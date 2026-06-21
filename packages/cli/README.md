@@ -26,6 +26,8 @@ minecraft-skills resourcepack-models latest
 minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills paper
 minecraft-skills paper-api 1.21.11
+minecraft-skills paper-api-index 1.21.11
+minecraft-skills compare-paper-api 1.20.4 1.21.11
 minecraft-skills paper-events "player join" --version 1.21.11
 ```
 

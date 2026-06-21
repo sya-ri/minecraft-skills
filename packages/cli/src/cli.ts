@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import {
   type CommandSearchOptions,
+  comparePaperApi,
   compareVersions,
   getDomain,
   getJavaReportsSummary,
+  getPaperApiIndex,
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
@@ -74,6 +76,8 @@ Usage:
   minecraft-skills vanilla-inventory [version] [--edition java]
   minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills paper-api [version]
+  minecraft-skills paper-api-index [version]
+  minecraft-skills compare-paper-api <from> <to>
   minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
@@ -98,6 +102,10 @@ Commands:
                  Print vanilla client asset and server data inventory JSON.
   vanilla-paths  Search bundled vanilla asset/data paths for a version.
   paper-api      Print Paper API dependency, Javadocs, and docs links for a version.
+  paper-api-index
+                 Print Paper Javadocs package index for a supported version.
+  compare-paper-api
+                 Compare Paper Javadocs package indexes between supported versions.
   paper-events   Search Paper/Bukkit events through the configured spigot-event-list API.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
@@ -278,6 +286,21 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (command === "paper-api") {
       const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getPaperApiReference(requested));
+      return 0;
+    }
+
+    if (command === "paper-api-index") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      printJson(output, getPaperApiIndex(requested));
+      return 0;
+    }
+
+    if (command === "compare-paper-api") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-paper-api command requires <from> and <to>");
+      }
+      printJson(output, comparePaperApi(from, to));
       return 0;
     }
 

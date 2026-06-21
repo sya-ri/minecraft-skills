@@ -9,6 +9,8 @@ import {
   type EditionData,
   JavaReportsSummary,
   type JavaReportsSummaryData,
+  PaperApiIndex,
+  type PaperApiIndexData,
   PaperPluginData,
   type PaperPluginDataData,
   type ReferenceData,
@@ -29,6 +31,7 @@ export type {
   DomainIdData,
   EditionData,
   JavaReportsSummaryData,
+  PaperApiIndexData,
   PaperPluginDataData,
   ReferenceData,
   ResourcepackModelSummaryData,
@@ -118,6 +121,18 @@ export type PaperApiReference = {
     defaultVersion: string;
     paperSources: string[];
   };
+};
+
+export type PaperApiComparison = {
+  from: string;
+  to: string;
+  packageCount: {
+    from: number;
+    to: number;
+    changed: boolean;
+  };
+  added: PaperApiIndexData["packages"];
+  removed: PaperApiIndexData["packages"];
 };
 
 export type VanillaPathDomain = "datapack" | "resourcepack";
@@ -306,6 +321,10 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
     if (reference.javadocsUrl) {
       facts.push(`paper_javadocs=${reference.javadocsUrl}`);
     }
+    const hasPackageIndex = hasDataFile(`java/paper-api-indexes/${detail.version}.json`);
+    if (hasPackageIndex) {
+      facts.push(`paper_api_package_index=${detail.version}`);
+    }
     facts.push(
       `paper_folia_support_docs=${reference.docs.foliaSupport}`,
       `paper_scheduler_docs=${reference.docs.scheduling}`,
@@ -320,7 +339,7 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
         "paper-plugin": {
           status: "api-reference-linked",
           facts,
-          unknowns: ["server_api_changes"],
+          unknowns: hasPackageIndex ? [] : ["server_api_changes"],
         },
       },
     });
@@ -477,6 +496,41 @@ function makePaperApiReference(
 
 export function getPaperApiReference(requested = "latest"): PaperApiReference {
   return makePaperApiReference(getPaperPluginData(), requested);
+}
+
+export function getPaperApiIndex(requested = "latest"): PaperApiIndexData {
+  const reference = getPaperApiReference(requested);
+  if (!reference.supported) {
+    throw new Error(
+      `No bundled Paper API index for ${reference.requestedVersion}; latest supported is ${reference.latestSupportedVersion}`,
+    );
+  }
+  const path = `java/paper-api-indexes/${reference.minecraftVersion}.json`;
+  if (!hasDataFile(path)) {
+    throw new Error(`No bundled Paper API index for ${reference.minecraftVersion}`);
+  }
+  return PaperApiIndex.assert(readDataJson(path));
+}
+
+export function comparePaperApi(fromRequested: string, toRequested: string): PaperApiComparison {
+  const from = getPaperApiIndex(fromRequested);
+  const to = getPaperApiIndex(toRequested);
+  const fromByName = new Map(from.packages.map((entry) => [entry.name, entry]));
+  const toByName = new Map(to.packages.map((entry) => [entry.name, entry]));
+  const added = to.packages.filter((entry) => !fromByName.has(entry.name));
+  const removed = from.packages.filter((entry) => !toByName.has(entry.name));
+
+  return {
+    from: from.minecraftVersion,
+    to: to.minecraftVersion,
+    packageCount: {
+      from: from.packageCount,
+      to: to.packageCount,
+      changed: from.packageCount !== to.packageCount,
+    },
+    added,
+    removed,
+  };
 }
 
 export function listPackFormats(edition = "java"): PackFormatSummary[] {

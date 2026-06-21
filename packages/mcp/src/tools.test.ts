@@ -18,6 +18,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_reference");
+    expect(tools.map((tool) => tool.name)).toContain("get_paper_api_index");
+    expect(tools.map((tool) => tool.name)).toContain("compare_paper_api");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
   });
 
@@ -43,6 +45,21 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
     expect(result.content[0]?.text).toContain("https://jd.papermc.io/paper/1.21.11/");
+  });
+
+  it("calls get_paper_api_index", async () => {
+    const result = await callMinecraftSkillsTool("get_paper_api_index", {
+      version: "1.21.11",
+    });
+    expect(result.content[0]?.text).toContain("io.papermc.paper.threadedregions.scheduler");
+  });
+
+  it("calls compare_paper_api", async () => {
+    const result = await callMinecraftSkillsTool("compare_paper_api", {
+      from: "1.20.4",
+      to: "1.21.11",
+    });
+    expect(result.content[0]?.text).toContain("io.papermc.paper.datacomponent");
   });
 
   it("calls list_pack_formats", async () => {

@@ -11,6 +11,7 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Vanilla resource pack model and item definition JSON shape summaries.
 - PaperMC support metadata, per-version Paper build summaries, Paper docs source links, and
   `sya-ri/spigot-event-list` API contract metadata.
+- Paper Javadocs package indexes for supported Paper versions.
 
 ## Use
 

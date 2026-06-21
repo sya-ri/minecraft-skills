@@ -1,7 +1,9 @@
 import {
   type CommandSearchOptions,
+  comparePaperApi,
   compareVersions,
   getJavaReportsSummary,
+  getPaperApiIndex,
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
@@ -238,6 +240,31 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_paper_api_index",
+    description:
+      "Get Paper Javadocs package index for a supported Minecraft version without copying Javadocs prose.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_paper_api",
+    description: "Compare Paper Javadocs package indexes between two supported Minecraft versions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: { type: "string" },
+        to: { type: "string" },
+      },
+      required: ["from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_paper_events",
     description: "Search Paper/Bukkit events through the configured sya-ri/spigot-event-list API.",
     inputSchema: {
@@ -390,6 +417,16 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_paper_api_reference") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getPaperApiReference(version));
+    }
+    if (name === "get_paper_api_index") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getPaperApiIndex(version));
+    }
+    if (name === "compare_paper_api") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_paper_api requires string from and to");
+      }
+      return text(comparePaperApi(args.from, args.to));
     }
     if (name === "search_paper_events") {
       if (typeof args.query !== "string") {

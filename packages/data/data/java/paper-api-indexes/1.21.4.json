@@ -1,0 +1,666 @@
+{
+  "schemaVersion": 1,
+  "projectId": "paper",
+  "minecraftVersion": "1.21.4",
+  "coverage": "javadocs-package-index",
+  "javadocsUrl": "https://jd.papermc.io/paper/1.21.4/",
+  "packageCount": 162,
+  "packages": [
+    {
+      "name": "co.aikar.timings",
+      "url": "https://jd.papermc.io/paper/1.21.4/co/aikar/timings/package-summary.html"
+    },
+    {
+      "name": "co.aikar.util",
+      "url": "https://jd.papermc.io/paper/1.21.4/co/aikar/util/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.block",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/block/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.brigadier",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/brigadier/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.entity",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/entity/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.entity.ai",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/entity/ai/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.entity.villager",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/entity/villager/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.block",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/block/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.brigadier",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/brigadier/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.entity",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/entity/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.inventory",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/inventory/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.player",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/player/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.profile",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/profile/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.event.server",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/event/server/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.exception",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/exception/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.inventory.meta",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/inventory/meta/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.loottable",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/loottable/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.network",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/network/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.profile",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/profile/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.util",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/util/package-summary.html"
+    },
+    {
+      "name": "com.destroystokyo.paper.utils",
+      "url": "https://jd.papermc.io/paper/1.21.4/com/destroystokyo/paper/utils/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.advancement",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/advancement/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.annotation",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/annotation/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.ban",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/ban/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.block",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/block/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.block.fluid",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/block/fluid/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.block.fluid.type",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/block/fluid/type/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.brigadier",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/brigadier/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.chat",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/chat/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command.brigadier",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/brigadier/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command.brigadier.argument",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/brigadier/argument/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command.brigadier.argument.predicate",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/brigadier/argument/predicate/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command.brigadier.argument.range",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/brigadier/argument/range/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command.brigadier.argument.resolvers",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/brigadier/argument/resolvers/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.command.brigadier.argument.resolvers.selector",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/command/brigadier/argument/resolvers/selector/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.datacomponent",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/datacomponent/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.datacomponent.item",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/datacomponent/item/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.datacomponent.item.consumable",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/datacomponent/item/consumable/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.datapack",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/datapack/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.enchantments",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/enchantments/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.entity",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/entity/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.block",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/block/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.entity",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/entity/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.executor",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/executor/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.packet",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/packet/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.player",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/player/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.server",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/server/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.world",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/world/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.event.world.border",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/event/world/border/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.generated",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/generated/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.inventory",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/inventory/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.inventory.tooltip",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/inventory/tooltip/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.item",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/item/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.math",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/math/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.persistence",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/persistence/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.bootstrap",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/bootstrap/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.configuration",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/configuration/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.lifecycle.event",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/lifecycle/event/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.lifecycle.event.handler",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/lifecycle/event/handler/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.lifecycle.event.handler.configuration",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/lifecycle/event/handler/configuration/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.lifecycle.event.registrar",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/lifecycle/event/registrar/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.lifecycle.event.types",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/lifecycle/event/types/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.loader",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/loader/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.loader.library",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/loader/library/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.loader.library.impl",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/loader/library/impl/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.provider.classloader",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/provider/classloader/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.provider.entrypoint",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/provider/entrypoint/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.plugin.provider.util",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/plugin/provider/util/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.potion",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/potion/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.raytracing",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/raytracing/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.data",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/data/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.event",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/event/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.event.type",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/event/type/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.keys",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/keys/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.keys.tags",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/keys/tags/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.set",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/set/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.registry.tag",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/registry/tag/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.scoreboard.numbers",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/scoreboard/numbers/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.tag",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/tag/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.text",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/text/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.threadedregions.scheduler",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/threadedregions/scheduler/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.util",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/util/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.world",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/world/package-summary.html"
+    },
+    {
+      "name": "io.papermc.paper.world.flag",
+      "url": "https://jd.papermc.io/paper/1.21.4/io/papermc/paper/world/flag/package-summary.html"
+    },
+    {
+      "name": "org.bukkit",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.advancement",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/advancement/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.attribute",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/attribute/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.ban",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/ban/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block.banner",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/banner/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block.data",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/data/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block.data.type",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/data/type/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block.sign",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/sign/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block.spawner",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/spawner/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.block.structure",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/block/structure/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.boss",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/boss/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.command",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/command/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.command.defaults",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/command/defaults/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.configuration",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/configuration/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.configuration.file",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/configuration/file/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.configuration.serialization",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/configuration/serialization/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.conversations",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/conversations/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.damage",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/damage/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.enchantments",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/enchantments/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.entity",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/entity/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.entity.boat",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/entity/boat/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.entity.memory",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/entity/memory/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.entity.minecart",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/entity/minecart/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.block",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/block/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.command",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/command/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.enchantment",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/enchantment/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.entity",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/entity/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.hanging",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/hanging/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.inventory",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/inventory/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.player",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/player/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.raid",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/raid/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.server",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/server/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.vehicle",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/vehicle/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.weather",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/weather/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.event.world",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/event/world/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.generator",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/generator/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.generator.structure",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/generator/structure/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.help",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/help/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.meta",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/meta/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.meta.components",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/meta/components/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.meta.tags",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/meta/tags/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.meta.trim",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/meta/trim/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.recipe",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/recipe/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.view",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/view/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.inventory.view.builder",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/inventory/view/builder/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.loot",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/loot/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.map",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/map/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.material",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/material/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.material.types",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/material/types/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.metadata",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/metadata/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.packs",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/packs/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.permissions",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/permissions/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.persistence",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/persistence/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.plugin",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/plugin/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.plugin.java",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/plugin/java/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.plugin.messaging",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/plugin/messaging/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.potion",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/potion/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.profile",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/profile/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.projectiles",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/projectiles/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.scheduler",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/scheduler/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.scoreboard",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/scoreboard/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.spawner",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/spawner/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.structure",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/structure/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.tag",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/tag/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.util",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/util/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.util.io",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/util/io/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.util.noise",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/util/noise/package-summary.html"
+    },
+    {
+      "name": "org.bukkit.util.permissions",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/bukkit/util/permissions/package-summary.html"
+    },
+    {
+      "name": "org.spigotmc",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/spigotmc/package-summary.html"
+    },
+    {
+      "name": "org.spigotmc.event.player",
+      "url": "https://jd.papermc.io/paper/1.21.4/org/spigotmc/event/player/package-summary.html"
+    }
+  ],
+  "sources": [
+    {
+      "id": "paper-javadocs-1.21.4",
+      "kind": "official-javadocs",
+      "url": "https://jd.papermc.io/paper/1.21.4/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    }
+  ]
+}

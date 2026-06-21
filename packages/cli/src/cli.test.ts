@@ -59,6 +59,19 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("https://jd.papermc.io/paper/1.21.11/");
   });
 
+  it("prints Paper API package indexes", async () => {
+    const result = await capture(["paper-api-index", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("io.papermc.paper.threadedregions.scheduler");
+  });
+
+  it("compares Paper API package indexes", async () => {
+    const result = await capture(["compare-paper-api", "1.20.4", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"added"');
+    expect(result.stdout.join("\n")).toContain("io.papermc.paper.datacomponent");
+  });
+
   it("prints vanilla inventory", async () => {
     const result = await capture(["vanilla-inventory"]);
     expect(result.code).toBe(0);

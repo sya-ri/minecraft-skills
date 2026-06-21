@@ -14,7 +14,9 @@ Node.js 22.12 or newer is required.
 
 ```ts
 import {
+  comparePaperApi,
   getJavaReportsSummary,
+  getPaperApiIndex,
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
@@ -39,6 +41,8 @@ const paths = searchVanillaPaths({
   contains: "recipe",
 });
 const paperApi = getPaperApiReference("1.21.11");
+const paperApiIndex = getPaperApiIndex("1.21.11");
+const paperApiDiff = comparePaperApi("1.20.4", "1.21.11");
 const paper = getPaperPluginData();
 ```
 

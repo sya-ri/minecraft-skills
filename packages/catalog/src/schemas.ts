@@ -161,6 +161,22 @@ export const PaperPluginData = type({
   sources: Source.array(),
 });
 
+export const PaperApiPackage = type({
+  name: "string",
+  url: "string",
+});
+
+export const PaperApiIndex = type({
+  schemaVersion: "1",
+  projectId: "'paper'",
+  minecraftVersion: "string",
+  coverage: "'javadocs-package-index'",
+  javadocsUrl: "string",
+  packageCount: "number",
+  packages: PaperApiPackage.array(),
+  sources: Source.array(),
+});
+
 export const InventoryTopLevel = type({
   path: "string",
   count: "number",
@@ -272,6 +288,7 @@ export type VersionSummaryData = typeof VersionSummary.infer;
 export type VersionDetailData = typeof VersionDetail.infer;
 export type DomainCoverageData = typeof DomainCoverage.infer;
 export type PaperPluginDataData = typeof PaperPluginData.infer;
+export type PaperApiIndexData = typeof PaperApiIndex.infer;
 export type VanillaInventoryData = typeof VanillaInventory.infer;
 export type ResourcepackModelSummaryData = typeof ResourcepackModelSummary.infer;
 export type JavaReportsSummaryData = typeof JavaReportsSummary.infer;

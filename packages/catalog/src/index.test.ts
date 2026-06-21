@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPaperEventSearchUrl,
+  comparePaperApi,
   compareVersions,
   getDomain,
   getJavaReportsSummary,
+  getPaperApiIndex,
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
@@ -105,6 +107,23 @@ describe("catalog", () => {
     expect(reference.docs.foliaSupport).toBe("https://docs.papermc.io/paper/dev/folia-support/");
   });
 
+  it("loads Paper API package indexes", () => {
+    const index = getPaperApiIndex("1.21.11");
+    expect(index.minecraftVersion).toBe("1.21.11");
+    expect(index.packageCount).toBeGreaterThan(100);
+    expect(index.packages.map((entry) => entry.name)).toContain(
+      "io.papermc.paper.threadedregions.scheduler",
+    );
+  });
+
+  it("compares Paper API package indexes", () => {
+    const comparison = comparePaperApi("1.20.4", "1.21.11");
+    expect(comparison.from).toBe("1.20.4");
+    expect(comparison.to).toBe("1.21.11");
+    expect(comparison.packageCount.changed).toBe(true);
+    expect(comparison.added.map((entry) => entry.name)).toContain("io.papermc.paper.datacomponent");
+  });
+
   it("builds Paper API references for unsupported future versions", () => {
     const reference = getPaperApiReference("26.2");
     expect(reference.supported).toBe(false);
@@ -126,10 +145,18 @@ describe("catalog", () => {
     expect(version.domains["paper-plugin"].facts).toContain(
       "paper_javadocs=https://jd.papermc.io/paper/1.21.11/",
     );
+    expect(version.domains["paper-plugin"].facts).toContain("paper_api_package_index=1.21.11");
     expect(version.domains["paper-plugin"].facts).toContain(
       "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
     );
     expect(version.domains["paper-plugin"].facts).toContain("paper_global_latest_build=69");
+    expect(version.domains["paper-plugin"].unknowns).toEqual([]);
+  });
+
+  it("keeps Paper API change unknowns when a package index is unavailable", () => {
+    const version = getVersionDetail("java", "1.13");
+    expect(version.domains["paper-plugin"].status).toBe("api-reference-linked");
+    expect(version.domains["paper-plugin"].facts).not.toContain("paper_api_package_index=1.13");
     expect(version.domains["paper-plugin"].unknowns).toEqual(["server_api_changes"]);
   });
 
