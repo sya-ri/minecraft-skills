@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import { listMinecraftSkillsResources, readMinecraftSkillsResource } from "./resources.js";
 import { callMinecraftSkillsTool, tools } from "./tools.js";
 
 export function createServer(): Server {
@@ -12,13 +18,20 @@ export function createServer(): Server {
     },
     {
       capabilities: {
+        resources: {},
         tools: {},
       },
       instructions:
-        "Use minecraft-skills tools for version-aware Minecraft datapack, resourcepack, and Paper plugin facts. Treat unknown or not-extracted fields as gaps, not facts.",
+        "Use minecraft-skills tools and resources for version-aware Minecraft datapack, resourcepack, and Paper plugin facts. Treat unknown or not-extracted fields as gaps, not facts.",
     },
   );
 
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: listMinecraftSkillsResources(),
+  }));
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) =>
+    readMinecraftSkillsResource(request.params.uri),
+  );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
   server.setRequestHandler(CallToolRequestSchema, async (request) =>
     callMinecraftSkillsTool(request.params.name, request.params.arguments),

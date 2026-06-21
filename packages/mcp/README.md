@@ -37,5 +37,13 @@ Node.js 22.12 or newer is required.
 - `list_references`
 - `get_source_policy`
 
+## Resources
+
+Agent Skill files are exposed under `minecraft-skills://skills/<skill>/...`, including:
+
+- `minecraft-skills://skills/minecraft-datapacks/SKILL.md`
+- `minecraft-skills://skills/minecraft-resourcepacks/SKILL.md`
+- `minecraft-skills://skills/minecraft-paper-plugins/SKILL.md`
+
 The server is designed for version-aware Minecraft Java data pack, resource pack, and Paper plugin
 authoring assistance.

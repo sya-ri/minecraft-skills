@@ -92,6 +92,10 @@ comparison, vanilla asset/data path search and comparison, resource pack model s
 support metadata, installable skill folder discovery, packaged skill payload lookup, and
 Paper/Bukkit event search.
 
+The server also exposes Agent Skill files as MCP resources under
+`minecraft-skills://skills/<skill>/...`, including `SKILL.md`, `agents/openai.yaml`, and generated
+reference markdown.
+
 ## Release Readiness
 
 Published package manifests are checked with pnpm because pnpm rewrites `workspace:` dependencies to
