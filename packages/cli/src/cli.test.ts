@@ -22,6 +22,11 @@ describe("minecraft-skills CLI", () => {
     expect(capture(["latest"]).stdout).toEqual(["26.2"]);
   });
 
+  it("prints effective version coverage", () => {
+    const result = capture(["versions"]);
+    expect(result.stdout[0]).toBe("26.2\trelease\t2026-06-16T12:03:33+00:00\tversion-json-and-jar");
+  });
+
   it("filters references by domain", () => {
     const result = capture(["references", "--domain", "paper-plugin"]);
     expect(result.stdout.join("\n")).toContain("minecraft-paper-plugins");

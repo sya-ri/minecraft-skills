@@ -90,9 +90,20 @@ function makeManifestOnlyDetail(
     type: version.type,
     releaseTime: version.releaseTime,
     coverage: version.coverage,
+    protocolVersion: null,
+    worldVersion: null,
+    stable: null,
+    javaVersion: {
+      component: null,
+      majorVersion: null,
+    },
+    assetIndex: null,
+    downloads: {},
     packFormats: {
       data: null,
+      dataMinor: null,
       resource: null,
+      resourceMinor: null,
       status: "not-extracted",
     },
     domains: {

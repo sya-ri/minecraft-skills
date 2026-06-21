@@ -77,7 +77,8 @@ export function runCli(argv: string[], output: Output = defaultOutput): number {
 
     if (command === "versions") {
       for (const version of listVersions(edition)) {
-        output.write(`${version.id}\t${version.type}\t${version.releaseTime}\t${version.coverage}`);
+        const detail = getVersionDetail(edition, version.id);
+        output.write(`${version.id}\t${version.type}\t${version.releaseTime}\t${detail.coverage}`);
       }
       return 0;
     }

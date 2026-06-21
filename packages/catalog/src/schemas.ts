@@ -74,6 +74,20 @@ export const DomainCoverage = type({
   unknowns: "string[]",
 });
 
+export const Download = type({
+  sha1: "string",
+  size: "number",
+  url: "string",
+});
+
+export const AssetIndex = type({
+  id: "string",
+  sha1: "string",
+  size: "number",
+  totalSize: "number",
+  url: "string",
+});
+
 export const VersionDetail = type({
   schemaVersion: "1",
   edition: "'java'",
@@ -81,9 +95,20 @@ export const VersionDetail = type({
   type: "string",
   releaseTime: "string",
   coverage: "string",
+  protocolVersion: "number | null",
+  worldVersion: "number | null",
+  stable: "boolean | null",
+  javaVersion: {
+    component: "string | null",
+    majorVersion: "number | null",
+  },
+  assetIndex: AssetIndex.or("null"),
+  downloads: "Record<string, unknown>",
   packFormats: {
     data: "number | null",
+    dataMinor: "number | null",
     resource: "number | null",
+    resourceMinor: "number | null",
     status: "string",
   },
   domains: {

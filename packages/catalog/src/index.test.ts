@@ -26,14 +26,18 @@ describe("catalog", () => {
     );
   });
 
-  it("loads version details without inventing unextracted pack formats", () => {
+  it("loads extracted version details for the latest release", () => {
     const version = getVersionDetail("java", "26.2");
-    expect(version.packFormats.data).toBeNull();
-    expect(version.packFormats.status).toBe("not-extracted");
+    expect(version.coverage).toBe("version-json-and-jar");
+    expect(version.packFormats.data).toBe(107);
+    expect(version.packFormats.resource).toBe(88);
+    expect(version.packFormats.status).toBe("extracted");
   });
 
   it("falls back to manifest-only details when a detail file is not generated", () => {
-    const version = getVersionDetail("java", "26.2");
+    const version = getVersionDetail("java", "1.13");
+    expect(version.packFormats.data).toBeNull();
+    expect(version.packFormats.status).toBe("not-extracted");
     expect(version.domains.datapack.unknowns).toContain("data_pack_format");
   });
 
