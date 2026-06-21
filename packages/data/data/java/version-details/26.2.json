@@ -40,18 +40,22 @@
   },
   "domains": {
     "datapack": {
-      "status": "extracted",
-      "facts": ["data_pack_format=107"],
-      "unknowns": ["command_tree", "registries", "vanilla_reports"]
+      "status": "reports-extracted",
+      "facts": ["data_pack_format=107", "vanilla_data_inventory=26.2", "server_reports=26.2"],
+      "unknowns": []
     },
     "resourcepack": {
-      "status": "extracted",
-      "facts": ["resource_pack_format=88"],
-      "unknowns": ["asset_index_contents", "model_schema"]
+      "status": "models-extracted",
+      "facts": [
+        "resource_pack_format=88",
+        "vanilla_asset_inventory=26.2",
+        "resourcepack_models=26.2"
+      ],
+      "unknowns": []
     },
     "paper-plugin": {
-      "status": "seed",
-      "facts": [],
+      "status": "not-yet-published",
+      "facts": ["paper_supported=false", "paper_latest_supported=1.21.11", "paper_latest_build=69"],
       "unknowns": ["paper_api_version", "server_api_changes", "folia_compatibility_notes"]
     }
   },

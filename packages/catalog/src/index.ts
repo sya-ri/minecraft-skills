@@ -506,6 +506,10 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
   });
 }
 
+function appendUnique(values: string[], ...added: string[]): string[] {
+  return [...new Set([...values, ...added])];
+}
+
 function withVanillaInventoryCoverage(detail: VersionDetailData): VersionDetailData {
   const inventoryPath = `java/vanilla-inventories/${detail.version}.json`;
   if (!hasDataFile(inventoryPath)) {
@@ -517,12 +521,18 @@ function withVanillaInventoryCoverage(detail: VersionDetailData): VersionDetailD
       ...detail.domains,
       datapack: {
         status: "inventory-extracted",
-        facts: [...detail.domains.datapack.facts, `vanilla_data_inventory=${detail.version}`],
+        facts: appendUnique(
+          detail.domains.datapack.facts,
+          `vanilla_data_inventory=${detail.version}`,
+        ),
         unknowns: ["command_tree", "vanilla_reports"],
       },
       resourcepack: {
         status: "inventory-extracted",
-        facts: [...detail.domains.resourcepack.facts, `vanilla_asset_inventory=${detail.version}`],
+        facts: appendUnique(
+          detail.domains.resourcepack.facts,
+          `vanilla_asset_inventory=${detail.version}`,
+        ),
         unknowns: ["model_schema"],
       },
     },
@@ -540,7 +550,7 @@ function withJavaReportsCoverage(detail: VersionDetailData): VersionDetailData {
       ...detail.domains,
       datapack: {
         status: "reports-extracted",
-        facts: [...detail.domains.datapack.facts, `server_reports=${detail.version}`],
+        facts: appendUnique(detail.domains.datapack.facts, `server_reports=${detail.version}`),
         unknowns: [],
       },
     },
@@ -558,7 +568,10 @@ function withResourcepackModelCoverage(detail: VersionDetailData): VersionDetail
       ...detail.domains,
       resourcepack: {
         status: "models-extracted",
-        facts: [...detail.domains.resourcepack.facts, `resourcepack_models=${detail.version}`],
+        facts: appendUnique(
+          detail.domains.resourcepack.facts,
+          `resourcepack_models=${detail.version}`,
+        ),
         unknowns: [],
       },
     },

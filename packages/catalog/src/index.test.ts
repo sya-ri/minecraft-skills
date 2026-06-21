@@ -87,7 +87,9 @@ describe("catalog", () => {
       supportedVersions: 43,
       latestSupportedVersion: "1.21.11",
       latestBuild: 69,
-      apiPackageIndexes: 40,
+      apiPackageIndexes: 43,
+      versionsWithoutUnknowns: 43,
+      missingApiPackageIndexes: [],
     });
     expect(summary.skills).toEqual({
       total: 3,
@@ -226,11 +228,11 @@ describe("catalog", () => {
     expect(version.domains["paper-plugin"].unknowns).toEqual([]);
   });
 
-  it("keeps Paper API change unknowns when a package index is unavailable", () => {
+  it("links Paper API package indexes for legacy supported versions", () => {
     const version = getVersionDetail("java", "1.13");
     expect(version.domains["paper-plugin"].status).toBe("api-reference-linked");
-    expect(version.domains["paper-plugin"].facts).not.toContain("paper_api_package_index=1.13");
-    expect(version.domains["paper-plugin"].unknowns).toEqual(["server_api_changes"]);
+    expect(version.domains["paper-plugin"].facts).toContain("paper_api_package_index=1.13");
+    expect(version.domains["paper-plugin"].unknowns).toEqual([]);
   });
 
   it("marks Java versions that Paper has not published yet", () => {

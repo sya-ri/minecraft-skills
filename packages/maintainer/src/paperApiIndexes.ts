@@ -82,27 +82,52 @@ async function fetchText(url: string): Promise<string> {
 
 async function fetchPaperJavadocsIndex(
   javadocsUrl: string,
-): Promise<{ html: string; url: string }> {
-  const candidates = [
-    javadocsUrl,
-    new URL("overview-summary.html", javadocsUrl).toString(),
-    new URL("overview-frame.html", javadocsUrl).toString(),
-    new URL("package-search-index.js", javadocsUrl).toString(),
-  ];
+): Promise<{ html: string; url: string; javadocsUrl: string }> {
+  const candidateBases = [javadocsUrl];
+  const checkedBases = new Set<string>();
+  let fallback: { html: string; url: string; javadocsUrl: string } | undefined;
 
-  for (const url of candidates) {
-    let html: string;
-    try {
-      html = await fetchText(url);
-    } catch {
+  for (const base of candidateBases) {
+    if (checkedBases.has(base)) {
       continue;
     }
-    if (extractPaperPackages(html, javadocsUrl).length > 0) {
-      return { html, url };
+    checkedBases.add(base);
+
+    const candidates = [
+      base,
+      new URL("overview-summary.html", base).toString(),
+      new URL("overview-frame.html", base).toString(),
+      new URL("package-search-index.js", base).toString(),
+    ];
+
+    for (const url of candidates) {
+      let response: Response;
+      try {
+        response = await fetch(url);
+      } catch {
+        continue;
+      }
+      if (!response.ok) {
+        continue;
+      }
+
+      const html = await response.text();
+      const finalBase = new URL(".", response.url).toString();
+      fallback ??= { html, url: response.url, javadocsUrl: finalBase };
+      if (!checkedBases.has(finalBase) && !candidateBases.includes(finalBase)) {
+        candidateBases.push(finalBase);
+      }
+      if (extractPaperPackages(html, finalBase).length > 0) {
+        return { html, url: response.url, javadocsUrl: finalBase };
+      }
     }
   }
 
-  return { html: await fetchText(javadocsUrl), url: javadocsUrl };
+  if (fallback) {
+    return fallback;
+  }
+
+  return { html: await fetchText(javadocsUrl), url: javadocsUrl, javadocsUrl };
 }
 
 export function buildPaperApiIndex(options: {
@@ -144,12 +169,16 @@ export async function ingestPaperApiIndexes(
   for (const version of getPaperPluginData().versions) {
     const javadocsUrl = `https://jd.papermc.io/paper/${version}/`;
     options.log?.(`fetch ${version}: Paper Javadocs package index`);
-    const { html, url } = await fetchPaperJavadocsIndex(javadocsUrl);
+    const {
+      html,
+      url,
+      javadocsUrl: resolvedJavadocsUrl,
+    } = await fetchPaperJavadocsIndex(javadocsUrl);
     let index: PaperApiIndex;
     try {
       index = buildPaperApiIndex({
         minecraftVersion: version,
-        javadocsUrl,
+        javadocsUrl: resolvedJavadocsUrl,
         html,
         retrievedAt: options.retrievedAt,
       });

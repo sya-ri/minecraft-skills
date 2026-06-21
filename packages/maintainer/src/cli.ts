@@ -69,6 +69,10 @@ function requireDataFile(root: string, path: string, messages: string[]): void {
   requireFile(root, dataFilePath(path), messages);
 }
 
+function readJsonFile<T>(path: string): T {
+  return JSON.parse(readFileSync(path, "utf8")) as T;
+}
+
 function requireGeneratedHeader(root: string, path: string, messages: string[]): void {
   const absolutePath = join(root, path);
   requireFile(root, path, messages);
@@ -152,6 +156,18 @@ function requireSkillPayloadMirror(root: string, skill: string, messages: string
   requireMirroredDataFile(root, `skills/${skill}/agents/openai.yaml`, messages);
 }
 
+function materializeVersionDetails(root: string): number {
+  let written = 0;
+  for (const version of listVersions("java")) {
+    writeFileSync(
+      join(root, dataFilePath(`java/version-details/${version.id}.json`)),
+      `${JSON.stringify(getVersionDetail("java", version.id), null, 2)}\n`,
+    );
+    written += 1;
+  }
+  return written;
+}
+
 export function validateRepository(): ValidationResult {
   const messages: string[] = [];
   const root = findRepositoryRoot();
@@ -201,6 +217,9 @@ export function validateRepository(): ValidationResult {
 
   for (const version of javaVersions) {
     const detail = getVersionDetail("java", version.id);
+    const rawDetail = readJsonFile<ReturnType<typeof getVersionDetail>>(
+      join(root, dataFilePath(`java/version-details/${version.id}.json`)),
+    );
     const prefix = `java ${version.id}`;
     requireDataFile(root, `java/version-details/${version.id}.json`, messages);
     requireDataFile(root, `java/reports/${version.id}.json`, messages);
@@ -212,6 +231,9 @@ export function validateRepository(): ValidationResult {
 
     if (detail.coverage !== "version-json-and-jar") {
       messages.push(`${prefix} detail must have version-json-and-jar coverage`);
+    }
+    if (JSON.stringify(rawDetail.domains) !== JSON.stringify(detail.domains)) {
+      messages.push(`${prefix} version detail must materialize derived domain coverage`);
     }
     if (
       detail.packFormats.status !== "extracted" ||
@@ -282,6 +304,7 @@ Usage:
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-builds [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-api-indexes [--retrieved-at <iso>]
+  minecraft-skills-maintainer materialize-version-details
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-resourcepack-models --version <version> --client-jar <client.jar> [--retrieved-at <iso>]
@@ -304,6 +327,8 @@ Commands:
   ingest-paper-builds  Download latest build summaries for all bundled Paper-supported versions.
   ingest-paper-api-indexes
                         Download Paper Javadocs package indexes for supported versions.
+  materialize-version-details
+                        Write derived domain coverage facts into checked-in version detail JSON.
   ingest-vanilla-inventory
                         Generate compact inventory for vanilla client assets and server data.
   ingest-vanilla-inventories
@@ -632,6 +657,13 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-paper-api-indexes") {
       await ingestAllPaperApiIndexes(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "materialize-version-details") {
+      const root = findRepositoryRoot();
+      const written = materializeVersionDetails(root);
+      console.log(`wrote ${written} Java version detail files`);
       return 0;
     }
 

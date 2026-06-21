@@ -247,6 +247,13 @@ node packages/maintainer/dist/cli.mjs ingest-resourcepack-models-all \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
+After changing generated reports, inventories, resource pack model summaries, Paper build data, or
+Paper API indexes, materialize derived coverage facts into the checked-in version detail JSON:
+
+```sh
+node packages/maintainer/dist/cli.mjs materialize-version-details
+```
+
 Regenerate one vanilla inventory from already downloaded jars:
 
 ```sh

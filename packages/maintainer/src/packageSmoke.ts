@@ -119,7 +119,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           [
             'import { getCoverageSummary } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
-            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2") throw new Error("bad coverage");',
+            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.paperPlugin.apiPackageIndexes !== 43 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
           ].join(" "),
         ],
         consumerDir,
