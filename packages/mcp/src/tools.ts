@@ -1,6 +1,7 @@
 import {
   getPaperPluginData,
   getSourcePolicy,
+  getVanillaInventory,
   getVersionDetail,
   listDomains,
   listPackFormats,
@@ -87,6 +88,19 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_vanilla_inventory",
+    description:
+      "Get compact inventory of vanilla client assets and server data bundled for a Minecraft version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "list_references",
     description: "List generated skill references, optionally filtered by domain.",
     inputSchema: {
@@ -157,6 +171,10 @@ export function callMinecraftSkillsTool(name: string, input: unknown): ToolResul
     }
     if (name === "list_pack_formats") {
       return text(listPackFormats(edition));
+    }
+    if (name === "get_vanilla_inventory") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getVanillaInventory(edition, version));
     }
     if (name === "list_references") {
       const domain = typeof args.domain === "string" ? args.domain : undefined;

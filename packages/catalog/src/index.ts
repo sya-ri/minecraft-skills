@@ -10,6 +10,8 @@ import {
   PaperPluginData,
   type PaperPluginDataData,
   type ReferenceData,
+  VanillaInventory,
+  type VanillaInventoryData,
   VersionDetail,
   type VersionDetailData,
   VersionIndex,
@@ -24,6 +26,7 @@ export type {
   EditionData,
   PaperPluginDataData,
   ReferenceData,
+  VanillaInventoryData,
   VersionDetailData,
   VersionIndexData,
   VersionSummaryData,
@@ -177,18 +180,45 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
   });
 }
 
+function withVanillaInventoryCoverage(detail: VersionDetailData): VersionDetailData {
+  const inventoryPath = `java/vanilla-inventories/${detail.version}.json`;
+  if (!hasDataFile(inventoryPath)) {
+    return detail;
+  }
+  return VersionDetail.assert({
+    ...detail,
+    domains: {
+      ...detail.domains,
+      datapack: {
+        status: "inventory-extracted",
+        facts: [...detail.domains.datapack.facts, `vanilla_data_inventory=${detail.version}`],
+        unknowns: ["command_tree", "vanilla_reports"],
+      },
+      resourcepack: {
+        status: "inventory-extracted",
+        facts: [...detail.domains.resourcepack.facts, `vanilla_asset_inventory=${detail.version}`],
+        unknowns: ["model_schema"],
+      },
+    },
+  });
+}
+
 export function getVersionDetail(edition = "java", requested = "latest"): VersionDetailData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
   const detailPath = `${editionId}/version-details/${version}.json`;
   if (hasDataFile(detailPath)) {
-    return withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath)));
+    return withVanillaInventoryCoverage(
+      withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath))),
+    );
   }
   const summary = getVersionIndex(editionId).versions.find((candidate) => candidate.id === version);
   if (!summary) {
     throw new Error(`Unsupported ${editionId} version: ${version}`);
   }
-  return withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary));
+  return withVanillaInventoryCoverage(
+    withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary)),
+  );
 }
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
@@ -212,4 +242,14 @@ export function listPackFormats(edition = "java"): PackFormatSummary[] {
       paperPluginStatus: detail.domains["paper-plugin"].status,
     };
   });
+}
+
+export function getVanillaInventory(edition = "java", requested = "latest"): VanillaInventoryData {
+  const editionId = Edition.assert(edition);
+  const version = resolveVersion(editionId, requested);
+  const inventoryPath = `${editionId}/vanilla-inventories/${version}.json`;
+  if (!hasDataFile(inventoryPath)) {
+    throw new Error(`No bundled vanilla inventory for ${editionId} ${version}`);
+  }
+  return VanillaInventory.assert(readDataJson(inventoryPath));
 }

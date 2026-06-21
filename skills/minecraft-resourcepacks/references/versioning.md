@@ -5,14 +5,15 @@
 Primary support starts at Java Edition 1.13. Versions before 1.13 are legacy and should be treated
 as outside first-class support unless explicit legacy data is present.
 
-Current bundled seed:
+Current bundled data:
 
 - Latest Java release: 26.2
-- Coverage: manifest-only
-- Resource pack format: not extracted
-- Asset index: not extracted
+- Java 1.13+ release index: bundled
+- Resource pack formats for Java 1.13+: extracted from official Mojang version/client metadata
+- Latest vanilla client asset inventory: extracted from official Mojang client jar
 - Model schema details: not extracted
 
-When a requested fact is not extracted, explain the gap and use the source policy instead of
-guessing. Future generated references should replace this seed with per-version facts and migration
-notes.
+Use `minecraft-skills show-version <version>` for per-version pack format facts. Use
+`minecraft-skills vanilla-inventory latest` to inspect latest bundled vanilla
+`assets/<namespace>/...` top-level directories, counts, and representative paths. When a requested
+fact is not extracted, explain the gap and use the source policy instead of guessing.

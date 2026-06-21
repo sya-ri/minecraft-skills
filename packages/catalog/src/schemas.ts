@@ -156,6 +156,29 @@ export const PaperPluginData = type({
   sources: Source.array(),
 });
 
+export const InventoryTopLevel = type({
+  path: "string",
+  count: "number",
+  jsonCount: "number",
+  samples: "string[]",
+});
+
+export const InventorySection = type({
+  entryCount: "number",
+  namespaces: "string[]",
+  topLevel: InventoryTopLevel.array(),
+});
+
+export const VanillaInventory = type({
+  schemaVersion: "1",
+  edition: "'java'",
+  version: "string",
+  coverage: "string",
+  resources: InventorySection,
+  datapack: InventorySection,
+  sources: Source.array(),
+});
+
 export const DomainId = type("'datapack' | 'resourcepack' | 'paper-plugin'");
 export const Edition = type("'java'");
 
@@ -167,5 +190,6 @@ export type VersionSummaryData = typeof VersionSummary.infer;
 export type VersionDetailData = typeof VersionDetail.infer;
 export type DomainCoverageData = typeof DomainCoverage.infer;
 export type PaperPluginDataData = typeof PaperPluginData.infer;
+export type VanillaInventoryData = typeof VanillaInventory.infer;
 export type DomainIdData = typeof DomainId.infer;
 export type EditionData = typeof Edition.infer;

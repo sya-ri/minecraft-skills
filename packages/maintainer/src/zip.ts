@@ -15,6 +15,48 @@ function findEndOfCentralDirectory(buffer: Buffer): number {
   throw new Error("Invalid zip: end of central directory not found");
 }
 
+export type ZipEntry = {
+  name: string;
+  compressedSize: number;
+  uncompressedSize: number;
+  compressionMethod: number;
+  directory: boolean;
+};
+
+export function listZipEntries(buffer: Buffer): ZipEntry[] {
+  const eocdOffset = findEndOfCentralDirectory(buffer);
+  const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16);
+  const centralDirectorySize = buffer.readUInt32LE(eocdOffset + 12);
+  let offset = centralDirectoryOffset;
+  const endOffset = centralDirectoryOffset + centralDirectorySize;
+  const entries: ZipEntry[] = [];
+
+  while (offset < endOffset) {
+    if (buffer.readUInt32LE(offset) !== centralDirectoryFileHeaderSignature) {
+      throw new Error("Invalid zip: central directory header not found");
+    }
+
+    const compressionMethod = buffer.readUInt16LE(offset + 10);
+    const compressedSize = buffer.readUInt32LE(offset + 20);
+    const uncompressedSize = buffer.readUInt32LE(offset + 24);
+    const fileNameLength = buffer.readUInt16LE(offset + 28);
+    const extraFieldLength = buffer.readUInt16LE(offset + 30);
+    const fileCommentLength = buffer.readUInt16LE(offset + 32);
+    const fileName = buffer.toString("utf8", offset + 46, offset + 46 + fileNameLength);
+    entries.push({
+      name: fileName,
+      compressedSize,
+      uncompressedSize,
+      compressionMethod,
+      directory: fileName.endsWith("/"),
+    });
+
+    offset += 46 + fileNameLength + extraFieldLength + fileCommentLength;
+  }
+
+  return entries;
+}
+
 export function readZipEntry(buffer: Buffer, entryName: string): Buffer {
   const eocdOffset = findEndOfCentralDirectory(buffer);
   const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16);

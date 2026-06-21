@@ -42,6 +42,7 @@ minecraft-skills latest
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
+minecraft-skills vanilla-inventory latest
 minecraft-skills paper
 minecraft-skills references --domain paper-plugin
 ```
@@ -79,6 +80,16 @@ curl -fsSL -o /tmp/papermc-paper-1.21.11-builds.json \
 node packages/maintainer/dist/cli.mjs ingest-paper-project \
   --project-json /tmp/papermc-paper-project.json \
   --latest-builds-json /tmp/papermc-paper-1.21.11-builds.json \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
+Regenerate latest vanilla client asset and server data inventory:
+
+```sh
+node packages/maintainer/dist/cli.mjs ingest-vanilla-inventory \
+  --version 26.2 \
+  --client-jar /tmp/minecraft-26.2-client.jar \
+  --server-jar /tmp/minecraft-26.2-server.jar \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 

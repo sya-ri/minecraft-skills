@@ -11,6 +11,7 @@ import { buildJavaVersionIndex } from "./javaManifest.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { buildPaperPluginData } from "./paperProject.js";
+import { buildVanillaInventory } from "./vanillaInventory.js";
 
 type ValidationResult = {
   ok: boolean;
@@ -84,6 +85,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
 
 Commands:
   validate              Validate checked-in data, catalog, and generated skills.
@@ -93,7 +95,9 @@ Commands:
   ingest-java-version-details
                         Download and generate missing detail JSON for all indexed Java releases.
   ingest-paper-project
-                        Generate Paper plugin support and event search data from PaperMC API JSON.`);
+                        Generate Paper plugin support and event search data from PaperMC API JSON.
+  ingest-vanilla-inventory
+                        Generate compact inventory for vanilla client assets and server data.`);
 }
 
 function readOption(args: string[], name: string): string | undefined {
@@ -184,6 +188,46 @@ function ingestPaperProject(args: string[]): void {
   console.log(`wrote Paper plugin data to ${output}`);
 }
 
+function readDownloadUrl(downloads: Record<string, unknown>, key: string): string {
+  const download = downloads[key];
+  if (download && typeof download === "object" && "url" in download) {
+    const url = (download as { url: unknown }).url;
+    if (typeof url === "string") {
+      return url;
+    }
+  }
+  throw new Error(`Version detail does not include downloads.${key}.url`);
+}
+
+function ingestVanillaInventory(args: string[]): void {
+  const version = readOption(args, "--version");
+  if (!version) {
+    throw new Error("ingest-vanilla-inventory requires --version <version>");
+  }
+  const clientJarPath = readOption(args, "--client-jar");
+  if (!clientJarPath) {
+    throw new Error("ingest-vanilla-inventory requires --client-jar <client.jar>");
+  }
+  const serverJarPath = readOption(args, "--server-jar");
+  if (!serverJarPath) {
+    throw new Error("ingest-vanilla-inventory requires --server-jar <server.jar>");
+  }
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const root = findRepositoryRoot();
+  const detail = getVersionDetail("java", version);
+  const inventory = buildVanillaInventory({
+    version: detail.version,
+    clientJarPath,
+    serverJarPath,
+    clientJarUrl: readDownloadUrl(detail.downloads, "client"),
+    serverJarUrl: readDownloadUrl(detail.downloads, "server"),
+    retrievedAt,
+  });
+  const output = join(root, `packages/data/data/java/vanilla-inventories/${detail.version}.json`);
+  writeFileSync(output, `${JSON.stringify(inventory, null, 2)}\n`);
+  console.log(`wrote Java ${detail.version} vanilla inventory to ${output}`);
+}
+
 export async function runMaintainerCli(argv: string[]): Promise<number> {
   const [command] = argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
@@ -209,6 +253,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-paper-project") {
       ingestPaperProject(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-vanilla-inventory") {
+      ingestVanillaInventory(argv.slice(1));
       return 0;
     }
 

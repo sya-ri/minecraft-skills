@@ -5,14 +5,15 @@
 Primary support starts at Java Edition 1.13. Versions before 1.13 are legacy and should be treated
 as outside the first-class data pack model unless explicit legacy data is present.
 
-Current bundled seed:
+Current bundled data:
 
 - Latest Java release: 26.2
-- Coverage: manifest-only
-- Data pack format: not extracted
-- Command tree: not extracted
-- Registries and vanilla reports: not extracted
+- Java 1.13+ release index: bundled
+- Data pack formats for Java 1.13+: extracted from official Mojang version/client metadata
+- Latest vanilla server data inventory: extracted from official Mojang server jar
+- Command tree and generated vanilla reports: not bundled
 
-When a requested fact is not extracted, explain the gap and use the source policy instead of
-guessing. Future generated references should replace this seed with per-version facts and migration
-notes.
+Use `minecraft-skills show-version <version>` for per-version pack format facts. Use
+`minecraft-skills vanilla-inventory latest` to inspect latest bundled vanilla `data/<namespace>/...`
+top-level directories, counts, and representative paths. When a requested fact is not extracted,
+explain the gap and use the source policy instead of guessing.

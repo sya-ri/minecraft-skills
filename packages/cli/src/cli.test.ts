@@ -48,6 +48,14 @@ describe("minecraft-skills CLI", () => {
     );
   });
 
+  it("prints vanilla inventory", () => {
+    const result = capture(["vanilla-inventory"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"version": "26.2"');
+    expect(result.stdout.join("\n")).toContain('"assets/minecraft/models"');
+    expect(result.stdout.join("\n")).toContain('"data/minecraft/tags"');
+  });
+
   it("reports unknown commands", () => {
     const result = capture(["nope"]);
     expect(result.code).toBe(1);

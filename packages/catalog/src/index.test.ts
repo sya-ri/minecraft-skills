@@ -3,6 +3,7 @@ import {
   getDomain,
   getPaperPluginData,
   getSourcePolicy,
+  getVanillaInventory,
   getVersionDetail,
   listDomains,
   listPackFormats,
@@ -96,5 +97,24 @@ describe("catalog", () => {
       data: 4,
       resource: 4,
     });
+  });
+
+  it("loads vanilla inventory for latest release", () => {
+    const inventory = getVanillaInventory("java", "latest");
+    expect(inventory.version).toBe("26.2");
+    expect(inventory.resources.entryCount).toBeGreaterThan(10_000);
+    expect(inventory.datapack.entryCount).toBeGreaterThan(8_000);
+    expect(inventory.resources.topLevel.map((entry) => entry.path)).toContain(
+      "assets/minecraft/models",
+    );
+    expect(inventory.datapack.topLevel.map((entry) => entry.path)).toContain("data/minecraft/tags");
+  });
+
+  it("annotates version details when vanilla inventory is bundled", () => {
+    const version = getVersionDetail("java", "26.2");
+    expect(version.domains.datapack.status).toBe("inventory-extracted");
+    expect(version.domains.resourcepack.status).toBe("inventory-extracted");
+    expect(version.domains.datapack.facts).toContain("vanilla_data_inventory=26.2");
+    expect(version.domains.resourcepack.facts).toContain("vanilla_asset_inventory=26.2");
   });
 });
