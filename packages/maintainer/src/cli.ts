@@ -3,9 +3,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
   getCatalog,
+  getPaperPluginData,
   getVersionDetail,
   listDomains,
   listReferences,
+  listVersions,
 } from "@minecraft-skills/catalog";
 import { buildJavaVersionIndex } from "./javaManifest.js";
 import {
@@ -48,6 +50,14 @@ function requireFile(root: string, path: string, messages: string[]): void {
   if (!existsSync(join(root, path))) {
     messages.push(`missing file: ${path}`);
   }
+}
+
+function dataFilePath(path: string): string {
+  return `packages/data/data/${path}`;
+}
+
+function requireDataFile(root: string, path: string, messages: string[]): void {
+  requireFile(root, dataFilePath(path), messages);
 }
 
 function requireGeneratedHeader(root: string, path: string, messages: string[]): void {
@@ -118,9 +128,15 @@ export function validateRepository(): ValidationResult {
   const messages: string[] = [];
   const root = findRepositoryRoot();
   const catalog = getCatalog();
+  const javaVersions = listVersions("java");
+  const paper = getPaperPluginData();
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");
+  }
+
+  if (catalog.latest.java !== javaVersions[0]?.id) {
+    messages.push("catalog latest Java version must match bundled Java version index");
   }
 
   for (const domain of listDomains()) {
@@ -151,6 +167,68 @@ export function validateRepository(): ValidationResult {
   const latest = getVersionDetail("java", "latest");
   if (latest.coverage === "complete" && latest.packFormats.status !== "extracted") {
     messages.push("complete version coverage must include extracted pack formats");
+  }
+
+  for (const version of javaVersions) {
+    const detail = getVersionDetail("java", version.id);
+    const prefix = `java ${version.id}`;
+    requireDataFile(root, `java/version-details/${version.id}.json`, messages);
+    requireDataFile(root, `java/reports/${version.id}.json`, messages);
+    requireDataFile(root, `java/command-paths/${version.id}.txt`, messages);
+    requireDataFile(root, `java/vanilla-inventories/${version.id}.json`, messages);
+    requireDataFile(root, `java/vanilla-paths/${version.id}.datapack.txt`, messages);
+    requireDataFile(root, `java/vanilla-paths/${version.id}.resourcepack.txt`, messages);
+    requireDataFile(root, `java/resourcepack-models/${version.id}.json`, messages);
+
+    if (detail.coverage !== "version-json-and-jar") {
+      messages.push(`${prefix} detail must have version-json-and-jar coverage`);
+    }
+    if (
+      detail.packFormats.status !== "extracted" ||
+      detail.packFormats.data === null ||
+      detail.packFormats.resource === null
+    ) {
+      messages.push(`${prefix} must have extracted data and resource pack formats`);
+    }
+    if (
+      detail.domains.datapack.status !== "reports-extracted" ||
+      detail.domains.datapack.unknowns.length > 0
+    ) {
+      messages.push(`${prefix} datapack coverage must include reports with no unknowns`);
+    }
+    if (
+      detail.domains.resourcepack.status !== "models-extracted" ||
+      detail.domains.resourcepack.unknowns.length > 0
+    ) {
+      messages.push(`${prefix} resourcepack coverage must include models with no unknowns`);
+    }
+  }
+
+  for (const paperVersion of paper.versions) {
+    const prefix = `paper ${paperVersion}`;
+    const detail = getVersionDetail("java", paperVersion);
+    const build = paper.versionBuilds.find(
+      (candidate) => candidate.minecraftVersion === paperVersion,
+    );
+    if (!build) {
+      messages.push(`${prefix} must have latest build metadata`);
+    }
+    if (detail.domains["paper-plugin"].status !== "api-reference-linked") {
+      messages.push(`${prefix} must be linked from Java version details`);
+    }
+    const apiIndexPath = dataFilePath(`java/paper-api-indexes/${paperVersion}.json`);
+    if (existsSync(join(root, apiIndexPath))) {
+      if (
+        !detail.domains["paper-plugin"].facts.includes(`paper_api_package_index=${paperVersion}`)
+      ) {
+        messages.push(`${prefix} must expose bundled Paper API package index fact`);
+      }
+      if (detail.domains["paper-plugin"].unknowns.length > 0) {
+        messages.push(`${prefix} must not keep Paper API unknowns when package index is bundled`);
+      }
+    } else if (!detail.domains["paper-plugin"].unknowns.includes("server_api_changes")) {
+      messages.push(`${prefix} must record server_api_changes when package index is unavailable`);
+    }
   }
 
   return {
