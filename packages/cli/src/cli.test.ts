@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 
@@ -39,6 +42,29 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("display_name");
     expect(output).toContain("Minecraft Paper Plugins");
     expect(output).toContain("# Paper Plugin Sources");
+  });
+
+  it("writes packaged skill folders", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-cli-"));
+    try {
+      const result = await capture(["write-skill", "minecraft-paper-plugins", "--output", root]);
+      const skillRoot = join(root, "minecraft-paper-plugins");
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain(join(skillRoot, "SKILL.md"));
+      expect(readFileSync(join(skillRoot, "SKILL.md"), "utf8")).toContain(
+        "# Minecraft Paper Plugins",
+      );
+      expect(readFileSync(join(skillRoot, "agents/openai.yaml"), "utf8")).toContain("display_name");
+      expect(readFileSync(join(skillRoot, "references/sources.md"), "utf8")).toContain(
+        "# Paper Plugin Sources",
+      );
+
+      const blocked = await capture(["write-skill", "minecraft-paper-plugins", "--output", root]);
+      expect(blocked.code).toBe(1);
+      expect(blocked.stderr.join("\n")).toContain("Refusing to overwrite existing file");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("prints bundled coverage summary", async () => {

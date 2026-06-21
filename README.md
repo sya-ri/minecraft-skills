@@ -41,6 +41,7 @@ CI=true mise exec -- pnpm check
 minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
+minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills coverage
 minecraft-skills versions
 minecraft-skills pack-formats
@@ -75,6 +76,8 @@ calls the event API for live event discovery. `minecraft-skills skill <name>` re
 Agent Skill payload, including `SKILL.md`, agent metadata, and generated references.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
+`minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
+preserving `SKILL.md`, `agents/openai.yaml`, and generated references.
 
 ## MCP
 
@@ -233,6 +236,7 @@ Generated skills are committed under `skills/` as standalone Agent Skills folder
 - `skills/minecraft-paper-plugins`
 
 Install or reference those folders directly from this repository when using a skill installer such
-as `gh skills` or `npx skills`. The public npm packages are for machine-readable data, CLI, and MCP
-runtime access; the skill folders are the human-readable agent instructions. Use
-`minecraft-skills skills` or MCP `list_skills` to list installable skill folder paths.
+as `gh skills` or `npx skills`. The public npm data package also includes mirrored skill payloads
+under `data/skills/`, so npm consumers can run `minecraft-skills write-skill <name> --output <dir>`
+to materialize a standalone skill folder. Use `minecraft-skills skills` or MCP `list_skills` to
+list installable skill folder paths.

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, relative } from "node:path";
 import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
@@ -73,6 +75,7 @@ Usage:
   minecraft-skills domains
   minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills skill <name>
+  minecraft-skills write-skill <name> --output <dir> [--force]
   minecraft-skills coverage
   minecraft-skills latest [--edition java]
   minecraft-skills versions [--edition java]
@@ -100,6 +103,7 @@ Commands:
   domains        List supported authoring domains.
   skills         List installable Agent Skill folders in this repository.
   skill          Print packaged Agent Skill payload JSON.
+  write-skill    Write a packaged Agent Skill folder to disk.
   coverage       Print bundled data coverage summary JSON.
   latest         Print the latest bundled version for an edition.
   versions       List bundled version metadata.
@@ -136,6 +140,50 @@ function printJson(output: Output, value: unknown): void {
   output.write(JSON.stringify(value, null, 2));
 }
 
+function writeFileSafely(path: string, content: string, force: boolean): void {
+  if (!force && existsSync(path)) {
+    throw new Error(`Refusing to overwrite existing file without --force: ${path}`);
+  }
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content);
+}
+
+function skillRelativePath(skillPath: string, filePath: string): string {
+  const prefix = `${skillPath}/`;
+  if (!filePath.startsWith(prefix)) {
+    throw new Error(`Skill file path is outside skill folder: ${filePath}`);
+  }
+  return relative(skillPath, filePath);
+}
+
+function writeSkillFolder(name: string, outputRoot: string, force: boolean): string[] {
+  const payload = getSkillPayload(name);
+  const outputDir = join(outputRoot, payload.skill.name);
+  const written: string[] = [];
+  const files = [
+    {
+      path: "SKILL.md",
+      content: payload.skillMarkdown,
+    },
+    {
+      path: skillRelativePath(payload.skill.path, payload.skill.agentMetadata),
+      content: payload.agentMetadata,
+    },
+    ...payload.references.map((reference) => ({
+      path: skillRelativePath(payload.skill.path, reference.reference.path),
+      content: reference.markdown,
+    })),
+  ];
+
+  for (const file of files) {
+    const outputPath = join(outputDir, file.path);
+    writeFileSafely(outputPath, file.content, force);
+    written.push(outputPath);
+  }
+
+  return written;
+}
+
 export async function runCli(argv: string[], output: Output = defaultOutput): Promise<number> {
   const [command, ...args] = argv;
   const edition = readOption(args, "--edition", "java");
@@ -167,6 +215,21 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("skill command requires a skill name");
       }
       printJson(output, getSkillPayload(name));
+      return 0;
+    }
+
+    if (command === "write-skill") {
+      const name = positionalArgs(args)[0];
+      const outputRoot = readOption(args, "--output", "");
+      if (!name) {
+        throw new Error("write-skill command requires a skill name");
+      }
+      if (!outputRoot) {
+        throw new Error("write-skill command requires --output <dir>");
+      }
+      for (const path of writeSkillFolder(name, outputRoot, args.includes("--force"))) {
+        output.write(path);
+      }
       return 0;
     }
 
