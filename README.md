@@ -35,6 +35,19 @@ CI=true mise exec -- pnpm check
 - `packages/mcp`: MCP server, publishable as `@minecraft-skills/mcp`.
 - `packages/maintainer`: private maintainer validation and generation tooling.
 
+## Maintainer Flow
+
+Regenerate the Java 1.13+ release index from Mojang's version manifest:
+
+```sh
+curl -fsSL -o /tmp/minecraft-version-manifest-v2.json \
+  https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
+mise exec -- pnpm --filter @minecraft-skills/maintainer build
+node packages/maintainer/dist/cli.mjs ingest-java-manifest \
+  --input /tmp/minecraft-version-manifest-v2.json \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
 ## Skills
 
 Generated skills are committed under `skills/` and should not be edited directly.

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
   getCatalog,
@@ -7,6 +7,7 @@ import {
   listDomains,
   listReferences,
 } from "@minecraft-skills/catalog";
+import { buildJavaVersionIndex } from "./javaManifest.js";
 
 type ValidationResult = {
   ok: boolean;
@@ -76,9 +77,33 @@ function printHelp(): void {
 
 Usage:
   minecraft-skills-maintainer validate
+  minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
 
 Commands:
-  validate  Validate checked-in data, catalog, and generated skills.`);
+  validate              Validate checked-in data, catalog, and generated skills.
+  ingest-java-manifest  Generate Java 1.13+ release index from Mojang version manifest.`);
+}
+
+function readOption(args: string[], name: string): string | undefined {
+  const index = args.indexOf(name);
+  if (index === -1) {
+    return undefined;
+  }
+  return args[index + 1];
+}
+
+function ingestJavaManifest(args: string[]): void {
+  const input = readOption(args, "--input");
+  if (!input) {
+    throw new Error("ingest-java-manifest requires --input <manifest.json>");
+  }
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const manifest = JSON.parse(readFileSync(input, "utf8")) as unknown;
+  const versionIndex = buildJavaVersionIndex(manifest, retrievedAt);
+  const root = findRepositoryRoot();
+  const output = join(root, "packages/data/data/java/versions.json");
+  writeFileSync(output, `${JSON.stringify(versionIndex, null, 2)}\n`);
+  console.log(`wrote ${versionIndex.versions.length} Java 1.13+ releases to ${output}`);
 }
 
 export function runMaintainerCli(argv: string[]): number {
@@ -88,20 +113,29 @@ export function runMaintainerCli(argv: string[]): number {
     return 0;
   }
 
-  if (command !== "validate") {
-    console.error(`Unknown command: ${command}`);
-    return 1;
-  }
-
-  const result = validateRepository();
-  if (!result.ok) {
-    for (const message of result.messages) {
-      console.error(message);
+  try {
+    if (command === "ingest-java-manifest") {
+      ingestJavaManifest(argv.slice(1));
+      return 0;
     }
+
+    if (command !== "validate") {
+      throw new Error(`Unknown command: ${command}`);
+    }
+
+    const result = validateRepository();
+    if (!result.ok) {
+      for (const message of result.messages) {
+        console.error(message);
+      }
+      return 1;
+    }
+    console.log("minecraft-skills repository validation passed");
+    return 0;
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
     return 1;
   }
-  console.log("minecraft-skills repository validation passed");
-  return 0;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

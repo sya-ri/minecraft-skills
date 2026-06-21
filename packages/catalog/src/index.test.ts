@@ -32,6 +32,11 @@ describe("catalog", () => {
     expect(version.packFormats.status).toBe("not-extracted");
   });
 
+  it("falls back to manifest-only details when a detail file is not generated", () => {
+    const version = getVersionDetail("java", "26.2");
+    expect(version.domains.datapack.unknowns).toContain("data_pack_format");
+  });
+
   it("keeps Minecraft Wiki prose out of redistributable data", () => {
     expect(getSourcePolicy().minecraftWikiTextRedistribution).toBe("forbidden");
   });

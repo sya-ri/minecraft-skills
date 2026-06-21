@@ -1,4 +1,4 @@
-import { readDataJson } from "@minecraft-skills/data";
+import { hasDataFile, readDataJson } from "@minecraft-skills/data";
 import {
   Catalog,
   type CatalogData,
@@ -79,10 +79,55 @@ export function listVersions(edition = "java"): VersionSummaryData[] {
   return getVersionIndex(edition).versions;
 }
 
+function makeManifestOnlyDetail(
+  edition: EditionData,
+  version: VersionSummaryData,
+): VersionDetailData {
+  return VersionDetail.assert({
+    schemaVersion: 1,
+    edition,
+    version: version.id,
+    type: version.type,
+    releaseTime: version.releaseTime,
+    coverage: version.coverage,
+    packFormats: {
+      data: null,
+      resource: null,
+      status: "not-extracted",
+    },
+    domains: {
+      datapack: {
+        status: "seed",
+        facts: [],
+        unknowns: ["data_pack_format", "command_tree", "registries", "vanilla_reports"],
+      },
+      resourcepack: {
+        status: "seed",
+        facts: [],
+        unknowns: ["resource_pack_format", "asset_index", "model_schema"],
+      },
+      "paper-plugin": {
+        status: "seed",
+        facts: [],
+        unknowns: ["paper_api_version", "server_api_changes", "folia_compatibility_notes"],
+      },
+    },
+    sources: getVersionIndex(edition).sources,
+  });
+}
+
 export function getVersionDetail(edition = "java", requested = "latest"): VersionDetailData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
-  return VersionDetail.assert(readDataJson(`${editionId}/version-details/${version}.json`));
+  const detailPath = `${editionId}/version-details/${version}.json`;
+  if (hasDataFile(detailPath)) {
+    return VersionDetail.assert(readDataJson(detailPath));
+  }
+  const summary = getVersionIndex(editionId).versions.find((candidate) => candidate.id === version);
+  if (!summary) {
+    throw new Error(`Unsupported ${editionId} version: ${version}`);
+  }
+  return makeManifestOnlyDetail(editionId, summary);
 }
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
