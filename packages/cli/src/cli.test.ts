@@ -27,6 +27,13 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout[0]).toBe("26.2\trelease\t2026-06-16T12:03:33+00:00\tversion-json-and-jar");
   });
 
+  it("prints pack formats by version", () => {
+    const result = capture(["pack-formats"]);
+    expect(result.stdout[0]).toContain("26.2\t2026-06-16T12:03:33+00:00\tdata=107");
+    expect(result.stdout[0]).toContain("resource=88");
+    expect(result.stdout[0]).toContain("paper=not-yet-published");
+  });
+
   it("filters references by domain", () => {
     const result = capture(["references", "--domain", "paper-plugin"]);
     expect(result.stdout.join("\n")).toContain("minecraft-paper-plugins");

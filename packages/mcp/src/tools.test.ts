@@ -5,6 +5,7 @@ describe("MCP tools", () => {
   it("exposes catalog tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
+    expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
   });
 
   it("calls latest_version", () => {
@@ -21,5 +22,11 @@ describe("MCP tools", () => {
     const result = callMinecraftSkillsTool("get_paper_plugin_data", {});
     expect(result.content[0]?.text).toContain('"minecraftVersion": "1.21.11"');
     expect(result.content[0]?.text).toContain("spigot-event-list");
+  });
+
+  it("calls list_pack_formats", () => {
+    const result = callMinecraftSkillsTool("list_pack_formats", {});
+    expect(result.content[0]?.text).toContain('"version": "26.2"');
+    expect(result.content[0]?.text).toContain('"data": 107');
   });
 });

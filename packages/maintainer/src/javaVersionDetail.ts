@@ -30,12 +30,16 @@ type JarVersionJson = {
   id: string;
   world_version?: number;
   protocol_version?: number;
-  pack_version?: {
-    resource_major?: number;
-    resource_minor?: number;
-    data_major?: number;
-    data_minor?: number;
-  };
+  pack_version?:
+    | number
+    | {
+        resource?: number;
+        resource_major?: number;
+        resource_minor?: number;
+        data?: number;
+        data_major?: number;
+        data_minor?: number;
+      };
   java_component?: string;
   java_version?: number;
   stable?: boolean;
@@ -139,12 +143,22 @@ export function buildJavaVersionDetail(options: {
   const jarMetadata = options.clientJarPath ? readJarMetadata(options.clientJarPath) : undefined;
   const jarVersion = jarMetadata?.versionJson;
   const packVersion = jarVersion?.pack_version;
+  const commonPackVersion = typeof packVersion === "number" ? packVersion : null;
+  const structuredPackVersion = typeof packVersion === "object" ? packVersion : undefined;
   const legacyPackFormat = jarMetadata?.packMcmeta?.pack?.pack_format ?? null;
   const packFormats = {
-    data: packVersion?.data_major ?? legacyPackFormat,
-    dataMinor: packVersion?.data_minor ?? null,
-    resource: packVersion?.resource_major ?? legacyPackFormat,
-    resourceMinor: packVersion?.resource_minor ?? null,
+    data:
+      structuredPackVersion?.data_major ??
+      structuredPackVersion?.data ??
+      commonPackVersion ??
+      legacyPackFormat,
+    dataMinor: structuredPackVersion?.data_minor ?? null,
+    resource:
+      structuredPackVersion?.resource_major ??
+      structuredPackVersion?.resource ??
+      commonPackVersion ??
+      legacyPackFormat,
+    resourceMinor: structuredPackVersion?.resource_minor ?? null,
     status: packVersion || legacyPackFormat ? "extracted" : "not-extracted",
   } as const;
 

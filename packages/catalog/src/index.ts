@@ -29,6 +29,16 @@ export type {
   VersionSummaryData,
 };
 
+export type PackFormatSummary = {
+  version: string;
+  releaseTime: string;
+  data: number | null;
+  dataMinor: number | null;
+  resource: number | null;
+  resourceMinor: number | null;
+  paperPluginStatus: string;
+};
+
 export function getCatalog(): CatalogData {
   return Catalog.assert(readDataJson("catalog.json"));
 }
@@ -187,4 +197,19 @@ export function getSourcePolicy(): CatalogData["sourcePolicy"] {
 
 export function getPaperPluginData(): PaperPluginDataData {
   return PaperPluginData.assert(readDataJson("java/paper.json"));
+}
+
+export function listPackFormats(edition = "java"): PackFormatSummary[] {
+  return listVersions(edition).map((version) => {
+    const detail = getVersionDetail(edition, version.id);
+    return {
+      version: detail.version,
+      releaseTime: detail.releaseTime,
+      data: detail.packFormats.data,
+      dataMinor: detail.packFormats.dataMinor,
+      resource: detail.packFormats.resource,
+      resourceMinor: detail.packFormats.resourceMinor,
+      paperPluginStatus: detail.domains["paper-plugin"].status,
+    };
+  });
 }

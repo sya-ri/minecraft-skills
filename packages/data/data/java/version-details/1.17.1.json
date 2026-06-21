@@ -42,21 +42,21 @@
     }
   },
   "packFormats": {
-    "data": null,
+    "data": 7,
     "dataMinor": null,
-    "resource": null,
+    "resource": 7,
     "resourceMinor": null,
     "status": "extracted"
   },
   "domains": {
     "datapack": {
       "status": "extracted",
-      "facts": [],
+      "facts": ["data_pack_format=7"],
       "unknowns": ["command_tree", "registries", "vanilla_reports"]
     },
     "resourcepack": {
       "status": "extracted",
-      "facts": [],
+      "facts": ["resource_pack_format=7"],
       "unknowns": ["asset_index_contents", "model_schema"]
     },
     "paper-plugin": {

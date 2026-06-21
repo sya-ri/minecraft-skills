@@ -5,6 +5,7 @@ import {
   getSourcePolicy,
   getVersionDetail,
   listDomains,
+  listPackFormats,
   resolveVersion,
 } from "./index.js";
 
@@ -79,5 +80,21 @@ describe("catalog", () => {
     expect(version.domains["paper-plugin"].status).toBe("not-yet-published");
     expect(version.domains["paper-plugin"].facts).toContain("paper_supported=false");
     expect(version.domains["paper-plugin"].facts).toContain("paper_latest_supported=1.21.11");
+  });
+
+  it("lists pack formats for all bundled releases", () => {
+    const formats = listPackFormats();
+    expect(formats).toHaveLength(50);
+    expect(formats[0]).toMatchObject({
+      version: "26.2",
+      data: 107,
+      resource: 88,
+      paperPluginStatus: "not-yet-published",
+    });
+    expect(formats.at(-1)).toMatchObject({
+      version: "1.13",
+      data: 4,
+      resource: 4,
+    });
   });
 });

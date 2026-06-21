@@ -5,6 +5,7 @@ import {
   getSourcePolicy,
   getVersionDetail,
   listDomains,
+  listPackFormats,
   listReferences,
   listVersions,
   resolveVersion,
@@ -35,6 +36,7 @@ Usage:
   minecraft-skills domains
   minecraft-skills latest [--edition java]
   minecraft-skills versions [--edition java]
+  minecraft-skills pack-formats [--edition java]
   minecraft-skills show-version [version] [--edition java]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
@@ -45,6 +47,7 @@ Commands:
   domains        List supported authoring domains.
   latest         Print the latest bundled version for an edition.
   versions       List bundled version metadata.
+  pack-formats   List data/resource pack formats and Paper support by version.
   show-version   Print canonical JSON for a version.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
@@ -82,6 +85,23 @@ export function runCli(argv: string[], output: Output = defaultOutput): number {
       for (const version of listVersions(edition)) {
         const detail = getVersionDetail(edition, version.id);
         output.write(`${version.id}\t${version.type}\t${version.releaseTime}\t${detail.coverage}`);
+      }
+      return 0;
+    }
+
+    if (command === "pack-formats") {
+      for (const format of listPackFormats(edition)) {
+        output.write(
+          [
+            format.version,
+            format.releaseTime,
+            `data=${format.data ?? ""}`,
+            `dataMinor=${format.dataMinor ?? ""}`,
+            `resource=${format.resource ?? ""}`,
+            `resourceMinor=${format.resourceMinor ?? ""}`,
+            `paper=${format.paperPluginStatus}`,
+          ].join("\t"),
+        );
       }
       return 0;
     }

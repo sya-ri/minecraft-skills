@@ -3,6 +3,7 @@ import {
   getSourcePolicy,
   getVersionDetail,
   listDomains,
+  listPackFormats,
   listReferences,
   listVersions,
   resolveVersion,
@@ -69,6 +70,18 @@ export const tools: ToolDefinition[] = [
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_pack_formats",
+    description:
+      "List data pack and resource pack format numbers by bundled Minecraft version, with Paper plugin support status.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
       },
       additionalProperties: false,
     },
@@ -141,6 +154,9 @@ export function callMinecraftSkillsTool(name: string, input: unknown): ToolResul
     if (name === "get_version") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getVersionDetail(edition, version));
+    }
+    if (name === "list_pack_formats") {
+      return text(listPackFormats(edition));
     }
     if (name === "list_references") {
       const domain = typeof args.domain === "string" ? args.domain : undefined;

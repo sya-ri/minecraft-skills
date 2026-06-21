@@ -40,6 +40,7 @@ CI=true mise exec -- pnpm check
 ```sh
 minecraft-skills latest
 minecraft-skills versions
+minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
 minecraft-skills paper
 minecraft-skills references --domain paper-plugin

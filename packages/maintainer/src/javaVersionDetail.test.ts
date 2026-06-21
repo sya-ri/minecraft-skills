@@ -123,4 +123,87 @@ describe("buildJavaVersionDetail", () => {
     expect(detail.packFormats.resource).toBe(4);
     expect(detail.sources.map((source) => source.id)).toContain("mojang-client-jar-pack-mcmeta");
   });
+
+  it("reads legacy pack_version data/resource keys from jar version.json", () => {
+    const dir = mkdtempSync(join(tmpdir(), "minecraft-skills-version-detail-"));
+    const versionJsonPath = join(dir, "version.json");
+    const clientJarPath = join(dir, "client.jar");
+    writeFileSync(
+      versionJsonPath,
+      JSON.stringify({
+        id: "1.21.8",
+        type: "release",
+        releaseTime: "2025-07-17T12:04:02+00:00",
+        time: "2026-06-16T06:36:57+00:00",
+        downloads: {
+          client: {
+            sha1: "client",
+            size: 1,
+            url: "https://example.test/client.jar",
+          },
+        },
+      }),
+    );
+    writeFileSync(
+      clientJarPath,
+      createStoredZip({
+        "version.json": JSON.stringify({
+          id: "1.21.8",
+          pack_version: {
+            resource: 64,
+            data: 81,
+          },
+        }),
+      }),
+    );
+
+    const detail = buildJavaVersionDetail({
+      versionJsonPath,
+      clientJarPath,
+      retrievedAt: "2026-06-22T00:00:00+09:00",
+    });
+
+    expect(detail.packFormats.data).toBe(81);
+    expect(detail.packFormats.resource).toBe(64);
+  });
+
+  it("reads numeric pack_version from jar version.json", () => {
+    const dir = mkdtempSync(join(tmpdir(), "minecraft-skills-version-detail-"));
+    const versionJsonPath = join(dir, "version.json");
+    const clientJarPath = join(dir, "client.jar");
+    writeFileSync(
+      versionJsonPath,
+      JSON.stringify({
+        id: "1.16.5",
+        type: "release",
+        releaseTime: "2021-01-14T16:05:32+00:00",
+        time: "2026-06-16T06:29:24+00:00",
+        downloads: {
+          client: {
+            sha1: "client",
+            size: 1,
+            url: "https://example.test/client.jar",
+          },
+        },
+      }),
+    );
+    writeFileSync(
+      clientJarPath,
+      createStoredZip({
+        "version.json": JSON.stringify({
+          id: "1.16.5",
+          pack_version: 6,
+        }),
+      }),
+    );
+
+    const detail = buildJavaVersionDetail({
+      versionJsonPath,
+      clientJarPath,
+      retrievedAt: "2026-06-22T00:00:00+09:00",
+    });
+
+    expect(detail.packFormats.data).toBe(6);
+    expect(detail.packFormats.resource).toBe(6);
+  });
 });
