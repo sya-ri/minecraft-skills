@@ -11,6 +11,7 @@ import { buildJavaVersionIndex } from "./javaManifest.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { buildPaperPluginData } from "./paperProject.js";
+import { ingestVanillaInventories } from "./vanillaInventories.js";
 import { buildVanillaInventory } from "./vanillaInventory.js";
 
 type ValidationResult = {
@@ -86,6 +87,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
 
 Commands:
   validate              Validate checked-in data, catalog, and generated skills.
@@ -97,7 +99,9 @@ Commands:
   ingest-paper-project
                         Generate Paper plugin support and event search data from PaperMC API JSON.
   ingest-vanilla-inventory
-                        Generate compact inventory for vanilla client assets and server data.`);
+                        Generate compact inventory for vanilla client assets and server data.
+  ingest-vanilla-inventories
+                        Download and generate missing vanilla inventories for all indexed Java releases.`);
 }
 
 function readOption(args: string[], name: string): string | undefined {
@@ -228,6 +232,18 @@ function ingestVanillaInventory(args: string[]): void {
   console.log(`wrote Java ${detail.version} vanilla inventory to ${output}`);
 }
 
+async function ingestAllVanillaInventories(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const written = await ingestVanillaInventories({
+    root,
+    retrievedAt,
+    force: args.includes("--force"),
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} Java vanilla inventory files`);
+}
+
 export async function runMaintainerCli(argv: string[]): Promise<number> {
   const [command] = argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
@@ -258,6 +274,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-vanilla-inventory") {
       ingestVanillaInventory(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-vanilla-inventories") {
+      await ingestAllVanillaInventories(argv.slice(1));
       return 0;
     }
 

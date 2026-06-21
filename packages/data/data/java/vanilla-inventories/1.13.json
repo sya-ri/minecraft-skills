@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "1.13",
+  "coverage": "client-assets-and-server-data",
+  "resources": {
+    "entryCount": 4162,
+    "namespaces": ["minecraft"],
+    "topLevel": [
+      {
+        "path": "assets/minecraft/blockstates",
+        "count": 594,
+        "jsonCount": 594,
+        "samples": [
+          "assets/minecraft/blockstates/acacia_button.json",
+          "assets/minecraft/blockstates/acacia_door.json",
+          "assets/minecraft/blockstates/acacia_fence.json",
+          "assets/minecraft/blockstates/acacia_fence_gate.json",
+          "assets/minecraft/blockstates/acacia_leaves.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/font",
+        "count": 3,
+        "jsonCount": 2,
+        "samples": [
+          "assets/minecraft/font/alt.json",
+          "assets/minecraft/font/default.json",
+          "assets/minecraft/font/glyph_sizes.bin"
+        ]
+      },
+      {
+        "path": "assets/minecraft/lang",
+        "count": 1,
+        "jsonCount": 1,
+        "samples": ["assets/minecraft/lang/en_us.json"]
+      },
+      {
+        "path": "assets/minecraft/models",
+        "count": 1930,
+        "jsonCount": 1930,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/shaders",
+        "count": 87,
+        "jsonCount": 52,
+        "samples": [
+          "assets/minecraft/shaders/post/antialias.json",
+          "assets/minecraft/shaders/post/art.json",
+          "assets/minecraft/shaders/post/bits.json",
+          "assets/minecraft/shaders/post/blobs.json",
+          "assets/minecraft/shaders/post/blobs2.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/texts",
+        "count": 3,
+        "jsonCount": 0,
+        "samples": [
+          "assets/minecraft/texts/credits.txt",
+          "assets/minecraft/texts/end.txt",
+          "assets/minecraft/texts/splashes.txt"
+        ]
+      },
+      {
+        "path": "assets/minecraft/textures",
+        "count": 1543,
+        "jsonCount": 0,
+        "samples": [
+          "assets/minecraft/textures/block/acacia_door_bottom.png",
+          "assets/minecraft/textures/block/acacia_door_top.png",
+          "assets/minecraft/textures/block/acacia_leaves.png",
+          "assets/minecraft/textures/block/acacia_log.png",
+          "assets/minecraft/textures/block/acacia_log_top.png"
+        ]
+      }
+    ]
+  },
+  "datapack": {
+    "entryCount": 1440,
+    "namespaces": ["minecraft"],
+    "topLevel": [
+      {
+        "path": "data/minecraft/advancements",
+        "count": 571,
+        "jsonCount": 571,
+        "samples": [
+          "data/minecraft/advancements/adventure/adventuring_time.json",
+          "data/minecraft/advancements/adventure/kill_a_mob.json",
+          "data/minecraft/advancements/adventure/kill_all_mobs.json",
+          "data/minecraft/advancements/adventure/root.json",
+          "data/minecraft/advancements/adventure/shoot_arrow.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/loot_tables",
+        "count": 96,
+        "jsonCount": 96,
+        "samples": [
+          "data/minecraft/loot_tables/chests/abandoned_mineshaft.json",
+          "data/minecraft/loot_tables/chests/buried_treasure.json",
+          "data/minecraft/loot_tables/chests/desert_pyramid.json",
+          "data/minecraft/loot_tables/chests/end_city_treasure.json",
+          "data/minecraft/loot_tables/chests/igloo_chest.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/recipes",
+        "count": 524,
+        "jsonCount": 524,
+        "samples": [
+          "data/minecraft/recipes/acacia_boat.json",
+          "data/minecraft/recipes/acacia_button.json",
+          "data/minecraft/recipes/acacia_door.json",
+          "data/minecraft/recipes/acacia_fence.json",
+          "data/minecraft/recipes/acacia_fence_gate.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/structures",
+        "count": 180,
+        "jsonCount": 0,
+        "samples": [
+          "data/minecraft/structures/end_city/base_floor.nbt",
+          "data/minecraft/structures/end_city/base_roof.nbt",
+          "data/minecraft/structures/end_city/bridge_end.nbt",
+          "data/minecraft/structures/end_city/bridge_gentle_stairs.nbt",
+          "data/minecraft/structures/end_city/bridge_piece.nbt"
+        ]
+      },
+      {
+        "path": "data/minecraft/tags",
+        "count": 68,
+        "jsonCount": 68,
+        "samples": [
+          "data/minecraft/tags/blocks/acacia_logs.json",
+          "data/minecraft/tags/blocks/anvil.json",
+          "data/minecraft/tags/blocks/banners.json",
+          "data/minecraft/tags/blocks/birch_logs.json",
+          "data/minecraft/tags/blocks/buttons.json"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "mojang-client-jar-assets",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/c0b970952cdd279912da384cdbfc0c26e6c6090b/client.jar",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    },
+    {
+      "id": "mojang-server-jar-data",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/d0caafb8438ebd206f99930cfaecfa6c9a13dca0/server.jar",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    }
+  ]
+}

@@ -1,0 +1,515 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "1.21.7",
+  "coverage": "client-assets-and-server-data",
+  "resources": {
+    "entryCount": 9732,
+    "namespaces": ["minecraft"],
+    "topLevel": [
+      {
+        "path": "assets/minecraft/atlases",
+        "count": 13,
+        "jsonCount": 13,
+        "samples": [
+          "assets/minecraft/atlases/armor_trims.json",
+          "assets/minecraft/atlases/banner_patterns.json",
+          "assets/minecraft/atlases/beds.json",
+          "assets/minecraft/atlases/blocks.json",
+          "assets/minecraft/atlases/chests.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/blockstates",
+        "count": 1107,
+        "jsonCount": 1107,
+        "samples": [
+          "assets/minecraft/blockstates/acacia_button.json",
+          "assets/minecraft/blockstates/acacia_door.json",
+          "assets/minecraft/blockstates/acacia_fence.json",
+          "assets/minecraft/blockstates/acacia_fence_gate.json",
+          "assets/minecraft/blockstates/acacia_hanging_sign.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/equipment",
+        "count": 43,
+        "jsonCount": 43,
+        "samples": [
+          "assets/minecraft/equipment/armadillo_scute.json",
+          "assets/minecraft/equipment/black_carpet.json",
+          "assets/minecraft/equipment/black_harness.json",
+          "assets/minecraft/equipment/blue_carpet.json",
+          "assets/minecraft/equipment/blue_harness.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/font",
+        "count": 7,
+        "jsonCount": 7,
+        "samples": [
+          "assets/minecraft/font/alt.json",
+          "assets/minecraft/font/default.json",
+          "assets/minecraft/font/illageralt.json",
+          "assets/minecraft/font/include/default.json",
+          "assets/minecraft/font/include/space.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/gpu_warnlist.json",
+        "count": 1,
+        "jsonCount": 1,
+        "samples": ["assets/minecraft/gpu_warnlist.json"]
+      },
+      {
+        "path": "assets/minecraft/items",
+        "count": 1416,
+        "jsonCount": 1416,
+        "samples": [
+          "assets/minecraft/items/acacia_boat.json",
+          "assets/minecraft/items/acacia_button.json",
+          "assets/minecraft/items/acacia_chest_boat.json",
+          "assets/minecraft/items/acacia_door.json",
+          "assets/minecraft/items/acacia_fence.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/lang",
+        "count": 2,
+        "jsonCount": 2,
+        "samples": ["assets/minecraft/lang/deprecated.json", "assets/minecraft/lang/en_us.json"]
+      },
+      {
+        "path": "assets/minecraft/models",
+        "count": 3426,
+        "jsonCount": 3426,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_door_bottom_left.json",
+          "assets/minecraft/models/block/acacia_door_bottom_left_open.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/particles",
+        "count": 103,
+        "jsonCount": 103,
+        "samples": [
+          "assets/minecraft/particles/ambient_entity_effect.json",
+          "assets/minecraft/particles/angry_villager.json",
+          "assets/minecraft/particles/ash.json",
+          "assets/minecraft/particles/bubble.json",
+          "assets/minecraft/particles/bubble_column_up.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/post_effect",
+        "count": 6,
+        "jsonCount": 6,
+        "samples": [
+          "assets/minecraft/post_effect/blur.json",
+          "assets/minecraft/post_effect/creeper.json",
+          "assets/minecraft/post_effect/entity_outline.json",
+          "assets/minecraft/post_effect/invert.json",
+          "assets/minecraft/post_effect/spider.json"
+        ]
+      },
+      {
+        "path": "assets/minecraft/regional_compliancies.json",
+        "count": 1,
+        "jsonCount": 1,
+        "samples": ["assets/minecraft/regional_compliancies.json"]
+      },
+      {
+        "path": "assets/minecraft/shaders",
+        "count": 94,
+        "jsonCount": 0,
+        "samples": [
+          "assets/minecraft/shaders/core/blit_screen.fsh",
+          "assets/minecraft/shaders/core/blit_screen.vsh",
+          "assets/minecraft/shaders/core/entity.fsh",
+          "assets/minecraft/shaders/core/entity.vsh",
+          "assets/minecraft/shaders/core/glint.fsh"
+        ]
+      },
+      {
+        "path": "assets/minecraft/texts",
+        "count": 4,
+        "jsonCount": 1,
+        "samples": [
+          "assets/minecraft/texts/credits.json",
+          "assets/minecraft/texts/end.txt",
+          "assets/minecraft/texts/postcredits.txt",
+          "assets/minecraft/texts/splashes.txt"
+        ]
+      },
+      {
+        "path": "assets/minecraft/textures",
+        "count": 3506,
+        "jsonCount": 0,
+        "samples": [
+          "assets/minecraft/textures/block/acacia_door_bottom.png",
+          "assets/minecraft/textures/block/acacia_door_top.png",
+          "assets/minecraft/textures/block/acacia_leaves.png",
+          "assets/minecraft/textures/block/acacia_log.png",
+          "assets/minecraft/textures/block/acacia_log_top.png"
+        ]
+      },
+      {
+        "path": "assets/minecraft/waypoint_style",
+        "count": 2,
+        "jsonCount": 2,
+        "samples": [
+          "assets/minecraft/waypoint_style/bowtie.json",
+          "assets/minecraft/waypoint_style/default.json"
+        ]
+      }
+    ]
+  },
+  "datapack": {
+    "entryCount": 7308,
+    "namespaces": ["minecraft"],
+    "topLevel": [
+      {
+        "path": "data/minecraft/advancement",
+        "count": 1520,
+        "jsonCount": 1520,
+        "samples": [
+          "data/minecraft/advancement/adventure/adventuring_time.json",
+          "data/minecraft/advancement/adventure/arbalistic.json",
+          "data/minecraft/advancement/adventure/avoid_vibration.json",
+          "data/minecraft/advancement/adventure/blowback.json",
+          "data/minecraft/advancement/adventure/brush_armadillo.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/banner_pattern",
+        "count": 43,
+        "jsonCount": 43,
+        "samples": [
+          "data/minecraft/banner_pattern/base.json",
+          "data/minecraft/banner_pattern/border.json",
+          "data/minecraft/banner_pattern/bricks.json",
+          "data/minecraft/banner_pattern/circle.json",
+          "data/minecraft/banner_pattern/creeper.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/cat_variant",
+        "count": 11,
+        "jsonCount": 11,
+        "samples": [
+          "data/minecraft/cat_variant/all_black.json",
+          "data/minecraft/cat_variant/black.json",
+          "data/minecraft/cat_variant/british_shorthair.json",
+          "data/minecraft/cat_variant/calico.json",
+          "data/minecraft/cat_variant/jellie.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/chat_type",
+        "count": 7,
+        "jsonCount": 7,
+        "samples": [
+          "data/minecraft/chat_type/chat.json",
+          "data/minecraft/chat_type/emote_command.json",
+          "data/minecraft/chat_type/msg_command_incoming.json",
+          "data/minecraft/chat_type/msg_command_outgoing.json",
+          "data/minecraft/chat_type/say_command.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/chicken_variant",
+        "count": 3,
+        "jsonCount": 3,
+        "samples": [
+          "data/minecraft/chicken_variant/cold.json",
+          "data/minecraft/chicken_variant/temperate.json",
+          "data/minecraft/chicken_variant/warm.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/cow_variant",
+        "count": 3,
+        "jsonCount": 3,
+        "samples": [
+          "data/minecraft/cow_variant/cold.json",
+          "data/minecraft/cow_variant/temperate.json",
+          "data/minecraft/cow_variant/warm.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/damage_type",
+        "count": 49,
+        "jsonCount": 49,
+        "samples": [
+          "data/minecraft/damage_type/arrow.json",
+          "data/minecraft/damage_type/bad_respawn_point.json",
+          "data/minecraft/damage_type/cactus.json",
+          "data/minecraft/damage_type/campfire.json",
+          "data/minecraft/damage_type/cramming.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/datapacks",
+        "count": 58,
+        "jsonCount": 55,
+        "samples": [
+          "data/minecraft/datapacks/minecart_improvements/pack.mcmeta",
+          "data/minecraft/datapacks/redstone_experiments/pack.mcmeta",
+          "data/minecraft/datapacks/trade_rebalance/data/minecraft/enchantment_provider/trades/desert_armorer_boots_4.json",
+          "data/minecraft/datapacks/trade_rebalance/data/minecraft/enchantment_provider/trades/desert_armorer_chestplate_4.json",
+          "data/minecraft/datapacks/trade_rebalance/data/minecraft/enchantment_provider/trades/desert_armorer_chestplate_5.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/dialog",
+        "count": 3,
+        "jsonCount": 3,
+        "samples": [
+          "data/minecraft/dialog/custom_options.json",
+          "data/minecraft/dialog/quick_actions.json",
+          "data/minecraft/dialog/server_links.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/dimension_type",
+        "count": 4,
+        "jsonCount": 4,
+        "samples": [
+          "data/minecraft/dimension_type/overworld.json",
+          "data/minecraft/dimension_type/overworld_caves.json",
+          "data/minecraft/dimension_type/the_end.json",
+          "data/minecraft/dimension_type/the_nether.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/enchantment",
+        "count": 42,
+        "jsonCount": 42,
+        "samples": [
+          "data/minecraft/enchantment/aqua_affinity.json",
+          "data/minecraft/enchantment/bane_of_arthropods.json",
+          "data/minecraft/enchantment/binding_curse.json",
+          "data/minecraft/enchantment/blast_protection.json",
+          "data/minecraft/enchantment/breach.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/enchantment_provider",
+        "count": 7,
+        "jsonCount": 7,
+        "samples": [
+          "data/minecraft/enchantment_provider/enderman_loot_drop.json",
+          "data/minecraft/enchantment_provider/mob_spawn_equipment.json",
+          "data/minecraft/enchantment_provider/pillager_spawn_crossbow.json",
+          "data/minecraft/enchantment_provider/raid/pillager_post_wave_3.json",
+          "data/minecraft/enchantment_provider/raid/pillager_post_wave_5.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/frog_variant",
+        "count": 3,
+        "jsonCount": 3,
+        "samples": [
+          "data/minecraft/frog_variant/cold.json",
+          "data/minecraft/frog_variant/temperate.json",
+          "data/minecraft/frog_variant/warm.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/instrument",
+        "count": 8,
+        "jsonCount": 8,
+        "samples": [
+          "data/minecraft/instrument/admire_goat_horn.json",
+          "data/minecraft/instrument/call_goat_horn.json",
+          "data/minecraft/instrument/dream_goat_horn.json",
+          "data/minecraft/instrument/feel_goat_horn.json",
+          "data/minecraft/instrument/ponder_goat_horn.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/jukebox_song",
+        "count": 21,
+        "jsonCount": 21,
+        "samples": [
+          "data/minecraft/jukebox_song/11.json",
+          "data/minecraft/jukebox_song/13.json",
+          "data/minecraft/jukebox_song/5.json",
+          "data/minecraft/jukebox_song/blocks.json",
+          "data/minecraft/jukebox_song/cat.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/loot_table",
+        "count": 1246,
+        "jsonCount": 1246,
+        "samples": [
+          "data/minecraft/loot_table/archaeology/desert_pyramid.json",
+          "data/minecraft/loot_table/archaeology/desert_well.json",
+          "data/minecraft/loot_table/archaeology/ocean_ruin_cold.json",
+          "data/minecraft/loot_table/archaeology/ocean_ruin_warm.json",
+          "data/minecraft/loot_table/archaeology/trail_ruins_common.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/painting_variant",
+        "count": 51,
+        "jsonCount": 51,
+        "samples": [
+          "data/minecraft/painting_variant/alban.json",
+          "data/minecraft/painting_variant/aztec.json",
+          "data/minecraft/painting_variant/aztec2.json",
+          "data/minecraft/painting_variant/backyard.json",
+          "data/minecraft/painting_variant/baroque.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/pig_variant",
+        "count": 3,
+        "jsonCount": 3,
+        "samples": [
+          "data/minecraft/pig_variant/cold.json",
+          "data/minecraft/pig_variant/temperate.json",
+          "data/minecraft/pig_variant/warm.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/recipe",
+        "count": 1407,
+        "jsonCount": 1407,
+        "samples": [
+          "data/minecraft/recipe/acacia_boat.json",
+          "data/minecraft/recipe/acacia_button.json",
+          "data/minecraft/recipe/acacia_chest_boat.json",
+          "data/minecraft/recipe/acacia_door.json",
+          "data/minecraft/recipe/acacia_fence.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/structure",
+        "count": 1202,
+        "jsonCount": 0,
+        "samples": [
+          "data/minecraft/structure/ancient_city/city/entrance/entrance_connector.nbt",
+          "data/minecraft/structure/ancient_city/city/entrance/entrance_path_1.nbt",
+          "data/minecraft/structure/ancient_city/city/entrance/entrance_path_2.nbt",
+          "data/minecraft/structure/ancient_city/city/entrance/entrance_path_3.nbt",
+          "data/minecraft/structure/ancient_city/city/entrance/entrance_path_4.nbt"
+        ]
+      },
+      {
+        "path": "data/minecraft/tags",
+        "count": 589,
+        "jsonCount": 589,
+        "samples": [
+          "data/minecraft/tags/banner_pattern/no_item_required.json",
+          "data/minecraft/tags/banner_pattern/pattern_item/bordure_indented.json",
+          "data/minecraft/tags/banner_pattern/pattern_item/creeper.json",
+          "data/minecraft/tags/banner_pattern/pattern_item/field_masoned.json",
+          "data/minecraft/tags/banner_pattern/pattern_item/flow.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/test_environment",
+        "count": 1,
+        "jsonCount": 1,
+        "samples": ["data/minecraft/test_environment/default.json"]
+      },
+      {
+        "path": "data/minecraft/test_instance",
+        "count": 1,
+        "jsonCount": 1,
+        "samples": ["data/minecraft/test_instance/always_pass.json"]
+      },
+      {
+        "path": "data/minecraft/trial_spawner",
+        "count": 28,
+        "jsonCount": 28,
+        "samples": [
+          "data/minecraft/trial_spawner/trial_chamber/breeze/normal.json",
+          "data/minecraft/trial_spawner/trial_chamber/breeze/ominous.json",
+          "data/minecraft/trial_spawner/trial_chamber/melee/husk/normal.json",
+          "data/minecraft/trial_spawner/trial_chamber/melee/husk/ominous.json",
+          "data/minecraft/trial_spawner/trial_chamber/melee/spider/normal.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/trim_material",
+        "count": 11,
+        "jsonCount": 11,
+        "samples": [
+          "data/minecraft/trim_material/amethyst.json",
+          "data/minecraft/trim_material/copper.json",
+          "data/minecraft/trim_material/diamond.json",
+          "data/minecraft/trim_material/emerald.json",
+          "data/minecraft/trim_material/gold.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/trim_pattern",
+        "count": 18,
+        "jsonCount": 18,
+        "samples": [
+          "data/minecraft/trim_pattern/bolt.json",
+          "data/minecraft/trim_pattern/coast.json",
+          "data/minecraft/trim_pattern/dune.json",
+          "data/minecraft/trim_pattern/eye.json",
+          "data/minecraft/trim_pattern/flow.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/wolf_sound_variant",
+        "count": 7,
+        "jsonCount": 7,
+        "samples": [
+          "data/minecraft/wolf_sound_variant/angry.json",
+          "data/minecraft/wolf_sound_variant/big.json",
+          "data/minecraft/wolf_sound_variant/classic.json",
+          "data/minecraft/wolf_sound_variant/cute.json",
+          "data/minecraft/wolf_sound_variant/grumpy.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/wolf_variant",
+        "count": 9,
+        "jsonCount": 9,
+        "samples": [
+          "data/minecraft/wolf_variant/ashen.json",
+          "data/minecraft/wolf_variant/black.json",
+          "data/minecraft/wolf_variant/chestnut.json",
+          "data/minecraft/wolf_variant/pale.json",
+          "data/minecraft/wolf_variant/rusty.json"
+        ]
+      },
+      {
+        "path": "data/minecraft/worldgen",
+        "count": 952,
+        "jsonCount": 952,
+        "samples": [
+          "data/minecraft/worldgen/biome/badlands.json",
+          "data/minecraft/worldgen/biome/bamboo_jungle.json",
+          "data/minecraft/worldgen/biome/basalt_deltas.json",
+          "data/minecraft/worldgen/biome/beach.json",
+          "data/minecraft/worldgen/biome/birch_forest.json"
+        ]
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "mojang-client-jar-assets",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/a2db1ea98c37b2d00c83f6867fb8bb581a593e07/client.jar",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    },
+    {
+      "id": "mojang-server-jar-data",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/05e4b48fbc01f0385adb74bcff9751d34552486c/server.jar",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    }
+  ]
+}

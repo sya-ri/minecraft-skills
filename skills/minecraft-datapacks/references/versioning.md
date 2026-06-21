@@ -10,10 +10,10 @@ Current bundled data:
 - Latest Java release: 26.2
 - Java 1.13+ release index: bundled
 - Data pack formats for Java 1.13+: extracted from official Mojang version/client metadata
-- Latest vanilla server data inventory: extracted from official Mojang server jar
+- Vanilla server data inventories for Java 1.13+: extracted from official Mojang server jars
 - Command tree and generated vanilla reports: not bundled
 
 Use `minecraft-skills show-version <version>` for per-version pack format facts. Use
-`minecraft-skills vanilla-inventory latest` to inspect latest bundled vanilla `data/<namespace>/...`
-top-level directories, counts, and representative paths. When a requested fact is not extracted,
+`minecraft-skills vanilla-inventory <version>` to inspect bundled vanilla `data/<namespace>/...`
+top-level directories, counts, and representative paths for Java 1.13+. When a requested fact is not extracted,
 explain the gap and use the source policy instead of guessing.

@@ -83,7 +83,14 @@ node packages/maintainer/dist/cli.mjs ingest-paper-project \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
-Regenerate latest vanilla client asset and server data inventory:
+Regenerate all Java 1.13+ vanilla client asset and server data inventories:
+
+```sh
+node packages/maintainer/dist/cli.mjs ingest-vanilla-inventories \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
+Regenerate one vanilla inventory from already downloaded jars:
 
 ```sh
 node packages/maintainer/dist/cli.mjs ingest-vanilla-inventory \
