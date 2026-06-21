@@ -45,6 +45,8 @@ minecraft-skills show-version 1.21.11
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills server-reports latest
 minecraft-skills commands latest --prefix execute --contains run
+minecraft-skills resourcepack-models latest
+minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills vanilla-inventory latest
 minecraft-skills vanilla-paths latest --domain resourcepack --contains models/block/acacia_button
 minecraft-skills paper
@@ -52,8 +54,46 @@ minecraft-skills paper-events "player join" --version 1.21.11
 minecraft-skills references --domain paper-plugin
 ```
 
-`minecraft-skills paper` returns PaperMC support metadata and the `sya-ri/spigot-event-list`
-event search API contract. `minecraft-skills paper-events` calls that API for live event discovery.
+`minecraft-skills resourcepack-models` returns observed vanilla model JSON and item definition JSON
+shape summaries extracted from official client jars. `minecraft-skills paper` returns PaperMC
+support metadata, per-version Paper build summaries, official Paper docs source links, and the
+`sya-ri/spigot-event-list` event search API contract. `minecraft-skills paper-events` calls that API
+for live event discovery.
+
+## MCP
+
+After publishing, the MCP server is intended to be runnable with:
+
+```sh
+npx @minecraft-skills/mcp
+```
+
+The server exposes tools for version lookup, pack formats, server reports, command search, vanilla
+asset/data path search, resource pack model summaries, Paper support metadata, and Paper/Bukkit event
+search.
+
+## Package API
+
+`@minecraft-skills/catalog` validates bundled data with ArkType and exposes read APIs for agents and
+other tools:
+
+```ts
+import {
+  getResourcepackModelSummary,
+  getVersionDetail,
+  searchCommands,
+  searchResourcepackModelPaths,
+} from "@minecraft-skills/catalog";
+
+const version = getVersionDetail("java", "26.2");
+const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
+const models = getResourcepackModelSummary("java", "26.2");
+const itemDefinitions = searchResourcepackModelPaths({
+  version: "26.2",
+  kind: "item-definition",
+  contains: "bundle",
+});
+```
 
 ## Maintainer Flow
 
@@ -103,12 +143,21 @@ node packages/maintainer/dist/cli.mjs ingest-paper-project \
   --project-json /tmp/papermc-paper-project.json \
   --latest-builds-json /tmp/papermc-paper-1.21.11-builds.json \
   --retrieved-at 2026-06-22T00:00:00+09:00
+node packages/maintainer/dist/cli.mjs ingest-paper-builds \
+  --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
 Regenerate all Java 1.13+ vanilla client asset and server data inventories:
 
 ```sh
 node packages/maintainer/dist/cli.mjs ingest-vanilla-inventories \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
+Regenerate all Java 1.13+ resource pack model summaries:
+
+```sh
+node packages/maintainer/dist/cli.mjs ingest-resourcepack-models-all \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
