@@ -1,9 +1,26 @@
 {
   "name": "minecraft-skills",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Public CLI for Minecraft Skills lookup, references, and validation.",
   "license": "MIT",
+  "keywords": [
+    "minecraft",
+    "datapack",
+    "resourcepack",
+    "paper",
+    "cli",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sya-ri/minecraft-skills.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/sya-ri/minecraft-skills/issues"
+  },
+  "homepage": "https://github.com/sya-ri/minecraft-skills#readme",
   "engines": {
     "node": ">=22.12"
   },
@@ -24,7 +41,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@minecraft-skills/catalog": "workspace:0.0.0"
+    "@minecraft-skills/catalog": "workspace:0.1.0"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

@@ -1,10 +1,15 @@
 {
   "name": "@minecraft-skills/maintainer",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Private maintainer tooling for ingesting, validating, and generating Minecraft Skills assets.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sya-ri/minecraft-skills.git",
+    "directory": "packages/maintainer"
+  },
   "engines": {
     "node": ">=22.12"
   },
@@ -19,8 +24,8 @@
     "validate": "node dist/cli.mjs validate"
   },
   "dependencies": {
-    "@minecraft-skills/catalog": "workspace:0.0.0",
-    "@minecraft-skills/data": "workspace:0.0.0"
+    "@minecraft-skills/catalog": "workspace:0.1.0",
+    "@minecraft-skills/data": "workspace:0.1.0"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

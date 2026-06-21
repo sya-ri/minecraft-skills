@@ -1,8 +1,18 @@
 {
   "name": "minecraft-skills-workspace",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Versioned Minecraft data, skills, CLI, and MCP tooling for AI-assisted authors.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sya-ri/minecraft-skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sya-ri/minecraft-skills/issues"
+  },
+  "homepage": "https://github.com/sya-ri/minecraft-skills#readme",
   "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": ">=22.12"

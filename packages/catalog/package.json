@@ -1,9 +1,25 @@
 {
   "name": "@minecraft-skills/catalog",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Validated catalog APIs for Minecraft Skills data consumers.",
   "license": "MIT",
+  "keywords": [
+    "minecraft",
+    "datapack",
+    "resourcepack",
+    "paper",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sya-ri/minecraft-skills.git",
+    "directory": "packages/catalog"
+  },
+  "bugs": {
+    "url": "https://github.com/sya-ri/minecraft-skills/issues"
+  },
+  "homepage": "https://github.com/sya-ri/minecraft-skills#readme",
   "engines": {
     "node": ">=22.12"
   },
@@ -28,7 +44,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@minecraft-skills/data": "workspace:0.0.0",
+    "@minecraft-skills/data": "workspace:0.1.0",
     "arktype": "2.2.1"
   },
   "devDependencies": {
