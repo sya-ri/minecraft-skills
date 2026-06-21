@@ -1,5 +1,14 @@
+import { listDomains, listSkills } from "@minecraft-skills/catalog";
 import { describe, expect, it } from "vitest";
 import { getMinecraftSkillsPrompt, prompts } from "./prompts.js";
+
+function textFromPrompt(name: string): string {
+  const result = getMinecraftSkillsPrompt(name, {
+    target_version: "26.2",
+    task: "check migration",
+  });
+  return result.messages[0]?.content.type === "text" ? result.messages[0].content.text : "";
+}
 
 describe("MCP prompts", () => {
   it("exposes domain prompts", () => {
@@ -11,6 +20,19 @@ describe("MCP prompts", () => {
     expect(
       prompts.every((prompt) => prompt.arguments?.some((arg) => arg.name === "target_version")),
     ).toBe(true);
+  });
+
+  it("keeps prompts aligned with catalog skills", () => {
+    const skills = listSkills();
+    expect(prompts).toHaveLength(listDomains().length);
+
+    for (const skill of skills) {
+      const promptName = `use_${skill.name.replace("minecraft-", "minecraft_").replaceAll("-", "_")}`;
+      expect(prompts.map((prompt) => prompt.name)).toContain(promptName);
+      expect(textFromPrompt(promptName)).toContain(
+        `minecraft-skills://skills/${skill.name}/SKILL.md`,
+      );
+    }
   });
 
   it("builds Paper plugin prompt text", () => {

@@ -1,3 +1,4 @@
+import { listDomains } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { callMinecraftSkillsTool, tools } from "./tools.js";
 
@@ -26,6 +27,36 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_index");
     expect(tools.map((tool) => tool.name)).toContain("compare_paper_api");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
+  });
+
+  it("keeps tool names unique and input schemas closed", () => {
+    const names = tools.map((tool) => tool.name);
+    expect(new Set(names).size).toBe(names.length);
+    expect(tools.every((tool) => tool.inputSchema.type === "object")).toBe(true);
+    expect(tools.every((tool) => tool.inputSchema.additionalProperties === false)).toBe(true);
+  });
+
+  it("exposes domain discovery and domain-specific entrypoints", () => {
+    expect(listDomains().map((domain) => domain.id)).toEqual([
+      "datapack",
+      "resourcepack",
+      "paper-plugin",
+    ]);
+    expect(tools.map((tool) => tool.name)).toEqual(
+      expect.arrayContaining([
+        "list_domains",
+        "list_skills",
+        "get_skill",
+        "get_source_policy",
+        "get_server_reports",
+        "search_commands",
+        "get_resourcepack_model_summary",
+        "search_resourcepack_models",
+        "get_paper_plugin_data",
+        "get_paper_api_reference",
+        "search_paper_events",
+      ]),
+    );
   });
 
   it("calls latest_version", async () => {
