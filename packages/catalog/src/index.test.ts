@@ -10,6 +10,7 @@ import {
   listDomains,
   listPackFormats,
   resolveVersion,
+  searchVanillaPaths,
 } from "./index.js";
 
 describe("catalog", () => {
@@ -142,5 +143,19 @@ describe("catalog", () => {
     expect(comparison.packFormats.resource.changed).toBe(true);
     expect(comparison.vanillaInventory.resources.entryCount.changed).toBe(true);
     expect(comparison.vanillaInventory.datapack.entryCount.changed).toBe(true);
+  });
+
+  it("searches vanilla paths", () => {
+    const result = searchVanillaPaths({
+      version: "26.2",
+      domain: "resourcepack",
+      prefix: "assets/minecraft/models/block/",
+      contains: "acacia_button",
+      extension: "json",
+      limit: 10,
+    });
+    expect(result.version).toBe("26.2");
+    expect(result.domain).toBe("resourcepack");
+    expect(result.paths).toContain("assets/minecraft/models/block/acacia_button.json");
   });
 });

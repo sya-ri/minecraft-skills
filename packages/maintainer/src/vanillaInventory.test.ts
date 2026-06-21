@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildVanillaInventory } from "./vanillaInventory.js";
+import { buildVanillaData, buildVanillaInventory } from "./vanillaInventory.js";
 
 function createStoredZip(entries: Record<string, string | Buffer>): Buffer {
   const chunks: Buffer[] = [];
@@ -95,5 +95,16 @@ describe("buildVanillaInventory", () => {
       jsonCount: 1,
       samples: ["data/minecraft/tags/block/mineable/pickaxe.json"],
     });
+
+    const data = buildVanillaData({
+      version: "26.2",
+      clientJarPath,
+      serverJarPath,
+      clientJarUrl: "https://example.test/client.jar",
+      serverJarUrl: "https://example.test/server.jar",
+      retrievedAt: "2026-06-22T00:00:00+09:00",
+    });
+    expect(data.paths.resourcepack).toContain("assets/minecraft/blockstates/acacia_button.json");
+    expect(data.paths.datapack).toContain("data/minecraft/tags/block/mineable/pickaxe.json");
   });
 });

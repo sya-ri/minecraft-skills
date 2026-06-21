@@ -10,6 +10,8 @@ import {
   listVersions,
   resolveVersion,
   searchPaperEvents,
+  searchVanillaPaths,
+  type VanillaPathSearchOptions,
 } from "@minecraft-skills/catalog";
 
 export type ToolContent = {
@@ -118,6 +120,24 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "search_vanilla_paths",
+    description:
+      "Search bundled vanilla asset/data paths for a Minecraft version without returning the full inventory.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"], default: "datapack" },
+        prefix: { type: "string" },
+        contains: { type: "string" },
+        extension: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "list_references",
     description: "List generated skill references, optionally filtered by domain.",
     inputSchema: {
@@ -213,6 +233,27 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_vanilla_inventory") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getVanillaInventory(edition, version));
+    }
+    if (name === "search_vanilla_paths") {
+      const pathOptions: VanillaPathSearchOptions = {
+        edition,
+        version: typeof args.version === "string" ? args.version : "latest",
+        domain:
+          args.domain === "resourcepack" || args.domain === "datapack" ? args.domain : "datapack",
+      };
+      if (typeof args.prefix === "string") {
+        pathOptions.prefix = args.prefix;
+      }
+      if (typeof args.contains === "string") {
+        pathOptions.contains = args.contains;
+      }
+      if (typeof args.extension === "string") {
+        pathOptions.extension = args.extension;
+      }
+      if (typeof args.limit === "number") {
+        pathOptions.limit = args.limit;
+      }
+      return text(searchVanillaPaths(pathOptions));
     }
     if (name === "list_references") {
       const domain = typeof args.domain === "string" ? args.domain : undefined;

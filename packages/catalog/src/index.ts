@@ -1,4 +1,4 @@
-import { hasDataFile, readDataJson } from "@minecraft-skills/data";
+import { hasDataFile, readDataJson, readDataText } from "@minecraft-skills/data";
 import {
   Catalog,
   type CatalogData,
@@ -90,6 +90,28 @@ export type PaperEventSearchOptions = {
   version?: string;
   source?: string;
   limit?: number;
+};
+
+export type VanillaPathDomain = "datapack" | "resourcepack";
+
+export type VanillaPathSearchOptions = {
+  edition?: string;
+  version?: string;
+  domain?: VanillaPathDomain;
+  prefix?: string;
+  contains?: string;
+  extension?: string;
+  limit?: number;
+};
+
+export type VanillaPathSearchResult = {
+  edition: EditionData;
+  version: string;
+  domain: VanillaPathDomain;
+  totalPaths: number;
+  matchedPaths: number;
+  truncated: boolean;
+  paths: string[];
 };
 
 export type FetchJson = (url: string) => Promise<{
@@ -311,6 +333,56 @@ export function getVanillaInventory(edition = "java", requested = "latest"): Van
   return VanillaInventory.assert(readDataJson(inventoryPath));
 }
 
+function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimit: number): number {
+  const resolved = limit ?? defaultLimit;
+  if (!Number.isInteger(resolved) || resolved < 1 || resolved > maxLimit) {
+    throw new Error(`Limit must be between 1 and ${maxLimit}`);
+  }
+  return resolved;
+}
+
+export function searchVanillaPaths(
+  options: VanillaPathSearchOptions = {},
+): VanillaPathSearchResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const inventory = getVanillaInventory(editionId, options.version ?? "latest");
+  const domain = options.domain ?? "datapack";
+  const pathIndex = `${editionId}/vanilla-paths/${inventory.version}.${domain}.txt`;
+  if (!hasDataFile(pathIndex)) {
+    throw new Error(
+      `No bundled vanilla path index for ${editionId} ${inventory.version} ${domain}`,
+    );
+  }
+  const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const prefix = options.prefix?.trim();
+  const contains = options.contains?.trim();
+  const extension = options.extension?.trim();
+
+  const matched = paths.filter((path) => {
+    if (prefix && !path.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !path.includes(contains)) {
+      return false;
+    }
+    if (extension && !path.endsWith(extension.startsWith(".") ? extension : `.${extension}`)) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    edition: editionId,
+    version: inventory.version,
+    domain,
+    totalPaths: paths.length,
+    matchedPaths: matched.length,
+    truncated: matched.length > limit,
+    paths: matched.slice(0, limit),
+  };
+}
+
 function compareValue<T>(from: T, to: T): { from: T; to: T; changed: boolean } {
   return {
     from,
@@ -401,11 +473,11 @@ export function buildPaperEventSearchUrl(options: PaperEventSearchOptions): stri
     throw new Error("Paper event search requires a query");
   }
   const limit = options.limit ?? paper.eventSearch.querySemantics.defaultLimit;
-  if (!Number.isInteger(limit) || limit < 1 || limit > paper.eventSearch.querySemantics.maxLimit) {
-    throw new Error(
-      `Paper event search limit must be between 1 and ${paper.eventSearch.querySemantics.maxLimit}`,
-    );
-  }
+  normalizeLimit(
+    limit,
+    paper.eventSearch.querySemantics.defaultLimit,
+    paper.eventSearch.querySemantics.maxLimit,
+  );
 
   const url = new URL(paper.eventSearch.baseUrl);
   url.searchParams.set("q", query);

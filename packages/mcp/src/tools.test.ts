@@ -12,6 +12,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
+    expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
   });
 
@@ -41,6 +42,17 @@ describe("MCP tools", () => {
     const result = await callMinecraftSkillsTool("get_vanilla_inventory", {});
     expect(result.content[0]?.text).toContain('"version": "26.2"');
     expect(result.content[0]?.text).toContain('"assets/minecraft/models"');
+  });
+
+  it("calls search_vanilla_paths", async () => {
+    const result = await callMinecraftSkillsTool("search_vanilla_paths", {
+      version: "26.2",
+      domain: "resourcepack",
+      prefix: "assets/minecraft/models/block/",
+      contains: "acacia_button",
+      extension: "json",
+    });
+    expect(result.content[0]?.text).toContain("assets/minecraft/models/block/acacia_button.json");
   });
 
   it("calls compare_versions", async () => {

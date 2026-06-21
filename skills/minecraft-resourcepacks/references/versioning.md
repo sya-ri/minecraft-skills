@@ -14,6 +14,7 @@ Current bundled data:
 - Model schema details: not extracted
 
 Use `minecraft-skills show-version <version>` for per-version pack format facts. Use
-`minecraft-skills vanilla-inventory <version>` to inspect bundled vanilla `assets/<namespace>/...`
-top-level directories, counts, and representative paths for Java 1.13+. When a requested fact is not
-extracted, explain the gap and use the source policy instead of guessing.
+`minecraft-skills vanilla-paths <version> --domain resourcepack` to search bundled vanilla
+`assets/<namespace>/...` paths, or `minecraft-skills vanilla-inventory <version>` for top-level
+directories, counts, representative paths, and full path arrays for Java 1.13+. When a requested
+fact is not extracted, explain the gap and use the source policy instead of guessing.

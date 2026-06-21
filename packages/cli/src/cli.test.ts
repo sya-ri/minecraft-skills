@@ -60,6 +60,23 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"data/minecraft/tags"');
   });
 
+  it("searches vanilla paths", async () => {
+    const result = await capture([
+      "vanilla-paths",
+      "26.2",
+      "--domain",
+      "resourcepack",
+      "--prefix",
+      "assets/minecraft/models/block/",
+      "--contains",
+      "acacia_button",
+      "--extension",
+      "json",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("assets/minecraft/models/block/acacia_button.json");
+  });
+
   it("prints version comparison", async () => {
     const result = await capture(["compare-versions", "1.20.6", "1.21"]);
     expect(result.code).toBe(0);

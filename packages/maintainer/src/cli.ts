@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
   getCatalog,
@@ -12,7 +12,7 @@ import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { buildPaperPluginData } from "./paperProject.js";
 import { ingestVanillaInventories } from "./vanillaInventories.js";
-import { buildVanillaInventory } from "./vanillaInventory.js";
+import { buildVanillaData, type VanillaPathIndex } from "./vanillaInventory.js";
 
 type ValidationResult = {
   ok: boolean;
@@ -203,6 +203,16 @@ function readDownloadUrl(downloads: Record<string, unknown>, key: string): strin
   throw new Error(`Version detail does not include downloads.${key}.url`);
 }
 
+function writeVanillaPathIndex(root: string, version: string, paths: VanillaPathIndex): void {
+  const outputRoot = join(root, "packages/data/data/java/vanilla-paths");
+  mkdirSync(outputRoot, { recursive: true });
+  writeFileSync(
+    join(outputRoot, `${version}.resourcepack.txt`),
+    `${paths.resourcepack.join("\n")}\n`,
+  );
+  writeFileSync(join(outputRoot, `${version}.datapack.txt`), `${paths.datapack.join("\n")}\n`);
+}
+
 function ingestVanillaInventory(args: string[]): void {
   const version = readOption(args, "--version");
   if (!version) {
@@ -219,7 +229,7 @@ function ingestVanillaInventory(args: string[]): void {
   const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
   const root = findRepositoryRoot();
   const detail = getVersionDetail("java", version);
-  const inventory = buildVanillaInventory({
+  const { inventory, paths } = buildVanillaData({
     version: detail.version,
     clientJarPath,
     serverJarPath,
@@ -229,6 +239,7 @@ function ingestVanillaInventory(args: string[]): void {
   });
   const output = join(root, `packages/data/data/java/vanilla-inventories/${detail.version}.json`);
   writeFileSync(output, `${JSON.stringify(inventory, null, 2)}\n`);
+  writeVanillaPathIndex(root, detail.version, paths);
   console.log(`wrote Java ${detail.version} vanilla inventory to ${output}`);
 }
 

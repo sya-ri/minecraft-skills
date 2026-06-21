@@ -12,6 +12,8 @@ import {
   listVersions,
   resolveVersion,
   searchPaperEvents,
+  searchVanillaPaths,
+  type VanillaPathSearchOptions,
 } from "@minecraft-skills/catalog";
 
 type Output = {
@@ -59,6 +61,7 @@ Usage:
   minecraft-skills show-version [version] [--edition java]
   minecraft-skills compare-versions <from> <to> [--edition java]
   minecraft-skills vanilla-inventory [version] [--edition java]
+  minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
@@ -75,6 +78,7 @@ Commands:
                  Compare bundled version metadata and vanilla inventory summaries.
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
+  vanilla-paths  Search bundled vanilla asset/data paths for a version.
   paper-events   Search Paper/Bukkit events through the configured spigot-event-list API.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
@@ -151,6 +155,31 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (command === "vanilla-inventory") {
       const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getVanillaInventory(edition, requested));
+      return 0;
+    }
+
+    if (command === "vanilla-paths") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const domain = readOption(args, "--domain", "datapack");
+      if (domain !== "datapack" && domain !== "resourcepack") {
+        throw new Error("vanilla-paths --domain must be datapack or resourcepack");
+      }
+      const pathOptions: VanillaPathSearchOptions = {
+        edition,
+        version: requested,
+        domain,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--prefix")) {
+        pathOptions.prefix = readOption(args, "--prefix", "");
+      }
+      if (args.includes("--contains")) {
+        pathOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--extension")) {
+        pathOptions.extension = readOption(args, "--extension", "");
+      }
+      printJson(output, searchVanillaPaths(pathOptions));
       return 0;
     }
 

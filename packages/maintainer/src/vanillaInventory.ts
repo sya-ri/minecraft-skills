@@ -27,6 +27,11 @@ type VanillaInventory = {
   }>;
 };
 
+export type VanillaPathIndex = {
+  resourcepack: string[];
+  datapack: string[];
+};
+
 function countEntries(entries: string[], prefix: string): SectionInventory {
   const files = entries.filter((entry) => entry.startsWith(prefix));
   const namespaces = new Set<string>();
@@ -98,29 +103,46 @@ export function buildVanillaInventory(options: {
   serverJarUrl: string;
   retrievedAt: string;
 }): VanillaInventory {
+  return buildVanillaData(options).inventory;
+}
+
+export function buildVanillaData(options: {
+  version: string;
+  clientJarPath: string;
+  serverJarPath: string;
+  clientJarUrl: string;
+  serverJarUrl: string;
+  retrievedAt: string;
+}): { inventory: VanillaInventory; paths: VanillaPathIndex } {
   const clientEntries = fileEntries(listZipEntries(readFileSync(options.clientJarPath)));
   const serverEntries = listServerEntries(options.serverJarPath);
 
   return {
-    schemaVersion: 1,
-    edition: "java",
-    version: options.version,
-    coverage: "client-assets-and-server-data",
-    resources: countEntries(clientEntries, "assets/"),
-    datapack: countEntries(serverEntries, "data/"),
-    sources: [
-      {
-        id: "mojang-client-jar-assets",
-        kind: "official-extracted",
-        url: options.clientJarUrl,
-        retrievedAt: options.retrievedAt,
-      },
-      {
-        id: "mojang-server-jar-data",
-        kind: "official-extracted",
-        url: options.serverJarUrl,
-        retrievedAt: options.retrievedAt,
-      },
-    ],
+    inventory: {
+      schemaVersion: 1,
+      edition: "java",
+      version: options.version,
+      coverage: "client-assets-and-server-data",
+      resources: countEntries(clientEntries, "assets/"),
+      datapack: countEntries(serverEntries, "data/"),
+      sources: [
+        {
+          id: "mojang-client-jar-assets",
+          kind: "official-extracted",
+          url: options.clientJarUrl,
+          retrievedAt: options.retrievedAt,
+        },
+        {
+          id: "mojang-server-jar-data",
+          kind: "official-extracted",
+          url: options.serverJarUrl,
+          retrievedAt: options.retrievedAt,
+        },
+      ],
+    },
+    paths: {
+      resourcepack: clientEntries.filter((entry) => entry.startsWith("assets/")),
+      datapack: serverEntries.filter((entry) => entry.startsWith("data/")),
+    },
   };
 }

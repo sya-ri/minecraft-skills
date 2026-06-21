@@ -1,8 +1,8 @@
-import { existsSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getVersionDetail, listVersions } from "@minecraft-skills/catalog";
-import { buildVanillaInventory } from "./vanillaInventory.js";
+import { buildVanillaData, type VanillaPathIndex } from "./vanillaInventory.js";
 
 type Download = {
   url: string;
@@ -39,6 +39,16 @@ function safeFileName(version: string): string {
   return version.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
 }
 
+function writePathIndex(root: string, version: string, paths: VanillaPathIndex): void {
+  const outputRoot = join(root, "packages/data/data/java/vanilla-paths");
+  mkdirSync(outputRoot, { recursive: true });
+  writeFileSync(
+    join(outputRoot, `${version}.resourcepack.txt`),
+    `${paths.resourcepack.join("\n")}\n`,
+  );
+  writeFileSync(join(outputRoot, `${version}.datapack.txt`), `${paths.datapack.join("\n")}\n`);
+}
+
 export async function ingestVanillaInventories(
   options: IngestVanillaInventoriesOptions,
 ): Promise<number> {
@@ -68,7 +78,7 @@ export async function ingestVanillaInventories(
       options.log?.(`fetch ${version.id}: server jar`);
       await downloadToFile(server.url, serverJarPath);
 
-      const inventory = buildVanillaInventory({
+      const { inventory, paths } = buildVanillaData({
         version: detail.version,
         clientJarPath,
         serverJarPath,
@@ -77,6 +87,7 @@ export async function ingestVanillaInventories(
         retrievedAt: options.retrievedAt,
       });
       writeFileSync(output, `${JSON.stringify(inventory, null, 2)}\n`);
+      writePathIndex(options.root, detail.version, paths);
       written += 1;
       options.log?.(`wrote ${version.id}`);
 

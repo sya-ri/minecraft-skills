@@ -9,6 +9,10 @@ export function readDataJson<T>(relativePath: string): T {
   return JSON.parse(readFileSync(join(dataRoot, relativePath), "utf8")) as T;
 }
 
+export function readDataText(relativePath: string): string {
+  return readFileSync(join(dataRoot, relativePath), "utf8");
+}
+
 export function hasDataFile(relativePath: string): boolean {
   return existsSync(join(dataRoot, relativePath));
 }

@@ -44,6 +44,7 @@ minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills vanilla-inventory latest
+minecraft-skills vanilla-paths latest --domain resourcepack --contains models/block/acacia_button
 minecraft-skills paper
 minecraft-skills paper-events "player join" --version 1.21.11
 minecraft-skills references --domain paper-plugin
