@@ -16,6 +16,7 @@ import {
   listDomains,
   listPackFormats,
   listReferences,
+  listSkills,
   listVersions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
@@ -55,6 +56,17 @@ export const tools: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_skills",
+    description: "List installable Minecraft Agent Skill folders in this repository.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
       additionalProperties: false,
     },
   },
@@ -359,6 +371,10 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
   try {
     if (name === "list_domains") {
       return text(listDomains());
+    }
+    if (name === "list_skills") {
+      const domain = typeof args.domain === "string" ? args.domain : undefined;
+      return text(listSkills(domain));
     }
     if (name === "latest_version") {
       return text(resolveVersion(edition, "latest"));

@@ -23,12 +23,14 @@ import {
   getPaperPluginData,
   getResourcepackModelSummary,
   getVersionDetail,
+  listSkills,
   searchCommands,
   searchResourcepackModelPaths,
   searchVanillaPaths,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
+const skills = listSkills();
 const reports = getJavaReportsSummary("java", "26.2");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });

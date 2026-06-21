@@ -124,6 +124,23 @@ export function validateRepository(): ValidationResult {
   }
 
   for (const domain of listDomains()) {
+    const skillEntry = catalog.skills.find((skill) => skill.name === domain.skill);
+    if (!skillEntry) {
+      messages.push(`missing catalog skill entry for domain: ${domain.id}`);
+    } else {
+      if (skillEntry.domain !== domain.id) {
+        messages.push(`catalog skill domain mismatch: ${skillEntry.name}`);
+      }
+      if (skillEntry.path !== `skills/${domain.skill}`) {
+        messages.push(`catalog skill path mismatch: ${skillEntry.name}`);
+      }
+      if (skillEntry.skillFile !== `skills/${domain.skill}/SKILL.md`) {
+        messages.push(`catalog skill SKILL.md path mismatch: ${skillEntry.name}`);
+      }
+      if (skillEntry.agentMetadata !== `skills/${domain.skill}/agents/openai.yaml`) {
+        messages.push(`catalog skill agent metadata path mismatch: ${skillEntry.name}`);
+      }
+    }
     requireSkillMetadata(root, domain.skill, messages);
   }
 

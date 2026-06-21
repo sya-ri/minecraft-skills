@@ -8,6 +8,7 @@ describe("MCP tools", () => {
 
   it("exposes catalog tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
+    expect(tools.map((tool) => tool.name)).toContain("list_skills");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
@@ -27,6 +28,14 @@ describe("MCP tools", () => {
 
   it("calls latest_version", async () => {
     expect((await callMinecraftSkillsTool("latest_version", {})).content[0]?.text).toBe("26.2");
+  });
+
+  it("calls list_skills", async () => {
+    const result = await callMinecraftSkillsTool("list_skills", {
+      domain: "paper-plugin",
+    });
+    expect(result.content[0]?.text).toContain('"name": "minecraft-paper-plugins"');
+    expect(result.content[0]?.text).toContain('"path": "skills/minecraft-paper-plugins"');
   });
 
   it("returns errors as tool results", async () => {

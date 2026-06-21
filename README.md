@@ -39,6 +39,7 @@ CI=true mise exec -- pnpm check
 
 ```sh
 minecraft-skills latest
+minecraft-skills skills
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
@@ -80,7 +81,7 @@ npx @minecraft-skills/mcp
 
 The server exposes tools for version lookup, pack formats, server reports, command search and
 comparison, vanilla asset/data path search and comparison, resource pack model summaries, Paper
-support metadata, and Paper/Bukkit event search.
+support metadata, installable skill folder discovery, and Paper/Bukkit event search.
 
 ## Release Readiness
 
@@ -113,11 +114,13 @@ import {
   compareVanillaPaths,
   getResourcepackModelSummary,
   getVersionDetail,
+  listSkills,
   searchCommands,
   searchResourcepackModelPaths,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
+const skills = listSkills();
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const models = getResourcepackModelSummary("java", "26.2");
@@ -221,4 +224,5 @@ Generated skills are committed under `skills/` as standalone Agent Skills folder
 
 Install or reference those folders directly from this repository when using a skill installer such
 as `gh skills` or `npx skills`. The public npm packages are for machine-readable data, CLI, and MCP
-runtime access; the skill folders are the human-readable agent instructions.
+runtime access; the skill folders are the human-readable agent instructions. Use
+`minecraft-skills skills` or MCP `list_skills` to list installable skill folder paths.

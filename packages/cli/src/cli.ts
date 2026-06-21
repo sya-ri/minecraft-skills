@@ -18,6 +18,7 @@ import {
   listDomains,
   listPackFormats,
   listReferences,
+  listSkills,
   listVersions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
@@ -68,6 +69,7 @@ function printHelp(output: Output): void {
 
 Usage:
   minecraft-skills domains
+  minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills latest [--edition java]
   minecraft-skills versions [--edition java]
   minecraft-skills pack-formats [--edition java]
@@ -92,6 +94,7 @@ Usage:
 
 Commands:
   domains        List supported authoring domains.
+  skills         List installable Agent Skill folders in this repository.
   latest         Print the latest bundled version for an edition.
   versions       List bundled version metadata.
   pack-formats   List data/resource pack formats and Paper support by version.
@@ -140,6 +143,14 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (command === "domains") {
       for (const domain of listDomains()) {
         output.write(`${domain.id}\t${domain.skill}\t${domain.title}`);
+      }
+      return 0;
+    }
+
+    if (command === "skills") {
+      const domain = args.includes("--domain") ? readOption(args, "--domain", "") : undefined;
+      for (const skill of listSkills(domain)) {
+        output.write(`${skill.name}\t${skill.domain}\t${skill.path}\t${skill.title}`);
       }
       return 0;
     }

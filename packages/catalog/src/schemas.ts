@@ -23,6 +23,16 @@ export const Reference = type({
   path: "string",
 });
 
+export const Skill = type({
+  name: "string",
+  domain: "'datapack' | 'resourcepack' | 'paper-plugin'",
+  path: "string",
+  skillFile: "string",
+  agentMetadata: "string",
+  title: "string",
+  description: "string",
+});
+
 export const Catalog = type({
   schemaVersion: "1",
   latest: {
@@ -40,6 +50,7 @@ export const Catalog = type({
     factPriority: "string[]",
   },
   domains: Domain.array(),
+  skills: Skill.array(),
   references: Reference.array(),
 });
 
@@ -282,6 +293,7 @@ export const Edition = type("'java'");
 
 export type CatalogData = typeof Catalog.infer;
 export type DomainData = typeof Domain.infer;
+export type SkillData = typeof Skill.infer;
 export type ReferenceData = typeof Reference.infer;
 export type VersionIndexData = typeof VersionIndex.infer;
 export type VersionSummaryData = typeof VersionSummary.infer;

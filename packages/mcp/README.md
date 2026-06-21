@@ -13,6 +13,7 @@ Node.js 22.12 or newer is required.
 ## Tools
 
 - `latest_version`
+- `list_skills`
 - `list_versions`
 - `get_version`
 - `list_pack_formats`

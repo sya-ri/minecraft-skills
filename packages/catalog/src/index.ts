@@ -16,6 +16,7 @@ import {
   type ReferenceData,
   ResourcepackModelSummary,
   type ResourcepackModelSummaryData,
+  type SkillData,
   VanillaInventory,
   type VanillaInventoryData,
   VersionDetail,
@@ -35,6 +36,7 @@ export type {
   PaperPluginDataData,
   ReferenceData,
   ResourcepackModelSummaryData,
+  SkillData,
   VanillaInventoryData,
   VersionDetailData,
   VersionIndexData,
@@ -254,6 +256,23 @@ export function getCatalog(): CatalogData {
 
 export function listDomains(): DomainData[] {
   return getCatalog().domains;
+}
+
+export function listSkills(domain?: string): SkillData[] {
+  const catalog = getCatalog();
+  if (!domain) {
+    return catalog.skills;
+  }
+  const domainId = DomainId.assert(domain);
+  return catalog.skills.filter((skill) => skill.domain === domainId);
+}
+
+export function getSkill(name: string): SkillData {
+  const found = listSkills().find((skill) => skill.name === name);
+  if (!found) {
+    throw new Error(`Unknown skill: ${name}`);
+  }
+  return found;
 }
 
 export function getDomain(domain: string): DomainData {

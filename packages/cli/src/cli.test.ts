@@ -22,6 +22,14 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("paper-plugin");
   });
 
+  it("prints installable skills", async () => {
+    const result = await capture(["skills", "--domain", "paper-plugin"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout).toEqual([
+      "minecraft-paper-plugins\tpaper-plugin\tskills/minecraft-paper-plugins\tMinecraft Paper Plugins",
+    ]);
+  });
+
   it("prints latest Java version", async () => {
     expect((await capture(["latest"])).stdout).toEqual(["26.2"]);
   });

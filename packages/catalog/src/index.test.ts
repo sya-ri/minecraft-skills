@@ -16,6 +16,7 @@ import {
   getVersionDetail,
   listDomains,
   listPackFormats,
+  listSkills,
   resolveVersion,
   searchCommands,
   searchResourcepackModelPaths,
@@ -28,6 +29,21 @@ describe("catalog", () => {
       "datapack",
       "resourcepack",
       "paper-plugin",
+    ]);
+  });
+
+  it("lists installable skill folders", () => {
+    expect(listSkills().map((skill) => skill.name)).toEqual([
+      "minecraft-datapacks",
+      "minecraft-resourcepacks",
+      "minecraft-paper-plugins",
+    ]);
+    expect(listSkills("paper-plugin")).toEqual([
+      expect.objectContaining({
+        name: "minecraft-paper-plugins",
+        path: "skills/minecraft-paper-plugins",
+        agentMetadata: "skills/minecraft-paper-plugins/agents/openai.yaml",
+      }),
     ]);
   });
 

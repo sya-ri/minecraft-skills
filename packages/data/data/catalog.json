@@ -79,6 +79,35 @@
       ]
     }
   ],
+  "skills": [
+    {
+      "name": "minecraft-datapacks",
+      "domain": "datapack",
+      "path": "skills/minecraft-datapacks",
+      "skillFile": "skills/minecraft-datapacks/SKILL.md",
+      "agentMetadata": "skills/minecraft-datapacks/agents/openai.yaml",
+      "title": "Minecraft Datapacks",
+      "description": "Version-aware Java Edition data pack guidance for pack.mcmeta, functions, commands, vanilla data, and migrations."
+    },
+    {
+      "name": "minecraft-resourcepacks",
+      "domain": "resourcepack",
+      "path": "skills/minecraft-resourcepacks",
+      "skillFile": "skills/minecraft-resourcepacks/SKILL.md",
+      "agentMetadata": "skills/minecraft-resourcepacks/agents/openai.yaml",
+      "title": "Minecraft Resourcepacks",
+      "description": "Version-aware Java Edition resource pack guidance for pack.mcmeta, assets, models, item definitions, and migrations."
+    },
+    {
+      "name": "minecraft-paper-plugins",
+      "domain": "paper-plugin",
+      "path": "skills/minecraft-paper-plugins",
+      "skillFile": "skills/minecraft-paper-plugins/SKILL.md",
+      "agentMetadata": "skills/minecraft-paper-plugins/agents/openai.yaml",
+      "title": "Minecraft Paper Plugins",
+      "description": "Paper-first plugin guidance for Paper/Bukkit APIs, events, lifecycle, scheduling, Folia-sensitive code, and migrations."
+    }
+  ],
   "references": [
     {
       "id": "java-versioning",
