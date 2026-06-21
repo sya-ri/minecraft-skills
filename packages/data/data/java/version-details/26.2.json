@@ -59,7 +59,7 @@
     {
       "id": "mojang-version-json",
       "kind": "official",
-      "url": "https://piston-meta.mojang.com/version/26.2",
+      "url": "https://piston-meta.mojang.com/v1/packages/4c3cd3500ce8b9ea104c358a784634fedb2a610f/26.2.json",
       "retrievedAt": "2026-06-22T00:00:00+09:00"
     },
     {

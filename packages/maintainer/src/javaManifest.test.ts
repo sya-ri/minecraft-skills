@@ -52,6 +52,7 @@ describe("buildJavaVersionIndex", () => {
       snapshot: null,
     });
     expect(index.versions.map((version) => version.id)).toEqual(["26.2", "1.13"]);
+    expect(index.versions[0]?.url).toBe("https://example.test/26.2.json");
     expect(index.sources[0]?.retrievedAt).toBe("2026-06-22T00:00:00+09:00");
   });
 });

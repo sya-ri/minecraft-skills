@@ -101,6 +101,7 @@ export function readJarVersionJson(path: string): JarVersionJson {
 export function buildJavaVersionDetail(options: {
   versionJsonPath: string;
   clientJarPath?: string;
+  versionJsonUrl?: string;
   retrievedAt: string;
 }): JavaVersionDetail {
   const versionJson = readJsonFile<MojangVersionJson>(options.versionJsonPath);
@@ -158,7 +159,7 @@ export function buildJavaVersionDetail(options: {
       {
         id: "mojang-version-json",
         kind: "official",
-        url: `https://piston-meta.mojang.com/version/${versionJson.id}`,
+        url: options.versionJsonUrl ?? `file://${options.versionJsonPath}`,
         retrievedAt: options.retrievedAt,
       },
       ...(options.clientJarPath

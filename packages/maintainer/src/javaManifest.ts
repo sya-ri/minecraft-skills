@@ -29,6 +29,7 @@ type JavaVersionIndex = {
   versions: Array<{
     id: string;
     type: string;
+    url: string;
     releaseTime: string;
     time: string;
     sha1: string;
@@ -86,6 +87,7 @@ export function buildJavaVersionIndex(manifest: unknown, retrievedAt: string): J
     versions: supportedReleases.map((version) => ({
       id: version.id,
       type: version.type,
+      url: version.url,
       releaseTime: version.releaseTime,
       time: version.time,
       sha1: version.sha1,

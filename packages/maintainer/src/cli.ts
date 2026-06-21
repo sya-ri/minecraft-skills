@@ -9,6 +9,7 @@ import {
 } from "@minecraft-skills/catalog";
 import { buildJavaVersionIndex } from "./javaManifest.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
+import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 
 type ValidationResult = {
   ok: boolean;
@@ -79,13 +80,16 @@ function printHelp(): void {
 Usage:
   minecraft-skills-maintainer validate
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
-  minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--client-jar <client.jar>] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
 
 Commands:
   validate              Validate checked-in data, catalog, and generated skills.
   ingest-java-manifest  Generate Java 1.13+ release index from Mojang version manifest.
   ingest-java-version-detail
-                        Generate detail JSON from Mojang version JSON and optional client jar.`);
+                        Generate detail JSON from Mojang version JSON and optional client jar.
+  ingest-java-version-details
+                        Download and generate missing detail JSON for all indexed Java releases.`);
 }
 
 function readOption(args: string[], name: string): string | undefined {
@@ -116,13 +120,22 @@ function ingestJavaVersionDetail(args: string[]): void {
     throw new Error("ingest-java-version-detail requires --version-json <version.json>");
   }
   const clientJarPath = readOption(args, "--client-jar");
+  const versionJsonUrl = readOption(args, "--version-json-url");
   const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
-  const options: { versionJsonPath: string; clientJarPath?: string; retrievedAt: string } = {
+  const options: {
+    versionJsonPath: string;
+    clientJarPath?: string;
+    versionJsonUrl?: string;
+    retrievedAt: string;
+  } = {
     versionJsonPath,
     retrievedAt,
   };
   if (clientJarPath) {
     options.clientJarPath = clientJarPath;
+  }
+  if (versionJsonUrl) {
+    options.versionJsonUrl = versionJsonUrl;
   }
   const detail = buildJavaVersionDetail(options);
   const root = findRepositoryRoot();
@@ -131,7 +144,20 @@ function ingestJavaVersionDetail(args: string[]): void {
   console.log(`wrote Java ${detail.version} detail to ${output}`);
 }
 
-export function runMaintainerCli(argv: string[]): number {
+async function ingestAllJavaVersionDetails(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const written = await ingestJavaVersionDetails({
+    root,
+    retrievedAt,
+    includeClientJars: !args.includes("--skip-client-jars"),
+    force: args.includes("--force"),
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} Java version detail files`);
+}
+
+export async function runMaintainerCli(argv: string[]): Promise<number> {
   const [command] = argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
     printHelp();
@@ -146,6 +172,11 @@ export function runMaintainerCli(argv: string[]): number {
 
     if (command === "ingest-java-version-detail") {
       ingestJavaVersionDetail(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-java-version-details") {
+      await ingestAllJavaVersionDetails(argv.slice(1));
       return 0;
     }
 
@@ -169,5 +200,5 @@ export function runMaintainerCli(argv: string[]): number {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  process.exitCode = runMaintainerCli(process.argv.slice(2));
+  process.exitCode = await runMaintainerCli(process.argv.slice(2));
 }

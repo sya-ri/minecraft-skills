@@ -46,6 +46,7 @@ export const Catalog = type({
 export const VersionSummary = type({
   id: "string",
   type: "string",
+  url: "string",
   releaseTime: "string",
   time: "string",
   sha1: "string",
