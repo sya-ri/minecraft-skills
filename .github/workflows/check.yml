@@ -32,3 +32,6 @@ jobs:
 
       - name: Pack dry run
         run: mise exec -- pnpm run pack:dry-run
+
+      - name: Package smoke
+        run: mise exec -- pnpm run pack:smoke

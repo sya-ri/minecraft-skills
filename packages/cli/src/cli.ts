@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
@@ -38,6 +39,12 @@ type Output = {
   write: (value: string) => void;
   error: (value: string) => void;
 };
+
+function isDirectRun(metaUrl: string): boolean {
+  return process.argv[1]
+    ? realpathSync(fileURLToPath(metaUrl)) === realpathSync(process.argv[1])
+    : false;
+}
 
 const defaultOutput: Output = {
   write: (value) => console.log(value),
@@ -495,6 +502,6 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectRun(import.meta.url)) {
   process.exitCode = await runCli(process.argv.slice(2));
 }

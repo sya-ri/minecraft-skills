@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -12,6 +14,12 @@ import {
 import { getMinecraftSkillsPrompt, prompts } from "./prompts.js";
 import { listMinecraftSkillsResources, readMinecraftSkillsResource } from "./resources.js";
 import { callMinecraftSkillsTool, tools } from "./tools.js";
+
+function isDirectRun(metaUrl: string): boolean {
+  return process.argv[1]
+    ? realpathSync(fileURLToPath(metaUrl)) === realpathSync(process.argv[1])
+    : false;
+}
 
 export function createServer(): Server {
   const server = new Server(
@@ -53,7 +61,7 @@ export async function runServer(): Promise<void> {
   await server.connect(new StdioServerTransport());
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectRun(import.meta.url)) {
   runServer().catch((error) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;

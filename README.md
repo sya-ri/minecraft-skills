@@ -122,6 +122,7 @@ concrete versions in packed packages.
 ```sh
 mise exec -- pnpm run check
 mise exec -- pnpm run pack:dry-run
+mise exec -- pnpm run pack:smoke
 mise exec -- pnpm run publish:dry-run
 ```
 
