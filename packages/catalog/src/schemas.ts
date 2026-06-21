@@ -139,6 +139,11 @@ export const PaperPluginData = type({
   },
   versionGroups: "string[]",
   versions: "string[]",
+  versionBuilds: type({
+    minecraftVersion: "string",
+    latestBuild: "number",
+    buildCount: "number",
+  }).array(),
   eventSearch: {
     provider: "string",
     baseUrl: "string",

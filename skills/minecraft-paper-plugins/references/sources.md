@@ -19,6 +19,7 @@ Bundled canonical data:
 Use bundled Paper data to check:
 
 - latest Paper-supported Minecraft version and build
+- latest Paper build and build count for each bundled Paper-supported Minecraft version
 - whether Paper has caught up to the latest bundled Java release
 - `spigot-event-list` event search base URL, sources, query semantics, and limits
 

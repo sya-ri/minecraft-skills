@@ -267,9 +267,18 @@ function makeManifestOnlyDetail(
 function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
   const paper = getPaperPluginData();
   if (paper.versions.includes(detail.version)) {
+    const build = paper.versionBuilds.find(
+      (candidate) => candidate.minecraftVersion === detail.version,
+    );
     const facts = [`paper_supported=true`, `paper_minecraft_version=${detail.version}`];
+    if (build) {
+      facts.push(
+        `paper_latest_build=${build.latestBuild}`,
+        `paper_build_count=${build.buildCount}`,
+      );
+    }
     if (paper.latest.minecraftVersion === detail.version) {
-      facts.push(`paper_latest_build=${paper.latest.build}`);
+      facts.push(`paper_global_latest_build=${paper.latest.build}`);
     }
     return VersionDetail.assert({
       ...detail,

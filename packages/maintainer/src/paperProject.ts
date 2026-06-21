@@ -29,6 +29,11 @@ type PaperPluginData = {
   };
   versionGroups: string[];
   versions: string[];
+  versionBuilds: Array<{
+    minecraftVersion: string;
+    latestBuild: number;
+    buildCount: number;
+  }>;
   eventSearch: {
     provider: "sya-ri/spigot-event-list";
     baseUrl: "https://spigot-event-list.s7a.dev/api/search/events";
@@ -130,6 +135,13 @@ export function buildPaperPluginData(options: {
     },
     versionGroups,
     versions,
+    versionBuilds: [
+      {
+        minecraftVersion: latestVersion,
+        latestBuild,
+        buildCount: options.latestBuildsJson.builds.length,
+      },
+    ],
     eventSearch: {
       provider: "sya-ri/spigot-event-list",
       baseUrl: "https://spigot-event-list.s7a.dev/api/search/events",

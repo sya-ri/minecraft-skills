@@ -15,6 +15,7 @@ import {
 } from "./javaReports.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
+import { ingestPaperBuilds } from "./paperBuilds.js";
 import { buildPaperPluginData } from "./paperProject.js";
 import { ingestResourcepackModelSummaries } from "./resourcepackModelSummaries.js";
 import { buildResourcepackModelSummary } from "./resourcepackModels.js";
@@ -95,6 +96,7 @@ Usage:
   minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-paper-builds [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-resourcepack-models --version <version> --client-jar <client.jar> [--retrieved-at <iso>]
@@ -112,6 +114,7 @@ Commands:
   ingest-java-reports   Generate compact report summary and command path index from server reports.
   ingest-paper-project
                         Generate Paper plugin support and event search data from PaperMC API JSON.
+  ingest-paper-builds  Download latest build summaries for all bundled Paper-supported versions.
   ingest-vanilla-inventory
                         Generate compact inventory for vanilla client assets and server data.
   ingest-vanilla-inventories
@@ -258,6 +261,17 @@ function ingestPaperProject(args: string[]): void {
   console.log(`wrote Paper plugin data to ${output}`);
 }
 
+async function ingestAllPaperBuilds(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const written = await ingestPaperBuilds({
+    root,
+    retrievedAt,
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} Paper version build summaries`);
+}
+
 function readDownloadUrl(downloads: Record<string, unknown>, key: string): string {
   const download = downloads[key];
   if (download && typeof download === "object" && "url" in download) {
@@ -393,6 +407,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-paper-project") {
       ingestPaperProject(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-paper-builds") {
+      await ingestAllPaperBuilds(argv.slice(1));
       return 0;
     }
 

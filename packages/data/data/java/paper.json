@@ -99,6 +99,229 @@
       "kind": "project-api-reference",
       "url": "https://raw.githubusercontent.com/sya-ri/spigot-event-list/master/skills/spigot-event-search/references/api.md",
       "retrievedAt": "2026-06-22T00:00:00+09:00"
+    },
+    {
+      "id": "papermc-api-paper-version-builds",
+      "kind": "official-bulk",
+      "url": "https://api.papermc.io/v2/projects/paper/versions/{minecraftVersion}",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    }
+  ],
+  "versionBuilds": [
+    {
+      "minecraftVersion": "1.13",
+      "latestBuild": 173,
+      "buildCount": 153
+    },
+    {
+      "minecraftVersion": "1.13.1",
+      "latestBuild": 386,
+      "buildCount": 206
+    },
+    {
+      "minecraftVersion": "1.13.2",
+      "latestBuild": 657,
+      "buildCount": 260
+    },
+    {
+      "minecraftVersion": "1.14",
+      "latestBuild": 17,
+      "buildCount": 16
+    },
+    {
+      "minecraftVersion": "1.14.1",
+      "latestBuild": 50,
+      "buildCount": 31
+    },
+    {
+      "minecraftVersion": "1.14.2",
+      "latestBuild": 107,
+      "buildCount": 54
+    },
+    {
+      "minecraftVersion": "1.14.3",
+      "latestBuild": 134,
+      "buildCount": 27
+    },
+    {
+      "minecraftVersion": "1.14.4",
+      "latestBuild": 245,
+      "buildCount": 103
+    },
+    {
+      "minecraftVersion": "1.15",
+      "latestBuild": 21,
+      "buildCount": 20
+    },
+    {
+      "minecraftVersion": "1.15.1",
+      "latestBuild": 62,
+      "buildCount": 37
+    },
+    {
+      "minecraftVersion": "1.15.2",
+      "latestBuild": 393,
+      "buildCount": 316
+    },
+    {
+      "minecraftVersion": "1.16.1",
+      "latestBuild": 138,
+      "buildCount": 128
+    },
+    {
+      "minecraftVersion": "1.16.2",
+      "latestBuild": 189,
+      "buildCount": 48
+    },
+    {
+      "minecraftVersion": "1.16.3",
+      "latestBuild": 253,
+      "buildCount": 63
+    },
+    {
+      "minecraftVersion": "1.16.4",
+      "latestBuild": 416,
+      "buildCount": 157
+    },
+    {
+      "minecraftVersion": "1.16.5",
+      "latestBuild": 794,
+      "buildCount": 363
+    },
+    {
+      "minecraftVersion": "1.17",
+      "latestBuild": 79,
+      "buildCount": 73
+    },
+    {
+      "minecraftVersion": "1.17.1",
+      "latestBuild": 411,
+      "buildCount": 319
+    },
+    {
+      "minecraftVersion": "1.18",
+      "latestBuild": 66,
+      "buildCount": 54
+    },
+    {
+      "minecraftVersion": "1.18.1",
+      "latestBuild": 216,
+      "buildCount": 145
+    },
+    {
+      "minecraftVersion": "1.18.2",
+      "latestBuild": 388,
+      "buildCount": 169
+    },
+    {
+      "minecraftVersion": "1.19",
+      "latestBuild": 81,
+      "buildCount": 76
+    },
+    {
+      "minecraftVersion": "1.19.1",
+      "latestBuild": 111,
+      "buildCount": 30
+    },
+    {
+      "minecraftVersion": "1.19.2",
+      "latestBuild": 307,
+      "buildCount": 189
+    },
+    {
+      "minecraftVersion": "1.19.3",
+      "latestBuild": 448,
+      "buildCount": 140
+    },
+    {
+      "minecraftVersion": "1.19.4",
+      "latestBuild": 550,
+      "buildCount": 102
+    },
+    {
+      "minecraftVersion": "1.20",
+      "latestBuild": 17,
+      "buildCount": 16
+    },
+    {
+      "minecraftVersion": "1.20.1",
+      "latestBuild": 196,
+      "buildCount": 178
+    },
+    {
+      "minecraftVersion": "1.20.2",
+      "latestBuild": 318,
+      "buildCount": 116
+    },
+    {
+      "minecraftVersion": "1.20.4",
+      "latestBuild": 499,
+      "buildCount": 175
+    },
+    {
+      "minecraftVersion": "1.20.5",
+      "latestBuild": 22,
+      "buildCount": 18
+    },
+    {
+      "minecraftVersion": "1.20.6",
+      "latestBuild": 151,
+      "buildCount": 127
+    },
+    {
+      "minecraftVersion": "1.21",
+      "latestBuild": 130,
+      "buildCount": 129
+    },
+    {
+      "minecraftVersion": "1.21.1",
+      "latestBuild": 133,
+      "buildCount": 128
+    },
+    {
+      "minecraftVersion": "1.21.3",
+      "latestBuild": 83,
+      "buildCount": 82
+    },
+    {
+      "minecraftVersion": "1.21.4",
+      "latestBuild": 232,
+      "buildCount": 224
+    },
+    {
+      "minecraftVersion": "1.21.5",
+      "latestBuild": 114,
+      "buildCount": 111
+    },
+    {
+      "minecraftVersion": "1.21.6",
+      "latestBuild": 48,
+      "buildCount": 46
+    },
+    {
+      "minecraftVersion": "1.21.7",
+      "latestBuild": 32,
+      "buildCount": 28
+    },
+    {
+      "minecraftVersion": "1.21.8",
+      "latestBuild": 60,
+      "buildCount": 55
+    },
+    {
+      "minecraftVersion": "1.21.9",
+      "latestBuild": 59,
+      "buildCount": 20
+    },
+    {
+      "minecraftVersion": "1.21.10",
+      "latestBuild": 129,
+      "buildCount": 50
+    },
+    {
+      "minecraftVersion": "1.21.11",
+      "latestBuild": 69,
+      "buildCount": 32
     }
   ]
 }

@@ -73,6 +73,11 @@ describe("catalog", () => {
       paperLatest: "1.21.11",
       status: "paper-not-yet-published-for-java-latest",
     });
+    expect(paper.versionBuilds).toContainEqual({
+      minecraftVersion: "1.21.11",
+      latestBuild: 69,
+      buildCount: 32,
+    });
     expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
   });
 
@@ -95,6 +100,8 @@ describe("catalog", () => {
     expect(version.domains["paper-plugin"].status).toBe("supported");
     expect(version.domains["paper-plugin"].facts).toContain("paper_supported=true");
     expect(version.domains["paper-plugin"].facts).toContain("paper_latest_build=69");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_build_count=32");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_global_latest_build=69");
   });
 
   it("marks Java versions that Paper has not published yet", () => {

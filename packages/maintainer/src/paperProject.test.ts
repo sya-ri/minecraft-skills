@@ -24,6 +24,13 @@ describe("buildPaperPluginData", () => {
     });
     expect(data.versionGroups).toEqual(["1.13", "1.21"]);
     expect(data.versions).toEqual(["1.13", "1.21.11"]);
+    expect(data.versionBuilds).toEqual([
+      {
+        minecraftVersion: "1.21.11",
+        latestBuild: 69,
+        buildCount: 3,
+      },
+    ]);
     expect(data.support.minecraftLatestGap.status).toBe("paper-not-yet-published-for-java-latest");
     expect(data.eventSearch.paperSources).toEqual(["spigot", "paper"]);
   });
