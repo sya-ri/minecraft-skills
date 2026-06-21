@@ -130,18 +130,55 @@ function makeManifestOnlyDetail(
   });
 }
 
+function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
+  const paper = getPaperPluginData();
+  if (paper.versions.includes(detail.version)) {
+    const facts = [`paper_supported=true`, `paper_minecraft_version=${detail.version}`];
+    if (paper.latest.minecraftVersion === detail.version) {
+      facts.push(`paper_latest_build=${paper.latest.build}`);
+    }
+    return VersionDetail.assert({
+      ...detail,
+      domains: {
+        ...detail.domains,
+        "paper-plugin": {
+          status: "supported",
+          facts,
+          unknowns: ["server_api_changes", "folia_compatibility_notes"],
+        },
+      },
+    });
+  }
+
+  return VersionDetail.assert({
+    ...detail,
+    domains: {
+      ...detail.domains,
+      "paper-plugin": {
+        status: "not-yet-published",
+        facts: [
+          "paper_supported=false",
+          `paper_latest_supported=${paper.latest.minecraftVersion}`,
+          `paper_latest_build=${paper.latest.build}`,
+        ],
+        unknowns: ["paper_api_version", "server_api_changes", "folia_compatibility_notes"],
+      },
+    },
+  });
+}
+
 export function getVersionDetail(edition = "java", requested = "latest"): VersionDetailData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
   const detailPath = `${editionId}/version-details/${version}.json`;
   if (hasDataFile(detailPath)) {
-    return VersionDetail.assert(readDataJson(detailPath));
+    return withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath)));
   }
   const summary = getVersionIndex(editionId).versions.find((candidate) => candidate.id === version);
   if (!summary) {
     throw new Error(`Unsupported ${editionId} version: ${version}`);
   }
-  return makeManifestOnlyDetail(editionId, summary);
+  return withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary));
 }
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {

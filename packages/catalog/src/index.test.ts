@@ -66,4 +66,18 @@ describe("catalog", () => {
     });
     expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
   });
+
+  it("marks Paper-supported version details", () => {
+    const version = getVersionDetail("java", "1.21.11");
+    expect(version.domains["paper-plugin"].status).toBe("supported");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_supported=true");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_build=69");
+  });
+
+  it("marks Java versions that Paper has not published yet", () => {
+    const version = getVersionDetail("java", "26.2");
+    expect(version.domains["paper-plugin"].status).toBe("not-yet-published");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_supported=false");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_supported=1.21.11");
+  });
 });
