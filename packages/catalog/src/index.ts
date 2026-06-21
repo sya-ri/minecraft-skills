@@ -292,6 +292,7 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
     const build = paper.versionBuilds.find(
       (candidate) => candidate.minecraftVersion === detail.version,
     );
+    const reference = makePaperApiReference(paper, detail.version);
     const facts = [`paper_supported=true`, `paper_minecraft_version=${detail.version}`];
     if (build) {
       facts.push(
@@ -299,6 +300,16 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
         `paper_build_count=${build.buildCount}`,
       );
     }
+    if (reference.apiDependency) {
+      facts.push(`paper_api_dependency=${reference.apiDependency}`);
+    }
+    if (reference.javadocsUrl) {
+      facts.push(`paper_javadocs=${reference.javadocsUrl}`);
+    }
+    facts.push(
+      `paper_folia_support_docs=${reference.docs.foliaSupport}`,
+      `paper_scheduler_docs=${reference.docs.scheduling}`,
+    );
     if (paper.latest.minecraftVersion === detail.version) {
       facts.push(`paper_global_latest_build=${paper.latest.build}`);
     }
@@ -307,9 +318,9 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
       domains: {
         ...detail.domains,
         "paper-plugin": {
-          status: "supported",
+          status: "api-reference-linked",
           facts,
-          unknowns: ["server_api_changes", "folia_compatibility_notes"],
+          unknowns: ["server_api_changes"],
         },
       },
     });
@@ -425,8 +436,10 @@ export function getPaperPluginData(): PaperPluginDataData {
   return PaperPluginData.assert(readDataJson("java/paper.json"));
 }
 
-export function getPaperApiReference(requested = "latest"): PaperApiReference {
-  const paper = getPaperPluginData();
+function makePaperApiReference(
+  paper: PaperPluginDataData,
+  requested = "latest",
+): PaperApiReference {
   const requestedVersion =
     requested === "latest" || requested === "latest-release"
       ? paper.latest.minecraftVersion
@@ -460,6 +473,10 @@ export function getPaperApiReference(requested = "latest"): PaperApiReference {
       paperSources: paper.eventSearch.paperSources,
     },
   };
+}
+
+export function getPaperApiReference(requested = "latest"): PaperApiReference {
+  return makePaperApiReference(getPaperPluginData(), requested);
 }
 
 export function listPackFormats(edition = "java"): PackFormatSummary[] {

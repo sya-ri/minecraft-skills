@@ -116,11 +116,21 @@ describe("catalog", () => {
 
   it("marks Paper-supported version details", () => {
     const version = getVersionDetail("java", "1.21.11");
-    expect(version.domains["paper-plugin"].status).toBe("supported");
+    expect(version.domains["paper-plugin"].status).toBe("api-reference-linked");
     expect(version.domains["paper-plugin"].facts).toContain("paper_supported=true");
     expect(version.domains["paper-plugin"].facts).toContain("paper_latest_build=69");
     expect(version.domains["paper-plugin"].facts).toContain("paper_build_count=32");
+    expect(version.domains["paper-plugin"].facts).toContain(
+      "paper_api_dependency=io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT",
+    );
+    expect(version.domains["paper-plugin"].facts).toContain(
+      "paper_javadocs=https://jd.papermc.io/paper/1.21.11/",
+    );
+    expect(version.domains["paper-plugin"].facts).toContain(
+      "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
+    );
     expect(version.domains["paper-plugin"].facts).toContain("paper_global_latest_build=69");
+    expect(version.domains["paper-plugin"].unknowns).toEqual(["server_api_changes"]);
   });
 
   it("marks Java versions that Paper has not published yet", () => {
