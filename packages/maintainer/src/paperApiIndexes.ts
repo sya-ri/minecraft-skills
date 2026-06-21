@@ -40,7 +40,8 @@ function decodeHtml(value: string): string {
 
 function extractPaperPackages(html: string, javadocsUrl: string): PaperApiPackage[] {
   const packages = new Map<string, PaperApiPackage>();
-  const linkPattern = /href="([^"]*package-summary\.html)"[^>]*>([^<]+)<\/a>/g;
+  const linkPattern = /href="([^"]*package-(?:summary|frame)\.html)"[^>]*>([^<]+)<\/a>/g;
+  const packageSearchIndexPattern = /"l":"([^"]+)"/g;
 
   for (const match of html.matchAll(linkPattern)) {
     const href = match[1];
@@ -50,7 +51,21 @@ function extractPaperPackages(html: string, javadocsUrl: string): PaperApiPackag
     }
     packages.set(name, {
       name,
-      url: new URL(href, javadocsUrl).toString(),
+      url: new URL(
+        href.replace(/package-frame\.html$/, "package-summary.html"),
+        javadocsUrl,
+      ).toString(),
+    });
+  }
+
+  for (const match of html.matchAll(packageSearchIndexPattern)) {
+    const name = decodeHtml(match[1]?.trim() ?? "");
+    if (!name || !/^(co|com|io|net|org)\./.test(name)) {
+      continue;
+    }
+    packages.set(name, {
+      name,
+      url: new URL(`${name.replaceAll(".", "/")}/package-summary.html`, javadocsUrl).toString(),
     });
   }
 
@@ -63,6 +78,31 @@ async function fetchText(url: string): Promise<string> {
     throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
   }
   return response.text();
+}
+
+async function fetchPaperJavadocsIndex(
+  javadocsUrl: string,
+): Promise<{ html: string; url: string }> {
+  const candidates = [
+    javadocsUrl,
+    new URL("overview-summary.html", javadocsUrl).toString(),
+    new URL("overview-frame.html", javadocsUrl).toString(),
+    new URL("package-search-index.js", javadocsUrl).toString(),
+  ];
+
+  for (const url of candidates) {
+    let html: string;
+    try {
+      html = await fetchText(url);
+    } catch {
+      continue;
+    }
+    if (extractPaperPackages(html, javadocsUrl).length > 0) {
+      return { html, url };
+    }
+  }
+
+  return { html: await fetchText(javadocsUrl), url: javadocsUrl };
 }
 
 export function buildPaperApiIndex(options: {
@@ -104,7 +144,7 @@ export async function ingestPaperApiIndexes(
   for (const version of getPaperPluginData().versions) {
     const javadocsUrl = `https://jd.papermc.io/paper/${version}/`;
     options.log?.(`fetch ${version}: Paper Javadocs package index`);
-    const html = await fetchText(javadocsUrl);
+    const { html, url } = await fetchPaperJavadocsIndex(javadocsUrl);
     let index: PaperApiIndex;
     try {
       index = buildPaperApiIndex({
@@ -116,6 +156,14 @@ export async function ingestPaperApiIndexes(
     } catch (error) {
       options.log?.(`skip ${version}: ${error instanceof Error ? error.message : String(error)}`);
       continue;
+    }
+    if (url !== javadocsUrl) {
+      index.sources.push({
+        id: `paper-javadocs-index-${version}`,
+        kind: "official-javadocs-index",
+        url,
+        retrievedAt: options.retrievedAt,
+      });
     }
     writeFileSync(join(outputRoot, `${version}.json`), `${JSON.stringify(index, null, 2)}\n`);
     written += 1;

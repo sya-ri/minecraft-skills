@@ -118,6 +118,13 @@ describe("catalog", () => {
     );
   });
 
+  it("loads legacy Paper API package indexes when Javadocs expose package tables", () => {
+    const index = getPaperApiIndex("1.13.2");
+    expect(index.minecraftVersion).toBe("1.13.2");
+    expect(index.packageCount).toBeGreaterThan(50);
+    expect(index.packages.map((entry) => entry.name)).toContain("org.bukkit.plugin");
+  });
+
   it("compares Paper API package indexes", () => {
     const comparison = comparePaperApi("1.20.4", "1.21.11");
     expect(comparison.from).toBe("1.20.4");

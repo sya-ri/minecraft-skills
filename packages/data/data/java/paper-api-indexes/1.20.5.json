@@ -561,6 +561,12 @@
       "kind": "official-javadocs",
       "url": "https://jd.papermc.io/paper/1.20.5/",
       "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "paper-javadocs-index-1.20.5",
+      "kind": "official-javadocs-index",
+      "url": "https://jd.papermc.io/paper/1.20.5/package-search-index.js",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
     }
   ]
 }
