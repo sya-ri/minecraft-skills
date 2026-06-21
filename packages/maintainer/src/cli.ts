@@ -58,6 +58,62 @@ function requireGeneratedHeader(root: string, path: string, messages: string[]):
   }
 }
 
+function readYamlStringField(content: string, key: string): string | undefined {
+  const match = content.match(new RegExp(`^\\s*${key}:\\s*"([^"]+)"\\s*$`, "m"));
+  return match?.[1];
+}
+
+function requireSkillMetadata(root: string, skill: string, messages: string[]): void {
+  const skillPath = `skills/${skill}/SKILL.md`;
+  const skillAbsolutePath = join(root, skillPath);
+  requireGeneratedHeader(root, skillPath, messages);
+
+  if (existsSync(skillAbsolutePath)) {
+    const content = readFileSync(skillAbsolutePath, "utf8");
+    const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontmatter) {
+      messages.push(`missing skill frontmatter: ${skillPath}`);
+    } else {
+      const frontmatterBody = frontmatter[1] ?? "";
+      const keys = [...frontmatterBody.matchAll(/^([a-z_]+):/gm)].map((match) => match[1] ?? "");
+      if (keys.join(",") !== "name,description") {
+        messages.push(`skill frontmatter must contain only name and description: ${skillPath}`);
+      }
+      if (!frontmatterBody.includes(`name: ${skill}`)) {
+        messages.push(`skill frontmatter name must match folder: ${skillPath}`);
+      }
+      if (!/^description: .+/m.test(frontmatterBody)) {
+        messages.push(`missing skill description: ${skillPath}`);
+      }
+    }
+  }
+
+  const openaiYamlPath = `skills/${skill}/agents/openai.yaml`;
+  const openaiYamlAbsolutePath = join(root, openaiYamlPath);
+  requireFile(root, openaiYamlPath, messages);
+  if (!existsSync(openaiYamlAbsolutePath)) {
+    return;
+  }
+
+  const metadata = readFileSync(openaiYamlAbsolutePath, "utf8");
+  const displayName = readYamlStringField(metadata, "display_name");
+  const shortDescription = readYamlStringField(metadata, "short_description");
+  const defaultPrompt = readYamlStringField(metadata, "default_prompt");
+  if (!displayName) {
+    messages.push(`missing display_name: ${openaiYamlPath}`);
+  }
+  if (!shortDescription) {
+    messages.push(`missing short_description: ${openaiYamlPath}`);
+  } else if (shortDescription.length < 25 || shortDescription.length > 64) {
+    messages.push(`short_description must be 25-64 characters: ${openaiYamlPath}`);
+  }
+  if (!defaultPrompt) {
+    messages.push(`missing default_prompt: ${openaiYamlPath}`);
+  } else if (!defaultPrompt.includes(`$${skill}`)) {
+    messages.push(`default_prompt must mention $${skill}: ${openaiYamlPath}`);
+  }
+}
+
 export function validateRepository(): ValidationResult {
   const messages: string[] = [];
   const root = findRepositoryRoot();
@@ -68,7 +124,7 @@ export function validateRepository(): ValidationResult {
   }
 
   for (const domain of listDomains()) {
-    requireGeneratedHeader(root, `skills/${domain.skill}/SKILL.md`, messages);
+    requireSkillMetadata(root, domain.skill, messages);
   }
 
   for (const reference of listReferences()) {

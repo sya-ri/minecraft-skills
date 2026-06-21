@@ -1,0 +1,5 @@
+interface:
+  display_name: "Minecraft Paper Plugins"
+  short_description: "Paper plugin API and event guidance"
+  default_prompt: "Use $minecraft-paper-plugins to review or migrate this Paper plugin for a target Minecraft version."
+

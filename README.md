@@ -212,8 +212,13 @@ node packages/maintainer/dist/cli.mjs ingest-vanilla-inventory \
 
 ## Skills
 
-Generated skills are committed under `skills/` and should not be edited directly.
+Generated skills are committed under `skills/` as standalone Agent Skills folders. Each skill has a
+`SKILL.md`, targeted references, and `agents/openai.yaml` UI metadata.
 
 - `skills/minecraft-datapacks`
 - `skills/minecraft-resourcepacks`
 - `skills/minecraft-paper-plugins`
+
+Install or reference those folders directly from this repository when using a skill installer such
+as `gh skills` or `npx skills`. The public npm packages are for machine-readable data, CLI, and MCP
+runtime access; the skill folders are the human-readable agent instructions.
