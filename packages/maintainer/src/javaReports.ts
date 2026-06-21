@@ -1,5 +1,15 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
+import { listZipEntries } from "./zip.js";
 
 type CommandNode = {
   type: string;
@@ -59,6 +69,19 @@ export type JavaReportsSummary = {
   }>;
 };
 
+function run(command: string, args: string[], cwd: string): void {
+  const result = spawnSync(command, args, {
+    cwd,
+    stdio: "inherit",
+  });
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(`${command} ${args.join(" ")} exited with ${result.status}`);
+  }
+}
+
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, "utf8")) as unknown;
 }
@@ -109,8 +132,16 @@ function readDatapack(reportsDir: string): {
   otherTypes: JavaReportsSummary["datapack"]["otherTypes"];
   registries: JavaReportsSummary["datapack"]["registries"];
 } {
+  const datapackPath = join(reportsDir, "datapack.json");
+  if (!existsSync(datapackPath)) {
+    return {
+      otherTypes: [],
+      registries: [],
+    };
+  }
   const datapack = asObject(readJson(join(reportsDir, "datapack.json")));
-  const registryDump = asObject(readJson(join(reportsDir, "registries.json")));
+  const registryDumpPath = join(reportsDir, "registries.json");
+  const registryDump = existsSync(registryDumpPath) ? asObject(readJson(registryDumpPath)) : {};
   const others = asObject(datapack.others);
   const registries = asObject(datapack.registries);
 
@@ -145,23 +176,77 @@ function readDatapack(reportsDir: string): {
 }
 
 function reportFiles(reportsDir: string): JavaReportsSummary["reports"] {
-  const names = [
-    "blocks.json",
-    "commands.json",
-    "datapack.json",
-    "json-rpc-api-schema.json",
-    "packets.json",
-    "registries.json",
-  ];
-  return names
+  return readdirSync(reportsDir)
+    .filter((name) => name.endsWith(".json"))
     .map((name) => {
-      const content = readFileSync(join(reportsDir, name));
       return {
         path: `reports/${name}`,
-        size: content.length,
+        size: statSync(join(reportsDir, name)).size,
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function listJarFiles(root: string): string[] {
+  const result: string[] = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = join(root, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...listJarFiles(path));
+    } else if (entry.isFile() && entry.name.endsWith(".jar")) {
+      result.push(path);
+    }
+  }
+  return result.sort();
+}
+
+function findBundledServerJar(workDir: string): string {
+  const versionJars = listJarFiles(join(workDir, "versions"));
+  const serverJar = versionJars.find((path) => path.includes("/server-"));
+  if (!serverJar) {
+    throw new Error(`Could not find unpacked bundled server jar under ${workDir}/versions`);
+  }
+  return serverJar;
+}
+
+export function generateJavaReports(options: {
+  javaBin: string;
+  serverJarPath: string;
+  workDir: string;
+  outputDir: string;
+}): void {
+  rmSync(options.workDir, { recursive: true, force: true });
+  mkdirSync(options.workDir, { recursive: true });
+  const serverJar = readFileSync(options.serverJarPath);
+  const bundled = listZipEntries(serverJar).some(
+    (entry) => entry.name === "META-INF/versions.list",
+  );
+  const outputDir = options.outputDir;
+
+  if (bundled) {
+    run(options.javaBin, ["-jar", options.serverJarPath, "--help"], options.workDir);
+    const mainJar = findBundledServerJar(options.workDir);
+    const libraries = listJarFiles(join(options.workDir, "libraries"));
+    run(
+      options.javaBin,
+      [
+        "-cp",
+        [mainJar, ...libraries].join(":"),
+        "net.minecraft.data.Main",
+        "--reports",
+        "--output",
+        outputDir,
+      ],
+      options.workDir,
+    );
+    return;
+  }
+
+  run(
+    options.javaBin,
+    ["-cp", options.serverJarPath, "net.minecraft.data.Main", "--reports", "--output", outputDir],
+    options.workDir,
+  );
 }
 
 export function buildJavaReportsSummary(options: {

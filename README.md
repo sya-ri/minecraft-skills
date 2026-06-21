@@ -76,7 +76,9 @@ node packages/maintainer/dist/cli.mjs ingest-java-version-details \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
-Generate and ingest server reports for a Java release:
+Generate and ingest server reports for a Java release. For modern bundled server jars, run the
+server jar once with `--help` to unpack the inner server jar and libraries, then run Mojang's data
+generator main class:
 
 ```sh
 java -jar /tmp/minecraft-26.2-server.jar --help

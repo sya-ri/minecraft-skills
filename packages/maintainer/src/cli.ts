@@ -8,7 +8,11 @@ import {
   listReferences,
 } from "@minecraft-skills/catalog";
 import { buildJavaVersionIndex } from "./javaManifest.js";
-import { buildJavaReportsSummary, writeJavaReportsSummary } from "./javaReports.js";
+import {
+  buildJavaReportsSummary,
+  generateJavaReports,
+  writeJavaReportsSummary,
+} from "./javaReports.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { buildPaperPluginData } from "./paperProject.js";
@@ -86,6 +90,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
+  minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
@@ -98,6 +103,8 @@ Commands:
                         Generate detail JSON from Mojang version JSON and optional client jar.
   ingest-java-version-details
                         Download and generate missing detail JSON for all indexed Java releases.
+  generate-java-reports
+                        Run Mojang data generator reports from a server jar.
   ingest-java-reports   Generate compact report summary and command path index from server reports.
   ingest-paper-project
                         Generate Paper plugin support and event search data from PaperMC API JSON.
@@ -196,6 +203,28 @@ function ingestJavaReports(args: string[]): void {
     ...summary,
   });
   console.log(`wrote Java ${detail.version} reports summary and command paths`);
+}
+
+function generateReports(args: string[]): void {
+  const serverJarPath = readOption(args, "--server-jar");
+  if (!serverJarPath) {
+    throw new Error("generate-java-reports requires --server-jar <server.jar>");
+  }
+  const workDir = readOption(args, "--work-dir");
+  if (!workDir) {
+    throw new Error("generate-java-reports requires --work-dir <dir>");
+  }
+  const outputDir = readOption(args, "--output-dir");
+  if (!outputDir) {
+    throw new Error("generate-java-reports requires --output-dir <dir>");
+  }
+  generateJavaReports({
+    javaBin: readOption(args, "--java-bin") ?? "java",
+    serverJarPath,
+    workDir,
+    outputDir,
+  });
+  console.log(`wrote generated Java reports to ${outputDir}`);
 }
 
 function ingestPaperProject(args: string[]): void {
@@ -309,6 +338,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-java-reports") {
       ingestJavaReports(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "generate-java-reports") {
+      generateReports(argv.slice(1));
       return 0;
     }
 

@@ -1,0 +1,690 @@
+advancement grant <targets:minecraft:entity> everything
+advancement grant <targets:minecraft:entity> from <advancement:minecraft:resource_location>
+advancement grant <targets:minecraft:entity> only <advancement:minecraft:resource_location>
+advancement grant <targets:minecraft:entity> only <advancement:minecraft:resource_location> <criterion:brigadier:string>
+advancement grant <targets:minecraft:entity> through <advancement:minecraft:resource_location>
+advancement grant <targets:minecraft:entity> until <advancement:minecraft:resource_location>
+advancement revoke <targets:minecraft:entity> everything
+advancement revoke <targets:minecraft:entity> from <advancement:minecraft:resource_location>
+advancement revoke <targets:minecraft:entity> only <advancement:minecraft:resource_location>
+advancement revoke <targets:minecraft:entity> only <advancement:minecraft:resource_location> <criterion:brigadier:string>
+advancement revoke <targets:minecraft:entity> through <advancement:minecraft:resource_location>
+advancement revoke <targets:minecraft:entity> until <advancement:minecraft:resource_location>
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> base get
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> base get <scale:brigadier:double>
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> base set <value:brigadier:double>
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> get
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> get <scale:brigadier:double>
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> modifier add <uuid:minecraft:uuid> <name:brigadier:string> <value:brigadier:double> add
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> modifier add <uuid:minecraft:uuid> <name:brigadier:string> <value:brigadier:double> multiply
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> modifier add <uuid:minecraft:uuid> <name:brigadier:string> <value:brigadier:double> multiply_base
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> modifier remove <uuid:minecraft:uuid>
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> modifier value get <uuid:minecraft:uuid>
+attribute <target:minecraft:entity> <attribute:minecraft:resource_location> modifier value get <uuid:minecraft:uuid> <scale:brigadier:double>
+ban <targets:minecraft:game_profile>
+ban <targets:minecraft:game_profile> <reason:minecraft:message>
+ban-ip <target:brigadier:string>
+ban-ip <target:brigadier:string> <reason:minecraft:message>
+banlist
+banlist ips
+banlist players
+bossbar add <id:minecraft:resource_location> <name:minecraft:component>
+bossbar get <id:minecraft:resource_location> max
+bossbar get <id:minecraft:resource_location> players
+bossbar get <id:minecraft:resource_location> value
+bossbar get <id:minecraft:resource_location> visible
+bossbar list
+bossbar remove <id:minecraft:resource_location>
+bossbar set <id:minecraft:resource_location> color blue
+bossbar set <id:minecraft:resource_location> color green
+bossbar set <id:minecraft:resource_location> color pink
+bossbar set <id:minecraft:resource_location> color purple
+bossbar set <id:minecraft:resource_location> color red
+bossbar set <id:minecraft:resource_location> color white
+bossbar set <id:minecraft:resource_location> color yellow
+bossbar set <id:minecraft:resource_location> max <max:brigadier:integer>
+bossbar set <id:minecraft:resource_location> name <name:minecraft:component>
+bossbar set <id:minecraft:resource_location> players
+bossbar set <id:minecraft:resource_location> players <targets:minecraft:entity>
+bossbar set <id:minecraft:resource_location> style notched_10
+bossbar set <id:minecraft:resource_location> style notched_12
+bossbar set <id:minecraft:resource_location> style notched_20
+bossbar set <id:minecraft:resource_location> style notched_6
+bossbar set <id:minecraft:resource_location> style progress
+bossbar set <id:minecraft:resource_location> value <value:brigadier:integer>
+bossbar set <id:minecraft:resource_location> visible <visible:brigadier:bool>
+clear
+clear <targets:minecraft:entity>
+clear <targets:minecraft:entity> <item:minecraft:item_predicate>
+clear <targets:minecraft:entity> <item:minecraft:item_predicate> <maxCount:brigadier:integer>
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos>
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> filtered <filter:minecraft:block_predicate>
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> filtered <filter:minecraft:block_predicate> force
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> filtered <filter:minecraft:block_predicate> move
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> filtered <filter:minecraft:block_predicate> normal
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> masked
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> masked force
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> masked move
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> masked normal
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> replace
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> replace force
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> replace move
+clone <begin:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> replace normal
+data get block <targetPos:minecraft:block_pos>
+data get block <targetPos:minecraft:block_pos> <path:minecraft:nbt_path>
+data get block <targetPos:minecraft:block_pos> <path:minecraft:nbt_path> <scale:brigadier:double>
+data get entity <target:minecraft:entity>
+data get entity <target:minecraft:entity> <path:minecraft:nbt_path>
+data get entity <target:minecraft:entity> <path:minecraft:nbt_path> <scale:brigadier:double>
+data get storage <target:minecraft:resource_location>
+data get storage <target:minecraft:resource_location> <path:minecraft:nbt_path>
+data get storage <target:minecraft:resource_location> <path:minecraft:nbt_path> <scale:brigadier:double>
+data merge block <targetPos:minecraft:block_pos> <nbt:minecraft:nbt_compound_tag>
+data merge entity <target:minecraft:entity> <nbt:minecraft:nbt_compound_tag>
+data merge storage <target:minecraft:resource_location> <nbt:minecraft:nbt_compound_tag>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append from block <sourcePos:minecraft:block_pos>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append from entity <source:minecraft:entity>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append from storage <source:minecraft:resource_location>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> append value <value:minecraft:nbt_tag>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from block <sourcePos:minecraft:block_pos>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from entity <source:minecraft:entity>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from storage <source:minecraft:resource_location>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> value <value:minecraft:nbt_tag>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge from block <sourcePos:minecraft:block_pos>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge from entity <source:minecraft:entity>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge from storage <source:minecraft:resource_location>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> merge value <value:minecraft:nbt_tag>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend from block <sourcePos:minecraft:block_pos>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend from entity <source:minecraft:entity>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend from storage <source:minecraft:resource_location>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> prepend value <value:minecraft:nbt_tag>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set from block <sourcePos:minecraft:block_pos>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set from entity <source:minecraft:entity>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set from storage <source:minecraft:resource_location>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify block <targetPos:minecraft:block_pos> <targetPath:minecraft:nbt_path> set value <value:minecraft:nbt_tag>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append from block <sourcePos:minecraft:block_pos>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append from entity <source:minecraft:entity>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append from storage <source:minecraft:resource_location>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> append value <value:minecraft:nbt_tag>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from block <sourcePos:minecraft:block_pos>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from entity <source:minecraft:entity>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from storage <source:minecraft:resource_location>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> value <value:minecraft:nbt_tag>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge from block <sourcePos:minecraft:block_pos>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge from entity <source:minecraft:entity>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge from storage <source:minecraft:resource_location>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> merge value <value:minecraft:nbt_tag>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend from block <sourcePos:minecraft:block_pos>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend from entity <source:minecraft:entity>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend from storage <source:minecraft:resource_location>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> prepend value <value:minecraft:nbt_tag>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set from block <sourcePos:minecraft:block_pos>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set from entity <source:minecraft:entity>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set from storage <source:minecraft:resource_location>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify entity <target:minecraft:entity> <targetPath:minecraft:nbt_path> set value <value:minecraft:nbt_tag>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append from block <sourcePos:minecraft:block_pos>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append from entity <source:minecraft:entity>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append from storage <source:minecraft:resource_location>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> append value <value:minecraft:nbt_tag>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from block <sourcePos:minecraft:block_pos>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from entity <source:minecraft:entity>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from storage <source:minecraft:resource_location>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> insert <index:brigadier:integer> value <value:minecraft:nbt_tag>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge from block <sourcePos:minecraft:block_pos>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge from entity <source:minecraft:entity>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge from storage <source:minecraft:resource_location>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> merge value <value:minecraft:nbt_tag>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend from block <sourcePos:minecraft:block_pos>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend from entity <source:minecraft:entity>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend from storage <source:minecraft:resource_location>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> prepend value <value:minecraft:nbt_tag>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set from block <sourcePos:minecraft:block_pos>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set from block <sourcePos:minecraft:block_pos> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set from entity <source:minecraft:entity>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set from entity <source:minecraft:entity> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set from storage <source:minecraft:resource_location>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set from storage <source:minecraft:resource_location> <sourcePath:minecraft:nbt_path>
+data modify storage <target:minecraft:resource_location> <targetPath:minecraft:nbt_path> set value <value:minecraft:nbt_tag>
+data remove block <targetPos:minecraft:block_pos> <path:minecraft:nbt_path>
+data remove entity <target:minecraft:entity> <path:minecraft:nbt_path>
+data remove storage <target:minecraft:resource_location> <path:minecraft:nbt_path>
+datapack disable <name:brigadier:string>
+datapack enable <name:brigadier:string>
+datapack enable <name:brigadier:string> after <existing:brigadier:string>
+datapack enable <name:brigadier:string> before <existing:brigadier:string>
+datapack enable <name:brigadier:string> first
+datapack enable <name:brigadier:string> last
+datapack list
+datapack list available
+datapack list enabled
+debug function <name:minecraft:function>
+debug start
+debug stop
+defaultgamemode adventure
+defaultgamemode creative
+defaultgamemode spectator
+defaultgamemode survival
+deop <targets:minecraft:game_profile>
+difficulty
+difficulty easy
+difficulty hard
+difficulty normal
+difficulty peaceful
+effect clear
+effect clear <targets:minecraft:entity>
+effect clear <targets:minecraft:entity> <effect:minecraft:mob_effect>
+effect give <targets:minecraft:entity> <effect:minecraft:mob_effect>
+effect give <targets:minecraft:entity> <effect:minecraft:mob_effect> <seconds:brigadier:integer>
+effect give <targets:minecraft:entity> <effect:minecraft:mob_effect> <seconds:brigadier:integer> <amplifier:brigadier:integer>
+effect give <targets:minecraft:entity> <effect:minecraft:mob_effect> <seconds:brigadier:integer> <amplifier:brigadier:integer> <hideParticles:brigadier:bool>
+enchant <targets:minecraft:entity> <enchantment:minecraft:item_enchantment>
+enchant <targets:minecraft:entity> <enchantment:minecraft:item_enchantment> <level:brigadier:integer>
+execute if block <pos:minecraft:block_pos> <block:minecraft:block_predicate>
+execute if blocks <start:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> all
+execute if blocks <start:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> masked
+execute if data block <sourcePos:minecraft:block_pos> <path:minecraft:nbt_path>
+execute if data entity <source:minecraft:entity> <path:minecraft:nbt_path>
+execute if data storage <source:minecraft:resource_location> <path:minecraft:nbt_path>
+execute if entity <entities:minecraft:entity>
+execute if predicate <predicate:minecraft:resource_location>
+execute if score <target:minecraft:score_holder> <targetObjective:minecraft:objective> < <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute if score <target:minecraft:score_holder> <targetObjective:minecraft:objective> <= <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute if score <target:minecraft:score_holder> <targetObjective:minecraft:objective> = <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute if score <target:minecraft:score_holder> <targetObjective:minecraft:objective> > <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute if score <target:minecraft:score_holder> <targetObjective:minecraft:objective> >= <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute if score <target:minecraft:score_holder> <targetObjective:minecraft:objective> matches <range:minecraft:int_range>
+execute unless block <pos:minecraft:block_pos> <block:minecraft:block_predicate>
+execute unless blocks <start:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> all
+execute unless blocks <start:minecraft:block_pos> <end:minecraft:block_pos> <destination:minecraft:block_pos> masked
+execute unless data block <sourcePos:minecraft:block_pos> <path:minecraft:nbt_path>
+execute unless data entity <source:minecraft:entity> <path:minecraft:nbt_path>
+execute unless data storage <source:minecraft:resource_location> <path:minecraft:nbt_path>
+execute unless entity <entities:minecraft:entity>
+execute unless predicate <predicate:minecraft:resource_location>
+execute unless score <target:minecraft:score_holder> <targetObjective:minecraft:objective> < <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute unless score <target:minecraft:score_holder> <targetObjective:minecraft:objective> <= <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute unless score <target:minecraft:score_holder> <targetObjective:minecraft:objective> = <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute unless score <target:minecraft:score_holder> <targetObjective:minecraft:objective> > <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute unless score <target:minecraft:score_holder> <targetObjective:minecraft:objective> >= <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+execute unless score <target:minecraft:score_holder> <targetObjective:minecraft:objective> matches <range:minecraft:int_range>
+experience add <targets:minecraft:entity> <amount:brigadier:integer>
+experience add <targets:minecraft:entity> <amount:brigadier:integer> levels
+experience add <targets:minecraft:entity> <amount:brigadier:integer> points
+experience query <targets:minecraft:entity> levels
+experience query <targets:minecraft:entity> points
+experience set <targets:minecraft:entity> <amount:brigadier:integer>
+experience set <targets:minecraft:entity> <amount:brigadier:integer> levels
+experience set <targets:minecraft:entity> <amount:brigadier:integer> points
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state>
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state> destroy
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state> hollow
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state> keep
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state> outline
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state> replace
+fill <from:minecraft:block_pos> <to:minecraft:block_pos> <block:minecraft:block_state> replace <filter:minecraft:block_predicate>
+forceload add <from:minecraft:column_pos>
+forceload add <from:minecraft:column_pos> <to:minecraft:column_pos>
+forceload query
+forceload query <pos:minecraft:column_pos>
+forceload remove <from:minecraft:column_pos>
+forceload remove <from:minecraft:column_pos> <to:minecraft:column_pos>
+forceload remove all
+function <name:minecraft:function>
+gamemode adventure
+gamemode adventure <target:minecraft:entity>
+gamemode creative
+gamemode creative <target:minecraft:entity>
+gamemode spectator
+gamemode spectator <target:minecraft:entity>
+gamemode survival
+gamemode survival <target:minecraft:entity>
+gamerule announceAdvancements
+gamerule announceAdvancements <value:brigadier:bool>
+gamerule commandBlockOutput
+gamerule commandBlockOutput <value:brigadier:bool>
+gamerule disableElytraMovementCheck
+gamerule disableElytraMovementCheck <value:brigadier:bool>
+gamerule disableRaids
+gamerule disableRaids <value:brigadier:bool>
+gamerule doDaylightCycle
+gamerule doDaylightCycle <value:brigadier:bool>
+gamerule doEntityDrops
+gamerule doEntityDrops <value:brigadier:bool>
+gamerule doFireTick
+gamerule doFireTick <value:brigadier:bool>
+gamerule doImmediateRespawn
+gamerule doImmediateRespawn <value:brigadier:bool>
+gamerule doInsomnia
+gamerule doInsomnia <value:brigadier:bool>
+gamerule doLimitedCrafting
+gamerule doLimitedCrafting <value:brigadier:bool>
+gamerule doMobLoot
+gamerule doMobLoot <value:brigadier:bool>
+gamerule doMobSpawning
+gamerule doMobSpawning <value:brigadier:bool>
+gamerule doPatrolSpawning
+gamerule doPatrolSpawning <value:brigadier:bool>
+gamerule doTileDrops
+gamerule doTileDrops <value:brigadier:bool>
+gamerule doTraderSpawning
+gamerule doTraderSpawning <value:brigadier:bool>
+gamerule doWeatherCycle
+gamerule doWeatherCycle <value:brigadier:bool>
+gamerule drowningDamage
+gamerule drowningDamage <value:brigadier:bool>
+gamerule fallDamage
+gamerule fallDamage <value:brigadier:bool>
+gamerule fireDamage
+gamerule fireDamage <value:brigadier:bool>
+gamerule forgiveDeadPlayers
+gamerule forgiveDeadPlayers <value:brigadier:bool>
+gamerule freezeDamage
+gamerule freezeDamage <value:brigadier:bool>
+gamerule keepInventory
+gamerule keepInventory <value:brigadier:bool>
+gamerule logAdminCommands
+gamerule logAdminCommands <value:brigadier:bool>
+gamerule maxCommandChainLength
+gamerule maxCommandChainLength <value:brigadier:integer>
+gamerule maxEntityCramming
+gamerule maxEntityCramming <value:brigadier:integer>
+gamerule mobGriefing
+gamerule mobGriefing <value:brigadier:bool>
+gamerule naturalRegeneration
+gamerule naturalRegeneration <value:brigadier:bool>
+gamerule playersSleepingPercentage
+gamerule playersSleepingPercentage <value:brigadier:integer>
+gamerule randomTickSpeed
+gamerule randomTickSpeed <value:brigadier:integer>
+gamerule reducedDebugInfo
+gamerule reducedDebugInfo <value:brigadier:bool>
+gamerule sendCommandFeedback
+gamerule sendCommandFeedback <value:brigadier:bool>
+gamerule showDeathMessages
+gamerule showDeathMessages <value:brigadier:bool>
+gamerule spawnRadius
+gamerule spawnRadius <value:brigadier:integer>
+gamerule spectatorsGenerateChunks
+gamerule spectatorsGenerateChunks <value:brigadier:bool>
+gamerule universalAnger
+gamerule universalAnger <value:brigadier:bool>
+give <targets:minecraft:entity> <item:minecraft:item_stack>
+give <targets:minecraft:entity> <item:minecraft:item_stack> <count:brigadier:integer>
+help
+help <command:brigadier:string>
+item modify block <pos:minecraft:block_pos> <slot:minecraft:item_slot> <modifier:minecraft:resource_location>
+item modify entity <targets:minecraft:entity> <slot:minecraft:item_slot> <modifier:minecraft:resource_location>
+item replace block <pos:minecraft:block_pos> <slot:minecraft:item_slot> from block <source:minecraft:block_pos> <sourceSlot:minecraft:item_slot>
+item replace block <pos:minecraft:block_pos> <slot:minecraft:item_slot> from block <source:minecraft:block_pos> <sourceSlot:minecraft:item_slot> <modifier:minecraft:resource_location>
+item replace block <pos:minecraft:block_pos> <slot:minecraft:item_slot> from entity <source:minecraft:entity> <sourceSlot:minecraft:item_slot>
+item replace block <pos:minecraft:block_pos> <slot:minecraft:item_slot> from entity <source:minecraft:entity> <sourceSlot:minecraft:item_slot> <modifier:minecraft:resource_location>
+item replace block <pos:minecraft:block_pos> <slot:minecraft:item_slot> with <item:minecraft:item_stack>
+item replace block <pos:minecraft:block_pos> <slot:minecraft:item_slot> with <item:minecraft:item_stack> <count:brigadier:integer>
+item replace entity <targets:minecraft:entity> <slot:minecraft:item_slot> from block <source:minecraft:block_pos> <sourceSlot:minecraft:item_slot>
+item replace entity <targets:minecraft:entity> <slot:minecraft:item_slot> from block <source:minecraft:block_pos> <sourceSlot:minecraft:item_slot> <modifier:minecraft:resource_location>
+item replace entity <targets:minecraft:entity> <slot:minecraft:item_slot> from entity <source:minecraft:entity> <sourceSlot:minecraft:item_slot>
+item replace entity <targets:minecraft:entity> <slot:minecraft:item_slot> from entity <source:minecraft:entity> <sourceSlot:minecraft:item_slot> <modifier:minecraft:resource_location>
+item replace entity <targets:minecraft:entity> <slot:minecraft:item_slot> with <item:minecraft:item_stack>
+item replace entity <targets:minecraft:entity> <slot:minecraft:item_slot> with <item:minecraft:item_stack> <count:brigadier:integer>
+jfr start
+jfr stop
+kick <targets:minecraft:entity>
+kick <targets:minecraft:entity> <reason:minecraft:message>
+kill
+kill <targets:minecraft:entity>
+list
+list uuids
+locate bastion_remnant
+locate buried_treasure
+locate desert_pyramid
+locate endcity
+locate fortress
+locate igloo
+locate jungle_pyramid
+locate mansion
+locate mineshaft
+locate monument
+locate nether_fossil
+locate ocean_ruin
+locate pillager_outpost
+locate ruined_portal
+locate shipwreck
+locate stronghold
+locate swamp_hut
+locate village
+locatebiome <biome:minecraft:resource_location>
+loot give <players:minecraft:entity> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot give <players:minecraft:entity> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot give <players:minecraft:entity> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot give <players:minecraft:entity> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot give <players:minecraft:entity> kill <target:minecraft:entity>
+loot give <players:minecraft:entity> loot <loot_table:minecraft:resource_location>
+loot give <players:minecraft:entity> mine <pos:minecraft:block_pos>
+loot give <players:minecraft:entity> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot give <players:minecraft:entity> mine <pos:minecraft:block_pos> mainhand
+loot give <players:minecraft:entity> mine <pos:minecraft:block_pos> offhand
+loot insert <targetPos:minecraft:block_pos> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot insert <targetPos:minecraft:block_pos> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot insert <targetPos:minecraft:block_pos> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot insert <targetPos:minecraft:block_pos> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot insert <targetPos:minecraft:block_pos> kill <target:minecraft:entity>
+loot insert <targetPos:minecraft:block_pos> loot <loot_table:minecraft:resource_location>
+loot insert <targetPos:minecraft:block_pos> mine <pos:minecraft:block_pos>
+loot insert <targetPos:minecraft:block_pos> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot insert <targetPos:minecraft:block_pos> mine <pos:minecraft:block_pos> mainhand
+loot insert <targetPos:minecraft:block_pos> mine <pos:minecraft:block_pos> offhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> kill <target:minecraft:entity>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> loot <loot_table:minecraft:resource_location>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos> mainhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos> offhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> kill <target:minecraft:entity>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> loot <loot_table:minecraft:resource_location>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos> mainhand
+loot replace block <targetPos:minecraft:block_pos> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos> offhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> kill <target:minecraft:entity>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> loot <loot_table:minecraft:resource_location>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos> mainhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> <count:brigadier:integer> mine <pos:minecraft:block_pos> offhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> kill <target:minecraft:entity>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> loot <loot_table:minecraft:resource_location>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos> mainhand
+loot replace entity <entities:minecraft:entity> <slot:minecraft:item_slot> mine <pos:minecraft:block_pos> offhand
+loot spawn <targetPos:minecraft:vec3> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos>
+loot spawn <targetPos:minecraft:vec3> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot spawn <targetPos:minecraft:vec3> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> mainhand
+loot spawn <targetPos:minecraft:vec3> fish <loot_table:minecraft:resource_location> <pos:minecraft:block_pos> offhand
+loot spawn <targetPos:minecraft:vec3> kill <target:minecraft:entity>
+loot spawn <targetPos:minecraft:vec3> loot <loot_table:minecraft:resource_location>
+loot spawn <targetPos:minecraft:vec3> mine <pos:minecraft:block_pos>
+loot spawn <targetPos:minecraft:vec3> mine <pos:minecraft:block_pos> <tool:minecraft:item_stack>
+loot spawn <targetPos:minecraft:vec3> mine <pos:minecraft:block_pos> mainhand
+loot spawn <targetPos:minecraft:vec3> mine <pos:minecraft:block_pos> offhand
+me <action:brigadier:string>
+msg <targets:minecraft:entity> <message:minecraft:message>
+op <targets:minecraft:game_profile>
+pardon <targets:minecraft:game_profile>
+pardon-ip <target:brigadier:string>
+particle <name:minecraft:particle>
+particle <name:minecraft:particle> <pos:minecraft:vec3>
+particle <name:minecraft:particle> <pos:minecraft:vec3> <delta:minecraft:vec3> <speed:brigadier:float> <count:brigadier:integer>
+particle <name:minecraft:particle> <pos:minecraft:vec3> <delta:minecraft:vec3> <speed:brigadier:float> <count:brigadier:integer> force
+particle <name:minecraft:particle> <pos:minecraft:vec3> <delta:minecraft:vec3> <speed:brigadier:float> <count:brigadier:integer> force <viewers:minecraft:entity>
+particle <name:minecraft:particle> <pos:minecraft:vec3> <delta:minecraft:vec3> <speed:brigadier:float> <count:brigadier:integer> normal
+particle <name:minecraft:particle> <pos:minecraft:vec3> <delta:minecraft:vec3> <speed:brigadier:float> <count:brigadier:integer> normal <viewers:minecraft:entity>
+perf start
+perf stop
+playsound <sound:minecraft:resource_location> ambient <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> ambient <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> ambient <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> ambient <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> ambient <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> block <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> block <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> block <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> block <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> block <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> hostile <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> hostile <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> hostile <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> hostile <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> hostile <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> master <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> master <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> master <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> master <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> master <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> music <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> music <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> music <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> music <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> music <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> neutral <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> neutral <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> neutral <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> neutral <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> neutral <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> player <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> player <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> player <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> player <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> player <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> record <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> record <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> record <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> record <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> record <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> voice <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> voice <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> voice <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> voice <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> voice <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+playsound <sound:minecraft:resource_location> weather <targets:minecraft:entity>
+playsound <sound:minecraft:resource_location> weather <targets:minecraft:entity> <pos:minecraft:vec3>
+playsound <sound:minecraft:resource_location> weather <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float>
+playsound <sound:minecraft:resource_location> weather <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float>
+playsound <sound:minecraft:resource_location> weather <targets:minecraft:entity> <pos:minecraft:vec3> <volume:brigadier:float> <pitch:brigadier:float> <minVolume:brigadier:float>
+publish
+publish <port:brigadier:integer>
+recipe give <targets:minecraft:entity> *
+recipe give <targets:minecraft:entity> <recipe:minecraft:resource_location>
+recipe take <targets:minecraft:entity> *
+recipe take <targets:minecraft:entity> <recipe:minecraft:resource_location>
+reload
+save-all
+save-all flush
+save-off
+save-on
+say <message:minecraft:message>
+schedule clear <function:brigadier:string>
+schedule function <function:minecraft:function> <time:minecraft:time>
+schedule function <function:minecraft:function> <time:minecraft:time> append
+schedule function <function:minecraft:function> <time:minecraft:time> replace
+scoreboard objectives add <objective:brigadier:string> <criteria:minecraft:objective_criteria>
+scoreboard objectives add <objective:brigadier:string> <criteria:minecraft:objective_criteria> <displayName:minecraft:component>
+scoreboard objectives list
+scoreboard objectives modify <objective:minecraft:objective> displayname <displayName:minecraft:component>
+scoreboard objectives modify <objective:minecraft:objective> rendertype hearts
+scoreboard objectives modify <objective:minecraft:objective> rendertype integer
+scoreboard objectives remove <objective:minecraft:objective>
+scoreboard objectives setdisplay <slot:minecraft:scoreboard_slot>
+scoreboard objectives setdisplay <slot:minecraft:scoreboard_slot> <objective:minecraft:objective>
+scoreboard players add <targets:minecraft:score_holder> <objective:minecraft:objective> <score:brigadier:integer>
+scoreboard players enable <targets:minecraft:score_holder> <objective:minecraft:objective>
+scoreboard players get <target:minecraft:score_holder> <objective:minecraft:objective>
+scoreboard players list
+scoreboard players list <target:minecraft:score_holder>
+scoreboard players operation <targets:minecraft:score_holder> <targetObjective:minecraft:objective> <operation:minecraft:operation> <source:minecraft:score_holder> <sourceObjective:minecraft:objective>
+scoreboard players remove <targets:minecraft:score_holder> <objective:minecraft:objective> <score:brigadier:integer>
+scoreboard players reset <targets:minecraft:score_holder>
+scoreboard players reset <targets:minecraft:score_holder> <objective:minecraft:objective>
+scoreboard players set <targets:minecraft:score_holder> <objective:minecraft:objective> <score:brigadier:integer>
+seed
+setblock <pos:minecraft:block_pos> <block:minecraft:block_state>
+setblock <pos:minecraft:block_pos> <block:minecraft:block_state> destroy
+setblock <pos:minecraft:block_pos> <block:minecraft:block_state> keep
+setblock <pos:minecraft:block_pos> <block:minecraft:block_state> replace
+setidletimeout <minutes:brigadier:integer>
+setworldspawn
+setworldspawn <pos:minecraft:block_pos>
+setworldspawn <pos:minecraft:block_pos> <angle:minecraft:angle>
+spawnpoint
+spawnpoint <targets:minecraft:entity>
+spawnpoint <targets:minecraft:entity> <pos:minecraft:block_pos>
+spawnpoint <targets:minecraft:entity> <pos:minecraft:block_pos> <angle:minecraft:angle>
+spectate
+spectate <target:minecraft:entity>
+spectate <target:minecraft:entity> <player:minecraft:entity>
+spreadplayers <center:minecraft:vec2> <spreadDistance:brigadier:float> <maxRange:brigadier:float> <respectTeams:brigadier:bool> <targets:minecraft:entity>
+spreadplayers <center:minecraft:vec2> <spreadDistance:brigadier:float> <maxRange:brigadier:float> under <maxHeight:brigadier:integer> <respectTeams:brigadier:bool> <targets:minecraft:entity>
+stop
+stopsound <targets:minecraft:entity>
+stopsound <targets:minecraft:entity> * <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> ambient
+stopsound <targets:minecraft:entity> ambient <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> block
+stopsound <targets:minecraft:entity> block <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> hostile
+stopsound <targets:minecraft:entity> hostile <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> master
+stopsound <targets:minecraft:entity> master <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> music
+stopsound <targets:minecraft:entity> music <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> neutral
+stopsound <targets:minecraft:entity> neutral <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> player
+stopsound <targets:minecraft:entity> player <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> record
+stopsound <targets:minecraft:entity> record <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> voice
+stopsound <targets:minecraft:entity> voice <sound:minecraft:resource_location>
+stopsound <targets:minecraft:entity> weather
+stopsound <targets:minecraft:entity> weather <sound:minecraft:resource_location>
+summon <entity:minecraft:entity_summon>
+summon <entity:minecraft:entity_summon> <pos:minecraft:vec3>
+summon <entity:minecraft:entity_summon> <pos:minecraft:vec3> <nbt:minecraft:nbt_compound_tag>
+tag <targets:minecraft:entity> add <name:brigadier:string>
+tag <targets:minecraft:entity> list
+tag <targets:minecraft:entity> remove <name:brigadier:string>
+team add <team:brigadier:string>
+team add <team:brigadier:string> <displayName:minecraft:component>
+team empty <team:minecraft:team>
+team join <team:minecraft:team>
+team join <team:minecraft:team> <members:minecraft:score_holder>
+team leave <members:minecraft:score_holder>
+team list
+team list <team:minecraft:team>
+team modify <team:minecraft:team> collisionRule always
+team modify <team:minecraft:team> collisionRule never
+team modify <team:minecraft:team> collisionRule pushOtherTeams
+team modify <team:minecraft:team> collisionRule pushOwnTeam
+team modify <team:minecraft:team> color <value:minecraft:color>
+team modify <team:minecraft:team> deathMessageVisibility always
+team modify <team:minecraft:team> deathMessageVisibility hideForOtherTeams
+team modify <team:minecraft:team> deathMessageVisibility hideForOwnTeam
+team modify <team:minecraft:team> deathMessageVisibility never
+team modify <team:minecraft:team> displayName <displayName:minecraft:component>
+team modify <team:minecraft:team> friendlyFire <allowed:brigadier:bool>
+team modify <team:minecraft:team> nametagVisibility always
+team modify <team:minecraft:team> nametagVisibility hideForOtherTeams
+team modify <team:minecraft:team> nametagVisibility hideForOwnTeam
+team modify <team:minecraft:team> nametagVisibility never
+team modify <team:minecraft:team> prefix <prefix:minecraft:component>
+team modify <team:minecraft:team> seeFriendlyInvisibles <allowed:brigadier:bool>
+team modify <team:minecraft:team> suffix <suffix:minecraft:component>
+team remove <team:minecraft:team>
+teammsg <message:minecraft:message>
+teleport <destination:minecraft:entity>
+teleport <location:minecraft:vec3>
+teleport <targets:minecraft:entity> <destination:minecraft:entity>
+teleport <targets:minecraft:entity> <location:minecraft:vec3>
+teleport <targets:minecraft:entity> <location:minecraft:vec3> <rotation:minecraft:rotation>
+teleport <targets:minecraft:entity> <location:minecraft:vec3> facing <facingLocation:minecraft:vec3>
+teleport <targets:minecraft:entity> <location:minecraft:vec3> facing entity <facingEntity:minecraft:entity>
+teleport <targets:minecraft:entity> <location:minecraft:vec3> facing entity <facingEntity:minecraft:entity> <facingAnchor:minecraft:entity_anchor>
+tellraw <targets:minecraft:entity> <message:minecraft:component>
+time add <time:minecraft:time>
+time query day
+time query daytime
+time query gametime
+time set <time:minecraft:time>
+time set day
+time set midnight
+time set night
+time set noon
+title <targets:minecraft:entity> actionbar <title:minecraft:component>
+title <targets:minecraft:entity> clear
+title <targets:minecraft:entity> reset
+title <targets:minecraft:entity> subtitle <title:minecraft:component>
+title <targets:minecraft:entity> times <fadeIn:brigadier:integer> <stay:brigadier:integer> <fadeOut:brigadier:integer>
+title <targets:minecraft:entity> title <title:minecraft:component>
+trigger <objective:minecraft:objective>
+trigger <objective:minecraft:objective> add <value:brigadier:integer>
+trigger <objective:minecraft:objective> set <value:brigadier:integer>
+weather clear
+weather clear <duration:brigadier:integer>
+weather rain
+weather rain <duration:brigadier:integer>
+weather thunder
+weather thunder <duration:brigadier:integer>
+whitelist add <targets:minecraft:game_profile>
+whitelist list
+whitelist off
+whitelist on
+whitelist reload
+whitelist remove <targets:minecraft:game_profile>
+worldborder add <distance:brigadier:double>
+worldborder add <distance:brigadier:double> <time:brigadier:integer>
+worldborder center <pos:minecraft:vec2>
+worldborder damage amount <damagePerBlock:brigadier:float>
+worldborder damage buffer <distance:brigadier:float>
+worldborder get
+worldborder set <distance:brigadier:double>
+worldborder set <distance:brigadier:double> <time:brigadier:integer>
+worldborder warning distance <distance:brigadier:integer>
+worldborder warning time <time:brigadier:integer>

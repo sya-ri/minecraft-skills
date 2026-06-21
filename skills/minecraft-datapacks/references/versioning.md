@@ -11,7 +11,7 @@ Current bundled data:
 - Java 1.13+ release index: bundled
 - Data pack formats for Java 1.13+: extracted from official Mojang version/client metadata
 - Vanilla server data inventories for Java 1.13+: extracted from official Mojang server jars
-- Latest command tree and generated vanilla server reports: bundled from official server reports
+- Command trees and generated vanilla server reports for Java 1.13+: bundled from official server reports
 
 Use `minecraft-skills show-version <version>` for per-version pack format facts. Use
 `minecraft-skills commands <version>` to search executable command syntax paths when server reports
