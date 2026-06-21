@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  compareVersions,
   getDomain,
   getPaperPluginData,
   getSourcePolicy,
@@ -30,6 +31,22 @@ function readOption(args: string[], name: string, fallback: string): string {
   return args[index + 1] ?? fallback;
 }
 
+function positionalArgs(args: string[]): string[] {
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) {
+      continue;
+    }
+    if (arg.startsWith("--")) {
+      index += 1;
+      continue;
+    }
+    positional.push(arg);
+  }
+  return positional;
+}
+
 function printHelp(output: Output): void {
   output.write(`minecraft-skills
 
@@ -39,6 +56,7 @@ Usage:
   minecraft-skills versions [--edition java]
   minecraft-skills pack-formats [--edition java]
   minecraft-skills show-version [version] [--edition java]
+  minecraft-skills compare-versions <from> <to> [--edition java]
   minecraft-skills vanilla-inventory [version] [--edition java]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
@@ -51,6 +69,8 @@ Commands:
   versions       List bundled version metadata.
   pack-formats   List data/resource pack formats and Paper support by version.
   show-version   Print canonical JSON for a version.
+  compare-versions
+                 Compare bundled version metadata and vanilla inventory summaries.
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
   references     List generated skill references.
@@ -111,13 +131,22 @@ export function runCli(argv: string[], output: Output = defaultOutput): number {
     }
 
     if (command === "show-version") {
-      const requested = args.find((arg) => !arg.startsWith("--")) ?? "latest";
+      const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getVersionDetail(edition, requested));
       return 0;
     }
 
+    if (command === "compare-versions") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-versions command requires <from> and <to>");
+      }
+      printJson(output, compareVersions(edition, from, to));
+      return 0;
+    }
+
     if (command === "vanilla-inventory") {
-      const requested = args.find((arg) => !arg.startsWith("--")) ?? "latest";
+      const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getVanillaInventory(edition, requested));
       return 0;
     }

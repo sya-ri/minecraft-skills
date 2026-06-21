@@ -25,7 +25,7 @@ version-specific facts.
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
-  `minecraft-skills vanilla-inventory <version>`
-- MCP: `@minecraft-skills/mcp` exposes version, pack format, vanilla inventory, and reference
-  lookup tools
+  `minecraft-skills compare-versions <from> <to>`, `minecraft-skills vanilla-inventory <version>`
+- MCP: `@minecraft-skills/mcp` exposes version, comparison, pack format, vanilla inventory, and
+  reference lookup tools
 - Package API: `@minecraft-skills/catalog`

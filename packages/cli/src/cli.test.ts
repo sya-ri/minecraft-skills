@@ -56,6 +56,14 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"data/minecraft/tags"');
   });
 
+  it("prints version comparison", () => {
+    const result = capture(["compare-versions", "1.20.6", "1.21"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"from": "1.20.6"');
+    expect(result.stdout.join("\n")).toContain('"to": "1.21"');
+    expect(result.stdout.join("\n")).toContain('"vanillaInventory"');
+  });
+
   it("reports unknown commands", () => {
     const result = capture(["nope"]);
     expect(result.code).toBe(1);

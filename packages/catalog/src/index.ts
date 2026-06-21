@@ -42,6 +42,49 @@ export type PackFormatSummary = {
   paperPluginStatus: string;
 };
 
+export type InventoryTopLevelChange = {
+  path: string;
+  from?: {
+    count: number;
+    jsonCount: number;
+  };
+  to?: {
+    count: number;
+    jsonCount: number;
+  };
+};
+
+export type VersionComparison = {
+  edition: EditionData;
+  from: string;
+  to: string;
+  packFormats: {
+    data: { from: number | null; to: number | null; changed: boolean };
+    dataMinor: { from: number | null; to: number | null; changed: boolean };
+    resource: { from: number | null; to: number | null; changed: boolean };
+    resourceMinor: { from: number | null; to: number | null; changed: boolean };
+  };
+  domains: {
+    datapack: { from: string; to: string; changed: boolean };
+    resourcepack: { from: string; to: string; changed: boolean };
+    "paper-plugin": { from: string; to: string; changed: boolean };
+  };
+  vanillaInventory: {
+    resources: {
+      entryCount: { from: number; to: number; changed: boolean };
+      added: InventoryTopLevelChange[];
+      removed: InventoryTopLevelChange[];
+      changed: InventoryTopLevelChange[];
+    };
+    datapack: {
+      entryCount: { from: number; to: number; changed: boolean };
+      added: InventoryTopLevelChange[];
+      removed: InventoryTopLevelChange[];
+      changed: InventoryTopLevelChange[];
+    };
+  };
+};
+
 export function getCatalog(): CatalogData {
   return Catalog.assert(readDataJson("catalog.json"));
 }
@@ -252,4 +295,87 @@ export function getVanillaInventory(edition = "java", requested = "latest"): Van
     throw new Error(`No bundled vanilla inventory for ${editionId} ${version}`);
   }
   return VanillaInventory.assert(readDataJson(inventoryPath));
+}
+
+function compareValue<T>(from: T, to: T): { from: T; to: T; changed: boolean } {
+  return {
+    from,
+    to,
+    changed: from !== to,
+  };
+}
+
+function compareInventorySection(
+  from: VanillaInventoryData["resources"],
+  to: VanillaInventoryData["resources"],
+): VersionComparison["vanillaInventory"]["resources"] {
+  const fromByPath = new Map(from.topLevel.map((entry) => [entry.path, entry]));
+  const toByPath = new Map(to.topLevel.map((entry) => [entry.path, entry]));
+  const added: InventoryTopLevelChange[] = [];
+  const removed: InventoryTopLevelChange[] = [];
+  const changed: InventoryTopLevelChange[] = [];
+
+  for (const [path, entry] of toByPath) {
+    const previous = fromByPath.get(path);
+    if (!previous) {
+      added.push({ path, to: { count: entry.count, jsonCount: entry.jsonCount } });
+      continue;
+    }
+    if (previous.count !== entry.count || previous.jsonCount !== entry.jsonCount) {
+      changed.push({
+        path,
+        from: { count: previous.count, jsonCount: previous.jsonCount },
+        to: { count: entry.count, jsonCount: entry.jsonCount },
+      });
+    }
+  }
+
+  for (const [path, entry] of fromByPath) {
+    if (!toByPath.has(path)) {
+      removed.push({ path, from: { count: entry.count, jsonCount: entry.jsonCount } });
+    }
+  }
+
+  return {
+    entryCount: compareValue(from.entryCount, to.entryCount),
+    added,
+    removed,
+    changed,
+  };
+}
+
+export function compareVersions(
+  edition = "java",
+  fromRequested = "latest",
+  toRequested = "latest",
+): VersionComparison {
+  const editionId = Edition.assert(edition);
+  const from = getVersionDetail(editionId, fromRequested);
+  const to = getVersionDetail(editionId, toRequested);
+  const fromInventory = getVanillaInventory(editionId, from.version);
+  const toInventory = getVanillaInventory(editionId, to.version);
+
+  return {
+    edition: editionId,
+    from: from.version,
+    to: to.version,
+    packFormats: {
+      data: compareValue(from.packFormats.data, to.packFormats.data),
+      dataMinor: compareValue(from.packFormats.dataMinor, to.packFormats.dataMinor),
+      resource: compareValue(from.packFormats.resource, to.packFormats.resource),
+      resourceMinor: compareValue(from.packFormats.resourceMinor, to.packFormats.resourceMinor),
+    },
+    domains: {
+      datapack: compareValue(from.domains.datapack.status, to.domains.datapack.status),
+      resourcepack: compareValue(from.domains.resourcepack.status, to.domains.resourcepack.status),
+      "paper-plugin": compareValue(
+        from.domains["paper-plugin"].status,
+        to.domains["paper-plugin"].status,
+      ),
+    },
+    vanillaInventory: {
+      resources: compareInventorySection(fromInventory.resources, toInventory.resources),
+      datapack: compareInventorySection(fromInventory.datapack, toInventory.datapack),
+    },
+  };
 }

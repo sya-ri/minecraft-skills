@@ -42,6 +42,7 @@ minecraft-skills latest
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
+minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills vanilla-inventory latest
 minecraft-skills paper
 minecraft-skills references --domain paper-plugin

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  compareVersions,
   getDomain,
   getPaperPluginData,
   getSourcePolicy,
@@ -116,5 +117,15 @@ describe("catalog", () => {
     expect(version.domains.resourcepack.status).toBe("inventory-extracted");
     expect(version.domains.datapack.facts).toContain("vanilla_data_inventory=26.2");
     expect(version.domains.resourcepack.facts).toContain("vanilla_asset_inventory=26.2");
+  });
+
+  it("compares version metadata and vanilla inventory summaries", () => {
+    const comparison = compareVersions("java", "1.20.6", "1.21");
+    expect(comparison.from).toBe("1.20.6");
+    expect(comparison.to).toBe("1.21");
+    expect(comparison.packFormats.data.changed).toBe(true);
+    expect(comparison.packFormats.resource.changed).toBe(true);
+    expect(comparison.vanillaInventory.resources.entryCount.changed).toBe(true);
+    expect(comparison.vanillaInventory.datapack.entryCount.changed).toBe(true);
   });
 });

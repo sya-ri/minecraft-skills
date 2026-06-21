@@ -6,6 +6,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
+    expect(tools.map((tool) => tool.name)).toContain("compare_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
   });
 
@@ -35,5 +36,11 @@ describe("MCP tools", () => {
     const result = callMinecraftSkillsTool("get_vanilla_inventory", {});
     expect(result.content[0]?.text).toContain('"version": "26.2"');
     expect(result.content[0]?.text).toContain('"assets/minecraft/models"');
+  });
+
+  it("calls compare_versions", () => {
+    const result = callMinecraftSkillsTool("compare_versions", { from: "1.20.6", to: "1.21" });
+    expect(result.content[0]?.text).toContain('"from": "1.20.6"');
+    expect(result.content[0]?.text).toContain('"vanillaInventory"');
   });
 });

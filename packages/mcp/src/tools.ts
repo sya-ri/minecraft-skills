@@ -1,4 +1,5 @@
 import {
+  compareVersions,
   getPaperPluginData,
   getSourcePolicy,
   getVanillaInventory,
@@ -88,6 +89,21 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "compare_versions",
+    description:
+      "Compare bundled Minecraft version metadata, pack formats, Paper status, and vanilla inventory summaries.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        from: { type: "string" },
+        to: { type: "string" },
+      },
+      required: ["from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_vanilla_inventory",
     description:
       "Get compact inventory of vanilla client assets and server data bundled for a Minecraft version.",
@@ -171,6 +187,12 @@ export function callMinecraftSkillsTool(name: string, input: unknown): ToolResul
     }
     if (name === "list_pack_formats") {
       return text(listPackFormats(edition));
+    }
+    if (name === "compare_versions") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_versions requires string from and to");
+      }
+      return text(compareVersions(edition, args.from, args.to));
     }
     if (name === "get_vanilla_inventory") {
       const version = typeof args.version === "string" ? args.version : "latest";
