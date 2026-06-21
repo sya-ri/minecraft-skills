@@ -27,6 +27,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.mts",
+      "default": "./dist/server.mjs"
+    }
+  },
+  "types": "./dist/server.d.mts",
   "bin": {
     "minecraft-skills-mcp": "./dist/server.mjs"
   },

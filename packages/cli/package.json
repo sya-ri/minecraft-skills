@@ -27,6 +27,13 @@
   "publishConfig": {
     "access": "public"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/cli.d.mts",
+      "default": "./dist/cli.mjs"
+    }
+  },
+  "types": "./dist/cli.d.mts",
   "bin": {
     "minecraft-skills": "./dist/cli.mjs"
   },
