@@ -96,6 +96,11 @@ The server also exposes Agent Skill files as MCP resources under
 `minecraft-skills://skills/<skill>/...`, including `SKILL.md`, `agents/openai.yaml`, and generated
 reference markdown.
 
+The server also exposes MCP prompts for starting domain-specific assistance:
+`use_minecraft_datapacks`, `use_minecraft_resourcepacks`, and `use_minecraft_paper_plugins`.
+Each prompt accepts optional `target_version` and `task` arguments, points the client at the matching
+skill resource, and names the MCP tools to prefer for that domain.
+
 ## Release Readiness
 
 Published package manifests are checked with pnpm because pnpm rewrites `workspace:` dependencies to

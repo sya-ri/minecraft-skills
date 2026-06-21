@@ -45,5 +45,14 @@ Agent Skill files are exposed under `minecraft-skills://skills/<skill>/...`, inc
 - `minecraft-skills://skills/minecraft-resourcepacks/SKILL.md`
 - `minecraft-skills://skills/minecraft-paper-plugins/SKILL.md`
 
+## Prompts
+
+- `use_minecraft_datapacks`
+- `use_minecraft_resourcepacks`
+- `use_minecraft_paper_plugins`
+
+Each prompt accepts optional `target_version` and `task` arguments and points the client at the
+matching skill resource plus the most relevant MCP tools.
+
 The server is designed for version-aware Minecraft Java data pack, resource pack, and Paper plugin
 authoring assistance.

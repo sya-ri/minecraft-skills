@@ -3,10 +3,13 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
+  ListPromptsRequestSchema,
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { getMinecraftSkillsPrompt, prompts } from "./prompts.js";
 import { listMinecraftSkillsResources, readMinecraftSkillsResource } from "./resources.js";
 import { callMinecraftSkillsTool, tools } from "./tools.js";
 
@@ -18,6 +21,7 @@ export function createServer(): Server {
     },
     {
       capabilities: {
+        prompts: {},
         resources: {},
         tools: {},
       },
@@ -31,6 +35,10 @@ export function createServer(): Server {
   }));
   server.setRequestHandler(ReadResourceRequestSchema, async (request) =>
     readMinecraftSkillsResource(request.params.uri),
+  );
+  server.setRequestHandler(ListPromptsRequestSchema, async () => ({ prompts }));
+  server.setRequestHandler(GetPromptRequestSchema, async (request) =>
+    getMinecraftSkillsPrompt(request.params.name, request.params.arguments),
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
   server.setRequestHandler(CallToolRequestSchema, async (request) =>
