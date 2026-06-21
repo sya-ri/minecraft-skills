@@ -5,10 +5,42 @@ MCP server exposing Minecraft Skills data to AI agents.
 ## Install
 
 ```sh
-npx @minecraft-skills/mcp
+npx -y @minecraft-skills/mcp
 ```
 
 Node.js 22.12 or newer is required.
+
+## MCP Client Config
+
+Use the package as a stdio MCP server:
+
+```json
+{
+  "mcpServers": {
+    "minecraft-skills": {
+      "command": "npx",
+      "args": ["-y", "@minecraft-skills/mcp"]
+    }
+  }
+}
+```
+
+For local development from this repository, build first and point the client at the built server:
+
+```sh
+mise exec -- pnpm --filter @minecraft-skills/mcp build
+```
+
+```json
+{
+  "mcpServers": {
+    "minecraft-skills": {
+      "command": "node",
+      "args": ["/absolute/path/to/minecraft-skills/packages/mcp/dist/server.mjs"]
+    }
+  }
+}
+```
 
 ## Tools
 

@@ -84,7 +84,20 @@ preserving `SKILL.md`, `agents/openai.yaml`, and generated references.
 After publishing, the MCP server is intended to be runnable with:
 
 ```sh
-npx @minecraft-skills/mcp
+npx -y @minecraft-skills/mcp
+```
+
+Typical stdio MCP client config:
+
+```json
+{
+  "mcpServers": {
+    "minecraft-skills": {
+      "command": "npx",
+      "args": ["-y", "@minecraft-skills/mcp"]
+    }
+  }
+}
 ```
 
 The server exposes tools for version lookup, pack formats, server reports, command search and
