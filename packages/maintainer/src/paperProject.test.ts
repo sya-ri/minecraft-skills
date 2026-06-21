@@ -33,5 +33,6 @@ describe("buildPaperPluginData", () => {
     ]);
     expect(data.support.minecraftLatestGap.status).toBe("paper-not-yet-published-for-java-latest");
     expect(data.eventSearch.paperSources).toEqual(["spigot", "paper"]);
+    expect(data.sources.map((source) => source.id)).toContain("papermc-docs-paper-folia-support");
   });
 });

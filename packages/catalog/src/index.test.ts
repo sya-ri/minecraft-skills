@@ -79,6 +79,7 @@ describe("catalog", () => {
       buildCount: 32,
     });
     expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
+    expect(paper.sources.map((source) => source.id)).toContain("papermc-docs-paper-folia-support");
   });
 
   it("builds Paper event search URLs", () => {

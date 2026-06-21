@@ -105,6 +105,30 @@
       "kind": "official-bulk",
       "url": "https://api.papermc.io/v2/projects/paper/versions/{minecraftVersion}",
       "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-paper-dev",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/paper/dev/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-paper-scheduling",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/paper/dev/scheduler/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-paper-folia-support",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/paper/dev/folia-support/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-folia-overview",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/folia/reference/overview/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
     }
   ],
   "versionBuilds": [

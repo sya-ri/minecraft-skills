@@ -181,6 +181,30 @@ export function buildPaperPluginData(options: {
         url: "https://raw.githubusercontent.com/sya-ri/spigot-event-list/master/skills/spigot-event-search/references/api.md",
         retrievedAt: options.retrievedAt,
       },
+      {
+        id: "papermc-docs-paper-dev",
+        kind: "official-docs",
+        url: "https://docs.papermc.io/paper/dev/",
+        retrievedAt: options.retrievedAt,
+      },
+      {
+        id: "papermc-docs-paper-scheduling",
+        kind: "official-docs",
+        url: "https://docs.papermc.io/paper/dev/scheduler/",
+        retrievedAt: options.retrievedAt,
+      },
+      {
+        id: "papermc-docs-paper-folia-support",
+        kind: "official-docs",
+        url: "https://docs.papermc.io/paper/dev/folia-support/",
+        retrievedAt: options.retrievedAt,
+      },
+      {
+        id: "papermc-docs-folia-overview",
+        kind: "official-docs",
+        url: "https://docs.papermc.io/folia/reference/overview/",
+        retrievedAt: options.retrievedAt,
+      },
     ],
   };
 }
