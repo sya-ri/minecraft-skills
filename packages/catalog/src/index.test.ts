@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPaperEventSearchUrl,
   compareVersions,
   getDomain,
   getPaperPluginData,
@@ -68,6 +69,20 @@ describe("catalog", () => {
       status: "paper-not-yet-published-for-java-latest",
     });
     expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
+  });
+
+  it("builds Paper event search URLs", () => {
+    const url = buildPaperEventSearchUrl({
+      query: "player join",
+      version: "1.21.11",
+      source: "paper",
+      limit: 5,
+    });
+    expect(url).toContain("https://spigot-event-list.s7a.dev/api/search/events");
+    expect(url).toContain("q=player+join");
+    expect(url).toContain("version=1.21.11");
+    expect(url).toContain("source=paper");
+    expect(url).toContain("limit=5");
   });
 
   it("marks Paper-supported version details", () => {

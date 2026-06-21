@@ -85,6 +85,20 @@ export type VersionComparison = {
   };
 };
 
+export type PaperEventSearchOptions = {
+  query: string;
+  version?: string;
+  source?: string;
+  limit?: number;
+};
+
+export type FetchJson = (url: string) => Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  json: () => Promise<unknown>;
+}>;
+
 export function getCatalog(): CatalogData {
   return Catalog.assert(readDataJson("catalog.json"));
 }
@@ -378,4 +392,39 @@ export function compareVersions(
       datapack: compareInventorySection(fromInventory.datapack, toInventory.datapack),
     },
   };
+}
+
+export function buildPaperEventSearchUrl(options: PaperEventSearchOptions): string {
+  const paper = getPaperPluginData();
+  const query = options.query.trim();
+  if (!query) {
+    throw new Error("Paper event search requires a query");
+  }
+  const limit = options.limit ?? paper.eventSearch.querySemantics.defaultLimit;
+  if (!Number.isInteger(limit) || limit < 1 || limit > paper.eventSearch.querySemantics.maxLimit) {
+    throw new Error(
+      `Paper event search limit must be between 1 and ${paper.eventSearch.querySemantics.maxLimit}`,
+    );
+  }
+
+  const url = new URL(paper.eventSearch.baseUrl);
+  url.searchParams.set("q", query);
+  url.searchParams.set("version", options.version ?? paper.eventSearch.defaultVersion);
+  url.searchParams.set("limit", String(limit));
+  if (options.source) {
+    url.searchParams.set("source", options.source);
+  }
+  return url.toString();
+}
+
+export async function searchPaperEvents(
+  options: PaperEventSearchOptions,
+  fetchJson: FetchJson = fetch,
+): Promise<unknown> {
+  const url = buildPaperEventSearchUrl(options);
+  const response = await fetchJson(url);
+  if (!response.ok) {
+    throw new Error(`Paper event search failed: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
 }

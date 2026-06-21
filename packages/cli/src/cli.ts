@@ -11,6 +11,7 @@ import {
   listReferences,
   listVersions,
   resolveVersion,
+  searchPaperEvents,
 } from "@minecraft-skills/catalog";
 
 type Output = {
@@ -58,6 +59,7 @@ Usage:
   minecraft-skills show-version [version] [--edition java]
   minecraft-skills compare-versions <from> <to> [--edition java]
   minecraft-skills vanilla-inventory [version] [--edition java]
+  minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
   minecraft-skills paper
@@ -73,6 +75,7 @@ Commands:
                  Compare bundled version metadata and vanilla inventory summaries.
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
+  paper-events   Search Paper/Bukkit events through the configured spigot-event-list API.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
   paper          Print canonical Paper plugin support and event search JSON.
@@ -83,7 +86,7 @@ function printJson(output: Output, value: unknown): void {
   output.write(JSON.stringify(value, null, 2));
 }
 
-export function runCli(argv: string[], output: Output = defaultOutput): number {
+export async function runCli(argv: string[], output: Output = defaultOutput): Promise<number> {
   const [command, ...args] = argv;
   const edition = readOption(args, "--edition", "java");
 
@@ -151,6 +154,23 @@ export function runCli(argv: string[], output: Output = defaultOutput): number {
       return 0;
     }
 
+    if (command === "paper-events") {
+      const query = positionalArgs(args).join(" ");
+      const limitText = readOption(args, "--limit", "20");
+      const source = args.includes("--source") ? readOption(args, "--source", "") : undefined;
+      const version = readOption(args, "--version", "latest");
+      const searchOptions = {
+        query,
+        version,
+        limit: Number(limitText),
+      };
+      printJson(
+        output,
+        await searchPaperEvents(source ? { ...searchOptions, source } : searchOptions),
+      );
+      return 0;
+    }
+
     if (command === "references") {
       const domain = args.includes("--domain") ? readOption(args, "--domain", "") : undefined;
       for (const reference of listReferences(domain)) {
@@ -186,5 +206,5 @@ export function runCli(argv: string[], output: Output = defaultOutput): number {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  process.exitCode = runCli(process.argv.slice(2));
+  process.exitCode = await runCli(process.argv.slice(2));
 }

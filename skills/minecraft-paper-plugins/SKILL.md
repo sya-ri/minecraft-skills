@@ -25,9 +25,9 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 ## Optional Tools
 
 - CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
-  `minecraft-skills compare-versions <from> <to>`
+  `minecraft-skills paper-events <query>`, `minecraft-skills compare-versions <from> <to>`
 - MCP: `@minecraft-skills/mcp` exposes domain, reference, version comparison, and Paper plugin data
-  tools
+  tools, plus live Paper/Bukkit event search when network access is available
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

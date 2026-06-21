@@ -45,11 +45,12 @@ minecraft-skills show-version 1.21.11
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills vanilla-inventory latest
 minecraft-skills paper
+minecraft-skills paper-events "player join" --version 1.21.11
 minecraft-skills references --domain paper-plugin
 ```
 
 `minecraft-skills paper` returns PaperMC support metadata and the `sya-ri/spigot-event-list`
-event search API contract.
+event search API contract. `minecraft-skills paper-events` calls that API for live event discovery.
 
 ## Maintainer Flow
 

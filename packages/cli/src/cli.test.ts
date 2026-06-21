@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 
-function capture(argv: string[]) {
+async function capture(argv: string[]) {
   const stdout: string[] = [];
   const stderr: string[] = [];
-  const code = runCli(argv, {
+  const code = await runCli(argv, {
     write: (value) => stdout.push(value),
     error: (value) => stderr.push(value),
   });
@@ -12,35 +12,39 @@ function capture(argv: string[]) {
 }
 
 describe("minecraft-skills CLI", () => {
-  it("prints domains", () => {
-    const result = capture(["domains"]);
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("prints domains", async () => {
+    const result = await capture(["domains"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain("paper-plugin");
   });
 
-  it("prints latest Java version", () => {
-    expect(capture(["latest"]).stdout).toEqual(["26.2"]);
+  it("prints latest Java version", async () => {
+    expect((await capture(["latest"])).stdout).toEqual(["26.2"]);
   });
 
-  it("prints effective version coverage", () => {
-    const result = capture(["versions"]);
+  it("prints effective version coverage", async () => {
+    const result = await capture(["versions"]);
     expect(result.stdout[0]).toBe("26.2\trelease\t2026-06-16T12:03:33+00:00\tversion-json-and-jar");
   });
 
-  it("prints pack formats by version", () => {
-    const result = capture(["pack-formats"]);
+  it("prints pack formats by version", async () => {
+    const result = await capture(["pack-formats"]);
     expect(result.stdout[0]).toContain("26.2\t2026-06-16T12:03:33+00:00\tdata=107");
     expect(result.stdout[0]).toContain("resource=88");
     expect(result.stdout[0]).toContain("paper=not-yet-published");
   });
 
-  it("filters references by domain", () => {
-    const result = capture(["references", "--domain", "paper-plugin"]);
+  it("filters references by domain", async () => {
+    const result = await capture(["references", "--domain", "paper-plugin"]);
     expect(result.stdout.join("\n")).toContain("minecraft-paper-plugins");
   });
 
-  it("prints Paper plugin support data", () => {
-    const result = capture(["paper"]);
+  it("prints Paper plugin support data", async () => {
+    const result = await capture(["paper"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"minecraftVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain(
@@ -48,24 +52,41 @@ describe("minecraft-skills CLI", () => {
     );
   });
 
-  it("prints vanilla inventory", () => {
-    const result = capture(["vanilla-inventory"]);
+  it("prints vanilla inventory", async () => {
+    const result = await capture(["vanilla-inventory"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"version": "26.2"');
     expect(result.stdout.join("\n")).toContain('"assets/minecraft/models"');
     expect(result.stdout.join("\n")).toContain('"data/minecraft/tags"');
   });
 
-  it("prints version comparison", () => {
-    const result = capture(["compare-versions", "1.20.6", "1.21"]);
+  it("prints version comparison", async () => {
+    const result = await capture(["compare-versions", "1.20.6", "1.21"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"from": "1.20.6"');
     expect(result.stdout.join("\n")).toContain('"to": "1.21"');
     expect(result.stdout.join("\n")).toContain('"vanillaInventory"');
   });
 
-  it("reports unknown commands", () => {
-    const result = capture(["nope"]);
+  it("searches Paper events", async () => {
+    const fetchMock = vi.fn(async (_url: string) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ events: [{ name: "PlayerJoinEvent" }] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await capture(["paper-events", "player join", "--version", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("PlayerJoinEvent");
+    const url = fetchMock.mock.calls[0]?.[0] ?? "";
+    expect(url).toContain("q=player+join");
+    expect(url).toContain("version=1.21.11");
+  });
+
+  it("reports unknown commands", async () => {
+    const result = await capture(["nope"]);
     expect(result.code).toBe(1);
     expect(result.stderr).toEqual(["Unknown command: nope"]);
   });

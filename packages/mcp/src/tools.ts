@@ -9,6 +9,7 @@ import {
   listReferences,
   listVersions,
   resolveVersion,
+  searchPaperEvents,
 } from "@minecraft-skills/catalog";
 
 export type ToolContent = {
@@ -138,6 +139,21 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "search_paper_events",
+    description: "Search Paper/Bukkit events through the configured sya-ri/spigot-event-list API.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        version: { type: "string", default: "latest" },
+        source: { type: "string" },
+        limit: { type: "number", default: 20 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_source_policy",
     description:
       "Get source priority and license policy for redistributable Minecraft Skills data.",
@@ -167,7 +183,7 @@ function text(value: unknown): ToolResult {
   };
 }
 
-export function callMinecraftSkillsTool(name: string, input: unknown): ToolResult {
+export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
   const args = asRecord(input);
   const edition = typeof args.edition === "string" ? args.edition : "java";
 
@@ -204,6 +220,19 @@ export function callMinecraftSkillsTool(name: string, input: unknown): ToolResul
     }
     if (name === "get_paper_plugin_data") {
       return text(getPaperPluginData());
+    }
+    if (name === "search_paper_events") {
+      if (typeof args.query !== "string") {
+        throw new Error("search_paper_events requires string query");
+      }
+      const searchOptions = {
+        query: args.query,
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      const withLimit =
+        typeof args.limit === "number" ? { ...searchOptions, limit: args.limit } : searchOptions;
+      const source = typeof args.source === "string" ? args.source : undefined;
+      return text(await searchPaperEvents(source ? { ...withLimit, source } : withLimit));
     }
     if (name === "get_source_policy") {
       return text(getSourcePolicy());
