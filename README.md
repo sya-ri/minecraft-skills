@@ -82,6 +82,26 @@ The server exposes tools for version lookup, pack formats, server reports, comma
 comparison, vanilla asset/data path search and comparison, resource pack model summaries, Paper
 support metadata, and Paper/Bukkit event search.
 
+## Release Readiness
+
+Published package manifests are checked with pnpm because pnpm rewrites `workspace:` dependencies to
+concrete versions in packed packages.
+
+```sh
+mise exec -- pnpm run check
+mise exec -- pnpm run pack:dry-run
+mise exec -- pnpm run publish:dry-run
+```
+
+Public publishing is intentionally manual. The `Release` GitHub Actions workflow defaults to a dry
+run. To publish, configure `NPM_TOKEN`, run the workflow from `main`, and set `dry_run` to `false`.
+The publish job uses npm provenance via GitHub OIDC and publishes:
+
+- `@minecraft-skills/data`
+- `@minecraft-skills/catalog`
+- `minecraft-skills`
+- `@minecraft-skills/mcp`
+
 ## Package API
 
 `@minecraft-skills/catalog` validates bundled data with ArkType and exposes read APIs for agents and

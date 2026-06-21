@@ -29,3 +29,6 @@ jobs:
 
       - name: Check
         run: CI=true mise exec -- pnpm run check
+
+      - name: Pack dry run
+        run: mise exec -- pnpm run pack:dry-run

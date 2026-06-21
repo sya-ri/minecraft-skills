@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run publish without uploading packages"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup mise
+        uses: jdx/mise-action@v4.2.0
+        with:
+          install: true
+          cache: true
+
+      - name: Install dependencies
+        run: mise exec -- pnpm install --frozen-lockfile
+
+      - name: Check
+        run: CI=true mise exec -- pnpm run check
+
+      - name: Publish dry run
+        if: ${{ inputs.dry_run }}
+        run: mise exec -- pnpm run publish:dry-run
+
+      - name: Require main branch for public publish
+        if: ${{ !inputs.dry_run && github.ref != 'refs/heads/main' }}
+        run: |
+          echo "Public publishing is only allowed from main."
+          exit 1
+
+      - name: Publish public packages
+        if: ${{ !inputs.dry_run }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: mise exec -- pnpm run publish:public
