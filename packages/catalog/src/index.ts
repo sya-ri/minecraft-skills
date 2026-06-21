@@ -157,6 +157,31 @@ export type VanillaPathSearchResult = {
   paths: string[];
 };
 
+export type VanillaPathComparisonOptions = {
+  edition?: string;
+  from: string;
+  to: string;
+  domain?: VanillaPathDomain;
+  prefix?: string;
+  contains?: string;
+  extension?: string;
+  limit?: number;
+};
+
+export type VanillaPathComparisonResult = {
+  edition: EditionData;
+  from: string;
+  to: string;
+  domain: VanillaPathDomain;
+  fromTotalPaths: number;
+  toTotalPaths: number;
+  addedTotal: number;
+  removedTotal: number;
+  truncated: boolean;
+  added: string[];
+  removed: string[];
+};
+
 export type CommandSearchOptions = {
   edition?: string;
   version?: string;
@@ -173,6 +198,29 @@ export type CommandSearchResult = {
   matchedPaths: number;
   truncated: boolean;
   paths: string[];
+};
+
+export type CommandComparisonOptions = {
+  edition?: string;
+  from: string;
+  to: string;
+  contains?: string;
+  prefix?: string;
+  parser?: string;
+  limit?: number;
+};
+
+export type CommandComparisonResult = {
+  edition: EditionData;
+  from: string;
+  to: string;
+  fromTotalPaths: number;
+  toTotalPaths: number;
+  addedTotal: number;
+  removedTotal: number;
+  truncated: boolean;
+  added: string[];
+  removed: string[];
 };
 
 export type ResourcepackModelPathSearchOptions = {
@@ -645,30 +693,9 @@ export function searchVanillaPaths(
   const editionId = Edition.assert(options.edition ?? "java");
   const inventory = getVanillaInventory(editionId, options.version ?? "latest");
   const domain = options.domain ?? "datapack";
-  const pathIndex = `${editionId}/vanilla-paths/${inventory.version}.${domain}.txt`;
-  if (!hasDataFile(pathIndex)) {
-    throw new Error(
-      `No bundled vanilla path index for ${editionId} ${inventory.version} ${domain}`,
-    );
-  }
-  const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+  const paths = readVanillaPathList(editionId, inventory.version, domain);
   const limit = normalizeLimit(options.limit, 50, 500);
-  const prefix = options.prefix?.trim();
-  const contains = options.contains?.trim();
-  const extension = options.extension?.trim();
-
-  const matched = paths.filter((path) => {
-    if (prefix && !path.startsWith(prefix)) {
-      return false;
-    }
-    if (contains && !path.includes(contains)) {
-      return false;
-    }
-    if (extension && !path.endsWith(extension.startsWith(".") ? extension : `.${extension}`)) {
-      return false;
-    }
-    return true;
-  });
+  const matched = filterVanillaPaths(paths, options);
 
   return {
     edition: editionId,
@@ -681,19 +708,117 @@ export function searchVanillaPaths(
   };
 }
 
+function readVanillaPathList(
+  edition: EditionData,
+  version: string,
+  domain: VanillaPathDomain,
+): string[] {
+  const pathIndex = `${edition}/vanilla-paths/${version}.${domain}.txt`;
+  if (!hasDataFile(pathIndex)) {
+    throw new Error(`No bundled vanilla path index for ${edition} ${version} ${domain}`);
+  }
+  return readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+}
+
+function filterVanillaPaths(
+  paths: string[],
+  options: Pick<VanillaPathSearchOptions, "prefix" | "contains" | "extension">,
+): string[] {
+  const prefix = options.prefix?.trim();
+  const contains = options.contains?.trim();
+  const extension = options.extension?.trim();
+
+  return paths.filter((path) => {
+    if (prefix && !path.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !path.includes(contains)) {
+      return false;
+    }
+    if (extension && !path.endsWith(extension.startsWith(".") ? extension : `.${extension}`)) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function comparePathLists(options: {
+  from: string[];
+  to: string[];
+  limit: number;
+}): Pick<
+  VanillaPathComparisonResult,
+  "addedTotal" | "removedTotal" | "truncated" | "added" | "removed"
+> {
+  const fromSet = new Set(options.from);
+  const toSet = new Set(options.to);
+  const added = options.to.filter((path) => !fromSet.has(path));
+  const removed = options.from.filter((path) => !toSet.has(path));
+  return {
+    addedTotal: added.length,
+    removedTotal: removed.length,
+    truncated: added.length > options.limit || removed.length > options.limit,
+    added: added.slice(0, options.limit),
+    removed: removed.slice(0, options.limit),
+  };
+}
+
+export function compareVanillaPaths(
+  options: VanillaPathComparisonOptions,
+): VanillaPathComparisonResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const from = resolveVersion(editionId, options.from);
+  const to = resolveVersion(editionId, options.to);
+  const domain = options.domain ?? "datapack";
+  const fromPaths = filterVanillaPaths(readVanillaPathList(editionId, from, domain), options);
+  const toPaths = filterVanillaPaths(readVanillaPathList(editionId, to, domain), options);
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const comparison = comparePathLists({ from: fromPaths, to: toPaths, limit });
+
+  return {
+    edition: editionId,
+    from,
+    to,
+    domain,
+    fromTotalPaths: fromPaths.length,
+    toTotalPaths: toPaths.length,
+    ...comparison,
+  };
+}
+
 export function searchCommands(options: CommandSearchOptions = {}): CommandSearchResult {
   const editionId = Edition.assert(options.edition ?? "java");
   const reports = getJavaReportsSummary(editionId, options.version ?? "latest");
-  const pathIndex = `${editionId}/command-paths/${reports.version}.txt`;
-  if (!hasDataFile(pathIndex)) {
-    throw new Error(`No bundled command path index for ${editionId} ${reports.version}`);
-  }
-  const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+  const paths = readCommandPathList(editionId, reports.version);
   const limit = normalizeLimit(options.limit, 50, 500);
+  const matched = filterCommandPaths(paths, options);
+
+  return {
+    edition: editionId,
+    version: reports.version,
+    totalPaths: paths.length,
+    matchedPaths: matched.length,
+    truncated: matched.length > limit,
+    paths: matched.slice(0, limit),
+  };
+}
+
+function readCommandPathList(edition: EditionData, version: string): string[] {
+  const pathIndex = `${edition}/command-paths/${version}.txt`;
+  if (!hasDataFile(pathIndex)) {
+    throw new Error(`No bundled command path index for ${edition} ${version}`);
+  }
+  return readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+}
+
+function filterCommandPaths(
+  paths: string[],
+  options: Pick<CommandSearchOptions, "contains" | "prefix" | "parser">,
+): string[] {
   const contains = options.contains?.trim();
   const prefix = options.prefix?.trim();
   const parser = options.parser?.trim();
-  const matched = paths.filter((path) => {
+  return paths.filter((path) => {
     if (prefix && !path.startsWith(prefix)) {
       return false;
     }
@@ -705,13 +830,24 @@ export function searchCommands(options: CommandSearchOptions = {}): CommandSearc
     }
     return true;
   });
+}
+
+export function compareCommands(options: CommandComparisonOptions): CommandComparisonResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const from = resolveVersion(editionId, options.from);
+  const to = resolveVersion(editionId, options.to);
+  const fromPaths = filterCommandPaths(readCommandPathList(editionId, from), options);
+  const toPaths = filterCommandPaths(readCommandPathList(editionId, to), options);
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const comparison = comparePathLists({ from: fromPaths, to: toPaths, limit });
+
   return {
     edition: editionId,
-    version: reports.version,
-    totalPaths: paths.length,
-    matchedPaths: matched.length,
-    truncated: matched.length > limit,
-    paths: matched.slice(0, limit),
+    from,
+    to,
+    fromTotalPaths: fromPaths.length,
+    toTotalPaths: toPaths.length,
+    ...comparison,
   };
 }
 

@@ -20,8 +20,10 @@ minecraft-skills show-version 26.2
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills server-reports latest
 minecraft-skills commands latest --prefix execute --limit 10
+minecraft-skills compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills vanilla-paths latest --domain datapack --contains recipe
 minecraft-skills vanilla-paths latest --domain resourcepack --contains models/block
+minecraft-skills compare-vanilla-paths 1.20.6 1.21 --domain resourcepack --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack-models latest
 minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills paper

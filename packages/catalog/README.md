@@ -14,7 +14,9 @@ Node.js 22.12 or newer is required.
 
 ```ts
 import {
+  compareCommands,
   comparePaperApi,
+  compareVanillaPaths,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -29,6 +31,7 @@ import {
 const version = getVersionDetail("java", "26.2");
 const reports = getJavaReportsSummary("java", "26.2");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
+const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const models = getResourcepackModelSummary("java", "26.2");
 const bundles = searchResourcepackModelPaths({
   version: "26.2",
@@ -39,6 +42,12 @@ const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",
   contains: "recipe",
+});
+const pathDiff = compareVanillaPaths({
+  from: "1.20.6",
+  to: "1.21",
+  domain: "resourcepack",
+  prefix: "assets/minecraft/models/item/",
 });
 const paperApi = getPaperApiReference("1.21.11");
 const paperApiIndex = getPaperApiIndex("1.21.11");

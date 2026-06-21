@@ -17,19 +17,22 @@ version-specific facts.
 3. If the `minecraft-skills` CLI, MCP server, or `@minecraft-skills/catalog` package is available,
    use it for machine-verifiable facts. Otherwise, use the bundled references in this skill and
    clearly state when strict data is not bundled.
-4. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+4. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
+   describing command or vanilla data additions/removals.
+5. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-5. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+6. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
   `minecraft-skills compare-versions <from> <to>`, `minecraft-skills server-reports <version>`,
-  `minecraft-skills commands <version>`, `minecraft-skills vanilla-paths <version>`,
-  `minecraft-skills vanilla-inventory <version>`
+  `minecraft-skills commands <version>`, `minecraft-skills compare-commands <from> <to>`,
+  `minecraft-skills vanilla-paths <version>`,
+  `minecraft-skills compare-vanilla-paths <from> <to>`, `minecraft-skills vanilla-inventory <version>`
 - MCP: `@minecraft-skills/mcp` exposes version, comparison, pack format, server reports, command
-  search, vanilla inventory, vanilla path search, and reference lookup tools
+  search/comparison, vanilla inventory, vanilla path search/comparison, and reference lookup tools
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

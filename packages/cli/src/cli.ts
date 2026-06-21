@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import {
+  type CommandComparisonOptions,
   type CommandSearchOptions,
+  compareCommands,
   comparePaperApi,
+  compareVanillaPaths,
   compareVersions,
   getDomain,
   getJavaReportsSummary,
@@ -22,6 +25,7 @@ import {
   searchPaperEvents,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
 } from "@minecraft-skills/catalog";
 
@@ -71,10 +75,12 @@ Usage:
   minecraft-skills compare-versions <from> <to> [--edition java]
   minecraft-skills server-reports [version] [--edition java]
   minecraft-skills commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
+  minecraft-skills compare-commands <from> <to> [--contains text] [--prefix literal] [--parser parser] [--limit 50]
   minecraft-skills resourcepack-models [version] [--edition java]
   minecraft-skills search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills vanilla-inventory [version] [--edition java]
   minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
+  minecraft-skills compare-vanilla-paths <from> <to> [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills paper-api [version]
   minecraft-skills paper-api-index [version]
   minecraft-skills compare-paper-api <from> <to>
@@ -95,12 +101,16 @@ Commands:
   server-reports
                  Print compact official server reports summary for a bundled version.
   commands       Search executable command syntax paths from generated server reports.
+  compare-commands
+                 Compare executable command syntax paths between bundled versions.
   resourcepack-models
                  Print compact resource pack model summary for a bundled version.
   search-models  Search vanilla resource pack model and item definition paths.
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
   vanilla-paths  Search bundled vanilla asset/data paths for a version.
+  compare-vanilla-paths
+                 Compare bundled vanilla asset/data paths between versions.
   paper-api      Print Paper API dependency, Javadocs, and docs links for a version.
   paper-api-index
                  Print Paper Javadocs package index for a supported version.
@@ -205,6 +215,30 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return 0;
     }
 
+    if (command === "compare-commands") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-commands command requires <from> and <to>");
+      }
+      const commandOptions: CommandComparisonOptions = {
+        edition,
+        from,
+        to,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--contains")) {
+        commandOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--prefix")) {
+        commandOptions.prefix = readOption(args, "--prefix", "");
+      }
+      if (args.includes("--parser")) {
+        commandOptions.parser = readOption(args, "--parser", "");
+      }
+      printJson(output, compareCommands(commandOptions));
+      return 0;
+    }
+
     if (command === "resourcepack-models") {
       const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getResourcepackModelSummary(edition, requested));
@@ -263,6 +297,35 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         pathOptions.extension = readOption(args, "--extension", "");
       }
       printJson(output, searchVanillaPaths(pathOptions));
+      return 0;
+    }
+
+    if (command === "compare-vanilla-paths") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-vanilla-paths command requires <from> and <to>");
+      }
+      const domain = readOption(args, "--domain", "datapack");
+      if (domain !== "datapack" && domain !== "resourcepack") {
+        throw new Error("compare-vanilla-paths --domain must be datapack or resourcepack");
+      }
+      const pathOptions: VanillaPathComparisonOptions = {
+        edition,
+        from,
+        to,
+        domain,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--prefix")) {
+        pathOptions.prefix = readOption(args, "--prefix", "");
+      }
+      if (args.includes("--contains")) {
+        pathOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--extension")) {
+        pathOptions.extension = readOption(args, "--extension", "");
+      }
+      printJson(output, compareVanillaPaths(pathOptions));
       return 0;
     }
 

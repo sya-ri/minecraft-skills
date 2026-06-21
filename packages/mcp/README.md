@@ -19,8 +19,10 @@ Node.js 22.12 or newer is required.
 - `compare_versions`
 - `get_server_reports`
 - `search_commands`
+- `compare_commands`
 - `get_vanilla_inventory`
 - `search_vanilla_paths`
+- `compare_vanilla_paths`
 - `get_resourcepack_model_summary`
 - `search_resourcepack_models`
 - `get_paper_plugin_data`

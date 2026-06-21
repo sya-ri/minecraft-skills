@@ -13,10 +13,12 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_server_reports");
     expect(tools.map((tool) => tool.name)).toContain("search_commands");
+    expect(tools.map((tool) => tool.name)).toContain("compare_commands");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
+    expect(tools.map((tool) => tool.name)).toContain("compare_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_reference");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_index");
     expect(tools.map((tool) => tool.name)).toContain("compare_paper_api");
@@ -85,6 +87,19 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain("assets/minecraft/models/block/acacia_button.json");
   });
 
+  it("calls compare_vanilla_paths", async () => {
+    const result = await callMinecraftSkillsTool("compare_vanilla_paths", {
+      from: "1.20.6",
+      to: "1.21",
+      domain: "resourcepack",
+      prefix: "assets/minecraft/models/item/",
+      limit: 10,
+    });
+    expect(result.content[0]?.text).toContain(
+      "assets/minecraft/models/item/music_disc_creator.json",
+    );
+  });
+
   it("calls compare_versions", async () => {
     const result = await callMinecraftSkillsTool("compare_versions", {
       from: "1.20.6",
@@ -107,6 +122,15 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"matchedPaths"');
     expect(result.content[0]?.text).toContain("execute");
+  });
+
+  it("calls compare_commands", async () => {
+    const result = await callMinecraftSkillsTool("compare_commands", {
+      from: "1.20.6",
+      to: "1.21",
+      prefix: "attribute",
+    });
+    expect(result.content[0]?.text).toContain("modifier add");
   });
 
   it("calls get_resourcepack_model_summary", async () => {

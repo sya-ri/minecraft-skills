@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPaperEventSearchUrl,
+  compareCommands,
   comparePaperApi,
+  compareVanillaPaths,
   compareVersions,
   getDomain,
   getJavaReportsSummary,
@@ -224,6 +226,31 @@ describe("catalog", () => {
     expect(comparison.packFormats.resource.changed).toBe(true);
     expect(comparison.vanillaInventory.resources.entryCount.changed).toBe(true);
     expect(comparison.vanillaInventory.datapack.entryCount.changed).toBe(true);
+  });
+
+  it("compares vanilla datapack paths between versions", () => {
+    const comparison = compareVanillaPaths({
+      from: "1.20.6",
+      to: "1.21",
+      domain: "datapack",
+      prefix: "data/minecraft/advancement/adventure/",
+      limit: 5,
+    });
+    expect(comparison.addedTotal).toBeGreaterThan(0);
+    expect(comparison.added).toContain("data/minecraft/advancement/adventure/blowback.json");
+  });
+
+  it("compares command syntax paths between versions", () => {
+    const comparison = compareCommands({
+      from: "1.20.6",
+      to: "1.21",
+      prefix: "attribute",
+      limit: 10,
+    });
+    expect(comparison.addedTotal).toBeGreaterThan(0);
+    expect(comparison.added).toContain(
+      "attribute <target:minecraft:entity> <attribute:minecraft:resource> modifier add <id:minecraft:resource_location> <value:brigadier:double> add_value",
+    );
   });
 
   it("searches vanilla paths", () => {

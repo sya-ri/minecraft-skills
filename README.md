@@ -45,10 +45,12 @@ minecraft-skills show-version 1.21.11
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills server-reports latest
 minecraft-skills commands latest --prefix execute --contains run
+minecraft-skills compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills resourcepack-models latest
 minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills vanilla-inventory latest
 minecraft-skills vanilla-paths latest --domain resourcepack --contains models/block/acacia_button
+minecraft-skills compare-vanilla-paths 1.20.6 1.21 --domain resourcepack --prefix assets/minecraft/models/item/
 minecraft-skills paper
 minecraft-skills paper-api 1.21.11
 minecraft-skills paper-api-index 1.21.11
@@ -57,9 +59,11 @@ minecraft-skills paper-events "player join" --version 1.21.11
 minecraft-skills references --domain paper-plugin
 ```
 
-`minecraft-skills resourcepack-models` returns observed vanilla model JSON and item definition JSON
-shape summaries extracted from official client jars. `minecraft-skills paper` returns PaperMC
-support metadata, per-version Paper build summaries, official Paper docs source links, and the
+`minecraft-skills compare-commands` and `minecraft-skills compare-vanilla-paths` return added and
+removed command syntax or asset/data paths between bundled versions. `minecraft-skills
+resourcepack-models` returns observed vanilla model JSON and item definition JSON shape summaries
+extracted from official client jars. `minecraft-skills paper` returns PaperMC support metadata,
+per-version Paper build summaries, official Paper docs source links, and the
 `sya-ri/spigot-event-list` event search API contract. `minecraft-skills paper-api` returns the
 versioned Paper API dependency, Javadocs URL, Paper docs, and Folia/scheduler reference links.
 `minecraft-skills compare-paper-api` compares versioned Paper Javadocs package indexes so agents can
@@ -74,9 +78,9 @@ After publishing, the MCP server is intended to be runnable with:
 npx @minecraft-skills/mcp
 ```
 
-The server exposes tools for version lookup, pack formats, server reports, command search, vanilla
-asset/data path search, resource pack model summaries, Paper support metadata, and Paper/Bukkit event
-search.
+The server exposes tools for version lookup, pack formats, server reports, command search and
+comparison, vanilla asset/data path search and comparison, resource pack model summaries, Paper
+support metadata, and Paper/Bukkit event search.
 
 ## Package API
 
@@ -85,6 +89,8 @@ other tools:
 
 ```ts
 import {
+  compareCommands,
+  compareVanillaPaths,
   getResourcepackModelSummary,
   getVersionDetail,
   searchCommands,
@@ -93,11 +99,18 @@ import {
 
 const version = getVersionDetail("java", "26.2");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
+const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const models = getResourcepackModelSummary("java", "26.2");
 const itemDefinitions = searchResourcepackModelPaths({
   version: "26.2",
   kind: "item-definition",
   contains: "bundle",
+});
+const assetDiff = compareVanillaPaths({
+  from: "1.20.6",
+  to: "1.21",
+  domain: "resourcepack",
+  prefix: "assets/minecraft/models/item/",
 });
 ```
 

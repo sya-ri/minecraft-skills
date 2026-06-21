@@ -1,6 +1,9 @@
 import {
+  type CommandComparisonOptions,
   type CommandSearchOptions,
+  compareCommands,
   comparePaperApi,
+  compareVanillaPaths,
   compareVersions,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -20,6 +23,7 @@ import {
   searchPaperEvents,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
 } from "@minecraft-skills/catalog";
 
@@ -146,6 +150,25 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "compare_commands",
+    description:
+      "Compare executable Minecraft command syntax paths generated from official server reports between bundled versions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        from: { type: "string" },
+        to: { type: "string" },
+        contains: { type: "string" },
+        prefix: { type: "string" },
+        parser: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      required: ["from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_resourcepack_model_summary",
     description:
       "Get compact vanilla resource pack model and item definition JSON shape summary for a bundled Java version.",
@@ -203,6 +226,26 @@ export const tools: ToolDefinition[] = [
         extension: { type: "string" },
         limit: { type: "number", default: 50 },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_vanilla_paths",
+    description:
+      "Compare bundled vanilla asset/data paths between Minecraft versions without returning full inventories.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        from: { type: "string" },
+        to: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"], default: "datapack" },
+        prefix: { type: "string" },
+        contains: { type: "string" },
+        extension: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      required: ["from", "to"],
       additionalProperties: false,
     },
   },
@@ -359,6 +402,29 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       }
       return text(searchCommands(commandOptions));
     }
+    if (name === "compare_commands") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_commands requires string from and to");
+      }
+      const commandOptions: CommandComparisonOptions = {
+        edition,
+        from: args.from,
+        to: args.to,
+      };
+      if (typeof args.contains === "string") {
+        commandOptions.contains = args.contains;
+      }
+      if (typeof args.prefix === "string") {
+        commandOptions.prefix = args.prefix;
+      }
+      if (typeof args.parser === "string") {
+        commandOptions.parser = args.parser;
+      }
+      if (typeof args.limit === "number") {
+        commandOptions.limit = args.limit;
+      }
+      return text(compareCommands(commandOptions));
+    }
     if (name === "get_resourcepack_model_summary") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getResourcepackModelSummary(edition, version));
@@ -406,6 +472,31 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         pathOptions.limit = args.limit;
       }
       return text(searchVanillaPaths(pathOptions));
+    }
+    if (name === "compare_vanilla_paths") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_vanilla_paths requires string from and to");
+      }
+      const pathOptions: VanillaPathComparisonOptions = {
+        edition,
+        from: args.from,
+        to: args.to,
+        domain:
+          args.domain === "resourcepack" || args.domain === "datapack" ? args.domain : "datapack",
+      };
+      if (typeof args.prefix === "string") {
+        pathOptions.prefix = args.prefix;
+      }
+      if (typeof args.contains === "string") {
+        pathOptions.contains = args.contains;
+      }
+      if (typeof args.extension === "string") {
+        pathOptions.extension = args.extension;
+      }
+      if (typeof args.limit === "number") {
+        pathOptions.limit = args.limit;
+      }
+      return text(compareVanillaPaths(pathOptions));
     }
     if (name === "list_references") {
       const domain = typeof args.domain === "string" ? args.domain : undefined;

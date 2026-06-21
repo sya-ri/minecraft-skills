@@ -97,6 +97,24 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("assets/minecraft/models/block/acacia_button.json");
   });
 
+  it("compares vanilla paths", async () => {
+    const result = await capture([
+      "compare-vanilla-paths",
+      "1.20.6",
+      "1.21",
+      "--domain",
+      "resourcepack",
+      "--prefix",
+      "assets/minecraft/models/item/",
+      "--limit",
+      "10",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain(
+      "assets/minecraft/models/item/music_disc_creator.json",
+    );
+  });
+
   it("prints version comparison", async () => {
     const result = await capture(["compare-versions", "1.20.6", "1.21"]);
     expect(result.code).toBe(0);
@@ -117,6 +135,12 @@ describe("minecraft-skills CLI", () => {
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"matchedPaths"');
     expect(result.stdout.join("\n")).toContain("execute");
+  });
+
+  it("compares command paths", async () => {
+    const result = await capture(["compare-commands", "1.20.6", "1.21", "--prefix", "attribute"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("modifier add");
   });
 
   it("prints resourcepack model summaries", async () => {
