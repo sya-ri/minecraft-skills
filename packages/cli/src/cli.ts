@@ -5,6 +5,7 @@ import {
   getDomain,
   getJavaReportsSummary,
   getPaperPluginData,
+  getResourcepackModelSummary,
   getSourcePolicy,
   getVanillaInventory,
   getVersionDetail,
@@ -12,9 +13,11 @@ import {
   listPackFormats,
   listReferences,
   listVersions,
+  type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchCommands,
   searchPaperEvents,
+  searchResourcepackModelPaths,
   searchVanillaPaths,
   type VanillaPathSearchOptions,
 } from "@minecraft-skills/catalog";
@@ -65,6 +68,8 @@ Usage:
   minecraft-skills compare-versions <from> <to> [--edition java]
   minecraft-skills server-reports [version] [--edition java]
   minecraft-skills commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
+  minecraft-skills resourcepack-models [version] [--edition java]
+  minecraft-skills search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills vanilla-inventory [version] [--edition java]
   minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
@@ -84,6 +89,9 @@ Commands:
   server-reports
                  Print compact official server reports summary for a bundled version.
   commands       Search executable command syntax paths from generated server reports.
+  resourcepack-models
+                 Print compact resource pack model summary for a bundled version.
+  search-models  Search vanilla resource pack model and item definition paths.
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
   vanilla-paths  Search bundled vanilla asset/data paths for a version.
@@ -183,6 +191,36 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         commandOptions.parser = readOption(args, "--parser", "");
       }
       printJson(output, searchCommands(commandOptions));
+      return 0;
+    }
+
+    if (command === "resourcepack-models") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      printJson(output, getResourcepackModelSummary(edition, requested));
+      return 0;
+    }
+
+    if (command === "search-models") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const modelOptions: ResourcepackModelPathSearchOptions = {
+        edition,
+        version: requested,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--contains")) {
+        modelOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--prefix")) {
+        modelOptions.prefix = readOption(args, "--prefix", "");
+      }
+      if (args.includes("--kind")) {
+        const kind = readOption(args, "--kind", "");
+        if (kind !== "model" && kind !== "item-definition") {
+          throw new Error("search-models --kind must be model or item-definition");
+        }
+        modelOptions.kind = kind;
+      }
+      printJson(output, searchResourcepackModelPaths(modelOptions));
       return 0;
     }
 

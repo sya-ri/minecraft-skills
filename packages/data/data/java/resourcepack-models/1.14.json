@@ -1,0 +1,3028 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "1.14",
+  "coverage": "client-resourcepack-models",
+  "files": {
+    "models": {
+      "count": 2203,
+      "groups": [
+        {
+          "value": "assets/minecraft/models/block",
+          "count": 1201,
+          "samples": [
+            "assets/minecraft/models/block/acacia_button.json",
+            "assets/minecraft/models/block/acacia_button_inventory.json",
+            "assets/minecraft/models/block/acacia_button_pressed.json",
+            "assets/minecraft/models/block/acacia_door_bottom.json",
+            "assets/minecraft/models/block/acacia_door_bottom_hinge.json"
+          ]
+        },
+        {
+          "value": "assets/minecraft/models/item",
+          "count": 1002,
+          "samples": [
+            "assets/minecraft/models/item/acacia_boat.json",
+            "assets/minecraft/models/item/acacia_button.json",
+            "assets/minecraft/models/item/acacia_door.json",
+            "assets/minecraft/models/item/acacia_fence.json",
+            "assets/minecraft/models/item/acacia_fence_gate.json"
+          ]
+        }
+      ]
+    },
+    "itemDefinitions": {
+      "count": 0,
+      "groups": []
+    }
+  },
+  "modelJson": {
+    "topLevelKeys": [
+      {
+        "value": "parent",
+        "count": 1978,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json"
+        ]
+      },
+      {
+        "value": "textures",
+        "count": 1691,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json"
+        ]
+      },
+      {
+        "value": "elements",
+        "count": 242,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json",
+          "assets/minecraft/models/block/bamboo2_age1.json"
+        ]
+      },
+      {
+        "value": "ambientocclusion",
+        "count": 122,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/beacon.json",
+          "assets/minecraft/models/block/cactus.json",
+          "assets/minecraft/models/block/cauldron.json"
+        ]
+      },
+      {
+        "value": "display",
+        "count": 35,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json"
+        ]
+      },
+      {
+        "value": "overrides",
+        "count": 8,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/elytra.json"
+        ]
+      }
+    ],
+    "fieldPaths": [
+      {
+        "value": "parent:string",
+        "count": 1978,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json"
+        ]
+      },
+      {
+        "value": "textures:object",
+        "count": 1691,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json"
+        ]
+      },
+      {
+        "value": "elements[].faces:object",
+        "count": 743,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].from:array",
+        "count": 743,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].from[]",
+        "count": 743,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].to:array",
+        "count": 743,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].to[]",
+        "count": 743,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up:object",
+        "count": 477,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up.texture:string",
+        "count": 477,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north:object",
+        "count": 470,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north.texture:string",
+        "count": 470,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "textures.layer0:string",
+        "count": 462,
+        "samples": [
+          "assets/minecraft/models/item/acacia_boat.json",
+          "assets/minecraft/models/item/acacia_door.json",
+          "assets/minecraft/models/item/acacia_sapling.json",
+          "assets/minecraft/models/item/acacia_sign.json",
+          "assets/minecraft/models/item/activator_rail.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down:object",
+        "count": 458,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down.texture:string",
+        "count": 458,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.south:object",
+        "count": 455,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.south.texture:string",
+        "count": 455,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east:object",
+        "count": 435,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east.texture:string",
+        "count": 435,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west:object",
+        "count": 435,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west.texture:string",
+        "count": 435,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up.uv:array",
+        "count": 410,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up.uv[]",
+        "count": 410,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "textures.particle:string",
+        "count": 380,
+        "samples": [
+          "assets/minecraft/models/block/acacia_sign.json",
+          "assets/minecraft/models/block/allium.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north.uv:array",
+        "count": 377,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north.uv[]",
+        "count": 377,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.south.uv:array",
+        "count": 377,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.south.uv[]",
+        "count": 377,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down.uv:array",
+        "count": 362,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down.uv[]",
+        "count": 362,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west.uv:array",
+        "count": 358,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west.uv[]",
+        "count": 358,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east.uv:array",
+        "count": 357,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east.uv[]",
+        "count": 357,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json"
+        ]
+      },
+      {
+        "value": "textures.top:string",
+        "count": 265,
+        "samples": [
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json",
+          "assets/minecraft/models/block/acacia_door_top.json",
+          "assets/minecraft/models/block/acacia_door_top_hinge.json",
+          "assets/minecraft/models/block/acacia_slab.json"
+        ]
+      },
+      {
+        "value": "textures.side:string",
+        "count": 258,
+        "samples": [
+          "assets/minecraft/models/block/acacia_log.json",
+          "assets/minecraft/models/block/acacia_slab.json",
+          "assets/minecraft/models/block/acacia_slab_top.json",
+          "assets/minecraft/models/block/acacia_stairs.json",
+          "assets/minecraft/models/block/acacia_stairs_inner.json"
+        ]
+      },
+      {
+        "value": "elements:array",
+        "count": 242,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json",
+          "assets/minecraft/models/block/bamboo2_age1.json"
+        ]
+      },
+      {
+        "value": "elements[]",
+        "count": 242,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json",
+          "assets/minecraft/models/block/bamboo2_age1.json"
+        ]
+      },
+      {
+        "value": "textures.bottom:string",
+        "count": 234,
+        "samples": [
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json",
+          "assets/minecraft/models/block/acacia_door_top.json",
+          "assets/minecraft/models/block/acacia_door_top_hinge.json",
+          "assets/minecraft/models/block/acacia_slab.json"
+        ]
+      },
+      {
+        "value": "textures.all:string",
+        "count": 215,
+        "samples": [
+          "assets/minecraft/models/block/acacia_leaves.json",
+          "assets/minecraft/models/block/acacia_planks.json",
+          "assets/minecraft/models/block/andesite.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down.cullface:string",
+        "count": 212,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json",
+          "assets/minecraft/models/block/bamboo2_age1.json"
+        ]
+      },
+      {
+        "value": "elements[].shade:boolean",
+        "count": 157,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "textures.texture:string",
+        "count": 139,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_fence_gate.json",
+          "assets/minecraft/models/block/acacia_fence_gate_open.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north.cullface:string",
+        "count": 134,
+        "samples": [
+          "assets/minecraft/models/block/bone_block.json",
+          "assets/minecraft/models/block/brown_mushroom_block.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.south.cullface:string",
+        "count": 132,
+        "samples": [
+          "assets/minecraft/models/block/bone_block.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json"
+        ]
+      },
+      {
+        "value": "ambientocclusion:boolean",
+        "count": 122,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/beacon.json",
+          "assets/minecraft/models/block/cactus.json",
+          "assets/minecraft/models/block/cauldron.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west.cullface:string",
+        "count": 121,
+        "samples": [
+          "assets/minecraft/models/block/bell_between_walls.json",
+          "assets/minecraft/models/block/bone_block.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east.cullface:string",
+        "count": 120,
+        "samples": [
+          "assets/minecraft/models/block/bell_between_walls.json",
+          "assets/minecraft/models/block/bell_wall.json",
+          "assets/minecraft/models/block/bone_block.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "overrides[].model:string",
+        "count": 110,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json"
+        ]
+      },
+      {
+        "value": "overrides[].predicate:object",
+        "count": 110,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up.cullface:string",
+        "count": 96,
+        "samples": [
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json",
+          "assets/minecraft/models/block/bamboo2_age0.json",
+          "assets/minecraft/models/block/bamboo2_age1.json",
+          "assets/minecraft/models/block/bamboo3_age0.json"
+        ]
+      },
+      {
+        "value": "elements[].rotation:object",
+        "count": 96,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty1.json",
+          "assets/minecraft/models/block/brewing_stand_empty2.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "elements[].rotation.angle:number",
+        "count": 96,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty1.json",
+          "assets/minecraft/models/block/brewing_stand_empty2.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "elements[].rotation.axis:string",
+        "count": 96,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty1.json",
+          "assets/minecraft/models/block/brewing_stand_empty2.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "elements[].rotation.origin:array",
+        "count": 96,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty1.json",
+          "assets/minecraft/models/block/brewing_stand_empty2.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "elements[].rotation.origin[]",
+        "count": 96,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty1.json",
+          "assets/minecraft/models/block/brewing_stand_empty2.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "textures.pane:string",
+        "count": 85,
+        "samples": [
+          "assets/minecraft/models/block/black_stained_glass_pane_noside.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_noside_alt.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_post.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side_alt.json"
+        ]
+      },
+      {
+        "value": "elements[].rotation.rescale:boolean",
+        "count": 74,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/coral_fan.json",
+          "assets/minecraft/models/block/coral_fan.json",
+          "assets/minecraft/models/block/coral_fan.json"
+        ]
+      },
+      {
+        "value": "overrides[].predicate.time:number",
+        "count": 65,
+        "samples": [
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down.rotation:number",
+        "count": 64,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up.rotation:number",
+        "count": 63,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire.json"
+        ]
+      },
+      {
+        "value": "textures.edge:string",
+        "count": 56,
+        "samples": [
+          "assets/minecraft/models/block/black_stained_glass_pane_post.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side_alt.json",
+          "assets/minecraft/models/block/blue_stained_glass_pane_post.json",
+          "assets/minecraft/models/block/blue_stained_glass_pane_side.json"
+        ]
+      },
+      {
+        "value": "textures.cross:string",
+        "count": 55,
+        "samples": [
+          "assets/minecraft/models/block/acacia_sapling.json",
+          "assets/minecraft/models/block/allium.json",
+          "assets/minecraft/models/block/azure_bluet.json",
+          "assets/minecraft/models/block/bamboo_sapling.json",
+          "assets/minecraft/models/block/birch_sapling.json"
+        ]
+      },
+      {
+        "value": "elements[].__comment:string",
+        "count": 50,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/beacon.json"
+        ]
+      },
+      {
+        "value": "textures.wall:string",
+        "count": 42,
+        "samples": [
+          "assets/minecraft/models/block/andesite_wall_inventory.json",
+          "assets/minecraft/models/block/andesite_wall_post.json",
+          "assets/minecraft/models/block/andesite_wall_side.json",
+          "assets/minecraft/models/block/brick_wall_inventory.json",
+          "assets/minecraft/models/block/brick_wall_post.json"
+        ]
+      },
+      {
+        "value": "textures.end:string",
+        "count": 37,
+        "samples": [
+          "assets/minecraft/models/block/acacia_log.json",
+          "assets/minecraft/models/block/acacia_wood.json",
+          "assets/minecraft/models/block/birch_log.json",
+          "assets/minecraft/models/block/birch_wood.json",
+          "assets/minecraft/models/block/bone_block.json"
+        ]
+      },
+      {
+        "value": "display:object",
+        "count": 35,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json"
+        ]
+      },
+      {
+        "value": "overrides[].predicate.angle:number",
+        "count": 33,
+        "samples": [
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.south.tintindex:number",
+        "count": 32,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/leaves.json",
+          "assets/minecraft/models/block/potted_fern.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north.tintindex:number",
+        "count": 31,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/leaves.json",
+          "assets/minecraft/models/block/potted_fern.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east.tintindex:number",
+        "count": 29,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/leaves.json",
+          "assets/minecraft/models/block/potted_fern.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west.tintindex:number",
+        "count": 29,
+        "samples": [
+          "assets/minecraft/models/block/bamboo_large_leaves.json",
+          "assets/minecraft/models/block/bamboo_small_leaves.json",
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/leaves.json",
+          "assets/minecraft/models/block/potted_fern.json"
+        ]
+      },
+      {
+        "value": "textures.inside:string",
+        "count": 28,
+        "samples": [
+          "assets/minecraft/models/block/cake_slice1.json",
+          "assets/minecraft/models/block/cake_slice2.json",
+          "assets/minecraft/models/block/cake_slice3.json",
+          "assets/minecraft/models/block/cake_slice4.json",
+          "assets/minecraft/models/block/cake_slice5.json"
+        ]
+      },
+      {
+        "value": "textures.crop:string",
+        "count": 23,
+        "samples": [
+          "assets/minecraft/models/block/beetroots_stage0.json",
+          "assets/minecraft/models/block/beetroots_stage1.json",
+          "assets/minecraft/models/block/beetroots_stage2.json",
+          "assets/minecraft/models/block/beetroots_stage3.json",
+          "assets/minecraft/models/block/carrots_stage0.json"
+        ]
+      },
+      {
+        "value": "textures.plant:string",
+        "count": 23,
+        "samples": [
+          "assets/minecraft/models/block/potted_acacia_sapling.json",
+          "assets/minecraft/models/block/potted_allium.json",
+          "assets/minecraft/models/block/potted_azure_bluet.json",
+          "assets/minecraft/models/block/potted_birch_sapling.json",
+          "assets/minecraft/models/block/potted_blue_orchid.json"
+        ]
+      },
+      {
+        "value": "textures.rail:string",
+        "count": 22,
+        "samples": [
+          "assets/minecraft/models/block/activator_rail.json",
+          "assets/minecraft/models/block/activator_rail_on.json",
+          "assets/minecraft/models/block/activator_rail_on_raised_ne.json",
+          "assets/minecraft/models/block/activator_rail_on_raised_sw.json",
+          "assets/minecraft/models/block/activator_rail_raised_ne.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand:object",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand.rotation:array",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand.rotation[]",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand.scale:array",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand.scale[]",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand.translation:array",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_righthand.translation[]",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "textures.down:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "textures.east:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "textures.fan:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/brain_coral_fan.json",
+          "assets/minecraft/models/block/brain_coral_wall_fan.json",
+          "assets/minecraft/models/block/bubble_coral_fan.json",
+          "assets/minecraft/models/block/bubble_coral_wall_fan.json",
+          "assets/minecraft/models/block/dead_brain_coral_fan.json"
+        ]
+      },
+      {
+        "value": "textures.north:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "textures.slab:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/comparator.json",
+          "assets/minecraft/models/block/comparator_on.json",
+          "assets/minecraft/models/block/comparator_on_subtract.json",
+          "assets/minecraft/models/block/comparator_subtract.json",
+          "assets/minecraft/models/block/repeater_1tick.json"
+        ]
+      },
+      {
+        "value": "textures.south:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "textures.up:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "textures.west:string",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand:object",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand.rotation:array",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand.rotation[]",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand.scale:array",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand.scale[]",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand.translation:array",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_righthand.translation[]",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "textures.stem:string",
+        "count": 18,
+        "samples": [
+          "assets/minecraft/models/block/attached_melon_stem.json",
+          "assets/minecraft/models/block/attached_pumpkin_stem.json",
+          "assets/minecraft/models/block/melon_stem_stage0.json",
+          "assets/minecraft/models/block/melon_stem_stage1.json",
+          "assets/minecraft/models/block/melon_stem_stage2.json"
+        ]
+      },
+      {
+        "value": "display.gui:object",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "display.gui.rotation:array",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "display.gui.rotation[]",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "display.gui.scale:array",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "display.gui.scale[]",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "display.gui.translation:array",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "display.gui.translation[]",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "textures.pattern:string",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/black_glazed_terracotta.json",
+          "assets/minecraft/models/block/blue_glazed_terracotta.json",
+          "assets/minecraft/models/block/brown_glazed_terracotta.json",
+          "assets/minecraft/models/block/cyan_glazed_terracotta.json",
+          "assets/minecraft/models/block/gray_glazed_terracotta.json"
+        ]
+      },
+      {
+        "value": "textures.wool:string",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/black_carpet.json",
+          "assets/minecraft/models/block/blue_carpet.json",
+          "assets/minecraft/models/block/brown_carpet.json",
+          "assets/minecraft/models/block/cyan_carpet.json",
+          "assets/minecraft/models/block/gray_carpet.json"
+        ]
+      },
+      {
+        "value": "display.head:object",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json"
+        ]
+      },
+      {
+        "value": "display.head.translation:array",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json"
+        ]
+      },
+      {
+        "value": "display.head.translation[]",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.up.tintindex:number",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/cauldron_level1.json",
+          "assets/minecraft/models/block/cauldron_level2.json",
+          "assets/minecraft/models/block/cauldron_level3.json",
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/leaves.json"
+        ]
+      },
+      {
+        "value": "textures.front:string",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/blast_furnace.json",
+          "assets/minecraft/models/block/blast_furnace_on.json",
+          "assets/minecraft/models/block/carved_pumpkin.json",
+          "assets/minecraft/models/block/dispenser.json",
+          "assets/minecraft/models/block/dispenser_vertical.json"
+        ]
+      },
+      {
+        "value": "display.fixed:object",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.fixed.rotation:array",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.fixed.rotation[]",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.fixed.scale:array",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.fixed.scale[]",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.head.rotation:array",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/item/bone.json"
+        ]
+      },
+      {
+        "value": "display.head.rotation[]",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/item/bone.json"
+        ]
+      },
+      {
+        "value": "display.head.scale:array",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/item/bone.json"
+        ]
+      },
+      {
+        "value": "display.head.scale[]",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/item/bone.json"
+        ]
+      },
+      {
+        "value": "display.fixed.translation:array",
+        "count": 13,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "display.fixed.translation[]",
+        "count": 13,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.east.rotation:number",
+        "count": 12,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/cube_directional.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.west.rotation:number",
+        "count": 12,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/cube_directional.json"
+        ]
+      },
+      {
+        "value": "textures.lit:string",
+        "count": 12,
+        "samples": [
+          "assets/minecraft/models/block/comparator.json",
+          "assets/minecraft/models/block/comparator_on.json",
+          "assets/minecraft/models/block/comparator_on_subtract.json",
+          "assets/minecraft/models/block/comparator_subtract.json",
+          "assets/minecraft/models/block/repeater_1tick_on.json"
+        ]
+      },
+      {
+        "value": "textures.unlit:string",
+        "count": 12,
+        "samples": [
+          "assets/minecraft/models/block/comparator.json",
+          "assets/minecraft/models/block/comparator_on.json",
+          "assets/minecraft/models/block/comparator_on_subtract.json",
+          "assets/minecraft/models/block/comparator_subtract.json",
+          "assets/minecraft/models/block/repeater_1tick.json"
+        ]
+      },
+      {
+        "value": "display.ground:object",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "display.ground.rotation:array",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "display.ground.rotation[]",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "display.ground.scale:array",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "display.ground.scale[]",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "display.ground.translation:array",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "display.ground.translation[]",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "textures.fire:string",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/fire_floor0.json",
+          "assets/minecraft/models/block/fire_floor1.json",
+          "assets/minecraft/models/block/fire_side0.json",
+          "assets/minecraft/models/block/fire_side1.json"
+        ]
+      },
+      {
+        "value": "textures.layer1:string",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/item/filled_map.json",
+          "assets/minecraft/models/item/firework_star.json",
+          "assets/minecraft/models/item/leather_boots.json",
+          "assets/minecraft/models/item/leather_chestplate.json",
+          "assets/minecraft/models/item/leather_helmet.json"
+        ]
+      },
+      {
+        "value": "textures.vine:string",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/vine_1.json",
+          "assets/minecraft/models/block/vine_1u.json",
+          "assets/minecraft/models/block/vine_2.json",
+          "assets/minecraft/models/block/vine_2_opposite.json",
+          "assets/minecraft/models/block/vine_2u.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand:object",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand.rotation:array",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand.rotation[]",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand.scale:array",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand.scale[]",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand.translation:array",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.firstperson_lefthand.translation[]",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand:object",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand.rotation:array",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand.rotation[]",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand.scale:array",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand.scale[]",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand.translation:array",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "display.thirdperson_lefthand.translation[]",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.down.tintindex:number",
+        "count": 8,
+        "samples": [
+          "assets/minecraft/models/block/leaves.json",
+          "assets/minecraft/models/block/lily_pad.json",
+          "assets/minecraft/models/block/vine_1u.json",
+          "assets/minecraft/models/block/vine_2u.json",
+          "assets/minecraft/models/block/vine_2u_opposite.json"
+        ]
+      },
+      {
+        "value": "overrides:array",
+        "count": 8,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/elytra.json"
+        ]
+      },
+      {
+        "value": "overrides[]",
+        "count": 8,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/elytra.json"
+        ]
+      },
+      {
+        "value": "textures.lock:string",
+        "count": 8,
+        "samples": [
+          "assets/minecraft/models/block/repeater_1tick_locked.json",
+          "assets/minecraft/models/block/repeater_1tick_on_locked.json",
+          "assets/minecraft/models/block/repeater_2tick_locked.json",
+          "assets/minecraft/models/block/repeater_2tick_on_locked.json",
+          "assets/minecraft/models/block/repeater_3tick_locked.json"
+        ]
+      },
+      {
+        "value": "textures.dirt:string",
+        "count": 7,
+        "samples": [
+          "assets/minecraft/models/block/farmland.json",
+          "assets/minecraft/models/block/farmland_moist.json",
+          "assets/minecraft/models/block/flower_pot.json",
+          "assets/minecraft/models/block/flower_pot_cross.json",
+          "assets/minecraft/models/block/potted_bamboo.json"
+        ]
+      },
+      {
+        "value": "textures.stand:string",
+        "count": 7,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand.json",
+          "assets/minecraft/models/block/brewing_stand_bottle0.json",
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty0.json"
+        ]
+      },
+      {
+        "value": "overrides[].predicate.pulling:number",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/crossbow.json"
+        ]
+      },
+      {
+        "value": "textures.line:string",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/redstone_dust_dot.json",
+          "assets/minecraft/models/block/redstone_dust_side0.json",
+          "assets/minecraft/models/block/redstone_dust_side1.json",
+          "assets/minecraft/models/block/redstone_dust_side_alt0.json",
+          "assets/minecraft/models/block/redstone_dust_side_alt1.json"
+        ]
+      },
+      {
+        "value": "textures.platform:string",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/piston.json",
+          "assets/minecraft/models/block/piston_head.json",
+          "assets/minecraft/models/block/piston_head_short.json",
+          "assets/minecraft/models/block/piston_head_short_sticky.json",
+          "assets/minecraft/models/block/piston_head_sticky.json"
+        ]
+      },
+      {
+        "value": "textures.torch:string",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/redstone_torch.json",
+          "assets/minecraft/models/block/redstone_torch_off.json",
+          "assets/minecraft/models/block/redstone_wall_torch.json",
+          "assets/minecraft/models/block/redstone_wall_torch_off.json",
+          "assets/minecraft/models/block/torch.json"
+        ]
+      },
+      {
+        "value": "textures.wood:string",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/item_frame.json",
+          "assets/minecraft/models/block/item_frame_map.json",
+          "assets/minecraft/models/block/tripwire_hook.json",
+          "assets/minecraft/models/block/tripwire_hook_attached.json",
+          "assets/minecraft/models/block/tripwire_hook_attached_on.json"
+        ]
+      },
+      {
+        "value": "textures.bars:string",
+        "count": 5,
+        "samples": [
+          "assets/minecraft/models/block/iron_bars_cap.json",
+          "assets/minecraft/models/block/iron_bars_cap_alt.json",
+          "assets/minecraft/models/block/iron_bars_post.json",
+          "assets/minecraft/models/block/iron_bars_side.json",
+          "assets/minecraft/models/block/iron_bars_side_alt.json"
+        ]
+      },
+      {
+        "value": "textures.flowerpot:string",
+        "count": 5,
+        "samples": [
+          "assets/minecraft/models/block/flower_pot.json",
+          "assets/minecraft/models/block/flower_pot_cross.json",
+          "assets/minecraft/models/block/potted_bamboo.json",
+          "assets/minecraft/models/block/potted_cactus.json",
+          "assets/minecraft/models/block/potted_fern.json"
+        ]
+      },
+      {
+        "value": "textures.overlay:string",
+        "count": 5,
+        "samples": [
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/redstone_dust_dot.json",
+          "assets/minecraft/models/block/redstone_dust_side.json",
+          "assets/minecraft/models/block/redstone_dust_side_alt.json",
+          "assets/minecraft/models/block/redstone_dust_up.json"
+        ]
+      },
+      {
+        "value": "overrides[].predicate.pull:number",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/crossbow.json"
+        ]
+      },
+      {
+        "value": "textures.bar:string",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/bell_between_walls.json",
+          "assets/minecraft/models/block/bell_ceiling.json",
+          "assets/minecraft/models/block/bell_floor.json",
+          "assets/minecraft/models/block/bell_wall.json"
+        ]
+      },
+      {
+        "value": "textures.base:string",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/lever.json",
+          "assets/minecraft/models/block/lever_on.json"
+        ]
+      },
+      {
+        "value": "textures.hook:string",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/tripwire_hook.json",
+          "assets/minecraft/models/block/tripwire_hook_attached.json",
+          "assets/minecraft/models/block/tripwire_hook_attached_on.json",
+          "assets/minecraft/models/block/tripwire_hook_on.json"
+        ]
+      },
+      {
+        "value": "textures.unsticky:string",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/piston_head.json",
+          "assets/minecraft/models/block/piston_head_short.json",
+          "assets/minecraft/models/block/piston_head_short_sticky.json",
+          "assets/minecraft/models/block/piston_head_sticky.json"
+        ]
+      },
+      {
+        "value": "textures.back:string",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/item_frame.json",
+          "assets/minecraft/models/block/item_frame_map.json",
+          "assets/minecraft/models/block/sunflower_top.json"
+        ]
+      },
+      {
+        "value": "textures.cocoa:string",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/cocoa_stage0.json",
+          "assets/minecraft/models/block/cocoa_stage1.json",
+          "assets/minecraft/models/block/cocoa_stage2.json"
+        ]
+      },
+      {
+        "value": "textures.seagrass:string",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/seagrass.json",
+          "assets/minecraft/models/block/tall_seagrass_bottom.json",
+          "assets/minecraft/models/block/tall_seagrass_top.json"
+        ]
+      },
+      {
+        "value": "textures.water:string",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/cauldron_level1.json",
+          "assets/minecraft/models/block/cauldron_level2.json",
+          "assets/minecraft/models/block/cauldron_level3.json"
+        ]
+      },
+      {
+        "value": "overrides[].predicate.charged:number",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/crossbow.json"
+        ]
+      },
+      {
+        "value": "textures.lever:string",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/lever.json",
+          "assets/minecraft/models/block/lever_on.json"
+        ]
+      },
+      {
+        "value": "textures.log:string",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json"
+        ]
+      },
+      {
+        "value": "textures.portal:string",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/nether_portal_ew.json",
+          "assets/minecraft/models/block/nether_portal_ns.json"
+        ]
+      },
+      {
+        "value": "textures.tripwire:string",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/tripwire_hook_attached.json",
+          "assets/minecraft/models/block/tripwire_hook_attached_on.json"
+        ]
+      },
+      {
+        "value": "textures.upperstem:string",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/attached_melon_stem.json",
+          "assets/minecraft/models/block/attached_pumpkin_stem.json"
+        ]
+      },
+      {
+        "value": "elements[].faces.north.rotation:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/template_glazed_terracotta.json"]
+      },
+      {
+        "value": "elements[].faces.south.rotation:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/template_glazed_terracotta.json"]
+      },
+      {
+        "value": "overrides[].predicate.blocking:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/shield.json"]
+      },
+      {
+        "value": "overrides[].predicate.broken:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/elytra.json"]
+      },
+      {
+        "value": "overrides[].predicate.cast:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/fishing_rod.json"]
+      },
+      {
+        "value": "overrides[].predicate.firework:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/crossbow.json"]
+      },
+      {
+        "value": "overrides[].predicate.throwing:number",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/trident_in_hand.json"]
+      },
+      {
+        "value": "textures.bamboo:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/potted_bamboo.json"]
+      },
+      {
+        "value": "textures.beacon:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/beacon.json"]
+      },
+      {
+        "value": "textures.body:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/anvil.json"]
+      },
+      {
+        "value": "textures.cactus:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/potted_cactus.json"]
+      },
+      {
+        "value": "textures.end_rod:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/end_rod.json"]
+      },
+      {
+        "value": "textures.eye:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/end_portal_frame_filled.json"]
+      },
+      {
+        "value": "textures.glass:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/beacon.json"]
+      },
+      {
+        "value": "textures.leaf:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/potted_bamboo.json"]
+      },
+      {
+        "value": "textures.leg:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/grindstone.json"]
+      },
+      {
+        "value": "textures.litlog:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/campfire.json"]
+      },
+      {
+        "value": "textures.obsidian:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/beacon.json"]
+      },
+      {
+        "value": "textures.pivot:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/grindstone.json"]
+      },
+      {
+        "value": "textures.post:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/bell_floor.json"]
+      },
+      {
+        "value": "textures.round:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/grindstone.json"]
+      },
+      {
+        "value": "textures.saw:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/stonecutter.json"]
+      },
+      {
+        "value": "textures.sides:string",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/lectern.json"]
+      }
+    ],
+    "displayContexts": [
+      {
+        "value": "firstperson_righthand",
+        "count": 21,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/orientable_with_bottom.json",
+          "assets/minecraft/models/block/pumpkin.json",
+          "assets/minecraft/models/block/smoker_on.json"
+        ]
+      },
+      {
+        "value": "thirdperson_righthand",
+        "count": 19,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "gui",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json",
+          "assets/minecraft/models/block/wall_inventory.json"
+        ]
+      },
+      {
+        "value": "head",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json",
+          "assets/minecraft/models/block/end_rod.json",
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/block/template_fence_gate.json"
+        ]
+      },
+      {
+        "value": "fixed",
+        "count": 14,
+        "samples": [
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/fence_inventory.json",
+          "assets/minecraft/models/block/wall_inventory.json",
+          "assets/minecraft/models/item/chest.json"
+        ]
+      },
+      {
+        "value": "ground",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/item/chest.json",
+          "assets/minecraft/models/item/conduit.json",
+          "assets/minecraft/models/item/generated.json",
+          "assets/minecraft/models/item/shield.json"
+        ]
+      },
+      {
+        "value": "firstperson_lefthand",
+        "count": 10,
+        "samples": [
+          "assets/minecraft/models/block/block.json",
+          "assets/minecraft/models/block/thin_block.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json"
+        ]
+      },
+      {
+        "value": "thirdperson_lefthand",
+        "count": 9,
+        "samples": [
+          "assets/minecraft/models/block/stairs.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/handheld.json",
+          "assets/minecraft/models/item/handheld_rod.json"
+        ]
+      }
+    ],
+    "textureVariables": [
+      {
+        "value": "layer0",
+        "count": 462,
+        "samples": [
+          "assets/minecraft/models/item/acacia_boat.json",
+          "assets/minecraft/models/item/acacia_door.json",
+          "assets/minecraft/models/item/acacia_sapling.json",
+          "assets/minecraft/models/item/acacia_sign.json",
+          "assets/minecraft/models/item/activator_rail.json"
+        ]
+      },
+      {
+        "value": "particle",
+        "count": 380,
+        "samples": [
+          "assets/minecraft/models/block/acacia_sign.json",
+          "assets/minecraft/models/block/allium.json",
+          "assets/minecraft/models/block/anvil.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "top",
+        "count": 265,
+        "samples": [
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json",
+          "assets/minecraft/models/block/acacia_door_top.json",
+          "assets/minecraft/models/block/acacia_door_top_hinge.json",
+          "assets/minecraft/models/block/acacia_slab.json"
+        ]
+      },
+      {
+        "value": "side",
+        "count": 258,
+        "samples": [
+          "assets/minecraft/models/block/acacia_log.json",
+          "assets/minecraft/models/block/acacia_slab.json",
+          "assets/minecraft/models/block/acacia_slab_top.json",
+          "assets/minecraft/models/block/acacia_stairs.json",
+          "assets/minecraft/models/block/acacia_stairs_inner.json"
+        ]
+      },
+      {
+        "value": "bottom",
+        "count": 234,
+        "samples": [
+          "assets/minecraft/models/block/acacia_door_bottom.json",
+          "assets/minecraft/models/block/acacia_door_bottom_hinge.json",
+          "assets/minecraft/models/block/acacia_door_top.json",
+          "assets/minecraft/models/block/acacia_door_top_hinge.json",
+          "assets/minecraft/models/block/acacia_slab.json"
+        ]
+      },
+      {
+        "value": "all",
+        "count": 215,
+        "samples": [
+          "assets/minecraft/models/block/acacia_leaves.json",
+          "assets/minecraft/models/block/acacia_planks.json",
+          "assets/minecraft/models/block/andesite.json",
+          "assets/minecraft/models/block/bamboo1_age0.json",
+          "assets/minecraft/models/block/bamboo1_age1.json"
+        ]
+      },
+      {
+        "value": "texture",
+        "count": 139,
+        "samples": [
+          "assets/minecraft/models/block/acacia_button.json",
+          "assets/minecraft/models/block/acacia_button_inventory.json",
+          "assets/minecraft/models/block/acacia_button_pressed.json",
+          "assets/minecraft/models/block/acacia_fence_gate.json",
+          "assets/minecraft/models/block/acacia_fence_gate_open.json"
+        ]
+      },
+      {
+        "value": "pane",
+        "count": 85,
+        "samples": [
+          "assets/minecraft/models/block/black_stained_glass_pane_noside.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_noside_alt.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_post.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side_alt.json"
+        ]
+      },
+      {
+        "value": "edge",
+        "count": 56,
+        "samples": [
+          "assets/minecraft/models/block/black_stained_glass_pane_post.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side.json",
+          "assets/minecraft/models/block/black_stained_glass_pane_side_alt.json",
+          "assets/minecraft/models/block/blue_stained_glass_pane_post.json",
+          "assets/minecraft/models/block/blue_stained_glass_pane_side.json"
+        ]
+      },
+      {
+        "value": "cross",
+        "count": 55,
+        "samples": [
+          "assets/minecraft/models/block/acacia_sapling.json",
+          "assets/minecraft/models/block/allium.json",
+          "assets/minecraft/models/block/azure_bluet.json",
+          "assets/minecraft/models/block/bamboo_sapling.json",
+          "assets/minecraft/models/block/birch_sapling.json"
+        ]
+      },
+      {
+        "value": "wall",
+        "count": 42,
+        "samples": [
+          "assets/minecraft/models/block/andesite_wall_inventory.json",
+          "assets/minecraft/models/block/andesite_wall_post.json",
+          "assets/minecraft/models/block/andesite_wall_side.json",
+          "assets/minecraft/models/block/brick_wall_inventory.json",
+          "assets/minecraft/models/block/brick_wall_post.json"
+        ]
+      },
+      {
+        "value": "end",
+        "count": 37,
+        "samples": [
+          "assets/minecraft/models/block/acacia_log.json",
+          "assets/minecraft/models/block/acacia_wood.json",
+          "assets/minecraft/models/block/birch_log.json",
+          "assets/minecraft/models/block/birch_wood.json",
+          "assets/minecraft/models/block/bone_block.json"
+        ]
+      },
+      {
+        "value": "inside",
+        "count": 28,
+        "samples": [
+          "assets/minecraft/models/block/cake_slice1.json",
+          "assets/minecraft/models/block/cake_slice2.json",
+          "assets/minecraft/models/block/cake_slice3.json",
+          "assets/minecraft/models/block/cake_slice4.json",
+          "assets/minecraft/models/block/cake_slice5.json"
+        ]
+      },
+      {
+        "value": "crop",
+        "count": 23,
+        "samples": [
+          "assets/minecraft/models/block/beetroots_stage0.json",
+          "assets/minecraft/models/block/beetroots_stage1.json",
+          "assets/minecraft/models/block/beetroots_stage2.json",
+          "assets/minecraft/models/block/beetroots_stage3.json",
+          "assets/minecraft/models/block/carrots_stage0.json"
+        ]
+      },
+      {
+        "value": "plant",
+        "count": 23,
+        "samples": [
+          "assets/minecraft/models/block/potted_acacia_sapling.json",
+          "assets/minecraft/models/block/potted_allium.json",
+          "assets/minecraft/models/block/potted_azure_bluet.json",
+          "assets/minecraft/models/block/potted_birch_sapling.json",
+          "assets/minecraft/models/block/potted_blue_orchid.json"
+        ]
+      },
+      {
+        "value": "rail",
+        "count": 22,
+        "samples": [
+          "assets/minecraft/models/block/activator_rail.json",
+          "assets/minecraft/models/block/activator_rail_on.json",
+          "assets/minecraft/models/block/activator_rail_on_raised_ne.json",
+          "assets/minecraft/models/block/activator_rail_on_raised_sw.json",
+          "assets/minecraft/models/block/activator_rail_raised_ne.json"
+        ]
+      },
+      {
+        "value": "down",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "east",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "fan",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/brain_coral_fan.json",
+          "assets/minecraft/models/block/brain_coral_wall_fan.json",
+          "assets/minecraft/models/block/bubble_coral_fan.json",
+          "assets/minecraft/models/block/bubble_coral_wall_fan.json",
+          "assets/minecraft/models/block/dead_brain_coral_fan.json"
+        ]
+      },
+      {
+        "value": "north",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "slab",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/comparator.json",
+          "assets/minecraft/models/block/comparator_on.json",
+          "assets/minecraft/models/block/comparator_on_subtract.json",
+          "assets/minecraft/models/block/comparator_subtract.json",
+          "assets/minecraft/models/block/repeater_1tick.json"
+        ]
+      },
+      {
+        "value": "south",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "up",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "west",
+        "count": 20,
+        "samples": [
+          "assets/minecraft/models/block/cartography_table.json",
+          "assets/minecraft/models/block/chain_command_block.json",
+          "assets/minecraft/models/block/chain_command_block_conditional.json",
+          "assets/minecraft/models/block/command_block.json",
+          "assets/minecraft/models/block/command_block_conditional.json"
+        ]
+      },
+      {
+        "value": "stem",
+        "count": 18,
+        "samples": [
+          "assets/minecraft/models/block/attached_melon_stem.json",
+          "assets/minecraft/models/block/attached_pumpkin_stem.json",
+          "assets/minecraft/models/block/melon_stem_stage0.json",
+          "assets/minecraft/models/block/melon_stem_stage1.json",
+          "assets/minecraft/models/block/melon_stem_stage2.json"
+        ]
+      },
+      {
+        "value": "pattern",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/black_glazed_terracotta.json",
+          "assets/minecraft/models/block/blue_glazed_terracotta.json",
+          "assets/minecraft/models/block/brown_glazed_terracotta.json",
+          "assets/minecraft/models/block/cyan_glazed_terracotta.json",
+          "assets/minecraft/models/block/gray_glazed_terracotta.json"
+        ]
+      },
+      {
+        "value": "wool",
+        "count": 16,
+        "samples": [
+          "assets/minecraft/models/block/black_carpet.json",
+          "assets/minecraft/models/block/blue_carpet.json",
+          "assets/minecraft/models/block/brown_carpet.json",
+          "assets/minecraft/models/block/cyan_carpet.json",
+          "assets/minecraft/models/block/gray_carpet.json"
+        ]
+      },
+      {
+        "value": "front",
+        "count": 15,
+        "samples": [
+          "assets/minecraft/models/block/blast_furnace.json",
+          "assets/minecraft/models/block/blast_furnace_on.json",
+          "assets/minecraft/models/block/carved_pumpkin.json",
+          "assets/minecraft/models/block/dispenser.json",
+          "assets/minecraft/models/block/dispenser_vertical.json"
+        ]
+      },
+      {
+        "value": "lit",
+        "count": 12,
+        "samples": [
+          "assets/minecraft/models/block/comparator.json",
+          "assets/minecraft/models/block/comparator_on.json",
+          "assets/minecraft/models/block/comparator_on_subtract.json",
+          "assets/minecraft/models/block/comparator_subtract.json",
+          "assets/minecraft/models/block/repeater_1tick_on.json"
+        ]
+      },
+      {
+        "value": "unlit",
+        "count": 12,
+        "samples": [
+          "assets/minecraft/models/block/comparator.json",
+          "assets/minecraft/models/block/comparator_on.json",
+          "assets/minecraft/models/block/comparator_on_subtract.json",
+          "assets/minecraft/models/block/comparator_subtract.json",
+          "assets/minecraft/models/block/repeater_1tick.json"
+        ]
+      },
+      {
+        "value": "fire",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/fire_floor0.json",
+          "assets/minecraft/models/block/fire_floor1.json",
+          "assets/minecraft/models/block/fire_side0.json",
+          "assets/minecraft/models/block/fire_side1.json"
+        ]
+      },
+      {
+        "value": "layer1",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/item/filled_map.json",
+          "assets/minecraft/models/item/firework_star.json",
+          "assets/minecraft/models/item/leather_boots.json",
+          "assets/minecraft/models/item/leather_chestplate.json",
+          "assets/minecraft/models/item/leather_helmet.json"
+        ]
+      },
+      {
+        "value": "vine",
+        "count": 11,
+        "samples": [
+          "assets/minecraft/models/block/vine_1.json",
+          "assets/minecraft/models/block/vine_1u.json",
+          "assets/minecraft/models/block/vine_2.json",
+          "assets/minecraft/models/block/vine_2_opposite.json",
+          "assets/minecraft/models/block/vine_2u.json"
+        ]
+      },
+      {
+        "value": "lock",
+        "count": 8,
+        "samples": [
+          "assets/minecraft/models/block/repeater_1tick_locked.json",
+          "assets/minecraft/models/block/repeater_1tick_on_locked.json",
+          "assets/minecraft/models/block/repeater_2tick_locked.json",
+          "assets/minecraft/models/block/repeater_2tick_on_locked.json",
+          "assets/minecraft/models/block/repeater_3tick_locked.json"
+        ]
+      },
+      {
+        "value": "dirt",
+        "count": 7,
+        "samples": [
+          "assets/minecraft/models/block/farmland.json",
+          "assets/minecraft/models/block/farmland_moist.json",
+          "assets/minecraft/models/block/flower_pot.json",
+          "assets/minecraft/models/block/flower_pot_cross.json",
+          "assets/minecraft/models/block/potted_bamboo.json"
+        ]
+      },
+      {
+        "value": "stand",
+        "count": 7,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand.json",
+          "assets/minecraft/models/block/brewing_stand_bottle0.json",
+          "assets/minecraft/models/block/brewing_stand_bottle1.json",
+          "assets/minecraft/models/block/brewing_stand_bottle2.json",
+          "assets/minecraft/models/block/brewing_stand_empty0.json"
+        ]
+      },
+      {
+        "value": "line",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/redstone_dust_dot.json",
+          "assets/minecraft/models/block/redstone_dust_side0.json",
+          "assets/minecraft/models/block/redstone_dust_side1.json",
+          "assets/minecraft/models/block/redstone_dust_side_alt0.json",
+          "assets/minecraft/models/block/redstone_dust_side_alt1.json"
+        ]
+      },
+      {
+        "value": "platform",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/piston.json",
+          "assets/minecraft/models/block/piston_head.json",
+          "assets/minecraft/models/block/piston_head_short.json",
+          "assets/minecraft/models/block/piston_head_short_sticky.json",
+          "assets/minecraft/models/block/piston_head_sticky.json"
+        ]
+      },
+      {
+        "value": "torch",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/redstone_torch.json",
+          "assets/minecraft/models/block/redstone_torch_off.json",
+          "assets/minecraft/models/block/redstone_wall_torch.json",
+          "assets/minecraft/models/block/redstone_wall_torch_off.json",
+          "assets/minecraft/models/block/torch.json"
+        ]
+      },
+      {
+        "value": "wood",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/block/item_frame.json",
+          "assets/minecraft/models/block/item_frame_map.json",
+          "assets/minecraft/models/block/tripwire_hook.json",
+          "assets/minecraft/models/block/tripwire_hook_attached.json",
+          "assets/minecraft/models/block/tripwire_hook_attached_on.json"
+        ]
+      },
+      {
+        "value": "bars",
+        "count": 5,
+        "samples": [
+          "assets/minecraft/models/block/iron_bars_cap.json",
+          "assets/minecraft/models/block/iron_bars_cap_alt.json",
+          "assets/minecraft/models/block/iron_bars_post.json",
+          "assets/minecraft/models/block/iron_bars_side.json",
+          "assets/minecraft/models/block/iron_bars_side_alt.json"
+        ]
+      },
+      {
+        "value": "flowerpot",
+        "count": 5,
+        "samples": [
+          "assets/minecraft/models/block/flower_pot.json",
+          "assets/minecraft/models/block/flower_pot_cross.json",
+          "assets/minecraft/models/block/potted_bamboo.json",
+          "assets/minecraft/models/block/potted_cactus.json",
+          "assets/minecraft/models/block/potted_fern.json"
+        ]
+      },
+      {
+        "value": "overlay",
+        "count": 5,
+        "samples": [
+          "assets/minecraft/models/block/grass_block.json",
+          "assets/minecraft/models/block/redstone_dust_dot.json",
+          "assets/minecraft/models/block/redstone_dust_side.json",
+          "assets/minecraft/models/block/redstone_dust_side_alt.json",
+          "assets/minecraft/models/block/redstone_dust_up.json"
+        ]
+      },
+      {
+        "value": "bar",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/bell_between_walls.json",
+          "assets/minecraft/models/block/bell_ceiling.json",
+          "assets/minecraft/models/block/bell_floor.json",
+          "assets/minecraft/models/block/bell_wall.json"
+        ]
+      },
+      {
+        "value": "base",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/brewing_stand.json",
+          "assets/minecraft/models/block/lectern.json",
+          "assets/minecraft/models/block/lever.json",
+          "assets/minecraft/models/block/lever_on.json"
+        ]
+      },
+      {
+        "value": "hook",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/tripwire_hook.json",
+          "assets/minecraft/models/block/tripwire_hook_attached.json",
+          "assets/minecraft/models/block/tripwire_hook_attached_on.json",
+          "assets/minecraft/models/block/tripwire_hook_on.json"
+        ]
+      },
+      {
+        "value": "unsticky",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/block/piston_head.json",
+          "assets/minecraft/models/block/piston_head_short.json",
+          "assets/minecraft/models/block/piston_head_short_sticky.json",
+          "assets/minecraft/models/block/piston_head_sticky.json"
+        ]
+      },
+      {
+        "value": "back",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/item_frame.json",
+          "assets/minecraft/models/block/item_frame_map.json",
+          "assets/minecraft/models/block/sunflower_top.json"
+        ]
+      },
+      {
+        "value": "cocoa",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/cocoa_stage0.json",
+          "assets/minecraft/models/block/cocoa_stage1.json",
+          "assets/minecraft/models/block/cocoa_stage2.json"
+        ]
+      },
+      {
+        "value": "seagrass",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/seagrass.json",
+          "assets/minecraft/models/block/tall_seagrass_bottom.json",
+          "assets/minecraft/models/block/tall_seagrass_top.json"
+        ]
+      },
+      {
+        "value": "water",
+        "count": 3,
+        "samples": [
+          "assets/minecraft/models/block/cauldron_level1.json",
+          "assets/minecraft/models/block/cauldron_level2.json",
+          "assets/minecraft/models/block/cauldron_level3.json"
+        ]
+      },
+      {
+        "value": "lever",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/lever.json",
+          "assets/minecraft/models/block/lever_on.json"
+        ]
+      },
+      {
+        "value": "log",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/campfire.json",
+          "assets/minecraft/models/block/campfire_off.json"
+        ]
+      },
+      {
+        "value": "portal",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/nether_portal_ew.json",
+          "assets/minecraft/models/block/nether_portal_ns.json"
+        ]
+      },
+      {
+        "value": "tripwire",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/tripwire_hook_attached.json",
+          "assets/minecraft/models/block/tripwire_hook_attached_on.json"
+        ]
+      },
+      {
+        "value": "upperstem",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/block/attached_melon_stem.json",
+          "assets/minecraft/models/block/attached_pumpkin_stem.json"
+        ]
+      },
+      {
+        "value": "bamboo",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/potted_bamboo.json"]
+      },
+      {
+        "value": "beacon",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/beacon.json"]
+      },
+      {
+        "value": "body",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/anvil.json"]
+      },
+      {
+        "value": "cactus",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/potted_cactus.json"]
+      },
+      {
+        "value": "end_rod",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/end_rod.json"]
+      },
+      {
+        "value": "eye",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/end_portal_frame_filled.json"]
+      },
+      {
+        "value": "glass",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/beacon.json"]
+      },
+      {
+        "value": "leaf",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/potted_bamboo.json"]
+      },
+      {
+        "value": "leg",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/grindstone.json"]
+      },
+      {
+        "value": "litlog",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/campfire.json"]
+      },
+      {
+        "value": "obsidian",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/beacon.json"]
+      },
+      {
+        "value": "pivot",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/grindstone.json"]
+      },
+      {
+        "value": "post",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/bell_floor.json"]
+      },
+      {
+        "value": "round",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/grindstone.json"]
+      },
+      {
+        "value": "saw",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/stonecutter.json"]
+      },
+      {
+        "value": "sides",
+        "count": 1,
+        "samples": ["assets/minecraft/models/block/lectern.json"]
+      }
+    ],
+    "overridePredicateKeys": [
+      {
+        "value": "time",
+        "count": 65,
+        "samples": [
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json",
+          "assets/minecraft/models/item/clock.json"
+        ]
+      },
+      {
+        "value": "angle",
+        "count": 33,
+        "samples": [
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json",
+          "assets/minecraft/models/item/compass.json"
+        ]
+      },
+      {
+        "value": "pulling",
+        "count": 6,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/crossbow.json"
+        ]
+      },
+      {
+        "value": "pull",
+        "count": 4,
+        "samples": [
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/bow.json",
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/crossbow.json"
+        ]
+      },
+      {
+        "value": "charged",
+        "count": 2,
+        "samples": [
+          "assets/minecraft/models/item/crossbow.json",
+          "assets/minecraft/models/item/crossbow.json"
+        ]
+      },
+      {
+        "value": "blocking",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/shield.json"]
+      },
+      {
+        "value": "broken",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/elytra.json"]
+      },
+      {
+        "value": "cast",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/fishing_rod.json"]
+      },
+      {
+        "value": "firework",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/crossbow.json"]
+      },
+      {
+        "value": "throwing",
+        "count": 1,
+        "samples": ["assets/minecraft/models/item/trident_in_hand.json"]
+      }
+    ]
+  },
+  "itemDefinitionJson": {
+    "topLevelKeys": [],
+    "fieldPaths": [],
+    "modelTypes": [],
+    "propertyKeys": []
+  },
+  "sources": [
+    {
+      "id": "mojang-client-jar-resourcepack-models",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/7a762a59345c13af7d87111207a93f5a8607f6c0/client.jar",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    }
+  ]
+}

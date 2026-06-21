@@ -13,6 +13,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_server_reports");
     expect(tools.map((tool) => tool.name)).toContain("search_commands");
+    expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
+    expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
@@ -79,6 +81,23 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"matchedPaths"');
     expect(result.content[0]?.text).toContain("execute");
+  });
+
+  it("calls get_resourcepack_model_summary", async () => {
+    const result = await callMinecraftSkillsTool("get_resourcepack_model_summary", {
+      version: "26.2",
+    });
+    expect(result.content[0]?.text).toContain('"coverage": "client-resourcepack-models"');
+    expect(result.content[0]?.text).toContain('"minecraft:model"');
+  });
+
+  it("calls search_resourcepack_models", async () => {
+    const result = await callMinecraftSkillsTool("search_resourcepack_models", {
+      version: "26.2",
+      kind: "item-definition",
+      contains: "bundle",
+    });
+    expect(result.content[0]?.text).toContain("assets/minecraft/items/bundle.json");
   });
 
   it("calls search_paper_events", async () => {

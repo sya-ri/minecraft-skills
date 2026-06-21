@@ -12,6 +12,8 @@ import {
   PaperPluginData,
   type PaperPluginDataData,
   type ReferenceData,
+  ResourcepackModelSummary,
+  type ResourcepackModelSummaryData,
   VanillaInventory,
   type VanillaInventoryData,
   VersionDetail,
@@ -29,6 +31,7 @@ export type {
   JavaReportsSummaryData,
   PaperPluginDataData,
   ReferenceData,
+  ResourcepackModelSummaryData,
   VanillaInventoryData,
   VersionDetailData,
   VersionIndexData,
@@ -127,6 +130,24 @@ export type CommandSearchOptions = {
 };
 
 export type CommandSearchResult = {
+  edition: EditionData;
+  version: string;
+  totalPaths: number;
+  matchedPaths: number;
+  truncated: boolean;
+  paths: string[];
+};
+
+export type ResourcepackModelPathSearchOptions = {
+  edition?: string;
+  version?: string;
+  contains?: string;
+  prefix?: string;
+  kind?: "model" | "item-definition";
+  limit?: number;
+};
+
+export type ResourcepackModelPathSearchResult = {
   edition: EditionData;
   version: string;
   totalPaths: number;
@@ -321,14 +342,34 @@ function withJavaReportsCoverage(detail: VersionDetailData): VersionDetailData {
   });
 }
 
+function withResourcepackModelCoverage(detail: VersionDetailData): VersionDetailData {
+  const modelsPath = `java/resourcepack-models/${detail.version}.json`;
+  if (!hasDataFile(modelsPath)) {
+    return detail;
+  }
+  return VersionDetail.assert({
+    ...detail,
+    domains: {
+      ...detail.domains,
+      resourcepack: {
+        status: "models-extracted",
+        facts: [...detail.domains.resourcepack.facts, `resourcepack_models=${detail.version}`],
+        unknowns: [],
+      },
+    },
+  });
+}
+
 export function getVersionDetail(edition = "java", requested = "latest"): VersionDetailData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
   const detailPath = `${editionId}/version-details/${version}.json`;
   if (hasDataFile(detailPath)) {
-    return withJavaReportsCoverage(
-      withVanillaInventoryCoverage(
-        withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath))),
+    return withResourcepackModelCoverage(
+      withJavaReportsCoverage(
+        withVanillaInventoryCoverage(
+          withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath))),
+        ),
       ),
     );
   }
@@ -336,9 +377,11 @@ export function getVersionDetail(edition = "java", requested = "latest"): Versio
   if (!summary) {
     throw new Error(`Unsupported ${editionId} version: ${version}`);
   }
-  return withJavaReportsCoverage(
-    withVanillaInventoryCoverage(
-      withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary)),
+  return withResourcepackModelCoverage(
+    withJavaReportsCoverage(
+      withVanillaInventoryCoverage(
+        withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary)),
+      ),
     ),
   );
 }
@@ -389,12 +432,72 @@ export function getJavaReportsSummary(
   return JavaReportsSummary.assert(readDataJson(reportsPath));
 }
 
+export function getResourcepackModelSummary(
+  edition = "java",
+  requested = "latest",
+): ResourcepackModelSummaryData {
+  const editionId = Edition.assert(edition);
+  const version = resolveVersion(editionId, requested);
+  const modelsPath = `${editionId}/resourcepack-models/${version}.json`;
+  if (!hasDataFile(modelsPath)) {
+    throw new Error(`No bundled resourcepack model summary for ${editionId} ${version}`);
+  }
+  return ResourcepackModelSummary.assert(readDataJson(modelsPath));
+}
+
 function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimit: number): number {
   const resolved = limit ?? defaultLimit;
   if (!Number.isInteger(resolved) || resolved < 1 || resolved > maxLimit) {
     throw new Error(`Limit must be between 1 and ${maxLimit}`);
   }
   return resolved;
+}
+
+export function searchResourcepackModelPaths(
+  options: ResourcepackModelPathSearchOptions = {},
+): ResourcepackModelPathSearchResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const modelSummary = getResourcepackModelSummary(editionId, options.version ?? "latest");
+  const pathIndex = `${editionId}/vanilla-paths/${modelSummary.version}.resourcepack.txt`;
+  if (!hasDataFile(pathIndex)) {
+    throw new Error(`No bundled resourcepack path index for ${editionId} ${modelSummary.version}`);
+  }
+  const paths = readDataText(pathIndex)
+    .trim()
+    .split(/\r?\n/)
+    .filter((path) => {
+      if (!path.endsWith(".json")) {
+        return false;
+      }
+      if (options.kind === "item-definition") {
+        return path.startsWith("assets/") && path.includes("/items/");
+      }
+      if (options.kind === "model") {
+        return path.startsWith("assets/") && path.includes("/models/");
+      }
+      return path.startsWith("assets/") && (path.includes("/models/") || path.includes("/items/"));
+    });
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const contains = options.contains?.trim();
+  const prefix = options.prefix?.trim();
+  const matched = paths.filter((path) => {
+    if (prefix && !path.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !path.includes(contains)) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    edition: editionId,
+    version: modelSummary.version,
+    totalPaths: paths.length,
+    matchedPaths: matched.length,
+    truncated: matched.length > limit,
+    paths: matched.slice(0, limit),
+  };
 }
 
 export function searchVanillaPaths(

@@ -5,6 +5,7 @@ import {
   getDomain,
   getJavaReportsSummary,
   getPaperPluginData,
+  getResourcepackModelSummary,
   getSourcePolicy,
   getVanillaInventory,
   getVersionDetail,
@@ -12,6 +13,7 @@ import {
   listPackFormats,
   resolveVersion,
   searchCommands,
+  searchResourcepackModelPaths,
   searchVanillaPaths,
 } from "./index.js";
 
@@ -132,11 +134,13 @@ describe("catalog", () => {
   it("annotates version details when vanilla inventory is bundled", () => {
     const version = getVersionDetail("java", "26.2");
     expect(version.domains.datapack.status).toBe("reports-extracted");
-    expect(version.domains.resourcepack.status).toBe("inventory-extracted");
+    expect(version.domains.resourcepack.status).toBe("models-extracted");
     expect(version.domains.datapack.facts).toContain("vanilla_data_inventory=26.2");
     expect(version.domains.datapack.facts).toContain("server_reports=26.2");
     expect(version.domains.resourcepack.facts).toContain("vanilla_asset_inventory=26.2");
+    expect(version.domains.resourcepack.facts).toContain("resourcepack_models=26.2");
     expect(version.domains.datapack.unknowns).toEqual([]);
+    expect(version.domains.resourcepack.unknowns).toEqual([]);
   });
 
   it("loads server reports summary for latest release", () => {
@@ -181,5 +185,28 @@ describe("catalog", () => {
     });
     expect(result.version).toBe("26.2");
     expect(result.paths.every((path) => path.startsWith("execute"))).toBe(true);
+  });
+
+  it("loads resourcepack model summaries", () => {
+    const summary = getResourcepackModelSummary("java", "26.2");
+    expect(summary.version).toBe("26.2");
+    expect(summary.files.models.count).toBeGreaterThan(3_000);
+    expect(summary.files.itemDefinitions.count).toBeGreaterThan(1_000);
+    expect(summary.modelJson.topLevelKeys.map((entry) => entry.value)).toContain("parent");
+    expect(summary.itemDefinitionJson.modelTypes.map((entry) => entry.value)).toContain(
+      "minecraft:model",
+    );
+  });
+
+  it("searches resourcepack model paths", () => {
+    const result = searchResourcepackModelPaths({
+      version: "26.2",
+      kind: "item-definition",
+      contains: "bundle",
+      limit: 10,
+    });
+    expect(result.version).toBe("26.2");
+    expect(result.paths).toContain("assets/minecraft/items/bundle.json");
+    expect(result.paths.every((path) => path.includes("/items/"))).toBe(true);
   });
 });

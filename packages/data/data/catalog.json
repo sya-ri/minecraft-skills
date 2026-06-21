@@ -26,7 +26,7 @@
       "skill": "minecraft-datapacks",
       "title": "Java Data Packs",
       "description": "Version-aware Java Edition data pack guidance for pack.mcmeta, functions, commands, advancements, loot tables, predicates, tags, recipes, item components, and migrations.",
-      "status": "seed",
+      "status": "partial-canonical-data",
       "primarySources": [
         {
           "id": "mojang-version-manifest-v2",
@@ -45,7 +45,7 @@
       "skill": "minecraft-resourcepacks",
       "title": "Java Resource Packs",
       "description": "Version-aware Java Edition resource pack guidance for pack.mcmeta, assets, textures, models, sounds, fonts, atlases, and item model definitions.",
-      "status": "seed",
+      "status": "partial-canonical-data",
       "primarySources": [
         {
           "id": "mojang-version-manifest-v2",

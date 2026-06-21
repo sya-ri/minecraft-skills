@@ -3,6 +3,7 @@ import {
   compareVersions,
   getJavaReportsSummary,
   getPaperPluginData,
+  getResourcepackModelSummary,
   getSourcePolicy,
   getVanillaInventory,
   getVersionDetail,
@@ -10,9 +11,11 @@ import {
   listPackFormats,
   listReferences,
   listVersions,
+  type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchCommands,
   searchPaperEvents,
+  searchResourcepackModelPaths,
   searchVanillaPaths,
   type VanillaPathSearchOptions,
 } from "@minecraft-skills/catalog";
@@ -134,6 +137,36 @@ export const tools: ToolDefinition[] = [
         contains: { type: "string" },
         prefix: { type: "string" },
         parser: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_resourcepack_model_summary",
+    description:
+      "Get compact vanilla resource pack model and item definition JSON shape summary for a bundled Java version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_resourcepack_models",
+    description:
+      "Search vanilla resource pack model and item definition JSON paths for a bundled Java version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        kind: { type: "string", enum: ["model", "item-definition"] },
+        contains: { type: "string" },
+        prefix: { type: "string" },
         limit: { type: "number", default: 50 },
       },
       additionalProperties: false,
@@ -285,6 +318,29 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         commandOptions.limit = args.limit;
       }
       return text(searchCommands(commandOptions));
+    }
+    if (name === "get_resourcepack_model_summary") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getResourcepackModelSummary(edition, version));
+    }
+    if (name === "search_resourcepack_models") {
+      const searchOptions: ResourcepackModelPathSearchOptions = {
+        edition,
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      if (args.kind === "model" || args.kind === "item-definition") {
+        searchOptions.kind = args.kind;
+      }
+      if (typeof args.contains === "string") {
+        searchOptions.contains = args.contains;
+      }
+      if (typeof args.prefix === "string") {
+        searchOptions.prefix = args.prefix;
+      }
+      if (typeof args.limit === "number") {
+        searchOptions.limit = args.limit;
+      }
+      return text(searchResourcepackModelPaths(searchOptions));
     }
     if (name === "get_vanilla_inventory") {
       const version = typeof args.version === "string" ? args.version : "latest";

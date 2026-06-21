@@ -16,6 +16,8 @@ import {
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { buildPaperPluginData } from "./paperProject.js";
+import { ingestResourcepackModelSummaries } from "./resourcepackModelSummaries.js";
+import { buildResourcepackModelSummary } from "./resourcepackModels.js";
 import { ingestVanillaInventories } from "./vanillaInventories.js";
 import { buildVanillaData, type VanillaPathIndex } from "./vanillaInventory.js";
 
@@ -95,6 +97,8 @@ Usage:
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-resourcepack-models --version <version> --client-jar <client.jar> [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-resourcepack-models-all [--force] [--retrieved-at <iso>]
 
 Commands:
   validate              Validate checked-in data, catalog, and generated skills.
@@ -111,7 +115,11 @@ Commands:
   ingest-vanilla-inventory
                         Generate compact inventory for vanilla client assets and server data.
   ingest-vanilla-inventories
-                        Download and generate missing vanilla inventories for all indexed Java releases.`);
+                        Download and generate missing vanilla inventories for all indexed Java releases.
+  ingest-resourcepack-models
+                        Generate compact resource pack model summary from a client jar.
+  ingest-resourcepack-models-all
+                        Download and generate missing resource pack model summaries for all indexed Java releases.`);
 }
 
 function readOption(args: string[], name: string): string | undefined {
@@ -313,6 +321,43 @@ async function ingestAllVanillaInventories(args: string[]): Promise<void> {
   console.log(`wrote ${written} Java vanilla inventory files`);
 }
 
+function ingestResourcepackModels(args: string[]): void {
+  const version = readOption(args, "--version");
+  if (!version) {
+    throw new Error("ingest-resourcepack-models requires --version <version>");
+  }
+  const clientJarPath = readOption(args, "--client-jar");
+  if (!clientJarPath) {
+    throw new Error("ingest-resourcepack-models requires --client-jar <client.jar>");
+  }
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const root = findRepositoryRoot();
+  const detail = getVersionDetail("java", version);
+  const summary = buildResourcepackModelSummary({
+    version: detail.version,
+    clientJarPath,
+    clientJarUrl: readDownloadUrl(detail.downloads, "client"),
+    retrievedAt,
+  });
+  const outputRoot = join(root, "packages/data/data/java/resourcepack-models");
+  mkdirSync(outputRoot, { recursive: true });
+  const output = join(outputRoot, `${detail.version}.json`);
+  writeFileSync(output, `${JSON.stringify(summary, null, 2)}\n`);
+  console.log(`wrote Java ${detail.version} resourcepack model summary to ${output}`);
+}
+
+async function ingestAllResourcepackModels(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const written = await ingestResourcepackModelSummaries({
+    root,
+    retrievedAt,
+    force: args.includes("--force"),
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} Java resourcepack model summary files`);
+}
+
 export async function runMaintainerCli(argv: string[]): Promise<number> {
   const [command] = argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
@@ -358,6 +403,16 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-vanilla-inventories") {
       await ingestAllVanillaInventories(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-resourcepack-models") {
+      ingestResourcepackModels(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-resourcepack-models-all") {
+      await ingestAllResourcepackModels(argv.slice(1));
       return 0;
     }
 

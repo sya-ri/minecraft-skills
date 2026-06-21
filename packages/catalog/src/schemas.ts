@@ -179,6 +179,43 @@ export const VanillaInventory = type({
   sources: Source.array(),
 });
 
+export const ResourcepackModelCountSample = type({
+  value: "string",
+  count: "number",
+  samples: "string[]",
+});
+
+export const ResourcepackModelSummary = type({
+  schemaVersion: "1",
+  edition: "'java'",
+  version: "string",
+  coverage: "'client-resourcepack-models'",
+  files: {
+    models: {
+      count: "number",
+      groups: ResourcepackModelCountSample.array(),
+    },
+    itemDefinitions: {
+      count: "number",
+      groups: ResourcepackModelCountSample.array(),
+    },
+  },
+  modelJson: {
+    topLevelKeys: ResourcepackModelCountSample.array(),
+    fieldPaths: ResourcepackModelCountSample.array(),
+    displayContexts: ResourcepackModelCountSample.array(),
+    textureVariables: ResourcepackModelCountSample.array(),
+    overridePredicateKeys: ResourcepackModelCountSample.array(),
+  },
+  itemDefinitionJson: {
+    topLevelKeys: ResourcepackModelCountSample.array(),
+    fieldPaths: ResourcepackModelCountSample.array(),
+    modelTypes: ResourcepackModelCountSample.array(),
+    propertyKeys: ResourcepackModelCountSample.array(),
+  },
+  sources: Source.array(),
+});
+
 export const ReportDatapackOtherType = type({
   id: "string",
   elements: "boolean | null",
@@ -231,6 +268,7 @@ export type VersionDetailData = typeof VersionDetail.infer;
 export type DomainCoverageData = typeof DomainCoverage.infer;
 export type PaperPluginDataData = typeof PaperPluginData.infer;
 export type VanillaInventoryData = typeof VanillaInventory.infer;
+export type ResourcepackModelSummaryData = typeof ResourcepackModelSummary.infer;
 export type JavaReportsSummaryData = typeof JavaReportsSummary.infer;
 export type DomainIdData = typeof DomainId.infer;
 export type EditionData = typeof Edition.infer;

@@ -99,6 +99,26 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("execute");
   });
 
+  it("prints resourcepack model summaries", async () => {
+    const result = await capture(["resourcepack-models", "26.2"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"coverage": "client-resourcepack-models"');
+    expect(result.stdout.join("\n")).toContain('"minecraft:model"');
+  });
+
+  it("searches resourcepack model paths", async () => {
+    const result = await capture([
+      "search-models",
+      "26.2",
+      "--kind",
+      "item-definition",
+      "--contains",
+      "bundle",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("assets/minecraft/items/bundle.json");
+  });
+
   it("searches Paper events", async () => {
     const fetchMock = vi.fn(async (_url: string) => ({
       ok: true,
