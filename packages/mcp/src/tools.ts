@@ -1,4 +1,5 @@
 import {
+  getPaperPluginData,
   getSourcePolicy,
   getVersionDetail,
   listDomains,
@@ -84,6 +85,16 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_paper_plugin_data",
+    description:
+      "Get Paper plugin support metadata, latest Paper build information, and the spigot-event-list event search API contract.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_source_policy",
     description:
       "Get source priority and license policy for redistributable Minecraft Skills data.",
@@ -134,6 +145,9 @@ export function callMinecraftSkillsTool(name: string, input: unknown): ToolResul
     if (name === "list_references") {
       const domain = typeof args.domain === "string" ? args.domain : undefined;
       return text(listReferences(domain));
+    }
+    if (name === "get_paper_plugin_data") {
+      return text(getPaperPluginData());
     }
     if (name === "get_source_policy") {
       return text(getSourcePolicy());

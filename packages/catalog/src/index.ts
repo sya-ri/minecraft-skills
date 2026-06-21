@@ -7,6 +7,8 @@ import {
   type DomainIdData,
   Edition,
   type EditionData,
+  PaperPluginData,
+  type PaperPluginDataData,
   type ReferenceData,
   VersionDetail,
   type VersionDetailData,
@@ -20,6 +22,7 @@ export type {
   DomainData,
   DomainIdData,
   EditionData,
+  PaperPluginDataData,
   ReferenceData,
   VersionDetailData,
   VersionIndexData,
@@ -143,4 +146,8 @@ export function getVersionDetail(edition = "java", requested = "latest"): Versio
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
   return getCatalog().sourcePolicy;
+}
+
+export function getPaperPluginData(): PaperPluginDataData {
+  return PaperPluginData.assert(readDataJson("java/paper.json"));
 }

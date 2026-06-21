@@ -10,6 +10,7 @@ import {
 import { buildJavaVersionIndex } from "./javaManifest.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
+import { buildPaperPluginData } from "./paperProject.js";
 
 type ValidationResult = {
   ok: boolean;
@@ -82,6 +83,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
 
 Commands:
   validate              Validate checked-in data, catalog, and generated skills.
@@ -89,7 +91,9 @@ Commands:
   ingest-java-version-detail
                         Generate detail JSON from Mojang version JSON and optional client jar.
   ingest-java-version-details
-                        Download and generate missing detail JSON for all indexed Java releases.`);
+                        Download and generate missing detail JSON for all indexed Java releases.
+  ingest-paper-project
+                        Generate Paper plugin support and event search data from PaperMC API JSON.`);
 }
 
 function readOption(args: string[], name: string): string | undefined {
@@ -157,6 +161,29 @@ async function ingestAllJavaVersionDetails(args: string[]): Promise<void> {
   console.log(`wrote ${written} Java version detail files`);
 }
 
+function ingestPaperProject(args: string[]): void {
+  const projectJsonPath = readOption(args, "--project-json");
+  if (!projectJsonPath) {
+    throw new Error("ingest-paper-project requires --project-json <project.json>");
+  }
+  const latestBuildsJsonPath = readOption(args, "--latest-builds-json");
+  if (!latestBuildsJsonPath) {
+    throw new Error("ingest-paper-project requires --latest-builds-json <builds.json>");
+  }
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const root = findRepositoryRoot();
+  const latest = getVersionDetail("java", readOption(args, "--java-latest") ?? "latest");
+  const paper = buildPaperPluginData({
+    projectJson: JSON.parse(readFileSync(projectJsonPath, "utf8")) as unknown,
+    latestBuildsJson: JSON.parse(readFileSync(latestBuildsJsonPath, "utf8")) as unknown,
+    javaLatest: latest.version,
+    retrievedAt,
+  });
+  const output = join(root, "packages/data/data/java/paper.json");
+  writeFileSync(output, `${JSON.stringify(paper, null, 2)}\n`);
+  console.log(`wrote Paper plugin data to ${output}`);
+}
+
 export async function runMaintainerCli(argv: string[]): Promise<number> {
   const [command] = argv;
   if (!command || command === "help" || command === "--help" || command === "-h") {
@@ -177,6 +204,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-java-version-details") {
       await ingestAllJavaVersionDetails(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-paper-project") {
+      ingestPaperProject(argv.slice(1));
       return 0;
     }
 

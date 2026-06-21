@@ -14,15 +14,18 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 
 1. Resolve the target Minecraft/Paper version if the user asks for version-specific behavior.
 2. Read `references/sources.md` before citing plugin API or event facts.
-3. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
-4. Use `sya-ri/spigot-event-list` as a candidate source/API for event discovery and AI event search.
-5. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+3. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
+   latest Paper build metadata, and the event search API contract.
+4. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
+5. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
+   by behavior, partial name, or localized text.
+6. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 
 ## Optional Tools
 
-- CLI: `minecraft-skills domain paper-plugin`
-- MCP: `@minecraft-skills/mcp` exposes domain and reference lookup tools
+- CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`
+- MCP: `@minecraft-skills/mcp` exposes domain, reference, version, and Paper plugin data tools
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

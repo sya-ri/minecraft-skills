@@ -120,6 +120,42 @@ export const VersionDetail = type({
   sources: Source.array(),
 });
 
+export const PaperPluginData = type({
+  schemaVersion: "1",
+  projectId: "'paper'",
+  projectName: "string",
+  latest: {
+    minecraftVersion: "string",
+    build: "number",
+  },
+  support: {
+    primarySince: "string",
+    legacyBefore: "string",
+    minecraftLatestGap: {
+      javaLatest: "string",
+      paperLatest: "string",
+      status: "string",
+    },
+  },
+  versionGroups: "string[]",
+  versions: "string[]",
+  eventSearch: {
+    provider: "string",
+    baseUrl: "string",
+    defaultVersion: "string",
+    sources: "string[]",
+    paperSources: "string[]",
+    querySemantics: {
+      defaultOperator: "string",
+      orOperator: "string",
+      quotedPhrases: "boolean",
+      maxLimit: "number",
+      defaultLimit: "number",
+    },
+  },
+  sources: Source.array(),
+});
+
 export const DomainId = type("'datapack' | 'resourcepack' | 'paper-plugin'");
 export const Edition = type("'java'");
 
@@ -130,5 +166,6 @@ export type VersionIndexData = typeof VersionIndex.infer;
 export type VersionSummaryData = typeof VersionSummary.infer;
 export type VersionDetailData = typeof VersionDetail.infer;
 export type DomainCoverageData = typeof DomainCoverage.infer;
+export type PaperPluginDataData = typeof PaperPluginData.infer;
 export type DomainIdData = typeof DomainId.infer;
 export type EditionData = typeof Edition.infer;

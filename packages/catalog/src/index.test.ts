@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getDomain,
+  getPaperPluginData,
   getSourcePolicy,
   getVersionDetail,
   listDomains,
@@ -50,5 +51,19 @@ describe("catalog", () => {
     expect(getDomain("paper-plugin").primarySources.map((source) => source.id)).toContain(
       "spigot-event-list",
     );
+  });
+
+  it("loads Paper plugin data and event search contract", () => {
+    const paper = getPaperPluginData();
+    expect(paper.latest).toEqual({
+      minecraftVersion: "1.21.11",
+      build: 69,
+    });
+    expect(paper.support.minecraftLatestGap).toEqual({
+      javaLatest: "26.2",
+      paperLatest: "1.21.11",
+      status: "paper-not-yet-published-for-java-latest",
+    });
+    expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
   });
 });

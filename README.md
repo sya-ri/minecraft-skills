@@ -35,6 +35,19 @@ CI=true mise exec -- pnpm check
 - `packages/mcp`: MCP server, publishable as `@minecraft-skills/mcp`.
 - `packages/maintainer`: private maintainer validation and generation tooling.
 
+## CLI
+
+```sh
+minecraft-skills latest
+minecraft-skills versions
+minecraft-skills show-version 1.21.11
+minecraft-skills paper
+minecraft-skills references --domain paper-plugin
+```
+
+`minecraft-skills paper` returns PaperMC support metadata and the `sya-ri/spigot-event-list`
+event search API contract.
+
 ## Maintainer Flow
 
 Regenerate the Java 1.13+ release index from Mojang's version manifest:
@@ -45,6 +58,26 @@ curl -fsSL -o /tmp/minecraft-version-manifest-v2.json \
 mise exec -- pnpm --filter @minecraft-skills/maintainer build
 node packages/maintainer/dist/cli.mjs ingest-java-manifest \
   --input /tmp/minecraft-version-manifest-v2.json \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
+Regenerate Java release details:
+
+```sh
+node packages/maintainer/dist/cli.mjs ingest-java-version-details \
+  --force \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
+Regenerate Paper plugin support data:
+
+```sh
+curl -fsSL -o /tmp/papermc-paper-project.json https://api.papermc.io/v2/projects/paper
+curl -fsSL -o /tmp/papermc-paper-1.21.11-builds.json \
+  https://api.papermc.io/v2/projects/paper/versions/1.21.11
+node packages/maintainer/dist/cli.mjs ingest-paper-project \
+  --project-json /tmp/papermc-paper-project.json \
+  --latest-builds-json /tmp/papermc-paper-1.21.11-builds.json \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 

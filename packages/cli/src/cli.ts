@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {
   getDomain,
+  getPaperPluginData,
   getSourcePolicy,
   getVersionDetail,
   listDomains,
@@ -37,6 +38,7 @@ Usage:
   minecraft-skills show-version [version] [--edition java]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
+  minecraft-skills paper
   minecraft-skills source-policy
 
 Commands:
@@ -46,6 +48,7 @@ Commands:
   show-version   Print canonical JSON for a version.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
+  paper          Print canonical Paper plugin support and event search JSON.
   source-policy  Print source and license policy JSON.`);
 }
 
@@ -103,6 +106,11 @@ export function runCli(argv: string[], output: Output = defaultOutput): number {
         throw new Error("domain command requires a domain id");
       }
       printJson(output, getDomain(domain));
+      return 0;
+    }
+
+    if (command === "paper") {
+      printJson(output, getPaperPluginData());
       return 0;
     }
 

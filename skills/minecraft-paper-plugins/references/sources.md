@@ -10,13 +10,25 @@ Useful project source:
 
 - sya-ri/spigot-event-list: https://github.com/sya-ri/spigot-event-list
 
-`spigot-event-list` is useful for event discovery and may become a catalog/MCP backing source. Do
-not treat imported event descriptions as canonical unless their upstream source and license are
-recorded in canonical data.
+Bundled canonical data:
 
-Current bundled seed:
+- CLI: `minecraft-skills paper`
+- MCP: `get_paper_plugin_data`
+- Package API: `getPaperPluginData()` from `@minecraft-skills/catalog`
 
-- Paper plugin domain coverage: seed
-- Paper API version data: not extracted
-- Folia compatibility notes: not extracted
-- Event catalog: not imported
+Use bundled Paper data to check:
+
+- latest Paper-supported Minecraft version and build
+- whether Paper has caught up to the latest bundled Java release
+- `spigot-event-list` event search base URL, sources, query semantics, and limits
+
+Event search:
+
+- Base URL: `https://spigot-event-list.s7a.dev/api/search/events`
+- Use `version=latest` unless the user asks for a fixed Minecraft version.
+- Use `source=paper,spigot` for Paper plugin event discovery.
+- Use quoted phrases for exact phrases and `OR` for alternatives.
+
+Do not vendor event descriptions into generated answers as canonical facts unless their upstream
+source and license are recorded in canonical data. Prefer linking to Paper Javadocs returned by the
+event search API.

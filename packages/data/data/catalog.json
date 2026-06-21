@@ -64,7 +64,7 @@
       "skill": "minecraft-paper-plugins",
       "title": "Paper Plugins",
       "description": "Paper-first plugin development guidance for Bukkit/Paper API use, events, commands, lifecycle, Folia-sensitive scheduling, and version migration.",
-      "status": "seed",
+      "status": "partial-canonical-data",
       "primarySources": [
         {
           "id": "papermc-docs",

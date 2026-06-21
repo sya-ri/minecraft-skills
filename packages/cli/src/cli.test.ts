@@ -32,6 +32,15 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("minecraft-paper-plugins");
   });
 
+  it("prints Paper plugin support data", () => {
+    const result = capture(["paper"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"minecraftVersion": "1.21.11"');
+    expect(result.stdout.join("\n")).toContain(
+      "https://spigot-event-list.s7a.dev/api/search/events",
+    );
+  });
+
   it("reports unknown commands", () => {
     const result = capture(["nope"]);
     expect(result.code).toBe(1);
