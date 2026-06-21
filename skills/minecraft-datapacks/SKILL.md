@@ -25,10 +25,11 @@ version-specific facts.
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
-  `minecraft-skills compare-versions <from> <to>`, `minecraft-skills vanilla-paths <version>`,
+  `minecraft-skills compare-versions <from> <to>`, `minecraft-skills server-reports <version>`,
+  `minecraft-skills commands <version>`, `minecraft-skills vanilla-paths <version>`,
   `minecraft-skills vanilla-inventory <version>`
-- MCP: `@minecraft-skills/mcp` exposes version, comparison, pack format, vanilla inventory, and
-  vanilla path search tools, plus reference lookup tools
+- MCP: `@minecraft-skills/mcp` exposes version, comparison, pack format, server reports, command
+  search, vanilla inventory, vanilla path search, and reference lookup tools
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

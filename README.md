@@ -43,6 +43,8 @@ minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
 minecraft-skills compare-versions 1.20.6 1.21
+minecraft-skills server-reports latest
+minecraft-skills commands latest --prefix execute --contains run
 minecraft-skills vanilla-inventory latest
 minecraft-skills vanilla-paths latest --domain resourcepack --contains models/block/acacia_button
 minecraft-skills paper
@@ -71,6 +73,21 @@ Regenerate Java release details:
 ```sh
 node packages/maintainer/dist/cli.mjs ingest-java-version-details \
   --force \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
+Generate and ingest server reports for a Java release:
+
+```sh
+java -jar /tmp/minecraft-26.2-server.jar --help
+cd /tmp/minecraft-skills-reports-26.2
+CP=$(find libraries -name '*.jar' -print | paste -sd: -)
+java -cp "versions/26.2/server-26.2.jar:$CP" net.minecraft.data.Main \
+  --reports \
+  --output /tmp/minecraft-skills-reports-26.2/generated
+node packages/maintainer/dist/cli.mjs ingest-java-reports \
+  --version 26.2 \
+  --reports-dir /tmp/minecraft-skills-reports-26.2/generated/reports \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 

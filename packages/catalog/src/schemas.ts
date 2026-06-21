@@ -179,6 +179,46 @@ export const VanillaInventory = type({
   sources: Source.array(),
 });
 
+export const ReportDatapackOtherType = type({
+  id: "string",
+  elements: "boolean | null",
+  format: "string | null",
+  stable: "boolean | null",
+  tags: "boolean | null",
+});
+
+export const ReportDatapackRegistry = type({
+  id: "string",
+  elements: "boolean | null",
+  stable: "boolean | null",
+  tags: "boolean | null",
+  entryCount: "number | null",
+  protocolId: "number | null",
+});
+
+export const ReportFile = type({
+  path: "string",
+  size: "number",
+});
+
+export const JavaReportsSummary = type({
+  schemaVersion: "1",
+  edition: "'java'",
+  version: "string",
+  coverage: "'server-reports'",
+  commands: {
+    rootLiterals: "string[]",
+    executablePathCount: "number",
+    argumentParsers: "string[]",
+  },
+  datapack: {
+    otherTypes: ReportDatapackOtherType.array(),
+    registries: ReportDatapackRegistry.array(),
+  },
+  reports: ReportFile.array(),
+  sources: Source.array(),
+});
+
 export const DomainId = type("'datapack' | 'resourcepack' | 'paper-plugin'");
 export const Edition = type("'java'");
 
@@ -191,5 +231,6 @@ export type VersionDetailData = typeof VersionDetail.infer;
 export type DomainCoverageData = typeof DomainCoverage.infer;
 export type PaperPluginDataData = typeof PaperPluginData.infer;
 export type VanillaInventoryData = typeof VanillaInventory.infer;
+export type JavaReportsSummaryData = typeof JavaReportsSummary.infer;
 export type DomainIdData = typeof DomainId.infer;
 export type EditionData = typeof Edition.infer;

@@ -8,6 +8,7 @@ import {
   listReferences,
 } from "@minecraft-skills/catalog";
 import { buildJavaVersionIndex } from "./javaManifest.js";
+import { buildJavaReportsSummary, writeJavaReportsSummary } from "./javaReports.js";
 import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { buildPaperPluginData } from "./paperProject.js";
@@ -85,6 +86,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
@@ -96,6 +98,7 @@ Commands:
                         Generate detail JSON from Mojang version JSON and optional client jar.
   ingest-java-version-details
                         Download and generate missing detail JSON for all indexed Java releases.
+  ingest-java-reports   Generate compact report summary and command path index from server reports.
   ingest-paper-project
                         Generate Paper plugin support and event search data from PaperMC API JSON.
   ingest-vanilla-inventory
@@ -167,6 +170,32 @@ async function ingestAllJavaVersionDetails(args: string[]): Promise<void> {
     log: (message) => console.log(message),
   });
   console.log(`wrote ${written} Java version detail files`);
+}
+
+function ingestJavaReports(args: string[]): void {
+  const version = readOption(args, "--version");
+  if (!version) {
+    throw new Error("ingest-java-reports requires --version <version>");
+  }
+  const reportsDir = readOption(args, "--reports-dir");
+  if (!reportsDir) {
+    throw new Error("ingest-java-reports requires --reports-dir <generated/reports>");
+  }
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const root = findRepositoryRoot();
+  const detail = getVersionDetail("java", version);
+  const summary = buildJavaReportsSummary({
+    version: detail.version,
+    reportsDir,
+    serverJarUrl: readDownloadUrl(detail.downloads, "server"),
+    retrievedAt,
+  });
+  writeJavaReportsSummary({
+    root,
+    version: detail.version,
+    ...summary,
+  });
+  console.log(`wrote Java ${detail.version} reports summary and command paths`);
 }
 
 function ingestPaperProject(args: string[]): void {
@@ -275,6 +304,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-java-version-details") {
       await ingestAllJavaVersionDetails(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-java-reports") {
+      ingestJavaReports(argv.slice(1));
       return 0;
     }
 

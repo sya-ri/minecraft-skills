@@ -3,6 +3,7 @@ import {
   buildPaperEventSearchUrl,
   compareVersions,
   getDomain,
+  getJavaReportsSummary,
   getPaperPluginData,
   getSourcePolicy,
   getVanillaInventory,
@@ -10,6 +11,7 @@ import {
   listDomains,
   listPackFormats,
   resolveVersion,
+  searchCommands,
   searchVanillaPaths,
 } from "./index.js";
 
@@ -129,10 +131,22 @@ describe("catalog", () => {
 
   it("annotates version details when vanilla inventory is bundled", () => {
     const version = getVersionDetail("java", "26.2");
-    expect(version.domains.datapack.status).toBe("inventory-extracted");
+    expect(version.domains.datapack.status).toBe("reports-extracted");
     expect(version.domains.resourcepack.status).toBe("inventory-extracted");
     expect(version.domains.datapack.facts).toContain("vanilla_data_inventory=26.2");
+    expect(version.domains.datapack.facts).toContain("server_reports=26.2");
     expect(version.domains.resourcepack.facts).toContain("vanilla_asset_inventory=26.2");
+    expect(version.domains.datapack.unknowns).toEqual([]);
+  });
+
+  it("loads server reports summary for latest release", () => {
+    const reports = getJavaReportsSummary("java", "latest");
+    expect(reports.version).toBe("26.2");
+    expect(reports.commands.rootLiterals).toContain("execute");
+    expect(reports.commands.executablePathCount).toBeGreaterThan(1_000);
+    expect(reports.datapack.registries.map((registry) => registry.id)).toContain(
+      "minecraft:enchantment",
+    );
   });
 
   it("compares version metadata and vanilla inventory summaries", () => {
@@ -157,5 +171,15 @@ describe("catalog", () => {
     expect(result.version).toBe("26.2");
     expect(result.domain).toBe("resourcepack");
     expect(result.paths).toContain("assets/minecraft/models/block/acacia_button.json");
+  });
+
+  it("searches command paths", () => {
+    const result = searchCommands({
+      version: "26.2",
+      prefix: "execute",
+      limit: 5,
+    });
+    expect(result.version).toBe("26.2");
+    expect(result.paths.every((path) => path.startsWith("execute"))).toBe(true);
   });
 });

@@ -7,6 +7,8 @@ import {
   type DomainIdData,
   Edition,
   type EditionData,
+  JavaReportsSummary,
+  type JavaReportsSummaryData,
   PaperPluginData,
   type PaperPluginDataData,
   type ReferenceData,
@@ -24,6 +26,7 @@ export type {
   DomainData,
   DomainIdData,
   EditionData,
+  JavaReportsSummaryData,
   PaperPluginDataData,
   ReferenceData,
   VanillaInventoryData,
@@ -108,6 +111,24 @@ export type VanillaPathSearchResult = {
   edition: EditionData;
   version: string;
   domain: VanillaPathDomain;
+  totalPaths: number;
+  matchedPaths: number;
+  truncated: boolean;
+  paths: string[];
+};
+
+export type CommandSearchOptions = {
+  edition?: string;
+  version?: string;
+  contains?: string;
+  prefix?: string;
+  parser?: string;
+  limit?: number;
+};
+
+export type CommandSearchResult = {
+  edition: EditionData;
+  version: string;
   totalPaths: number;
   matchedPaths: number;
   truncated: boolean;
@@ -282,21 +303,43 @@ function withVanillaInventoryCoverage(detail: VersionDetailData): VersionDetailD
   });
 }
 
+function withJavaReportsCoverage(detail: VersionDetailData): VersionDetailData {
+  const reportsPath = `java/reports/${detail.version}.json`;
+  if (!hasDataFile(reportsPath)) {
+    return detail;
+  }
+  return VersionDetail.assert({
+    ...detail,
+    domains: {
+      ...detail.domains,
+      datapack: {
+        status: "reports-extracted",
+        facts: [...detail.domains.datapack.facts, `server_reports=${detail.version}`],
+        unknowns: [],
+      },
+    },
+  });
+}
+
 export function getVersionDetail(edition = "java", requested = "latest"): VersionDetailData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
   const detailPath = `${editionId}/version-details/${version}.json`;
   if (hasDataFile(detailPath)) {
-    return withVanillaInventoryCoverage(
-      withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath))),
+    return withJavaReportsCoverage(
+      withVanillaInventoryCoverage(
+        withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath))),
+      ),
     );
   }
   const summary = getVersionIndex(editionId).versions.find((candidate) => candidate.id === version);
   if (!summary) {
     throw new Error(`Unsupported ${editionId} version: ${version}`);
   }
-  return withVanillaInventoryCoverage(
-    withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary)),
+  return withJavaReportsCoverage(
+    withVanillaInventoryCoverage(
+      withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary)),
+    ),
   );
 }
 
@@ -331,6 +374,19 @@ export function getVanillaInventory(edition = "java", requested = "latest"): Van
     throw new Error(`No bundled vanilla inventory for ${editionId} ${version}`);
   }
   return VanillaInventory.assert(readDataJson(inventoryPath));
+}
+
+export function getJavaReportsSummary(
+  edition = "java",
+  requested = "latest",
+): JavaReportsSummaryData {
+  const editionId = Edition.assert(edition);
+  const version = resolveVersion(editionId, requested);
+  const reportsPath = `${editionId}/reports/${version}.json`;
+  if (!hasDataFile(reportsPath)) {
+    throw new Error(`No bundled server reports summary for ${editionId} ${version}`);
+  }
+  return JavaReportsSummary.assert(readDataJson(reportsPath));
 }
 
 function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimit: number): number {
@@ -376,6 +432,40 @@ export function searchVanillaPaths(
     edition: editionId,
     version: inventory.version,
     domain,
+    totalPaths: paths.length,
+    matchedPaths: matched.length,
+    truncated: matched.length > limit,
+    paths: matched.slice(0, limit),
+  };
+}
+
+export function searchCommands(options: CommandSearchOptions = {}): CommandSearchResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const reports = getJavaReportsSummary(editionId, options.version ?? "latest");
+  const pathIndex = `${editionId}/command-paths/${reports.version}.txt`;
+  if (!hasDataFile(pathIndex)) {
+    throw new Error(`No bundled command path index for ${editionId} ${reports.version}`);
+  }
+  const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const contains = options.contains?.trim();
+  const prefix = options.prefix?.trim();
+  const parser = options.parser?.trim();
+  const matched = paths.filter((path) => {
+    if (prefix && !path.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !path.includes(contains)) {
+      return false;
+    }
+    if (parser && !path.includes(`:${parser}>`)) {
+      return false;
+    }
+    return true;
+  });
+  return {
+    edition: editionId,
+    version: reports.version,
     totalPaths: paths.length,
     matchedPaths: matched.length,
     truncated: matched.length > limit,

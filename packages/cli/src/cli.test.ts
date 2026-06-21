@@ -85,6 +85,20 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"vanillaInventory"');
   });
 
+  it("prints server reports", async () => {
+    const result = await capture(["server-reports"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"coverage": "server-reports"');
+    expect(result.stdout.join("\n")).toContain('"execute"');
+  });
+
+  it("searches command paths", async () => {
+    const result = await capture(["commands", "26.2", "--prefix", "execute"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"matchedPaths"');
+    expect(result.stdout.join("\n")).toContain("execute");
+  });
+
   it("searches Paper events", async () => {
     const fetchMock = vi.fn(async (_url: string) => ({
       ok: true,

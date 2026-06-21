@@ -1,5 +1,7 @@
 import {
+  type CommandSearchOptions,
   compareVersions,
+  getJavaReportsSummary,
   getPaperPluginData,
   getSourcePolicy,
   getVanillaInventory,
@@ -9,6 +11,7 @@ import {
   listReferences,
   listVersions,
   resolveVersion,
+  searchCommands,
   searchPaperEvents,
   searchVanillaPaths,
   type VanillaPathSearchOptions,
@@ -103,6 +106,36 @@ export const tools: ToolDefinition[] = [
         to: { type: "string" },
       },
       required: ["from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_server_reports",
+    description:
+      "Get compact official Minecraft server reports summary for a bundled Java version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_commands",
+    description:
+      "Search executable Minecraft command syntax paths generated from official server reports.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        contains: { type: "string" },
+        prefix: { type: "string" },
+        parser: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
       additionalProperties: false,
     },
   },
@@ -229,6 +262,29 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("compare_versions requires string from and to");
       }
       return text(compareVersions(edition, args.from, args.to));
+    }
+    if (name === "get_server_reports") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getJavaReportsSummary(edition, version));
+    }
+    if (name === "search_commands") {
+      const commandOptions: CommandSearchOptions = {
+        edition,
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      if (typeof args.contains === "string") {
+        commandOptions.contains = args.contains;
+      }
+      if (typeof args.prefix === "string") {
+        commandOptions.prefix = args.prefix;
+      }
+      if (typeof args.parser === "string") {
+        commandOptions.parser = args.parser;
+      }
+      if (typeof args.limit === "number") {
+        commandOptions.limit = args.limit;
+      }
+      return text(searchCommands(commandOptions));
     }
     if (name === "get_vanilla_inventory") {
       const version = typeof args.version === "string" ? args.version : "latest";

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import {
+  type CommandSearchOptions,
   compareVersions,
   getDomain,
+  getJavaReportsSummary,
   getPaperPluginData,
   getSourcePolicy,
   getVanillaInventory,
@@ -11,6 +13,7 @@ import {
   listReferences,
   listVersions,
   resolveVersion,
+  searchCommands,
   searchPaperEvents,
   searchVanillaPaths,
   type VanillaPathSearchOptions,
@@ -60,6 +63,8 @@ Usage:
   minecraft-skills pack-formats [--edition java]
   minecraft-skills show-version [version] [--edition java]
   minecraft-skills compare-versions <from> <to> [--edition java]
+  minecraft-skills server-reports [version] [--edition java]
+  minecraft-skills commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
   minecraft-skills vanilla-inventory [version] [--edition java]
   minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
@@ -76,6 +81,9 @@ Commands:
   show-version   Print canonical JSON for a version.
   compare-versions
                  Compare bundled version metadata and vanilla inventory summaries.
+  server-reports
+                 Print compact official server reports summary for a bundled version.
+  commands       Search executable command syntax paths from generated server reports.
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
   vanilla-paths  Search bundled vanilla asset/data paths for a version.
@@ -149,6 +157,32 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("compare-versions command requires <from> and <to>");
       }
       printJson(output, compareVersions(edition, from, to));
+      return 0;
+    }
+
+    if (command === "server-reports") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      printJson(output, getJavaReportsSummary(edition, requested));
+      return 0;
+    }
+
+    if (command === "commands") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const commandOptions: CommandSearchOptions = {
+        edition,
+        version: requested,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--contains")) {
+        commandOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--prefix")) {
+        commandOptions.prefix = readOption(args, "--prefix", "");
+      }
+      if (args.includes("--parser")) {
+        commandOptions.parser = readOption(args, "--parser", "");
+      }
+      printJson(output, searchCommands(commandOptions));
       return 0;
     }
 

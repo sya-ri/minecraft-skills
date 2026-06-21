@@ -11,6 +11,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
+    expect(tools.map((tool) => tool.name)).toContain("get_server_reports");
+    expect(tools.map((tool) => tool.name)).toContain("search_commands");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
@@ -62,6 +64,21 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"from": "1.20.6"');
     expect(result.content[0]?.text).toContain('"vanillaInventory"');
+  });
+
+  it("calls get_server_reports", async () => {
+    const result = await callMinecraftSkillsTool("get_server_reports", {});
+    expect(result.content[0]?.text).toContain('"coverage": "server-reports"');
+    expect(result.content[0]?.text).toContain('"execute"');
+  });
+
+  it("calls search_commands", async () => {
+    const result = await callMinecraftSkillsTool("search_commands", {
+      version: "26.2",
+      prefix: "execute",
+    });
+    expect(result.content[0]?.text).toContain('"matchedPaths"');
+    expect(result.content[0]?.text).toContain("execute");
   });
 
   it("calls search_paper_events", async () => {
