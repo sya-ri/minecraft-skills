@@ -1,0 +1,5 @@
+interface:
+  display_name: "Minecraft Datapacks"
+  short_description: "Version-aware Java data pack help"
+  default_prompt: "Use $minecraft-datapacks to review or migrate this Java Edition data pack for a target Minecraft version."
+

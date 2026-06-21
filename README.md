@@ -40,6 +40,7 @@ CI=true mise exec -- pnpm check
 ```sh
 minecraft-skills latest
 minecraft-skills skills
+minecraft-skills skill minecraft-paper-plugins
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
@@ -69,7 +70,8 @@ per-version Paper build summaries, official Paper docs source links, and the
 versioned Paper API dependency, Javadocs URL, Paper docs, and Folia/scheduler reference links.
 `minecraft-skills compare-paper-api` compares versioned Paper Javadocs package indexes so agents can
 spot API package surface changes without copying Javadocs prose. `minecraft-skills paper-events`
-calls the event API for live event discovery.
+calls the event API for live event discovery. `minecraft-skills skill <name>` returns the packaged
+Agent Skill payload, including `SKILL.md`, agent metadata, and generated references.
 
 ## MCP
 
@@ -81,7 +83,8 @@ npx @minecraft-skills/mcp
 
 The server exposes tools for version lookup, pack formats, server reports, command search and
 comparison, vanilla asset/data path search and comparison, resource pack model summaries, Paper
-support metadata, installable skill folder discovery, and Paper/Bukkit event search.
+support metadata, installable skill folder discovery, packaged skill payload lookup, and
+Paper/Bukkit event search.
 
 ## Release Readiness
 
@@ -113,6 +116,7 @@ import {
   compareCommands,
   compareVanillaPaths,
   getResourcepackModelSummary,
+  getSkillPayload,
   getVersionDetail,
   listSkills,
   searchCommands,
@@ -121,6 +125,7 @@ import {
 
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
+const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const models = getResourcepackModelSummary("java", "26.2");

@@ -11,6 +11,7 @@ import {
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getSkillPayload,
   getSourcePolicy,
   getVanillaInventory,
   getVersionDetail,
@@ -43,6 +44,22 @@ describe("catalog", () => {
         name: "minecraft-paper-plugins",
         path: "skills/minecraft-paper-plugins",
         agentMetadata: "skills/minecraft-paper-plugins/agents/openai.yaml",
+      }),
+    ]);
+  });
+
+  it("loads packaged skill payloads", () => {
+    const payload = getSkillPayload("minecraft-paper-plugins");
+    expect(payload.skill.domain).toBe("paper-plugin");
+    expect(payload.skillMarkdown).toContain("# Minecraft Paper Plugins");
+    expect(payload.agentMetadata).toContain('display_name: "Minecraft Paper Plugins"');
+    expect(payload.references).toEqual([
+      expect.objectContaining({
+        reference: expect.objectContaining({
+          id: "paper-plugin-sources",
+          path: "skills/minecraft-paper-plugins/references/sources.md",
+        }),
+        markdown: expect.stringContaining("# Paper Plugin Sources"),
       }),
     ]);
   });

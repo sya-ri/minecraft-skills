@@ -22,6 +22,7 @@ import {
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getSkillPayload,
   getVersionDetail,
   listSkills,
   searchCommands,
@@ -31,6 +32,7 @@ import {
 
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
+const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const reports = getJavaReportsSummary("java", "26.2");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });

@@ -124,6 +124,25 @@ function requireSkillMetadata(root: string, skill: string, messages: string[]): 
   }
 }
 
+function requireMirroredDataFile(root: string, path: string, messages: string[]): void {
+  const sourcePath = join(root, path);
+  const bundledPath = join(root, dataFilePath(path));
+  requireFile(root, path, messages);
+  requireDataFile(root, path, messages);
+  if (
+    existsSync(sourcePath) &&
+    existsSync(bundledPath) &&
+    readFileSync(sourcePath, "utf8") !== readFileSync(bundledPath, "utf8")
+  ) {
+    messages.push(`packaged data mirror differs from source: ${path}`);
+  }
+}
+
+function requireSkillPayloadMirror(root: string, skill: string, messages: string[]): void {
+  requireMirroredDataFile(root, `skills/${skill}/SKILL.md`, messages);
+  requireMirroredDataFile(root, `skills/${skill}/agents/openai.yaml`, messages);
+}
+
 export function validateRepository(): ValidationResult {
   const messages: string[] = [];
   const root = findRepositoryRoot();
@@ -158,10 +177,12 @@ export function validateRepository(): ValidationResult {
       }
     }
     requireSkillMetadata(root, domain.skill, messages);
+    requireSkillPayloadMirror(root, domain.skill, messages);
   }
 
   for (const reference of listReferences()) {
     requireGeneratedHeader(root, reference.path, messages);
+    requireMirroredDataFile(root, reference.path, messages);
   }
 
   const latest = getVersionDetail("java", "latest");

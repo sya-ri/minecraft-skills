@@ -9,6 +9,7 @@ describe("MCP tools", () => {
   it("exposes catalog tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
     expect(tools.map((tool) => tool.name)).toContain("list_skills");
+    expect(tools.map((tool) => tool.name)).toContain("get_skill");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
@@ -36,6 +37,16 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"name": "minecraft-paper-plugins"');
     expect(result.content[0]?.text).toContain('"path": "skills/minecraft-paper-plugins"');
+  });
+
+  it("calls get_skill", async () => {
+    const result = await callMinecraftSkillsTool("get_skill", {
+      name: "minecraft-paper-plugins",
+    });
+    expect(result.content[0]?.text).toContain("# Minecraft Paper Plugins");
+    expect(result.content[0]?.text).toContain("display_name");
+    expect(result.content[0]?.text).toContain("Minecraft Paper Plugins");
+    expect(result.content[0]?.text).toContain("# Paper Plugin Sources");
   });
 
   it("returns errors as tool results", async () => {

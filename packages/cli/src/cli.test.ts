@@ -30,6 +30,17 @@ describe("minecraft-skills CLI", () => {
     ]);
   });
 
+  it("prints packaged skill payloads", async () => {
+    const result = await capture(["skill", "minecraft-paper-plugins"]);
+    const output = result.stdout.join("\n");
+    expect(result.code).toBe(0);
+    expect(output).toContain('"name": "minecraft-paper-plugins"');
+    expect(output).toContain("# Minecraft Paper Plugins");
+    expect(output).toContain("display_name");
+    expect(output).toContain("Minecraft Paper Plugins");
+    expect(output).toContain("# Paper Plugin Sources");
+  });
+
   it("prints latest Java version", async () => {
     expect((await capture(["latest"])).stdout).toEqual(["26.2"]);
   });

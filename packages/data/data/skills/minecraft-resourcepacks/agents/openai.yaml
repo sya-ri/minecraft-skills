@@ -1,0 +1,5 @@
+interface:
+  display_name: "Minecraft Resourcepacks"
+  short_description: "Version-aware Java resource pack help"
+  default_prompt: "Use $minecraft-resourcepacks to review or migrate this Java Edition resource pack for a target Minecraft version."
+

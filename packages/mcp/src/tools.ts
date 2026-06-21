@@ -10,6 +10,7 @@ import {
   getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getSkillPayload,
   getSourcePolicy,
   getVanillaInventory,
   getVersionDetail,
@@ -61,12 +62,25 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "list_skills",
-    description: "List installable Minecraft Agent Skill folders in this repository.",
+    description: "List installable Minecraft Agent Skill folders bundled by minecraft-skills.",
     inputSchema: {
       type: "object",
       properties: {
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_skill",
+    description:
+      "Get a packaged Minecraft Agent Skill payload, including SKILL.md, agent metadata, and references.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+      },
+      required: ["name"],
       additionalProperties: false,
     },
   },
@@ -375,6 +389,12 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "list_skills") {
       const domain = typeof args.domain === "string" ? args.domain : undefined;
       return text(listSkills(domain));
+    }
+    if (name === "get_skill") {
+      if (typeof args.name !== "string") {
+        throw new Error("get_skill requires string name");
+      }
+      return text(getSkillPayload(args.name));
     }
     if (name === "latest_version") {
       return text(resolveVersion(edition, "latest"));

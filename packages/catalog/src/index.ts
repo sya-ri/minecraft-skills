@@ -137,6 +137,18 @@ export type PaperApiComparison = {
   removed: PaperApiIndexData["packages"];
 };
 
+export type SkillReferencePayload = {
+  reference: ReferenceData;
+  markdown: string;
+};
+
+export type SkillPayload = {
+  skill: SkillData;
+  skillMarkdown: string;
+  agentMetadata: string;
+  references: SkillReferencePayload[];
+};
+
 export type VanillaPathDomain = "datapack" | "resourcepack";
 
 export type VanillaPathSearchOptions = {
@@ -273,6 +285,19 @@ export function getSkill(name: string): SkillData {
     throw new Error(`Unknown skill: ${name}`);
   }
   return found;
+}
+
+export function getSkillPayload(name: string): SkillPayload {
+  const skill = getSkill(name);
+  return {
+    skill,
+    skillMarkdown: readDataText(skill.skillFile),
+    agentMetadata: readDataText(skill.agentMetadata),
+    references: listReferences(skill.domain).map((reference) => ({
+      reference,
+      markdown: readDataText(reference.path),
+    })),
+  };
 }
 
 export function getDomain(domain: string): DomainData {
