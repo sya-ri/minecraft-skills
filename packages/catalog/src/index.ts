@@ -149,6 +149,58 @@ export type SkillPayload = {
   references: SkillReferencePayload[];
 };
 
+export type CoverageSummary = {
+  schemaVersion: 1;
+  generatedFrom: "bundled-data";
+  latest: CatalogData["latest"];
+  supportPolicy: CatalogData["supportPolicy"];
+  domains: {
+    total: number;
+    ids: DomainIdData[];
+  };
+  skills: {
+    total: number;
+    packagedPayloads: number;
+  };
+  java: {
+    releases: {
+      total: number;
+      latest: string;
+      oldest: string;
+    };
+    requiredData: {
+      complete: boolean;
+      missing: { version: string; path: string }[];
+    };
+    packFormats: {
+      extracted: number;
+      missing: number;
+    };
+    datapack: {
+      serverReports: number;
+      commandPathIndexes: number;
+      vanillaInventories: number;
+      vanillaPathIndexes: number;
+      versionsWithoutUnknowns: number;
+    };
+    resourcepack: {
+      vanillaInventories: number;
+      vanillaPathIndexes: number;
+      modelSummaries: number;
+      versionsWithoutUnknowns: number;
+    };
+    paperPlugin: {
+      supportedVersions: number;
+      latestSupportedVersion: string;
+      latestBuild: number;
+      versionBuilds: number;
+      apiPackageIndexes: number;
+      versionsWithoutUnknowns: number;
+      missingApiPackageIndexes: string[];
+    };
+  };
+};
+
 export type VanillaPathDomain = "datapack" | "resourcepack";
 
 export type VanillaPathSearchOptions = {
@@ -541,6 +593,127 @@ export function getVersionDetail(edition = "java", requested = "latest"): Versio
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
   return getCatalog().sourcePolicy;
+}
+
+function countExisting(paths: string[]): number {
+  return paths.filter((path) => hasDataFile(path)).length;
+}
+
+export function getCoverageSummary(): CoverageSummary {
+  const catalog = getCatalog();
+  const versions = listVersions("java");
+  const paper = getPaperPluginData();
+  const missing: CoverageSummary["java"]["requiredData"]["missing"] = [];
+  let extractedPackFormats = 0;
+  let datapackWithoutUnknowns = 0;
+  let resourcepackWithoutUnknowns = 0;
+  let paperWithoutUnknowns = 0;
+
+  for (const version of versions) {
+    const detail = getVersionDetail("java", version.id);
+    const requiredPaths = [
+      `java/version-details/${version.id}.json`,
+      `java/reports/${version.id}.json`,
+      `java/command-paths/${version.id}.txt`,
+      `java/vanilla-inventories/${version.id}.json`,
+      `java/vanilla-paths/${version.id}.datapack.txt`,
+      `java/vanilla-paths/${version.id}.resourcepack.txt`,
+      `java/resourcepack-models/${version.id}.json`,
+    ];
+    for (const path of requiredPaths) {
+      if (!hasDataFile(path)) {
+        missing.push({ version: version.id, path });
+      }
+    }
+    if (
+      detail.packFormats.status === "extracted" &&
+      detail.packFormats.data !== null &&
+      detail.packFormats.resource !== null
+    ) {
+      extractedPackFormats += 1;
+    }
+    if (detail.domains.datapack.unknowns.length === 0) {
+      datapackWithoutUnknowns += 1;
+    }
+    if (detail.domains.resourcepack.unknowns.length === 0) {
+      resourcepackWithoutUnknowns += 1;
+    }
+    if (detail.domains["paper-plugin"].unknowns.length === 0) {
+      paperWithoutUnknowns += 1;
+    }
+  }
+
+  const paperApiIndexes = paper.versions.filter((version) =>
+    hasDataFile(`java/paper-api-indexes/${version}.json`),
+  );
+
+  return {
+    schemaVersion: 1,
+    generatedFrom: "bundled-data",
+    latest: catalog.latest,
+    supportPolicy: catalog.supportPolicy,
+    domains: {
+      total: catalog.domains.length,
+      ids: catalog.domains.map((domain) => domain.id),
+    },
+    skills: {
+      total: catalog.skills.length,
+      packagedPayloads: catalog.skills.filter(
+        (skill) => hasDataFile(skill.skillFile) && hasDataFile(skill.agentMetadata),
+      ).length,
+    },
+    java: {
+      releases: {
+        total: versions.length,
+        latest: versions[0]?.id ?? "",
+        oldest: versions.at(-1)?.id ?? "",
+      },
+      requiredData: {
+        complete: missing.length === 0,
+        missing,
+      },
+      packFormats: {
+        extracted: extractedPackFormats,
+        missing: versions.length - extractedPackFormats,
+      },
+      datapack: {
+        serverReports: countExisting(versions.map((version) => `java/reports/${version.id}.json`)),
+        commandPathIndexes: countExisting(
+          versions.map((version) => `java/command-paths/${version.id}.txt`),
+        ),
+        vanillaInventories: countExisting(
+          versions.map((version) => `java/vanilla-inventories/${version.id}.json`),
+        ),
+        vanillaPathIndexes: countExisting(
+          versions.map((version) => `java/vanilla-paths/${version.id}.datapack.txt`),
+        ),
+        versionsWithoutUnknowns: datapackWithoutUnknowns,
+      },
+      resourcepack: {
+        vanillaInventories: countExisting(
+          versions.map((version) => `java/vanilla-inventories/${version.id}.json`),
+        ),
+        vanillaPathIndexes: countExisting(
+          versions.map((version) => `java/vanilla-paths/${version.id}.resourcepack.txt`),
+        ),
+        modelSummaries: countExisting(
+          versions.map((version) => `java/resourcepack-models/${version.id}.json`),
+        ),
+        versionsWithoutUnknowns: resourcepackWithoutUnknowns,
+      },
+      paperPlugin: {
+        supportedVersions: paper.versions.length,
+        latestSupportedVersion: paper.latest.minecraftVersion,
+        latestBuild: paper.latest.build,
+        versionBuilds: paper.versionBuilds.length,
+        apiPackageIndexes: paperApiIndexes.length,
+        versionsWithoutUnknowns: paperWithoutUnknowns,
+        missingApiPackageIndexes: paper.versions.filter(
+          (version) => !paperApiIndexes.includes(version),
+        ),
+      },
+    },
+  };
 }
 
 export function getPaperPluginData(): PaperPluginDataData {

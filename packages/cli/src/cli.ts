@@ -6,6 +6,7 @@ import {
   comparePaperApi,
   compareVanillaPaths,
   compareVersions,
+  getCoverageSummary,
   getDomain,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -72,6 +73,7 @@ Usage:
   minecraft-skills domains
   minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills skill <name>
+  minecraft-skills coverage
   minecraft-skills latest [--edition java]
   minecraft-skills versions [--edition java]
   minecraft-skills pack-formats [--edition java]
@@ -98,6 +100,7 @@ Commands:
   domains        List supported authoring domains.
   skills         List installable Agent Skill folders in this repository.
   skill          Print packaged Agent Skill payload JSON.
+  coverage       Print bundled data coverage summary JSON.
   latest         Print the latest bundled version for an edition.
   versions       List bundled version metadata.
   pack-formats   List data/resource pack formats and Paper support by version.
@@ -164,6 +167,11 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("skill command requires a skill name");
       }
       printJson(output, getSkillPayload(name));
+      return 0;
+    }
+
+    if (command === "coverage") {
+      printJson(output, getCoverageSummary());
       return 0;
     }
 

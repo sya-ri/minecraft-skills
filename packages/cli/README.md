@@ -16,6 +16,7 @@ Node.js 22.12 or newer is required.
 minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
+minecraft-skills coverage
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 26.2

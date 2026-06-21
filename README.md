@@ -41,6 +41,7 @@ CI=true mise exec -- pnpm check
 minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
+minecraft-skills coverage
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
@@ -72,6 +73,8 @@ versioned Paper API dependency, Javadocs URL, Paper docs, and Folia/scheduler re
 spot API package surface changes without copying Javadocs prose. `minecraft-skills paper-events`
 calls the event API for live event discovery. `minecraft-skills skill <name>` returns the packaged
 Agent Skill payload, including `SKILL.md`, agent metadata, and generated references.
+`minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
+facts, Paper plugin data, and packaged skill payloads.
 
 ## MCP
 
@@ -115,6 +118,7 @@ other tools:
 import {
   compareCommands,
   compareVanillaPaths,
+  getCoverageSummary,
   getResourcepackModelSummary,
   getSkillPayload,
   getVersionDetail,
@@ -126,6 +130,7 @@ import {
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
+const coverage = getCoverageSummary();
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const models = getResourcepackModelSummary("java", "26.2");

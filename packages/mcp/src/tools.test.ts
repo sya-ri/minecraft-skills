@@ -10,6 +10,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
     expect(tools.map((tool) => tool.name)).toContain("list_skills");
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
+    expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
@@ -47,6 +48,13 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain("display_name");
     expect(result.content[0]?.text).toContain("Minecraft Paper Plugins");
     expect(result.content[0]?.text).toContain("# Paper Plugin Sources");
+  });
+
+  it("calls get_coverage_summary", async () => {
+    const result = await callMinecraftSkillsTool("get_coverage_summary", {});
+    expect(result.content[0]?.text).toContain('"complete": true');
+    expect(result.content[0]?.text).toContain('"latestSupportedVersion": "1.21.11"');
+    expect(result.content[0]?.text).toContain('"packagedPayloads": 3');
   });
 
   it("returns errors as tool results", async () => {

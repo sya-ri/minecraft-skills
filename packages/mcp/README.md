@@ -15,6 +15,7 @@ Node.js 22.12 or newer is required.
 - `latest_version`
 - `list_skills`
 - `get_skill`
+- `get_coverage_summary`
 - `list_versions`
 - `get_version`
 - `list_pack_formats`

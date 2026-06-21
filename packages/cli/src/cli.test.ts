@@ -41,6 +41,15 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("# Paper Plugin Sources");
   });
 
+  it("prints bundled coverage summary", async () => {
+    const result = await capture(["coverage"]);
+    const output = result.stdout.join("\n");
+    expect(result.code).toBe(0);
+    expect(output).toContain('"complete": true');
+    expect(output).toContain('"latestSupportedVersion": "1.21.11"');
+    expect(output).toContain('"packagedPayloads": 3');
+  });
+
   it("prints latest Java version", async () => {
     expect((await capture(["latest"])).stdout).toEqual(["26.2"]);
   });

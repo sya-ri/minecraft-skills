@@ -5,6 +5,7 @@ import {
   comparePaperApi,
   compareVanillaPaths,
   compareVersions,
+  getCoverageSummary,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -81,6 +82,16 @@ export const tools: ToolDefinition[] = [
         name: { type: "string" },
       },
       required: ["name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_coverage_summary",
+    description:
+      "Get bundled data coverage counts for Java versions, datapacks, resourcepacks, Paper plugins, and packaged skills.",
+    inputSchema: {
+      type: "object",
+      properties: {},
       additionalProperties: false,
     },
   },
@@ -395,6 +406,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_skill requires string name");
       }
       return text(getSkillPayload(args.name));
+    }
+    if (name === "get_coverage_summary") {
+      return text(getCoverageSummary());
     }
     if (name === "latest_version") {
       return text(resolveVersion(edition, "latest"));

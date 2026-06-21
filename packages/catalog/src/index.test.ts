@@ -5,6 +5,7 @@ import {
   comparePaperApi,
   compareVanillaPaths,
   compareVersions,
+  getCoverageSummary,
   getDomain,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -62,6 +63,36 @@ describe("catalog", () => {
         markdown: expect.stringContaining("# Paper Plugin Sources"),
       }),
     ]);
+  });
+
+  it("summarizes bundled coverage", () => {
+    const summary = getCoverageSummary();
+    expect(summary.latest.java).toBe("26.2");
+    expect(summary.java.releases).toEqual({
+      total: 50,
+      latest: "26.2",
+      oldest: "1.13",
+    });
+    expect(summary.java.requiredData).toEqual({
+      complete: true,
+      missing: [],
+    });
+    expect(summary.java.packFormats).toEqual({
+      extracted: 50,
+      missing: 0,
+    });
+    expect(summary.java.datapack.serverReports).toBe(50);
+    expect(summary.java.resourcepack.modelSummaries).toBe(50);
+    expect(summary.java.paperPlugin).toMatchObject({
+      supportedVersions: 43,
+      latestSupportedVersion: "1.21.11",
+      latestBuild: 69,
+      apiPackageIndexes: 40,
+    });
+    expect(summary.skills).toEqual({
+      total: 3,
+      packagedPayloads: 3,
+    });
   });
 
   it("resolves the latest Java version", () => {
