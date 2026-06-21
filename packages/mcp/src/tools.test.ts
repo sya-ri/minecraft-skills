@@ -17,6 +17,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
+    expect(tools.map((tool) => tool.name)).toContain("get_paper_api_reference");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
   });
 
@@ -34,6 +35,14 @@ describe("MCP tools", () => {
     const result = await callMinecraftSkillsTool("get_paper_plugin_data", {});
     expect(result.content[0]?.text).toContain('"minecraftVersion": "1.21.11"');
     expect(result.content[0]?.text).toContain("spigot-event-list");
+  });
+
+  it("calls get_paper_api_reference", async () => {
+    const result = await callMinecraftSkillsTool("get_paper_api_reference", {
+      version: "1.21.11",
+    });
+    expect(result.content[0]?.text).toContain("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
+    expect(result.content[0]?.text).toContain("https://jd.papermc.io/paper/1.21.11/");
   });
 
   it("calls list_pack_formats", async () => {

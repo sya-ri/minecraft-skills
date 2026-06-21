@@ -4,6 +4,7 @@ import {
   compareVersions,
   getDomain,
   getJavaReportsSummary,
+  getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSourcePolicy,
@@ -72,6 +73,7 @@ Usage:
   minecraft-skills search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills vanilla-inventory [version] [--edition java]
   minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
+  minecraft-skills paper-api [version]
   minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
@@ -95,6 +97,7 @@ Commands:
   vanilla-inventory
                  Print vanilla client asset and server data inventory JSON.
   vanilla-paths  Search bundled vanilla asset/data paths for a version.
+  paper-api      Print Paper API dependency, Javadocs, and docs links for a version.
   paper-events   Search Paper/Bukkit events through the configured spigot-event-list API.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
@@ -269,6 +272,12 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         output,
         await searchPaperEvents(source ? { ...searchOptions, source } : searchOptions),
       );
+      return 0;
+    }
+
+    if (command === "paper-api") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      printJson(output, getPaperApiReference(requested));
       return 0;
     }
 

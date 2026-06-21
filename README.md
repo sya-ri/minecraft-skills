@@ -50,6 +50,7 @@ minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills vanilla-inventory latest
 minecraft-skills vanilla-paths latest --domain resourcepack --contains models/block/acacia_button
 minecraft-skills paper
+minecraft-skills paper-api 1.21.11
 minecraft-skills paper-events "player join" --version 1.21.11
 minecraft-skills references --domain paper-plugin
 ```
@@ -57,8 +58,9 @@ minecraft-skills references --domain paper-plugin
 `minecraft-skills resourcepack-models` returns observed vanilla model JSON and item definition JSON
 shape summaries extracted from official client jars. `minecraft-skills paper` returns PaperMC
 support metadata, per-version Paper build summaries, official Paper docs source links, and the
-`sya-ri/spigot-event-list` event search API contract. `minecraft-skills paper-events` calls that API
-for live event discovery.
+`sya-ri/spigot-event-list` event search API contract. `minecraft-skills paper-api` returns the
+versioned Paper API dependency, Javadocs URL, Paper docs, and Folia/scheduler reference links.
+`minecraft-skills paper-events` calls the event API for live event discovery.
 
 ## MCP
 

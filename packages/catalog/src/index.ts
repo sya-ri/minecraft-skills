@@ -98,6 +98,28 @@ export type PaperEventSearchOptions = {
   limit?: number;
 };
 
+export type PaperApiReference = {
+  requestedVersion: string;
+  supported: boolean;
+  minecraftVersion: string;
+  latestSupportedVersion: string;
+  latestBuild: number | null;
+  buildCount: number | null;
+  apiDependency: string | null;
+  javadocsUrl: string | null;
+  docs: {
+    paperDev: string;
+    scheduling: string;
+    foliaSupport: string;
+    foliaOverview: string;
+  };
+  eventSearch: {
+    url: string;
+    defaultVersion: string;
+    paperSources: string[];
+  };
+};
+
 export type VanillaPathDomain = "datapack" | "resourcepack";
 
 export type VanillaPathSearchOptions = {
@@ -401,6 +423,43 @@ export function getSourcePolicy(): CatalogData["sourcePolicy"] {
 
 export function getPaperPluginData(): PaperPluginDataData {
   return PaperPluginData.assert(readDataJson("java/paper.json"));
+}
+
+export function getPaperApiReference(requested = "latest"): PaperApiReference {
+  const paper = getPaperPluginData();
+  const requestedVersion =
+    requested === "latest" || requested === "latest-release"
+      ? paper.latest.minecraftVersion
+      : requested;
+  const build = paper.versionBuilds.find(
+    (candidate) => candidate.minecraftVersion === requestedVersion,
+  );
+  const supported = paper.versions.includes(requestedVersion);
+  const minecraftVersion = supported ? requestedVersion : paper.latest.minecraftVersion;
+
+  return {
+    requestedVersion,
+    supported,
+    minecraftVersion,
+    latestSupportedVersion: paper.latest.minecraftVersion,
+    latestBuild: build?.latestBuild ?? null,
+    buildCount: build?.buildCount ?? null,
+    apiDependency: supported
+      ? `io.papermc.paper:paper-api:${minecraftVersion}-R0.1-SNAPSHOT`
+      : null,
+    javadocsUrl: supported ? `https://jd.papermc.io/paper/${minecraftVersion}/` : null,
+    docs: {
+      paperDev: "https://docs.papermc.io/paper/dev/",
+      scheduling: "https://docs.papermc.io/paper/dev/scheduler/",
+      foliaSupport: "https://docs.papermc.io/paper/dev/folia-support/",
+      foliaOverview: "https://docs.papermc.io/folia/reference/overview/",
+    },
+    eventSearch: {
+      url: paper.eventSearch.baseUrl,
+      defaultVersion: supported ? minecraftVersion : paper.eventSearch.defaultVersion,
+      paperSources: paper.eventSearch.paperSources,
+    },
+  };
 }
 
 export function listPackFormats(edition = "java"): PackFormatSummary[] {

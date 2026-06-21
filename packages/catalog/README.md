@@ -15,6 +15,7 @@ Node.js 22.12 or newer is required.
 ```ts
 import {
   getJavaReportsSummary,
+  getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
   getVersionDetail,
@@ -37,6 +38,7 @@ const paths = searchVanillaPaths({
   domain: "datapack",
   contains: "recipe",
 });
+const paperApi = getPaperApiReference("1.21.11");
 const paper = getPaperPluginData();
 ```
 

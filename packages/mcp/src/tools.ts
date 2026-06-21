@@ -2,6 +2,7 @@ import {
   type CommandSearchOptions,
   compareVersions,
   getJavaReportsSummary,
+  getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSourcePolicy,
@@ -225,6 +226,18 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_paper_api_reference",
+    description:
+      "Get Paper API Maven dependency, versioned Javadocs URL, Paper docs links, and event search defaults for a Minecraft version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_paper_events",
     description: "Search Paper/Bukkit events through the configured sya-ri/spigot-event-list API.",
     inputSchema: {
@@ -373,6 +386,10 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "get_paper_plugin_data") {
       return text(getPaperPluginData());
+    }
+    if (name === "get_paper_api_reference") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getPaperApiReference(version));
     }
     if (name === "search_paper_events") {
       if (typeof args.query !== "string") {

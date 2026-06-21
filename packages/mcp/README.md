@@ -24,6 +24,7 @@ Node.js 22.12 or newer is required.
 - `get_resourcepack_model_summary`
 - `search_resourcepack_models`
 - `get_paper_plugin_data`
+- `get_paper_api_reference`
 - `search_paper_events`
 - `list_domains`
 - `list_references`

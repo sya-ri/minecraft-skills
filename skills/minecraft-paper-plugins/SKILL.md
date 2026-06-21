@@ -16,18 +16,22 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 2. Read `references/sources.md` before citing plugin API or event facts.
 3. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
    latest Paper build metadata, and the event search API contract.
-4. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
-5. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
+4. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
+   versioned Paper API dependency, Javadocs URL, and Folia/scheduler docs.
+5. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
+6. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text.
-6. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+7. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
+  `minecraft-skills paper-api <version>`,
   `minecraft-skills paper-events <query>`, `minecraft-skills compare-versions <from> <to>`
 - MCP: `@minecraft-skills/mcp` exposes domain, reference, version comparison, and Paper plugin data
-  tools, plus live Paper/Bukkit event search when network access is available
+  tools, Paper API reference lookup, plus live Paper/Bukkit event search when network access is
+  available
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

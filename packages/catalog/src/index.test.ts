@@ -4,6 +4,7 @@ import {
   compareVersions,
   getDomain,
   getJavaReportsSummary,
+  getPaperApiReference,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSourcePolicy,
@@ -94,6 +95,23 @@ describe("catalog", () => {
     expect(url).toContain("version=1.21.11");
     expect(url).toContain("source=paper");
     expect(url).toContain("limit=5");
+  });
+
+  it("builds Paper API references for supported versions", () => {
+    const reference = getPaperApiReference("1.21.11");
+    expect(reference.supported).toBe(true);
+    expect(reference.apiDependency).toBe("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
+    expect(reference.javadocsUrl).toBe("https://jd.papermc.io/paper/1.21.11/");
+    expect(reference.docs.foliaSupport).toBe("https://docs.papermc.io/paper/dev/folia-support/");
+  });
+
+  it("builds Paper API references for unsupported future versions", () => {
+    const reference = getPaperApiReference("26.2");
+    expect(reference.supported).toBe(false);
+    expect(reference.minecraftVersion).toBe("1.21.11");
+    expect(reference.latestSupportedVersion).toBe("1.21.11");
+    expect(reference.apiDependency).toBeNull();
+    expect(reference.javadocsUrl).toBeNull();
   });
 
   it("marks Paper-supported version details", () => {

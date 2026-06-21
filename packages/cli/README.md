@@ -25,6 +25,7 @@ minecraft-skills vanilla-paths latest --domain resourcepack --contains models/bl
 minecraft-skills resourcepack-models latest
 minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills paper
+minecraft-skills paper-api 1.21.11
 minecraft-skills paper-events "player join" --version 1.21.11
 ```
 

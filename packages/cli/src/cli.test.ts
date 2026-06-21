@@ -52,6 +52,13 @@ describe("minecraft-skills CLI", () => {
     );
   });
 
+  it("prints Paper API references", async () => {
+    const result = await capture(["paper-api", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
+    expect(result.stdout.join("\n")).toContain("https://jd.papermc.io/paper/1.21.11/");
+  });
+
   it("prints vanilla inventory", async () => {
     const result = await capture(["vanilla-inventory"]);
     expect(result.code).toBe(0);
