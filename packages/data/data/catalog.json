@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "latest": {
+    "java": "26.2"
+  },
+  "supportPolicy": {
+    "javaPrimarySince": "1.13",
+    "legacyBefore": "1.13",
+    "domains": ["datapack", "resourcepack", "paper-plugin"]
+  },
+  "sourcePolicy": {
+    "license": "MIT",
+    "minecraftWikiTextRedistribution": "forbidden",
+    "minecraftWikiUse": "Use Minecraft Wiki for navigation, source URLs, revision metadata, and independent verification. Do not redistribute copied or closely paraphrased Wiki prose in MIT packages.",
+    "factPriority": [
+      "Mojang official version metadata",
+      "Extracted vanilla game data",
+      "PaperMC official documentation and API artifacts",
+      "Minecraft Wiki links and revision metadata for navigation and cross-checking",
+      "Human-authored reviewed guidance"
+    ]
+  },
+  "domains": [
+    {
+      "id": "datapack",
+      "skill": "minecraft-datapacks",
+      "title": "Java Data Packs",
+      "description": "Version-aware Java Edition data pack guidance for pack.mcmeta, functions, commands, advancements, loot tables, predicates, tags, recipes, item components, and migrations.",
+      "status": "seed",
+      "primarySources": [
+        {
+          "id": "mojang-version-manifest-v2",
+          "kind": "official",
+          "url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+        },
+        {
+          "id": "minecraft-wiki-datapack",
+          "kind": "community-navigation",
+          "url": "https://minecraft.wiki/w/Data_pack"
+        }
+      ]
+    },
+    {
+      "id": "resourcepack",
+      "skill": "minecraft-resourcepacks",
+      "title": "Java Resource Packs",
+      "description": "Version-aware Java Edition resource pack guidance for pack.mcmeta, assets, textures, models, sounds, fonts, atlases, and item model definitions.",
+      "status": "seed",
+      "primarySources": [
+        {
+          "id": "mojang-version-manifest-v2",
+          "kind": "official",
+          "url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+        },
+        {
+          "id": "minecraft-wiki-resourcepack",
+          "kind": "community-navigation",
+          "url": "https://minecraft.wiki/w/Resource_pack"
+        }
+      ]
+    },
+    {
+      "id": "paper-plugin",
+      "skill": "minecraft-paper-plugins",
+      "title": "Paper Plugins",
+      "description": "Paper-first plugin development guidance for Bukkit/Paper API use, events, commands, lifecycle, Folia-sensitive scheduling, and version migration.",
+      "status": "seed",
+      "primarySources": [
+        {
+          "id": "papermc-docs",
+          "kind": "official",
+          "url": "https://docs.papermc.io/paper/dev/"
+        },
+        {
+          "id": "spigot-event-list",
+          "kind": "project-api",
+          "url": "https://github.com/sya-ri/spigot-event-list"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "id": "java-versioning",
+      "domain": "datapack",
+      "title": "Java Versioning Policy",
+      "path": "skills/minecraft-datapacks/references/versioning.md"
+    },
+    {
+      "id": "resourcepack-versioning",
+      "domain": "resourcepack",
+      "title": "Resource Pack Versioning Policy",
+      "path": "skills/minecraft-resourcepacks/references/versioning.md"
+    },
+    {
+      "id": "paper-plugin-sources",
+      "domain": "paper-plugin",
+      "title": "Paper Plugin Source Policy",
+      "path": "skills/minecraft-paper-plugins/references/sources.md"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+node_modules/
+.pnpm-store/
+dist/
+.turbo/
+.DS_Store
+*.log
+*.tgz

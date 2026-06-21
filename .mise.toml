@@ -1,0 +1,6 @@
+[tools]
+node = "24.16.0"
+pnpm = "11.8.0"
+
+[env]
+COREPACK_ENABLE_DOWNLOAD_PROMPT = "0"

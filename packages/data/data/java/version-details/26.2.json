@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "26.2",
+  "type": "release",
+  "releaseTime": "2026-06-16T12:03:33+00:00",
+  "coverage": "manifest-only",
+  "packFormats": {
+    "data": null,
+    "resource": null,
+    "status": "not-extracted"
+  },
+  "domains": {
+    "datapack": {
+      "status": "seed",
+      "facts": [],
+      "unknowns": ["data_pack_format", "command_tree", "registries", "vanilla_reports"]
+    },
+    "resourcepack": {
+      "status": "seed",
+      "facts": [],
+      "unknowns": ["resource_pack_format", "asset_index", "model_schema"]
+    },
+    "paper-plugin": {
+      "status": "seed",
+      "facts": [],
+      "unknowns": ["paper_api_version", "server_api_changes", "folia_compatibility_notes"]
+    }
+  },
+  "sources": [
+    {
+      "id": "mojang-version-manifest-v2",
+      "kind": "official",
+      "url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    }
+  ]
+}

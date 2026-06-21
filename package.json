@@ -1,0 +1,29 @@
+{
+  "name": "minecraft-skills-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "pnpm --recursive --filter './packages/*' build",
+    "check": "sherif && biome check . && pnpm build && pnpm typecheck && pnpm test && pnpm validate",
+    "format": "biome check --write .",
+    "lint": "biome check .",
+    "test": "pnpm --recursive --if-present test",
+    "typecheck:tsc": "pnpm --recursive --if-present typecheck:tsc",
+    "typecheck": "pnpm --recursive --if-present typecheck",
+    "validate": "pnpm --filter @minecraft-skills/maintainer validate"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.0",
+    "@types/node": "26.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260621.1",
+    "sherif": "1.12.0",
+    "tsdown": "0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  }
+}

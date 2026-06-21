@@ -1,0 +1,37 @@
+{
+  "name": "@minecraft-skills/mcp",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "MCP server exposing Minecraft Skills catalog lookups to AI agents.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "minecraft-skills-mcp": "./dist/server.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "prepack": "tsdown",
+    "typecheck": "tsgo -p tsconfig.json --noEmit",
+    "typecheck:tsc": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@minecraft-skills/catalog": "workspace:0.0.0",
+    "@modelcontextprotocol/sdk": "1.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260621.1",
+    "tsdown": "0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  }
+}

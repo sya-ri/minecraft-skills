@@ -1,0 +1,36 @@
+{
+  "name": "minecraft-skills",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Public CLI for Minecraft Skills lookup, references, and validation.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "minecraft-skills": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "prepack": "tsdown",
+    "typecheck": "tsgo -p tsconfig.json --noEmit",
+    "typecheck:tsc": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@minecraft-skills/catalog": "workspace:0.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260621.1",
+    "tsdown": "0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  }
+}

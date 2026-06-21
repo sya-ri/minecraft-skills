@@ -1,0 +1,32 @@
+{
+  "name": "@minecraft-skills/maintainer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Private maintainer tooling for ingesting, validating, and generating Minecraft Skills assets.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "bin": {
+    "minecraft-skills-maintainer": "./dist/cli.mjs"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsgo -p tsconfig.json --noEmit",
+    "typecheck:tsc": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "validate": "node dist/cli.mjs validate"
+  },
+  "dependencies": {
+    "@minecraft-skills/catalog": "workspace:0.0.0",
+    "@minecraft-skills/data": "workspace:0.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260621.1",
+    "tsdown": "0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  }
+}

@@ -1,0 +1,22 @@
+packages:
+  - "packages/*"
+verifyDepsBeforeRun: false
+confirmModulesPurge: false
+minimumReleaseAgeExclude:
+  - sherif-darwin-arm64@1.12.0
+  - sherif-darwin-x64@1.12.0
+  - sherif-linux-arm64-musl@1.12.0
+  - sherif-linux-arm64@1.12.0
+  - sherif-linux-x64-musl@1.12.0
+  - sherif-linux-x64@1.12.0
+  - sherif-windows-arm64@1.12.0
+  - sherif-windows-x64@1.12.0
+  - sherif@1.12.0
+  - '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview-darwin-x64@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview-linux-arm64@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview-linux-arm@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview-linux-x64@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview-win32-arm64@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview-win32-x64@7.0.0-dev.20260621.1'
+  - '@typescript/native-preview@7.0.0-dev.20260621.1'
