@@ -34,11 +34,12 @@ describe("catalog", () => {
     expect(version.packFormats.status).toBe("extracted");
   });
 
-  it("falls back to manifest-only details when a detail file is not generated", () => {
+  it("loads extracted legacy details for the oldest supported release", () => {
     const version = getVersionDetail("java", "1.13");
-    expect(version.packFormats.data).toBeNull();
-    expect(version.packFormats.status).toBe("not-extracted");
-    expect(version.domains.datapack.unknowns).toContain("data_pack_format");
+    expect(version.coverage).toBe("version-json-and-jar");
+    expect(version.packFormats.data).toBe(4);
+    expect(version.packFormats.resource).toBe(4);
+    expect(version.packFormats.status).toBe("extracted");
   });
 
   it("keeps Minecraft Wiki prose out of redistributable data", () => {

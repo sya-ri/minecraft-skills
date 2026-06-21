@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "1.20.5",
+  "type": "release",
+  "releaseTime": "2024-04-23T11:54:12+00:00",
+  "coverage": "version-json-and-jar",
+  "protocolVersion": 766,
+  "worldVersion": 3837,
+  "stable": true,
+  "javaVersion": {
+    "component": "java-runtime-delta",
+    "majorVersion": 21
+  },
+  "assetIndex": {
+    "id": "16",
+    "sha1": "c912b1461c12d3251ef34449df536b54cd14c2ae",
+    "size": 446463,
+    "totalSize": 651917349,
+    "url": "https://piston-meta.mojang.com/v1/packages/c912b1461c12d3251ef34449df536b54cd14c2ae/16.json"
+  },
+  "downloads": {
+    "client": {
+      "sha1": "c6b92b2374a629f20802bb284f98a4ee790e950a",
+      "size": 26565623,
+      "url": "https://piston-data.mojang.com/v1/objects/c6b92b2374a629f20802bb284f98a4ee790e950a/client.jar"
+    },
+    "client_mappings": {
+      "sha1": "65b1468c44fbf34382716416b5c1a16d2949217a",
+      "size": 9421856,
+      "url": "https://piston-data.mojang.com/v1/objects/65b1468c44fbf34382716416b5c1a16d2949217a/client.txt"
+    },
+    "server": {
+      "sha1": "79493072f65e17243fd36a699c9a96b4381feb91",
+      "size": 51424012,
+      "url": "https://piston-data.mojang.com/v1/objects/79493072f65e17243fd36a699c9a96b4381feb91/server.jar"
+    },
+    "server_mappings": {
+      "sha1": "14be97974a77b09eb8bca88ed9268445f0fde3e7",
+      "size": 7283217,
+      "url": "https://piston-data.mojang.com/v1/objects/14be97974a77b09eb8bca88ed9268445f0fde3e7/server.txt"
+    }
+  },
+  "packFormats": {
+    "data": null,
+    "dataMinor": null,
+    "resource": null,
+    "resourceMinor": null,
+    "status": "extracted"
+  },
+  "domains": {
+    "datapack": {
+      "status": "extracted",
+      "facts": [],
+      "unknowns": ["command_tree", "registries", "vanilla_reports"]
+    },
+    "resourcepack": {
+      "status": "extracted",
+      "facts": [],
+      "unknowns": ["asset_index_contents", "model_schema"]
+    },
+    "paper-plugin": {
+      "status": "seed",
+      "facts": [],
+      "unknowns": ["paper_api_version", "server_api_changes", "folia_compatibility_notes"]
+    }
+  },
+  "sources": [
+    {
+      "id": "mojang-version-json",
+      "kind": "official",
+      "url": "https://piston-meta.mojang.com/v1/packages/495a4c781f2d9739f727b57973979b4e5af9762d/1.20.5.json",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    },
+    {
+      "id": "mojang-client-jar-version-json",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/c6b92b2374a629f20802bb284f98a4ee790e950a/client.jar",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    }
+  ]
+}

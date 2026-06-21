@@ -41,6 +41,17 @@ type JarVersionJson = {
   stable?: boolean;
 };
 
+type JarPackMcmeta = {
+  pack?: {
+    pack_format?: number;
+  };
+};
+
+type JarMetadata = {
+  versionJson?: JarVersionJson;
+  packMcmeta?: JarPackMcmeta;
+};
+
 type JavaVersionDetail = {
   schemaVersion: 1;
   edition: "java";
@@ -98,6 +109,26 @@ export function readJarVersionJson(path: string): JarVersionJson {
   return JSON.parse(content) as JarVersionJson;
 }
 
+function readJarPackMcmeta(path: string): JarPackMcmeta {
+  const content = readZipEntry(readFileSync(path), "pack.mcmeta").toString("utf8");
+  return JSON.parse(content) as JarPackMcmeta;
+}
+
+function readJarMetadata(path: string): JarMetadata {
+  try {
+    return {
+      versionJson: readJarVersionJson(path),
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message === "Zip entry not found: version.json") {
+      return {
+        packMcmeta: readJarPackMcmeta(path),
+      };
+    }
+    throw error;
+  }
+}
+
 export function buildJavaVersionDetail(options: {
   versionJsonPath: string;
   clientJarPath?: string;
@@ -105,14 +136,16 @@ export function buildJavaVersionDetail(options: {
   retrievedAt: string;
 }): JavaVersionDetail {
   const versionJson = readJsonFile<MojangVersionJson>(options.versionJsonPath);
-  const jarVersion = options.clientJarPath ? readJarVersionJson(options.clientJarPath) : undefined;
+  const jarMetadata = options.clientJarPath ? readJarMetadata(options.clientJarPath) : undefined;
+  const jarVersion = jarMetadata?.versionJson;
   const packVersion = jarVersion?.pack_version;
+  const legacyPackFormat = jarMetadata?.packMcmeta?.pack?.pack_format ?? null;
   const packFormats = {
-    data: packVersion?.data_major ?? null,
+    data: packVersion?.data_major ?? legacyPackFormat,
     dataMinor: packVersion?.data_minor ?? null,
-    resource: packVersion?.resource_major ?? null,
+    resource: packVersion?.resource_major ?? legacyPackFormat,
     resourceMinor: packVersion?.resource_minor ?? null,
-    status: packVersion ? "extracted" : "not-extracted",
+    status: packVersion || legacyPackFormat ? "extracted" : "not-extracted",
   } as const;
 
   return {
@@ -121,7 +154,7 @@ export function buildJavaVersionDetail(options: {
     version: versionJson.id,
     type: versionJson.type,
     releaseTime: versionJson.releaseTime,
-    coverage: jarVersion ? "version-json-and-jar" : "version-json",
+    coverage: jarMetadata ? "version-json-and-jar" : "version-json",
     protocolVersion: jarVersion?.protocol_version ?? null,
     worldVersion: jarVersion?.world_version ?? null,
     stable: jarVersion?.stable ?? null,
@@ -134,18 +167,16 @@ export function buildJavaVersionDetail(options: {
     packFormats,
     domains: {
       datapack: {
-        status: packVersion ? "extracted" : "seed",
-        facts: packVersion?.data_major ? [`data_pack_format=${packVersion.data_major}`] : [],
-        unknowns: packVersion
+        status: packFormats.data ? "extracted" : "seed",
+        facts: packFormats.data ? [`data_pack_format=${packFormats.data}`] : [],
+        unknowns: packFormats.data
           ? ["command_tree", "registries", "vanilla_reports"]
           : ["data_pack_format", "command_tree", "registries", "vanilla_reports"],
       },
       resourcepack: {
-        status: packVersion ? "extracted" : "seed",
-        facts: packVersion?.resource_major
-          ? [`resource_pack_format=${packVersion.resource_major}`]
-          : [],
-        unknowns: packVersion
+        status: packFormats.resource ? "extracted" : "seed",
+        facts: packFormats.resource ? [`resource_pack_format=${packFormats.resource}`] : [],
+        unknowns: packFormats.resource
           ? ["asset_index_contents", "model_schema"]
           : ["resource_pack_format", "asset_index", "model_schema"],
       },
@@ -165,7 +196,7 @@ export function buildJavaVersionDetail(options: {
       ...(options.clientJarPath
         ? [
             {
-              id: "mojang-client-jar-version-json",
+              id: jarVersion ? "mojang-client-jar-version-json" : "mojang-client-jar-pack-mcmeta",
               kind: "official-extracted",
               url: versionJson.downloads?.client?.url ?? "client.jar",
               retrievedAt: options.retrievedAt,

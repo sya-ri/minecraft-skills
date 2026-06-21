@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "26.1.1",
+  "type": "release",
+  "releaseTime": "2026-04-01T09:06:36+00:00",
+  "coverage": "version-json-and-jar",
+  "protocolVersion": 775,
+  "worldVersion": 4788,
+  "stable": true,
+  "javaVersion": {
+    "component": "java-runtime-epsilon",
+    "majorVersion": 25
+  },
+  "assetIndex": {
+    "id": "30",
+    "sha1": "03dec833c02512ee8143c02daf977aafc36c3d04",
+    "size": 548290,
+    "totalSize": 451122478,
+    "url": "https://piston-meta.mojang.com/v1/packages/03dec833c02512ee8143c02daf977aafc36c3d04/30.json"
+  },
+  "downloads": {
+    "client": {
+      "sha1": "377031a9e733ba8ab4d355959a8f6fb8eb707556",
+      "size": 38113231,
+      "url": "https://piston-data.mojang.com/v1/objects/377031a9e733ba8ab4d355959a8f6fb8eb707556/client.jar"
+    },
+    "server": {
+      "sha1": "49c8195703ad0ba4f0a4efbccfd85a4a8ca57431",
+      "size": 60417481,
+      "url": "https://piston-data.mojang.com/v1/objects/49c8195703ad0ba4f0a4efbccfd85a4a8ca57431/server.jar"
+    }
+  },
+  "packFormats": {
+    "data": 101,
+    "dataMinor": 1,
+    "resource": 84,
+    "resourceMinor": 0,
+    "status": "extracted"
+  },
+  "domains": {
+    "datapack": {
+      "status": "extracted",
+      "facts": ["data_pack_format=101"],
+      "unknowns": ["command_tree", "registries", "vanilla_reports"]
+    },
+    "resourcepack": {
+      "status": "extracted",
+      "facts": ["resource_pack_format=84"],
+      "unknowns": ["asset_index_contents", "model_schema"]
+    },
+    "paper-plugin": {
+      "status": "seed",
+      "facts": [],
+      "unknowns": ["paper_api_version", "server_api_changes", "folia_compatibility_notes"]
+    }
+  },
+  "sources": [
+    {
+      "id": "mojang-version-json",
+      "kind": "official",
+      "url": "https://piston-meta.mojang.com/v1/packages/33b40c956e816614457a1c2a2439ffbb1b4f805f/26.1.1.json",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    },
+    {
+      "id": "mojang-client-jar-version-json",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/377031a9e733ba8ab4d355959a8f6fb8eb707556/client.jar",
+      "retrievedAt": "2026-06-22T00:00:00+09:00"
+    }
+  ]
+}
