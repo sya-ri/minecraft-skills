@@ -174,6 +174,14 @@ const assetDiff = compareVanillaPaths({
 
 ## Maintainer Flow
 
+Before publishing or claiming the bundled data is current, compare checked-in latest metadata with
+Mojang and PaperMC:
+
+```sh
+mise exec -- pnpm --filter @minecraft-skills/maintainer build
+node packages/maintainer/dist/cli.mjs audit-current-sources
+```
+
 Regenerate the Java 1.13+ release index from Mojang's version manifest:
 
 ```sh

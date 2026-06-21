@@ -9,6 +9,7 @@ import {
   listReferences,
   listVersions,
 } from "@minecraft-skills/catalog";
+import { auditCurrentSources } from "./currentSources.js";
 import { buildJavaVersionIndex } from "./javaManifest.js";
 import {
   buildJavaReportsSummary,
@@ -263,6 +264,7 @@ function printHelp(): void {
 
 Usage:
   minecraft-skills-maintainer validate
+  minecraft-skills-maintainer audit-current-sources
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
@@ -278,6 +280,7 @@ Usage:
 
 Commands:
   validate              Validate checked-in data, catalog, and generated skills.
+  audit-current-sources Compare bundled latest Java/Paper data with Mojang and PaperMC APIs.
   ingest-java-manifest  Generate Java 1.13+ release index from Mojang version manifest.
   ingest-java-version-detail
                         Generate detail JSON from Mojang version JSON and optional client jar.
@@ -567,6 +570,12 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
   }
 
   try {
+    if (command === "audit-current-sources") {
+      const result = await auditCurrentSources();
+      console.log(JSON.stringify(result, null, 2));
+      return result.ok ? 0 : 1;
+    }
+
     if (command === "ingest-java-manifest") {
       ingestJavaManifest(argv.slice(1));
       return 0;

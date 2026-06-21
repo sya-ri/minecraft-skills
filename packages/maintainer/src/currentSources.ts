@@ -1,0 +1,156 @@
+import { getCatalog, getPaperPluginData } from "@minecraft-skills/catalog";
+
+type FetchJson = (url: string) => Promise<unknown>;
+
+type MojangManifest = {
+  latest: {
+    release: string;
+    snapshot: string;
+  };
+};
+
+type PaperProject = {
+  versions: string[];
+};
+
+type PaperVersionBuilds = {
+  version: string;
+  builds: number[];
+};
+
+export type CurrentSourceAudit = {
+  ok: boolean;
+  checkedAt: string;
+  bundled: {
+    javaLatestRelease: string;
+    paperLatestVersion: string;
+    paperLatestBuild: number;
+  };
+  current: {
+    javaLatestRelease: string;
+    javaLatestSnapshot: string;
+    paperLatestVersion: string;
+    paperLatestBuild: number;
+  };
+  mismatches: string[];
+};
+
+const mojangManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
+const paperProjectUrl = "https://api.papermc.io/v2/projects/paper";
+
+async function defaultFetchJson(url: string): Promise<unknown> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`GET ${url} failed: ${response.status} ${response.statusText}`);
+  }
+  return response.json() as Promise<unknown>;
+}
+
+function assertMojangManifest(value: unknown): asserts value is MojangManifest {
+  if (!value || typeof value !== "object" || !("latest" in value)) {
+    throw new Error("Invalid Mojang version manifest: missing latest");
+  }
+  const latest = (value as { latest: unknown }).latest;
+  if (!latest || typeof latest !== "object") {
+    throw new Error("Invalid Mojang version manifest: latest must be an object");
+  }
+  const release = (latest as { release?: unknown }).release;
+  const snapshot = (latest as { snapshot?: unknown }).snapshot;
+  if (typeof release !== "string" || typeof snapshot !== "string") {
+    throw new Error("Invalid Mojang version manifest: latest release/snapshot must be strings");
+  }
+}
+
+function assertPaperProject(value: unknown): asserts value is PaperProject {
+  if (!value || typeof value !== "object" || !("versions" in value)) {
+    throw new Error("Invalid PaperMC project JSON: missing versions");
+  }
+  if (!Array.isArray((value as { versions: unknown }).versions)) {
+    throw new Error("Invalid PaperMC project JSON: versions must be an array");
+  }
+}
+
+function assertPaperVersionBuilds(value: unknown): asserts value is PaperVersionBuilds {
+  if (!value || typeof value !== "object" || !("builds" in value)) {
+    throw new Error("Invalid PaperMC version builds JSON: missing builds");
+  }
+  if (!Array.isArray((value as { builds: unknown }).builds)) {
+    throw new Error("Invalid PaperMC version builds JSON: builds must be an array");
+  }
+}
+
+function supportedPaperReleaseVersions(project: PaperProject): string[] {
+  return project.versions.filter((version) => {
+    if (version.includes("-")) {
+      return false;
+    }
+    const [major, minor] = version.split(".");
+    return major === "1" && Number(minor) >= 13;
+  });
+}
+
+export async function auditCurrentSources(
+  options: { checkedAt?: string; fetchJson?: FetchJson } = {},
+): Promise<CurrentSourceAudit> {
+  const fetchJson = options.fetchJson ?? defaultFetchJson;
+  const checkedAt = options.checkedAt ?? new Date().toISOString();
+  const catalog = getCatalog();
+  const paper = getPaperPluginData();
+
+  const mojangManifest = await fetchJson(mojangManifestUrl);
+  assertMojangManifest(mojangManifest);
+
+  const paperProject = await fetchJson(paperProjectUrl);
+  assertPaperProject(paperProject);
+  const paperVersions = supportedPaperReleaseVersions(paperProject);
+  const paperLatestVersion = paperVersions.at(-1);
+  if (!paperLatestVersion) {
+    throw new Error("PaperMC project JSON did not contain supported 1.13+ release versions");
+  }
+
+  const paperBuilds = await fetchJson(`${paperProjectUrl}/versions/${paperLatestVersion}`);
+  assertPaperVersionBuilds(paperBuilds);
+  if (paperBuilds.version !== paperLatestVersion) {
+    throw new Error(
+      `PaperMC builds JSON is for ${paperBuilds.version}, expected ${paperLatestVersion}`,
+    );
+  }
+  const paperLatestBuild = Math.max(...paperBuilds.builds);
+  if (!Number.isFinite(paperLatestBuild)) {
+    throw new Error(`PaperMC builds JSON for ${paperLatestVersion} did not contain any builds`);
+  }
+
+  const mismatches: string[] = [];
+  if (catalog.latest.java !== mojangManifest.latest.release) {
+    mismatches.push(
+      `bundled Java latest ${catalog.latest.java} differs from Mojang latest release ${mojangManifest.latest.release}`,
+    );
+  }
+  if (paper.latest.minecraftVersion !== paperLatestVersion) {
+    mismatches.push(
+      `bundled Paper latest ${paper.latest.minecraftVersion} differs from PaperMC latest ${paperLatestVersion}`,
+    );
+  }
+  if (paper.latest.build !== paperLatestBuild) {
+    mismatches.push(
+      `bundled Paper latest build ${paper.latest.build} differs from PaperMC latest build ${paperLatestBuild}`,
+    );
+  }
+
+  return {
+    ok: mismatches.length === 0,
+    checkedAt,
+    bundled: {
+      javaLatestRelease: catalog.latest.java,
+      paperLatestVersion: paper.latest.minecraftVersion,
+      paperLatestBuild: paper.latest.build,
+    },
+    current: {
+      javaLatestRelease: mojangManifest.latest.release,
+      javaLatestSnapshot: mojangManifest.latest.snapshot,
+      paperLatestVersion,
+      paperLatestBuild,
+    },
+    mismatches,
+  };
+}
