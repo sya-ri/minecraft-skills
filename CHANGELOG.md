@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.1 - 2026-06-23
+
+### Added
+
+- Version-aware pack file content validation APIs in `@minecraft-skills/catalog`.
+- `datapack validate-files` and `resourcepack validate-files` CLI commands.
+- `validate_pack_files` MCP tool for validating datapack/resourcepack file content passed by agents.
+- Maintainer validation coverage for every bundled Java version and every vanilla datapack/resourcepack
+  path index entry.
+
+### Changed
+
+- Pack file schema lookup now rejects target-version-incompatible layouts instead of returning
+  misleading schemas.
+- Pack migration plans count only target-version-available schema lookups as schema-backed.
+- Pack schema coverage now includes additional known resourcepack/datapack file containers such as
+  marker files, shader sources, text assets, binary font assets, and embedded vanilla datapacks.
+
 ## 0.1.0 - 2026-06-22
 
 Initial public release of minecraft-skills.
