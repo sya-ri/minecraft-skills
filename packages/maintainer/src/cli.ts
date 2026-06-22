@@ -948,96 +948,128 @@ function materializeVersionDetails(root: string): number {
   return written;
 }
 
-function requirePackContentValidationSamples(messages: string[]): void {
-  const latest = getVersionDetail("java", "latest");
-  const dataPackFormat = latest.packFormats.data;
-  const resourcePackFormat = latest.packFormats.resource;
-  const samples = [
-    validatePackFileContent({
-      version: latest.version,
-      domain: "datapack",
-      path: "pack.mcmeta",
-      content: {
-        pack: {
-          pack_format: dataPackFormat,
-          description: "minecraft-skills validation sample",
-        },
-      },
-    }),
-    validatePackFileContent({
-      version: latest.version,
-      domain: "resourcepack",
-      path: "pack.mcmeta",
-      content: {
-        pack: {
-          pack_format: resourcePackFormat,
-          description: "minecraft-skills validation sample",
-        },
-      },
-    }),
-    validatePackFileContent({
-      version: latest.version,
-      domain: "datapack",
-      path: "data/minecraft/advancement/validation_sample.json",
-      content: {
-        criteria: {
-          impossible: {
-            trigger: "minecraft:impossible",
-          },
-        },
-      },
-    }),
-    validatePackFileContent({
-      version: latest.version,
-      domain: "resourcepack",
-      path: "assets/minecraft/models/item/validation_sample.json",
-      content: {
-        parent: "minecraft:item/generated",
-        textures: {
-          layer0: "minecraft:item/stick",
-        },
-      },
-    }),
-  ];
-
-  for (const sample of samples) {
-    if (!sample.valid) {
-      messages.push(
-        `pack content validation sample must pass: ${sample.version} ${sample.path}: ${sample.issues
-          .map((issue) => issue.message)
-          .join("; ")}`,
-      );
-    }
-  }
-
-  const unsupportedOldLayout = validatePackFileContent({
-    version: "1.20.6",
-    domain: "resourcepack",
-    path: "assets/minecraft/items/validation_sample.json",
-    content: {
-      model: {
-        type: "minecraft:model",
-        model: "minecraft:item/stick",
-      },
-    },
-  });
-  if (unsupportedOldLayout.valid || unsupportedOldLayout.schemaAvailable) {
-    messages.push("pack content validation must reject resourcepack item definitions on 1.20.6");
-  }
-
-  const wrongPackFormat = validatePackFileContent({
-    version: latest.version,
-    domain: "datapack",
-    path: "pack.mcmeta",
-    content: {
+function validationSampleContent(
+  domain: "datapack" | "resourcepack",
+  path: string,
+  detail: ReturnType<typeof getVersionDetail>,
+): string | unknown {
+  if (path.endsWith("pack.mcmeta")) {
+    return {
       pack: {
-        pack_format: (dataPackFormat ?? 0) + 1,
+        pack_format: domain === "datapack" ? detail.packFormats.data : detail.packFormats.resource,
         description: "minecraft-skills validation sample",
       },
-    },
-  });
-  if (wrongPackFormat.valid) {
-    messages.push("pack content validation must reject mismatched pack.mcmeta pack_format");
+    };
+  }
+  if (path.endsWith(".json")) {
+    return {};
+  }
+  return "";
+}
+
+function validationClassKey(
+  version: string,
+  domain: "datapack" | "resourcepack",
+  path: string,
+): string {
+  const normalized = path.replaceAll("\\", "/");
+  const parts = normalized.split("/");
+  if (path.endsWith("pack.mcmeta")) {
+    return `${version}\t${domain}\tpack.mcmeta`;
+  }
+  if (normalized === "data/.mcassetsroot" || normalized === "assets/.mcassetsroot") {
+    return `${version}\t${domain}\t.mcassetsroot`;
+  }
+  if (domain === "datapack") {
+    const nestedDataIndex =
+      parts[0] === "data" && parts[2] === "datapacks"
+        ? parts.findIndex((part, index) => index > 2 && part === "data")
+        : -1;
+    const datapackParts = nestedDataIndex === -1 ? parts : parts.slice(nestedDataIndex);
+    const top = datapackParts[2] ?? "";
+    const second = datapackParts[3] ?? "";
+    const extension = path.includes(".") ? (path.split(".").at(-1) ?? "") : "";
+    const kind =
+      top === "tags"
+        ? `tag/${second}`
+        : top === "worldgen"
+          ? `worldgen/${second}`
+          : top === "functions" || top === "function"
+            ? "function"
+            : top === "structures" || top === "structure"
+              ? "structure"
+              : top;
+    return `${version}\t${domain}\t${kind}\t${extension}`;
+  }
+  const top = parts[2] ?? "";
+  const second = parts[3] ?? "";
+  const extension = path.includes(".") ? (path.split(".").at(-1) ?? "") : "";
+  const kind =
+    top === "models"
+      ? "model"
+      : top === "items"
+        ? "item-definition"
+        : top === "textures"
+          ? `texture/${second}`
+          : top === "shaders"
+            ? `shader/${second}`
+            : top === "sounds"
+              ? "sound-asset"
+              : top;
+  return `${version}\t${domain}\t${kind}\t${extension}`;
+}
+
+function requirePackContentValidationSamples(root: string, messages: string[]): void {
+  let checked = 0;
+  const failures: string[] = [];
+  const validationCache = new Map<string, true>();
+  for (const version of listVersions("java")) {
+    const detail = getVersionDetail("java", version.id);
+    for (const domain of ["datapack", "resourcepack"] as const) {
+      const pathIndex = join(root, dataFilePath(`java/vanilla-paths/${version.id}.${domain}.txt`));
+      const paths = readFileSync(pathIndex, "utf8").trim().split(/\r?\n/).filter(Boolean);
+      for (const path of paths) {
+        checked += 1;
+        const cacheKey = validationClassKey(version.id, domain, path);
+        if (validationCache.has(cacheKey)) {
+          continue;
+        }
+        const result = validatePackFileContent({
+          version: version.id,
+          domain,
+          path,
+          content: validationSampleContent(domain, path, detail),
+        });
+        if (!result.valid) {
+          failures.push(
+            `${version.id} ${domain} ${path}: ${result.issues
+              .map((issue) => `${issue.keyword ?? "unknown"} ${issue.message}`)
+              .join("; ")}`,
+          );
+          if (failures.length >= 50) {
+            break;
+          }
+        } else {
+          validationCache.set(cacheKey, true);
+        }
+      }
+      if (failures.length >= 50) {
+        break;
+      }
+    }
+    if (failures.length >= 50) {
+      break;
+    }
+  }
+  if (checked === 0) {
+    messages.push("pack content validation must check at least one vanilla path");
+  }
+  if (failures.length > 0) {
+    messages.push(
+      `pack content validation must pass for every bundled vanilla path; checked ${checked} before failing:\n${failures.join(
+        "\n",
+      )}`,
+    );
   }
 }
 
@@ -1060,7 +1092,7 @@ export function validateRepository(): ValidationResult {
   requireOutputRequirements(root, messages);
   requireResponsePatterns(root, messages);
   requireIntentLookups(root, publicEntrypoints, messages);
-  requirePackContentValidationSamples(messages);
+  requirePackContentValidationSamples(root, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");

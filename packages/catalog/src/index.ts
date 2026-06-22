@@ -16,7 +16,7 @@ import {
   readDataJson,
   readDataText,
 } from "@minecraft-skills/data";
-import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
+import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import {
   AuthoringChecklist,
   type AuthoringChecklistData,
@@ -1863,30 +1863,41 @@ function withResourcepackModelCoverage(detail: VersionDetailData): VersionDetail
   });
 }
 
+const versionDetailCache = new Map<string, VersionDetailData>();
+
 export function getVersionDetail(edition = "java", requested = "latest"): VersionDetailData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
+  const cacheKey = `${editionId}/${version}`;
+  const cached = versionDetailCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
   const detailPath = `${editionId}/version-details/${version}.json`;
   if (hasDataFile(detailPath)) {
-    return withResourcepackModelCoverage(
+    const detail = withResourcepackModelCoverage(
       withJavaReportsCoverage(
         withVanillaInventoryCoverage(
           withPaperPluginCoverage(VersionDetail.assert(readDataJson(detailPath))),
         ),
       ),
     );
+    versionDetailCache.set(cacheKey, detail);
+    return detail;
   }
   const summary = getVersionIndex(editionId).versions.find((candidate) => candidate.id === version);
   if (!summary) {
     throw new Error(`Unsupported ${editionId} version: ${version}`);
   }
-  return withResourcepackModelCoverage(
+  const detail = withResourcepackModelCoverage(
     withJavaReportsCoverage(
       withVanillaInventoryCoverage(
         withPaperPluginCoverage(makeManifestOnlyDetail(editionId, summary)),
       ),
     ),
   );
+  versionDetailCache.set(cacheKey, detail);
+  return detail;
 }
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
@@ -2290,17 +2301,26 @@ export function getVanillaInventory(edition = "java", requested = "latest"): Van
   return VanillaInventory.assert(readDataJson(inventoryPath));
 }
 
+const datapackSchemaSurfaceCache = new Map<string, ObservedDatapackSchemaSurfaceData>();
+
 export function getDatapackSchemaSurface(
   edition = "java",
   requested = "latest",
 ): ObservedDatapackSchemaSurfaceData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
+  const cacheKey = `${editionId}/${version}`;
+  const cached = datapackSchemaSurfaceCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
   const surfacePath = `${editionId}/datapack-schema-surfaces/${version}.json`;
   if (!hasDataFile(surfacePath)) {
     throw new Error(`No bundled observed datapack schema surface for ${editionId} ${version}`);
   }
-  return ObservedDatapackSchemaSurface.assert(readDataJson(surfacePath));
+  const surface = ObservedDatapackSchemaSurface.assert(readDataJson(surfacePath));
+  datapackSchemaSurfaceCache.set(cacheKey, surface);
+  return surface;
 }
 
 export function getJavaReportsSummary(
@@ -2427,17 +2447,26 @@ export function compareDatapackSchema(
   };
 }
 
+const resourcepackModelSummaryCache = new Map<string, ResourcepackModelSummaryData>();
+
 export function getResourcepackModelSummary(
   edition = "java",
   requested = "latest",
 ): ResourcepackModelSummaryData {
   const editionId = Edition.assert(edition);
   const version = resolveVersion(editionId, requested);
+  const cacheKey = `${editionId}/${version}`;
+  const cached = resourcepackModelSummaryCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
   const modelsPath = `${editionId}/resourcepack-models/${version}.json`;
   if (!hasDataFile(modelsPath)) {
     throw new Error(`No bundled resourcepack model summary for ${editionId} ${version}`);
   }
-  return ResourcepackModelSummary.assert(readDataJson(modelsPath));
+  const summary = ResourcepackModelSummary.assert(readDataJson(modelsPath));
+  resourcepackModelSummaryCache.set(cacheKey, summary);
+  return summary;
 }
 
 function pathExtension(path: string): string | null {
@@ -2450,9 +2479,26 @@ function normalizePackPath(path: string): string {
   return path.replaceAll("\\", "/").replace(/^\/+/, "");
 }
 
-function classifyDatapackPath(path: string): PackFileClassification | undefined {
+function normalizeDatapackClassificationPath(path: string): string {
   const normalized = normalizePackPath(path);
-  if (normalized === "pack.mcmeta") {
+  const parts = normalized.split("/");
+  if (parts[0] === "data" && parts[2] === "datapacks") {
+    const nestedDataIndex = parts.findIndex((part, index) => index > 2 && part === "data");
+    if (nestedDataIndex !== -1) {
+      return parts.slice(nestedDataIndex).join("/");
+    }
+  }
+  return normalized;
+}
+
+function isEmbeddedDatapackPath(path: string): boolean {
+  const parts = normalizePackPath(path).split("/");
+  return parts[0] === "data" && parts[2] === "datapacks";
+}
+
+function classifyDatapackPath(path: string): PackFileClassification | undefined {
+  const normalized = normalizeDatapackClassificationPath(path);
+  if (normalized === "pack.mcmeta" || normalizePackPath(path).endsWith("/pack.mcmeta")) {
     return {
       path,
       domain: "datapack",
@@ -2469,6 +2515,19 @@ function classifyDatapackPath(path: string): PackFileClassification | undefined 
   }
 
   const parts = normalized.split("/");
+  if (normalized === "data/.mcassetsroot") {
+    return {
+      path,
+      domain: "datapack",
+      kind: "asset-root-marker",
+      namespace: null,
+      extension: "mcassetsroot",
+      json: false,
+      schemaAvailable: true,
+      schemaKind: "asset-root-marker",
+      notes: ["Marker file extracted from official Minecraft data assets."],
+    };
+  }
   if (parts[0] !== "data" || !parts[1] || !parts[2]) {
     return undefined;
   }
@@ -2526,6 +2585,19 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
   }
 
   const parts = normalized.split("/");
+  if (normalized === "assets/.mcassetsroot") {
+    return {
+      path,
+      domain: "resourcepack",
+      kind: "asset-root-marker",
+      namespace: null,
+      extension: "mcassetsroot",
+      json: false,
+      schemaAvailable: true,
+      schemaKind: "asset-root-marker",
+      notes: ["Marker file extracted from official Minecraft client assets."],
+    };
+  }
   if (parts[0] !== "assets" || !parts[1] || !parts[2]) {
     return undefined;
   }
@@ -2573,6 +2645,9 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
   } else if (parts[2] === "sounds") {
     kind = "sound-asset";
     schemaKind = "sound-asset";
+  } else if (parts[2] === "texts") {
+    kind = "text-asset";
+    schemaKind = "text-asset";
   }
 
   const schemaAvailable = Boolean(schemaKind) || json;
@@ -2792,6 +2867,16 @@ function staticPackFileJsonSchema(options: {
   packFormat: number | null;
 }): Record<string, unknown> | null {
   const { file } = options;
+  if (file.schemaKind === "asset-root-marker") {
+    return {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "string",
+      "x-minecraft-skills": {
+        format: "Minecraft asset root marker file.",
+        note: "Marker file extracted from official Minecraft jar assets; content is not semantically validated.",
+      },
+    };
+  }
   if (
     file.schemaKind === "pack-metadata" &&
     (file.domain === "datapack" || file.domain === "resourcepack")
@@ -2905,6 +2990,17 @@ function staticPackFileJsonSchema(options: {
       });
     }
     if (file.schemaKind === "font") {
+      if (!file.json) {
+        return {
+          $schema: "https://json-schema.org/draft/2020-12/schema",
+          type: "string",
+          contentMediaType: "application/octet-stream",
+          "x-minecraft-skills": {
+            format: "Resource pack binary font asset.",
+            note: "This identifies the binary font asset file format only; minecraft-skills does not validate glyph data.",
+          },
+        };
+      }
       return objectSchema({
         providers: arrayOf(objectSchema()),
       });
@@ -2920,6 +3016,17 @@ function staticPackFileJsonSchema(options: {
       return objectSchema({
         textures: stringOrStringArraySchema(),
       });
+    }
+    if (file.schemaKind === "shader" && !file.json) {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "string",
+        contentMediaType: "text/x-glsl",
+        "x-minecraft-skills": {
+          format: "Resource pack shader source asset.",
+          note: "This identifies the shader source file format only; minecraft-skills does not validate GLSL syntax.",
+        },
+      };
     }
     if (file.schemaKind === "shader" || file.schemaKind === "post-effect") {
       return objectSchema();
@@ -2948,6 +3055,20 @@ function staticPackFileJsonSchema(options: {
         "x-minecraft-skills": {
           format: "Resource pack sound asset.",
           note: "This identifies the asset file format only; minecraft-skills does not validate audio codec details.",
+        },
+      };
+    }
+    if (file.schemaKind === "text-asset") {
+      if (file.json) {
+        return objectSchema();
+      }
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "string",
+        contentMediaType: "text/plain",
+        "x-minecraft-skills": {
+          format: "Resource pack text asset.",
+          note: "This identifies the text asset file format only; minecraft-skills does not validate prose content.",
         },
       };
     }
@@ -3035,9 +3156,12 @@ function staticSchemaVersionSupport(options: {
   detail: VersionDetailData;
 }): string[] {
   const { file } = options;
-  const normalized = normalizePackPath(file.path);
+  const normalized =
+    file.domain === "datapack"
+      ? normalizeDatapackClassificationPath(file.path)
+      : normalizePackPath(file.path);
   const parts = normalized.split("/");
-  if (file.kind === "pack-metadata") {
+  if (file.kind === "pack-metadata" || file.kind === "asset-root-marker") {
     return [];
   }
   if (file.domain === "datapack") {
@@ -3118,7 +3242,7 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
     });
   }
 
-  if (file.kind === "pack-metadata") {
+  if (file.kind === "pack-metadata" || file.kind === "asset-root-marker") {
     return staticPackFileSchema({ edition: editionId, version, file, packFormat });
   }
 
@@ -3127,6 +3251,9 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
     const kind = surface.kinds.find((entry) => entry.kind === file.schemaKind);
     if (!kind) {
       if (file.kind === "function" || file.kind === "structure") {
+        return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+      }
+      if (file.json && isEmbeddedDatapackPath(file.path)) {
         return staticPackFileSchema({ edition: editionId, version, file, packFormat });
       }
       return unsupportedSchemaResult({
@@ -3222,6 +3349,39 @@ function ajvIssue(path: string, error: ErrorObject): PackFileValidationIssue {
   });
 }
 
+const validationAjv = new Ajv2020({
+  allErrors: true,
+  strict: false,
+  validateFormats: false,
+});
+const validationFunctionCache = new Map<string, ValidateFunction>();
+
+function validationSchemaCacheKey(schema: PackFileSchemaResult): string {
+  return [
+    schema.edition,
+    schema.version,
+    schema.file.domain,
+    schema.file.kind,
+    schema.file.schemaKind,
+    schema.file.extension,
+    schema.coverage,
+  ].join("\0");
+}
+
+function getValidationFunction(schema: PackFileSchemaResult): ValidateFunction {
+  if (!schema.jsonSchema) {
+    throw new Error("Cannot compile a missing validation schema");
+  }
+  const key = validationSchemaCacheKey(schema);
+  const cached = validationFunctionCache.get(key);
+  if (cached) {
+    return cached;
+  }
+  const validate = validationAjv.compile(schema.jsonSchema);
+  validationFunctionCache.set(key, validate);
+  return validate;
+}
+
 function parseValidationContent(options: {
   content: string | unknown;
   file: PackFileClassification;
@@ -3300,12 +3460,7 @@ export function validatePackFileContent(
     };
   }
 
-  const ajv = new Ajv2020({
-    allErrors: true,
-    strict: false,
-    validateFormats: false,
-  });
-  const validate = ajv.compile(schema.jsonSchema);
+  const validate = getValidationFunction(schema);
   const valid = validate(parsed.value);
   const issues = valid ? [] : (validate.errors ?? []).map((error) => ajvIssue(options.path, error));
 
@@ -3422,16 +3577,24 @@ export function searchVanillaPaths(
   };
 }
 
+const vanillaPathListCache = new Map<string, string[]>();
+
 function readVanillaPathList(
   edition: EditionData,
   version: string,
   domain: VanillaPathDomain,
 ): string[] {
   const pathIndex = `${edition}/vanilla-paths/${version}.${domain}.txt`;
+  const cached = vanillaPathListCache.get(pathIndex);
+  if (cached) {
+    return cached;
+  }
   if (!hasDataFile(pathIndex)) {
     throw new Error(`No bundled vanilla path index for ${edition} ${version} ${domain}`);
   }
-  return readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+  const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
+  vanillaPathListCache.set(pathIndex, paths);
+  return paths;
 }
 
 function filterVanillaPaths(
