@@ -18,6 +18,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_context");
     expect(tools.map((tool) => tool.name)).toContain("list_claim_policies");
     expect(tools.map((tool) => tool.name)).toContain("get_claim_policy");
+    expect(tools.map((tool) => tool.name)).toContain("list_output_requirements");
+    expect(tools.map((tool) => tool.name)).toContain("get_output_requirement");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
@@ -80,6 +82,8 @@ describe("MCP tools", () => {
         "get_authoring_context",
         "list_claim_policies",
         "get_claim_policy",
+        "list_output_requirements",
+        "get_output_requirement",
         "get_authoring_preflight",
         "get_evidence_bundle",
         "list_intent_lookups",
@@ -178,6 +182,20 @@ describe("MCP tools", () => {
     expect(single.content[0]?.text).toContain("will succeed at runtime");
   });
 
+  it("calls output requirement tools", async () => {
+    const list = await callMinecraftSkillsTool("list_output_requirements", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "global-version-and-evidence"');
+    expect(list.content[0]?.text).toContain('"id": "paper-plugin-output-safety"');
+
+    const single = await callMinecraftSkillsTool("get_output_requirement", {
+      id: "paper-plugin-output-safety",
+    });
+    expect(single.content[0]?.text).toContain("Javadocs type/member evidence");
+    expect(single.content[0]?.text).toContain("unverified event class names");
+  });
+
   it("calls authoring preflight tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_preflight", {
       domain: "paper-plugin",
@@ -195,6 +213,7 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
     expect(result.content[0]?.text).toContain('"guardrails"');
     expect(result.content[0]?.text).toContain('"claimPolicies"');
+    expect(result.content[0]?.text).toContain('"outputRequirements"');
     expect(result.content[0]?.text).toContain('"intentLookups"');
     expect(result.content[0]?.text).toContain('"id": "verify-paper-type-or-member"');
     expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');

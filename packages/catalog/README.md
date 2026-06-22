@@ -32,6 +32,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getOutputRequirement,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -47,6 +48,7 @@ import {
   listVersionSupport,
   listFactSurfaces,
   listIntentLookups,
+  listOutputRequirements,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -67,6 +69,8 @@ const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
 const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
+const outputRequirements = listOutputRequirements({ domain: "paper-plugin" });
+const paperOutputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
 const intentLookups = listIntentLookups({ domain: "paper-plugin" });

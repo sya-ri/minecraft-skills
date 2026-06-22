@@ -6,6 +6,7 @@ import {
   getDatapackSchemaSurface,
   getFactSurface,
   getIntentLookup,
+  getOutputRequirement,
   getPaperApiSurface,
   getSkillPayload,
   listAuthoringChecklists,
@@ -13,6 +14,7 @@ import {
   listClaimPolicies,
   listFactSurfaces,
   listIntentLookups,
+  listOutputRequirements,
   listSkills,
 } from "@minecraft-skills/catalog";
 
@@ -104,6 +106,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     policies: claimPolicies,
   };
+  const outputRequirements = listOutputRequirements();
+  const outputRequirementIndex = {
+    schemaVersion: 1,
+    requirements: outputRequirements,
+  };
   const factSurfaces = listFactSurfaces();
   const factSurfaceIndex = {
     schemaVersion: 1,
@@ -164,6 +171,22 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Claim policy for ${policy.claim}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(policy, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/output-requirements.json`,
+      name: "output-requirements.json",
+      title: "Minecraft Skills output requirements",
+      description: "Final-output requirements for Minecraft authoring responses.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(outputRequirementIndex, null, 2)),
+    },
+    ...outputRequirements.map((requirement) => ({
+      uri: `${dataResourceBase}/output-requirements/${requirement.id}.json`,
+      name: `output-requirements/${requirement.id}.json`,
+      title: requirement.title,
+      description: `Final-output requirement for ${requirement.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(requirement, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/fact-surfaces.json`,
@@ -325,6 +348,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/output-requirements.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              requirements: listOutputRequirements(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   const dataPrefix = `${dataResourceBase}/`;
   if (uri.startsWith(dataPrefix)) {
     const path = uri.slice(dataPrefix.length);
@@ -363,6 +405,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getClaimPolicy(id), null, 2),
+          },
+        ],
+      };
+    }
+    const outputRequirementPrefix = "output-requirements/";
+    if (path.startsWith(outputRequirementPrefix) && path.endsWith(".json")) {
+      const id = path.slice(outputRequirementPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getOutputRequirement(id), null, 2),
           },
         ],
       };

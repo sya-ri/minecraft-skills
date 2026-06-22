@@ -25,6 +25,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getOutputRequirement,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -42,6 +43,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listOutputRequirements,
   listPackFormats,
   listReferences,
   listSkills,
@@ -194,6 +196,30 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_claim_policy",
     description: "Get one Minecraft authoring claim policy by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_output_requirements",
+    description:
+      "List final-output requirements that keep Minecraft authoring responses explicit about versions, evidence, gaps, and non-guarantees.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_output_requirement",
+    description: "Get one Minecraft authoring final-output requirement by id.",
     inputSchema: {
       type: "object",
       properties: {
@@ -826,6 +852,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_claim_policy requires string id");
       }
       return text(getClaimPolicy(args.id));
+    }
+    if (name === "list_output_requirements") {
+      return text(
+        listOutputRequirements({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_output_requirement") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_output_requirement requires string id");
+      }
+      return text(getOutputRequirement(args.id));
     }
     if (name === "get_authoring_preflight") {
       if (typeof args.domain !== "string") {

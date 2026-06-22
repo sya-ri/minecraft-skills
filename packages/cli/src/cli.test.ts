@@ -123,6 +123,18 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("will succeed at runtime");
   });
 
+  it("prints output requirements", async () => {
+    const list = await capture(["output-requirements", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "global-version-and-evidence"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-plugin-output-safety"');
+
+    const single = await capture(["output-requirement", "paper-plugin-output-safety"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain("Javadocs type/member evidence");
+    expect(single.stdout.join("\n")).toContain("unverified event class names");
+  });
+
   it("prints authoring preflight payloads", async () => {
     const datapack = await capture(["preflight", "datapack", "26.2"]);
     expect(datapack.code).toBe(0);
@@ -142,6 +154,8 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
     expect(result.stdout.join("\n")).toContain('"claimPolicies"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-type-or-member-exists"');
+    expect(result.stdout.join("\n")).toContain('"outputRequirements"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-plugin-output-safety"');
     expect(result.stdout.join("\n")).toContain('"intentLookups"');
     expect(result.stdout.join("\n")).toContain('"id": "verify-paper-type-or-member"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');

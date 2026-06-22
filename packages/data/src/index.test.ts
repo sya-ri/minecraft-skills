@@ -71,6 +71,15 @@ describe("@minecraft-skills/data", () => {
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
   });
 
+  it("loads bundled output requirement JSON", () => {
+    const requirements = readDataJson<{ requirements: Array<{ id: string }> }>(
+      "output-requirements.json",
+    );
+    expect(requirements.requirements.map((requirement) => requirement.id)).toContain(
+      "paper-plugin-output-safety",
+    );
+  });
+
   it("exposes a package data root", () => {
     expect(getDataRoot()).toMatch(/packages\/data\/data$/);
   });

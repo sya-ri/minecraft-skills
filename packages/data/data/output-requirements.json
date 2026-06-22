@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills authoring context, guardrails, claim policies, and evidence bundles",
+  "requirements": [
+    {
+      "id": "global-version-and-evidence",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "State target version and evidence limits",
+      "mustInclude": [
+        "target Minecraft Java version or an explicit latest-bundled-version assumption",
+        "whether the answer is based on bundled data, cached/downloaded data, or a stated gap",
+        "a distinction between verified facts and unverified assumptions"
+      ],
+      "includeWhenRelevant": [
+        "source or evidence links when explaining provenance",
+        "warnings from authoring context or preflight",
+        "claim policy wording when a fact surface has important non-guarantees"
+      ],
+      "mustNotInclude": [
+        "copied or closely paraphrased Minecraft Wiki, Paper docs, or Javadocs prose",
+        "claims for another Minecraft version unless framed as a comparison",
+        "invented facts when data is missing or unknown"
+      ],
+      "failureMode": "The answer can appear precise while hiding target-version assumptions or missing evidence."
+    },
+    {
+      "id": "datapack-output-safety",
+      "domains": ["datapack"],
+      "title": "Keep datapack output bounded to verified command, path, and JSON facts",
+      "mustInclude": [
+        "pack_format evidence when pack.mcmeta is generated or changed",
+        "command syntax evidence or an explicit gap when command forms are version-sensitive",
+        "observed-only wording when using datapack JSON field shape surfaces"
+      ],
+      "includeWhenRelevant": [
+        "vanilla path evidence for referenced vanilla data paths",
+        "migration comparison evidence for changed command paths or vanilla data paths",
+        "download instruction when a required datapack schema surface is missing locally"
+      ],
+      "mustNotInclude": [
+        "runtime success guarantees from command parser paths alone",
+        "normative schema claims from observed vanilla datapack JSON",
+        "pack_format values copied from neighboring versions without target-version evidence"
+      ],
+      "failureMode": "Generated datapacks can contain plausible but unverified commands, pack formats, or JSON shapes."
+    },
+    {
+      "id": "resourcepack-output-safety",
+      "domains": ["resourcepack"],
+      "title": "Keep resourcepack output bounded to verified asset, pack format, and model facts",
+      "mustInclude": [
+        "resource pack format evidence when pack.mcmeta is generated or changed",
+        "vanilla asset path evidence for referenced vanilla assets",
+        "observed-only wording when using model or item definition shape summaries"
+      ],
+      "includeWhenRelevant": [
+        "migration comparison evidence for changed vanilla asset paths",
+        "resourcepack model summary evidence for model JSON or item definition fields",
+        "a stated gap when rendering behavior is not proven by bundled data"
+      ],
+      "mustNotInclude": [
+        "rendering guarantees from asset path presence alone",
+        "complete schema claims from observed client files",
+        "invented vanilla asset paths from naming convention"
+      ],
+      "failureMode": "Generated resource packs can reference nonexistent assets or overstate observed model data."
+    },
+    {
+      "id": "paper-plugin-output-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper plugin output bounded to verified support, API, event, and threading facts",
+      "mustInclude": [
+        "Paper support evidence before emitting dependency coordinates",
+        "Javadocs type/member evidence for referenced API names",
+        "a statement when API surface evidence proves name presence only"
+      ],
+      "includeWhenRelevant": [
+        "event search result plus Javadocs confirmation before listener code",
+        "Paper scheduler and Folia documentation links when code touches scheduling, worlds, entities, chunks, or async work",
+        "unsupported-version warning when latest Java is ahead of latest supported Paper"
+      ],
+      "mustNotInclude": [
+        "dependency coordinates for unsupported Paper versions",
+        "runtime behavior, nullability, thread safety, or Folia safety from type/member name presence alone",
+        "listener code for unverified event class names"
+      ],
+      "failureMode": "Generated plugins can target unsupported Paper versions or compile against invented API names."
+    }
+  ]
+}

@@ -50,6 +50,10 @@ import {
   type JavaReportsSummaryData,
   ObservedDatapackSchemaSurface,
   type ObservedDatapackSchemaSurfaceData,
+  OutputRequirement,
+  type OutputRequirementData,
+  OutputRequirementIndex,
+  type OutputRequirementIndexData,
   PaperApiIndex,
   type PaperApiIndexData,
   type PaperApiMemberData,
@@ -95,6 +99,8 @@ export type {
   IntentLookupStepData,
   JavaReportsSummaryData,
   ObservedDatapackSchemaSurfaceData,
+  OutputRequirementData,
+  OutputRequirementIndexData,
   PaperApiIndexData,
   PaperApiMemberData,
   PaperApiSurfaceData,
@@ -141,6 +147,10 @@ export type AuthoringGuardrailQuery = {
 };
 
 export type ClaimPolicyQuery = {
+  domain?: string;
+};
+
+export type OutputRequirementQuery = {
   domain?: string;
 };
 
@@ -430,6 +440,7 @@ export type AuthoringContext = {
   preflight: AuthoringPreflight;
   guardrails: AuthoringGuardrailData[];
   claimPolicies: ClaimPolicyData[];
+  outputRequirements: OutputRequirementData[];
   intentLookups: IntentLookupData[];
   evidence: EvidenceBundle;
 };
@@ -752,6 +763,25 @@ export function getClaimPolicy(id: string): ClaimPolicyData {
   return ClaimPolicy.assert(found);
 }
 
+export function listOutputRequirements(
+  query: OutputRequirementQuery = {},
+): OutputRequirementData[] {
+  const index = OutputRequirementIndex.assert(readDataJson("output-requirements.json"));
+  if (!query.domain) {
+    return index.requirements;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.requirements.filter((requirement) => requirement.domains.includes(domain));
+}
+
+export function getOutputRequirement(id: string): OutputRequirementData {
+  const found = listOutputRequirements().find((requirement) => requirement.id === id);
+  if (!found) {
+    throw new Error(`Unknown output requirement: ${id}`);
+  }
+  return OutputRequirement.assert(found);
+}
+
 export function listIntentLookups(query: IntentLookupQuery = {}): IntentLookupData[] {
   const index = IntentLookupIndex.assert(readDataJson("intent-lookups.json"));
   if (!query.domain) {
@@ -1022,6 +1052,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     preflight,
     guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
     claimPolicies: listClaimPolicies({ domain: preflight.domain }),
+    outputRequirements: listOutputRequirements({ domain: preflight.domain }),
     intentLookups: listIntentLookups({ domain: preflight.domain }),
     evidence: getEvidenceBundle({
       domain: preflight.domain,

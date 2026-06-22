@@ -38,6 +38,12 @@ describe("MCP resources", () => {
       "minecraft-skills://data/claim-policies/paper-type-or-member-exists.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/output-requirements.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/output-requirements/paper-plugin-output-safety.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/fact-surfaces.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -120,6 +126,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/claim-policies/command-syntax-exists.json",
     );
     expect(claimPolicy.contents[0]?.text).toContain("parser shape, not gameplay behavior");
+
+    const outputRequirements = readMinecraftSkillsResource(
+      "minecraft-skills://data/output-requirements.json",
+    );
+    expect(outputRequirements.contents[0]?.text).toContain('"id": "paper-plugin-output-safety"');
+
+    const outputRequirement = readMinecraftSkillsResource(
+      "minecraft-skills://data/output-requirements/paper-plugin-output-safety.json",
+    );
+    expect(outputRequirement.contents[0]?.text).toContain("Javadocs type/member evidence");
 
     const factSurfaces = readMinecraftSkillsResource("minecraft-skills://data/fact-surfaces.json");
     expect(factSurfaces.contents[0]?.text).toContain('"id": "paper-api-surface"');

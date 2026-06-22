@@ -54,6 +54,8 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_authoring_context`
 - `list_claim_policies`
 - `get_claim_policy`
+- `list_output_requirements`
+- `get_output_requirement`
 - `get_authoring_preflight`
 - `get_evidence_bundle`
 - `list_intent_lookups`
@@ -109,10 +111,12 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/intent-lookups.json`
 - `minecraft-skills://data/authoring-guardrails.json`
 - `minecraft-skills://data/claim-policies.json`
+- `minecraft-skills://data/output-requirements.json`
 - `minecraft-skills://data/authoring-checklists.json`
 - `minecraft-skills://data/authoring-checklists/paper-plugin.json`
 - `minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
+- `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/intent-lookups/verify-paper-type-or-member.json`
 - `minecraft-skills://data/fact-surfaces/datapack-schema-surface.json`
 - `minecraft-skills://data/data-manifest.json`

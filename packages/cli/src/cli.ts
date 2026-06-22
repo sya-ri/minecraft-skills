@@ -30,6 +30,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getOutputRequirement,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -47,6 +48,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listOutputRequirements,
   listPackFormats,
   listReferences,
   listSkills,
@@ -122,6 +124,8 @@ Usage:
   minecraft-skills authoring-context <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills claim-policies [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills claim-policy <id>
+  minecraft-skills output-requirements [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills output-requirement <id>
   minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills intent-lookups [--domain datapack|resourcepack|paper-plugin]
@@ -183,6 +187,10 @@ Commands:
   claim-policies
                  List required evidence and allowed wording for Minecraft authoring claim types.
   claim-policy   Print one claim policy by id.
+  output-requirements
+                 List required final-output checks for Minecraft authoring responses.
+  output-requirement
+                 Print one final-output requirement by id.
   preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
   evidence       Print source policy, primary sources, data files, links, and warnings.
   intent-lookups
@@ -409,6 +417,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("claim-policy command requires an id");
       }
       printJson(output, getClaimPolicy(id));
+      return 0;
+    }
+
+    if (command === "output-requirements") {
+      printJson(output, {
+        schemaVersion: 1,
+        requirements: listOutputRequirements({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "output-requirement") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("output-requirement command requires an id");
+      }
+      printJson(output, getOutputRequirement(id));
       return 0;
     }
 

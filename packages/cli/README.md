@@ -24,6 +24,8 @@ minecraft-skills authoring-guardrails --domain paper-plugin
 minecraft-skills authoring-guardrail paper-api-surface-limits
 minecraft-skills claim-policies --domain paper-plugin
 minecraft-skills claim-policy paper-type-or-member-exists
+minecraft-skills output-requirements --domain paper-plugin
+minecraft-skills output-requirement paper-plugin-output-safety
 minecraft-skills intent-lookups --domain paper-plugin
 minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist paper-plugin
@@ -67,6 +69,7 @@ SHA-256 verified heavyweight data in the local OS cache.
 evidence in one payload for starting an authoring task.
 `authoring-guardrails` lists output rules and required evidence that prevent unsupported claims.
 `claim-policies` maps claim types to required evidence plus allowed and disallowed wording.
+`output-requirements` lists final-answer and generated-file checks for one authoring domain.
 `preflight <domain> [version]` returns resolved version coverage, the domain checklist, fact
 surfaces, relevant downloadable data, and warnings. `authoring-checklist <domain>` returns only the
 pre-generation checks an AI agent should perform before writing files or code. `fact-surfaces`

@@ -19,6 +19,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getOutputRequirement,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -35,6 +36,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listOutputRequirements,
   listPackFormats,
   listSkills,
   listVersionSupport,
@@ -150,6 +152,22 @@ describe("catalog", () => {
     expect(() => getClaimPolicy("missing")).toThrow("Unknown claim policy: missing");
   });
 
+  it("lists output requirements for final answer checks", () => {
+    const paperRequirements = listOutputRequirements({ domain: "paper-plugin" });
+    expect(paperRequirements.map((requirement) => requirement.id)).toContain(
+      "global-version-and-evidence",
+    );
+    expect(paperRequirements.map((requirement) => requirement.id)).toContain(
+      "paper-plugin-output-safety",
+    );
+
+    const paper = getOutputRequirement("paper-plugin-output-safety");
+    expect(paper.mustInclude).toContain("Javadocs type/member evidence for referenced API names");
+    expect(paper.mustNotInclude).toContain("listener code for unverified event class names");
+
+    expect(() => getOutputRequirement("missing")).toThrow("Unknown output requirement: missing");
+  });
+
   it("builds authoring preflight payloads with coverage warnings", () => {
     const datapack = getAuthoringPreflight({ domain: "datapack", version: "26.2" });
     expect(datapack).toMatchObject({
@@ -187,6 +205,9 @@ describe("catalog", () => {
     );
     expect(context.claimPolicies.map((policy) => policy.id)).toContain(
       "paper-type-or-member-exists",
+    );
+    expect(context.outputRequirements.map((requirement) => requirement.id)).toContain(
+      "paper-plugin-output-safety",
     );
     expect(context.intentLookups.map((intent) => intent.id)).toContain(
       "verify-paper-type-or-member",

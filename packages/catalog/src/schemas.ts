@@ -141,6 +141,22 @@ export const ClaimPolicyIndex = type({
   policies: ClaimPolicy.array(),
 });
 
+export const OutputRequirement = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  mustInclude: "string[]",
+  includeWhenRelevant: "string[]",
+  mustNotInclude: "string[]",
+  failureMode: "string",
+});
+
+export const OutputRequirementIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  requirements: OutputRequirement.array(),
+});
+
 export const IntentLookupToolRefs = type({
   cli: "string[]",
   mcp: "string[]",
@@ -471,6 +487,8 @@ export type AuthoringGuardrailData = typeof AuthoringGuardrail.infer;
 export type AuthoringGuardrailIndexData = typeof AuthoringGuardrailIndex.infer;
 export type ClaimPolicyData = typeof ClaimPolicy.infer;
 export type ClaimPolicyIndexData = typeof ClaimPolicyIndex.infer;
+export type OutputRequirementData = typeof OutputRequirement.infer;
+export type OutputRequirementIndexData = typeof OutputRequirementIndex.infer;
 export type IntentLookupData = typeof IntentLookup.infer;
 export type IntentLookupIndexData = typeof IntentLookupIndex.infer;
 export type IntentLookupStepData = typeof IntentLookupStep.infer;

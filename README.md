@@ -52,6 +52,8 @@ minecraft-skills authoring-guardrails --domain paper-plugin
 minecraft-skills authoring-guardrail paper-api-surface-limits
 minecraft-skills claim-policies --domain paper-plugin
 minecraft-skills claim-policy paper-type-or-member-exists
+minecraft-skills output-requirements --domain paper-plugin
+minecraft-skills output-requirement paper-plugin-output-safety
 minecraft-skills intent-lookups --domain paper-plugin
 minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist datapack
@@ -117,6 +119,8 @@ routing, and evidence in one payload for the start of an authoring task.
 agent from overstating observed data, unsupported Paper versions, or upstream prose.
 `minecraft-skills claim-policies` maps claim types to required evidence plus allowed and disallowed
 wording, so agents can avoid turning observed facts into unsupported guarantees.
+`minecraft-skills output-requirements` lists final-answer and generated-file checks that should be
+applied before returning Minecraft authoring output.
 `minecraft-skills version-support` lists per-version pack formats, domain coverage, Paper support,
 and generated surface availability for target-version selection.
 `minecraft-skills evidence <domain> [version]` returns source policy, primary sources,
@@ -159,7 +163,7 @@ The server exposes tools for version lookup, pack formats, server reports, comma
 comparison, observed datapack schema search/comparison, vanilla asset/data path search and
 comparison, resource pack model summaries, Paper support metadata, Paper type/member surface search,
 authoring checklists, data manifest/cache status/fetch operations, installable skill folder
-discovery, packaged skill payload lookup, and Paper/Bukkit event search.
+discovery, packaged skill payload lookup, output requirements, and Paper/Bukkit event search.
 
 The server also exposes Agent Skill files as MCP resources under
 `minecraft-skills://skills/<skill>/...`, including `SKILL.md`, `agents/openai.yaml`, and generated
@@ -187,6 +191,7 @@ import {
   getClaimPolicy,
   getEvidenceBundle,
   getFactSurface,
+  getOutputRequirement,
   compareVanillaPaths,
   getCoverageSummary,
   getPaperApiSurface,
@@ -200,6 +205,7 @@ import {
   listAuthoringGuardrails,
   listClaimPolicies,
   listFactSurfaces,
+  listOutputRequirements,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -219,6 +225,8 @@ const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
 const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
+const outputRequirements = listOutputRequirements({ domain: "paper-plugin" });
+const paperOutputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const factSurfaces = listFactSurfaces({ domain: "datapack" });
 const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");
 const coverage = getCoverageSummary();

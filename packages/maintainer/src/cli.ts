@@ -24,6 +24,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listOutputRequirements,
   listReferences,
   listVersions,
 } from "@minecraft-skills/catalog";
@@ -377,6 +378,39 @@ function requireClaimPolicies(
   }
 }
 
+function requireOutputRequirements(root: string, messages: string[]): void {
+  requireDataFile(root, "output-requirements.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  for (const requirement of listOutputRequirements()) {
+    const prefix = `output requirement ${requirement.id}`;
+    if (ids.has(requirement.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(requirement.id);
+    if (requirement.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of requirement.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (requirement.mustInclude.length === 0) {
+      messages.push(`${prefix} must list required output items`);
+    }
+    if (requirement.includeWhenRelevant.length === 0) {
+      messages.push(`${prefix} must list conditional output items`);
+    }
+    if (requirement.mustNotInclude.length === 0) {
+      messages.push(`${prefix} must list forbidden output items`);
+    }
+    if (!requirement.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+  }
+}
+
 function requireIntentLookups(
   root: string,
   publicEntrypoints: PublicEntrypoints,
@@ -535,6 +569,7 @@ export function validateRepository(): ValidationResult {
   requireAuthoringChecklists(root, publicEntrypoints, messages);
   requireAuthoringGuardrails(root, messages);
   requireClaimPolicies(root, publicEntrypoints, messages);
+  requireOutputRequirements(root, messages);
   requireIntentLookups(root, publicEntrypoints, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
