@@ -122,7 +122,66 @@ function positionalArgs(args: string[]): string[] {
 function printHelp(output: Output): void {
   output.write(`minecraft-skills
 
+Version-aware Minecraft authoring facts for AI agents and pack/plugin authors.
+All fact commands print JSON unless noted. Treat missing, unknown, or not-extracted fields as gaps,
+not permission to guess.
+
 Usage:
+  minecraft-skills <command> [options]
+  minecraft-skills help
+
+Start here:
+  minecraft-skills authoring-context <domain> [version]
+      Broad preflight payload for one domain/version: checklist, recipes, scenarios, diagnostics,
+      claim policies, response patterns, intent routing, evidence, and warnings.
+  minecraft-skills authoring-scenario-search <query> [--domain <domain>]
+      Route a user task to existing scenarios using scenario, recipe, and intent text.
+  minecraft-skills authoring-plan <scenario-id> [version]
+      Resolve one scenario into exact recipes, intent lookups, diagnostics, claim policies,
+      fact surfaces, response patterns, and optional version evidence.
+  minecraft-skills preflight <domain> [version]
+      Check target-version coverage, support gaps, downloadable surfaces, and warnings before
+      generating files or code.
+  minecraft-skills evidence <domain> [version]
+      Print source policy, data files, links, and warnings for provenance-aware answers.
+
+Domains:
+  datapack        Java data packs: commands, server reports, pack formats, vanilla data paths,
+                  and observed datapack JSON shapes.
+  resourcepack    Java resource packs: pack formats, vanilla asset paths, model summaries,
+                  and observed item/model shapes.
+  paper-plugin    Paper-first plugins: Paper support, Javadocs indexes/surfaces, API names,
+                  event candidates, and Folia/threading caveats.
+
+Common workflows:
+  Pick a safe workflow for a task:
+    minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin
+    minecraft-skills authoring-plan paper-event-listener-review 1.21.11
+
+  Generate or review a datapack function:
+    minecraft-skills authoring-context datapack 26.2
+    minecraft-skills commands 26.2 --prefix execute --contains run
+
+  Check resource pack paths and model shapes:
+    minecraft-skills preflight resourcepack 26.2
+    minecraft-skills vanilla-paths 26.2 --domain resourcepack --contains models/item
+    minecraft-skills search-models 26.2 --kind item-definition --contains bundle
+
+  Check Paper API names and events:
+    minecraft-skills preflight paper-plugin 1.21.11
+    minecraft-skills paper-types 1.21.11 --contains org.bukkit.entity.Player
+    minecraft-skills paper-members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
+    minecraft-skills paper-events "player join" --version 1.21.11
+
+Safety notes:
+  - Command paths prove parser shape, not gameplay success, permissions, or runtime behavior.
+  - Vanilla path matches prove bundled vanilla file presence, not custom content validity.
+  - Observed JSON/model surfaces are not normative schemas.
+  - Paper Javadocs indexes prove API name presence, not behavior, nullability, overload semantics,
+    thread safety, or Folia safety.
+  - Paper event search results are candidates until checked against Paper/Bukkit API surfaces.
+
+Command forms:
   minecraft-skills domains
   minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills skill <name>
@@ -189,7 +248,7 @@ Usage:
   minecraft-skills paper
   minecraft-skills source-policy
 
-Commands:
+Command reference:
   domains        List supported authoring domains.
   skills         List installable Agent Skill folders in this repository.
   skill          Print packaged Agent Skill payload JSON.
@@ -287,7 +346,21 @@ Commands:
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
   paper          Print canonical Paper plugin support and event search JSON.
-  source-policy  Print source and license policy JSON.`);
+  source-policy  Print source and license policy JSON.
+
+Options:
+  --domain <domain>      Filter to datapack, resourcepack, or paper-plugin where supported.
+  --edition java         Select edition. Only java is currently supported.
+  --version <version>    Select a version for commands that accept named options.
+  --limit <n>            Limit search results. Search commands validate their own maximums.
+  --force                Overwrite or refetch where supported.
+
+Cache:
+  Heavy generated surfaces are listed in data-manifest and stored in the OS cache. Use cache-dir,
+  cache-list, cache-clean, and fetch-data. Set MINECRAFT_SKILLS_CACHE_DIR to override the cache.
+
+More:
+  docs/USAGE.md has full CLI, MCP, package API, cache, and skill usage.`);
 }
 
 function printJson(output: Output, value: unknown): void {

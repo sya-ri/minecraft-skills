@@ -559,4 +559,18 @@ describe("minecraft-skills CLI", () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toEqual(["Unknown command: nope"]);
   });
+
+  it("prints practical help with workflows and safety notes", async () => {
+    const result = await capture(["--help"]);
+    const output = result.stdout.join("\n");
+    expect(result.code).toBe(0);
+    expect(output).toContain("Start here:");
+    expect(output).toContain("Common workflows:");
+    expect(output).toContain(
+      'minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin',
+    );
+    expect(output).toContain("Safety notes:");
+    expect(output).toContain("Paper Javadocs indexes prove API name presence");
+    expect(output).toContain("docs/USAGE.md");
+  });
 });
