@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import * as catalogModule from "@minecraft-skills/catalog";
 import {
   getCatalog,
   getDataManifest,
@@ -169,6 +170,19 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
 
 function requireFactSurfaces(root: string, messages: string[]): void {
   requireDataFile(root, "fact-surfaces.json", messages);
+  const cliCommands = new Set(
+    [
+      ...readFileSync(join(root, "packages/cli/src/cli.ts"), "utf8").matchAll(
+        /command === "([^"]+)"/g,
+      ),
+    ].map((match) => match[1] ?? ""),
+  );
+  const mcpTools = new Set(
+    [
+      ...readFileSync(join(root, "packages/mcp/src/tools.ts"), "utf8").matchAll(/name: "([^"]+)"/g),
+    ].map((match) => match[1] ?? ""),
+  );
+  const packageApis = new Set(Object.keys(catalogModule));
   const ids = new Set<string>();
   for (const surface of listFactSurfaces()) {
     const prefix = `fact surface ${surface.id}`;
@@ -184,6 +198,21 @@ function requireFactSurfaces(root: string, messages: string[]): void {
     }
     if (surface.cli.length === 0 && surface.mcp.length === 0 && surface.packageApis.length === 0) {
       messages.push(`${prefix} must expose at least one CLI, MCP, or package API entrypoint`);
+    }
+    for (const command of surface.cli) {
+      if (!cliCommands.has(command)) {
+        messages.push(`${prefix} references missing CLI command: ${command}`);
+      }
+    }
+    for (const tool of surface.mcp) {
+      if (!mcpTools.has(tool)) {
+        messages.push(`${prefix} references missing MCP tool: ${tool}`);
+      }
+    }
+    for (const api of surface.packageApis) {
+      if (!packageApis.has(api)) {
+        messages.push(`${prefix} references missing package API: ${api}`);
+      }
     }
   }
 }
