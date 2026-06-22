@@ -1,9 +1,18 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   getCatalog,
+  getDataManifest,
   getDatapackSchemaSurface,
   getPaperApiSurface,
   getPaperPluginData,
@@ -78,6 +87,83 @@ function requireDataFile(root: string, path: string, messages: string[]): void {
 
 function readJsonFile<T>(path: string): T {
   return JSON.parse(readFileSync(path, "utf8")) as T;
+}
+
+function sha256File(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function isSafeRelativePath(path: string): boolean {
+  return path.length > 0 && !path.includes("\0") && !path.split(/[\\/]/).includes("..");
+}
+
+function requireDataManifestIntegrity(root: string, messages: string[]): void {
+  requireDataFile(root, "data-manifest.json", messages);
+  const manifestPath = join(root, dataFilePath("data-manifest.json"));
+  if (!existsSync(manifestPath)) {
+    return;
+  }
+
+  const manifest = getDataManifest();
+  if (manifest.schemaVersion !== 1) {
+    messages.push("data manifest schemaVersion must be 1");
+  }
+  if (manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") {
+    messages.push("data manifest cache environment variable must be MINECRAFT_SKILLS_CACHE_DIR");
+  }
+
+  const seenPaths = new Set<string>();
+  for (const entry of manifest.downloadable) {
+    const prefix = `data manifest entry ${entry.path}`;
+    if (!isSafeRelativePath(entry.path)) {
+      messages.push(`${prefix} must use a safe relative path`);
+      continue;
+    }
+    if (seenPaths.has(entry.path)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    seenPaths.add(entry.path);
+
+    if (entry.kind === "datapack-schema-surface") {
+      if (entry.edition !== "java" || !entry.version) {
+        messages.push(`${prefix} datapack schema surface must identify Java version`);
+      } else if (entry.path !== `java/datapack-schema-surfaces/${entry.version}.json`) {
+        messages.push(`${prefix} datapack schema surface path must match version`);
+      }
+    } else if (entry.kind === "paper-api-surface") {
+      if (entry.edition !== "java" || !entry.version) {
+        messages.push(`${prefix} Paper API surface must identify Java version`);
+      } else if (entry.path !== `java/paper-api-surfaces/${entry.version}.json`) {
+        messages.push(`${prefix} Paper API surface path must match version`);
+      }
+    } else {
+      messages.push(`${prefix} has unsupported downloadable kind: ${entry.kind}`);
+    }
+
+    try {
+      new URL(entry.url);
+    } catch {
+      messages.push(`${prefix} must include a valid URL`);
+    }
+
+    const absolutePath = join(root, dataFilePath(entry.path));
+    requireDataFile(root, entry.path, messages);
+    if (!existsSync(absolutePath)) {
+      continue;
+    }
+    const actualSize = statSync(absolutePath).size;
+    if (actualSize !== entry.size) {
+      messages.push(
+        `${prefix} size must match checked-in file: expected ${entry.size}, got ${actualSize}`,
+      );
+    }
+    const actualSha256 = sha256File(absolutePath);
+    if (actualSha256 !== entry.sha256) {
+      messages.push(
+        `${prefix} sha256 must match checked-in file: expected ${entry.sha256}, got ${actualSha256}`,
+      );
+    }
+  }
 }
 
 function requireGeneratedHeader(root: string, path: string, messages: string[]): void {
@@ -181,6 +267,8 @@ export function validateRepository(): ValidationResult {
   const catalog = getCatalog();
   const javaVersions = listVersions("java");
   const paper = getPaperPluginData();
+
+  requireDataManifestIntegrity(root, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");
