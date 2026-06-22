@@ -17,11 +17,11 @@ or reviewing authoring output:
 
 The public entrypoints are designed around two workflows:
 
-- Start broad with `authoring-context <domain> <version>` to get domain guidance, available
+- Start broad with `authoring context <domain> <version>` to get domain guidance, available
   surfaces, evidence, diagnostics, and response rules.
-- Search from task wording with `authoring-scenario-search <query> --domain <domain>` when an
+- Search from task wording with `authoring search-scenarios <query> --domain <domain>` when an
   agent needs a data-backed route into the right scenario.
-- Start from a known task shape with `authoring-plan <scenario-id> <version>` to resolve a scenario
+- Start from a known task shape with `authoring plan <scenario-id> <version>` to resolve a scenario
   into the exact recipes, intent lookups, diagnostics, claim policies, fact surfaces, and response
   patterns an agent should use.
 
@@ -30,92 +30,93 @@ The public entrypoints are designed around two workflows:
 Install/run after publishing:
 
 ```sh
-npx minecraft-skills latest
+npx minecraft-skills version latest
 ```
 
 Common entrypoints:
 
 ```sh
-minecraft-skills latest
-minecraft-skills skills
-minecraft-skills skill minecraft-paper-plugins
-minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills version latest
+minecraft-skills skill list
+minecraft-skills skill show minecraft-paper-plugins
+minecraft-skills skill write minecraft-paper-plugins --output ./skills
 
-minecraft-skills authoring-context paper-plugin 1.21.11
-minecraft-skills authoring-recipes --domain paper-plugin
-minecraft-skills authoring-recipe paper-event-listener
-minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin
-minecraft-skills authoring-scenarios --domain paper-plugin
-minecraft-skills authoring-scenario paper-event-listener-review
-minecraft-skills authoring-plan paper-event-listener-review 1.21.11
-minecraft-skills preflight paper-plugin 1.21.11
-minecraft-skills evidence paper-plugin 1.21.11
-minecraft-skills intent-lookups --domain paper-plugin
-minecraft-skills fact-surfaces --domain paper-plugin
-minecraft-skills claim-policies --domain paper-plugin
-minecraft-skills authoring-diagnostics --domain paper-plugin
-minecraft-skills output-requirements --domain paper-plugin
-minecraft-skills response-patterns --domain paper-plugin
+minecraft-skills authoring context paper-plugin 1.21.11
+minecraft-skills authoring recipes --domain paper-plugin
+minecraft-skills authoring recipe paper-event-listener
+minecraft-skills authoring search-scenarios "Paper event listener" --domain paper-plugin
+minecraft-skills authoring scenarios --domain paper-plugin
+minecraft-skills authoring scenario paper-event-listener-review
+minecraft-skills authoring plan paper-event-listener-review 1.21.11
+minecraft-skills authoring preflight paper-plugin 1.21.11
+minecraft-skills authoring evidence paper-plugin 1.21.11
+minecraft-skills authoring intents --domain paper-plugin
+minecraft-skills authoring fact-surfaces --domain paper-plugin
+minecraft-skills authoring claim-policies --domain paper-plugin
+minecraft-skills authoring diagnostics --domain paper-plugin
+minecraft-skills authoring output-requirements --domain paper-plugin
+minecraft-skills authoring response-patterns --domain paper-plugin
 
-minecraft-skills version-support --domain paper-plugin
-minecraft-skills data-manifest
-minecraft-skills fetch-data paper-api-surface --version 1.21.11
+minecraft-skills version support --domain paper-plugin
+minecraft-skills data manifest
+minecraft-skills data fetch paper-api-surface --version 1.21.11
 ```
 
 Data pack lookups:
 
 ```sh
-minecraft-skills show-version 26.2
-minecraft-skills pack-formats
-minecraft-skills commands 26.2 --prefix execute --contains run
-minecraft-skills compare-commands 1.20.6 1.21 --prefix attribute
-minecraft-skills datapack-schema 26.2
-minecraft-skills search-datapack-schema 26.2 --kind advancement --contains criteria
-minecraft-skills compare-datapack-schema 26.2 26.2 --kind advancement
-minecraft-skills vanilla-paths 26.2 --domain datapack --contains recipe
+minecraft-skills version show 26.2
+minecraft-skills version pack-formats
+minecraft-skills datapack commands 26.2 --prefix execute --contains run
+minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
+minecraft-skills datapack schema 26.2
+minecraft-skills datapack search-schema 26.2 --kind advancement --contains criteria
+minecraft-skills datapack compare-schema 26.2 26.2 --kind advancement
+minecraft-skills datapack vanilla-paths 26.2 --contains recipe
 ```
 
 Resource pack lookups:
 
 ```sh
-minecraft-skills vanilla-paths 26.2 --domain resourcepack --contains models/block/acacia_button
-minecraft-skills compare-vanilla-paths 1.20.6 1.21 --domain resourcepack --prefix assets/minecraft/models/item/
-minecraft-skills resourcepack-models 26.2
-minecraft-skills search-models 26.2 --kind item-definition --contains bundle
+minecraft-skills resourcepack vanilla-paths 26.2 --contains models/block/acacia_button
+minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
+minecraft-skills resourcepack models 26.2
+minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
 ```
 
 Paper plugin lookups:
 
 ```sh
-minecraft-skills paper
-minecraft-skills paper-api 1.21.11
-minecraft-skills paper-api-index 1.21.11
-minecraft-skills paper-api-surface 1.21.11
-minecraft-skills paper-types 1.21.11 --contains org.bukkit.entity.Player
-minecraft-skills paper-members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
-minecraft-skills compare-paper-api 1.20.4 1.21.11
-minecraft-skills compare-paper-api-surface 1.21.11 1.21.11
-minecraft-skills paper-events "player join" --version 1.21.11
+minecraft-skills paper info
+minecraft-skills paper api 1.21.11
+minecraft-skills paper api-index 1.21.11
+minecraft-skills paper api-surface 1.21.11
+minecraft-skills paper types 1.21.11 --contains org.bukkit.entity.Player
+minecraft-skills paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills paper compare-api 1.20.4 1.21.11
+minecraft-skills paper compare-api-surface 1.21.11 1.21.11
+minecraft-skills paper events "player join" --version 1.21.11
 ```
 
 ## Authoring Safety Data
 
 Use these together before writing or reviewing generated output:
 
-- `authoring-context`: preflight, recipes, scenarios, guardrails, diagnostics, claim policies, output
+- `authoring context`: preflight, recipes, scenarios, guardrails, diagnostics, claim policies, output
   requirements, response patterns, intent routing, and evidence in one payload.
-- `authoring-recipes`: ordered lookup workflows for common tasks.
-- `authoring-scenario-search`: task-wording search over existing scenario, recipe, and intent text.
-- `authoring-scenarios`: realistic task shapes plus required lookup IDs for evaluation and
+- `authoring recipes`: ordered lookup workflows for common tasks.
+- `authoring search-scenarios`: task-wording search over existing scenario, recipe, and intent text.
+- `authoring scenarios`: realistic task shapes plus required lookup IDs for evaluation and
   self-review.
-- `authoring-plan`: one scenario with all required recipes, intent lookups, diagnostics, claim
+- `authoring plan`: one scenario with all required recipes, intent lookups, diagnostics, claim
   policies, fact surfaces, response patterns, and optional version evidence resolved.
-- `authoring-diagnostics`: pass/fail checks to run before returning generated files, code, or
+- `authoring diagnostics`: pass/fail checks to run before returning generated files, code, or
   source-backed answers.
-- `claim-policies`: required evidence plus safe and unsafe wording for specific claim types.
-- `output-requirements`: final-answer and generated-file checks.
-- `response-patterns`: answer shapes for verified facts, missing evidence, and non-guarantees.
-- `fact-surfaces`: what each machine-verifiable data surface can and cannot prove.
+- `authoring claim-policies`: required evidence plus safe and unsafe wording for specific claim types.
+- `authoring output-requirements`: final-answer and generated-file checks.
+- `authoring response-patterns`: answer shapes for verified facts, missing evidence, and
+  non-guarantees.
+- `authoring fact-surfaces`: what each machine-verifiable data surface can and cannot prove.
 
 ## MCP
 
@@ -208,12 +209,12 @@ Standalone Agent Skill folders are committed under:
 The npm data package also mirrors these under `data/skills/`. Use:
 
 ```sh
-minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills skill write minecraft-paper-plugins --output ./skills
 ```
 
 ## Cache
 
-Heavy generated surfaces are listed in `data-manifest` and downloaded with `fetch-data`. Cache
+Heavy generated surfaces are listed in `data manifest` and downloaded with `data fetch`. Cache
 defaults:
 
 - macOS: `~/Library/Caches/minecraft-skills`

@@ -184,13 +184,12 @@ type PublicEntrypoints = {
 };
 
 function collectPublicEntrypoints(root: string): PublicEntrypoints {
-  const cliCommands = new Set(
-    [
-      ...readFileSync(join(root, "packages/cli/src/cli.ts"), "utf8").matchAll(
-        /command === "([^"]+)"/g,
-      ),
-    ].map((match) => match[1] ?? ""),
-  );
+  const cliSource = readFileSync(join(root, "packages/cli/src/cli.ts"), "utf8");
+  const cliCommands = new Set([
+    ...[...cliSource.matchAll(/command === "([^"]+)"/g)].map((match) => match[1] ?? ""),
+    ...[...cliSource.matchAll(/"([^"]+ [^"]+)": "[^"]+"/g)].map((match) => match[1] ?? ""),
+    ...[...cliSource.matchAll(/groupedCommand === "([^"]+)"/g)].map((match) => match[1] ?? ""),
+  ]);
   const mcpTools = new Set(
     [
       ...readFileSync(join(root, "packages/mcp/src/tools.ts"), "utf8").matchAll(/name: "([^"]+)"/g),

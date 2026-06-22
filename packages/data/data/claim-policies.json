@@ -21,7 +21,7 @@
         "Assume the same value from a neighboring version."
       ],
       "tools": {
-        "cli": ["authoring-context", "version-support", "show-version", "evidence"],
+        "cli": ["authoring context", "version support", "version show", "authoring evidence"],
         "mcp": [
           "get_authoring_context",
           "list_version_support",
@@ -56,7 +56,7 @@
         "The data pack and resource pack pack_format values are interchangeable."
       ],
       "tools": {
-        "cli": ["show-version", "pack-formats", "version-support"],
+        "cli": ["version show", "version pack-formats", "version support"],
         "mcp": ["get_version", "list_pack_formats", "list_version_support"],
         "packageApis": ["getVersionDetail", "listPackFormats", "listVersionSupport"]
       },
@@ -81,7 +81,12 @@
         "The command will succeed at runtime because the parser path exists."
       ],
       "tools": {
-        "cli": ["commands", "compare-commands", "server-reports", "fact-surface"],
+        "cli": [
+          "datapack commands",
+          "datapack compare-commands",
+          "datapack server-reports",
+          "authoring fact-surface"
+        ],
         "mcp": ["search_commands", "compare_commands", "get_server_reports", "get_fact_surface"],
         "packageApis": [
           "searchCommands",
@@ -111,7 +116,7 @@
         "This proves third-party extensions are valid."
       ],
       "tools": {
-        "cli": ["datapack-schema", "search-datapack-schema", "fetch-data", "data-manifest"],
+        "cli": ["datapack schema", "datapack search-schema", "data fetch", "data manifest"],
         "mcp": [
           "get_datapack_schema_surface",
           "search_datapack_schema",
@@ -146,7 +151,11 @@
         "A missing path can be invented from naming convention."
       ],
       "tools": {
-        "cli": ["vanilla-paths", "compare-vanilla-paths", "vanilla-inventory"],
+        "cli": [
+          "datapack vanilla-paths",
+          "datapack compare-vanilla-paths",
+          "resourcepack vanilla-inventory"
+        ],
         "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
         "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
       },
@@ -171,7 +180,7 @@
         "This proves how the model renders in every context."
       ],
       "tools": {
-        "cli": ["resourcepack-models", "search-models"],
+        "cli": ["resourcepack models", "resourcepack search-models"],
         "mcp": ["get_resourcepack_model_summary", "search_resourcepack_models"],
         "packageApis": ["getResourcepackModelSummary", "searchResourcepackModelPaths"]
       },
@@ -196,7 +205,7 @@
         "A Mojang version alone proves Paper support."
       ],
       "tools": {
-        "cli": ["paper", "paper-api", "version-support", "preflight"],
+        "cli": ["paper info", "paper api", "version support", "authoring preflight"],
         "mcp": [
           "get_paper_plugin_data",
           "get_paper_api_reference",
@@ -231,7 +240,7 @@
         "Invent a method name when no member search result exists."
       ],
       "tools": {
-        "cli": ["paper-api-index", "paper-api-surface", "paper-types", "paper-members"],
+        "cli": ["paper api-index", "paper api-surface", "paper types", "paper members"],
         "mcp": [
           "get_paper_api_index",
           "get_paper_api_surface",
@@ -266,7 +275,7 @@
         "Generate listener code for an unverified event class name."
       ],
       "tools": {
-        "cli": ["paper-events", "paper-types", "paper-members", "paper-api-surface"],
+        "cli": ["paper events", "paper types", "paper members", "paper api-surface"],
         "mcp": [
           "search_paper_events",
           "search_paper_types",
@@ -301,7 +310,7 @@
         "Global scheduler patterns are silently acceptable for Folia-sensitive work."
       ],
       "tools": {
-        "cli": ["paper-api", "fact-surface", "authoring-guardrails"],
+        "cli": ["paper api", "authoring fact-surface", "authoring guardrails"],
         "mcp": ["get_paper_api_reference", "get_fact_surface", "list_authoring_guardrails"],
         "packageApis": ["getPaperApiReference", "getFactSurface", "listAuthoringGuardrails"]
       },

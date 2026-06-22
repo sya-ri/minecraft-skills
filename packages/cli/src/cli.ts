@@ -119,6 +119,183 @@ function positionalArgs(args: string[]): string[] {
   return positional;
 }
 
+function withDefaultDomain(args: string[], domain: "datapack" | "resourcepack"): string[] {
+  return args.includes("--domain") ? args : [...args, "--domain", domain];
+}
+
+function normalizeSubcommands(argv: string[]): string[] {
+  const [group, subcommand, ...rest] = argv;
+  if (!group || !subcommand || subcommand.startsWith("-")) {
+    return argv;
+  }
+
+  const groupedCommand = `${group} ${subcommand}`;
+  const aliases: Record<string, string> = {
+    "authoring context": "authoring-context",
+    "authoring search-scenarios": "authoring-scenario-search",
+    "authoring scenario-search": "authoring-scenario-search",
+    "authoring scenarios": "authoring-scenarios",
+    "authoring scenario": "authoring-scenario",
+    "authoring plan": "authoring-plan",
+    "authoring recipes": "authoring-recipes",
+    "authoring recipe": "authoring-recipe",
+    "authoring checklists": "authoring-checklists",
+    "authoring checklist": "authoring-checklist",
+    "authoring guardrails": "authoring-guardrails",
+    "authoring guardrail": "authoring-guardrail",
+    "authoring diagnostics": "authoring-diagnostics",
+    "authoring diagnostic": "authoring-diagnostic",
+    "authoring preflight": "preflight",
+    "authoring evidence": "evidence",
+    "authoring intents": "intent-lookups",
+    "authoring intent": "intent-lookup",
+    "authoring fact-surfaces": "fact-surfaces",
+    "authoring fact-surface": "fact-surface",
+    "authoring claim-policies": "claim-policies",
+    "authoring claim-policy": "claim-policy",
+    "authoring output-requirements": "output-requirements",
+    "authoring output-requirement": "output-requirement",
+    "authoring response-patterns": "response-patterns",
+    "authoring response-pattern": "response-pattern",
+    "data manifest": "data-manifest",
+    "data fetch": "fetch-data",
+    "data cache-dir": "cache-dir",
+    "data cache-list": "cache-list",
+    "data cache-clean": "cache-clean",
+    "data coverage": "coverage",
+    "data support-matrix": "support-matrix",
+    "version latest": "latest",
+    "version list": "versions",
+    "version show": "show-version",
+    "version compare": "compare-versions",
+    "version support": "version-support",
+    "version pack-formats": "pack-formats",
+    "datapack server-reports": "server-reports",
+    "datapack schema": "datapack-schema",
+    "datapack search-schema": "search-datapack-schema",
+    "datapack compare-schema": "compare-datapack-schema",
+    "datapack commands": "commands",
+    "datapack compare-commands": "compare-commands",
+    "datapack vanilla-inventory": "vanilla-inventory",
+    "resourcepack models": "resourcepack-models",
+    "resourcepack search-models": "search-models",
+    "resourcepack vanilla-inventory": "vanilla-inventory",
+    "paper api": "paper-api",
+    "paper api-index": "paper-api-index",
+    "paper compare-api": "compare-paper-api",
+    "paper api-surface": "paper-api-surface",
+    "paper types": "paper-types",
+    "paper members": "paper-members",
+    "paper compare-api-surface": "compare-paper-api-surface",
+    "paper events": "paper-events",
+    "paper info": "paper",
+    "skill list": "skills",
+    "skill show": "skill",
+    "skill write": "write-skill",
+    "reference list": "references",
+    "domain list": "domains",
+    "domain show": "domain",
+    "source policy": "source-policy",
+  };
+
+  if (groupedCommand === "datapack vanilla-paths") {
+    return ["vanilla-paths", ...withDefaultDomain(rest, "datapack")];
+  }
+  if (groupedCommand === "datapack compare-vanilla-paths") {
+    return ["compare-vanilla-paths", ...withDefaultDomain(rest, "datapack")];
+  }
+  if (groupedCommand === "resourcepack vanilla-paths") {
+    return ["vanilla-paths", ...withDefaultDomain(rest, "resourcepack")];
+  }
+  if (groupedCommand === "resourcepack compare-vanilla-paths") {
+    return ["compare-vanilla-paths", ...withDefaultDomain(rest, "resourcepack")];
+  }
+
+  const command = aliases[groupedCommand];
+  return command ? [command, ...rest] : argv;
+}
+
+const flatCommandSuggestions: Record<string, string> = {
+  domains: "domain list",
+  skills: "skill list",
+  skill: "skill show",
+  "write-skill": "skill write",
+  "authoring-checklists": "authoring checklists",
+  "authoring-checklist": "authoring checklist",
+  "authoring-recipes": "authoring recipes",
+  "authoring-recipe": "authoring recipe",
+  "authoring-scenario-search": "authoring search-scenarios",
+  "authoring-scenarios": "authoring scenarios",
+  "authoring-scenario": "authoring scenario",
+  "authoring-plan": "authoring plan",
+  "authoring-guardrails": "authoring guardrails",
+  "authoring-guardrail": "authoring guardrail",
+  "authoring-diagnostics": "authoring diagnostics",
+  "authoring-diagnostic": "authoring diagnostic",
+  "authoring-context": "authoring context",
+  "claim-policies": "authoring claim-policies",
+  "claim-policy": "authoring claim-policy",
+  "output-requirements": "authoring output-requirements",
+  "output-requirement": "authoring output-requirement",
+  "response-patterns": "authoring response-patterns",
+  "response-pattern": "authoring response-pattern",
+  preflight: "authoring preflight",
+  evidence: "authoring evidence",
+  "intent-lookups": "authoring intents",
+  "intent-lookup": "authoring intent",
+  "fact-surfaces": "authoring fact-surfaces",
+  "fact-surface": "authoring fact-surface",
+  coverage: "data coverage",
+  "data-manifest": "data manifest",
+  "support-matrix": "data support-matrix",
+  "version-support": "version support",
+  "cache-dir": "data cache-dir",
+  "cache-list": "data cache-list",
+  "cache-clean": "data cache-clean",
+  "fetch-data": "data fetch",
+  latest: "version latest",
+  versions: "version list",
+  "pack-formats": "version pack-formats",
+  "show-version": "version show",
+  "compare-versions": "version compare",
+  "server-reports": "datapack server-reports",
+  "datapack-schema": "datapack schema",
+  "search-datapack-schema": "datapack search-schema",
+  "compare-datapack-schema": "datapack compare-schema",
+  commands: "datapack commands",
+  "compare-commands": "datapack compare-commands",
+  "resourcepack-models": "resourcepack models",
+  "search-models": "resourcepack search-models",
+  "vanilla-inventory": "datapack vanilla-inventory or resourcepack vanilla-inventory",
+  "vanilla-paths": "datapack vanilla-paths or resourcepack vanilla-paths",
+  "compare-vanilla-paths": "datapack compare-vanilla-paths or resourcepack compare-vanilla-paths",
+  "paper-api": "paper api",
+  "paper-api-index": "paper api-index",
+  "compare-paper-api": "paper compare-api",
+  "paper-api-surface": "paper api-surface",
+  "paper-types": "paper types",
+  "paper-members": "paper members",
+  "compare-paper-api-surface": "paper compare-api-surface",
+  "paper-events": "paper events",
+  paper: "paper info",
+  references: "reference list",
+  domain: "domain show",
+  "source-policy": "source policy",
+};
+
+const commandGroups = new Set([
+  "authoring",
+  "data",
+  "version",
+  "datapack",
+  "resourcepack",
+  "paper",
+  "skill",
+  "reference",
+  "domain",
+  "source",
+]);
+
 function printHelp(output: Output): void {
   output.write(`minecraft-skills
 
@@ -127,22 +304,22 @@ All fact commands print JSON unless noted. Treat missing, unknown, or not-extrac
 not permission to guess.
 
 Usage:
-  minecraft-skills <command> [options]
+  minecraft-skills <group> <command> [options]
   minecraft-skills help
 
 Start here:
-  minecraft-skills authoring-context <domain> [version]
+  minecraft-skills authoring context <domain> [version]
       Broad preflight payload for one domain/version: checklist, recipes, scenarios, diagnostics,
       claim policies, response patterns, intent routing, evidence, and warnings.
-  minecraft-skills authoring-scenario-search <query> [--domain <domain>]
+  minecraft-skills authoring search-scenarios <query> [--domain <domain>]
       Route a user task to existing scenarios using scenario, recipe, and intent text.
-  minecraft-skills authoring-plan <scenario-id> [version]
+  minecraft-skills authoring plan <scenario-id> [version]
       Resolve one scenario into exact recipes, intent lookups, diagnostics, claim policies,
       fact surfaces, response patterns, and optional version evidence.
-  minecraft-skills preflight <domain> [version]
+  minecraft-skills authoring preflight <domain> [version]
       Check target-version coverage, support gaps, downloadable surfaces, and warnings before
       generating files or code.
-  minecraft-skills evidence <domain> [version]
+  minecraft-skills authoring evidence <domain> [version]
       Print source policy, data files, links, and warnings for provenance-aware answers.
 
 Domains:
@@ -155,23 +332,23 @@ Domains:
 
 Common workflows:
   Pick a safe workflow for a task:
-    minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin
-    minecraft-skills authoring-plan paper-event-listener-review 1.21.11
+    minecraft-skills authoring search-scenarios "Paper event listener" --domain paper-plugin
+    minecraft-skills authoring plan paper-event-listener-review 1.21.11
 
   Generate or review a datapack function:
-    minecraft-skills authoring-context datapack 26.2
-    minecraft-skills commands 26.2 --prefix execute --contains run
+    minecraft-skills authoring context datapack 26.2
+    minecraft-skills datapack commands 26.2 --prefix execute --contains run
 
   Check resource pack paths and model shapes:
-    minecraft-skills preflight resourcepack 26.2
-    minecraft-skills vanilla-paths 26.2 --domain resourcepack --contains models/item
-    minecraft-skills search-models 26.2 --kind item-definition --contains bundle
+    minecraft-skills authoring preflight resourcepack 26.2
+    minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
+    minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
 
   Check Paper API names and events:
-    minecraft-skills preflight paper-plugin 1.21.11
-    minecraft-skills paper-types 1.21.11 --contains org.bukkit.entity.Player
-    minecraft-skills paper-members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
-    minecraft-skills paper-events "player join" --version 1.21.11
+    minecraft-skills authoring preflight paper-plugin 1.21.11
+    minecraft-skills paper types 1.21.11 --contains org.bukkit.entity.Player
+    minecraft-skills paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
+    minecraft-skills paper events "player join" --version 1.21.11
 
 Safety notes:
   - Command paths prove parser shape, not gameplay success, permissions, or runtime behavior.
@@ -181,172 +358,77 @@ Safety notes:
     thread safety, or Folia safety.
   - Paper event search results are candidates until checked against Paper/Bukkit API surfaces.
 
-Command forms:
-  minecraft-skills domains
-  minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills skill <name>
-  minecraft-skills write-skill <name> --output <dir> [--force]
-  minecraft-skills authoring-checklists [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
-  minecraft-skills authoring-recipes [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills authoring-recipe <id>
-  minecraft-skills authoring-scenario-search <query> [--domain datapack|resourcepack|paper-plugin] [--limit 10]
-  minecraft-skills authoring-scenarios [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills authoring-scenario <id>
-  minecraft-skills authoring-plan <scenario-id> [version] [--edition java]
-  minecraft-skills authoring-guardrails [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills authoring-guardrail <id>
-  minecraft-skills authoring-diagnostics [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills authoring-diagnostic <id>
-  minecraft-skills authoring-context <datapack|resourcepack|paper-plugin> [version] [--edition java]
-  minecraft-skills claim-policies [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills claim-policy <id>
-  minecraft-skills output-requirements [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills output-requirement <id>
-  minecraft-skills response-patterns [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills response-pattern <id>
-  minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
-  minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
-  minecraft-skills intent-lookups [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills intent-lookup <id>
-  minecraft-skills fact-surfaces [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills fact-surface <id>
-  minecraft-skills coverage
-  minecraft-skills data-manifest
-  minecraft-skills support-matrix
-  minecraft-skills version-support [--domain datapack|resourcepack|paper-plugin] [--edition java]
-  minecraft-skills cache-dir
-  minecraft-skills cache-list
-  minecraft-skills cache-clean
-  minecraft-skills fetch-data <kind> [--version version] [--path path] [--base-url url] [--force]
-  minecraft-skills latest [--edition java]
-  minecraft-skills versions [--edition java]
-  minecraft-skills pack-formats [--edition java]
-  minecraft-skills show-version [version] [--edition java]
-  minecraft-skills compare-versions <from> <to> [--edition java]
-  minecraft-skills server-reports [version] [--edition java]
-  minecraft-skills datapack-schema [version] [--edition java]
-  minecraft-skills search-datapack-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
-  minecraft-skills compare-datapack-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
-  minecraft-skills commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
-  minecraft-skills compare-commands <from> <to> [--contains text] [--prefix literal] [--parser parser] [--limit 50]
-  minecraft-skills resourcepack-models [version] [--edition java]
-  minecraft-skills search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
-  minecraft-skills vanilla-inventory [version] [--edition java]
-  minecraft-skills vanilla-paths [version] [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
-  minecraft-skills compare-vanilla-paths <from> <to> [--domain datapack|resourcepack] [--prefix path] [--contains text] [--extension json] [--limit 50]
-  minecraft-skills paper-api [version]
-  minecraft-skills paper-api-index [version]
-  minecraft-skills compare-paper-api <from> <to>
-  minecraft-skills paper-api-surface [version]
-  minecraft-skills paper-types [version] [--package package.name] [--contains text] [--limit 50]
-  minecraft-skills paper-members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
-  minecraft-skills compare-paper-api-surface <from> <to>
-  minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
-  minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills domain <datapack|resourcepack|paper-plugin>
-  minecraft-skills paper
-  minecraft-skills source-policy
+Grouped commands:
+  minecraft-skills authoring context <datapack|resourcepack|paper-plugin> [version] [--edition java]
+  minecraft-skills authoring search-scenarios <query> [--domain datapack|resourcepack|paper-plugin] [--limit 10]
+  minecraft-skills authoring plan <scenario-id> [version] [--edition java]
+  minecraft-skills authoring preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
+  minecraft-skills authoring evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
+  minecraft-skills authoring recipes|recipe|scenarios|scenario|checklists|checklist|guardrails|guardrail|diagnostics|diagnostic
+  minecraft-skills authoring intents|intent|fact-surfaces|fact-surface|claim-policies|claim-policy
+  minecraft-skills authoring output-requirements|output-requirement|response-patterns|response-pattern
+  minecraft-skills datapack commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
+  minecraft-skills datapack schema [version] [--edition java]
+  minecraft-skills datapack search-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
+  minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
+  minecraft-skills datapack server-reports [version] [--edition java]
+  minecraft-skills datapack vanilla-inventory [version] [--edition java]
+  minecraft-skills datapack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
+  minecraft-skills resourcepack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
+  minecraft-skills resourcepack models [version] [--edition java]
+  minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
+  minecraft-skills paper info
+  minecraft-skills paper api|api-index|api-surface [version]
+  minecraft-skills paper types [version] [--package package.name] [--contains text] [--limit 50]
+  minecraft-skills paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
+  minecraft-skills paper events <query> [--version latest] [--source paper] [--limit 20]
+  minecraft-skills version latest|list|show|compare|support|pack-formats
+  minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage|support-matrix
+  minecraft-skills skill list|show|write
+  minecraft-skills reference list [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills domain show <datapack|resourcepack|paper-plugin>
+  minecraft-skills source policy
 
 Command reference:
-  domains        List supported authoring domains.
-  skills         List installable Agent Skill folders in this repository.
-  skill          Print packaged Agent Skill payload JSON.
-  write-skill    Write a packaged Agent Skill folder to disk.
-  authoring-checklists
-                 List pre-generation checks for each supported authoring domain.
-  authoring-checklist
-                 Print the pre-generation checklist for one authoring domain.
-  authoring-recipes
-                 List task recipes that order exact lookups for common authoring work.
-  authoring-recipe
-                 Print one task recipe by id.
-  authoring-scenario-search
+  domain list    List supported authoring domains.
+  skill list     List installable Agent Skill folders in this repository.
+  skill show     Print packaged Agent Skill payload JSON.
+  skill write    Write a packaged Agent Skill folder to disk.
+  authoring context
+                 Print preflight, recipes, diagnostics, intent lookups, and evidence for a domain.
+  authoring search-scenarios
                  Search scenarios by task wording using scenario, recipe, and intent text.
-  authoring-scenarios
-                 List realistic authoring scenarios and the required lookups to evaluate them.
-  authoring-scenario
-                 Print one authoring scenario by id.
-  authoring-plan
-                 Print one scenario with all required lookups resolved, optionally with preflight/evidence.
-  authoring-guardrails
-                 List output guardrails that prevent unsupported Minecraft authoring claims.
-  authoring-guardrail
-                 Print one output guardrail by id.
-  authoring-diagnostics
-                 List pre-finalization diagnostics for generated Minecraft files, code, and answers.
-  authoring-diagnostic
-                 Print one authoring diagnostic by id.
-  authoring-context
-                 Print preflight, recipes, diagnostics, intent lookups, and evidence for one domain/version.
-  claim-policies
-                 List required evidence and allowed wording for Minecraft authoring claim types.
-  claim-policy   Print one claim policy by id.
-  output-requirements
-                 List required final-output checks for Minecraft authoring responses.
-  output-requirement
-                 Print one final-output requirement by id.
-  response-patterns
-                 List response patterns for source-backed Minecraft authoring answers.
-  response-pattern
-                 Print one response pattern by id.
-  preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
-  evidence       Print source policy, primary sources, data files, links, and warnings.
-  intent-lookups
-                 List intent-to-lookup routing entries for exact source-backed authoring.
-  intent-lookup  Print one intent-to-lookup routing entry by id.
-  fact-surfaces  List machine-verifiable fact surfaces and their guarantees.
-  fact-surface   Print one fact surface by id.
-  coverage       Print bundled data coverage summary JSON.
-  data-manifest  Print downloadable data manifest JSON.
-  support-matrix Print version aliases and bundled/downloadable data support matrix.
-  version-support
-                 Print per-version domain coverage, pack formats, Paper support, and surface availability.
-  cache-dir      Print the OS cache directory used by minecraft-skills.
-  cache-list     Print cached data files for the current data version.
-  cache-clean    Remove cached files for the current data version.
-  fetch-data     Download manifest data entries into the local cache.
-  latest         Print the latest bundled version for an edition.
-  versions       List bundled version metadata.
-  pack-formats   List data/resource pack formats and Paper support by version.
-  show-version   Print canonical JSON for a version.
-  compare-versions
-                 Compare bundled version metadata and vanilla inventory summaries.
-  server-reports
-                 Print compact official server reports summary for a bundled version.
-  datapack-schema
-                 Print observed vanilla datapack JSON schema surface for a bundled version.
-  search-datapack-schema
-                 Search observed vanilla datapack JSON field paths.
-  compare-datapack-schema
-                 Compare observed datapack JSON field paths between bundled versions.
-  commands       Search executable command syntax paths from generated server reports.
-  compare-commands
-                 Compare executable command syntax paths between bundled versions.
-  resourcepack-models
-                 Print compact resource pack model summary for a bundled version.
-  search-models  Search vanilla resource pack model and item definition paths.
-  vanilla-inventory
-                 Print vanilla client asset and server data inventory JSON.
-  vanilla-paths  Search bundled vanilla asset/data paths for a version.
-  compare-vanilla-paths
-                 Compare bundled vanilla asset/data paths between versions.
-  paper-api      Print Paper API dependency, Javadocs, and docs links for a version.
-  paper-api-index
-                 Print Paper Javadocs package index for a supported version.
-  compare-paper-api
-                 Compare Paper Javadocs package indexes between supported versions.
-  paper-api-surface
-                 Print Paper Javadocs type and member search-index surface.
-  paper-types    Search Paper Javadocs type names.
-  paper-members  Search Paper Javadocs member labels by type/package/kind.
-  compare-paper-api-surface
-                 Compare Paper Javadocs type and member surfaces between versions.
-  paper-events   Search Paper/Bukkit events through the configured spigot-event-list API.
-  references     List generated skill references.
-  domain         Print canonical JSON for an authoring domain.
-  paper          Print canonical Paper plugin support and event search JSON.
-  source-policy  Print source and license policy JSON.
+  authoring plan
+                 Print one scenario with all required lookups resolved.
+  authoring preflight
+                 Print resolved version, checklist, fact surfaces, coverage, and warnings.
+  authoring evidence
+                 Print source policy, primary sources, data files, links, and warnings.
+  authoring checklists|checklist|recipes|recipe|scenarios|scenario
+                 Inspect domain checklists, ordered workflows, and realistic task shapes.
+  authoring guardrails|guardrail|diagnostics|diagnostic
+                 Inspect output rules and pre-finalization diagnostics.
+  authoring claim-policies|claim-policy|output-requirements|output-requirement
+                 Inspect required evidence and final-output checks.
+  authoring response-patterns|response-pattern|intents|intent|fact-surfaces|fact-surface
+                 Inspect answer patterns, intent routing, and fact-surface guarantees.
+  data coverage|manifest|support-matrix
+                 Print bundled coverage, downloadable data manifest, or support matrix JSON.
+  data cache-dir|cache-list|cache-clean|fetch
+                 Inspect, clean, or download SHA-256 verified cache data.
+  version latest|list|pack-formats|show|compare|support
+                 Inspect bundled version metadata and per-domain version support.
+  datapack server-reports|vanilla-inventory|schema|search-schema|compare-schema|commands|compare-commands
+                 Inspect command paths and observed datapack JSON shapes.
+  datapack vanilla-paths|compare-vanilla-paths
+                 Search or compare bundled vanilla datapack paths.
+  resourcepack vanilla-inventory|vanilla-paths|compare-vanilla-paths|models|search-models
+                 Inspect vanilla assets, model summaries, and item/model paths.
+  paper info|api|api-index|compare-api|api-surface|types|members|compare-api-surface|events
+                 Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
+  reference list Print generated skill references.
+  domain show    Print canonical JSON for an authoring domain.
+  source policy  Print source and license policy JSON.
 
 Options:
   --domain <domain>      Filter to datapack, resourcepack, or paper-plugin where supported.
@@ -356,8 +438,8 @@ Options:
   --force                Overwrite or refetch where supported.
 
 Cache:
-  Heavy generated surfaces are listed in data-manifest and stored in the OS cache. Use cache-dir,
-  cache-list, cache-clean, and fetch-data. Set MINECRAFT_SKILLS_CACHE_DIR to override the cache.
+  Heavy generated surfaces are listed in data manifest and stored in the OS cache. Use data cache-dir,
+  data cache-list, data cache-clean, and data fetch. Set MINECRAFT_SKILLS_CACHE_DIR to override it.
 
 More:
   docs/USAGE.md has full CLI, MCP, package API, cache, and skill usage.`);
@@ -412,7 +494,18 @@ function writeSkillFolder(name: string, outputRoot: string, force: boolean): str
 }
 
 export async function runCli(argv: string[], output: Output = defaultOutput): Promise<number> {
-  const [command, ...args] = argv;
+  const flatSuggestion = flatCommandSuggestions[argv[0] ?? ""];
+  const hasSubcommand = Boolean(argv[1] && !argv[1].startsWith("-"));
+  if (flatSuggestion && !(commandGroups.has(argv[0] ?? "") && hasSubcommand)) {
+    output.error(`Use subcommands: minecraft-skills ${flatSuggestion}`);
+    return 1;
+  }
+  const normalizedArgv = normalizeSubcommands(argv);
+  if (commandGroups.has(argv[0] ?? "") && hasSubcommand && normalizedArgv === argv) {
+    output.error(`Unknown subcommand: ${argv[0]} ${argv[1]}`);
+    return 1;
+  }
+  const [command, ...args] = normalizedArgv;
   const edition = readOption(args, "--edition", "java");
 
   try {

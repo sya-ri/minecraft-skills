@@ -16,7 +16,7 @@
           "id": "resolve-version-and-context",
           "action": "Resolve the target Java version, datapack coverage, source policy, fact surfaces, and output requirements.",
           "tools": {
-            "cli": ["authoring-context", "preflight", "output-requirements"],
+            "cli": ["authoring context", "authoring preflight", "authoring output-requirements"],
             "mcp": ["get_authoring_context", "get_authoring_preflight", "list_output_requirements"],
             "packageApis": [
               "getAuthoringContext",
@@ -34,7 +34,7 @@
           "id": "verify-pack-format",
           "action": "Verify pack_format before generating or changing pack.mcmeta.",
           "tools": {
-            "cli": ["pack-formats", "show-version", "version-support"],
+            "cli": ["version pack-formats", "version show", "version support"],
             "mcp": ["list_pack_formats", "get_version", "list_version_support"],
             "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
           },
@@ -48,7 +48,7 @@
           "id": "verify-command-path",
           "action": "Search command paths for the target version and compare versions when migration is requested.",
           "tools": {
-            "cli": ["commands", "compare-commands", "server-reports"],
+            "cli": ["datapack commands", "datapack compare-commands", "datapack server-reports"],
             "mcp": ["search_commands", "compare_commands", "get_server_reports"],
             "packageApis": ["searchCommands", "compareCommands", "getJavaReportsSummary"]
           },
@@ -80,7 +80,7 @@
           "id": "resolve-version-and-context",
           "action": "Resolve target version coverage and whether the observed datapack schema surface is bundled, cached, downloadable, or missing.",
           "tools": {
-            "cli": ["authoring-context", "preflight", "data-manifest"],
+            "cli": ["authoring context", "authoring preflight", "data manifest"],
             "mcp": ["get_authoring_context", "get_authoring_preflight", "get_data_manifest"],
             "packageApis": ["getAuthoringContext", "getAuthoringPreflight", "getDataManifest"]
           },
@@ -95,10 +95,10 @@
           "action": "Search observed vanilla datapack JSON paths and compare versions when migration is requested.",
           "tools": {
             "cli": [
-              "datapack-schema",
-              "search-datapack-schema",
-              "compare-datapack-schema",
-              "fetch-data"
+              "datapack schema",
+              "datapack search-schema",
+              "datapack compare-schema",
+              "data fetch"
             ],
             "mcp": [
               "get_datapack_schema_surface",
@@ -123,7 +123,7 @@
           "id": "verify-vanilla-paths",
           "action": "Verify referenced vanilla data paths if the JSON points at vanilla files, tags, loot tables, predicates, recipes, or functions.",
           "tools": {
-            "cli": ["vanilla-paths", "compare-vanilla-paths"],
+            "cli": ["datapack vanilla-paths", "datapack compare-vanilla-paths"],
             "mcp": ["search_vanilla_paths", "compare_vanilla_paths"],
             "packageApis": ["searchVanillaPaths", "compareVanillaPaths"]
           },
@@ -156,7 +156,7 @@
           "id": "resolve-version-and-context",
           "action": "Resolve target Java version, resourcepack coverage, fact surfaces, and output requirements.",
           "tools": {
-            "cli": ["authoring-context", "preflight", "output-requirements"],
+            "cli": ["authoring context", "authoring preflight", "authoring output-requirements"],
             "mcp": ["get_authoring_context", "get_authoring_preflight", "list_output_requirements"],
             "packageApis": [
               "getAuthoringContext",
@@ -174,7 +174,7 @@
           "id": "verify-pack-format",
           "action": "Verify resource pack format before generating or changing pack.mcmeta.",
           "tools": {
-            "cli": ["pack-formats", "show-version", "version-support"],
+            "cli": ["version pack-formats", "version show", "version support"],
             "mcp": ["list_pack_formats", "get_version", "list_version_support"],
             "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
           },
@@ -189,10 +189,10 @@
           "action": "Search vanilla asset paths and observed model or item definition summaries for referenced paths and fields.",
           "tools": {
             "cli": [
-              "vanilla-paths",
-              "compare-vanilla-paths",
-              "resourcepack-models",
-              "search-models"
+              "resourcepack vanilla-paths",
+              "resourcepack compare-vanilla-paths",
+              "resourcepack models",
+              "resourcepack search-models"
             ],
             "mcp": [
               "search_vanilla_paths",
@@ -236,7 +236,12 @@
           "id": "resolve-paper-support-and-context",
           "action": "Resolve target version, Paper support, API reference, guardrails, claim policies, and output requirements.",
           "tools": {
-            "cli": ["authoring-context", "paper", "paper-api", "output-requirements"],
+            "cli": [
+              "authoring context",
+              "paper info",
+              "paper api",
+              "authoring output-requirements"
+            ],
             "mcp": [
               "get_authoring_context",
               "get_paper_plugin_data",
@@ -260,7 +265,7 @@
           "id": "discover-event-candidates",
           "action": "Use event search for candidates, then verify event type names against the Paper API surface.",
           "tools": {
-            "cli": ["paper-events", "paper-types", "paper-api-surface", "fetch-data"],
+            "cli": ["paper events", "paper types", "paper api-surface", "data fetch"],
             "mcp": [
               "search_paper_events",
               "search_paper_types",
@@ -284,7 +289,7 @@
           "id": "verify-used-members",
           "action": "Search every referenced event, player, entity, server, scheduler, or component type/member name.",
           "tools": {
-            "cli": ["paper-types", "paper-members", "paper-api-index", "paper-api-surface"],
+            "cli": ["paper types", "paper members", "paper api-index", "paper api-surface"],
             "mcp": [
               "search_paper_types",
               "search_paper_members",
@@ -328,7 +333,7 @@
           "id": "resolve-paper-support-and-reference",
           "action": "Resolve the target version's Paper support, dependency coordinates, Javadocs URL, and scheduler/Folia documentation links.",
           "tools": {
-            "cli": ["authoring-context", "paper", "paper-api", "version-support"],
+            "cli": ["authoring context", "paper info", "paper api", "version support"],
             "mcp": [
               "get_authoring_context",
               "get_paper_plugin_data",
@@ -352,7 +357,7 @@
           "id": "verify-api-surface",
           "action": "Search types and members in the target Paper API surface and fetch the surface if it is downloadable but missing locally.",
           "tools": {
-            "cli": ["paper-api-surface", "paper-types", "paper-members", "fetch-data"],
+            "cli": ["paper api-surface", "paper types", "paper members", "data fetch"],
             "mcp": [
               "get_paper_api_surface",
               "search_paper_types",
@@ -376,7 +381,7 @@
           "id": "flag-behavior-and-threading-limits",
           "action": "Use claim policies and Paper reference links to keep behavior, scheduler, and Folia claims bounded.",
           "tools": {
-            "cli": ["claim-policies", "authoring-guardrails", "paper-api"],
+            "cli": ["authoring claim-policies", "authoring guardrails", "paper api"],
             "mcp": ["list_claim_policies", "list_authoring_guardrails", "get_paper_api_reference"],
             "packageApis": ["listClaimPolicies", "listAuthoringGuardrails", "getPaperApiReference"]
           },

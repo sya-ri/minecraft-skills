@@ -22,7 +22,7 @@
         "version detail for pack formats and domain coverage"
       ],
       "tools": {
-        "cli": ["authoring-context", "preflight", "show-version", "version-support"],
+        "cli": ["authoring context", "authoring preflight", "version show", "version support"],
         "mcp": [
           "get_authoring_context",
           "get_authoring_preflight",
@@ -69,7 +69,7 @@
         "compare-versions output when explaining migration"
       ],
       "tools": {
-        "cli": ["show-version", "pack-formats", "compare-versions", "version-support"],
+        "cli": ["version show", "version pack-formats", "version compare", "version support"],
         "mcp": ["get_version", "list_pack_formats", "compare_versions", "list_version_support"],
         "packageApis": [
           "getVersionDetail",
@@ -111,7 +111,7 @@
         "command-paths fact surface non-guarantees"
       ],
       "tools": {
-        "cli": ["commands", "compare-commands", "fact-surface"],
+        "cli": ["datapack commands", "datapack compare-commands", "authoring fact-surface"],
         "mcp": ["search_commands", "compare_commands", "get_fact_surface"],
         "packageApis": ["searchCommands", "compareCommands", "getFactSurface"]
       },
@@ -148,7 +148,11 @@
         "vanilla-paths fact surface non-guarantees"
       ],
       "tools": {
-        "cli": ["vanilla-paths", "compare-vanilla-paths", "fact-surface"],
+        "cli": [
+          "datapack vanilla-paths",
+          "datapack compare-vanilla-paths",
+          "authoring fact-surface"
+        ],
         "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_fact_surface"],
         "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getFactSurface"]
       },
@@ -186,11 +190,11 @@
       ],
       "tools": {
         "cli": [
-          "search-datapack-schema",
-          "search-models",
-          "datapack-schema",
-          "resourcepack-models",
-          "fact-surfaces"
+          "datapack search-schema",
+          "resourcepack search-models",
+          "datapack schema",
+          "resourcepack models",
+          "authoring fact-surfaces"
         ],
         "mcp": [
           "search_datapack_schema",
@@ -240,7 +244,7 @@
         "Paper Javadocs member search result when naming members"
       ],
       "tools": {
-        "cli": ["paper", "paper-api", "paper-types", "paper-members", "paper-api-surface"],
+        "cli": ["paper info", "paper api", "paper types", "paper members", "paper api-surface"],
         "mcp": [
           "get_paper_plugin_data",
           "get_paper_api_reference",
@@ -289,7 +293,7 @@
         "Paper API member search results for referenced event methods"
       ],
       "tools": {
-        "cli": ["paper-events", "paper-types", "paper-members", "paper-api-surface"],
+        "cli": ["paper events", "paper types", "paper members", "paper api-surface"],
         "mcp": [
           "search_paper_events",
           "search_paper_types",
@@ -336,7 +340,7 @@
         "paper-api-surface non-guarantees"
       ],
       "tools": {
-        "cli": ["paper-api", "claim-policy", "fact-surface"],
+        "cli": ["paper api", "authoring claim-policy", "authoring fact-surface"],
         "mcp": ["get_paper_api_reference", "get_claim_policy", "get_fact_surface"],
         "packageApis": ["getPaperApiReference", "getClaimPolicy", "getFactSurface"]
       },

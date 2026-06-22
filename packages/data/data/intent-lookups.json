@@ -15,7 +15,7 @@
         {
           "purpose": "Resolve the exact version, domain coverage, pack formats, Paper support, and surface availability.",
           "tools": {
-            "cli": ["version-support", "preflight"],
+            "cli": ["version support", "authoring preflight"],
             "mcp": ["list_version_support", "get_authoring_preflight"],
             "packageApis": ["listVersionSupport", "getAuthoringPreflight"]
           },
@@ -40,18 +40,18 @@
           "purpose": "Load the domain checklist, exact fact surfaces, resolved version coverage, downloadable data state, and warnings.",
           "tools": {
             "cli": [
-              "authoring-context",
-              "authoring-recipes",
-              "authoring-scenarios",
-              "authoring-guardrails",
-              "authoring-diagnostics",
-              "claim-policies",
-              "output-requirements",
-              "response-patterns",
-              "preflight",
-              "authoring-checklist",
-              "fact-surfaces",
-              "evidence"
+              "authoring context",
+              "authoring recipes",
+              "authoring scenarios",
+              "authoring guardrails",
+              "authoring diagnostics",
+              "authoring claim-policies",
+              "authoring output-requirements",
+              "authoring response-patterns",
+              "authoring preflight",
+              "authoring checklist",
+              "authoring fact-surfaces",
+              "authoring evidence"
             ],
             "mcp": [
               "get_authoring_context",
@@ -105,7 +105,7 @@
         {
           "purpose": "Read exact pack format values extracted from bundled version metadata.",
           "tools": {
-            "cli": ["pack-formats", "show-version", "version-support"],
+            "cli": ["version pack-formats", "version show", "version support"],
             "mcp": ["list_pack_formats", "get_version", "list_version_support"],
             "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
           },
@@ -129,7 +129,7 @@
         {
           "purpose": "Search executable command syntax paths generated from official server reports.",
           "tools": {
-            "cli": ["commands", "compare-commands", "server-reports"],
+            "cli": ["datapack commands", "datapack compare-commands", "datapack server-reports"],
             "mcp": ["search_commands", "compare_commands", "get_server_reports"],
             "packageApis": ["searchCommands", "compareCommands", "getJavaReportsSummary"]
           },
@@ -153,7 +153,7 @@
         {
           "purpose": "Search observed vanilla datapack JSON field paths and confirm downloadable surface availability.",
           "tools": {
-            "cli": ["search-datapack-schema", "datapack-schema", "fetch-data", "data-manifest"],
+            "cli": ["datapack search-schema", "datapack schema", "data fetch", "data manifest"],
             "mcp": [
               "search_datapack_schema",
               "get_datapack_schema_surface",
@@ -187,7 +187,11 @@
         {
           "purpose": "Search vanilla server data path inventories for the target version.",
           "tools": {
-            "cli": ["vanilla-paths", "compare-vanilla-paths", "vanilla-inventory"],
+            "cli": [
+              "datapack vanilla-paths",
+              "datapack compare-vanilla-paths",
+              "datapack vanilla-inventory"
+            ],
             "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
             "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
           },
@@ -211,7 +215,11 @@
         {
           "purpose": "Search vanilla client resource path inventories for the target version.",
           "tools": {
-            "cli": ["vanilla-paths", "compare-vanilla-paths", "vanilla-inventory"],
+            "cli": [
+              "resourcepack vanilla-paths",
+              "resourcepack compare-vanilla-paths",
+              "resourcepack vanilla-inventory"
+            ],
             "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
             "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
           },
@@ -235,7 +243,7 @@
         {
           "purpose": "Search resource pack model and item definition summaries extracted from the client asset index.",
           "tools": {
-            "cli": ["resourcepack-models", "search-models"],
+            "cli": ["resourcepack models", "resourcepack search-models"],
             "mcp": ["get_resourcepack_model_summary", "search_resourcepack_models"],
             "packageApis": ["getResourcepackModelSummary", "searchResourcepackModelPaths"]
           },
@@ -259,7 +267,7 @@
         {
           "purpose": "Resolve whether Paper publishes builds for the Minecraft version and get official API/Javadocs links.",
           "tools": {
-            "cli": ["paper", "paper-api", "version-support", "preflight"],
+            "cli": ["paper info", "paper api", "version support", "authoring preflight"],
             "mcp": [
               "get_paper_plugin_data",
               "get_paper_api_reference",
@@ -294,12 +302,12 @@
           "purpose": "Search Paper Javadocs package, type, and member surfaces for the target supported version.",
           "tools": {
             "cli": [
-              "paper-api-index",
-              "paper-api-surface",
-              "paper-types",
-              "paper-members",
-              "fetch-data",
-              "data-manifest"
+              "paper api-index",
+              "paper api-surface",
+              "paper types",
+              "paper members",
+              "data fetch",
+              "data manifest"
             ],
             "mcp": [
               "get_paper_api_index",
@@ -338,7 +346,7 @@
         {
           "purpose": "Search configured event-list data, then verify candidates against Paper Javadocs surfaces.",
           "tools": {
-            "cli": ["paper-events", "paper-types", "paper-members", "paper-api-surface"],
+            "cli": ["paper events", "paper types", "paper members", "paper api-surface"],
             "mcp": [
               "search_paper_events",
               "search_paper_types",
@@ -372,7 +380,12 @@
         {
           "purpose": "Return source policy, primary sources, relevant data files, fact surface guarantees, and warnings.",
           "tools": {
-            "cli": ["evidence", "source-policy", "fact-surfaces", "fact-surface"],
+            "cli": [
+              "authoring evidence",
+              "source policy",
+              "authoring fact-surfaces",
+              "authoring fact-surface"
+            ],
             "mcp": [
               "get_evidence_bundle",
               "get_source_policy",

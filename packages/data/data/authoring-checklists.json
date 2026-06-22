@@ -10,7 +10,12 @@
           "id": "resolve-target-version",
           "reason": "Data pack syntax, pack formats, command trees, and vanilla data paths are version-specific.",
           "tools": {
-            "cli": ["latest", "show-version", "pack-formats", "support-matrix"],
+            "cli": [
+              "version latest",
+              "version show",
+              "version pack-formats",
+              "data support-matrix"
+            ],
             "mcp": ["latest_version", "get_version", "list_pack_formats", "get_support_matrix"],
             "packageApis": [
               "resolveVersion",
@@ -29,7 +34,7 @@
           "id": "inspect-data-surface-limits",
           "reason": "minecraft-skills surfaces distinguish observed facts from normative specifications.",
           "tools": {
-            "cli": ["fact-surfaces", "fact-surface"],
+            "cli": ["authoring fact-surfaces", "authoring fact-surface"],
             "mcp": ["list_fact_surfaces", "get_fact_surface"],
             "packageApis": ["listFactSurfaces", "getFactSurface"]
           },
@@ -43,7 +48,12 @@
           "id": "verify-commands-and-paths",
           "reason": "Commands and vanilla data paths can be checked against extracted official server data.",
           "tools": {
-            "cli": ["commands", "compare-commands", "vanilla-paths", "compare-vanilla-paths"],
+            "cli": [
+              "datapack commands",
+              "datapack compare-commands",
+              "datapack vanilla-paths",
+              "datapack compare-vanilla-paths"
+            ],
             "mcp": [
               "search_commands",
               "compare_commands",
@@ -68,11 +78,11 @@
           "reason": "Observed vanilla datapack JSON fields help avoid invented field names while preserving the observed-only boundary.",
           "tools": {
             "cli": [
-              "datapack-schema",
-              "search-datapack-schema",
-              "compare-datapack-schema",
-              "data-manifest",
-              "fetch-data"
+              "datapack schema",
+              "datapack search-schema",
+              "datapack compare-schema",
+              "data manifest",
+              "data fetch"
             ],
             "mcp": [
               "get_datapack_schema_surface",
@@ -105,7 +115,12 @@
           "id": "resolve-target-version",
           "reason": "Resource pack formats, vanilla asset paths, model shapes, and item definitions are version-specific.",
           "tools": {
-            "cli": ["latest", "show-version", "pack-formats", "support-matrix"],
+            "cli": [
+              "version latest",
+              "version show",
+              "version pack-formats",
+              "data support-matrix"
+            ],
             "mcp": ["latest_version", "get_version", "list_pack_formats", "get_support_matrix"],
             "packageApis": [
               "resolveVersion",
@@ -124,7 +139,7 @@
           "id": "inspect-data-surface-limits",
           "reason": "Resource pack model summaries are extracted from vanilla assets and are not normative schemas.",
           "tools": {
-            "cli": ["fact-surfaces", "fact-surface"],
+            "cli": ["authoring fact-surfaces", "authoring fact-surface"],
             "mcp": ["list_fact_surfaces", "get_fact_surface"],
             "packageApis": ["listFactSurfaces", "getFactSurface"]
           },
@@ -139,10 +154,10 @@
           "reason": "Vanilla asset inventories and model summaries reduce invented namespaces, paths, and item definition fields.",
           "tools": {
             "cli": [
-              "vanilla-paths",
-              "compare-vanilla-paths",
-              "resourcepack-models",
-              "search-models"
+              "datapack vanilla-paths",
+              "datapack compare-vanilla-paths",
+              "resourcepack models",
+              "resourcepack search-models"
             ],
             "mcp": [
               "search_vanilla_paths",
@@ -173,7 +188,7 @@
           "id": "resolve-paper-support",
           "reason": "Paper support can lag the latest Java release, and plugin API references are tied to supported Minecraft versions.",
           "tools": {
-            "cli": ["paper", "paper-api", "support-matrix"],
+            "cli": ["paper info", "paper api", "data support-matrix"],
             "mcp": ["get_paper_plugin_data", "get_paper_api_reference", "get_support_matrix"],
             "packageApis": ["getPaperPluginData", "getPaperApiReference", "getSupportMatrix"]
           },
@@ -187,7 +202,7 @@
           "id": "inspect-api-surface-limits",
           "reason": "Javadocs package/type/member indexes prove names and labels, not behavior, nullability, or thread safety.",
           "tools": {
-            "cli": ["fact-surfaces", "fact-surface"],
+            "cli": ["authoring fact-surfaces", "authoring fact-surface"],
             "mcp": ["list_fact_surfaces", "get_fact_surface"],
             "packageApis": ["listFactSurfaces", "getFactSurface"]
           },
@@ -202,11 +217,11 @@
           "reason": "Paper Javadocs indexes and event search reduce hallucinated class names, methods, and event candidates.",
           "tools": {
             "cli": [
-              "paper-api-index",
-              "paper-api-surface",
-              "paper-types",
-              "paper-members",
-              "paper-events"
+              "paper api-index",
+              "paper api-surface",
+              "paper types",
+              "paper members",
+              "paper events"
             ],
             "mcp": [
               "get_paper_api_index",
@@ -233,7 +248,7 @@
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {
-            "cli": ["paper-api"],
+            "cli": ["paper api"],
             "mcp": ["get_paper_api_reference"],
             "packageApis": ["getPaperApiReference"]
           },

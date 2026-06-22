@@ -106,7 +106,7 @@ describe("catalog", () => {
 
     const schemaSurface = getFactSurface("datapack-schema-surface");
     expect(schemaSurface.nonGuarantees).toContain("not a normative schema");
-    expect(schemaSurface.cli).toContain("search-datapack-schema");
+    expect(schemaSurface.cli).toContain("datapack search-schema");
 
     expect(() => getFactSurface("missing")).toThrow("Unknown fact surface: missing");
   });
@@ -121,7 +121,7 @@ describe("catalog", () => {
 
     const datapack = getAuthoringChecklist("datapack");
     expect(datapack.steps.map((step) => step.id)).toContain("verify-commands-and-paths");
-    expect(datapack.steps.flatMap((step) => step.tools.cli)).toContain("commands");
+    expect(datapack.steps.flatMap((step) => step.tools.cli)).toContain("datapack commands");
     expect(datapack.steps.flatMap((step) => step.tools.mcp)).toContain("search_commands");
 
     const paper = getAuthoringChecklist("paper-plugin");
@@ -374,7 +374,7 @@ describe("catalog", () => {
 
     const paper = getIntentLookup("verify-paper-type-or-member");
     expect(paper.domains).toEqual(["paper-plugin"]);
-    expect(paper.lookups[0]?.tools.cli).toContain("paper-members");
+    expect(paper.lookups[0]?.tools.cli).toContain("paper members");
     expect(paper.lookups[0]?.tools.mcp).toContain("search_paper_members");
     expect(paper.lookups[0]?.failureMode).toContain("does not prove runtime behavior");
 
