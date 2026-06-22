@@ -5,6 +5,7 @@ Redistributable canonical data for Minecraft Skills consumers.
 ## Contents
 
 - Java 1.13+ release index and version details.
+- Machine-readable fact surface guidance that states what each data surface can and cannot prove.
 - Extracted data/resource pack format numbers.
 - Official server report summaries and command path indexes.
 - Vanilla client asset and server data inventories.
@@ -27,6 +28,7 @@ JSON/text data files.
 import { fetchData, getDataManifest, readDataJson, readDataText } from "@minecraft-skills/data";
 
 const versions = readDataJson("java/versions.json");
+const factSurfaces = readDataJson("fact-surfaces.json");
 const commandPaths = readDataText("java/command-paths/26.2.txt");
 const paperSkill = readDataText("skills/minecraft-paper-plugins/SKILL.md");
 const manifest = getDataManifest();

@@ -45,6 +45,8 @@ minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills fact-surfaces --domain datapack
+minecraft-skills fact-surface datapack-schema-surface
 minecraft-skills coverage
 minecraft-skills data-manifest
 minecraft-skills support-matrix
@@ -90,6 +92,8 @@ type/member search-index facts, and `minecraft-skills compare-paper-api-surface`
 facts without copying Javadocs prose. `minecraft-skills paper-events` calls the event API for live
 event discovery. `minecraft-skills skill <name>` returns the packaged Agent Skill payload, including
 `SKILL.md`, agent metadata, and generated references.
+`minecraft-skills fact-surfaces` lists machine-verifiable data surfaces with what each surface can
+and cannot prove, so agents can avoid treating observed data as normative specification.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
@@ -146,6 +150,7 @@ import {
   compareCommands,
   compareDatapackSchema,
   getDatapackSchemaSurface,
+  getFactSurface,
   compareVanillaPaths,
   getCoverageSummary,
   getPaperApiSurface,
@@ -154,6 +159,7 @@ import {
   getSupportMatrix,
   getVersionDetail,
   listSkills,
+  listFactSurfaces,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -164,6 +170,8 @@ import {
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
+const factSurfaces = listFactSurfaces({ domain: "datapack" });
+const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");
 const coverage = getCoverageSummary();
 const support = getSupportMatrix();
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });

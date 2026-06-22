@@ -18,6 +18,7 @@ import {
   getPaperPluginData,
   getVersionDetail,
   listDomains,
+  listFactSurfaces,
   listReferences,
   listVersions,
 } from "@minecraft-skills/catalog";
@@ -166,6 +167,27 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
   }
 }
 
+function requireFactSurfaces(root: string, messages: string[]): void {
+  requireDataFile(root, "fact-surfaces.json", messages);
+  const ids = new Set<string>();
+  for (const surface of listFactSurfaces()) {
+    const prefix = `fact surface ${surface.id}`;
+    if (ids.has(surface.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(surface.id);
+    if (surface.guarantees.length === 0) {
+      messages.push(`${prefix} must list at least one guarantee`);
+    }
+    if (surface.nonGuarantees.length === 0) {
+      messages.push(`${prefix} must list at least one non-guarantee`);
+    }
+    if (surface.cli.length === 0 && surface.mcp.length === 0 && surface.packageApis.length === 0) {
+      messages.push(`${prefix} must expose at least one CLI, MCP, or package API entrypoint`);
+    }
+  }
+}
+
 function requireGeneratedHeader(root: string, path: string, messages: string[]): void {
   const absolutePath = join(root, path);
   requireFile(root, path, messages);
@@ -269,6 +291,7 @@ export function validateRepository(): ValidationResult {
   const paper = getPaperPluginData();
 
   requireDataManifestIntegrity(root, messages);
+  requireFactSurfaces(root, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");

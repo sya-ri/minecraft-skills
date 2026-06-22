@@ -11,6 +11,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
     expect(tools.map((tool) => tool.name)).toContain("list_skills");
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
+    expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
+    expect(tools.map((tool) => tool.name)).toContain("get_fact_surface");
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
     expect(tools.map((tool) => tool.name)).toContain("get_data_manifest");
     expect(tools.map((tool) => tool.name)).toContain("get_support_matrix");
@@ -59,6 +61,8 @@ describe("MCP tools", () => {
         "list_domains",
         "list_skills",
         "get_skill",
+        "list_fact_surfaces",
+        "get_fact_surface",
         "get_source_policy",
         "get_server_reports",
         "get_datapack_schema_surface",
@@ -95,6 +99,19 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain("display_name");
     expect(result.content[0]?.text).toContain("Minecraft Paper Plugins");
     expect(result.content[0]?.text).toContain("# Paper Plugin Sources");
+  });
+
+  it("calls fact surface tools", async () => {
+    const list = await callMinecraftSkillsTool("list_fact_surfaces", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "paper-api-surface"');
+    expect(list.content[0]?.text).toContain("nonGuarantees");
+
+    const single = await callMinecraftSkillsTool("get_fact_surface", {
+      id: "datapack-schema-surface",
+    });
+    expect(single.content[0]?.text).toContain("not a normative schema");
   });
 
   it("calls get_coverage_summary", async () => {

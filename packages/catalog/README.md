@@ -23,6 +23,7 @@ import {
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
+  getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -33,6 +34,7 @@ import {
   getSupportMatrix,
   getVersionDetail,
   listSkills,
+  listFactSurfaces,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -44,6 +46,8 @@ import {
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
+const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
+const apiSurfacePolicy = getFactSurface("paper-api-surface");
 const coverage = getCoverageSummary();
 const support = getSupportMatrix();
 const manifest = getDataManifest();

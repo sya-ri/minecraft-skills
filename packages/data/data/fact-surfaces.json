@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "reviewed-maintainer-guidance",
+  "surfaces": [
+    {
+      "id": "java-version-metadata",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Java version metadata",
+      "dataKind": "official-version-metadata",
+      "coverage": "Java Edition 1.13+ bundled releases",
+      "provenance": "Mojang version manifest v2 and per-version metadata JSON",
+      "guarantees": [
+        "release id, type, release time, metadata URL, and SHA-1 are copied from official Mojang metadata",
+        "latest bundled Java alias is derived from the checked-in release index"
+      ],
+      "nonGuarantees": [
+        "does not include snapshot support unless explicitly bundled",
+        "does not imply Paper has published a matching server for the same Java version"
+      ],
+      "cli": ["versions", "latest", "show-version", "compare-versions"],
+      "mcp": ["list_versions", "latest_version", "get_version", "compare_versions"],
+      "packageApis": ["listVersions", "resolveVersion", "getVersionDetail", "compareVersions"]
+    },
+    {
+      "id": "pack-formats",
+      "domains": ["datapack", "resourcepack"],
+      "title": "Pack format numbers",
+      "dataKind": "extracted-version-json-field",
+      "coverage": "Java Edition 1.13+ bundled releases where version JSON and jars were extracted",
+      "provenance": "official Mojang version metadata and extracted vanilla jar facts",
+      "guarantees": [
+        "data and resource pack format numbers are version-specific when status is extracted",
+        "null values are exposed when the fact is unavailable"
+      ],
+      "nonGuarantees": [
+        "does not explain behavioral migration steps by itself",
+        "does not make unsupported versions compatible"
+      ],
+      "cli": ["pack-formats", "show-version", "compare-versions"],
+      "mcp": ["list_pack_formats", "get_version", "compare_versions"],
+      "packageApis": ["listPackFormats", "getVersionDetail", "compareVersions"]
+    },
+    {
+      "id": "server-reports",
+      "domains": ["datapack"],
+      "title": "Generated server reports",
+      "dataKind": "official-generated-report-summary",
+      "coverage": "Java Edition 1.13+ bundled releases",
+      "provenance": "official Mojang server jar data generator reports",
+      "guarantees": [
+        "summaries are derived from generated vanilla server reports for the target version",
+        "command report availability is represented explicitly"
+      ],
+      "nonGuarantees": [
+        "does not include copied Minecraft Wiki prose",
+        "does not replace in-game testing for command side effects"
+      ],
+      "cli": ["server-reports"],
+      "mcp": ["get_server_reports"],
+      "packageApis": ["getJavaReportsSummary"]
+    },
+    {
+      "id": "command-paths",
+      "domains": ["datapack"],
+      "title": "Command syntax paths",
+      "dataKind": "derived-command-tree-index",
+      "coverage": "Java Edition 1.13+ bundled releases",
+      "provenance": "command trees extracted from official server reports",
+      "guarantees": [
+        "search results are executable command syntax paths observed in generated command trees",
+        "version comparisons report added and removed syntax paths"
+      ],
+      "nonGuarantees": [
+        "does not prove command semantics, permissions, runtime selectors, or side effects",
+        "does not infer undocumented aliases"
+      ],
+      "cli": ["commands", "compare-commands"],
+      "mcp": ["search_commands", "compare_commands"],
+      "packageApis": ["searchCommands", "compareCommands"]
+    },
+    {
+      "id": "vanilla-inventory",
+      "domains": ["datapack", "resourcepack"],
+      "title": "Vanilla asset and data inventories",
+      "dataKind": "extracted-jar-inventory",
+      "coverage": "Java Edition 1.13+ bundled releases",
+      "provenance": "official Mojang client and server jars",
+      "guarantees": [
+        "vanilla resource and datapack entry counts, namespaces, top-level folders, and sample paths are extracted from jars",
+        "version comparisons report top-level inventory changes"
+      ],
+      "nonGuarantees": [
+        "does not include modded, server-specific, or third-party pack files",
+        "samples are representative, not complete lists"
+      ],
+      "cli": ["vanilla-inventory", "compare-versions"],
+      "mcp": ["get_vanilla_inventory", "compare_versions"],
+      "packageApis": ["getVanillaInventory", "compareVersions"]
+    },
+    {
+      "id": "vanilla-paths",
+      "domains": ["datapack", "resourcepack"],
+      "title": "Vanilla asset and data paths",
+      "dataKind": "extracted-jar-path-index",
+      "coverage": "Java Edition 1.13+ bundled releases",
+      "provenance": "official Mojang client and server jars",
+      "guarantees": [
+        "path search returns exact vanilla asset/data paths for the selected version and domain",
+        "version comparisons report added and removed paths"
+      ],
+      "nonGuarantees": [
+        "does not validate custom pack JSON content",
+        "does not include generated files outside the official jars"
+      ],
+      "cli": ["vanilla-paths", "compare-vanilla-paths"],
+      "mcp": ["search_vanilla_paths", "compare_vanilla_paths"],
+      "packageApis": ["searchVanillaPaths", "compareVanillaPaths"]
+    },
+    {
+      "id": "datapack-schema-surface",
+      "domains": ["datapack"],
+      "title": "Observed datapack JSON field shapes",
+      "dataKind": "observed-vanilla-json-shape",
+      "coverage": "downloadable or bundled versions listed in the support matrix",
+      "provenance": "vanilla datapack JSON files extracted from official Mojang server jars",
+      "guarantees": [
+        "field paths, value kind counts, and sample file paths are observed from vanilla files for the exact version",
+        "comparison reports added and removed observed field paths"
+      ],
+      "nonGuarantees": [
+        "not a normative schema",
+        "does not prove all valid custom datapack fields",
+        "does not prove field semantics beyond observed JSON shape"
+      ],
+      "cli": ["datapack-schema", "search-datapack-schema", "compare-datapack-schema"],
+      "mcp": ["get_datapack_schema_surface", "search_datapack_schema", "compare_datapack_schema"],
+      "packageApis": ["getDatapackSchemaSurface", "searchDatapackSchema", "compareDatapackSchema"]
+    },
+    {
+      "id": "resourcepack-model-summary",
+      "domains": ["resourcepack"],
+      "title": "Observed resource pack model shapes",
+      "dataKind": "observed-vanilla-json-shape",
+      "coverage": "Java Edition 1.13+ bundled releases",
+      "provenance": "vanilla resource pack model and item definition JSON extracted from official Mojang client jars",
+      "guarantees": [
+        "model and item definition path summaries are observed from vanilla files for the exact version",
+        "search can locate paths and shape summaries by kind, prefix, or text"
+      ],
+      "nonGuarantees": [
+        "not a normative schema",
+        "does not prove all valid custom model or item definition fields",
+        "does not include textures or binary asset validation"
+      ],
+      "cli": ["resourcepack-models", "search-models"],
+      "mcp": ["get_resourcepack_model_summary", "search_resourcepack_models"],
+      "packageApis": ["getResourcepackModelSummary", "searchResourcepackModelPaths"]
+    },
+    {
+      "id": "paper-builds",
+      "domains": ["paper-plugin"],
+      "title": "Paper build support metadata",
+      "dataKind": "official-project-api-summary",
+      "coverage": "Paper versions listed in checked-in PaperMC project metadata",
+      "provenance": "PaperMC project API and Paper documentation links",
+      "guarantees": [
+        "latest supported Paper Minecraft version and build count are recorded from PaperMC data",
+        "gap between latest Java and latest Paper is explicit"
+      ],
+      "nonGuarantees": [
+        "does not prove a future Paper build exists before PaperMC publishes it",
+        "does not include third-party forks"
+      ],
+      "cli": ["paper", "paper-api"],
+      "mcp": ["get_paper_plugin_data", "get_paper_api_reference"],
+      "packageApis": ["getPaperPluginData", "getPaperApiReference"]
+    },
+    {
+      "id": "paper-api-index",
+      "domains": ["paper-plugin"],
+      "title": "Paper Javadocs package index",
+      "dataKind": "javadocs-package-index",
+      "coverage": "Paper versions where package tables or indexes are bundled",
+      "provenance": "Paper Javadocs pages",
+      "guarantees": [
+        "package names and package URLs are extracted from Paper Javadocs for the target version",
+        "comparison reports added and removed package names"
+      ],
+      "nonGuarantees": [
+        "does not include method-level API details",
+        "does not copy Javadocs prose or prove method behavior"
+      ],
+      "cli": ["paper-api-index", "compare-paper-api"],
+      "mcp": ["get_paper_api_index", "compare_paper_api"],
+      "packageApis": ["getPaperApiIndex", "comparePaperApi"]
+    },
+    {
+      "id": "paper-api-surface",
+      "domains": ["paper-plugin"],
+      "title": "Paper Javadocs type and member surface",
+      "dataKind": "javadocs-search-index",
+      "coverage": "downloadable or bundled versions listed in the support matrix",
+      "provenance": "Paper Javadocs search index artifacts",
+      "guarantees": [
+        "type names, member labels, package names, and URLs are extracted from Javadocs search indexes",
+        "comparison reports added and removed observed type/member labels"
+      ],
+      "nonGuarantees": [
+        "does not copy Javadocs prose",
+        "does not prove method behavior, overload semantics, nullability, or thread safety",
+        "does not replace Paper documentation for Folia-sensitive behavior"
+      ],
+      "cli": ["paper-api-surface", "paper-types", "paper-members", "compare-paper-api-surface"],
+      "mcp": [
+        "get_paper_api_surface",
+        "search_paper_types",
+        "search_paper_members",
+        "compare_paper_api_surface"
+      ],
+      "packageApis": [
+        "getPaperApiSurface",
+        "searchPaperTypes",
+        "searchPaperMembers",
+        "comparePaperApiSurface"
+      ]
+    },
+    {
+      "id": "paper-event-search",
+      "domains": ["paper-plugin"],
+      "title": "Paper and Bukkit event discovery",
+      "dataKind": "external-event-search-api",
+      "coverage": "versions and sources supported by the configured spigot-event-list API",
+      "provenance": "sya-ri/spigot-event-list API contract and live API responses",
+      "guarantees": [
+        "query URL construction follows the checked-in event search contract",
+        "live search can find candidate events by behavior text, partial names, or localized text when network access is available"
+      ],
+      "nonGuarantees": [
+        "network access may be unavailable",
+        "search results are discovery candidates and still need Paper/Bukkit API verification",
+        "does not prove event firing order or cancellation semantics"
+      ],
+      "cli": ["paper-events"],
+      "mcp": ["search_paper_events"],
+      "packageApis": ["buildPaperEventSearchUrl", "searchPaperEvents"]
+    }
+  ]
+}

@@ -23,6 +23,10 @@ import {
   type DomainIdData,
   Edition,
   type EditionData,
+  FactSurface,
+  type FactSurfaceData,
+  FactSurfaceIndex,
+  type FactSurfaceIndexData,
   JavaReportsSummary,
   type JavaReportsSummaryData,
   ObservedDatapackSchemaSurface,
@@ -56,6 +60,8 @@ export type {
   DomainData,
   DomainIdData,
   EditionData,
+  FactSurfaceData,
+  FactSurfaceIndexData,
   FetchDataOptions,
   FetchDataResult,
   JavaReportsSummaryData,
@@ -91,6 +97,10 @@ export type PackFormatSummary = {
   resource: number | null;
   resourceMinor: number | null;
   paperPluginStatus: string;
+};
+
+export type FactSurfaceQuery = {
+  domain?: string;
 };
 
 export type InventoryTopLevelChange = {
@@ -500,6 +510,23 @@ export function listSkills(domain?: string): SkillData[] {
   }
   const domainId = DomainId.assert(domain);
   return catalog.skills.filter((skill) => skill.domain === domainId);
+}
+
+export function listFactSurfaces(query: FactSurfaceQuery = {}): FactSurfaceData[] {
+  const index = FactSurfaceIndex.assert(readDataJson("fact-surfaces.json"));
+  if (!query.domain) {
+    return index.surfaces;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.surfaces.filter((surface) => surface.domains.includes(domain));
+}
+
+export function getFactSurface(id: string): FactSurfaceData {
+  const found = listFactSurfaces().find((surface) => surface.id === id);
+  if (!found) {
+    throw new Error(`Unknown fact surface: ${id}`);
+  }
+  return FactSurface.assert(found);
 }
 
 export function getSkill(name: string): SkillData {

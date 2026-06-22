@@ -76,6 +76,17 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain('"packagedPayloads": 3');
   });
 
+  it("prints fact surfaces and their non-guarantees", async () => {
+    const list = await capture(["fact-surfaces", "--domain", "datapack"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "datapack-schema-surface"');
+    expect(list.stdout.join("\n")).toContain('"id": "command-paths"');
+
+    const single = await capture(["fact-surface", "paper-api-surface"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain("does not prove method behavior");
+  });
+
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data-manifest"]);
     expect(manifest.code).toBe(0);

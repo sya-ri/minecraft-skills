@@ -21,6 +21,7 @@ import {
   getDataManifest,
   getDatapackSchemaSurface,
   getDomain,
+  getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -34,6 +35,7 @@ import {
   getVersionDetail,
   listCachedDataFiles,
   listDomains,
+  listFactSurfaces,
   listPackFormats,
   listReferences,
   listSkills,
@@ -101,6 +103,8 @@ Usage:
   minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills skill <name>
   minecraft-skills write-skill <name> --output <dir> [--force]
+  minecraft-skills fact-surfaces [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills fact-surface <id>
   minecraft-skills coverage
   minecraft-skills data-manifest
   minecraft-skills support-matrix
@@ -142,6 +146,8 @@ Commands:
   skills         List installable Agent Skill folders in this repository.
   skill          Print packaged Agent Skill payload JSON.
   write-skill    Write a packaged Agent Skill folder to disk.
+  fact-surfaces  List machine-verifiable fact surfaces and their guarantees.
+  fact-surface   Print one fact surface by id.
   coverage       Print bundled data coverage summary JSON.
   data-manifest  Print downloadable data manifest JSON.
   support-matrix Print version aliases and bundled/downloadable data support matrix.
@@ -286,6 +292,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       for (const path of writeSkillFolder(name, outputRoot, args.includes("--force"))) {
         output.write(path);
       }
+      return 0;
+    }
+
+    if (command === "fact-surfaces") {
+      printJson(output, {
+        schemaVersion: 1,
+        surfaces: listFactSurfaces({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "fact-surface") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("fact-surface command requires an id");
+      }
+      printJson(output, getFactSurface(id));
       return 0;
     }
 

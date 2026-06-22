@@ -10,6 +10,7 @@ import {
   getCoverageSummary,
   getDatapackSchemaSurface,
   getDomain,
+  getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -22,6 +23,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   listDomains,
+  listFactSurfaces,
   listPackFormats,
   listSkills,
   resolveVersion,
@@ -71,6 +73,18 @@ describe("catalog", () => {
         markdown: expect.stringContaining("# Paper Plugin Sources"),
       }),
     ]);
+  });
+
+  it("lists fact surfaces with guarantees and non-guarantees", () => {
+    const datapackSurfaces = listFactSurfaces({ domain: "datapack" });
+    expect(datapackSurfaces.map((surface) => surface.id)).toContain("datapack-schema-surface");
+    expect(datapackSurfaces.map((surface) => surface.id)).toContain("command-paths");
+
+    const schemaSurface = getFactSurface("datapack-schema-surface");
+    expect(schemaSurface.nonGuarantees).toContain("not a normative schema");
+    expect(schemaSurface.cli).toContain("search-datapack-schema");
+
+    expect(() => getFactSurface("missing")).toThrow("Unknown fact surface: missing");
   });
 
   it("summarizes bundled coverage", () => {

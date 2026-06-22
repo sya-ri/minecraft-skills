@@ -47,6 +47,8 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `latest_version`
 - `list_skills`
 - `get_skill`
+- `list_fact_surfaces`
+- `get_fact_surface`
 - `get_coverage_summary`
 - `get_data_manifest`
 - `get_support_matrix`

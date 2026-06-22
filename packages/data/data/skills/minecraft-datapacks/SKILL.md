@@ -17,23 +17,26 @@ version-specific facts.
 3. If the `minecraft-skills` CLI, MCP server, or `@minecraft-skills/catalog` package is available,
    use it for machine-verifiable facts. Otherwise, use the bundled references in this skill and
    clearly state when strict data is not bundled.
-4. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+4. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+   each data surface can and cannot prove.
+5. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific facts are bundled and which heavyweight facts are downloadable.
-5. If an observed datapack schema surface is needed but not available locally, inspect
+6. If an observed datapack schema surface is needed but not available locally, inspect
    `data-manifest` or MCP `get_data_manifest`, then fetch the matching
    `datapack-schema-surface` entry before relying on it.
-6. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
+7. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
    describing command or vanilla data additions/removals.
-7. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
+8. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
    datapack JSON field shapes. Treat this as observed vanilla data, not a normative schema.
-8. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+9. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-9. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+10. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
+  `minecraft-skills fact-surfaces --domain datapack`,
   `minecraft-skills support-matrix`, `minecraft-skills data-manifest`,
   `minecraft-skills fetch-data datapack-schema-surface --version <version>`,
   `minecraft-skills compare-versions <from> <to>`, `minecraft-skills server-reports <version>`,

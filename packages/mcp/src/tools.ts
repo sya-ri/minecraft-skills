@@ -16,6 +16,7 @@ import {
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
+  getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -29,6 +30,7 @@ import {
   getVersionDetail,
   listCachedDataFiles,
   listDomains,
+  listFactSurfaces,
   listPackFormats,
   listReferences,
   listSkills,
@@ -100,6 +102,30 @@ export const tools: ToolDefinition[] = [
         name: { type: "string" },
       },
       required: ["name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_fact_surfaces",
+    description:
+      "List machine-verifiable minecraft-skills fact surfaces, including guarantees and non-guarantees.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_fact_surface",
+    description: "Get one minecraft-skills fact surface by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
       additionalProperties: false,
     },
   },
@@ -584,6 +610,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_skill requires string name");
       }
       return text(getSkillPayload(args.name));
+    }
+    if (name === "list_fact_surfaces") {
+      return text(
+        listFactSurfaces({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_fact_surface") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_fact_surface requires string id");
+      }
+      return text(getFactSurface(args.id));
     }
     if (name === "get_coverage_summary") {
       return text(getCoverageSummary());

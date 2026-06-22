@@ -7,8 +7,11 @@ export const Source = type({
   "retrievedAt?": "string",
 });
 
+export const DomainId = type("'datapack' | 'resourcepack' | 'paper-plugin'");
+export const Edition = type("'java'");
+
 export const Domain = type({
-  id: "'datapack' | 'resourcepack' | 'paper-plugin'",
+  id: DomainId,
   skill: "string",
   title: "string",
   description: "string",
@@ -18,14 +21,14 @@ export const Domain = type({
 
 export const Reference = type({
   id: "string",
-  domain: "'datapack' | 'resourcepack' | 'paper-plugin'",
+  domain: DomainId,
   title: "string",
   path: "string",
 });
 
 export const Skill = type({
   name: "string",
-  domain: "'datapack' | 'resourcepack' | 'paper-plugin'",
+  domain: DomainId,
   path: "string",
   skillFile: "string",
   agentMetadata: "string",
@@ -52,6 +55,26 @@ export const Catalog = type({
   domains: Domain.array(),
   skills: Skill.array(),
   references: Reference.array(),
+});
+
+export const FactSurface = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  dataKind: "string",
+  coverage: "string",
+  provenance: "string",
+  guarantees: "string[]",
+  nonGuarantees: "string[]",
+  cli: "string[]",
+  mcp: "string[]",
+  packageApis: "string[]",
+});
+
+export const FactSurfaceIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  surfaces: FactSurface.array(),
 });
 
 export const VersionSummary = type({
@@ -349,10 +372,9 @@ export const JavaReportsSummary = type({
   sources: Source.array(),
 });
 
-export const DomainId = type("'datapack' | 'resourcepack' | 'paper-plugin'");
-export const Edition = type("'java'");
-
 export type CatalogData = typeof Catalog.infer;
+export type FactSurfaceData = typeof FactSurface.infer;
+export type FactSurfaceIndexData = typeof FactSurfaceIndex.infer;
 export type DomainData = typeof Domain.infer;
 export type SkillData = typeof Skill.infer;
 export type ReferenceData = typeof Reference.infer;
