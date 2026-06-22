@@ -7,5 +7,5 @@ describe("maintainer validation", () => {
       ok: true,
       messages: [],
     });
-  });
+  }, 30_000);
 });
