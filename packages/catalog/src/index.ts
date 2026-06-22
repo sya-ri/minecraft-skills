@@ -612,6 +612,40 @@ export type CoverageSummary = {
 
 export type VanillaPathDomain = "datapack" | "resourcepack";
 
+export type PackFileClassificationDomain = "datapack" | "resourcepack" | "unknown";
+
+export type PackFileClassification = {
+  path: string;
+  domain: PackFileClassificationDomain;
+  kind: string;
+  namespace: string | null;
+  extension: string | null;
+  json: boolean;
+  schemaAvailable: boolean;
+  schemaKind: string | null;
+  notes: string[];
+};
+
+export type PackFileClassificationOptions = {
+  paths: string[];
+  domain?: "datapack" | "resourcepack";
+};
+
+export type PackFileClassificationResult = {
+  schemaVersion: 1;
+  requestedDomain?: "datapack" | "resourcepack";
+  totalFiles: number;
+  classifiedFiles: number;
+  schemaAvailableFiles: number;
+  kinds: Array<{
+    domain: PackFileClassificationDomain;
+    kind: string;
+    count: number;
+    schemaAvailable: boolean;
+  }>;
+  files: PackFileClassification[];
+};
+
 export type VanillaPathSearchOptions = {
   edition?: string;
   version?: string;
@@ -2286,6 +2320,183 @@ export function getResourcepackModelSummary(
     throw new Error(`No bundled resourcepack model summary for ${editionId} ${version}`);
   }
   return ResourcepackModelSummary.assert(readDataJson(modelsPath));
+}
+
+function pathExtension(path: string): string | null {
+  const file = path.split("/").at(-1) ?? "";
+  const dot = file.lastIndexOf(".");
+  return dot === -1 ? null : file.slice(dot + 1).toLowerCase();
+}
+
+function classifyDatapackPath(path: string): PackFileClassification | undefined {
+  const normalized = path.replaceAll("\\", "/").replace(/^\/+/, "");
+  if (normalized === "pack.mcmeta") {
+    return {
+      path,
+      domain: "datapack",
+      kind: "pack-metadata",
+      namespace: null,
+      extension: "mcmeta",
+      json: true,
+      schemaAvailable: false,
+      schemaKind: null,
+      notes: ["pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous."],
+    };
+  }
+
+  const parts = normalized.split("/");
+  if (parts[0] !== "data" || !parts[1] || !parts[2]) {
+    return undefined;
+  }
+
+  const extension = pathExtension(normalized);
+  const json = extension === "json";
+  let kind = parts[2];
+  if (parts[2] === "tags") {
+    kind = parts[3] ? `tag/${parts[3]}` : "tag";
+  } else if (parts[2] === "worldgen") {
+    kind = parts[3] ? `worldgen/${parts[3]}` : "worldgen";
+  } else if (parts[2] === "functions" || parts[2] === "function") {
+    kind = "function";
+  } else if (parts[2] === "structures" || parts[2] === "structure") {
+    kind = "structure";
+  }
+
+  const schemaAvailable = json && parts[2] !== "tags" && parts[2] !== "functions";
+  return {
+    path,
+    domain: "datapack",
+    kind,
+    namespace: parts[1],
+    extension,
+    json,
+    schemaAvailable,
+    schemaKind: schemaAvailable ? kind : null,
+    notes: schemaAvailable
+      ? ["Schema data is an observed vanilla JSON shape, not a normative validation schema."]
+      : [],
+  };
+}
+
+function classifyResourcepackPath(path: string): PackFileClassification | undefined {
+  const normalized = path.replaceAll("\\", "/").replace(/^\/+/, "");
+  if (normalized === "pack.mcmeta") {
+    return {
+      path,
+      domain: "resourcepack",
+      kind: "pack-metadata",
+      namespace: null,
+      extension: "mcmeta",
+      json: true,
+      schemaAvailable: false,
+      schemaKind: null,
+      notes: ["pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous."],
+    };
+  }
+
+  const parts = normalized.split("/");
+  if (parts[0] !== "assets" || !parts[1] || !parts[2]) {
+    return undefined;
+  }
+
+  const extension = pathExtension(normalized);
+  const json = extension === "json";
+  let kind = parts[2];
+  let schemaKind: string | null = null;
+  if (parts[2] === "models") {
+    kind = "model";
+    schemaKind = "model";
+  } else if (parts[2] === "items") {
+    kind = "item-definition";
+    schemaKind = "item-definition";
+  } else if (parts[2] === "blockstates") {
+    kind = "blockstate";
+  } else if (parts[2] === "lang") {
+    kind = "language";
+  } else if (parts[2] === "textures") {
+    kind = `texture/${parts[3] ?? "unknown"}`;
+  } else if (parts[2] === "sounds.json") {
+    kind = "sounds";
+  }
+
+  return {
+    path,
+    domain: "resourcepack",
+    kind,
+    namespace: parts[1],
+    extension,
+    json,
+    schemaAvailable: json && schemaKind !== null,
+    schemaKind,
+    notes:
+      json && schemaKind
+        ? ["Schema data is an observed vanilla model/item shape, not a normative validation schema."]
+        : [],
+  };
+}
+
+function classifyPackPath(
+  path: string,
+  domain?: "datapack" | "resourcepack",
+): PackFileClassification {
+  const datapack = domain !== "resourcepack" ? classifyDatapackPath(path) : undefined;
+  const resourcepack = domain !== "datapack" ? classifyResourcepackPath(path) : undefined;
+  const classified = domain === "resourcepack" ? resourcepack : datapack ?? resourcepack;
+  if (classified) {
+    return classified;
+  }
+  return {
+    path,
+    domain: "unknown",
+    kind: "unknown",
+    namespace: null,
+    extension: pathExtension(path),
+    json: pathExtension(path) === "json",
+    schemaAvailable: false,
+    schemaKind: null,
+    notes: ["Path does not match a known Java datapack or resourcepack file location."],
+  };
+}
+
+export function classifyPackFiles(
+  options: PackFileClassificationOptions,
+): PackFileClassificationResult {
+  const domain =
+    options.domain === "datapack" || options.domain === "resourcepack" ? options.domain : undefined;
+  const files = options.paths
+    .map((path) => path.trim())
+    .filter(Boolean)
+    .map((path) => classifyPackPath(path, domain));
+  const kinds = new Map<string, PackFileClassificationResult["kinds"][number]>();
+  for (const file of files) {
+    const key = `${file.domain}\t${file.kind}\t${file.schemaAvailable}`;
+    const current = kinds.get(key);
+    if (current) {
+      current.count += 1;
+    } else {
+      kinds.set(key, {
+        domain: file.domain,
+        kind: file.kind,
+        count: 1,
+        schemaAvailable: file.schemaAvailable,
+      });
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    ...(domain ? { requestedDomain: domain } : {}),
+    totalFiles: files.length,
+    classifiedFiles: files.filter((file) => file.domain !== "unknown").length,
+    schemaAvailableFiles: files.filter((file) => file.schemaAvailable).length,
+    kinds: [...kinds.values()].sort(
+      (left, right) =>
+        left.domain.localeCompare(right.domain) ||
+        left.kind.localeCompare(right.kind) ||
+        Number(right.schemaAvailable) - Number(left.schemaAvailable),
+    ),
+    files,
+  };
 }
 
 function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimit: number): number {

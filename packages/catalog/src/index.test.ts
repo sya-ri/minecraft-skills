@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPaperEventSearchUrl,
+  classifyPackFiles,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -496,6 +497,46 @@ describe("catalog", () => {
     expect(version.packFormats.data).toBe(4);
     expect(version.packFormats.resource).toBe(4);
     expect(version.packFormats.status).toBe("extracted");
+  });
+
+  it("classifies datapack and resourcepack file paths", () => {
+    const result = classifyPackFiles({
+      paths: [
+        "data/example/advancement/root.json",
+        "data/example/functions/tick.mcfunction",
+        "assets/example/models/item/widget.json",
+        "assets/example/textures/item/widget.png",
+        "README.md",
+      ],
+    });
+
+    expect(result.totalFiles).toBe(5);
+    expect(result.classifiedFiles).toBe(4);
+    expect(result.files).toContainEqual(
+      expect.objectContaining({
+        path: "data/example/advancement/root.json",
+        domain: "datapack",
+        kind: "advancement",
+        schemaAvailable: true,
+        schemaKind: "advancement",
+      }),
+    );
+    expect(result.files).toContainEqual(
+      expect.objectContaining({
+        path: "assets/example/models/item/widget.json",
+        domain: "resourcepack",
+        kind: "model",
+        schemaAvailable: true,
+        schemaKind: "model",
+      }),
+    );
+    expect(result.files).toContainEqual(
+      expect.objectContaining({
+        path: "README.md",
+        domain: "unknown",
+        schemaAvailable: false,
+      }),
+    );
   });
 
   it("keeps Minecraft Wiki prose out of redistributable data", () => {

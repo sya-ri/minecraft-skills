@@ -2,6 +2,7 @@ import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
   cleanCachedData,
+  classifyPackFiles,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -642,6 +643,20 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "classify_pack_files",
+    description:
+      "Classify datapack or resourcepack file paths into known Minecraft file kinds and report whether observed schema data is available.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        paths: { type: "array", items: { type: "string" } },
+        domain: { type: "string", enum: ["datapack", "resourcepack"] },
+      },
+      required: ["paths"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_commands",
     description:
       "Search executable Minecraft command syntax paths generated from official server reports.",
@@ -1231,6 +1246,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         schemaOptions.limit = args.limit;
       }
       return text(compareDatapackSchema(schemaOptions));
+    }
+    if (name === "classify_pack_files") {
+      if (!Array.isArray(args.paths) || !args.paths.every((path) => typeof path === "string")) {
+        throw new Error("classify_pack_files requires string[] paths");
+      }
+      const domain =
+        args.domain === "datapack" || args.domain === "resourcepack" ? args.domain : undefined;
+      return text(
+        classifyPackFiles({
+          paths: args.paths,
+          ...(domain ? { domain } : {}),
+        }),
+      );
     }
     if (name === "search_commands") {
       const commandOptions: CommandSearchOptions = {

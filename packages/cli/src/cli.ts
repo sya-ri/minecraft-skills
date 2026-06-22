@@ -6,6 +6,7 @@ import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
   cleanCachedData,
+  classifyPackFiles,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -212,9 +213,11 @@ function normalizeSubcommands(argv: string[]): string[] {
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
     "datapack compare-schema": "compare-datapack-schema",
+    "datapack classify-files": "classify-files",
     "datapack commands": "commands",
     "datapack compare-commands": "compare-commands",
     "resourcepack models": "resourcepack-models",
+    "resourcepack classify-files": "classify-files",
     "resourcepack search-models": "search-models",
     "skill list": "skills",
     "skill show": "skill",
@@ -231,6 +234,9 @@ function normalizeSubcommands(argv: string[]): string[] {
   if (groupedCommand === "datapack compare-vanilla-paths") {
     return ["compare-vanilla-paths", ...withDefaultDomain(rest, "datapack")];
   }
+  if (groupedCommand === "datapack classify-files") {
+    return ["classify-files", ...withDefaultDomain(rest, "datapack")];
+  }
   if (group === "datapack") {
     const command = normalizeDomainAuthoringSubcommand("datapack", subcommand, rest);
     if (command) {
@@ -242,6 +248,9 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
   if (groupedCommand === "resourcepack compare-vanilla-paths") {
     return ["compare-vanilla-paths", ...withDefaultDomain(rest, "resourcepack")];
+  }
+  if (groupedCommand === "resourcepack classify-files") {
+    return ["classify-files", ...withDefaultDomain(rest, "resourcepack")];
   }
   if (group === "resourcepack") {
     const command = normalizeDomainAuthoringSubcommand("resourcepack", subcommand, rest);
@@ -339,6 +348,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "datapack-schema": "datapack schema",
   "search-datapack-schema": "datapack search-schema",
   "compare-datapack-schema": "datapack compare-schema",
+  "classify-files": "datapack classify-files or resourcepack classify-files",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
   "resourcepack-models": "resourcepack models",
@@ -504,10 +514,12 @@ Grouped commands:
   minecraft-skills datapack schema [version] [--edition java]
   minecraft-skills datapack search-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
   minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
+  minecraft-skills datapack classify-files <path...>
   minecraft-skills datapack server-reports [version] [--edition java]
   minecraft-skills datapack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills resourcepack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills resourcepack models [version] [--edition java]
+  minecraft-skills resourcepack classify-files <path...>
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills plugin paper info
   minecraft-skills plugin paper api|api-index|api-surface [version]
@@ -551,11 +563,11 @@ Command reference:
   minecraft latest|list|pack-formats|show|compare|support|support-matrix|vanilla-inventory
                  Inspect bundled version metadata and per-domain version support.
   datapack server-reports|schema|search-schema|compare-schema|commands|compare-commands
-                 Inspect command paths and observed datapack JSON shapes.
+                 Inspect command paths, observed datapack JSON shapes, and datapack file kinds.
   datapack vanilla-paths|compare-vanilla-paths
                  Search or compare bundled vanilla datapack paths.
   resourcepack vanilla-paths|compare-vanilla-paths|models|search-models
-                 Inspect vanilla assets, model summaries, and item/model paths.
+                 Inspect vanilla assets, model summaries, item/model paths, and resourcepack file kinds.
   plugin paper info|api|api-index|compare-api|api-surface|types|members|compare-api-surface|events
                  Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
   reference list Print generated skill references.
@@ -1125,6 +1137,27 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         schemaOptions.contains = readOption(args, "--contains", "");
       }
       printJson(output, compareDatapackSchema(schemaOptions));
+      return 0;
+    }
+
+    if (command === "classify-files") {
+      const paths = positionalArgs(args);
+      if (paths.length === 0) {
+        throw new Error("classify-files command requires at least one path");
+      }
+      const domainText = readOption(args, "--domain", "");
+      if (domainText && domainText !== "datapack" && domainText !== "resourcepack") {
+        throw new Error("classify-files --domain must be datapack or resourcepack");
+      }
+      const domain =
+        domainText === "datapack" || domainText === "resourcepack" ? domainText : undefined;
+      printJson(
+        output,
+        classifyPackFiles({
+          paths,
+          ...(domain ? { domain } : {}),
+        }),
+      );
       return 0;
     }
 
