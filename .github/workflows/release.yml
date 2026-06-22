@@ -44,6 +44,13 @@ jobs:
           echo "Public publishing is only allowed from main."
           exit 1
 
+      - name: Configure npm authentication
+        if: ${{ !inputs.dry_run }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          printf '%s\n' 'registry=https://registry.npmjs.org/' '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > ~/.npmrc
+
       - name: Publish public packages
         if: ${{ !inputs.dry_run }}
         env:
