@@ -22,6 +22,7 @@ import {
   fetchData,
   getAuthoringChecklist,
   getAuthoringContext,
+  getAuthoringDiagnostic,
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
@@ -44,6 +45,7 @@ import {
   getSupportMatrix,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
   listClaimPolicies,
@@ -73,6 +75,8 @@ const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
+const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
+const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
 const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirements = listOutputRequirements({ domain: "paper-plugin" });

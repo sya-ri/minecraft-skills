@@ -1,0 +1,356 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills authoring recipes, claim policies, output requirements, and fact surfaces",
+  "diagnostics": [
+    {
+      "id": "target-version-missing",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Target version is missing or only implied",
+      "severity": "error",
+      "detectWhen": [
+        "the generated answer or files depend on Minecraft version-specific behavior",
+        "the user did not name a target Java version",
+        "the answer uses latest-version data without saying so"
+      ],
+      "requiredChecks": [
+        "resolve the target with authoring-context or preflight",
+        "state the exact resolved version or latest-bundled-version assumption",
+        "carry that version through every generated file, command, path, or API claim"
+      ],
+      "evidence": [
+        "resolvedVersion from authoring-context or preflight",
+        "version detail for pack formats and domain coverage"
+      ],
+      "tools": {
+        "cli": ["authoring-context", "preflight", "show-version", "version-support"],
+        "mcp": [
+          "get_authoring_context",
+          "get_authoring_preflight",
+          "get_version",
+          "list_version_support"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getAuthoringPreflight",
+          "getVersionDetail",
+          "listVersionSupport"
+        ]
+      },
+      "failIf": [
+        "version-sensitive output has no explicit resolved Minecraft Java version",
+        "latest is used without identifying the latest bundled version",
+        "facts from one version are presented as facts for another version without comparison evidence"
+      ],
+      "safeResponse": [
+        "Ask for a target version when the user can provide one.",
+        "If proceeding, state the exact latest bundled version assumption before generating output.",
+        "Mark missing target-version evidence as a gap instead of filling it from memory."
+      ],
+      "failureMode": "Generated output can look precise while silently targeting the wrong Minecraft version."
+    },
+    {
+      "id": "pack-format-unverified",
+      "domains": ["datapack", "resourcepack"],
+      "title": "pack.mcmeta pack_format is not verified for the target version",
+      "severity": "error",
+      "detectWhen": [
+        "the generated output creates or edits pack.mcmeta",
+        "the answer names a data or resource pack_format value",
+        "the task migrates a pack between Minecraft versions"
+      ],
+      "requiredChecks": [
+        "verify data pack format or resource pack format from target-version detail",
+        "compare versions when migration is requested",
+        "do not copy pack_format from neighboring versions without target-version evidence"
+      ],
+      "evidence": [
+        "version detail packFormats.data for datapacks",
+        "version detail packFormats.resource for resourcepacks",
+        "compare-versions output when explaining migration"
+      ],
+      "tools": {
+        "cli": ["show-version", "pack-formats", "compare-versions", "version-support"],
+        "mcp": ["get_version", "list_pack_formats", "compare_versions", "list_version_support"],
+        "packageApis": [
+          "getVersionDetail",
+          "listPackFormats",
+          "compareVersions",
+          "listVersionSupport"
+        ]
+      },
+      "failIf": [
+        "pack.mcmeta is emitted with a pack_format that was not checked for the target version",
+        "a null or unavailable pack format is replaced with a guessed value",
+        "migration advice omits changed pack format evidence"
+      ],
+      "safeResponse": [
+        "State the verified pack_format for the resolved target version.",
+        "If the value is unavailable, do not emit pack.mcmeta as verified.",
+        "Use comparison evidence when changing pack_format across versions."
+      ],
+      "failureMode": "Generated packs can fail to load because pack.mcmeta targets the wrong format."
+    },
+    {
+      "id": "datapack-command-unverified",
+      "domains": ["datapack"],
+      "title": "Datapack command syntax is not verified in command paths",
+      "severity": "error",
+      "detectWhen": [
+        "the generated output writes .mcfunction commands",
+        "the answer recommends execute, scoreboard, summon, data, function, or other version-sensitive command syntax",
+        "the task asks whether command syntax changed"
+      ],
+      "requiredChecks": [
+        "search target-version command paths for the command syntax",
+        "compare command paths for migration questions",
+        "treat command paths as parser-shape evidence only"
+      ],
+      "evidence": [
+        "command path search result for the target version",
+        "command comparison result when migration is requested",
+        "command-paths fact surface non-guarantees"
+      ],
+      "tools": {
+        "cli": ["commands", "compare-commands", "fact-surface"],
+        "mcp": ["search_commands", "compare_commands", "get_fact_surface"],
+        "packageApis": ["searchCommands", "compareCommands", "getFactSurface"]
+      },
+      "failIf": [
+        "a command form is emitted without a matching target-version command path or stated gap",
+        "parser path presence is described as runtime success or gameplay behavior",
+        "a missing command path is replaced with guessed syntax"
+      ],
+      "safeResponse": [
+        "Only present command syntax as verified when the command path exists for the target version.",
+        "State that command paths prove parser shape, not runtime behavior.",
+        "If no path is found, report the gap or provide a verified alternative."
+      ],
+      "failureMode": "Generated functions can contain plausible but unverified command syntax."
+    },
+    {
+      "id": "vanilla-path-unverified",
+      "domains": ["datapack", "resourcepack"],
+      "title": "Referenced vanilla data or asset path is not verified",
+      "severity": "error",
+      "detectWhen": [
+        "the generated output references minecraft namespace data or asset paths",
+        "the task edits models, textures, loot tables, recipes, tags, predicates, or functions that point at vanilla files",
+        "the task migrates vanilla paths between versions"
+      ],
+      "requiredChecks": [
+        "search target-version vanilla paths for each referenced path",
+        "compare paths when migration is requested",
+        "treat path presence as file existence only"
+      ],
+      "evidence": [
+        "vanilla path search result for the target version and domain",
+        "vanilla path comparison result when migration is requested",
+        "vanilla-paths fact surface non-guarantees"
+      ],
+      "tools": {
+        "cli": ["vanilla-paths", "compare-vanilla-paths", "fact-surface"],
+        "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_fact_surface"],
+        "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getFactSurface"]
+      },
+      "failIf": [
+        "a vanilla path is emitted without an exact target-version path match or stated gap",
+        "a path is invented from a naming convention",
+        "path presence is described as validating custom JSON or rendering behavior"
+      ],
+      "safeResponse": [
+        "Use exact path matches for vanilla references.",
+        "If no path is found, say the bundled path index did not verify it.",
+        "Keep behavior or rendering claims separate from path existence."
+      ],
+      "failureMode": "Generated packs can reference nonexistent vanilla files or overstate what path existence proves."
+    },
+    {
+      "id": "observed-json-overstated",
+      "domains": ["datapack", "resourcepack"],
+      "title": "Observed vanilla JSON shape is overstated as a complete schema",
+      "severity": "warning",
+      "detectWhen": [
+        "the answer claims JSON fields, required keys, optionality, or model/item definition shapes",
+        "the generated output uses observed datapack schema surfaces or resourcepack model summaries",
+        "the task asks whether a custom JSON field is valid"
+      ],
+      "requiredChecks": [
+        "search the relevant observed shape surface for target-version evidence",
+        "state that observed vanilla shape data is not a normative schema",
+        "avoid claiming custom validity, required fields, or semantics from observed examples alone"
+      ],
+      "evidence": [
+        "observed datapack schema field path match",
+        "resourcepack model or item definition summary match",
+        "fact surface non-guarantees for observed JSON surfaces"
+      ],
+      "tools": {
+        "cli": [
+          "search-datapack-schema",
+          "search-models",
+          "datapack-schema",
+          "resourcepack-models",
+          "fact-surfaces"
+        ],
+        "mcp": [
+          "search_datapack_schema",
+          "search_resourcepack_models",
+          "get_datapack_schema_surface",
+          "get_resourcepack_model_summary",
+          "list_fact_surfaces"
+        ],
+        "packageApis": [
+          "searchDatapackSchema",
+          "searchResourcepackModelPaths",
+          "getDatapackSchemaSurface",
+          "getResourcepackModelSummary",
+          "listFactSurfaces"
+        ]
+      },
+      "failIf": [
+        "observed vanilla JSON is called a complete or normative schema",
+        "observed examples are used to prove all valid custom fields",
+        "field semantics or rendering behavior are inferred from field path presence alone"
+      ],
+      "safeResponse": [
+        "Describe observed JSON as target-version vanilla examples.",
+        "State non-guarantees when the user asks about custom validity or behavior.",
+        "If the surface is missing but downloadable, fetch it before relying on shape claims."
+      ],
+      "failureMode": "Generated JSON can overclaim schema validity and mislead authors about custom pack behavior."
+    },
+    {
+      "id": "paper-api-member-unverified",
+      "domains": ["paper-plugin"],
+      "title": "Paper API type or member is not verified in the target API surface",
+      "severity": "error",
+      "detectWhen": [
+        "the generated output names Paper, Bukkit, or Adventure classes, methods, constructors, fields, or enum constants",
+        "the answer emits plugin code",
+        "the task asks whether an API member exists"
+      ],
+      "requiredChecks": [
+        "resolve Paper support for the target Minecraft version",
+        "search Paper API type and member surfaces for referenced names",
+        "state that Javadocs search indexes prove name presence only"
+      ],
+      "evidence": [
+        "Paper support metadata and API reference for the target version",
+        "Paper Javadocs type search result",
+        "Paper Javadocs member search result when naming members"
+      ],
+      "tools": {
+        "cli": ["paper", "paper-api", "paper-types", "paper-members", "paper-api-surface"],
+        "mcp": [
+          "get_paper_plugin_data",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_paper_api_surface"
+        ],
+        "packageApis": [
+          "getPaperPluginData",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getPaperApiSurface"
+        ]
+      },
+      "failIf": [
+        "plugin code references an API type or member that was not found or explicitly marked unverified",
+        "dependency coordinates are emitted for an unsupported Paper version",
+        "name presence is used to prove behavior, nullability, overload semantics, or thread safety"
+      ],
+      "safeResponse": [
+        "Use only API names found in the target Paper API surface.",
+        "When names are missing, state that the surface did not verify them.",
+        "Separate name presence from behavior and thread-safety claims."
+      ],
+      "failureMode": "Generated plugins can fail to compile or overstate API behavior from a name match."
+    },
+    {
+      "id": "paper-event-candidate-unverified",
+      "domains": ["paper-plugin"],
+      "title": "Paper or Bukkit event candidate is not verified before listener code",
+      "severity": "error",
+      "detectWhen": [
+        "the generated output creates listener code",
+        "the task asks which event class to use",
+        "the answer relies on event search results"
+      ],
+      "requiredChecks": [
+        "use event search as candidate discovery only",
+        "verify the selected event type against the target Paper API surface",
+        "verify referenced event members before emitting listener code"
+      ],
+      "evidence": [
+        "spigot-event-list candidate result when event discovery was needed",
+        "Paper API type search result for the selected event class",
+        "Paper API member search results for referenced event methods"
+      ],
+      "tools": {
+        "cli": ["paper-events", "paper-types", "paper-members", "paper-api-surface"],
+        "mcp": [
+          "search_paper_events",
+          "search_paper_types",
+          "search_paper_members",
+          "get_paper_api_surface"
+        ],
+        "packageApis": [
+          "searchPaperEvents",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getPaperApiSurface"
+        ]
+      },
+      "failIf": [
+        "listener code is emitted for an event class that was only found as a candidate",
+        "event member methods are invented or unverified",
+        "event firing order or cancellation behavior is inferred from event name presence"
+      ],
+      "safeResponse": [
+        "Treat event search results as candidates until API type verification succeeds.",
+        "If the event type is not verified, do not emit listener code as correct.",
+        "State behavior gaps instead of inferring event semantics."
+      ],
+      "failureMode": "Generated listener code can target nonexistent event classes or unsupported event behavior."
+    },
+    {
+      "id": "paper-threading-assumption",
+      "domains": ["paper-plugin"],
+      "title": "Threading, scheduler, or Folia behavior is assumed without documentation evidence",
+      "severity": "warning",
+      "detectWhen": [
+        "the generated plugin code touches worlds, entities, chunks, scheduling, async work, or Folia-sensitive APIs",
+        "the answer claims code is thread-safe or Folia-safe",
+        "the answer recommends scheduler usage"
+      ],
+      "requiredChecks": [
+        "inspect Paper scheduler and Folia documentation links from the API reference",
+        "avoid deriving thread safety from type or member name presence",
+        "state assumptions when behavior documentation was not inspected"
+      ],
+      "evidence": [
+        "Paper API reference docs links for scheduling and Folia",
+        "folia-or-thread-safety claim policy",
+        "paper-api-surface non-guarantees"
+      ],
+      "tools": {
+        "cli": ["paper-api", "claim-policy", "fact-surface"],
+        "mcp": ["get_paper_api_reference", "get_claim_policy", "get_fact_surface"],
+        "packageApis": ["getPaperApiReference", "getClaimPolicy", "getFactSurface"]
+      },
+      "failIf": [
+        "thread safety or Folia safety is claimed from Javadocs type/member presence alone",
+        "global scheduler assumptions are hidden when the code touches Folia-sensitive state",
+        "async world, entity, or chunk access is presented as safe without documentation-backed context"
+      ],
+      "safeResponse": [
+        "Flag scheduler and Folia assumptions explicitly.",
+        "Use Paper documentation links as provenance for behavior claims without copying prose.",
+        "Avoid safety guarantees when only API surface data was checked."
+      ],
+      "failureMode": "Generated plugins can compile but be unsafe for threading, scheduling, or Folia contexts."
+    }
+  ]
+}

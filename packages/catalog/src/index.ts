@@ -22,6 +22,10 @@ import {
   AuthoringChecklistIndex,
   type AuthoringChecklistIndexData,
   type AuthoringChecklistStepData,
+  AuthoringDiagnostic,
+  type AuthoringDiagnosticData,
+  AuthoringDiagnosticIndex,
+  type AuthoringDiagnosticIndexData,
   AuthoringGuardrail,
   type AuthoringGuardrailData,
   AuthoringGuardrailIndex,
@@ -88,6 +92,8 @@ export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
   AuthoringChecklistStepData,
+  AuthoringDiagnosticData,
+  AuthoringDiagnosticIndexData,
   AuthoringGuardrailData,
   AuthoringGuardrailIndexData,
   AuthoringRecipeData,
@@ -161,6 +167,10 @@ export type AuthoringRecipeQuery = {
 };
 
 export type AuthoringGuardrailQuery = {
+  domain?: string;
+};
+
+export type AuthoringDiagnosticQuery = {
   domain?: string;
 };
 
@@ -462,6 +472,7 @@ export type AuthoringContext = {
   preflight: AuthoringPreflight;
   recipes: AuthoringRecipeData[];
   guardrails: AuthoringGuardrailData[];
+  diagnostics: AuthoringDiagnosticData[];
   claimPolicies: ClaimPolicyData[];
   outputRequirements: OutputRequirementData[];
   responsePatterns: ResponsePatternData[];
@@ -787,6 +798,25 @@ export function getAuthoringGuardrail(id: string): AuthoringGuardrailData {
   return AuthoringGuardrail.assert(found);
 }
 
+export function listAuthoringDiagnostics(
+  query: AuthoringDiagnosticQuery = {},
+): AuthoringDiagnosticData[] {
+  const index = AuthoringDiagnosticIndex.assert(readDataJson("authoring-diagnostics.json"));
+  if (!query.domain) {
+    return index.diagnostics;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.diagnostics.filter((diagnostic) => diagnostic.domains.includes(domain));
+}
+
+export function getAuthoringDiagnostic(id: string): AuthoringDiagnosticData {
+  const found = listAuthoringDiagnostics().find((diagnostic) => diagnostic.id === id);
+  if (!found) {
+    throw new Error(`Unknown authoring diagnostic: ${id}`);
+  }
+  return AuthoringDiagnostic.assert(found);
+}
+
 export function listClaimPolicies(query: ClaimPolicyQuery = {}): ClaimPolicyData[] {
   const index = ClaimPolicyIndex.assert(readDataJson("claim-policies.json"));
   if (!query.domain) {
@@ -1110,6 +1140,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     preflight,
     recipes: listAuthoringRecipes({ domain: preflight.domain }),
     guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
+    diagnostics: listAuthoringDiagnostics({ domain: preflight.domain }),
     claimPolicies: listClaimPolicies({ domain: preflight.domain }),
     outputRequirements: listOutputRequirements({ domain: preflight.domain }),
     responsePatterns: listResponsePatterns({ domain: preflight.domain }),

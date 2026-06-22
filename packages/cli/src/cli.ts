@@ -17,6 +17,7 @@ import {
   fetchData,
   getAuthoringChecklist,
   getAuthoringContext,
+  getAuthoringDiagnostic,
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
@@ -44,6 +45,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
   listCachedDataFiles,
@@ -127,6 +129,8 @@ Usage:
   minecraft-skills authoring-recipe <id>
   minecraft-skills authoring-guardrails [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-guardrail <id>
+  minecraft-skills authoring-diagnostics [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills authoring-diagnostic <id>
   minecraft-skills authoring-context <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills claim-policies [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills claim-policy <id>
@@ -194,8 +198,12 @@ Commands:
                  List output guardrails that prevent unsupported Minecraft authoring claims.
   authoring-guardrail
                  Print one output guardrail by id.
+  authoring-diagnostics
+                 List pre-finalization diagnostics for generated Minecraft files, code, and answers.
+  authoring-diagnostic
+                 Print one authoring diagnostic by id.
   authoring-context
-                 Print preflight, recipes, intent lookups, and evidence for one domain/version.
+                 Print preflight, recipes, diagnostics, intent lookups, and evidence for one domain/version.
   claim-policies
                  List required evidence and allowed wording for Minecraft authoring claim types.
   claim-policy   Print one claim policy by id.
@@ -417,6 +425,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-guardrail command requires an id");
       }
       printJson(output, getAuthoringGuardrail(id));
+      return 0;
+    }
+
+    if (command === "authoring-diagnostics") {
+      printJson(output, {
+        schemaVersion: 1,
+        diagnostics: listAuthoringDiagnostics({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "authoring-diagnostic") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("authoring-diagnostic command requires an id");
+      }
+      printJson(output, getAuthoringDiagnostic(id));
       return 0;
     }
 

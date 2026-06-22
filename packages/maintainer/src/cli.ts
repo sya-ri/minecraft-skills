@@ -19,6 +19,7 @@ import {
   getPaperPluginData,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
   listClaimPolicies,
@@ -330,6 +331,60 @@ function requireAuthoringGuardrails(root: string, messages: string[]): void {
       messages.push(`${prefix} must list required evidence`);
     }
     if (!guardrail.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+  }
+}
+
+function requireAuthoringDiagnostics(
+  root: string,
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  requireDataFile(root, "authoring-diagnostics.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  for (const diagnostic of listAuthoringDiagnostics()) {
+    const prefix = `authoring diagnostic ${diagnostic.id}`;
+    if (ids.has(diagnostic.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(diagnostic.id);
+    if (diagnostic.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of diagnostic.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (diagnostic.severity !== "error" && diagnostic.severity !== "warning") {
+      messages.push(`${prefix} must use severity error or warning`);
+    }
+    if (diagnostic.detectWhen.length === 0) {
+      messages.push(`${prefix} must describe when to detect it`);
+    }
+    if (diagnostic.requiredChecks.length === 0) {
+      messages.push(`${prefix} must list required checks`);
+    }
+    if (diagnostic.evidence.length === 0) {
+      messages.push(`${prefix} must list evidence expectations`);
+    }
+    if (
+      diagnostic.tools.cli.length === 0 &&
+      diagnostic.tools.mcp.length === 0 &&
+      diagnostic.tools.packageApis.length === 0
+    ) {
+      messages.push(`${prefix} must expose at least one CLI, MCP, or package API entrypoint`);
+    }
+    requirePublicEntrypoints(prefix, diagnostic.tools, publicEntrypoints, messages);
+    if (diagnostic.failIf.length === 0) {
+      messages.push(`${prefix} must list fail conditions`);
+    }
+    if (diagnostic.safeResponse.length === 0) {
+      messages.push(`${prefix} must list safe responses`);
+    }
+    if (!diagnostic.failureMode) {
       messages.push(`${prefix} must describe a failure mode`);
     }
   }
@@ -681,6 +736,7 @@ export function validateRepository(): ValidationResult {
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
   requireAuthoringGuardrails(root, messages);
+  requireAuthoringDiagnostics(root, publicEntrypoints, messages);
   requireAuthoringRecipes(root, publicEntrypoints, messages);
   requireClaimPolicies(root, publicEntrypoints, messages);
   requireOutputRequirements(root, messages);

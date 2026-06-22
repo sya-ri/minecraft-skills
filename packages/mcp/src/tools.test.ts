@@ -17,6 +17,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_recipe");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_guardrails");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_guardrail");
+    expect(tools.map((tool) => tool.name)).toContain("list_authoring_diagnostics");
+    expect(tools.map((tool) => tool.name)).toContain("get_authoring_diagnostic");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_context");
     expect(tools.map((tool) => tool.name)).toContain("list_claim_policies");
     expect(tools.map((tool) => tool.name)).toContain("get_claim_policy");
@@ -85,6 +87,8 @@ describe("MCP tools", () => {
         "get_authoring_recipe",
         "list_authoring_guardrails",
         "get_authoring_guardrail",
+        "list_authoring_diagnostics",
+        "get_authoring_diagnostic",
         "get_authoring_context",
         "list_claim_policies",
         "get_claim_policy",
@@ -190,6 +194,20 @@ describe("MCP tools", () => {
     expect(single.content[0]?.text).toContain("Javadocs package, type, and member indexes");
   });
 
+  it("calls authoring diagnostic tools", async () => {
+    const list = await callMinecraftSkillsTool("list_authoring_diagnostics", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "paper-api-member-unverified"');
+    expect(list.content[0]?.text).toContain('"id": "paper-threading-assumption"');
+
+    const single = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-api-member-unverified",
+    });
+    expect(single.content[0]?.text).toContain('"severity": "error"');
+    expect(single.content[0]?.text).toContain("searchPaperMembers");
+  });
+
   it("calls claim policy tools", async () => {
     const list = await callMinecraftSkillsTool("list_claim_policies", {
       domain: "paper-plugin",
@@ -250,6 +268,8 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"recipes"');
     expect(result.content[0]?.text).toContain('"id": "paper-event-listener"');
     expect(result.content[0]?.text).toContain('"guardrails"');
+    expect(result.content[0]?.text).toContain('"diagnostics"');
+    expect(result.content[0]?.text).toContain('"id": "paper-api-member-unverified"');
     expect(result.content[0]?.text).toContain('"claimPolicies"');
     expect(result.content[0]?.text).toContain('"outputRequirements"');
     expect(result.content[0]?.text).toContain('"responsePatterns"');

@@ -26,8 +26,10 @@ version-specific facts.
 6. Use `authoring-context resourcepack <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "resourcepack", version })` when you need preflight, intent
    routing, and evidence in one payload.
-7. Use `authoring-guardrails --domain resourcepack`, MCP `list_authoring_guardrails`, or package
-   `listAuthoringGuardrails({ domain: "resourcepack" })` before finalizing generated files.
+7. Use `authoring-guardrails --domain resourcepack` and
+   `authoring-diagnostics --domain resourcepack`, MCP `list_authoring_guardrails` and
+   `list_authoring_diagnostics`, or package `listAuthoringGuardrails({ domain: "resourcepack" })`
+   and `listAuthoringDiagnostics({ domain: "resourcepack" })` before finalizing generated files.
 8. Use `claim-policies --domain resourcepack`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "resourcepack" })` before making version, path, model, or item
    definition claims.
@@ -63,6 +65,8 @@ version-specific facts.
   `minecraft-skills authoring-recipes --domain resourcepack`,
   `minecraft-skills authoring-recipe <id>`,
   `minecraft-skills authoring-guardrails --domain resourcepack`,
+  `minecraft-skills authoring-diagnostics --domain resourcepack`,
+  `minecraft-skills authoring-diagnostic <id>`,
   `minecraft-skills claim-policies --domain resourcepack`,
   `minecraft-skills output-requirements --domain resourcepack`,
   `minecraft-skills response-patterns --domain resourcepack`,

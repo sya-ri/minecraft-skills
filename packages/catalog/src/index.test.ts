@@ -9,6 +9,7 @@ import {
   compareVersions,
   getAuthoringChecklist,
   getAuthoringContext,
+  getAuthoringDiagnostic,
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
@@ -33,6 +34,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
   listClaimPolicies,
@@ -152,6 +154,27 @@ describe("catalog", () => {
     expect(() => getAuthoringGuardrail("missing")).toThrow("Unknown authoring guardrail: missing");
   });
 
+  it("lists authoring diagnostics for pre-finalization checks", () => {
+    const paperDiagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
+    expect(paperDiagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-api-member-unverified",
+    );
+    expect(paperDiagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-threading-assumption",
+    );
+
+    const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf).toContain(
+      "plugin code references an API type or member that was not found or explicitly marked unverified",
+    );
+    expect(diagnostic.tools.packageApis).toContain("searchPaperMembers");
+
+    expect(() => getAuthoringDiagnostic("missing")).toThrow(
+      "Unknown authoring diagnostic: missing",
+    );
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
@@ -236,6 +259,9 @@ describe("catalog", () => {
     expect(context.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
     expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
+    );
+    expect(context.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-api-member-unverified",
     );
     expect(context.claimPolicies.map((policy) => policy.id)).toContain(
       "paper-type-or-member-exists",

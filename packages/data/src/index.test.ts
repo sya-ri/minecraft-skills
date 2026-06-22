@@ -71,6 +71,15 @@ describe("@minecraft-skills/data", () => {
     );
   });
 
+  it("loads bundled authoring diagnostic JSON", () => {
+    const diagnostics = readDataJson<{ diagnostics: Array<{ id: string }> }>(
+      "authoring-diagnostics.json",
+    );
+    expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-api-member-unverified",
+    );
+  });
+
   it("loads bundled claim policy JSON", () => {
     const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

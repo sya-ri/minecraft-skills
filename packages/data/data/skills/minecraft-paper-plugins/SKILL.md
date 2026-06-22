@@ -23,8 +23,11 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 5. Use `authoring-context paper-plugin <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "paper-plugin", version })` when you need preflight, intent
    routing, and evidence in one payload.
-6. Use `authoring-guardrails --domain paper-plugin`, MCP `list_authoring_guardrails`, or package
-   `listAuthoringGuardrails({ domain: "paper-plugin" })` before finalizing generated plugin code.
+6. Use `authoring-guardrails --domain paper-plugin` and
+   `authoring-diagnostics --domain paper-plugin`, MCP `list_authoring_guardrails` and
+   `list_authoring_diagnostics`, or package `listAuthoringGuardrails({ domain: "paper-plugin" })`
+   and `listAuthoringDiagnostics({ domain: "paper-plugin" })` before finalizing generated plugin
+   code.
 7. Use `claim-policies --domain paper-plugin`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "paper-plugin" })` before making Paper support, API, event, or
    Folia/thread-safety claims.
@@ -70,6 +73,8 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
   `minecraft-skills authoring-recipes --domain paper-plugin`,
   `minecraft-skills authoring-recipe <id>`,
   `minecraft-skills authoring-guardrails --domain paper-plugin`,
+  `minecraft-skills authoring-diagnostics --domain paper-plugin`,
+  `minecraft-skills authoring-diagnostic <id>`,
   `minecraft-skills claim-policies --domain paper-plugin`,
   `minecraft-skills output-requirements --domain paper-plugin`,
   `minecraft-skills response-patterns --domain paper-plugin`,

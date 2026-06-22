@@ -1,5 +1,6 @@
 import {
   getAuthoringChecklist,
+  getAuthoringDiagnostic,
   getAuthoringGuardrail,
   getAuthoringRecipe,
   getClaimPolicy,
@@ -12,6 +13,7 @@ import {
   getResponsePattern,
   getSkillPayload,
   listAuthoringChecklists,
+  listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
   listClaimPolicies,
@@ -105,6 +107,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     guardrails: authoringGuardrails,
   };
+  const authoringDiagnostics = listAuthoringDiagnostics();
+  const authoringDiagnosticIndex = {
+    schemaVersion: 1,
+    diagnostics: authoringDiagnostics,
+  };
   const authoringRecipes = listAuthoringRecipes();
   const authoringRecipeIndex = {
     schemaVersion: 1,
@@ -169,6 +176,22 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Output guardrail for ${guardrail.title}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(guardrail, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/authoring-diagnostics.json`,
+      name: "authoring-diagnostics.json",
+      title: "Minecraft Skills authoring diagnostics",
+      description: "Pre-finalization diagnostics for generated Minecraft files, code, and answers.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(authoringDiagnosticIndex, null, 2)),
+    },
+    ...authoringDiagnostics.map((diagnostic) => ({
+      uri: `${dataResourceBase}/authoring-diagnostics/${diagnostic.id}.json`,
+      name: `authoring-diagnostics/${diagnostic.id}.json`,
+      title: diagnostic.title,
+      description: `Authoring diagnostic for ${diagnostic.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(diagnostic, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/authoring-recipes.json`,
@@ -357,6 +380,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/authoring-diagnostics.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              diagnostics: listAuthoringDiagnostics(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   if (uri === `${dataResourceBase}/authoring-recipes.json`) {
     return {
       contents: [
@@ -477,6 +519,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getAuthoringGuardrail(id), null, 2),
+          },
+        ],
+      };
+    }
+    const diagnosticPrefix = "authoring-diagnostics/";
+    if (path.startsWith(diagnosticPrefix) && path.endsWith(".json")) {
+      const id = path.slice(diagnosticPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getAuthoringDiagnostic(id), null, 2),
           },
         ],
       };

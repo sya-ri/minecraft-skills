@@ -148,6 +148,32 @@ export const AuthoringGuardrailIndex = type({
   guardrails: AuthoringGuardrail.array(),
 });
 
+export const AuthoringDiagnosticToolRefs = type({
+  cli: "string[]",
+  mcp: "string[]",
+  packageApis: "string[]",
+});
+
+export const AuthoringDiagnostic = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  severity: "'error' | 'warning'",
+  detectWhen: "string[]",
+  requiredChecks: "string[]",
+  evidence: "string[]",
+  tools: AuthoringDiagnosticToolRefs,
+  failIf: "string[]",
+  safeResponse: "string[]",
+  failureMode: "string",
+});
+
+export const AuthoringDiagnosticIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  diagnostics: AuthoringDiagnostic.array(),
+});
+
 export const ClaimPolicyToolRefs = type({
   cli: "string[]",
   mcp: "string[]",
@@ -536,6 +562,8 @@ export type AuthoringRecipeIndexData = typeof AuthoringRecipeIndex.infer;
 export type AuthoringRecipeStepData = typeof AuthoringRecipeStep.infer;
 export type AuthoringGuardrailData = typeof AuthoringGuardrail.infer;
 export type AuthoringGuardrailIndexData = typeof AuthoringGuardrailIndex.infer;
+export type AuthoringDiagnosticData = typeof AuthoringDiagnostic.infer;
+export type AuthoringDiagnosticIndexData = typeof AuthoringDiagnosticIndex.infer;
 export type ClaimPolicyData = typeof ClaimPolicy.infer;
 export type ClaimPolicyIndexData = typeof ClaimPolicyIndex.infer;
 export type OutputRequirementData = typeof OutputRequirement.infer;

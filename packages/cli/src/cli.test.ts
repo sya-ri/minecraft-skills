@@ -123,6 +123,18 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("nonexistent APIs");
   });
 
+  it("prints authoring diagnostics", async () => {
+    const list = await capture(["authoring-diagnostics", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "paper-api-member-unverified"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-threading-assumption"');
+
+    const single = await capture(["authoring-diagnostic", "paper-api-member-unverified"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain('"severity": "error"');
+    expect(single.stdout.join("\n")).toContain("searchPaperMembers");
+  });
+
   it("prints claim policies", async () => {
     const list = await capture(["claim-policies", "--domain", "paper-plugin"]);
     expect(list.code).toBe(0);
@@ -178,6 +190,8 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener"');
     expect(result.stdout.join("\n")).toContain('"guardrails"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
+    expect(result.stdout.join("\n")).toContain('"diagnostics"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-api-member-unverified"');
     expect(result.stdout.join("\n")).toContain('"claimPolicies"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-type-or-member-exists"');
     expect(result.stdout.join("\n")).toContain('"outputRequirements"');

@@ -27,6 +27,7 @@ minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills intent-lookups --domain paper-plugin
 minecraft-skills fact-surfaces --domain paper-plugin
 minecraft-skills claim-policies --domain paper-plugin
+minecraft-skills authoring-diagnostics --domain paper-plugin
 minecraft-skills output-requirements --domain paper-plugin
 minecraft-skills response-patterns --domain paper-plugin
 
@@ -75,9 +76,11 @@ minecraft-skills paper-events "player join" --version 1.21.11
 
 Use these together before writing or reviewing generated output:
 
-- `authoring-context`: preflight, recipes, guardrails, claim policies, output requirements,
-  response patterns, intent routing, and evidence in one payload.
+- `authoring-context`: preflight, recipes, guardrails, diagnostics, claim policies, output
+  requirements, response patterns, intent routing, and evidence in one payload.
 - `authoring-recipes`: ordered lookup workflows for common tasks.
+- `authoring-diagnostics`: pass/fail checks to run before returning generated files, code, or
+  source-backed answers.
 - `claim-policies`: required evidence plus safe and unsafe wording for specific claim types.
 - `output-requirements`: final-answer and generated-file checks.
 - `response-patterns`: answer shapes for verified facts, missing evidence, and non-guarantees.
@@ -122,6 +125,7 @@ Use `@minecraft-skills/catalog` for validated data access:
 ```ts
 import {
   getAuthoringContext,
+  getAuthoringDiagnostic,
   getAuthoringRecipe,
   getClaimPolicy,
   getOutputRequirement,
@@ -132,6 +136,7 @@ import {
 } from "@minecraft-skills/catalog";
 
 const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
+const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");

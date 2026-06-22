@@ -108,6 +108,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (!readDataText("authoring-checklists.json").includes("Paper Plugin Authoring Checklist")) throw new Error("missing authoring checklists");',
             'if (!readDataText("authoring-recipes.json").includes("paper-event-listener")) throw new Error("missing authoring recipes");',
             'if (!readDataText("authoring-guardrails.json").includes("paper-api-surface-limits")) throw new Error("missing authoring guardrails");',
+            'if (!readDataText("authoring-diagnostics.json").includes("paper-api-member-unverified")) throw new Error("missing authoring diagnostics");',
             'if (!readDataText("claim-policies.json").includes("paper-type-or-member-exists")) throw new Error("missing claim policies");',
             'if (!readDataText("output-requirements.json").includes("paper-plugin-output-safety")) throw new Error("missing output requirements");',
             'if (!readDataText("response-patterns.json").includes("paper-api-answer")) throw new Error("missing response patterns");',
@@ -124,7 +125,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringGuardrail, getAuthoringPreflight, getAuthoringRecipe, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResponsePattern, getSupportMatrix, listAuthoringChecklists, listAuthoringGuardrails, listAuthoringRecipes, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPreflight, getAuthoringRecipe, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResponsePattern, getSupportMatrix, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
@@ -139,10 +140,11 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
             'if (!listAuthoringRecipes({ domain: "paper-plugin" }).some((recipe) => recipe.id === "paper-event-listener") || !getAuthoringRecipe("paper-event-listener").steps.some((step) => step.id === "discover-event-candidates")) throw new Error("bad authoring recipes");',
             'if (!listAuthoringGuardrails({ domain: "paper-plugin" }).some((guardrail) => guardrail.id === "paper-api-surface-limits") || !getAuthoringGuardrail("paper-api-surface-limits").rules.some((rule) => rule.includes("Javadocs package"))) throw new Error("bad authoring guardrails");',
+            'if (!listAuthoringDiagnostics({ domain: "paper-plugin" }).some((diagnostic) => diagnostic.id === "paper-api-member-unverified") || !getAuthoringDiagnostic("paper-api-member-unverified").tools.packageApis.includes("searchPaperMembers")) throw new Error("bad authoring diagnostics");',
             'if (!listClaimPolicies({ domain: "paper-plugin" }).some((policy) => policy.id === "paper-type-or-member-exists") || !getClaimPolicy("command-syntax-exists").allowedWording.some((wording) => wording.includes("parser shape"))) throw new Error("bad claim policies");',
             'if (!listOutputRequirements({ domain: "paper-plugin" }).some((requirement) => requirement.id === "paper-plugin-output-safety") || !getOutputRequirement("paper-plugin-output-safety").mustNotInclude.some((rule) => rule.includes("unverified event class names"))) throw new Error("bad output requirements");',
             'if (!listResponsePatterns({ domain: "paper-plugin" }).some((pattern) => pattern.id === "paper-api-answer") || !getResponsePattern("paper-api-answer").gapStatements.some((statement) => statement.includes("name presence"))) throw new Error("bad response patterns");',
-            'if (!context.recipes.some((recipe) => recipe.id === "paper-event-listener") || !context.guardrails.some((guardrail) => guardrail.id === "paper-api-surface-limits") || !context.claimPolicies.some((policy) => policy.id === "paper-type-or-member-exists") || !context.outputRequirements.some((requirement) => requirement.id === "paper-plugin-output-safety") || !context.responsePatterns.some((pattern) => pattern.id === "paper-api-answer") || !context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
+            'if (!context.recipes.some((recipe) => recipe.id === "paper-event-listener") || !context.guardrails.some((guardrail) => guardrail.id === "paper-api-surface-limits") || !context.diagnostics.some((diagnostic) => diagnostic.id === "paper-api-member-unverified") || !context.claimPolicies.some((policy) => policy.id === "paper-type-or-member-exists") || !context.outputRequirements.some((requirement) => requirement.id === "paper-plugin-output-safety") || !context.responsePatterns.some((pattern) => pattern.id === "paper-api-answer") || !context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
             'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
             'if (!evidence.links.some((link) => link.id === "paper-javadocs") || evidence.sourcePolicy.minecraftWikiTextRedistribution !== "forbidden") throw new Error("bad evidence bundle");',
             'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
@@ -193,6 +195,9 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     if (!commands.at(-1)?.stdout.includes("paper-api-answer")) {
       throw new Error("minecraft-skills authoring-context did not include response patterns");
     }
+    if (!commands.at(-1)?.stdout.includes("paper-api-member-unverified")) {
+      throw new Error("minecraft-skills authoring-context did not include diagnostics");
+    }
     commands.push(
       runCommand(
         "pnpm",
@@ -242,6 +247,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     );
     if (!commands.at(-1)?.stdout.includes("Javadocs package, type, and member indexes")) {
       throw new Error("minecraft-skills authoring-guardrail did not include Paper API guardrail");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "authoring-diagnostic", "paper-api-member-unverified"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("searchPaperMembers")) {
+      throw new Error("minecraft-skills authoring-diagnostic did not include Paper API checks");
     }
     commands.push(
       runCommand(

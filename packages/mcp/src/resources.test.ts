@@ -32,6 +32,12 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-recipes.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -128,6 +134,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(guardrail.contents[0]?.text).toContain("Javadocs package, type, and member indexes");
+
+    const diagnostics = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics.json",
+    );
+    expect(diagnostics.contents[0]?.text).toContain('"id": "paper-api-member-unverified"');
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("searchPaperMembers");
 
     const recipes = readMinecraftSkillsResource("minecraft-skills://data/authoring-recipes.json");
     expect(recipes.contents[0]?.text).toContain('"id": "paper-event-listener"');

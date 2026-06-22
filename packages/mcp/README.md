@@ -53,6 +53,8 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_authoring_recipe`
 - `list_authoring_guardrails`
 - `get_authoring_guardrail`
+- `list_authoring_diagnostics`
+- `get_authoring_diagnostic`
 - `get_authoring_context`
 - `list_claim_policies`
 - `get_claim_policy`
@@ -115,6 +117,7 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/intent-lookups.json`
 - `minecraft-skills://data/authoring-recipes.json`
 - `minecraft-skills://data/authoring-guardrails.json`
+- `minecraft-skills://data/authoring-diagnostics.json`
 - `minecraft-skills://data/claim-policies.json`
 - `minecraft-skills://data/output-requirements.json`
 - `minecraft-skills://data/response-patterns.json`
@@ -122,6 +125,7 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-checklists/paper-plugin.json`
 - `minecraft-skills://data/authoring-recipes/paper-event-listener.json`
 - `minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
 - `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/response-patterns/paper-api-answer.json`

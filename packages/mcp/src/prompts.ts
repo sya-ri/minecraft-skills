@@ -41,6 +41,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_authoring_checklist",
       "list_authoring_guardrails",
       "get_authoring_guardrail",
+      "list_authoring_diagnostics",
+      "get_authoring_diagnostic",
       "list_claim_policies",
       "get_claim_policy",
       "list_output_requirements",
@@ -85,6 +87,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_authoring_checklist",
       "list_authoring_guardrails",
       "get_authoring_guardrail",
+      "list_authoring_diagnostics",
+      "get_authoring_diagnostic",
       "list_claim_policies",
       "get_claim_policy",
       "list_output_requirements",
@@ -124,6 +128,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_authoring_checklist",
       "list_authoring_guardrails",
       "get_authoring_guardrail",
+      "list_authoring_diagnostics",
+      "get_authoring_diagnostic",
       "list_claim_policies",
       "get_claim_policy",
       "list_output_requirements",
@@ -186,6 +192,7 @@ Preflight rules:
 - Call get_evidence_bundle when you need to cite or explain which sources and extracted files back an answer.
 - Call get_authoring_checklist if you need the checklist without version coverage.
 - Call list_authoring_guardrails before finalizing generated files or code that relies on version-specific Minecraft facts.
+- Call list_authoring_diagnostics before returning generated files, code, or source-backed answers so missing evidence is caught as an explicit failure or warning.
 - Call list_claim_policies before making version-specific, behavior, schema, path, API, or event claims.
 - Call list_output_requirements before finalizing an answer or generated files.
 - Call list_response_patterns before writing source-backed final answers that include verified facts, gaps, or non-guarantees.

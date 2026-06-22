@@ -43,6 +43,7 @@
               "authoring-context",
               "authoring-recipes",
               "authoring-guardrails",
+              "authoring-diagnostics",
               "claim-policies",
               "output-requirements",
               "response-patterns",
@@ -55,6 +56,7 @@
               "get_authoring_context",
               "list_authoring_recipes",
               "list_authoring_guardrails",
+              "list_authoring_diagnostics",
               "list_claim_policies",
               "list_output_requirements",
               "list_response_patterns",
@@ -67,6 +69,7 @@
               "getAuthoringContext",
               "listAuthoringRecipes",
               "listAuthoringGuardrails",
+              "listAuthoringDiagnostics",
               "listClaimPolicies",
               "listOutputRequirements",
               "listResponsePatterns",
@@ -78,6 +81,7 @@
           },
           "evidence": [
             "Checklist steps for the requested domain",
+            "Diagnostics for missing evidence or unsafe final output",
             "Fact surface guarantees and non-guarantees",
             "Evidence bundle links and data file availability"
           ],

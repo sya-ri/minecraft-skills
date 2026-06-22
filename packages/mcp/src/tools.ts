@@ -13,6 +13,7 @@ import {
   fetchData,
   getAuthoringChecklist,
   getAuthoringContext,
+  getAuthoringDiagnostic,
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
@@ -39,6 +40,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
   listCachedDataFiles,
@@ -195,9 +197,33 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "list_authoring_diagnostics",
+    description:
+      "List pre-finalization diagnostics for generated Minecraft datapack, resourcepack, and Paper plugin files, code, and answers.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_diagnostic",
+    description: "Get one Minecraft authoring diagnostic by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_authoring_context",
     description:
-      "Get preflight, task recipes, intent lookup routing, and evidence bundle in one source-backed context before generating Minecraft files or code.",
+      "Get preflight, task recipes, diagnostics, intent lookup routing, and evidence bundle in one source-backed context before generating Minecraft files or code.",
     inputSchema: {
       type: "object",
       properties: {
@@ -892,6 +918,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_guardrail requires string id");
       }
       return text(getAuthoringGuardrail(args.id));
+    }
+    if (name === "list_authoring_diagnostics") {
+      return text(
+        listAuthoringDiagnostics({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_authoring_diagnostic") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_authoring_diagnostic requires string id");
+      }
+      return text(getAuthoringDiagnostic(args.id));
     }
     if (name === "get_authoring_context") {
       if (typeof args.domain !== "string") {
