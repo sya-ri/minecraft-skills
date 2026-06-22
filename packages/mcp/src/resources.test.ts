@@ -20,6 +20,12 @@ describe("MCP resources", () => {
   it("lists data manifest and downloadable data resources", () => {
     const resources = listMinecraftSkillsResources();
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/fact-surfaces.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/fact-surfaces/datapack-schema-surface.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/data-manifest.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -61,6 +67,14 @@ describe("MCP resources", () => {
   });
 
   it("reads data resources", () => {
+    const factSurfaces = readMinecraftSkillsResource("minecraft-skills://data/fact-surfaces.json");
+    expect(factSurfaces.contents[0]?.text).toContain('"id": "paper-api-surface"');
+
+    const factSurface = readMinecraftSkillsResource(
+      "minecraft-skills://data/fact-surfaces/datapack-schema-surface.json",
+    );
+    expect(factSurface.contents[0]?.text).toContain("not a normative schema");
+
     const manifest = readMinecraftSkillsResource("minecraft-skills://data/data-manifest.json");
     expect(manifest.contents[0]?.text).toContain('"dataVersion": "2026.06.22-1"');
 

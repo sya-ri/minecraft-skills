@@ -1,8 +1,10 @@
 import {
   getDataManifest,
   getDatapackSchemaSurface,
+  getFactSurface,
   getPaperApiSurface,
   getSkillPayload,
+  listFactSurfaces,
   listSkills,
 } from "@minecraft-skills/catalog";
 
@@ -79,7 +81,28 @@ export function listMinecraftSkillsResources(): Resource[] {
     })),
   );
   const manifest = getDataManifest();
+  const factSurfaces = listFactSurfaces();
+  const factSurfaceIndex = {
+    schemaVersion: 1,
+    surfaces: factSurfaces,
+  };
   const dataResources: Resource[] = [
+    {
+      uri: `${dataResourceBase}/fact-surfaces.json`,
+      name: "fact-surfaces.json",
+      title: "Minecraft Skills fact surfaces",
+      description: "Machine-verifiable fact surfaces and what each surface can and cannot prove.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(factSurfaceIndex, null, 2)),
+    },
+    ...factSurfaces.map((surface) => ({
+      uri: `${dataResourceBase}/fact-surfaces/${surface.id}.json`,
+      name: `fact-surfaces/${surface.id}.json`,
+      title: surface.title,
+      description: `Guarantees and non-guarantees for ${surface.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(surface, null, 2)),
+    })),
     {
       uri: `${dataResourceBase}/data-manifest.json`,
       name: "data-manifest.json",
@@ -113,9 +136,41 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/fact-surfaces.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              surfaces: listFactSurfaces(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   const dataPrefix = `${dataResourceBase}/`;
   if (uri.startsWith(dataPrefix)) {
     const path = uri.slice(dataPrefix.length);
+    const factSurfacePrefix = "fact-surfaces/";
+    if (path.startsWith(factSurfacePrefix) && path.endsWith(".json")) {
+      const id = path.slice(factSurfacePrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getFactSurface(id), null, 2),
+          },
+        ],
+      };
+    }
     const entry = getDataManifest().downloadable.find((candidate) => candidate.path === path);
     if (entry?.kind === "datapack-schema-surface" && entry.version) {
       return {
