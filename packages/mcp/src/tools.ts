@@ -13,6 +13,7 @@ import {
   fetchData,
   getAuthoringChecklist,
   getAuthoringContext,
+  getAuthoringGuardrail,
   getAuthoringPreflight,
   getCacheDataRoot,
   getCacheRoot,
@@ -34,6 +35,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringGuardrails,
   listCachedDataFiles,
   listDomains,
   listFactSurfaces,
@@ -133,6 +135,30 @@ export const tools: ToolDefinition[] = [
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
       },
       required: ["domain"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_authoring_guardrails",
+    description:
+      "List output guardrails that prevent unsupported Minecraft authoring claims and generation steps.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_guardrail",
+    description: "Get one Minecraft authoring output guardrail by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
       additionalProperties: false,
     },
   },
@@ -736,6 +762,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_checklist requires string domain");
       }
       return text(getAuthoringChecklist(args.domain));
+    }
+    if (name === "list_authoring_guardrails") {
+      return text(
+        listAuthoringGuardrails({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_authoring_guardrail") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_authoring_guardrail requires string id");
+      }
+      return text(getAuthoringGuardrail(args.id));
     }
     if (name === "get_authoring_context") {
       if (typeof args.domain !== "string") {

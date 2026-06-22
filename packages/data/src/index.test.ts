@@ -57,6 +57,15 @@ describe("@minecraft-skills/data", () => {
     expect(intents.intents.map((intent) => intent.id)).toContain("verify-paper-type-or-member");
   });
 
+  it("loads bundled authoring guardrail JSON", () => {
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string }> }>(
+      "authoring-guardrails.json",
+    );
+    expect(guardrails.guardrails.map((guardrail) => guardrail.id)).toContain(
+      "paper-api-surface-limits",
+    );
+  });
+
   it("exposes a package data root", () => {
     expect(getDataRoot()).toMatch(/packages\/data\/data$/);
   });

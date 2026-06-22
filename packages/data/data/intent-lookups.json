@@ -41,6 +41,7 @@
           "tools": {
             "cli": [
               "authoring-context",
+              "authoring-guardrails",
               "preflight",
               "authoring-checklist",
               "fact-surfaces",
@@ -48,6 +49,7 @@
             ],
             "mcp": [
               "get_authoring_context",
+              "list_authoring_guardrails",
               "get_authoring_preflight",
               "get_authoring_checklist",
               "list_fact_surfaces",
@@ -55,6 +57,7 @@
             ],
             "packageApis": [
               "getAuthoringContext",
+              "listAuthoringGuardrails",
               "getAuthoringPreflight",
               "getAuthoringChecklist",
               "listFactSurfaces",

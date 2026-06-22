@@ -20,6 +20,8 @@ minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
+minecraft-skills authoring-guardrails --domain paper-plugin
+minecraft-skills authoring-guardrail paper-api-surface-limits
 minecraft-skills intent-lookups --domain paper-plugin
 minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist paper-plugin
@@ -59,8 +61,9 @@ minecraft-skills paper-events "player join" --version 1.21.11
 `support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data-manifest`, `cache-dir`, `cache-list`, `cache-clean`, and `fetch-data` manage
 SHA-256 verified heavyweight data in the local OS cache.
-`authoring-context <domain> [version]` returns preflight, intent lookup routing, and evidence in one
-payload for starting an authoring task.
+`authoring-context <domain> [version]` returns preflight, guardrails, intent lookup routing, and
+evidence in one payload for starting an authoring task.
+`authoring-guardrails` lists output rules and required evidence that prevent unsupported claims.
 `preflight <domain> [version]` returns resolved version coverage, the domain checklist, fact
 surfaces, relevant downloadable data, and warnings. `authoring-checklist <domain>` returns only the
 pre-generation checks an AI agent should perform before writing files or code. `fact-surfaces`

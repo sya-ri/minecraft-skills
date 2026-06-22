@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills source policy, fact surfaces, authoring checklists, and intent lookups",
+  "guardrails": [
+    {
+      "id": "global-source-provenance",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Use source-backed facts without redistributing upstream prose",
+      "rules": [
+        "Prefer exact target-version data over latest-version data.",
+        "Use Minecraft Wiki, Paper docs, and Javadocs links as provenance and navigation; do not copy or closely paraphrase upstream prose.",
+        "Treat null, unknown, seed, missing, not-extracted, or not-yet-published values as gaps, not facts.",
+        "When evidence is unavailable, state the gap instead of filling it from memory."
+      ],
+      "requiredEvidence": [
+        "source-policy or evidence bundle when citing provenance",
+        "target version detail or support entry when giving version-specific facts"
+      ],
+      "failureMode": "Hallucinated facts, unsupported citations, or license-sensitive copied prose can enter generated output."
+    },
+    {
+      "id": "datapack-command-and-json-limits",
+      "domains": ["datapack"],
+      "title": "Do not overstate datapack command and JSON evidence",
+      "rules": [
+        "Command paths from server reports prove parser shape only; they do not prove gameplay behavior, permissions, or execution context.",
+        "Observed vanilla datapack JSON field paths are not normative schemas.",
+        "Do not infer required fields, optionality, or allowed custom extension behavior from observed vanilla files alone.",
+        "Do not reuse pack_format values or command syntax from neighboring versions without checking the target version."
+      ],
+      "requiredEvidence": [
+        "server reports or command path search results for command syntax",
+        "observed datapack schema surface when discussing vanilla JSON field shapes",
+        "version detail packFormats.data for pack.mcmeta"
+      ],
+      "failureMode": "Generated datapacks can contain commands or JSON shapes that look plausible but are not verified for the target version."
+    },
+    {
+      "id": "resourcepack-asset-and-model-limits",
+      "domains": ["resourcepack"],
+      "title": "Do not overstate resourcepack asset and model evidence",
+      "rules": [
+        "Vanilla asset path matches prove bundled file paths only; they do not prove rendering behavior.",
+        "Observed model and item definition summaries do not prove every accepted key, required key, or rendering semantic.",
+        "Do not infer pack_format values or item model conventions from neighboring versions without checking the target version.",
+        "When a resource path is not found, do not invent a vanilla path."
+      ],
+      "requiredEvidence": [
+        "vanilla path or inventory search results for asset paths",
+        "resourcepack model summary when discussing observed model or item definition fields",
+        "version detail packFormats.resource for pack.mcmeta"
+      ],
+      "failureMode": "Generated resource packs can reference nonexistent vanilla paths or unverified model JSON conventions."
+    },
+    {
+      "id": "paper-api-surface-limits",
+      "domains": ["paper-plugin"],
+      "title": "Do not overstate Paper API surface evidence",
+      "rules": [
+        "Paper support can lag the latest Java version; do not emit dependency coordinates for unsupported versions.",
+        "Javadocs package, type, and member indexes prove names and labels only.",
+        "Do not infer runtime behavior, overload semantics, nullability, thread safety, or Folia safety from a type/member match.",
+        "Event search results are candidates and must be verified against Paper/Bukkit API surfaces before generating listener code.",
+        "Flag Folia-sensitive scheduling and threading assumptions instead of silently using global scheduler patterns."
+      ],
+      "requiredEvidence": [
+        "Paper project support metadata and Paper API reference for dependency coordinates",
+        "Paper Javadocs package/type/member surface for referenced API names",
+        "Paper event search result plus Javadocs confirmation for event candidates",
+        "Paper scheduler and Folia documentation links when code touches scheduling, worlds, entities, chunks, or async work"
+      ],
+      "failureMode": "Generated plugins can compile against nonexistent APIs, target unsupported Paper versions, or hide unsafe threading assumptions."
+    }
+  ]
+}

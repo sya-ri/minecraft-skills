@@ -1,5 +1,6 @@
 import {
   getAuthoringChecklist,
+  getAuthoringGuardrail,
   getDataManifest,
   getDatapackSchemaSurface,
   getFactSurface,
@@ -7,6 +8,7 @@ import {
   getPaperApiSurface,
   getSkillPayload,
   listAuthoringChecklists,
+  listAuthoringGuardrails,
   listFactSurfaces,
   listIntentLookups,
   listSkills,
@@ -90,6 +92,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     checklists: authoringChecklists,
   };
+  const authoringGuardrails = listAuthoringGuardrails();
+  const authoringGuardrailIndex = {
+    schemaVersion: 1,
+    guardrails: authoringGuardrails,
+  };
   const factSurfaces = listFactSurfaces();
   const factSurfaceIndex = {
     schemaVersion: 1,
@@ -117,6 +124,23 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Pre-generation checklist for ${checklist.domain} authoring.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(checklist, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/authoring-guardrails.json`,
+      name: "authoring-guardrails.json",
+      title: "Minecraft Skills authoring guardrails",
+      description:
+        "Output guardrails that prevent unsupported Minecraft datapack, resourcepack, and Paper plugin claims.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(authoringGuardrailIndex, null, 2)),
+    },
+    ...authoringGuardrails.map((guardrail) => ({
+      uri: `${dataResourceBase}/authoring-guardrails/${guardrail.id}.json`,
+      name: `authoring-guardrails/${guardrail.id}.json`,
+      title: guardrail.title,
+      description: `Output guardrail for ${guardrail.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(guardrail, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/fact-surfaces.json`,
@@ -221,6 +245,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/authoring-guardrails.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              guardrails: listAuthoringGuardrails(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   if (uri === `${dataResourceBase}/intent-lookups.json`) {
     return {
       contents: [
@@ -252,6 +295,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getAuthoringChecklist(domain), null, 2),
+          },
+        ],
+      };
+    }
+    const guardrailPrefix = "authoring-guardrails/";
+    if (path.startsWith(guardrailPrefix) && path.endsWith(".json")) {
+      const id = path.slice(guardrailPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getAuthoringGuardrail(id), null, 2),
           },
         ],
       };

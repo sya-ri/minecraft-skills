@@ -26,6 +26,12 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-checklists/paper-plugin.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/fact-surfaces.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -88,6 +94,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-checklists/paper-plugin.json",
     );
     expect(paperChecklist.contents[0]?.text).toContain("verify-types-members-and-events");
+
+    const guardrails = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails.json",
+    );
+    expect(guardrails.contents[0]?.text).toContain('"id": "paper-api-surface-limits"');
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("Javadocs package, type, and member indexes");
 
     const factSurfaces = readMinecraftSkillsResource("minecraft-skills://data/fact-surfaces.json");
     expect(factSurfaces.contents[0]?.text).toContain('"id": "paper-api-surface"');

@@ -22,6 +22,10 @@ import {
   AuthoringChecklistIndex,
   type AuthoringChecklistIndexData,
   type AuthoringChecklistStepData,
+  AuthoringGuardrail,
+  type AuthoringGuardrailData,
+  AuthoringGuardrailIndex,
+  type AuthoringGuardrailIndexData,
   Catalog,
   type CatalogData,
   type DomainData,
@@ -67,6 +71,8 @@ export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
   AuthoringChecklistStepData,
+  AuthoringGuardrailData,
+  AuthoringGuardrailIndexData,
   CachedDataFile,
   CatalogData,
   DataManifest,
@@ -121,6 +127,10 @@ export type FactSurfaceQuery = {
 };
 
 export type AuthoringChecklistQuery = {
+  domain?: string;
+};
+
+export type AuthoringGuardrailQuery = {
   domain?: string;
 };
 
@@ -408,6 +418,7 @@ export type AuthoringContext = {
   requestedVersion: string;
   resolvedVersion: string;
   preflight: AuthoringPreflight;
+  guardrails: AuthoringGuardrailData[];
   intentLookups: IntentLookupData[];
   evidence: EvidenceBundle;
 };
@@ -694,6 +705,25 @@ export function getAuthoringChecklist(domain: string): AuthoringChecklistData {
   return AuthoringChecklist.assert(found);
 }
 
+export function listAuthoringGuardrails(
+  query: AuthoringGuardrailQuery = {},
+): AuthoringGuardrailData[] {
+  const index = AuthoringGuardrailIndex.assert(readDataJson("authoring-guardrails.json"));
+  if (!query.domain) {
+    return index.guardrails;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.guardrails.filter((guardrail) => guardrail.domains.includes(domain));
+}
+
+export function getAuthoringGuardrail(id: string): AuthoringGuardrailData {
+  const found = listAuthoringGuardrails().find((guardrail) => guardrail.id === id);
+  if (!found) {
+    throw new Error(`Unknown authoring guardrail: ${id}`);
+  }
+  return AuthoringGuardrail.assert(found);
+}
+
 export function listIntentLookups(query: IntentLookupQuery = {}): IntentLookupData[] {
   const index = IntentLookupIndex.assert(readDataJson("intent-lookups.json"));
   if (!query.domain) {
@@ -962,6 +992,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     requestedVersion: preflight.requestedVersion,
     resolvedVersion: preflight.resolvedVersion,
     preflight,
+    guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
     intentLookups: listIntentLookups({ domain: preflight.domain }),
     evidence: getEvidenceBundle({
       domain: preflight.domain,

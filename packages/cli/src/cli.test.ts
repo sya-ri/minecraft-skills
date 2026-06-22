@@ -99,6 +99,18 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("search-datapack-schema");
   });
 
+  it("prints authoring guardrails", async () => {
+    const list = await capture(["authoring-guardrails", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "global-source-provenance"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
+
+    const single = await capture(["authoring-guardrail", "paper-api-surface-limits"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain("Javadocs package, type, and member indexes");
+    expect(single.stdout.join("\n")).toContain("nonexistent APIs");
+  });
+
   it("prints authoring preflight payloads", async () => {
     const datapack = await capture(["preflight", "datapack", "26.2"]);
     expect(datapack.code).toBe(0);
@@ -114,6 +126,8 @@ describe("minecraft-skills CLI", () => {
     const result = await capture(["authoring-context", "paper-plugin", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
+    expect(result.stdout.join("\n")).toContain('"guardrails"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
     expect(result.stdout.join("\n")).toContain('"intentLookups"');
     expect(result.stdout.join("\n")).toContain('"id": "verify-paper-type-or-member"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');

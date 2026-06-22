@@ -6,6 +6,7 @@ Redistributable canonical data for Minecraft Skills consumers.
 
 - Java 1.13+ release index and version details.
 - Machine-readable authoring checklists for pre-generation AI validation.
+- Machine-readable authoring guardrails for output safety.
 - Machine-readable fact surface guidance that states what each data surface can and cannot prove.
 - Extracted data/resource pack format numbers.
 - Official server report summaries and command path indexes.
@@ -30,6 +31,7 @@ import { fetchData, getDataManifest, readDataJson, readDataText } from "@minecra
 
 const versions = readDataJson("java/versions.json");
 const checklists = readDataJson("authoring-checklists.json");
+const guardrails = readDataJson("authoring-guardrails.json");
 const factSurfaces = readDataJson("fact-surfaces.json");
 const intentLookups = readDataJson("intent-lookups.json");
 const commandPaths = readDataText("java/command-paths/26.2.txt");

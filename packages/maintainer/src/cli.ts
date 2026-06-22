@@ -19,6 +19,7 @@ import {
   getPaperPluginData,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringGuardrails,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -300,6 +301,36 @@ function requireAuthoringChecklists(
   }
 }
 
+function requireAuthoringGuardrails(root: string, messages: string[]): void {
+  requireDataFile(root, "authoring-guardrails.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  for (const guardrail of listAuthoringGuardrails()) {
+    const prefix = `authoring guardrail ${guardrail.id}`;
+    if (ids.has(guardrail.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(guardrail.id);
+    if (guardrail.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of guardrail.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (guardrail.rules.length === 0) {
+      messages.push(`${prefix} must list at least one rule`);
+    }
+    if (guardrail.requiredEvidence.length === 0) {
+      messages.push(`${prefix} must list required evidence`);
+    }
+    if (!guardrail.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+  }
+}
+
 function requireIntentLookups(
   root: string,
   publicEntrypoints: PublicEntrypoints,
@@ -456,6 +487,7 @@ export function validateRepository(): ValidationResult {
   requireDataManifestIntegrity(root, messages);
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
+  requireAuthoringGuardrails(root, messages);
   requireIntentLookups(root, publicEntrypoints, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {

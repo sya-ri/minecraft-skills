@@ -13,6 +13,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_checklists");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
+    expect(tools.map((tool) => tool.name)).toContain("list_authoring_guardrails");
+    expect(tools.map((tool) => tool.name)).toContain("get_authoring_guardrail");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_context");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
@@ -71,6 +73,8 @@ describe("MCP tools", () => {
         "get_skill",
         "list_authoring_checklists",
         "get_authoring_checklist",
+        "list_authoring_guardrails",
+        "get_authoring_guardrail",
         "get_authoring_context",
         "get_authoring_preflight",
         "get_evidence_bundle",
@@ -143,6 +147,19 @@ describe("MCP tools", () => {
     expect(single.content[0]?.text).toContain("Folia");
   });
 
+  it("calls authoring guardrail tools", async () => {
+    const list = await callMinecraftSkillsTool("list_authoring_guardrails", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "paper-api-surface-limits"');
+    expect(list.content[0]?.text).toContain("unsupported Paper versions");
+
+    const single = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-api-surface-limits",
+    });
+    expect(single.content[0]?.text).toContain("Javadocs package, type, and member indexes");
+  });
+
   it("calls authoring preflight tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_preflight", {
       domain: "paper-plugin",
@@ -158,6 +175,7 @@ describe("MCP tools", () => {
       version: "1.21.11",
     });
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
+    expect(result.content[0]?.text).toContain('"guardrails"');
     expect(result.content[0]?.text).toContain('"intentLookups"');
     expect(result.content[0]?.text).toContain('"id": "verify-paper-type-or-member"');
     expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');

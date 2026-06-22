@@ -48,6 +48,8 @@ minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
+minecraft-skills authoring-guardrails --domain paper-plugin
+minecraft-skills authoring-guardrail paper-api-surface-limits
 minecraft-skills intent-lookups --domain paper-plugin
 minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist datapack
@@ -107,8 +109,10 @@ perform before writing data pack files, resource pack files, or Paper plugin cod
 `minecraft-skills preflight <domain> [version]` combines the checklist with resolved version
 coverage, relevant fact surfaces, support matrix data, and warnings for missing or unsupported
 facts.
-`minecraft-skills authoring-context <domain> [version]` returns preflight, intent lookup routing,
-and evidence in one payload for the start of an authoring task.
+`minecraft-skills authoring-context <domain> [version]` returns preflight, guardrails, intent lookup
+routing, and evidence in one payload for the start of an authoring task.
+`minecraft-skills authoring-guardrails` lists output rules and required evidence that prevent an
+agent from overstating observed data, unsupported Paper versions, or upstream prose.
 `minecraft-skills version-support` lists per-version pack formats, domain coverage, Paper support,
 and generated surface availability for target-version selection.
 `minecraft-skills evidence <domain> [version]` returns source policy, primary sources,
@@ -173,6 +177,8 @@ import {
   compareDatapackSchema,
   getDatapackSchemaSurface,
   getAuthoringChecklist,
+  getAuthoringContext,
+  getAuthoringGuardrail,
   getAuthoringPreflight,
   getEvidenceBundle,
   getFactSurface,
@@ -186,6 +192,7 @@ import {
   listVersionSupport,
   listSkills,
   listAuthoringChecklists,
+  listAuthoringGuardrails,
   listFactSurfaces,
   searchCommands,
   searchDatapackSchema,
@@ -198,9 +205,12 @@ const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const datapackChecklist = getAuthoringChecklist("datapack");
+const paperContext = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
 const paperPreflight = getAuthoringPreflight({ domain: "paper-plugin", version: "1.21.11" });
 const paperEvidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });
 const checklists = listAuthoringChecklists();
+const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
+const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const factSurfaces = listFactSurfaces({ domain: "datapack" });
 const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");
 const coverage = getCoverageSummary();

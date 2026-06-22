@@ -103,6 +103,21 @@ export const AuthoringChecklistIndex = type({
   checklists: AuthoringChecklist.array(),
 });
 
+export const AuthoringGuardrail = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  rules: "string[]",
+  requiredEvidence: "string[]",
+  failureMode: "string",
+});
+
+export const AuthoringGuardrailIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  guardrails: AuthoringGuardrail.array(),
+});
+
 export const IntentLookupToolRefs = type({
   cli: "string[]",
   mcp: "string[]",
@@ -429,6 +444,8 @@ export type CatalogData = typeof Catalog.infer;
 export type AuthoringChecklistData = typeof AuthoringChecklist.infer;
 export type AuthoringChecklistIndexData = typeof AuthoringChecklistIndex.infer;
 export type AuthoringChecklistStepData = typeof AuthoringChecklistStep.infer;
+export type AuthoringGuardrailData = typeof AuthoringGuardrail.infer;
+export type AuthoringGuardrailIndexData = typeof AuthoringGuardrailIndex.infer;
 export type IntentLookupData = typeof IntentLookup.infer;
 export type IntentLookupIndexData = typeof IntentLookupIndex.infer;
 export type IntentLookupStepData = typeof IntentLookupStep.infer;

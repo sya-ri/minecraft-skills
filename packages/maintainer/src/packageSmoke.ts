@@ -106,6 +106,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'import { readDataText } from "@minecraft-skills/data";',
             'if (!readDataText("skills/minecraft-paper-plugins/SKILL.md").includes("# Minecraft Paper Plugins")) throw new Error("missing skill payload");',
             'if (!readDataText("authoring-checklists.json").includes("Paper Plugin Authoring Checklist")) throw new Error("missing authoring checklists");',
+            'if (!readDataText("authoring-guardrails.json").includes("paper-api-surface-limits")) throw new Error("missing authoring guardrails");',
             'if (!readDataText("intent-lookups.json").includes("verify-paper-type-or-member")) throw new Error("missing intent lookups");',
           ].join(" "),
         ],
@@ -119,7 +120,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces, listIntentLookups, listVersionSupport } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringGuardrail, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listAuthoringGuardrails, listFactSurfaces, listIntentLookups, listVersionSupport } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
@@ -132,7 +133,8 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (manifest.downloadable.length !== 2 || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
             'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "1.21.11") throw new Error("bad support matrix");',
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
-            'if (!context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
+            'if (!listAuthoringGuardrails({ domain: "paper-plugin" }).some((guardrail) => guardrail.id === "paper-api-surface-limits") || !getAuthoringGuardrail("paper-api-surface-limits").rules.some((rule) => rule.includes("Javadocs package"))) throw new Error("bad authoring guardrails");',
+            'if (!context.guardrails.some((guardrail) => guardrail.id === "paper-api-surface-limits") || !context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
             'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
             'if (!evidence.links.some((link) => link.id === "paper-javadocs") || evidence.sourcePolicy.minecraftWikiTextRedistribution !== "forbidden") throw new Error("bad evidence bundle");',
             'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
@@ -203,6 +205,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     );
     if (!commands.at(-1)?.stdout.includes("verify-types-members-and-events")) {
       throw new Error("minecraft-skills authoring-checklist did not include Paper checks");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "authoring-guardrail", "paper-api-surface-limits"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("Javadocs package, type, and member indexes")) {
+      throw new Error("minecraft-skills authoring-guardrail did not include Paper API guardrail");
     }
     commands.push(
       runCommand(

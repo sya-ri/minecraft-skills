@@ -9,6 +9,7 @@ import {
   compareVersions,
   getAuthoringChecklist,
   getAuthoringContext,
+  getAuthoringGuardrail,
   getAuthoringPreflight,
   getCoverageSummary,
   getDatapackSchemaSurface,
@@ -28,6 +29,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
+  listAuthoringGuardrails,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -115,6 +117,20 @@ describe("catalog", () => {
     expect(() => getAuthoringChecklist("missing")).toThrow("missing");
   });
 
+  it("lists authoring guardrails for output safety", () => {
+    const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
+    expect(guardrails.map((guardrail) => guardrail.id)).toContain("global-source-provenance");
+    expect(guardrails.map((guardrail) => guardrail.id)).toContain("paper-api-surface-limits");
+
+    const paper = getAuthoringGuardrail("paper-api-surface-limits");
+    expect(paper.rules).toContain(
+      "Javadocs package, type, and member indexes prove names and labels only.",
+    );
+    expect(paper.failureMode).toContain("nonexistent APIs");
+
+    expect(() => getAuthoringGuardrail("missing")).toThrow("Unknown authoring guardrail: missing");
+  });
+
   it("builds authoring preflight payloads with coverage warnings", () => {
     const datapack = getAuthoringPreflight({ domain: "datapack", version: "26.2" });
     expect(datapack).toMatchObject({
@@ -147,6 +163,9 @@ describe("catalog", () => {
       resolvedVersion: "1.21.11",
     });
     expect(context.preflight.checklist.domain).toBe("paper-plugin");
+    expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
+      "paper-api-surface-limits",
+    );
     expect(context.intentLookups.map((intent) => intent.id)).toContain(
       "verify-paper-type-or-member",
     );

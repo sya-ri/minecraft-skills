@@ -37,6 +37,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_authoring_preflight",
       "get_evidence_bundle",
       "get_authoring_checklist",
+      "list_authoring_guardrails",
+      "get_authoring_guardrail",
       "list_fact_surfaces",
       "get_data_manifest",
       "get_coverage_summary",
@@ -71,6 +73,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_authoring_preflight",
       "get_evidence_bundle",
       "get_authoring_checklist",
+      "list_authoring_guardrails",
+      "get_authoring_guardrail",
       "list_fact_surfaces",
       "get_coverage_summary",
       "get_source_policy",
@@ -100,6 +104,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_authoring_preflight",
       "get_evidence_bundle",
       "get_authoring_checklist",
+      "list_authoring_guardrails",
+      "get_authoring_guardrail",
       "list_fact_surfaces",
       "get_data_manifest",
       "get_coverage_summary",
@@ -154,6 +160,7 @@ Preflight rules:
 - Call get_authoring_preflight for the relevant domain before generating files or code.
 - Call get_evidence_bundle when you need to cite or explain which sources and extracted files back an answer.
 - Call get_authoring_checklist if you need the checklist without version coverage.
+- Call list_authoring_guardrails before finalizing generated files or code that relies on version-specific Minecraft facts.
 - Call list_fact_surfaces when you need to know what a data surface can and cannot prove.
 - Call get_support_matrix before using heavyweight surfaces so you know what is bundled, cached, or downloadable.
 - Call get_data_manifest and fetch_data when a relevant downloadable surface is missing locally.
