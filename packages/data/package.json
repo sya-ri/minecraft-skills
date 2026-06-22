@@ -37,6 +37,7 @@
     "data",
     "!data/java/datapack-schema-surfaces",
     "!data/java/paper-api-surfaces",
+    "!data/java/resourcepack-models",
     "dist"
   ],
   "scripts": {

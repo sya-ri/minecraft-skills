@@ -124,6 +124,10 @@ function buildDataManifestEntries(root: string): DataManifestEntry[] {
       directory: "java/paper-api-surfaces",
       kind: "paper-api-surface",
     },
+    {
+      directory: "java/resourcepack-models",
+      kind: "resourcepack-model-summary",
+    },
   ];
   const baseUrl = getDataManifest().defaultBaseUrl.replace(/\/+$/, "");
   const entries: DataManifestEntry[] = [];
@@ -213,6 +217,20 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
         messages.push(`${prefix} Paper API surface must identify Java version`);
       } else if (entry.path !== `java/paper-api-surfaces/${entry.version}.json`) {
         messages.push(`${prefix} Paper API surface path must match version`);
+      } else {
+        const surface = readJsonFile<{
+          typeCount?: unknown;
+          memberCount?: unknown;
+        }>(join(root, dataFilePath(entry.path)));
+        if (surface.typeCount === 0 && surface.memberCount === 0) {
+          messages.push(`${prefix} Paper API surface must not be empty`);
+        }
+      }
+    } else if (entry.kind === "resourcepack-model-summary") {
+      if (entry.edition !== "java" || !entry.version) {
+        messages.push(`${prefix} resourcepack model summary must identify Java version`);
+      } else if (entry.path !== `java/resourcepack-models/${entry.version}.json`) {
+        messages.push(`${prefix} resourcepack model summary path must match version`);
       }
     } else {
       messages.push(`${prefix} has unsupported downloadable kind: ${entry.kind}`);
@@ -252,7 +270,7 @@ type PublicEntrypoints = {
 
 type DataManifestEntry = {
   path: string;
-  kind: "datapack-schema-surface" | "paper-api-surface";
+  kind: "datapack-schema-surface" | "paper-api-surface" | "resourcepack-model-summary";
   edition: "java";
   version: string;
   size: number;

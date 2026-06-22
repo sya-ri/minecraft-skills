@@ -137,13 +137,16 @@ describe("@minecraft-skills/data", () => {
   it("loads data manifest and resolves cache directories", async () => {
     await withCacheDir((cacheDir) => {
       const manifest = getDataManifest();
-      expect(manifest.dataVersion).toBe("2026.06.22-2");
-      expect(manifest.downloadable).toHaveLength(73);
+      expect(manifest.dataVersion).toBe("2026.06.22-5");
+      expect(manifest.downloadable).toHaveLength(135);
       expect(manifest.downloadable).toContainEqual(
         expect.objectContaining({ kind: "datapack-schema-surface", version: "1.13" }),
       );
       expect(manifest.downloadable).toContainEqual(
         expect.objectContaining({ kind: "paper-api-surface", version: "1.20.5" }),
+      );
+      expect(manifest.downloadable).toContainEqual(
+        expect.objectContaining({ kind: "resourcepack-model-summary", version: "1.13" }),
       );
       expect(getCacheRoot()).toBe(cacheDir);
       expect(getCacheDataRoot()).toBe(join(cacheDir, "data", manifest.dataVersion));

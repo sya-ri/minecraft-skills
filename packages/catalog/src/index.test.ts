@@ -435,11 +435,20 @@ describe("catalog", () => {
       latestSupportedVersion: "1.21.11",
       latestBuild: 69,
       apiPackageIndexes: 43,
-      apiSurfaces: 23,
+      apiSurfaces: 35,
       versionsWithoutUnknowns: 43,
       missingApiPackageIndexes: [],
     });
-    expect(summary.java.paperPlugin.missingApiSurfaces).toHaveLength(20);
+    expect(summary.java.paperPlugin.missingApiSurfaces).toEqual([
+      "1.13",
+      "1.14",
+      "1.15",
+      "1.17",
+      "1.18",
+      "1.19",
+      "1.20",
+      "1.21",
+    ]);
     expect(summary.skills).toEqual({
       total: 3,
       packagedPayloads: 3,

@@ -475,6 +475,7 @@ export type VersionSupportEntry = {
     resourcepackModels: {
       bundled: boolean;
       cached: boolean;
+      downloadable: boolean;
       available: boolean;
     };
   };
@@ -1188,6 +1189,9 @@ function relevantDownloadableEntries(domain: DomainIdData, version: string): Dat
     if (domain === "paper-plugin") {
       return entry.kind === "paper-api-surface";
     }
+    if (domain === "resourcepack") {
+      return entry.kind === "resourcepack-model-summary";
+    }
     return false;
   });
 }
@@ -1291,6 +1295,7 @@ export function listVersionSupport(query: VersionSupportQuery = {}): VersionSupp
           resourcepackModels: {
             bundled: hasBundledDataFile(resourcepackModelsPath),
             cached: hasCachedDataFile(resourcepackModelsPath),
+            downloadable: manifestHasDownloadable("resourcepack-model-summary", summary.id),
             available: hasDataFile(resourcepackModelsPath),
           },
         },
@@ -1759,7 +1764,6 @@ export function getCoverageSummary(): CoverageSummary {
       `java/vanilla-inventories/${version.id}.json`,
       `java/vanilla-paths/${version.id}.datapack.txt`,
       `java/vanilla-paths/${version.id}.resourcepack.txt`,
-      `java/resourcepack-models/${version.id}.json`,
     ];
     for (const path of requiredPaths) {
       if (!hasDataFile(path)) {

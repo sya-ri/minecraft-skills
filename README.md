@@ -35,6 +35,8 @@ minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see
 [docs/USAGE.md](docs/USAGE.md).
 
+Release notes are tracked in [CHANGELOG.md](CHANGELOG.md).
+
 ## Source Policy
 
 Primary support starts at Java Edition 1.13. Redistributable facts should come from official Mojang

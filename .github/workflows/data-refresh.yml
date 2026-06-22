@@ -1,0 +1,116 @@
+name: Data Refresh
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Run refresh even when the source audit is clean"
+        required: true
+        default: false
+        type: boolean
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup mise
+        uses: jdx/mise-action@v4.2.0
+        with:
+          install: true
+          cache: true
+
+      - name: Install dependencies
+        run: mise exec -- pnpm install --frozen-lockfile
+
+      - name: Build maintainer tools
+        run: mise exec -- pnpm --filter @minecraft-skills/maintainer build
+
+      - name: Audit current sources
+        id: audit
+        continue-on-error: true
+        run: node packages/maintainer/dist/cli.mjs audit-current-sources
+
+      - name: Refresh generated data
+        if: ${{ steps.audit.outcome == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.force) }}
+        run: |
+          set -euo pipefail
+          RETRIEVED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          DATA_VERSION="$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
+
+          curl -fsSL -o /tmp/minecraft-version-manifest-v2.json \
+            https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
+          node packages/maintainer/dist/cli.mjs ingest-java-manifest \
+            --input /tmp/minecraft-version-manifest-v2.json \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-java-version-details \
+            --retrieved-at "$RETRIEVED_AT"
+
+          curl -fsSL -o /tmp/papermc-paper-project.json \
+            https://api.papermc.io/v2/projects/paper
+          PAPER_LATEST="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; const project = JSON.parse(readFileSync("/tmp/papermc-paper-project.json", "utf8")); console.log(project.versions.at(-1));')"
+          curl -fsSL -o /tmp/papermc-paper-latest-builds.json \
+            "https://api.papermc.io/v2/projects/paper/versions/${PAPER_LATEST}"
+          node packages/maintainer/dist/cli.mjs ingest-paper-project \
+            --project-json /tmp/papermc-paper-project.json \
+            --latest-builds-json /tmp/papermc-paper-latest-builds.json \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-paper-builds \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-paper-api-indexes \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-paper-api-surfaces \
+            --retrieved-at "$RETRIEVED_AT"
+
+          node packages/maintainer/dist/cli.mjs ingest-vanilla-inventories \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-datapack-schemas-all \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-resourcepack-models-all \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs materialize-version-details
+          node packages/maintainer/dist/cli.mjs write-data-manifest \
+            --data-version "$DATA_VERSION"
+          mise exec -- pnpm exec biome check . --write
+
+      - name: Check refreshed data
+        if: ${{ steps.audit.outcome == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.force) }}
+        run: CI=true mise exec -- pnpm run check
+
+      - name: Create refresh pull request
+        if: ${{ steps.audit.outcome == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.force) }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No data changes after refresh."
+            exit 0
+          fi
+
+          BRANCH="data-refresh/${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add .
+          git commit -m "Refresh Minecraft data"
+          git push --force-with-lease origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Refresh Minecraft data" \
+            --body "Automated data refresh from Mojang and PaperMC sources. The workflow ran repository checks before opening this PR."

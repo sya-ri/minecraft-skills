@@ -104,12 +104,41 @@ function memberKind(
   return "method";
 }
 
+function decodeHtml(value: string): string {
+  return value
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&#40;", "(")
+    .replaceAll("&#41;", ")");
+}
+
+function stripTags(value: string): string {
+  return decodeHtml(value.replaceAll(/<[^>]*>/g, ""))
+    .replaceAll(/\s+/g, " ")
+    .trim();
+}
+
 async function fetchText(url: string): Promise<string> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
   }
   return response.text();
+}
+
+async function fetchTextWithFinalUrl(url: string): Promise<{ text: string; finalUrl: string }> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  }
+  return {
+    text: await response.text(),
+    finalUrl: response.url,
+  };
 }
 
 export function buildPaperApiSurface(options: {
@@ -183,6 +212,113 @@ export function buildPaperApiSurface(options: {
   };
 }
 
+export function buildLegacyPaperApiSurface(options: {
+  minecraftVersion: string;
+  javadocsUrl: string;
+  allClassesHtml: string;
+  indexAllHtml: string;
+  allClassesUrl: string;
+  indexAllUrl: string;
+  retrievedAt: string;
+}): PaperApiSurface {
+  const types = [
+    ...options.allClassesHtml.matchAll(
+      /<li>\s*<a href="([^"]+)" title="[^"]* in ([^"]+)">([\s\S]*?)<\/a>\s*<\/li>/g,
+    ),
+  ]
+    .map((match) => {
+      const href = match[1] ?? "";
+      const packageName = decodeHtml(match[2] ?? "").trim();
+      const name = stripTags(match[3] ?? "");
+      return {
+        packageName,
+        name,
+        qualifiedName: `${packageName}.${name}`,
+        url: new URL(href, options.javadocsUrl).toString(),
+      };
+    })
+    .filter((entry) => entry.packageName && entry.name)
+    .sort((left, right) => left.qualifiedName.localeCompare(right.qualifiedName));
+
+  const seenMembers = new Set<string>();
+  const members = [
+    ...options.indexAllHtml.matchAll(
+      /<dt><span class="memberNameLink"><a href="([^"]+)">([\s\S]*?)<\/a><\/span> - ([\s\S]*?)<\/dt>/g,
+    ),
+  ]
+    .map((match) => {
+      const href = decodeHtml(match[1] ?? "");
+      const label = stripTags(match[2] ?? "");
+      const description = stripTags(match[3] ?? "");
+      const htmlPath = href.split("#")[0] ?? "";
+      const typePath = htmlPath.replace(/\.html$/, "");
+      const segments = typePath.split("/").filter(Boolean);
+      const typeName = segments.pop() ?? "";
+      const packageName = segments.join(".");
+      const name = label.split("(")[0]?.trim() ?? label;
+      const kind = description.toLowerCase().includes("method")
+        ? memberKind(typeName, name, label)
+        : memberKind(typeName, name, label);
+      return {
+        packageName,
+        typeName,
+        qualifiedTypeName: `${packageName}.${typeName}`,
+        name,
+        label,
+        kind,
+        url: new URL(href, options.javadocsUrl).toString(),
+      };
+    })
+    .filter((entry) => entry.packageName && entry.typeName && entry.label)
+    .filter((entry) => {
+      const key = `${entry.qualifiedTypeName}#${entry.label}#${entry.url}`;
+      if (seenMembers.has(key)) {
+        return false;
+      }
+      seenMembers.add(key);
+      return true;
+    })
+    .sort((left, right) =>
+      `${left.qualifiedTypeName}#${left.label}`.localeCompare(
+        `${right.qualifiedTypeName}#${right.label}`,
+      ),
+    );
+
+  return {
+    schemaVersion: 1,
+    projectId: "paper",
+    minecraftVersion: options.minecraftVersion,
+    coverage: "javadocs-search-index",
+    javadocsUrl: options.javadocsUrl,
+    typeCount: types.length,
+    memberCount: members.length,
+    types,
+    members,
+    sources: [
+      {
+        id: `paper-javadocs-allclasses-${options.minecraftVersion}`,
+        kind: "official-javadocs-legacy-index",
+        url: options.allClassesUrl,
+        retrievedAt: options.retrievedAt,
+      },
+      {
+        id: `paper-javadocs-index-all-${options.minecraftVersion}`,
+        kind: "official-javadocs-legacy-index",
+        url: options.indexAllUrl,
+        retrievedAt: options.retrievedAt,
+      },
+    ],
+  };
+}
+
+function requireNonEmptySurface(surface: PaperApiSurface): void {
+  if (surface.typeCount === 0 && surface.memberCount === 0) {
+    throw new Error(
+      `Paper API surface for ${surface.minecraftVersion} did not contain types or members`,
+    );
+  }
+}
+
 export async function ingestPaperApiSurfaces(
   options: IngestPaperApiSurfacesOptions,
 ): Promise<number> {
@@ -212,13 +348,36 @@ export async function ingestPaperApiSurfaces(
         memberSearchIndexJs,
         retrievedAt: options.retrievedAt,
       });
+      requireNonEmptySurface(surface);
     } catch (error) {
-      if (options.onlyVersion) {
-        throw error;
+      try {
+        options.log?.(`fetch ${version}: Paper legacy Javadocs allclasses/index-all pages`);
+        const [allClasses, indexAll] = await Promise.all([
+          fetchTextWithFinalUrl(new URL("allclasses-noframe.html", javadocsUrl).toString()),
+          fetchTextWithFinalUrl(new URL("index-all.html", javadocsUrl).toString()),
+        ]);
+        surface = buildLegacyPaperApiSurface({
+          minecraftVersion: version,
+          javadocsUrl: new URL(".", indexAll.finalUrl).toString(),
+          allClassesHtml: allClasses.text,
+          indexAllHtml: indexAll.text,
+          allClassesUrl: allClasses.finalUrl,
+          indexAllUrl: indexAll.finalUrl,
+          retrievedAt: options.retrievedAt,
+        });
+        requireNonEmptySurface(surface);
+      } catch (fallbackError) {
+        if (options.onlyVersion) {
+          throw fallbackError;
+        }
+        const message = error instanceof Error ? error.message : String(error);
+        const fallbackMessage =
+          fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        options.log?.(
+          `skip ${version}: Paper API surface unavailable (${message}; legacy fallback: ${fallbackMessage})`,
+        );
+        continue;
       }
-      const message = error instanceof Error ? error.message : String(error);
-      options.log?.(`skip ${version}: Paper API surface unavailable (${message})`);
-      continue;
     }
     writeFileSync(output, `${JSON.stringify(surface, null, 2)}\n`);
     written += 1;

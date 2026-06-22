@@ -17,14 +17,15 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Extracted data/resource pack format numbers.
 - Official server report summaries and command path indexes.
 - Vanilla client asset and server data inventories.
-- Vanilla resource pack model and item definition JSON shape summaries.
+- Downloadable vanilla resource pack model and item definition JSON shape summaries.
 - Packaged Agent Skill payloads under `skills/`, mirrored from the repository root skill folders.
 - PaperMC support metadata, per-version Paper build summaries, Paper docs source links, and
   `sya-ri/spigot-event-list` API contract metadata.
 - Paper Javadocs package indexes for Paper versions where package tables or search indexes are
   available.
-- Download manifest metadata for heavyweight generated surfaces that can be fetched into an OS
-  cache with SHA-256 verification.
+- Download manifest metadata for heavyweight generated datapack schema surfaces, Paper API
+  surfaces, and resourcepack model summaries that can be fetched into an OS cache with SHA-256
+  verification.
 
 ## Use
 

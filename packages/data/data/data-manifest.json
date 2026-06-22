@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.06.22-2",
+  "dataVersion": "2026.06.22-5",
   "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data",
   "cache": {
     "environmentVariable": "MINECRAFT_SKILLS_CACHE_DIR"
@@ -457,6 +457,114 @@
       "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/datapack-schema-surfaces/26.2.json"
     },
     {
+      "path": "java/paper-api-surfaces/1.13.1.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.13.1",
+      "size": 4114237,
+      "sha256": "ef36a349f7f2e7ad1fe876c67a993f85ff4a6d61a34ac3d9ed7c1926ab3721cc",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.13.1.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.13.2.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.13.2",
+      "size": 4287036,
+      "sha256": "f2826a94ce6d212cdfbecd656cca4015e5bef6435e5527b11697127c55ebfb9c",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.13.2.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.14.1.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.14.1",
+      "size": 4487045,
+      "sha256": "a75470070efc351a42e1e50c80ef7a8d6563826ec63a04ac94b655aaadd26a8c",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.14.1.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.14.2.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.14.2",
+      "size": 4491070,
+      "sha256": "7cbe007c6ceebea742bc0dc71870360b98709b5b149ae1b69c744a11b1b5af69",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.14.2.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.14.3.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.14.3",
+      "size": 4496451,
+      "sha256": "1a9211dc892e49a6a2dc15c151c7f5b7f5ba5e1423db725ff12f4413e2eb1749",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.14.3.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.14.4.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.14.4",
+      "size": 4531325,
+      "sha256": "22aab31932f12ea6d8dbb35ed18603017c860e622b2f334e59f41b92c84ecec1",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.14.4.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.15.1.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.15.1",
+      "size": 3267393,
+      "sha256": "e7669f61f2e985fec1f29dbca90e5d77e43cc5876f8cc6d00433cccb0e2e691c",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.15.1.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.15.2.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.15.2",
+      "size": 4746773,
+      "sha256": "b132a4ba7901b1ab5cc8e0151c3a4d6ba24227d9c344a73607698789a65218c3",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.15.2.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.16.1.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.16.1",
+      "size": 4929616,
+      "sha256": "bc33c6f2bb56f121bbf0a7af7f1c9f844dd9e74604d8cf608a1bfab16f909e61",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.16.1.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.16.2.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.16.2",
+      "size": 4973276,
+      "sha256": "f6021cce6448c31e00f87aa015b8000b2ff47a38fb77def842e5307810e3bc22",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.16.2.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.16.3.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.16.3",
+      "size": 4982570,
+      "sha256": "18a5abca3cf6714ee9c30eff589a050b1f6e13469ddda45f00f7a9319e1aedd3",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.16.3.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.16.4.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.16.4",
+      "size": 5074626,
+      "sha256": "0e0df9ca3ea825accc6f52efa4d96cc5d5fffdbc1998fb239841b583d790ff43",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.16.4.json"
+    },
+    {
       "path": "java/paper-api-surfaces/1.16.5.json",
       "kind": "paper-api-surface",
       "edition": "java",
@@ -662,6 +770,456 @@
       "size": 11872152,
       "sha256": "005657a20bf10b4c93a95fbc4d4b905cb4cce22c15b13767886baeb368106612",
       "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.21.11.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.13.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.13.1",
+      "size": 104506,
+      "sha256": "145d718370fd0d352c3f7ce36b0596b94ff094702790e085cbba4a184c892e6d",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.13.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.13.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.13.2",
+      "size": 104506,
+      "sha256": "f34dc1dfbebf70d974d08cd320da6c4cd3bbb3154a899304a65fddfc9d836189",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.13.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.13.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.13",
+      "size": 104504,
+      "sha256": "6e4849b1381fce1a246fe83ec4ac2ed2ff029ec2ce9981abb183cba89147cf7a",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.13.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.14.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.14.1",
+      "size": 110030,
+      "sha256": "6f2a33d6421a050643ec36ee378aae855fad09c20f14df960ab0e66b3188d5c7",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.14.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.14.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.14.2",
+      "size": 110030,
+      "sha256": "036f7bd5ccd2e8fc7540a8e105341d32b26a1a6f5e5ad0656da4522fe38e93f3",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.14.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.14.3.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.14.3",
+      "size": 110030,
+      "sha256": "114e13dcdb8a21ff01c2dda59f793e46d8a17ebb9cc7d4f592325789447f5d97",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.14.3.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.14.4.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.14.4",
+      "size": 110030,
+      "sha256": "d72966af82608a98c3a432cf9af53700f6a5d886673f3ebb80b41244a152d493",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.14.4.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.14.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.14",
+      "size": 110028,
+      "sha256": "8e9c40fe0e8228b1b08574cb43335d1a186581e5fe5f3508486b99d6a8f2eb94",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.14.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.15.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.15.1",
+      "size": 110000,
+      "sha256": "301a751b85085132a21526bd396589fda80392954e0d9917f07dac92f5fecb08",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.15.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.15.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.15.2",
+      "size": 110783,
+      "sha256": "3acd29af1fa08f1429d26f4a654854857663dcc6bb8c19c3c32944a974f62073",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.15.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.15.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.15",
+      "size": 109998,
+      "sha256": "27f88201216a9eb846f13e4a08cdc1c1642b8c19d2e56af94af1f84fcea8cfcb",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.15.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.16.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.16.1",
+      "size": 112525,
+      "sha256": "a308924ce78d7785276585d5e58db3010d2560c42ac5828807122d9e251b7e16",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.16.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.16.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.16.2",
+      "size": 112525,
+      "sha256": "b13a821b6b4af1cd50f371319f94fb72a0612749029724f68b6fcae51c029dd1",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.16.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.16.3.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.16.3",
+      "size": 112525,
+      "sha256": "e72142d81498be8a83dc583df3cf484f46f82ef79ee230a6c80f2d6e786e6221",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.16.3.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.16.4.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.16.4",
+      "size": 112525,
+      "sha256": "47811b161e9a30a03ad788cad4fd7c63d150fbb9c2ca98b5693b177e36adaf23",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.16.4.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.16.5.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.16.5",
+      "size": 112525,
+      "sha256": "4dfd05a956cfe7d378359116ccbe3155dcae36f6bd8027bbbf61d92de453a713",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.16.5.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.16.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.16",
+      "size": 112523,
+      "sha256": "996af106f13012e1f125d207f8eea26130a6ba4754574e1e5b41ccd84a78d064",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.16.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.17.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.17.1",
+      "size": 117141,
+      "sha256": "078e1366bcca49e8b1bf8cf4f00acd1698e1077b6af4d396c16c2bb4453260c2",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.17.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.17.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.17",
+      "size": 117139,
+      "sha256": "c4dc4524148ee42bd8a495e0d4e08a9d72b05d343a2e059e913046bf40e05e3d",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.17.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.18.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.18.1",
+      "size": 117140,
+      "sha256": "b1810888d50f9a903fdce0a2cbdf5de8d0229049e18045f07717559546398f03",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.18.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.18.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.18.2",
+      "size": 117140,
+      "sha256": "58fd2dedfad540b0fee3eabd3a3aff6b2f539a4abd610c21561fa239a07dd89a",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.18.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.18.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.18",
+      "size": 117138,
+      "sha256": "0fc3a3d5e2e6ec284b8506937aaa4ef0d246c76881d6e47ea43f549f4df65c48",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.18.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.19.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.19.1",
+      "size": 120452,
+      "sha256": "e829742fc56554cb6b082ec48c140a13b8f5b823b0f40cb64352541d1db3e491",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.19.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.19.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.19.2",
+      "size": 120452,
+      "sha256": "80e3343e4c668499ae2e8e020a4f1f82fd95d22f2e0c4c421973ae3b19181fac",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.19.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.19.3.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.19.3",
+      "size": 124624,
+      "sha256": "d129529e2634f605c4be4cc123316b6a5ae14d49cd10a7949c15e004ced958ae",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.19.3.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.19.4.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.19.4",
+      "size": 128091,
+      "sha256": "d9d367e5b9d7888de4a86dcb826817fc9a281966da0d974f44e1fd72f1a6e702",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.19.4.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.19.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.19",
+      "size": 120450,
+      "sha256": "225758fafe1fcc24c8652ae3b7fe67bd66f7b2a03382d2d5a7c405fb04ebda6d",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.19.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20.1",
+      "size": 133792,
+      "sha256": "cd3cc95b27d758357b73bb58f038a137203f04cc9120f53c70623a9cd9a65934",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20.2",
+      "size": 133809,
+      "sha256": "be48c504b4e201d6e70ce82c1df0f08be94e59f157932f917f0dcc0c9c9e24e2",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.3.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20.3",
+      "size": 133826,
+      "sha256": "7008965826e421c5f6bc26d78d44b3d65f40e15e0f1b8bbba232d7d9a79f2e8c",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.3.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.4.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20.4",
+      "size": 133826,
+      "sha256": "c47a7e3cd680dfd24e0aea93ac563406eac327f90f6212427b88619f14331533",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.4.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.5.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20.5",
+      "size": 134277,
+      "sha256": "c5d22a4aba18e64ff576a9cb8d41d7ba61feb9e6917339a0c40d95770ef78eef",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.5.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.6.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20.6",
+      "size": 134277,
+      "sha256": "d56be3db81abe0e289ae6599b37a69d0e74fcb8fc15d7b048eed7a3ebaa04fe9",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.6.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.20.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.20",
+      "size": 133790,
+      "sha256": "403d5d43e4ca5d7849b0a9da4b55352aa3e3594db01543dcc613d79f4bc92eb9",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.20.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.1",
+      "size": 134277,
+      "sha256": "bb3a5bc17fecacadf60b962ce80201c66f75b86842248fdb940437cac977dc35",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.2",
+      "size": 143200,
+      "sha256": "dc0820530d0d1bad97cb9e14465335add2883e64b96f1b8af62d58ff4c573ea1",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.3.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.3",
+      "size": 143200,
+      "sha256": "10b65c2bc9e3881950c3b892298f2f4546668197bfd136ffa24045bd81e230b5",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.3.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.4.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.4",
+      "size": 172406,
+      "sha256": "0121fa9d857340a204977626f278d2b01a8b8c37c534f2ae94a67acf688ffc0e",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.4.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.5.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.5",
+      "size": 173613,
+      "sha256": "afa868e23f625b94de1bc0fb3a640d15f501966e4049d550df5e68d72f3d09af",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.5.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.6.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.6",
+      "size": 174426,
+      "sha256": "4046d1099e65d89b5884432535b69d3ed827c44e12f4e3037362d537e15a0289",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.6.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.7.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.7",
+      "size": 174426,
+      "sha256": "710ab6c945d2eb766852df5acdcc23be5e6795efd5d261057d0cadcc81c80a7d",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.7.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.8.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.8",
+      "size": 174426,
+      "sha256": "6256a8491ec322c4f61376f8272e0cde5f0bfda2f28fc51a3602b06681987f26",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.8.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.9.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.9",
+      "size": 177481,
+      "sha256": "83d65d68b7f17147504a834fa7725c0c53cffd694d138bc64c6f70e1c57d217c",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.9.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.10.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.10",
+      "size": 177482,
+      "sha256": "f966ed5360d146b7b6eeea1033420279612f4ea079dce60017dd5d475aef10b2",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.10.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.11.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21.11",
+      "size": 178374,
+      "sha256": "cfcfc826b99e86e96c4180bb0d3c5cf86861f56755c64f0486abeaab865baada",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.11.json"
+    },
+    {
+      "path": "java/resourcepack-models/1.21.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "1.21",
+      "size": 134275,
+      "sha256": "2bed26efa970465c98bbd85d0ad097e031eebbd591e0351cda097be50053f344",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/1.21.json"
+    },
+    {
+      "path": "java/resourcepack-models/26.1.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "26.1.1",
+      "size": 195925,
+      "sha256": "cf8cd13180c8a7b134118eb7df32c32d0de1151200d55f7e4059a666c2ff1cee",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/26.1.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/26.1.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "26.1.2",
+      "size": 195925,
+      "sha256": "bb787ebbe218fef9242ca66cadc1ac5bf7b9b608c12f0f2975134433c237d608",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/26.1.2.json"
+    },
+    {
+      "path": "java/resourcepack-models/26.1.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "26.1",
+      "size": 195923,
+      "sha256": "ed80a584ef7e8d5b128a7e8cf5bb885ecc6a069a568d03c852a332150fac37ad",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/26.1.json"
+    },
+    {
+      "path": "java/resourcepack-models/26.2.json",
+      "kind": "resourcepack-model-summary",
+      "edition": "java",
+      "version": "26.2",
+      "size": 195241,
+      "sha256": "0ba509f69fcc564d5ff7536bdf2bfb5d7e5b10117fe56ce16675f6ca6b2c072f",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/resourcepack-models/26.2.json"
     }
   ]
 }

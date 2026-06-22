@@ -100,6 +100,13 @@ minecraft-skills plugin paper compare-api-surface 1.21.11 1.21.11
 minecraft-skills plugin paper events "player join" --version 1.21.11
 ```
 
+Paper API package indexes are available for every bundled Paper-supported Minecraft version from
+1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and
+`member-search-index.js` files when present. Older Javadocs that do not expose those files are
+covered with legacy `allclasses-noframe.html` and `index-all.html` extraction. These surfaces still
+prove name presence only; they do not prove runtime behavior, nullability, overload semantics, or
+thread safety.
+
 ## Authoring Safety Data
 
 Use these together before writing or reviewing generated output:
@@ -225,8 +232,9 @@ minecraft-skills skill write minecraft-paper-plugins --output ./skills
 
 ## Cache
 
-Heavy generated surfaces are listed in `data manifest` and downloaded with `data fetch`. Cache
-defaults:
+Heavy generated surfaces are listed in `data manifest` and downloaded with `data fetch`. This
+includes datapack schema surfaces, Paper API type/member surfaces, and resourcepack model summaries.
+Cache defaults:
 
 - macOS: `~/Library/Caches/minecraft-skills`
 - Linux: `${XDG_CACHE_HOME:-~/.cache}/minecraft-skills`
