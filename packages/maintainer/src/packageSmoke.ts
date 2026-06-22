@@ -119,11 +119,12 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces, listIntentLookups, listVersionSupport } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces, listIntentLookups, listVersionSupport } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
             'const checklist = getAuthoringChecklist("paper-plugin");',
+            'const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });',
             'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });',
             'const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });',
             'const factSurface = getFactSurface("datapack-schema-surface");',
@@ -131,6 +132,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (manifest.downloadable.length !== 2 || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
             'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "1.21.11") throw new Error("bad support matrix");',
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
+            'if (!context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
             'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
             'if (!evidence.links.some((link) => link.id === "paper-javadocs") || evidence.sourcePolicy.minecraftWikiTextRedistribution !== "forbidden") throw new Error("bad evidence bundle");',
             'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
@@ -161,6 +163,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     );
     if (!commands.at(-1)?.stdout.includes('"latestBuild": 69')) {
       throw new Error("minecraft-skills version-support did not include latest Paper build");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "authoring-context", "paper-plugin", "1.21.11"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("verify-paper-type-or-member")) {
+      throw new Error("minecraft-skills authoring-context did not include intent lookups");
     }
     commands.push(
       runCommand(

@@ -49,6 +49,7 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_skill`
 - `list_authoring_checklists`
 - `get_authoring_checklist`
+- `get_authoring_context`
 - `get_authoring_preflight`
 - `get_evidence_bundle`
 - `list_intent_lookups`

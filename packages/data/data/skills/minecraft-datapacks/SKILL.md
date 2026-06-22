@@ -20,33 +20,37 @@ version-specific facts.
 4. Use `intent-lookups --domain datapack`, MCP `list_intent_lookups`, or package
    `listIntentLookups({ domain: "datapack" })` to choose the exact lookup path for the user's
    intent.
-5. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+5. Use `authoring-context datapack <version>`, MCP `get_authoring_context`, or package
+   `getAuthoringContext({ domain: "datapack", version })` when you need preflight, intent routing,
+   and evidence in one payload.
+6. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-6. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
+7. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "datapack", version })` before generating files or commands.
-7. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+8. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific facts are bundled and which heavyweight facts are downloadable.
-8. Use `version-support --domain datapack`, MCP `list_version_support`, or package
+9. Use `version-support --domain datapack`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "datapack" })` when choosing among target versions.
-9. Use `evidence datapack <version>`, MCP `get_evidence_bundle`, or package
+10. Use `evidence datapack <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "datapack", version })` when explaining which sources and extracted
    files back an answer.
-10. If an observed datapack schema surface is needed but not available locally, inspect
+11. If an observed datapack schema surface is needed but not available locally, inspect
    `data-manifest` or MCP `get_data_manifest`, then fetch the matching
    `datapack-schema-surface` entry before relying on it.
-11. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
+12. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
    describing command or vanilla data additions/removals.
-12. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
+13. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
    datapack JSON field shapes. Treat this as observed vanilla data, not a normative schema.
-13. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+14. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-14. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+15. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
   `minecraft-skills preflight datapack <version>`,
+  `minecraft-skills authoring-context datapack <version>`,
   `minecraft-skills evidence datapack <version>`,
   `minecraft-skills intent-lookups --domain datapack`,
   `minecraft-skills intent-lookup <id>`,

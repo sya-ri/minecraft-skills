@@ -12,6 +12,7 @@ import {
   type DatapackSchemaSearchOptions,
   fetchData,
   getAuthoringChecklist,
+  getAuthoringContext,
   getAuthoringPreflight,
   getCacheDataRoot,
   getCacheRoot,
@@ -130,6 +131,21 @@ export const tools: ToolDefinition[] = [
       type: "object",
       properties: {
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      required: ["domain"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_context",
+    description:
+      "Get preflight, intent lookup routing, and evidence bundle in one source-backed context before generating Minecraft files or code.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
       },
       required: ["domain"],
       additionalProperties: false,
@@ -720,6 +736,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_checklist requires string domain");
       }
       return text(getAuthoringChecklist(args.domain));
+    }
+    if (name === "get_authoring_context") {
+      if (typeof args.domain !== "string") {
+        throw new Error("get_authoring_context requires string domain");
+      }
+      return text(
+        getAuthoringContext({
+          domain: args.domain,
+          edition,
+          ...(typeof args.version === "string" ? { version: args.version } : {}),
+        }),
+      );
     }
     if (name === "get_authoring_preflight") {
       if (typeof args.domain !== "string") {

@@ -8,6 +8,7 @@ import {
   compareVanillaPaths,
   compareVersions,
   getAuthoringChecklist,
+  getAuthoringContext,
   getAuthoringPreflight,
   getCoverageSummary,
   getDatapackSchemaSurface,
@@ -136,6 +137,20 @@ describe("catalog", () => {
     expect(paper.paper?.supported).toBe(false);
     expect(paper.warnings.join("\n")).toContain("Paper is not marked supported for 26.2");
     expect(paper.domainCoverage.status).toBe("not-yet-published");
+  });
+
+  it("builds authoring contexts with preflight, intent lookups, and evidence", () => {
+    const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
+    expect(context).toMatchObject({
+      schemaVersion: 1,
+      domain: "paper-plugin",
+      resolvedVersion: "1.21.11",
+    });
+    expect(context.preflight.checklist.domain).toBe("paper-plugin");
+    expect(context.intentLookups.map((intent) => intent.id)).toContain(
+      "verify-paper-type-or-member",
+    );
+    expect(context.evidence.links.map((link) => link.id)).toContain("paper-javadocs");
   });
 
   it("builds evidence bundles for answer provenance", () => {

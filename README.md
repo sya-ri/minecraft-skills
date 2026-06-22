@@ -45,6 +45,7 @@ minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills intent-lookups --domain paper-plugin
@@ -106,6 +107,8 @@ perform before writing data pack files, resource pack files, or Paper plugin cod
 `minecraft-skills preflight <domain> [version]` combines the checklist with resolved version
 coverage, relevant fact surfaces, support matrix data, and warnings for missing or unsupported
 facts.
+`minecraft-skills authoring-context <domain> [version]` returns preflight, intent lookup routing,
+and evidence in one payload for the start of an authoring task.
 `minecraft-skills version-support` lists per-version pack formats, domain coverage, Paper support,
 and generated surface availability for target-version selection.
 `minecraft-skills evidence <domain> [version]` returns source policy, primary sources,

@@ -110,6 +110,15 @@ describe("minecraft-skills CLI", () => {
     expect(paper.stdout.join("\n")).toContain("Paper is not marked supported for 26.2");
   });
 
+  it("prints authoring contexts", async () => {
+    const result = await capture(["authoring-context", "paper-plugin", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
+    expect(result.stdout.join("\n")).toContain('"intentLookups"');
+    expect(result.stdout.join("\n")).toContain('"id": "verify-paper-type-or-member"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');
+  });
+
   it("prints evidence bundles", async () => {
     const result = await capture(["evidence", "paper-plugin", "1.21.11"]);
     expect(result.code).toBe(0);

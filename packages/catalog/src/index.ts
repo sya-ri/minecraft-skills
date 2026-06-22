@@ -140,6 +140,12 @@ export type EvidenceBundleOptions = {
   version?: string;
 };
 
+export type AuthoringContextOptions = {
+  domain: string;
+  edition?: string;
+  version?: string;
+};
+
 export type InventoryTopLevelChange = {
   path: string;
   from?: {
@@ -393,6 +399,17 @@ export type EvidenceBundle = {
     url: string;
   }>;
   warnings: string[];
+};
+
+export type AuthoringContext = {
+  schemaVersion: 1;
+  domain: DomainIdData;
+  edition: EditionData;
+  requestedVersion: string;
+  resolvedVersion: string;
+  preflight: AuthoringPreflight;
+  intentLookups: IntentLookupData[];
+  evidence: EvidenceBundle;
 };
 
 export type SkillReferencePayload = {
@@ -933,6 +950,24 @@ export function getEvidenceBundle(options: EvidenceBundleOptions): EvidenceBundl
       ...paperLinks,
     ]),
     warnings: preflight.warnings,
+  };
+}
+
+export function getAuthoringContext(options: AuthoringContextOptions): AuthoringContext {
+  const preflight = getAuthoringPreflight(options);
+  return {
+    schemaVersion: 1,
+    domain: preflight.domain,
+    edition: preflight.edition,
+    requestedVersion: preflight.requestedVersion,
+    resolvedVersion: preflight.resolvedVersion,
+    preflight,
+    intentLookups: listIntentLookups({ domain: preflight.domain }),
+    evidence: getEvidenceBundle({
+      domain: preflight.domain,
+      edition: preflight.edition,
+      version: preflight.resolvedVersion,
+    }),
   };
 }
 

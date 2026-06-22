@@ -16,6 +16,7 @@ import {
   type DatapackSchemaSearchOptions,
   fetchData,
   getAuthoringChecklist,
+  getAuthoringContext,
   getAuthoringPreflight,
   getCacheDataRoot,
   getCacheRoot,
@@ -112,6 +113,7 @@ Usage:
   minecraft-skills write-skill <name> --output <dir> [--force]
   minecraft-skills authoring-checklists [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
+  minecraft-skills authoring-context <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills intent-lookups [--domain datapack|resourcepack|paper-plugin]
@@ -164,6 +166,8 @@ Commands:
                  List pre-generation checks for each supported authoring domain.
   authoring-checklist
                  Print the pre-generation checklist for one authoring domain.
+  authoring-context
+                 Print preflight, intent lookups, and evidence for one authoring domain/version.
   preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
   evidence       Print source policy, primary sources, data files, links, and warnings.
   intent-lookups
@@ -336,6 +340,22 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-checklist command requires a domain");
       }
       printJson(output, getAuthoringChecklist(domain));
+      return 0;
+    }
+
+    if (command === "authoring-context") {
+      const [domain, version] = positionalArgs(args);
+      if (!domain) {
+        throw new Error("authoring-context command requires a domain");
+      }
+      printJson(
+        output,
+        getAuthoringContext({
+          domain,
+          edition,
+          ...(version ? { version } : {}),
+        }),
+      );
       return 0;
     }
 

@@ -13,6 +13,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_checklists");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
+    expect(tools.map((tool) => tool.name)).toContain("get_authoring_context");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
@@ -70,6 +71,7 @@ describe("MCP tools", () => {
         "get_skill",
         "list_authoring_checklists",
         "get_authoring_checklist",
+        "get_authoring_context",
         "get_authoring_preflight",
         "get_evidence_bundle",
         "list_intent_lookups",
@@ -148,6 +150,17 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"resolvedVersion": "26.2"');
     expect(result.content[0]?.text).toContain("Paper is not marked supported for 26.2");
+  });
+
+  it("calls authoring context tool", async () => {
+    const result = await callMinecraftSkillsTool("get_authoring_context", {
+      domain: "paper-plugin",
+      version: "1.21.11",
+    });
+    expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
+    expect(result.content[0]?.text).toContain('"intentLookups"');
+    expect(result.content[0]?.text).toContain('"id": "verify-paper-type-or-member"');
+    expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');
   });
 
   it("calls evidence bundle tool", async () => {

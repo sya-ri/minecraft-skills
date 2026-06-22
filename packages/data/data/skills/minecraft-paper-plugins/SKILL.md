@@ -17,39 +17,43 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 3. Use `intent-lookups --domain paper-plugin`, MCP `list_intent_lookups`, or package
    `listIntentLookups({ domain: "paper-plugin" })` to choose the exact lookup path for the user's
    intent.
-4. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+4. Use `authoring-context paper-plugin <version>`, MCP `get_authoring_context`, or package
+   `getAuthoringContext({ domain: "paper-plugin", version })` when you need preflight, intent
+   routing, and evidence in one payload.
+5. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each plugin data surface can and cannot prove.
-5. Use `preflight paper-plugin <version>`, MCP `get_authoring_preflight`, or package
+6. Use `preflight paper-plugin <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "paper-plugin", version })` before generating plugin code.
-6. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
+7. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
    latest bundled Java/Paper aliases and whether Paper API surface facts are bundled or
    downloadable.
-7. Use `version-support --domain paper-plugin`, MCP `list_version_support`, or package
+8. Use `version-support --domain paper-plugin`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "paper-plugin" })` when choosing among Paper target versions.
-8. Use `evidence paper-plugin <version>`, MCP `get_evidence_bundle`, or package
+9. Use `evidence paper-plugin <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "paper-plugin", version })` when explaining which sources and
    extracted files back an answer.
-9. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
+10. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
    latest Paper build metadata, and the event search API contract.
-10. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
+11. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
    versioned Paper API dependency, Javadocs URL, and Folia/scheduler docs.
-11. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
+12. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
    versioned Paper Javadocs package additions/removals before discussing server API changes.
-12. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
+13. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
    or MCP `get_data_manifest`, then fetch the matching `paper-api-surface` entry before relying on
    it.
-13. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
+14. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
    Javadocs type/member names. Treat labels as API surface facts, not method behavior prose.
-14. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
-15. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
+15. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
+16. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text.
-16. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+17. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
   `minecraft-skills preflight paper-plugin <version>`,
+  `minecraft-skills authoring-context paper-plugin <version>`,
   `minecraft-skills evidence paper-plugin <version>`,
   `minecraft-skills intent-lookups --domain paper-plugin`,
   `minecraft-skills intent-lookup <id>`,

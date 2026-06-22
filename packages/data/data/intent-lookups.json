@@ -39,14 +39,22 @@
         {
           "purpose": "Load the domain checklist, exact fact surfaces, resolved version coverage, downloadable data state, and warnings.",
           "tools": {
-            "cli": ["preflight", "authoring-checklist", "fact-surfaces", "evidence"],
+            "cli": [
+              "authoring-context",
+              "preflight",
+              "authoring-checklist",
+              "fact-surfaces",
+              "evidence"
+            ],
             "mcp": [
+              "get_authoring_context",
               "get_authoring_preflight",
               "get_authoring_checklist",
               "list_fact_surfaces",
               "get_evidence_bundle"
             ],
             "packageApis": [
+              "getAuthoringContext",
               "getAuthoringPreflight",
               "getAuthoringChecklist",
               "listFactSurfaces",
