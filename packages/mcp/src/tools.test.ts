@@ -300,10 +300,10 @@ describe("MCP tools", () => {
   it("calls authoring preflight tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_preflight", {
       domain: "paper-plugin",
-      version: "26.2",
+      version: "26.1",
     });
-    expect(result.content[0]?.text).toContain('"resolvedVersion": "26.2"');
-    expect(result.content[0]?.text).toContain("Paper is not marked supported for 26.2");
+    expect(result.content[0]?.text).toContain('"resolvedVersion": "26.1"');
+    expect(result.content[0]?.text).toContain("Paper is not marked supported for 26.1");
   });
 
   it("calls authoring context tool", async () => {
@@ -354,16 +354,16 @@ describe("MCP tools", () => {
   it("calls get_coverage_summary", async () => {
     const result = await callMinecraftSkillsTool("get_coverage_summary", {});
     expect(result.content[0]?.text).toContain('"complete": true');
-    expect(result.content[0]?.text).toContain('"latestSupportedVersion": "1.21.11"');
+    expect(result.content[0]?.text).toContain('"latestSupportedVersion": "26.2"');
     expect(result.content[0]?.text).toContain('"packagedPayloads": 3');
   });
 
   it("calls data manifest and cache tools", async () => {
     const manifest = await callMinecraftSkillsTool("get_data_manifest", {});
-    expect(manifest.content[0]?.text).toContain('"dataVersion": "2026.06.22-5"');
+    expect(manifest.content[0]?.text).toContain('"dataVersion": "2026.06.22-6"');
 
     const matrix = await callMinecraftSkillsTool("get_support_matrix", {});
-    expect(matrix.content[0]?.text).toContain('"latestWithPaperApiSurface": "1.21.11"');
+    expect(matrix.content[0]?.text).toContain('"latestWithPaperApiSurface": "26.2"');
 
     const versionSupport = await callMinecraftSkillsTool("list_version_support", {
       domain: "paper-plugin",

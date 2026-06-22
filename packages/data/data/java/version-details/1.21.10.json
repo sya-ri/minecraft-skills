@@ -73,8 +73,8 @@
       "facts": [
         "paper_supported=true",
         "paper_minecraft_version=1.21.10",
-        "paper_latest_build=129",
-        "paper_build_count=50",
+        "paper_latest_build=130",
+        "paper_build_count=51",
         "paper_api_dependency=io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT",
         "paper_javadocs=https://jd.papermc.io/paper/1.21.10/",
         "paper_api_package_index=1.21.10",

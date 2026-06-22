@@ -14,9 +14,9 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 - Datapack coverage: server reports, command paths, vanilla datapack paths, and observed schema
   surfaces for 50/50 releases.
 - Resourcepack coverage: vanilla asset paths and model summaries for 50/50 releases.
-- Paper support metadata: 43 Minecraft versions, latest 1.21.11 build 69.
-- Paper API package indexes: 43/43 supported Paper versions.
-- Paper API type/member surfaces: 35/43 supported Paper versions.
+- Paper support metadata: 46 Minecraft versions, latest 26.2 build 30.
+- Paper API package indexes: 46/46 supported Paper versions.
+- Paper API type/member surfaces: 38/46 supported Paper versions.
 - Downloadable heavy surfaces: datapack schema surfaces, Paper API surfaces, and resourcepack model
   summaries are listed in the data manifest and fetched into the runtime cache on demand.
 
@@ -25,9 +25,9 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 | Alias | Version |
 | --- | --- |
 | latestJava | 26.2 |
-| latestPaper | 1.21.11 |
+| latestPaper | 26.2 |
 | latestWithDatapackSchemaSurface | 26.2 |
-| latestWithPaperApiSurface | 1.21.11 |
+| latestWithPaperApiSurface | 26.2 |
 | latestWithResourcepackModels | 26.2 |
 
 ## Legend
@@ -48,12 +48,12 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 | Version | Released | Data PF | Resource PF | Datapack | Resourcepack | Paper | Paper build | Paper API surface | Heavy data |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 26.2 | 2026-06-16 | 107.1 | 88.0 | ✅ | ✅ |  |  |  | ✅ |
-| 26.1.2 | 2026-04-09 | 101.1 | 84.0 | ✅ | ✅ |  |  |  | ✅ |
-| 26.1.1 | 2026-04-01 | 101.1 | 84.0 | ✅ | ✅ |  |  |  | ✅ |
+| 26.2 | 2026-06-16 | 107.1 | 88.0 | ✅ | ✅ | ✅ | 30 | ✅ | ✅ |
+| 26.1.2 | 2026-04-09 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 72 | ✅ | ✅ |
+| 26.1.1 | 2026-04-01 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 29 | ✅ | ✅ |
 | 26.1 | 2026-03-24 | 101.1 | 84.0 | ✅ | ✅ |  |  |  | ✅ |
-| 1.21.11 | 2025-12-09 | 94.1 | 75.0 | ✅ | ✅ | ✅ | 69 | ✅ | ✅ |
-| 1.21.10 | 2025-10-07 | 88.0 | 69.0 | ✅ | ✅ | ✅ | 129 | ✅ | ✅ |
+| 1.21.11 | 2025-12-09 | 94.1 | 75.0 | ✅ | ✅ | ✅ | 132 | ✅ | ✅ |
+| 1.21.10 | 2025-10-07 | 88.0 | 69.0 | ✅ | ✅ | ✅ | 130 | ✅ | ✅ |
 | 1.21.9 | 2025-09-30 | 88.0 | 69.0 | ✅ | ✅ | ✅ | 59 | ✅ | ✅ |
 | 1.21.8 | 2025-07-17 | 81 | 64 | ✅ | ✅ | ✅ | 60 | ✅ | ✅ |
 | 1.21.7 | 2025-06-30 | 81 | 64 | ✅ | ✅ | ✅ | 32 | ✅ | ✅ |
@@ -101,7 +101,5 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 ## Notes
 
-- Paper latest supported version is 1.21.11 for versions without Paper support: 26.2, 26.1.2,
-  26.1.1, 26.1, 1.21.2, 1.20.3, 1.16.
-- Paper API package indexes exist, but type/member surfaces are unavailable for: 1.21, 1.20, 1.19,
-  1.18, 1.17, 1.15, 1.14, 1.13.
+- Paper latest supported version is 26.2. Versions without Paper support: 26.1, 1.21.2, 1.20.3, 1.16.
+- Paper API package indexes exist, but type/member surfaces are unavailable for: 1.13, 1.14, 1.15, 1.17, 1.18, 1.19, 1.20, 1.21.

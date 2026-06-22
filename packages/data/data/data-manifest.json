@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.06.22-5",
+  "dataVersion": "2026.06.22-6",
   "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.0/packages/data/data",
   "cache": {
     "environmentVariable": "MINECRAFT_SKILLS_CACHE_DIR"
@@ -770,6 +770,33 @@
       "size": 11872152,
       "sha256": "005657a20bf10b4c93a95fbc4d4b905cb4cce22c15b13767886baeb368106612",
       "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.0/packages/data/data/java/paper-api-surfaces/1.21.11.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/26.1.1.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "26.1.1",
+      "size": 11964164,
+      "sha256": "706ae4721b2d134e810eef4d000303f6cfc220c00358108feb7c55f56a04c9b4",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.0/packages/data/data/java/paper-api-surfaces/26.1.1.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/26.1.2.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "26.1.2",
+      "size": 11996578,
+      "sha256": "23fac5b3ef6159ebb77cc955db45f59992981df53d81a193092b6706c3cf27a0",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.0/packages/data/data/java/paper-api-surfaces/26.1.2.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/26.2.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "26.2",
+      "size": 12119798,
+      "sha256": "344c40ae688b26551a25cae805cb344c9a41bcbc94d09f2288a29deaf31e1192",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.0/packages/data/data/java/paper-api-surfaces/26.2.json"
     },
     {
       "path": "java/resourcepack-models/1.13.1.json",

@@ -470,7 +470,7 @@ Common workflows:
     minecraft-skills plugin paper preflight 1.21.11
     minecraft-skills plugin paper types 1.21.11 --contains org.bukkit.entity.Player
     minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
-    minecraft-skills plugin paper events "player join" --version 1.21.11
+    minecraft-skills plugin paper events "player join" --version 26.2
 
 Safety notes:
   - Command paths prove parser shape, not gameplay success, permissions, or runtime behavior.

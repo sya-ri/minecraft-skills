@@ -78,7 +78,7 @@ describe("minecraft-skills CLI", () => {
     const output = result.stdout.join("\n");
     expect(result.code).toBe(0);
     expect(output).toContain('"complete": true');
-    expect(output).toContain('"latestSupportedVersion": "1.21.11"');
+    expect(output).toContain('"latestSupportedVersion": "26.2"');
     expect(output).toContain('"packagedPayloads": 3');
   });
 
@@ -228,9 +228,9 @@ describe("minecraft-skills CLI", () => {
     expect(datapack.stdout.join("\n")).toContain('"resolvedVersion": "26.2"');
     expect(datapack.stdout.join("\n")).toContain('"id": "verify-commands-and-paths"');
 
-    const paper = await capture(["plugin", "paper", "preflight", "26.2"]);
+    const paper = await capture(["plugin", "paper", "preflight", "26.1"]);
     expect(paper.code).toBe(0);
-    expect(paper.stdout.join("\n")).toContain("Paper is not marked supported for 26.2");
+    expect(paper.stdout.join("\n")).toContain("Paper is not marked supported for 26.1");
   });
 
   it("prints authoring contexts", async () => {
@@ -279,7 +279,7 @@ describe("minecraft-skills CLI", () => {
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data", "manifest"]);
     expect(manifest.code).toBe(0);
-    expect(manifest.stdout.join("\n")).toContain('"dataVersion": "2026.06.22-5"');
+    expect(manifest.stdout.join("\n")).toContain('"dataVersion": "2026.06.22-6"');
 
     const cacheDir = await capture(["data", "cache-dir"]);
     expect(cacheDir.code).toBe(0);
@@ -294,16 +294,16 @@ describe("minecraft-skills CLI", () => {
     const result = await capture(["minecraft", "support-matrix"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"latestWithDatapackSchemaSurface": "26.2"');
-    expect(result.stdout.join("\n")).toContain('"latestWithPaperApiSurface": "1.21.11"');
+    expect(result.stdout.join("\n")).toContain('"latestWithPaperApiSurface": "26.2"');
   });
 
   it("prints per-version support", async () => {
     const result = await capture(["minecraft", "support", "--domain", "paper-plugin"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"version": "26.2"');
+    expect(result.stdout.join("\n")).toContain('"latestBuild": 30');
+    expect(result.stdout.join("\n")).toContain('"version": "26.1"');
     expect(result.stdout.join("\n")).toContain('"supported": false');
-    expect(result.stdout.join("\n")).toContain('"version": "1.21.11"');
-    expect(result.stdout.join("\n")).toContain('"latestBuild": 69');
   });
 
   it("fetches downloadable data into the cache", async () => {
@@ -357,7 +357,7 @@ describe("minecraft-skills CLI", () => {
     const result = await capture(["minecraft", "pack-formats"]);
     expect(result.stdout[0]).toContain("26.2\t2026-06-16T12:03:33+00:00\tdata=107");
     expect(result.stdout[0]).toContain("resource=88");
-    expect(result.stdout[0]).toContain("paper=not-yet-published");
+    expect(result.stdout[0]).toContain("paper=api-reference-linked");
   });
 
   it("filters references by domain", async () => {

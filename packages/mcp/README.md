@@ -139,7 +139,7 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/fact-surfaces/datapack-schema-surface.json`
 - `minecraft-skills://data/data-manifest.json`
 - `minecraft-skills://data/java/datapack-schema-surfaces/26.2.json`
-- `minecraft-skills://data/java/paper-api-surfaces/1.21.11.json`
+- `minecraft-skills://data/java/paper-api-surfaces/26.2.json`
 
 ## Prompts
 

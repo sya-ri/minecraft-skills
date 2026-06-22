@@ -150,16 +150,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });',
             'const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });',
             'const scenarioSearch = searchAuthoringScenarios({ query: "Paper event listener", domain: "paper-plugin" });',
-            'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });',
+            'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.1" });',
             'const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });',
             'const factSurface = getFactSurface("datapack-schema-surface");',
-            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.paperPlugin.apiPackageIndexes !== 43 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
-            'if (manifest.downloadable.length !== 135 || !manifest.downloadable.some((entry) => entry.kind === "datapack-schema-surface" && entry.version === "1.13") || !manifest.downloadable.some((entry) => entry.kind === "paper-api-surface" && entry.version === "1.20.5") || !manifest.downloadable.some((entry) => entry.kind === "resourcepack-model-summary" && entry.version === "1.13") || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
+            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.paperPlugin.apiPackageIndexes !== 46 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
+            'if (manifest.downloadable.length !== 138 || !manifest.downloadable.some((entry) => entry.kind === "datapack-schema-surface" && entry.version === "1.13") || !manifest.downloadable.some((entry) => entry.kind === "paper-api-surface" && entry.version === "1.20.5") || !manifest.downloadable.some((entry) => entry.kind === "resourcepack-model-summary" && entry.version === "1.13") || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
             'if (hasBundledDataFile("java/datapack-schema-surfaces/1.13.json") || hasBundledDataFile("java/paper-api-surfaces/1.20.5.json") || hasBundledDataFile("java/resourcepack-models/1.13.json")) throw new Error("heavy data should be downloaded, not bundled in npm package");',
             'await fetchData({ kind: "datapack-schema-surface", version: "1.13", fetch: localFetch });',
             'await fetchData({ kind: "paper-api-surface", version: "1.20.5", fetch: localFetch });',
             'await fetchData({ kind: "resourcepack-model-summary", version: "1.13", fetch: localFetch });',
-            'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "1.21.11") throw new Error("bad support matrix");',
+            'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "26.2") throw new Error("bad support matrix");',
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
             'if (!listAuthoringRecipes({ domain: "paper-plugin" }).some((recipe) => recipe.id === "paper-event-listener") || !getAuthoringRecipe("paper-event-listener").steps.some((step) => step.id === "discover-event-candidates")) throw new Error("bad authoring recipes");',
             'if (!listAuthoringScenarios({ domain: "paper-plugin" }).some((scenario) => scenario.id === "paper-event-listener-review") || !getAuthoringScenario("paper-event-listener-review").requiredLookups.diagnostics.includes("paper-event-candidate-unverified")) throw new Error("bad authoring scenarios");',
@@ -171,7 +171,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (!listResponsePatterns({ domain: "paper-plugin" }).some((pattern) => pattern.id === "paper-api-answer") || !getResponsePattern("paper-api-answer").gapStatements.some((statement) => statement.includes("name presence"))) throw new Error("bad response patterns");',
             'if (!context.recipes.some((recipe) => recipe.id === "paper-event-listener") || !context.scenarios.some((scenario) => scenario.id === "paper-event-listener-review") || !context.guardrails.some((guardrail) => guardrail.id === "paper-api-surface-limits") || !context.diagnostics.some((diagnostic) => diagnostic.id === "paper-api-member-unverified") || !context.claimPolicies.some((policy) => policy.id === "paper-type-or-member-exists") || !context.outputRequirements.some((requirement) => requirement.id === "paper-plugin-output-safety") || !context.responsePatterns.some((pattern) => pattern.id === "paper-api-answer") || !context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
             'if (plan.scenario.id !== "paper-event-listener-review" || !plan.recipes.some((recipe) => recipe.id === "paper-event-listener") || !plan.diagnostics.some((diagnostic) => diagnostic.id === "paper-event-candidate-unverified") || plan.preflight?.resolvedVersion !== "1.21.11" || !plan.evidence?.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring plan");',
-            'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
+            'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.1"))) throw new Error("bad authoring preflight");',
             'if (!evidence.links.some((link) => link.id === "paper-javadocs") || evidence.sourcePolicy.minecraftWikiTextRedistribution !== "forbidden") throw new Error("bad evidence bundle");',
             'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
             'if (!listIntentLookups({ domain: "paper-plugin" }).some((intent) => intent.id === "discover-paper-event-candidates") || !getIntentLookup("verify-paper-type-or-member").lookups[0].tools.mcp.includes("search_paper_members")) throw new Error("bad intent lookups");',
@@ -195,7 +195,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand("pnpm", ["exec", "minecraft-skills", "minecraft", "support-matrix"], consumerDir),
     );
-    if (!commands.at(-1)?.stdout.includes('"latestPaper": "1.21.11"')) {
+    if (!commands.at(-1)?.stdout.includes('"latestPaper": "26.2"')) {
       throw new Error("minecraft-skills support-matrix did not include latestPaper");
     }
     commands.push(
@@ -205,7 +205,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
         consumerDir,
       ),
     );
-    if (!commands.at(-1)?.stdout.includes('"latestBuild": 69')) {
+    if (!commands.at(-1)?.stdout.includes('"latestBuild": 30')) {
       throw new Error("minecraft-skills version-support did not include latest Paper build");
     }
     commands.push(
@@ -270,11 +270,11 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "plugin", "paper", "preflight", "26.2"],
+        ["exec", "minecraft-skills", "plugin", "paper", "preflight", "26.1"],
         consumerDir,
       ),
     );
-    if (!commands.at(-1)?.stdout.includes("Paper is not marked supported for 26.2")) {
+    if (!commands.at(-1)?.stdout.includes("Paper is not marked supported for 26.1")) {
       throw new Error("minecraft-skills preflight did not include Paper support warning");
     }
     commands.push(

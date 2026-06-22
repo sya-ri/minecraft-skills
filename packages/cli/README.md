@@ -17,15 +17,15 @@ minecraft-skills minecraft latest
 minecraft-skills skill list
 minecraft-skills skill show minecraft-paper-plugins
 minecraft-skills skill write minecraft-paper-plugins --output ./skills
-minecraft-skills plugin paper context 1.21.11
+minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper recipes
 minecraft-skills plugin paper recipe paper-event-listener
 minecraft-skills plugin paper search-scenarios "Paper event listener"
 minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
-minecraft-skills plugin paper plan paper-event-listener-review 1.21.11
-minecraft-skills plugin paper preflight 1.21.11
-minecraft-skills plugin paper evidence 1.21.11
+minecraft-skills plugin paper plan paper-event-listener-review 26.2
+minecraft-skills plugin paper preflight 26.2
+minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
 minecraft-skills plugin paper guardrail paper-api-surface-limits
 minecraft-skills plugin paper diagnostics
@@ -46,7 +46,7 @@ minecraft-skills data coverage
 minecraft-skills minecraft support-matrix
 minecraft-skills minecraft support --domain paper-plugin
 minecraft-skills data manifest
-minecraft-skills data fetch paper-api-surface --version 1.21.11
+minecraft-skills data fetch paper-api-surface --version 26.2
 minecraft-skills minecraft list
 minecraft-skills minecraft pack-formats
 minecraft-skills minecraft show 26.2
@@ -62,14 +62,14 @@ minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/
 minecraft-skills resourcepack models latest
 minecraft-skills resourcepack search-models latest --kind item-definition --contains bundle
 minecraft-skills plugin paper info
-minecraft-skills plugin paper api 1.21.11
-minecraft-skills plugin paper api-index 1.21.11
-minecraft-skills plugin paper api-surface 1.21.11
-minecraft-skills plugin paper types 1.21.11 --contains org.bukkit.entity.Player
-minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
-minecraft-skills plugin paper compare-api 1.20.4 1.21.11
-minecraft-skills plugin paper compare-api-surface 1.21.11 1.21.11
-minecraft-skills plugin paper events "player join" --version 1.21.11
+minecraft-skills plugin paper api 26.2
+minecraft-skills plugin paper api-index 26.2
+minecraft-skills plugin paper api-surface 26.2
+minecraft-skills plugin paper types 26.2 --contains org.bukkit.entity.Player
+minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin paper compare-api 1.20.4 26.2
+minecraft-skills plugin paper compare-api-surface 26.2 26.2
+minecraft-skills plugin paper events "player join" --version 26.2
 ```
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or

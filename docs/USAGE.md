@@ -43,15 +43,15 @@ minecraft-skills skill list
 minecraft-skills skill show minecraft-paper-plugins
 minecraft-skills skill write minecraft-paper-plugins --output ./skills
 
-minecraft-skills plugin paper context 1.21.11
+minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper recipes
 minecraft-skills plugin paper recipe paper-event-listener
 minecraft-skills plugin paper search-scenarios "Paper event listener"
 minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
-minecraft-skills plugin paper plan paper-event-listener-review 1.21.11
-minecraft-skills plugin paper preflight 1.21.11
-minecraft-skills plugin paper evidence 1.21.11
+minecraft-skills plugin paper plan paper-event-listener-review 26.2
+minecraft-skills plugin paper preflight 26.2
+minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper intents
 minecraft-skills plugin paper fact-surfaces
 minecraft-skills plugin paper claim-policies
@@ -67,7 +67,7 @@ support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.m
 
 ```sh
 minecraft-skills data manifest
-minecraft-skills data fetch paper-api-surface --version 1.21.11
+minecraft-skills data fetch paper-api-surface --version 26.2
 ```
 
 Data pack lookups:
@@ -96,14 +96,14 @@ Paper plugin lookups:
 
 ```sh
 minecraft-skills plugin paper info
-minecraft-skills plugin paper api 1.21.11
-minecraft-skills plugin paper api-index 1.21.11
-minecraft-skills plugin paper api-surface 1.21.11
-minecraft-skills plugin paper types 1.21.11 --contains org.bukkit.entity.Player
-minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
-minecraft-skills plugin paper compare-api 1.20.4 1.21.11
-minecraft-skills plugin paper compare-api-surface 1.21.11 1.21.11
-minecraft-skills plugin paper events "player join" --version 1.21.11
+minecraft-skills plugin paper api 26.2
+minecraft-skills plugin paper api-index 26.2
+minecraft-skills plugin paper api-surface 26.2
+minecraft-skills plugin paper types 26.2 --contains org.bukkit.entity.Player
+minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin paper compare-api 1.20.4 26.2
+minecraft-skills plugin paper compare-api-surface 26.2 26.2
+minecraft-skills plugin paper events "player join" --version 26.2
 ```
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
@@ -194,7 +194,7 @@ import {
   searchVanillaPaths,
 } from "@minecraft-skills/catalog";
 
-const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
+const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const scenario = getAuthoringScenario("paper-event-listener-review");
@@ -202,7 +202,7 @@ const matchingScenarios = searchAuthoringScenarios({
   query: "Paper event listener",
   domain: "paper-plugin",
 });
-const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });
+const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "26.2" });
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const responsePattern = getResponsePattern("paper-api-answer");
@@ -214,7 +214,7 @@ const assetMatches = searchVanillaPaths({
   contains: "models/item",
 });
 const playerMembers = searchPaperMembers({
-  version: "1.21.11",
+  version: "26.2",
   type: "org.bukkit.entity.Player",
   contains: "sendMessage",
 });

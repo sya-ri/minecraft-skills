@@ -10,12 +10,16 @@ type MojangManifest = {
 };
 
 type PaperProject = {
-  versions: string[];
+  versions: string[] | Record<string, string[]>;
 };
 
 type PaperVersionBuilds = {
   version: string;
   builds: number[];
+};
+
+type PaperDownloadBuild = {
+  id: number;
 };
 
 export type CurrentSourceAudit = {
@@ -36,7 +40,7 @@ export type CurrentSourceAudit = {
 };
 
 const mojangManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
-const paperProjectUrl = "https://api.papermc.io/v2/projects/paper";
+const paperProjectUrl = "https://fill.papermc.io/v3/projects/paper";
 
 async function defaultFetchJson(url: string): Promise<unknown> {
   const response = await fetch(url);
@@ -65,8 +69,9 @@ function assertPaperProject(value: unknown): asserts value is PaperProject {
   if (!value || typeof value !== "object" || !("versions" in value)) {
     throw new Error("Invalid PaperMC project JSON: missing versions");
   }
-  if (!Array.isArray((value as { versions: unknown }).versions)) {
-    throw new Error("Invalid PaperMC project JSON: versions must be an array");
+  const versions = (value as { versions: unknown }).versions;
+  if (!Array.isArray(versions) && (!versions || typeof versions !== "object")) {
+    throw new Error("Invalid PaperMC project JSON: versions must be an array or grouped object");
   }
 }
 
@@ -79,14 +84,52 @@ function assertPaperVersionBuilds(value: unknown): asserts value is PaperVersion
   }
 }
 
-function supportedPaperReleaseVersions(project: PaperProject): string[] {
-  return project.versions.filter((version) => {
-    if (version.includes("-")) {
-      return false;
+function assertPaperDownloadBuilds(value: unknown): asserts value is PaperDownloadBuild[] {
+  if (!Array.isArray(value)) {
+    throw new Error("Invalid PaperMC downloads builds JSON: expected array");
+  }
+  for (const build of value) {
+    if (!build || typeof build !== "object" || typeof (build as { id?: unknown }).id !== "number") {
+      throw new Error("Invalid PaperMC downloads builds JSON: build id must be a number");
     }
-    const [major, minor] = version.split(".");
-    return major === "1" && Number(minor) >= 13;
-  });
+  }
+}
+
+function paperProjectVersions(project: PaperProject): string[] {
+  if (Array.isArray(project.versions)) {
+    return project.versions;
+  }
+  return Object.values(project.versions).flat();
+}
+
+function isSupportedPaperReleaseVersion(version: string): boolean {
+  if (version.includes("-")) {
+    return false;
+  }
+  const [major, minor] = version.split(".");
+  if (major === "1") {
+    return Number(minor) >= 13;
+  }
+  return Number(major) >= 26;
+}
+
+function compareMinecraftVersions(left: string, right: string): number {
+  const leftParts = left.split(".").map(Number);
+  const rightParts = right.split(".").map(Number);
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < length; index += 1) {
+    const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
+}
+
+function supportedPaperReleaseVersions(project: PaperProject): string[] {
+  return paperProjectVersions(project)
+    .filter(isSupportedPaperReleaseVersion)
+    .sort(compareMinecraftVersions);
 }
 
 export async function auditCurrentSources(
@@ -108,14 +151,20 @@ export async function auditCurrentSources(
     throw new Error("PaperMC project JSON did not contain supported 1.13+ release versions");
   }
 
-  const paperBuilds = await fetchJson(`${paperProjectUrl}/versions/${paperLatestVersion}`);
-  assertPaperVersionBuilds(paperBuilds);
-  if (paperBuilds.version !== paperLatestVersion) {
-    throw new Error(
-      `PaperMC builds JSON is for ${paperBuilds.version}, expected ${paperLatestVersion}`,
-    );
+  const paperBuilds = await fetchJson(`${paperProjectUrl}/versions/${paperLatestVersion}/builds`);
+  let paperLatestBuild: number;
+  try {
+    assertPaperDownloadBuilds(paperBuilds);
+    paperLatestBuild = Math.max(...paperBuilds.map((build) => build.id));
+  } catch {
+    assertPaperVersionBuilds(paperBuilds);
+    if (paperBuilds.version !== paperLatestVersion) {
+      throw new Error(
+        `PaperMC builds JSON is for ${paperBuilds.version}, expected ${paperLatestVersion}`,
+      );
+    }
+    paperLatestBuild = Math.max(...paperBuilds.builds);
   }
-  const paperLatestBuild = Math.max(...paperBuilds.builds);
   if (!Number.isFinite(paperLatestBuild)) {
     throw new Error(`PaperMC builds JSON for ${paperLatestVersion} did not contain any builds`);
   }

@@ -61,13 +61,9 @@ jobs:
             --retrieved-at "$RETRIEVED_AT"
 
           curl -fsSL -o /tmp/papermc-paper-project.json \
-            https://api.papermc.io/v2/projects/paper
-          PAPER_LATEST="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; const project = JSON.parse(readFileSync("/tmp/papermc-paper-project.json", "utf8")); console.log(project.versions.at(-1));')"
-          curl -fsSL -o /tmp/papermc-paper-latest-builds.json \
-            "https://api.papermc.io/v2/projects/paper/versions/${PAPER_LATEST}"
+            https://fill.papermc.io/v3/projects/paper
           node packages/maintainer/dist/cli.mjs ingest-paper-project \
             --project-json /tmp/papermc-paper-project.json \
-            --latest-builds-json /tmp/papermc-paper-latest-builds.json \
             --retrieved-at "$RETRIEVED_AT"
           node packages/maintainer/dist/cli.mjs ingest-paper-builds \
             --retrieved-at "$RETRIEVED_AT"

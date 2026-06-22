@@ -23,13 +23,13 @@ npx -y @minecraft-skills/mcp
 Useful first commands:
 
 ```sh
-minecraft-skills plugin paper context 1.21.11
+minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper search-scenarios "Paper event listener"
-minecraft-skills plugin paper plan paper-event-listener-review 1.21.11
+minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills datapack recipes
 minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
-minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 ```
 
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see

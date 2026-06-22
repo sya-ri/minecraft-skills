@@ -50,7 +50,7 @@ const intentLookups = readDataJson("intent-lookups.json");
 const commandPaths = readDataText("java/command-paths/26.2.txt");
 const paperSkill = readDataText("skills/minecraft-paper-plugins/SKILL.md");
 const manifest = getDataManifest();
-await fetchData({ kind: "paper-api-surface", version: "1.21.11" });
+await fetchData({ kind: "paper-api-surface", version: "26.2" });
 ```
 
 Downloaded data is cached under the platform cache directory for the manifest data version. Set

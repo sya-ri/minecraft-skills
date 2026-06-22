@@ -16,14 +16,20 @@ describe("auditCurrentSources", () => {
         }
         if (url.endsWith("/projects/paper")) {
           return {
-            versions: ["1.12.2", "1.13", "1.21.11-pre3", "1.21.11"],
+            versions: {
+              "1.12": ["1.12.2"],
+              "1.13": ["1.13"],
+              "1.21": ["1.21.11-pre3", "1.21.11"],
+              "26.1": ["26.1.2", "26.1.1"],
+              "26.2": ["26.2", "26.2-rc-2"],
+            },
           };
         }
-        if (url.endsWith("/projects/paper/versions/1.21.11")) {
-          return {
-            version: "1.21.11",
-            builds: [1, 69],
-          };
+        if (url.endsWith("/projects/paper/versions/26.2/builds")) {
+          return [
+            { id: 1, channel: "ALPHA" },
+            { id: 30, channel: "ALPHA" },
+          ];
         }
         throw new Error(`Unexpected URL: ${url}`);
       },
@@ -34,14 +40,14 @@ describe("auditCurrentSources", () => {
       checkedAt: "2026-06-22T00:00:00.000Z",
       bundled: {
         javaLatestRelease: "26.2",
-        paperLatestVersion: "1.21.11",
-        paperLatestBuild: 69,
+        paperLatestVersion: "26.2",
+        paperLatestBuild: 30,
       },
       current: {
         javaLatestRelease: "26.2",
         javaLatestSnapshot: "26.2",
-        paperLatestVersion: "1.21.11",
-        paperLatestBuild: 69,
+        paperLatestVersion: "26.2",
+        paperLatestBuild: 30,
       },
       mismatches: [],
     });
@@ -61,14 +67,17 @@ describe("auditCurrentSources", () => {
         }
         if (url.endsWith("/projects/paper")) {
           return {
-            versions: ["1.21.11", "1.21.12"],
+            versions: {
+              "26.2": ["26.2"],
+              "26.3": ["26.3"],
+            },
           };
         }
-        if (url.endsWith("/projects/paper/versions/1.21.12")) {
-          return {
-            version: "1.21.12",
-            builds: [1, 2],
-          };
+        if (url.endsWith("/projects/paper/versions/26.3/builds")) {
+          return [
+            { id: 1, channel: "ALPHA" },
+            { id: 2, channel: "ALPHA" },
+          ];
         }
         throw new Error(`Unexpected URL: ${url}`);
       },
@@ -77,8 +86,8 @@ describe("auditCurrentSources", () => {
     expect(result.ok).toBe(false);
     expect(result.mismatches).toEqual([
       "bundled Java latest 26.2 differs from Mojang latest release 26.3",
-      "bundled Paper latest 1.21.11 differs from PaperMC latest 1.21.12",
-      "bundled Paper latest build 69 differs from PaperMC latest build 2",
+      "bundled Paper latest 26.2 differs from PaperMC latest 26.3",
+      "bundled Paper latest build 30 differs from PaperMC latest build 2",
     ]);
   });
 });

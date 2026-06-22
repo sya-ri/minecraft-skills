@@ -59,9 +59,20 @@
       "unknowns": []
     },
     "paper-plugin": {
-      "status": "not-yet-published",
-      "facts": ["paper_supported=false", "paper_latest_supported=1.21.11", "paper_latest_build=69"],
-      "unknowns": ["paper_api_version", "server_api_changes", "folia_compatibility_notes"]
+      "status": "api-reference-linked",
+      "facts": [
+        "paper_supported=true",
+        "paper_minecraft_version=26.1.1",
+        "paper_latest_build=29",
+        "paper_build_count=23",
+        "paper_api_dependency=io.papermc.paper:paper-api:26.1.1-R0.1-SNAPSHOT",
+        "paper_javadocs=https://jd.papermc.io/paper/26.1.1/",
+        "paper_api_package_index=26.1.1",
+        "paper_api_surface=26.1.1",
+        "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
+        "paper_scheduler_docs=https://docs.papermc.io/paper/dev/scheduler/"
+      ],
+      "unknowns": []
     }
   },
   "sources": [

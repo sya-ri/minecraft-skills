@@ -1116,7 +1116,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
-  minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-paper-project --project-json <project.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-builds [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-api-indexes [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-api-surfaces [--version <paper-version>] [--force] [--retrieved-at <iso>]
@@ -1282,16 +1282,11 @@ function ingestPaperProject(args: string[]): void {
   if (!projectJsonPath) {
     throw new Error("ingest-paper-project requires --project-json <project.json>");
   }
-  const latestBuildsJsonPath = readOption(args, "--latest-builds-json");
-  if (!latestBuildsJsonPath) {
-    throw new Error("ingest-paper-project requires --latest-builds-json <builds.json>");
-  }
   const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
   const root = findRepositoryRoot();
   const latest = getVersionDetail("java", readOption(args, "--java-latest") ?? "latest");
   const paper = buildPaperPluginData({
     projectJson: JSON.parse(readFileSync(projectJsonPath, "utf8")) as unknown,
-    latestBuildsJson: JSON.parse(readFileSync(latestBuildsJsonPath, "utf8")) as unknown,
     javaLatest: latest.version,
     retrievedAt,
   });

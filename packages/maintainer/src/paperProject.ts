@@ -1,13 +1,12 @@
 type PaperProjectJson = {
-  project_id: string;
-  project_name: string;
-  version_groups: string[];
-  versions: string[];
-};
-
-type PaperVersionBuildsJson = {
-  version: string;
-  builds: number[];
+  project_id?: string;
+  project_name?: string;
+  project?: {
+    id?: string;
+    name?: string;
+  };
+  version_groups?: string[];
+  versions: string[] | Record<string, string[]>;
 };
 
 type PaperPluginData = {
@@ -60,66 +59,103 @@ function assertPaperProject(value: unknown): asserts value is PaperProjectJson {
   if (!value || typeof value !== "object" || !("versions" in value)) {
     throw new Error("Invalid PaperMC project JSON: missing versions");
   }
-  if (!Array.isArray((value as { versions: unknown }).versions)) {
-    throw new Error("Invalid PaperMC project JSON: versions must be an array");
+  const versions = (value as { versions: unknown }).versions;
+  if (!Array.isArray(versions) && (!versions || typeof versions !== "object")) {
+    throw new Error("Invalid PaperMC project JSON: versions must be an array or grouped object");
   }
 }
 
-function assertPaperVersionBuilds(value: unknown): asserts value is PaperVersionBuildsJson {
-  if (!value || typeof value !== "object" || !("builds" in value)) {
-    throw new Error("Invalid PaperMC version builds JSON: missing builds");
+function paperProjectId(project: PaperProjectJson): "paper" {
+  const id = project.project_id ?? project.project?.id;
+  if (id !== "paper") {
+    throw new Error(`Invalid PaperMC project JSON: expected paper project, got ${String(id)}`);
   }
-  if (!Array.isArray((value as { builds: unknown }).builds)) {
-    throw new Error("Invalid PaperMC version builds JSON: builds must be an array");
+  return id;
+}
+
+function paperProjectName(project: PaperProjectJson): string {
+  return project.project_name ?? project.project?.name ?? "Paper";
+}
+
+function paperProjectVersions(project: PaperProjectJson): string[] {
+  if (Array.isArray(project.versions)) {
+    return project.versions;
   }
+  return Object.values(project.versions).flat();
+}
+
+function paperProjectVersionGroups(project: PaperProjectJson): string[] {
+  if (Array.isArray(project.version_groups)) {
+    return project.version_groups;
+  }
+  if (!Array.isArray(project.versions)) {
+    return Object.keys(project.versions);
+  }
+  return [...new Set(project.versions.map((version) => version.split(".").slice(0, 2).join(".")))];
+}
+
+function isSupportedReleaseVersion(version: string): boolean {
+  if (version.includes("-")) {
+    return false;
+  }
+  const [major, minor] = version.split(".");
+  if (major === "1") {
+    return Number(minor) >= 13;
+  }
+  return Number(major) >= 26;
+}
+
+function compareMinecraftVersions(left: string, right: string): number {
+  const leftParts = left.split(".").map(Number);
+  const rightParts = right.split(".").map(Number);
+  const length = Math.max(leftParts.length, rightParts.length);
+  for (let index = 0; index < length; index += 1) {
+    const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
 }
 
 function supportedReleaseVersions(project: PaperProjectJson): string[] {
-  return project.versions.filter((version) => {
-    if (version.includes("-")) {
-      return false;
-    }
-    const [major, minor] = version.split(".");
-    return major === "1" && Number(minor) >= 13;
-  });
+  return paperProjectVersions(project)
+    .filter(isSupportedReleaseVersion)
+    .sort(compareMinecraftVersions);
+}
+
+function supportedVersionGroups(project: PaperProjectJson): string[] {
+  return paperProjectVersionGroups(project)
+    .filter((group) => {
+      const [major, minor] = group.split(".");
+      if (major === "1") {
+        return Number(minor) >= 13;
+      }
+      return Number(major) >= 26;
+    })
+    .sort(compareMinecraftVersions);
 }
 
 export function buildPaperPluginData(options: {
   projectJson: unknown;
-  latestBuildsJson: unknown;
   javaLatest: string;
   retrievedAt: string;
 }): PaperPluginData {
   assertPaperProject(options.projectJson);
-  assertPaperVersionBuilds(options.latestBuildsJson);
 
   const versions = supportedReleaseVersions(options.projectJson);
   const latestVersion = versions.at(-1);
-  const latestBuild = Math.max(...options.latestBuildsJson.builds);
   if (!latestVersion) {
     throw new Error("PaperMC project JSON did not contain supported 1.13+ release versions");
   }
-  if (options.latestBuildsJson.version !== latestVersion) {
-    throw new Error(
-      `PaperMC builds JSON is for ${options.latestBuildsJson.version}, expected ${latestVersion}`,
-    );
-  }
-  if (!Number.isFinite(latestBuild)) {
-    throw new Error(`PaperMC builds JSON for ${latestVersion} did not contain any builds`);
-  }
-
-  const versionGroups = options.projectJson.version_groups.filter((group) => {
-    const [major, minor] = group.split(".");
-    return major === "1" && Number(minor) >= 13;
-  });
 
   return {
     schemaVersion: 1,
-    projectId: "paper",
-    projectName: options.projectJson.project_name,
+    projectId: paperProjectId(options.projectJson),
+    projectName: paperProjectName(options.projectJson),
     latest: {
       minecraftVersion: latestVersion,
-      build: latestBuild,
+      build: 0,
     },
     support: {
       primarySince: "1.13",
@@ -133,15 +169,9 @@ export function buildPaperPluginData(options: {
             : "paper-not-yet-published-for-java-latest",
       },
     },
-    versionGroups,
+    versionGroups: supportedVersionGroups(options.projectJson),
     versions,
-    versionBuilds: [
-      {
-        minecraftVersion: latestVersion,
-        latestBuild,
-        buildCount: options.latestBuildsJson.builds.length,
-      },
-    ],
+    versionBuilds: [],
     eventSearch: {
       provider: "sya-ri/spigot-event-list",
       baseUrl: "https://spigot-event-list.s7a.dev/api/search/events",
@@ -158,15 +188,9 @@ export function buildPaperPluginData(options: {
     },
     sources: [
       {
-        id: "papermc-api-project-paper",
+        id: "papermc-downloads-project-paper",
         kind: "official",
-        url: "https://api.papermc.io/v2/projects/paper",
-        retrievedAt: options.retrievedAt,
-      },
-      {
-        id: `papermc-api-paper-${latestVersion}-builds`,
-        kind: "official",
-        url: `https://api.papermc.io/v2/projects/paper/versions/${latestVersion}`,
+        url: "https://fill.papermc.io/v3/projects/paper",
         retrievedAt: options.retrievedAt,
       },
       {

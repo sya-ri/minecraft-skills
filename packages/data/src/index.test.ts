@@ -137,8 +137,8 @@ describe("@minecraft-skills/data", () => {
   it("loads data manifest and resolves cache directories", async () => {
     await withCacheDir((cacheDir) => {
       const manifest = getDataManifest();
-      expect(manifest.dataVersion).toBe("2026.06.22-5");
-      expect(manifest.downloadable).toHaveLength(135);
+      expect(manifest.dataVersion).toBe("2026.06.22-6");
+      expect(manifest.downloadable).toHaveLength(138);
       expect(manifest.downloadable).toContainEqual(
         expect.objectContaining({ kind: "datapack-schema-surface", version: "1.13" }),
       );

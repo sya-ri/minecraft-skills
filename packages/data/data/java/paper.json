@@ -3,19 +3,31 @@
   "projectId": "paper",
   "projectName": "Paper",
   "latest": {
-    "minecraftVersion": "1.21.11",
-    "build": 69
+    "minecraftVersion": "26.2",
+    "build": 30
   },
   "support": {
     "primarySince": "1.13",
     "legacyBefore": "1.13",
     "minecraftLatestGap": {
       "javaLatest": "26.2",
-      "paperLatest": "1.21.11",
-      "status": "paper-not-yet-published-for-java-latest"
+      "paperLatest": "26.2",
+      "status": "paper-current-with-java-latest"
     }
   },
-  "versionGroups": ["1.13", "1.14", "1.15", "1.16", "1.17", "1.18", "1.19", "1.20", "1.21"],
+  "versionGroups": [
+    "1.13",
+    "1.14",
+    "1.15",
+    "1.16",
+    "1.17",
+    "1.18",
+    "1.19",
+    "1.20",
+    "1.21",
+    "26.1",
+    "26.2"
+  ],
   "versions": [
     "1.13",
     "1.13.1",
@@ -59,77 +71,10 @@
     "1.21.8",
     "1.21.9",
     "1.21.10",
-    "1.21.11"
-  ],
-  "eventSearch": {
-    "provider": "sya-ri/spigot-event-list",
-    "baseUrl": "https://spigot-event-list.s7a.dev/api/search/events",
-    "defaultVersion": "latest",
-    "sources": ["spigot", "paper", "purpur", "bungee", "velocity"],
-    "paperSources": ["spigot", "paper"],
-    "querySemantics": {
-      "defaultOperator": "AND",
-      "orOperator": "OR",
-      "quotedPhrases": true,
-      "maxLimit": 100,
-      "defaultLimit": 20
-    }
-  },
-  "sources": [
-    {
-      "id": "papermc-api-project-paper",
-      "kind": "official",
-      "url": "https://api.papermc.io/v2/projects/paper",
-      "retrievedAt": "2026-06-22T00:00:00+09:00"
-    },
-    {
-      "id": "papermc-api-paper-1.21.11-builds",
-      "kind": "official",
-      "url": "https://api.papermc.io/v2/projects/paper/versions/1.21.11",
-      "retrievedAt": "2026-06-22T00:00:00+09:00"
-    },
-    {
-      "id": "spigot-event-list-search-api",
-      "kind": "project-api",
-      "url": "https://spigot-event-list.s7a.dev/api/search/events",
-      "retrievedAt": "2026-06-22T00:00:00+09:00"
-    },
-    {
-      "id": "spigot-event-search-skill-api-reference",
-      "kind": "project-api-reference",
-      "url": "https://raw.githubusercontent.com/sya-ri/spigot-event-list/master/skills/spigot-event-search/references/api.md",
-      "retrievedAt": "2026-06-22T00:00:00+09:00"
-    },
-    {
-      "id": "papermc-api-paper-version-builds",
-      "kind": "official-bulk",
-      "url": "https://api.papermc.io/v2/projects/paper/versions/{minecraftVersion}",
-      "retrievedAt": "2026-06-22T00:00:00.000Z"
-    },
-    {
-      "id": "papermc-docs-paper-dev",
-      "kind": "official-docs",
-      "url": "https://docs.papermc.io/paper/dev/",
-      "retrievedAt": "2026-06-22T00:00:00.000Z"
-    },
-    {
-      "id": "papermc-docs-paper-scheduling",
-      "kind": "official-docs",
-      "url": "https://docs.papermc.io/paper/dev/scheduler/",
-      "retrievedAt": "2026-06-22T00:00:00.000Z"
-    },
-    {
-      "id": "papermc-docs-paper-folia-support",
-      "kind": "official-docs",
-      "url": "https://docs.papermc.io/paper/dev/folia-support/",
-      "retrievedAt": "2026-06-22T00:00:00.000Z"
-    },
-    {
-      "id": "papermc-docs-folia-overview",
-      "kind": "official-docs",
-      "url": "https://docs.papermc.io/folia/reference/overview/",
-      "retrievedAt": "2026-06-22T00:00:00.000Z"
-    }
+    "1.21.11",
+    "26.1.1",
+    "26.1.2",
+    "26.2"
   ],
   "versionBuilds": [
     {
@@ -339,13 +284,92 @@
     },
     {
       "minecraftVersion": "1.21.10",
-      "latestBuild": 129,
-      "buildCount": 50
+      "latestBuild": 130,
+      "buildCount": 51
     },
     {
       "minecraftVersion": "1.21.11",
-      "latestBuild": 69,
-      "buildCount": 32
+      "latestBuild": 132,
+      "buildCount": 92
+    },
+    {
+      "minecraftVersion": "26.1.1",
+      "latestBuild": 29,
+      "buildCount": 23
+    },
+    {
+      "minecraftVersion": "26.1.2",
+      "latestBuild": 72,
+      "buildCount": 69
+    },
+    {
+      "minecraftVersion": "26.2",
+      "latestBuild": 30,
+      "buildCount": 19
+    }
+  ],
+  "eventSearch": {
+    "provider": "sya-ri/spigot-event-list",
+    "baseUrl": "https://spigot-event-list.s7a.dev/api/search/events",
+    "defaultVersion": "latest",
+    "sources": ["spigot", "paper", "purpur", "bungee", "velocity"],
+    "paperSources": ["spigot", "paper"],
+    "querySemantics": {
+      "defaultOperator": "AND",
+      "orOperator": "OR",
+      "quotedPhrases": true,
+      "maxLimit": 100,
+      "defaultLimit": 20
+    }
+  },
+  "sources": [
+    {
+      "id": "papermc-downloads-project-paper",
+      "kind": "official",
+      "url": "https://fill.papermc.io/v3/projects/paper",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "spigot-event-list-search-api",
+      "kind": "project-api",
+      "url": "https://spigot-event-list.s7a.dev/api/search/events",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "spigot-event-search-skill-api-reference",
+      "kind": "project-api-reference",
+      "url": "https://raw.githubusercontent.com/sya-ri/spigot-event-list/master/skills/spigot-event-search/references/api.md",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-paper-dev",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/paper/dev/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-paper-scheduling",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/paper/dev/scheduler/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-paper-folia-support",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/paper/dev/folia-support/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-docs-folia-overview",
+      "kind": "official-docs",
+      "url": "https://docs.papermc.io/folia/reference/overview/",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
+    },
+    {
+      "id": "papermc-downloads-paper-version-builds",
+      "kind": "official-bulk",
+      "url": "https://fill.papermc.io/v3/projects/paper/versions/{minecraftVersion}/builds",
+      "retrievedAt": "2026-06-22T00:00:00.000Z"
     }
   ]
 }

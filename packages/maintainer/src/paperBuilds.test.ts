@@ -18,7 +18,18 @@ describe("ingestPaperBuilds", () => {
       paperPath,
       `${JSON.stringify({
         schemaVersion: 1,
-        versions: ["1.21", "1.21.11"],
+        latest: {
+          minecraftVersion: "26.2",
+          build: 0,
+        },
+        support: {
+          minecraftLatestGap: {
+            javaLatest: "26.2",
+            paperLatest: "26.2",
+            status: "paper-current-with-java-latest",
+          },
+        },
+        versions: ["26.1", "26.1.1", "26.1.2", "26.2"],
         sources: [],
       })}\n`,
     );
@@ -26,12 +37,24 @@ describe("ingestPaperBuilds", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string) => {
-        const version = url.split("/").at(-1);
+        const version = url.split("/").at(-2);
+        const buildsByVersion: Record<string, Array<{ id: number; channel: string }>> = {
+          "26.1": [],
+          "26.1.1": [
+            { id: 28, channel: "ALPHA" },
+            { id: 29, channel: "ALPHA" },
+          ],
+          "26.1.2": [{ id: 72, channel: "STABLE" }],
+          "26.2": [
+            { id: 1, channel: "ALPHA" },
+            { id: 30, channel: "ALPHA" },
+          ],
+        };
         return {
           ok: true,
           status: 200,
           statusText: "OK",
-          json: async () => ({ version, builds: version === "1.21" ? [1, 130] : [1, 69] }),
+          json: async () => buildsByVersion[version ?? ""] ?? [],
         };
       }),
     );
@@ -41,24 +64,44 @@ describe("ingestPaperBuilds", () => {
         root,
         retrievedAt: "2026-06-22T00:00:00.000Z",
       }),
-    ).resolves.toBe(2);
+    ).resolves.toBe(3);
 
     const paper = JSON.parse(readFileSync(paperPath, "utf8")) as {
+      latest: unknown;
+      support: { minecraftLatestGap: unknown };
+      versions: unknown;
       versionBuilds: unknown;
       sources: Array<{ id: string }>;
     };
+    expect(paper.latest).toEqual({
+      minecraftVersion: "26.2",
+      build: 30,
+    });
+    expect(paper.support.minecraftLatestGap).toEqual({
+      javaLatest: "26.2",
+      paperLatest: "26.2",
+      status: "paper-current-with-java-latest",
+    });
+    expect(paper.versions).toEqual(["26.1.1", "26.1.2", "26.2"]);
     expect(paper.versionBuilds).toEqual([
       {
-        minecraftVersion: "1.21",
-        latestBuild: 130,
+        minecraftVersion: "26.1.1",
+        latestBuild: 29,
         buildCount: 2,
       },
       {
-        minecraftVersion: "1.21.11",
-        latestBuild: 69,
+        minecraftVersion: "26.1.2",
+        latestBuild: 72,
+        buildCount: 1,
+      },
+      {
+        minecraftVersion: "26.2",
+        latestBuild: 30,
         buildCount: 2,
       },
     ]);
-    expect(paper.sources.map((source) => source.id)).toContain("papermc-api-paper-version-builds");
+    expect(paper.sources.map((source) => source.id)).toContain(
+      "papermc-downloads-paper-version-builds",
+    );
   });
 });

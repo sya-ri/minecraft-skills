@@ -296,9 +296,9 @@ describe("catalog", () => {
       }),
     );
 
-    const paper = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
+    const paper = getAuthoringPreflight({ domain: "paper-plugin", version: "26.1" });
     expect(paper.paper?.supported).toBe(false);
-    expect(paper.warnings.join("\n")).toContain("Paper is not marked supported for 26.2");
+    expect(paper.warnings.join("\n")).toContain("Paper is not marked supported for 26.1");
     expect(paper.domainCoverage.status).toBe("not-yet-published");
   });
 
@@ -388,7 +388,8 @@ describe("catalog", () => {
       edition: "java",
       version: "26.2",
       paper: {
-        supported: false,
+        supported: true,
+        latestBuild: 30,
       },
       surfaces: {
         datapackSchemaSurface: {
@@ -396,11 +397,11 @@ describe("catalog", () => {
         },
       },
     });
-    const latestPaper = support.find((entry) => entry.version === "1.21.11");
+    const latestPaper = support.find((entry) => entry.version === "26.2");
     expect(latestPaper).toMatchObject({
       paper: {
         supported: true,
-        latestBuild: 69,
+        latestBuild: 30,
       },
       surfaces: {
         paperApiSurface: {
@@ -431,12 +432,12 @@ describe("catalog", () => {
     expect(summary.java.datapack.observedSchemaSurfaces).toBe(50);
     expect(summary.java.resourcepack.modelSummaries).toBe(50);
     expect(summary.java.paperPlugin).toMatchObject({
-      supportedVersions: 43,
-      latestSupportedVersion: "1.21.11",
-      latestBuild: 69,
-      apiPackageIndexes: 43,
-      apiSurfaces: 35,
-      versionsWithoutUnknowns: 43,
+      supportedVersions: 46,
+      latestSupportedVersion: "26.2",
+      latestBuild: 30,
+      apiPackageIndexes: 46,
+      apiSurfaces: 38,
+      versionsWithoutUnknowns: 46,
       missingApiPackageIndexes: [],
     });
     expect(summary.java.paperPlugin.missingApiSurfaces).toEqual([
@@ -459,9 +460,9 @@ describe("catalog", () => {
     const matrix = getSupportMatrix();
     expect(matrix.aliases).toMatchObject({
       latestJava: "26.2",
-      latestPaper: "1.21.11",
+      latestPaper: "26.2",
       latestWithDatapackSchemaSurface: "26.2",
-      latestWithPaperApiSurface: "1.21.11",
+      latestWithPaperApiSurface: "26.2",
     });
     expect(matrix.downloadable).toContainEqual(
       expect.objectContaining({
@@ -510,18 +511,18 @@ describe("catalog", () => {
   it("loads Paper plugin data and event search contract", () => {
     const paper = getPaperPluginData();
     expect(paper.latest).toEqual({
-      minecraftVersion: "1.21.11",
-      build: 69,
+      minecraftVersion: "26.2",
+      build: 30,
     });
     expect(paper.support.minecraftLatestGap).toEqual({
       javaLatest: "26.2",
-      paperLatest: "1.21.11",
-      status: "paper-not-yet-published-for-java-latest",
+      paperLatest: "26.2",
+      status: "paper-current-with-java-latest",
     });
     expect(paper.versionBuilds).toContainEqual({
       minecraftVersion: "1.21.11",
-      latestBuild: 69,
-      buildCount: 32,
+      latestBuild: 132,
+      buildCount: 92,
     });
     expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
     expect(paper.sources.map((source) => source.id)).toContain("papermc-docs-paper-folia-support");
@@ -611,11 +612,11 @@ describe("catalog", () => {
     expect(comparison.changes).toEqual([]);
   });
 
-  it("builds Paper API references for unsupported future versions", () => {
-    const reference = getPaperApiReference("26.2");
+  it("builds Paper API references for unsupported versions", () => {
+    const reference = getPaperApiReference("26.1");
     expect(reference.supported).toBe(false);
-    expect(reference.minecraftVersion).toBe("1.21.11");
-    expect(reference.latestSupportedVersion).toBe("1.21.11");
+    expect(reference.minecraftVersion).toBe("26.2");
+    expect(reference.latestSupportedVersion).toBe("26.2");
     expect(reference.apiDependency).toBeNull();
     expect(reference.javadocsUrl).toBeNull();
   });
@@ -624,8 +625,8 @@ describe("catalog", () => {
     const version = getVersionDetail("java", "1.21.11");
     expect(version.domains["paper-plugin"].status).toBe("api-reference-linked");
     expect(version.domains["paper-plugin"].facts).toContain("paper_supported=true");
-    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_build=69");
-    expect(version.domains["paper-plugin"].facts).toContain("paper_build_count=32");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_build=132");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_build_count=92");
     expect(version.domains["paper-plugin"].facts).toContain(
       "paper_api_dependency=io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT",
     );
@@ -637,7 +638,6 @@ describe("catalog", () => {
     expect(version.domains["paper-plugin"].facts).toContain(
       "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
     );
-    expect(version.domains["paper-plugin"].facts).toContain("paper_global_latest_build=69");
     expect(version.domains["paper-plugin"].unknowns).toEqual([]);
   });
 
@@ -649,10 +649,10 @@ describe("catalog", () => {
   });
 
   it("marks Java versions that Paper has not published yet", () => {
-    const version = getVersionDetail("java", "26.2");
+    const version = getVersionDetail("java", "26.1");
     expect(version.domains["paper-plugin"].status).toBe("not-yet-published");
     expect(version.domains["paper-plugin"].facts).toContain("paper_supported=false");
-    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_supported=1.21.11");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_supported=26.2");
   });
 
   it("lists pack formats for all bundled releases", () => {
@@ -662,7 +662,7 @@ describe("catalog", () => {
       version: "26.2",
       data: 107,
       resource: 88,
-      paperPluginStatus: "not-yet-published",
+      paperPluginStatus: "api-reference-linked",
     });
     expect(formats.at(-1)).toMatchObject({
       version: "1.13",

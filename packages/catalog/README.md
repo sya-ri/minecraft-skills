@@ -71,10 +71,10 @@ const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const checklist = getAuthoringChecklist("paper-plugin");
-const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
-const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });
-const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "1.21.11" });
-const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });
+const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
+const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "26.2" });
+const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
+const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
 const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
@@ -102,7 +102,7 @@ const coverage = getCoverageSummary();
 const support = getSupportMatrix();
 const versionSupport = listVersionSupport({ domain: "paper-plugin" });
 const manifest = getDataManifest();
-await fetchData({ kind: "paper-api-surface", version: "1.21.11" });
+await fetchData({ kind: "paper-api-surface", version: "26.2" });
 const reports = getJavaReportsSummary("java", "26.2");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
@@ -130,17 +130,17 @@ const pathDiff = compareVanillaPaths({
   domain: "resourcepack",
   prefix: "assets/minecraft/models/item/",
 });
-const paperApi = getPaperApiReference("1.21.11");
-const paperApiIndex = getPaperApiIndex("1.21.11");
-const paperApiDiff = comparePaperApi("1.20.4", "1.21.11");
-const paperSurface = getPaperApiSurface("1.21.11");
-const paperTypes = searchPaperTypes({ version: "1.21.11", contains: "Player" });
+const paperApi = getPaperApiReference("26.2");
+const paperApiIndex = getPaperApiIndex("26.2");
+const paperApiDiff = comparePaperApi("1.20.4", "26.2");
+const paperSurface = getPaperApiSurface("26.2");
+const paperTypes = searchPaperTypes({ version: "26.2", contains: "Player" });
 const paperMembers = searchPaperMembers({
-  version: "1.21.11",
+  version: "26.2",
   type: "org.bukkit.entity.Player",
   contains: "sendMessage",
 });
-const paperSurfaceDiff = comparePaperApiSurface("1.21.11", "1.21.11");
+const paperSurfaceDiff = comparePaperApiSurface("26.2", "26.2");
 const paper = getPaperPluginData();
 ```
 
