@@ -29,10 +29,16 @@ const promptDefinitions: PromptDefinition[] = [
     focus:
       "Minecraft Java datapack authoring, commands, server reports, pack formats, and vanilla data paths.",
     tools: [
+      "get_support_matrix",
+      "get_data_manifest",
       "get_coverage_summary",
+      "get_source_policy",
       "get_version",
       "compare_versions",
       "get_server_reports",
+      "get_datapack_schema_surface",
+      "search_datapack_schema",
+      "compare_datapack_schema",
       "search_commands",
       "compare_commands",
       "get_vanilla_inventory",
@@ -49,7 +55,9 @@ const promptDefinitions: PromptDefinition[] = [
     focus:
       "Minecraft Java resource pack authoring, pack formats, model summaries, and vanilla asset paths.",
     tools: [
+      "get_support_matrix",
       "get_coverage_summary",
+      "get_source_policy",
       "get_version",
       "compare_versions",
       "get_vanilla_inventory",
@@ -68,11 +76,18 @@ const promptDefinitions: PromptDefinition[] = [
     focus:
       "Paper plugin authoring, supported Minecraft versions, Paper API references, Javadocs indexes, Folia notes, and Bukkit/Paper events.",
     tools: [
+      "get_support_matrix",
+      "get_data_manifest",
       "get_coverage_summary",
+      "get_source_policy",
       "get_paper_plugin_data",
       "get_paper_api_reference",
       "get_paper_api_index",
       "compare_paper_api",
+      "get_paper_api_surface",
+      "search_paper_types",
+      "search_paper_members",
+      "compare_paper_api_surface",
       "search_paper_events",
     ],
   },
@@ -109,6 +124,8 @@ ${tools}
 
 Version rules:
 - Prefer exact target-version data over latest-version data.
+- Call get_support_matrix before using heavyweight surfaces so you know what is bundled, cached, or downloadable.
+- Call get_data_manifest and fetch_data when a relevant downloadable surface is missing locally.
 - Use compare tools when answering migration or compatibility questions.
 - Treat unknown, missing, or not-extracted fields as gaps, not facts.
 - Do not copy Minecraft Wiki, Paper docs, or Javadocs prose; use linked sources as provenance and summarize in your own words.`;

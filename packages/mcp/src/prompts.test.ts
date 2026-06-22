@@ -42,10 +42,26 @@ describe("MCP prompts", () => {
     });
     const text = result.messages[0]?.content.type === "text" ? result.messages[0].content.text : "";
     expect(text).toContain("minecraft-skills://skills/minecraft-paper-plugins/SKILL.md");
+    expect(text).toContain("get_support_matrix");
+    expect(text).toContain("get_data_manifest");
+    expect(text).toContain("get_source_policy");
     expect(text).toContain("get_paper_api_reference");
+    expect(text).toContain("get_paper_api_surface");
+    expect(text).toContain("search_paper_types");
+    expect(text).toContain("search_paper_members");
     expect(text).toContain("search_paper_events");
+    expect(text).toContain("fetch_data");
     expect(text).toContain("1.21.11");
     expect(text).toContain("handle player join");
+  });
+
+  it("builds datapack prompt text with schema lookup tools", () => {
+    const text = textFromPrompt("use_minecraft_datapacks");
+    expect(text).toContain("get_support_matrix");
+    expect(text).toContain("get_datapack_schema_surface");
+    expect(text).toContain("search_datapack_schema");
+    expect(text).toContain("compare_datapack_schema");
+    expect(text).toContain("fetch_data");
   });
 
   it("rejects unknown prompts", () => {
