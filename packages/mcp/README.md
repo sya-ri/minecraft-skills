@@ -47,6 +47,8 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `latest_version`
 - `list_skills`
 - `get_skill`
+- `list_authoring_checklists`
+- `get_authoring_checklist`
 - `list_fact_surfaces`
 - `get_fact_surface`
 - `get_coverage_summary`
@@ -94,6 +96,8 @@ Agent Skill files are exposed under `minecraft-skills://skills/<skill>/...`, inc
 Data resources are exposed under `minecraft-skills://data/...`, including:
 
 - `minecraft-skills://data/fact-surfaces.json`
+- `minecraft-skills://data/authoring-checklists.json`
+- `minecraft-skills://data/authoring-checklists/paper-plugin.json`
 - `minecraft-skills://data/fact-surfaces/datapack-schema-surface.json`
 - `minecraft-skills://data/data-manifest.json`
 - `minecraft-skills://data/java/datapack-schema-surfaces/26.2.json`

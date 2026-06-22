@@ -18,6 +18,7 @@ import {
   getPaperApiSurface,
   getPaperPluginData,
   getVersionDetail,
+  listAuthoringChecklists,
   listDomains,
   listFactSurfaces,
   listReferences,
@@ -168,8 +169,13 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
   }
 }
 
-function requireFactSurfaces(root: string, messages: string[]): void {
-  requireDataFile(root, "fact-surfaces.json", messages);
+type PublicEntrypoints = {
+  cliCommands: Set<string>;
+  mcpTools: Set<string>;
+  packageApis: Set<string>;
+};
+
+function collectPublicEntrypoints(root: string): PublicEntrypoints {
   const cliCommands = new Set(
     [
       ...readFileSync(join(root, "packages/cli/src/cli.ts"), "utf8").matchAll(
@@ -183,6 +189,46 @@ function requireFactSurfaces(root: string, messages: string[]): void {
     ].map((match) => match[1] ?? ""),
   );
   const packageApis = new Set(Object.keys(catalogModule));
+  return {
+    cliCommands,
+    mcpTools,
+    packageApis,
+  };
+}
+
+function requirePublicEntrypoints(
+  prefix: string,
+  entrypoints: {
+    cli: string[];
+    mcp: string[];
+    packageApis: string[];
+  },
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  for (const command of entrypoints.cli) {
+    if (!publicEntrypoints.cliCommands.has(command)) {
+      messages.push(`${prefix} references missing CLI command: ${command}`);
+    }
+  }
+  for (const tool of entrypoints.mcp) {
+    if (!publicEntrypoints.mcpTools.has(tool)) {
+      messages.push(`${prefix} references missing MCP tool: ${tool}`);
+    }
+  }
+  for (const api of entrypoints.packageApis) {
+    if (!publicEntrypoints.packageApis.has(api)) {
+      messages.push(`${prefix} references missing package API: ${api}`);
+    }
+  }
+}
+
+function requireFactSurfaces(
+  root: string,
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  requireDataFile(root, "fact-surfaces.json", messages);
   const ids = new Set<string>();
   for (const surface of listFactSurfaces()) {
     const prefix = `fact surface ${surface.id}`;
@@ -199,20 +245,56 @@ function requireFactSurfaces(root: string, messages: string[]): void {
     if (surface.cli.length === 0 && surface.mcp.length === 0 && surface.packageApis.length === 0) {
       messages.push(`${prefix} must expose at least one CLI, MCP, or package API entrypoint`);
     }
-    for (const command of surface.cli) {
-      if (!cliCommands.has(command)) {
-        messages.push(`${prefix} references missing CLI command: ${command}`);
-      }
+    requirePublicEntrypoints(prefix, surface, publicEntrypoints, messages);
+  }
+}
+
+function requireAuthoringChecklists(
+  root: string,
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  requireDataFile(root, "authoring-checklists.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const seenDomains = new Set<string>();
+  for (const checklist of listAuthoringChecklists()) {
+    const prefix = `authoring checklist ${checklist.domain}`;
+    if (!domains.has(checklist.domain)) {
+      messages.push(`${prefix} must reference a catalog domain`);
     }
-    for (const tool of surface.mcp) {
-      if (!mcpTools.has(tool)) {
-        messages.push(`${prefix} references missing MCP tool: ${tool}`);
-      }
+    if (seenDomains.has(checklist.domain)) {
+      messages.push(`${prefix} must not be duplicated`);
     }
-    for (const api of surface.packageApis) {
-      if (!packageApis.has(api)) {
-        messages.push(`${prefix} references missing package API: ${api}`);
+    seenDomains.add(checklist.domain);
+    if (checklist.steps.length === 0) {
+      messages.push(`${prefix} must list at least one step`);
+    }
+    const stepIds = new Set<string>();
+    for (const step of checklist.steps) {
+      const stepPrefix = `${prefix} step ${step.id}`;
+      if (stepIds.has(step.id)) {
+        messages.push(`${stepPrefix} must not be duplicated`);
       }
+      stepIds.add(step.id);
+      if (step.evidence.length === 0) {
+        messages.push(`${stepPrefix} must list evidence expectations`);
+      }
+      if (!step.failureMode) {
+        messages.push(`${stepPrefix} must describe a failure mode`);
+      }
+      if (
+        step.tools.cli.length === 0 &&
+        step.tools.mcp.length === 0 &&
+        step.tools.packageApis.length === 0
+      ) {
+        messages.push(`${stepPrefix} must expose at least one CLI, MCP, or package API entrypoint`);
+      }
+      requirePublicEntrypoints(stepPrefix, step.tools, publicEntrypoints, messages);
+    }
+  }
+  for (const domain of domains) {
+    if (!seenDomains.has(domain)) {
+      messages.push(`missing authoring checklist for domain: ${domain}`);
     }
   }
 }
@@ -318,9 +400,11 @@ export function validateRepository(): ValidationResult {
   const catalog = getCatalog();
   const javaVersions = listVersions("java");
   const paper = getPaperPluginData();
+  const publicEntrypoints = collectPublicEntrypoints(root);
 
   requireDataManifestIntegrity(root, messages);
-  requireFactSurfaces(root, messages);
+  requireFactSurfaces(root, publicEntrypoints, messages);
+  requireAuthoringChecklists(root, publicEntrypoints, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");

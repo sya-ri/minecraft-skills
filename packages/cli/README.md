@@ -17,6 +17,8 @@ minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills authoring-checklist paper-plugin
+minecraft-skills authoring-checklists --domain datapack
 minecraft-skills fact-surfaces --domain paper-plugin
 minecraft-skills fact-surface paper-api-surface
 minecraft-skills coverage
@@ -51,7 +53,9 @@ minecraft-skills paper-events "player join" --version 1.21.11
 `support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data-manifest`, `cache-dir`, `cache-list`, `cache-clean`, and `fetch-data` manage
 SHA-256 verified heavyweight data in the local OS cache.
-`fact-surfaces` explains what each machine-verifiable data surface can and cannot prove.
+`authoring-checklist <domain>` returns the pre-generation checks an AI agent should perform before
+writing files or code. `fact-surfaces` explains what each machine-verifiable data surface can and
+cannot prove.
 
 ## Data Sources
 

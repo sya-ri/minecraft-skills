@@ -11,6 +11,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   fetchData,
+  getAuthoringChecklist,
   getCacheDataRoot,
   getCacheRoot,
   getCoverageSummary,
@@ -28,6 +29,7 @@ import {
   getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
+  listAuthoringChecklists,
   listCachedDataFiles,
   listDomains,
   listFactSurfaces,
@@ -102,6 +104,29 @@ export const tools: ToolDefinition[] = [
         name: { type: "string" },
       },
       required: ["name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_authoring_checklists",
+    description: "List pre-generation Minecraft authoring checklists for supported domains.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_checklist",
+    description: "Get the pre-generation authoring checklist for one Minecraft authoring domain.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      required: ["domain"],
       additionalProperties: false,
     },
   },
@@ -610,6 +635,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_skill requires string name");
       }
       return text(getSkillPayload(args.name));
+    }
+    if (name === "list_authoring_checklists") {
+      return text(
+        listAuthoringChecklists({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_authoring_checklist") {
+      if (typeof args.domain !== "string") {
+        throw new Error("get_authoring_checklist requires string domain");
+      }
+      return text(getAuthoringChecklist(args.domain));
     }
     if (name === "list_fact_surfaces") {
       return text(

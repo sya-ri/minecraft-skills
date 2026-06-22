@@ -7,6 +7,7 @@ import {
   comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
+  getAuthoringChecklist,
   getCoverageSummary,
   getDatapackSchemaSurface,
   getDomain,
@@ -22,6 +23,7 @@ import {
   getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
+  listAuthoringChecklists,
   listDomains,
   listFactSurfaces,
   listPackFormats,
@@ -85,6 +87,26 @@ describe("catalog", () => {
     expect(schemaSurface.cli).toContain("search-datapack-schema");
 
     expect(() => getFactSurface("missing")).toThrow("Unknown fact surface: missing");
+  });
+
+  it("lists authoring checklists for generation preflight", () => {
+    const checklists = listAuthoringChecklists();
+    expect(checklists.map((checklist) => checklist.domain)).toEqual([
+      "datapack",
+      "resourcepack",
+      "paper-plugin",
+    ]);
+
+    const datapack = getAuthoringChecklist("datapack");
+    expect(datapack.steps.map((step) => step.id)).toContain("verify-commands-and-paths");
+    expect(datapack.steps.flatMap((step) => step.tools.cli)).toContain("commands");
+    expect(datapack.steps.flatMap((step) => step.tools.mcp)).toContain("search_commands");
+
+    const paper = getAuthoringChecklist("paper-plugin");
+    expect(paper.steps.map((step) => step.id)).toContain("verify-types-members-and-events");
+    expect(paper.steps.flatMap((step) => step.tools.packageApis)).toContain("searchPaperMembers");
+
+    expect(() => getAuthoringChecklist("missing")).toThrow("missing");
   });
 
   it("summarizes bundled coverage", () => {

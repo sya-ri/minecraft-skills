@@ -45,6 +45,8 @@ minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills authoring-checklist datapack
+minecraft-skills authoring-checklists --domain paper-plugin
 minecraft-skills fact-surfaces --domain datapack
 minecraft-skills fact-surface datapack-schema-surface
 minecraft-skills coverage
@@ -94,6 +96,8 @@ event discovery. `minecraft-skills skill <name>` returns the packaged Agent Skil
 `SKILL.md`, agent metadata, and generated references.
 `minecraft-skills fact-surfaces` lists machine-verifiable data surfaces with what each surface can
 and cannot prove, so agents can avoid treating observed data as normative specification.
+`minecraft-skills authoring-checklist <domain>` returns the pre-generation checks an agent should
+perform before writing data pack files, resource pack files, or Paper plugin code.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
@@ -128,8 +132,8 @@ Typical stdio MCP client config:
 The server exposes tools for version lookup, pack formats, server reports, command search and
 comparison, observed datapack schema search/comparison, vanilla asset/data path search and
 comparison, resource pack model summaries, Paper support metadata, Paper type/member surface search,
-data manifest/cache status/fetch operations, installable skill folder discovery, packaged skill
-payload lookup, and Paper/Bukkit event search.
+authoring checklists, data manifest/cache status/fetch operations, installable skill folder
+discovery, packaged skill payload lookup, and Paper/Bukkit event search.
 
 The server also exposes Agent Skill files as MCP resources under
 `minecraft-skills://skills/<skill>/...`, including `SKILL.md`, `agents/openai.yaml`, and generated
@@ -150,6 +154,7 @@ import {
   compareCommands,
   compareDatapackSchema,
   getDatapackSchemaSurface,
+  getAuthoringChecklist,
   getFactSurface,
   compareVanillaPaths,
   getCoverageSummary,
@@ -159,6 +164,7 @@ import {
   getSupportMatrix,
   getVersionDetail,
   listSkills,
+  listAuthoringChecklists,
   listFactSurfaces,
   searchCommands,
   searchDatapackSchema,
@@ -170,6 +176,8 @@ import {
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
+const datapackChecklist = getAuthoringChecklist("datapack");
+const checklists = listAuthoringChecklists();
 const factSurfaces = listFactSurfaces({ domain: "datapack" });
 const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");
 const coverage = getCoverageSummary();

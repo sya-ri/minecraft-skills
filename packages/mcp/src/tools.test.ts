@@ -11,6 +11,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_version");
     expect(tools.map((tool) => tool.name)).toContain("list_skills");
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
+    expect(tools.map((tool) => tool.name)).toContain("list_authoring_checklists");
+    expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
     expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
     expect(tools.map((tool) => tool.name)).toContain("get_fact_surface");
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
@@ -61,6 +63,8 @@ describe("MCP tools", () => {
         "list_domains",
         "list_skills",
         "get_skill",
+        "list_authoring_checklists",
+        "get_authoring_checklist",
         "list_fact_surfaces",
         "get_fact_surface",
         "get_source_policy",
@@ -112,6 +116,20 @@ describe("MCP tools", () => {
       id: "datapack-schema-surface",
     });
     expect(single.content[0]?.text).toContain("not a normative schema");
+  });
+
+  it("calls authoring checklist tools", async () => {
+    const list = await callMinecraftSkillsTool("list_authoring_checklists", {
+      domain: "resourcepack",
+    });
+    expect(list.content[0]?.text).toContain('"domain": "resourcepack"');
+    expect(list.content[0]?.text).toContain("verify-assets-and-model-shapes");
+
+    const single = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(single.content[0]?.text).toContain("verify-types-members-and-events");
+    expect(single.content[0]?.text).toContain("Folia");
   });
 
   it("calls get_coverage_summary", async () => {

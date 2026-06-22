@@ -41,6 +41,17 @@ describe("@minecraft-skills/data", () => {
     expect(catalog.latest.java).toBe("26.2");
   });
 
+  it("loads bundled authoring checklist JSON", () => {
+    const checklists = readDataJson<{ checklists: Array<{ domain: string }> }>(
+      "authoring-checklists.json",
+    );
+    expect(checklists.checklists.map((checklist) => checklist.domain)).toEqual([
+      "datapack",
+      "resourcepack",
+      "paper-plugin",
+    ]);
+  });
+
   it("exposes a package data root", () => {
     expect(getDataRoot()).toMatch(/packages\/data\/data$/);
   });
@@ -138,6 +149,28 @@ describe("@minecraft-skills/data", () => {
           reason: "already-cached",
         }),
       ]);
+    });
+  });
+
+  it("rejects fetched bytes when sha256 verification fails", async () => {
+    await withCacheDir(async () => {
+      const fetchMock: typeof fetch = async (_input, _init) =>
+        ({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          arrayBuffer: async () => Buffer.from("not the manifest payload"),
+        }) as unknown as Response;
+
+      await expect(
+        fetchData({
+          kind: "datapack-schema-surface",
+          version: "26.2",
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("Integrity mismatch");
+
+      expect(hasCachedDataFile("java/datapack-schema-surfaces/26.2.json")).toBe(false);
     });
   });
 });

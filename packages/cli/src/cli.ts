@@ -15,6 +15,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   fetchData,
+  getAuthoringChecklist,
   getCacheDataRoot,
   getCacheRoot,
   getCoverageSummary,
@@ -33,6 +34,7 @@ import {
   getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
+  listAuthoringChecklists,
   listCachedDataFiles,
   listDomains,
   listFactSurfaces,
@@ -103,6 +105,8 @@ Usage:
   minecraft-skills skills [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills skill <name>
   minecraft-skills write-skill <name> --output <dir> [--force]
+  minecraft-skills authoring-checklists [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
   minecraft-skills fact-surfaces [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills fact-surface <id>
   minecraft-skills coverage
@@ -146,6 +150,10 @@ Commands:
   skills         List installable Agent Skill folders in this repository.
   skill          Print packaged Agent Skill payload JSON.
   write-skill    Write a packaged Agent Skill folder to disk.
+  authoring-checklists
+                 List pre-generation checks for each supported authoring domain.
+  authoring-checklist
+                 Print the pre-generation checklist for one authoring domain.
   fact-surfaces  List machine-verifiable fact surfaces and their guarantees.
   fact-surface   Print one fact surface by id.
   coverage       Print bundled data coverage summary JSON.
@@ -292,6 +300,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       for (const path of writeSkillFolder(name, outputRoot, args.includes("--force"))) {
         output.write(path);
       }
+      return 0;
+    }
+
+    if (command === "authoring-checklists") {
+      printJson(output, {
+        schemaVersion: 1,
+        checklists: listAuthoringChecklists({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "authoring-checklist") {
+      const domain = positionalArgs(args)[0];
+      if (!domain) {
+        throw new Error("authoring-checklist command requires a domain");
+      }
+      printJson(output, getAuthoringChecklist(domain));
       return 0;
     }
 

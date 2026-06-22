@@ -30,6 +30,7 @@ const promptDefinitions: PromptDefinition[] = [
       "Minecraft Java datapack authoring, commands, server reports, pack formats, and vanilla data paths.",
     tools: [
       "get_support_matrix",
+      "get_authoring_checklist",
       "list_fact_surfaces",
       "get_data_manifest",
       "get_coverage_summary",
@@ -57,6 +58,7 @@ const promptDefinitions: PromptDefinition[] = [
       "Minecraft Java resource pack authoring, pack formats, model summaries, and vanilla asset paths.",
     tools: [
       "get_support_matrix",
+      "get_authoring_checklist",
       "list_fact_surfaces",
       "get_coverage_summary",
       "get_source_policy",
@@ -79,6 +81,7 @@ const promptDefinitions: PromptDefinition[] = [
       "Paper plugin authoring, supported Minecraft versions, Paper API references, Javadocs indexes, Folia notes, and Bukkit/Paper events.",
     tools: [
       "get_support_matrix",
+      "get_authoring_checklist",
       "list_fact_surfaces",
       "get_data_manifest",
       "get_coverage_summary",
@@ -127,6 +130,7 @@ ${tools}
 
 Version rules:
 - Prefer exact target-version data over latest-version data.
+- Call get_authoring_checklist for the relevant domain before generating files or code.
 - Call list_fact_surfaces when you need to know what a data surface can and cannot prove.
 - Call get_support_matrix before using heavyweight surfaces so you know what is bundled, cached, or downloadable.
 - Call get_data_manifest and fetch_data when a relevant downloadable surface is missing locally.

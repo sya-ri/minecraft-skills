@@ -20,6 +20,7 @@ import {
   comparePaperApiSurface,
   compareVanillaPaths,
   fetchData,
+  getAuthoringChecklist,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -33,6 +34,7 @@ import {
   getSkillPayload,
   getSupportMatrix,
   getVersionDetail,
+  listAuthoringChecklists,
   listSkills,
   listFactSurfaces,
   searchCommands,
@@ -46,6 +48,8 @@ import {
 const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
+const checklist = getAuthoringChecklist("paper-plugin");
+const checklists = listAuthoringChecklists();
 const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
 const coverage = getCoverageSummary();

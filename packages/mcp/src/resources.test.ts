@@ -20,6 +20,12 @@ describe("MCP resources", () => {
   it("lists data manifest and downloadable data resources", () => {
     const resources = listMinecraftSkillsResources();
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-checklists.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-checklists/paper-plugin.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/fact-surfaces.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -67,6 +73,16 @@ describe("MCP resources", () => {
   });
 
   it("reads data resources", () => {
+    const checklists = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-checklists.json",
+    );
+    expect(checklists.contents[0]?.text).toContain('"domain": "datapack"');
+
+    const paperChecklist = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-checklists/paper-plugin.json",
+    );
+    expect(paperChecklist.contents[0]?.text).toContain("verify-types-members-and-events");
+
     const factSurfaces = readMinecraftSkillsResource("minecraft-skills://data/fact-surfaces.json");
     expect(factSurfaces.contents[0]?.text).toContain('"id": "paper-api-surface"');
 

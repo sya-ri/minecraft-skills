@@ -16,6 +16,11 @@ import {
   readDataText,
 } from "@minecraft-skills/data";
 import {
+  AuthoringChecklist,
+  type AuthoringChecklistData,
+  AuthoringChecklistIndex,
+  type AuthoringChecklistIndexData,
+  type AuthoringChecklistStepData,
   Catalog,
   type CatalogData,
   type DomainData,
@@ -53,6 +58,9 @@ import {
 } from "./schemas.js";
 
 export type {
+  AuthoringChecklistData,
+  AuthoringChecklistIndexData,
+  AuthoringChecklistStepData,
   CachedDataFile,
   CatalogData,
   DataManifest,
@@ -100,6 +108,10 @@ export type PackFormatSummary = {
 };
 
 export type FactSurfaceQuery = {
+  domain?: string;
+};
+
+export type AuthoringChecklistQuery = {
   domain?: string;
 };
 
@@ -527,6 +539,26 @@ export function getFactSurface(id: string): FactSurfaceData {
     throw new Error(`Unknown fact surface: ${id}`);
   }
   return FactSurface.assert(found);
+}
+
+export function listAuthoringChecklists(
+  query: AuthoringChecklistQuery = {},
+): AuthoringChecklistData[] {
+  const index = AuthoringChecklistIndex.assert(readDataJson("authoring-checklists.json"));
+  if (!query.domain) {
+    return index.checklists;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.checklists.filter((checklist) => checklist.domain === domain);
+}
+
+export function getAuthoringChecklist(domain: string): AuthoringChecklistData {
+  const domainId = DomainId.assert(domain);
+  const found = listAuthoringChecklists().find((checklist) => checklist.domain === domainId);
+  if (!found) {
+    throw new Error(`Unknown authoring checklist domain: ${domain}`);
+  }
+  return AuthoringChecklist.assert(found);
 }
 
 export function getSkill(name: string): SkillData {

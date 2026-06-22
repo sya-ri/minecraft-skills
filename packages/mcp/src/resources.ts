@@ -1,9 +1,11 @@
 import {
+  getAuthoringChecklist,
   getDataManifest,
   getDatapackSchemaSurface,
   getFactSurface,
   getPaperApiSurface,
   getSkillPayload,
+  listAuthoringChecklists,
   listFactSurfaces,
   listSkills,
 } from "@minecraft-skills/catalog";
@@ -81,12 +83,34 @@ export function listMinecraftSkillsResources(): Resource[] {
     })),
   );
   const manifest = getDataManifest();
+  const authoringChecklists = listAuthoringChecklists();
+  const authoringChecklistIndex = {
+    schemaVersion: 1,
+    checklists: authoringChecklists,
+  };
   const factSurfaces = listFactSurfaces();
   const factSurfaceIndex = {
     schemaVersion: 1,
     surfaces: factSurfaces,
   };
   const dataResources: Resource[] = [
+    {
+      uri: `${dataResourceBase}/authoring-checklists.json`,
+      name: "authoring-checklists.json",
+      title: "Minecraft Skills authoring checklists",
+      description:
+        "Pre-generation checks for Minecraft datapack, resourcepack, and Paper plugin authoring.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(authoringChecklistIndex, null, 2)),
+    },
+    ...authoringChecklists.map((checklist) => ({
+      uri: `${dataResourceBase}/authoring-checklists/${checklist.domain}.json`,
+      name: `authoring-checklists/${checklist.domain}.json`,
+      title: checklist.title,
+      description: `Pre-generation checklist for ${checklist.domain} authoring.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(checklist, null, 2)),
+    })),
     {
       uri: `${dataResourceBase}/fact-surfaces.json`,
       name: "fact-surfaces.json",
@@ -155,9 +179,41 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/authoring-checklists.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              checklists: listAuthoringChecklists(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   const dataPrefix = `${dataResourceBase}/`;
   if (uri.startsWith(dataPrefix)) {
     const path = uri.slice(dataPrefix.length);
+    const checklistPrefix = "authoring-checklists/";
+    if (path.startsWith(checklistPrefix) && path.endsWith(".json")) {
+      const domain = path.slice(checklistPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getAuthoringChecklist(domain), null, 2),
+          },
+        ],
+      };
+    }
     const factSurfacePrefix = "fact-surfaces/";
     if (path.startsWith(factSurfacePrefix) && path.endsWith(".json")) {
       const id = path.slice(factSurfacePrefix.length, -".json".length);

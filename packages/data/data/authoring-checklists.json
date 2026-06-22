@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills public fact surfaces",
+  "checklists": [
+    {
+      "domain": "datapack",
+      "title": "Java Data Pack Authoring Checklist",
+      "steps": [
+        {
+          "id": "resolve-target-version",
+          "reason": "Data pack syntax, pack formats, command trees, and vanilla data paths are version-specific.",
+          "tools": {
+            "cli": ["latest", "show-version", "pack-formats", "support-matrix"],
+            "mcp": ["latest_version", "get_version", "list_pack_formats", "get_support_matrix"],
+            "packageApis": [
+              "resolveVersion",
+              "getVersionDetail",
+              "listPackFormats",
+              "getSupportMatrix"
+            ]
+          },
+          "evidence": [
+            "Target Java version is explicit or resolved from the bundled latest alias.",
+            "The selected version has extracted pack format and data pack coverage."
+          ],
+          "failureMode": "Do not copy pack_format or version-specific syntax from memory when the target version is unresolved."
+        },
+        {
+          "id": "inspect-data-surface-limits",
+          "reason": "minecraft-skills surfaces distinguish observed facts from normative specifications.",
+          "tools": {
+            "cli": ["fact-surfaces", "fact-surface"],
+            "mcp": ["list_fact_surfaces", "get_fact_surface"],
+            "packageApis": ["listFactSurfaces", "getFactSurface"]
+          },
+          "evidence": [
+            "Relevant datapack fact surfaces were inspected for guarantees and non-guarantees.",
+            "Observed schema data is treated as observed vanilla data, not a complete JSON schema."
+          ],
+          "failureMode": "Do not claim a generated JSON shape is valid for all packs when only observed vanilla examples are available."
+        },
+        {
+          "id": "verify-commands-and-paths",
+          "reason": "Commands and vanilla data paths can be checked against extracted official server data.",
+          "tools": {
+            "cli": ["commands", "compare-commands", "vanilla-paths", "compare-vanilla-paths"],
+            "mcp": [
+              "search_commands",
+              "compare_commands",
+              "search_vanilla_paths",
+              "compare_vanilla_paths"
+            ],
+            "packageApis": [
+              "searchCommands",
+              "compareCommands",
+              "searchVanillaPaths",
+              "compareVanillaPaths"
+            ]
+          },
+          "evidence": [
+            "Command literals, arguments, or parsers used in output were searched for the target version.",
+            "Vanilla data paths referenced by output were searched for the target version."
+          ],
+          "failureMode": "If a command or path is not found, describe it as unverified instead of presenting it as a version fact."
+        },
+        {
+          "id": "inspect-json-shapes-when-needed",
+          "reason": "Observed vanilla datapack JSON fields help avoid invented field names while preserving the observed-only boundary.",
+          "tools": {
+            "cli": [
+              "datapack-schema",
+              "search-datapack-schema",
+              "compare-datapack-schema",
+              "data-manifest",
+              "fetch-data"
+            ],
+            "mcp": [
+              "get_datapack_schema_surface",
+              "search_datapack_schema",
+              "compare_datapack_schema",
+              "get_data_manifest",
+              "fetch_data"
+            ],
+            "packageApis": [
+              "getDatapackSchemaSurface",
+              "searchDatapackSchema",
+              "compareDatapackSchema",
+              "getDataManifest",
+              "fetchData"
+            ]
+          },
+          "evidence": [
+            "Observed field paths were checked for the relevant datapack kind when JSON fields are version-sensitive.",
+            "Downloadable schema surface data was fetched when the target surface was not bundled locally."
+          ],
+          "failureMode": "If no observed surface exists for the target version, state the gap and use versioned sources instead of fabricating fields."
+        }
+      ]
+    },
+    {
+      "domain": "resourcepack",
+      "title": "Java Resource Pack Authoring Checklist",
+      "steps": [
+        {
+          "id": "resolve-target-version",
+          "reason": "Resource pack formats, vanilla asset paths, model shapes, and item definitions are version-specific.",
+          "tools": {
+            "cli": ["latest", "show-version", "pack-formats", "support-matrix"],
+            "mcp": ["latest_version", "get_version", "list_pack_formats", "get_support_matrix"],
+            "packageApis": [
+              "resolveVersion",
+              "getVersionDetail",
+              "listPackFormats",
+              "getSupportMatrix"
+            ]
+          },
+          "evidence": [
+            "Target Java version is explicit or resolved from the bundled latest alias.",
+            "The selected version has extracted resource pack format and asset coverage."
+          ],
+          "failureMode": "Do not reuse a pack_format or item model convention from another version without checking the target version."
+        },
+        {
+          "id": "inspect-data-surface-limits",
+          "reason": "Resource pack model summaries are extracted from vanilla assets and are not normative schemas.",
+          "tools": {
+            "cli": ["fact-surfaces", "fact-surface"],
+            "mcp": ["list_fact_surfaces", "get_fact_surface"],
+            "packageApis": ["listFactSurfaces", "getFactSurface"]
+          },
+          "evidence": [
+            "Resource pack fact surfaces were inspected for guarantees and non-guarantees.",
+            "Model summary data is treated as observed vanilla data."
+          ],
+          "failureMode": "Do not claim a model JSON structure is complete or plugin-defined when only vanilla observations are available."
+        },
+        {
+          "id": "verify-assets-and-model-shapes",
+          "reason": "Vanilla asset inventories and model summaries reduce invented namespaces, paths, and item definition fields.",
+          "tools": {
+            "cli": [
+              "vanilla-paths",
+              "compare-vanilla-paths",
+              "resourcepack-models",
+              "search-models"
+            ],
+            "mcp": [
+              "search_vanilla_paths",
+              "compare_vanilla_paths",
+              "get_resourcepack_model_summary",
+              "search_resourcepack_models"
+            ],
+            "packageApis": [
+              "searchVanillaPaths",
+              "compareVanillaPaths",
+              "getResourcepackModelSummary",
+              "searchResourcepackModelPaths"
+            ]
+          },
+          "evidence": [
+            "Referenced vanilla asset paths were searched for the target version.",
+            "Model or item definition fields were checked against extracted vanilla model summaries when relevant."
+          ],
+          "failureMode": "If a path or model field is not found, mark it as custom or unverified rather than vanilla."
+        }
+      ]
+    },
+    {
+      "domain": "paper-plugin",
+      "title": "Paper Plugin Authoring Checklist",
+      "steps": [
+        {
+          "id": "resolve-paper-support",
+          "reason": "Paper support can lag the latest Java release, and plugin API references are tied to supported Minecraft versions.",
+          "tools": {
+            "cli": ["paper", "paper-api", "support-matrix"],
+            "mcp": ["get_paper_plugin_data", "get_paper_api_reference", "get_support_matrix"],
+            "packageApis": ["getPaperPluginData", "getPaperApiReference", "getSupportMatrix"]
+          },
+          "evidence": [
+            "The target Minecraft version is listed as Paper-supported or the gap is explicitly stated.",
+            "The versioned Paper API dependency and Javadocs URL are resolved for supported versions."
+          ],
+          "failureMode": "Do not generate a Paper dependency for an unsupported latest Java version unless the support gap is stated."
+        },
+        {
+          "id": "inspect-api-surface-limits",
+          "reason": "Javadocs package/type/member indexes prove names and labels, not behavior, nullability, or thread safety.",
+          "tools": {
+            "cli": ["fact-surfaces", "fact-surface"],
+            "mcp": ["list_fact_surfaces", "get_fact_surface"],
+            "packageApis": ["listFactSurfaces", "getFactSurface"]
+          },
+          "evidence": [
+            "Paper API fact surfaces were inspected for guarantees and non-guarantees.",
+            "Type/member search results are treated as API surface facts only."
+          ],
+          "failureMode": "Do not infer method behavior, overload semantics, or Folia safety from a type/member label alone."
+        },
+        {
+          "id": "verify-types-members-and-events",
+          "reason": "Paper Javadocs indexes and event search reduce hallucinated class names, methods, and event candidates.",
+          "tools": {
+            "cli": [
+              "paper-api-index",
+              "paper-api-surface",
+              "paper-types",
+              "paper-members",
+              "paper-events"
+            ],
+            "mcp": [
+              "get_paper_api_index",
+              "get_paper_api_surface",
+              "search_paper_types",
+              "search_paper_members",
+              "search_paper_events"
+            ],
+            "packageApis": [
+              "getPaperApiIndex",
+              "getPaperApiSurface",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "searchPaperEvents"
+            ]
+          },
+          "evidence": [
+            "Referenced Paper/Bukkit types and members were searched for the target Paper version.",
+            "Events discovered by behavior or partial name are treated as candidates until checked against Paper/Bukkit docs."
+          ],
+          "failureMode": "If a type, member, or event is not found, do not invent an API; state that the surface did not verify it."
+        },
+        {
+          "id": "flag-folia-and-scheduler-assumptions",
+          "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
+          "tools": {
+            "cli": ["paper-api"],
+            "mcp": ["get_paper_api_reference"],
+            "packageApis": ["getPaperApiReference"]
+          },
+          "evidence": [
+            "Scheduler and Folia documentation links from the Paper API reference were considered for code touching worlds, entities, chunks, or async work."
+          ],
+          "failureMode": "Do not silently use global scheduler patterns for Folia-sensitive work without noting the assumption."
+        }
+      ]
+    }
+  ]
+}

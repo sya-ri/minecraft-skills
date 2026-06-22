@@ -19,18 +19,21 @@ version-specific facts.
    clearly state when strict data is not bundled.
 4. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-5. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+5. Use `authoring-checklist resourcepack`, MCP `get_authoring_checklist`, or package
+   `getAuthoringChecklist("resourcepack")` before generating resource pack files.
+6. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific resource pack facts are bundled.
-6. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
+7. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
    additions/removals.
-7. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+8. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-8. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+9. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
+  `minecraft-skills authoring-checklist resourcepack`,
   `minecraft-skills fact-surfaces --domain resourcepack`,
   `minecraft-skills support-matrix`,
   `minecraft-skills compare-versions <from> <to>`, `minecraft-skills vanilla-paths <version>`,

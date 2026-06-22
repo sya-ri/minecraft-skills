@@ -87,6 +87,18 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("does not prove method behavior");
   });
 
+  it("prints authoring checklists", async () => {
+    const list = await capture(["authoring-checklists", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"domain": "paper-plugin"');
+    expect(list.stdout.join("\n")).toContain("verify-types-members-and-events");
+
+    const single = await capture(["authoring-checklist", "datapack"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain("verify-commands-and-paths");
+    expect(single.stdout.join("\n")).toContain("search-datapack-schema");
+  });
+
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data-manifest"]);
     expect(manifest.code).toBe(0);

@@ -77,6 +77,32 @@ export const FactSurfaceIndex = type({
   surfaces: FactSurface.array(),
 });
 
+export const AuthoringChecklistToolRefs = type({
+  cli: "string[]",
+  mcp: "string[]",
+  packageApis: "string[]",
+});
+
+export const AuthoringChecklistStep = type({
+  id: "string",
+  reason: "string",
+  tools: AuthoringChecklistToolRefs,
+  evidence: "string[]",
+  failureMode: "string",
+});
+
+export const AuthoringChecklist = type({
+  domain: DomainId,
+  title: "string",
+  steps: AuthoringChecklistStep.array(),
+});
+
+export const AuthoringChecklistIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  checklists: AuthoringChecklist.array(),
+});
+
 export const VersionSummary = type({
   id: "string",
   type: "string",
@@ -373,6 +399,9 @@ export const JavaReportsSummary = type({
 });
 
 export type CatalogData = typeof Catalog.infer;
+export type AuthoringChecklistData = typeof AuthoringChecklist.infer;
+export type AuthoringChecklistIndexData = typeof AuthoringChecklistIndex.infer;
+export type AuthoringChecklistStepData = typeof AuthoringChecklistStep.infer;
 export type FactSurfaceData = typeof FactSurface.infer;
 export type FactSurfaceIndexData = typeof FactSurfaceIndex.infer;
 export type DomainData = typeof Domain.infer;
