@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
-  cleanCachedData,
   classifyPackFiles,
+  cleanCachedData,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -37,6 +37,7 @@ import {
   getJavaReportsSummary,
   getOutputRequirement,
   getPackFileSchema,
+  getPackMigrationPlan,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -216,11 +217,13 @@ function normalizeSubcommands(argv: string[]): string[] {
     "datapack compare-schema": "compare-datapack-schema",
     "datapack classify-files": "classify-files",
     "datapack file-schema": "file-schema",
+    "datapack migration-plan": "migration-plan",
     "datapack commands": "commands",
     "datapack compare-commands": "compare-commands",
     "resourcepack models": "resourcepack-models",
     "resourcepack classify-files": "classify-files",
     "resourcepack file-schema": "file-schema",
+    "resourcepack migration-plan": "migration-plan",
     "resourcepack search-models": "search-models",
     "skill list": "skills",
     "skill show": "skill",
@@ -243,6 +246,9 @@ function normalizeSubcommands(argv: string[]): string[] {
   if (groupedCommand === "datapack file-schema") {
     return ["file-schema", ...withDefaultDomain(rest, "datapack")];
   }
+  if (groupedCommand === "datapack migration-plan") {
+    return ["migration-plan", ...withDefaultDomain(rest, "datapack")];
+  }
   if (group === "datapack") {
     const command = normalizeDomainAuthoringSubcommand("datapack", subcommand, rest);
     if (command) {
@@ -260,6 +266,9 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
   if (groupedCommand === "resourcepack file-schema") {
     return ["file-schema", ...withDefaultDomain(rest, "resourcepack")];
+  }
+  if (groupedCommand === "resourcepack migration-plan") {
+    return ["migration-plan", ...withDefaultDomain(rest, "resourcepack")];
   }
   if (group === "resourcepack") {
     const command = normalizeDomainAuthoringSubcommand("resourcepack", subcommand, rest);
@@ -359,6 +368,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "compare-datapack-schema": "datapack compare-schema",
   "classify-files": "datapack classify-files or resourcepack classify-files",
   "file-schema": "datapack file-schema or resourcepack file-schema",
+  "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
   "resourcepack-models": "resourcepack models",
@@ -526,12 +536,14 @@ Grouped commands:
   minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
   minecraft-skills datapack classify-files <path...>
   minecraft-skills datapack file-schema [version] <path>
+  minecraft-skills datapack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills datapack server-reports [version] [--edition java]
   minecraft-skills datapack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills resourcepack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills resourcepack models [version] [--edition java]
   minecraft-skills resourcepack classify-files <path...>
   minecraft-skills resourcepack file-schema [version] <path>
+  minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills plugin paper info
   minecraft-skills plugin paper api|api-index|api-surface [version]
@@ -1194,6 +1206,29 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           version: version ?? "latest",
           path,
           ...(domain ? { domain } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "migration-plan") {
+      const [from, to, ...paths] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("migration-plan command requires <from> and <to>");
+      }
+      const domainText = readOption(args, "--domain", "");
+      if (domainText !== "datapack" && domainText !== "resourcepack") {
+        throw new Error("migration-plan --domain must be datapack or resourcepack");
+      }
+      printJson(
+        output,
+        getPackMigrationPlan({
+          edition,
+          domain: domainText,
+          from,
+          to,
+          paths,
+          limit: Number(readOption(args, "--limit", "50")),
         }),
       );
       return 0;

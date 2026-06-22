@@ -54,6 +54,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("compare_datapack_schema");
     expect(tools.map((tool) => tool.name)).toContain("classify_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
+    expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
@@ -495,6 +496,19 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"normative": false');
     expect(result.content[0]?.text).toContain('"path": "$.criteria"');
+  });
+
+  it("calls get_pack_migration_plan", async () => {
+    const result = await callMinecraftSkillsTool("get_pack_migration_plan", {
+      domain: "resourcepack",
+      from: "1.20.6",
+      to: "1.21",
+      paths: ["assets/example/items/widget.json"],
+      limit: 5,
+    });
+    expect(result.content[0]?.text).toContain('"domain": "resourcepack"');
+    expect(result.content[0]?.text).toContain('"schemaBackedFiles": 1');
+    expect(result.content[0]?.text).toContain('"resourcepack file-schema"');
   });
 
   it("calls search_vanilla_paths", async () => {

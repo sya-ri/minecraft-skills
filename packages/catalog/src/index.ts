@@ -673,6 +673,44 @@ export type PackFileSchemaResult = {
   jsonSchema: Record<string, unknown> | null;
 };
 
+export type PackMigrationPlanOptions = {
+  domain: "datapack" | "resourcepack";
+  from: string;
+  to: string;
+  edition?: string;
+  paths?: string[];
+  limit?: number;
+};
+
+export type PackMigrationPlanResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  domain: "datapack" | "resourcepack";
+  from: string;
+  to: string;
+  summary: {
+    packFormatChanged: boolean;
+    minorPackFormatChanged: boolean;
+    domainCoverageChanged: boolean;
+    classifiedFiles: number;
+    schemaBackedFiles: number;
+  };
+  versionComparison: VersionComparison;
+  fileClassification: PackFileClassificationResult;
+  schemaLookups: PackFileSchemaResult[];
+  pathChanges: VanillaPathComparisonResult;
+  schemaChanges: Array<{
+    kind: string;
+    addedTotal: number;
+    removedTotal: number;
+    truncated: boolean;
+    added: Array<{ kind: string; path: string }>;
+    removed: Array<{ kind: string; path: string }>;
+  }>;
+  considerations: string[];
+  recommendedChecks: string[];
+};
+
 export type VanillaPathSearchOptions = {
   edition?: string;
   version?: string;
@@ -2367,7 +2405,9 @@ function classifyDatapackPath(path: string): PackFileClassification | undefined 
       json: true,
       schemaAvailable: false,
       schemaKind: null,
-      notes: ["pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous."],
+      notes: [
+        "pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous.",
+      ],
     };
   }
 
@@ -2417,7 +2457,9 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
       json: true,
       schemaAvailable: false,
       schemaKind: null,
-      notes: ["pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous."],
+      notes: [
+        "pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous.",
+      ],
     };
   }
 
@@ -2457,7 +2499,9 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
     schemaKind,
     notes:
       json && schemaKind
-        ? ["Schema data is an observed vanilla model/item shape, not a normative validation schema."]
+        ? [
+            "Schema data is an observed vanilla model/item shape, not a normative validation schema.",
+          ]
         : [],
   };
 }
@@ -2468,7 +2512,7 @@ function classifyPackPath(
 ): PackFileClassification {
   const datapack = domain !== "resourcepack" ? classifyDatapackPath(path) : undefined;
   const resourcepack = domain !== "datapack" ? classifyResourcepackPath(path) : undefined;
-  const classified = domain === "resourcepack" ? resourcepack : datapack ?? resourcepack;
+  const classified = domain === "resourcepack" ? resourcepack : (datapack ?? resourcepack);
   if (classified) {
     return classified;
   }
@@ -2530,9 +2574,7 @@ function jsonSchemaTypes(kinds: string[]): string[] {
   return kinds
     .map((kind) => (kind === "integer" ? "number" : kind))
     .filter((kind, index, all) => all.indexOf(kind) === index)
-    .filter((kind) =>
-      ["array", "boolean", "null", "number", "object", "string"].includes(kind),
-    );
+    .filter((kind) => ["array", "boolean", "null", "number", "object", "string"].includes(kind));
 }
 
 function observedFieldsJsonSchema(options: {
@@ -2888,6 +2930,204 @@ export function compareCommands(options: CommandComparisonOptions): CommandCompa
     fromTotalPaths: fromPaths.length,
     toTotalPaths: toPaths.length,
     ...comparison,
+  };
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)].sort();
+}
+
+function migrationPackFormatChanged(
+  comparison: VersionComparison,
+  domain: "datapack" | "resourcepack",
+): boolean {
+  return domain === "datapack"
+    ? comparison.packFormats.data.changed
+    : comparison.packFormats.resource.changed;
+}
+
+function migrationMinorPackFormatChanged(
+  comparison: VersionComparison,
+  domain: "datapack" | "resourcepack",
+): boolean {
+  return domain === "datapack"
+    ? comparison.packFormats.dataMinor.changed
+    : comparison.packFormats.resourceMinor.changed;
+}
+
+function migrationConsiderations(options: {
+  domain: "datapack" | "resourcepack";
+  comparison: VersionComparison;
+  classification: PackFileClassificationResult;
+  pathChanges: VanillaPathComparisonResult;
+  schemaChanges: PackMigrationPlanResult["schemaChanges"];
+}): string[] {
+  const considerations: string[] = [];
+  if (migrationPackFormatChanged(options.comparison, options.domain)) {
+    considerations.push(
+      options.domain === "datapack"
+        ? "Update pack.mcmeta pack_format for data packs and verify data pack compatibility warnings in the target version."
+        : "Update pack.mcmeta pack_format for resource packs and verify resource pack compatibility warnings in the target version.",
+    );
+  }
+  if (migrationMinorPackFormatChanged(options.comparison, options.domain)) {
+    considerations.push(
+      "Review supported_formats/min_format/max_format handling if this pack declares version ranges.",
+    );
+  }
+  if (options.pathChanges.addedTotal > 0 || options.pathChanges.removedTotal > 0) {
+    considerations.push(
+      "Compare vanilla paths for renamed, added, or removed files that custom content overrides or references.",
+    );
+  }
+  if (options.schemaChanges.some((change) => change.addedTotal > 0 || change.removedTotal > 0)) {
+    considerations.push(
+      "Review observed JSON shape changes for schema-backed file kinds used by this pack.",
+    );
+  }
+  if (options.classification.files.some((file) => file.domain === "unknown")) {
+    considerations.push(
+      "Some paths were not recognized as Java datapack/resourcepack files; review them manually before migration.",
+    );
+  }
+  if (options.domain === "datapack") {
+    considerations.push(
+      "Run command and loot/advancement/predicate/function checks against the target version; observed schema surfaces are not normative validators.",
+    );
+  } else {
+    considerations.push(
+      "Review model, item definition, texture, atlas, font, and language files in-game; observed model surfaces are not normative validators.",
+    );
+  }
+  return considerations;
+}
+
+export function getPackMigrationPlan(options: PackMigrationPlanOptions): PackMigrationPlanResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const from = resolveVersion(editionId, options.from);
+  const to = resolveVersion(editionId, options.to);
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const classification = classifyPackFiles({
+    paths: options.paths ?? [],
+    domain: options.domain,
+  });
+  const versionComparison = compareVersions(editionId, from, to);
+  const schemaLookups = classification.files
+    .filter((file) => file.schemaAvailable)
+    .slice(0, limit)
+    .map((file) =>
+      getPackFileSchema({
+        edition: editionId,
+        version: to,
+        path: file.path,
+        domain: options.domain,
+      }),
+    );
+  const pathChanges = compareVanillaPaths({
+    edition: editionId,
+    from,
+    to,
+    domain: options.domain,
+    limit,
+  });
+  const schemaKinds = uniqueStrings(
+    classification.files
+      .map((file) => file.schemaKind)
+      .filter((kind): kind is string => typeof kind === "string"),
+  );
+  const schemaChanges =
+    options.domain === "datapack"
+      ? schemaKinds.map((kind) => {
+          const comparison = compareDatapackSchema({ edition: editionId, from, to, kind, limit });
+          return {
+            kind,
+            addedTotal: comparison.addedTotal,
+            removedTotal: comparison.removedTotal,
+            truncated: comparison.truncated,
+            added: comparison.added,
+            removed: comparison.removed,
+          };
+        })
+      : schemaKinds.map((kind) => {
+          const fromSchema = getPackFileSchema({
+            edition: editionId,
+            version: from,
+            domain: options.domain,
+            path:
+              kind === "item-definition"
+                ? "assets/minecraft/items/example.json"
+                : "assets/minecraft/models/item/example.json",
+          });
+          const toSchema = getPackFileSchema({
+            edition: editionId,
+            version: to,
+            domain: options.domain,
+            path:
+              kind === "item-definition"
+                ? "assets/minecraft/items/example.json"
+                : "assets/minecraft/models/item/example.json",
+          });
+          const fromFields = new Set(fromSchema.observedFields.map((field) => field.path));
+          const toFields = new Set(toSchema.observedFields.map((field) => field.path));
+          const added = toSchema.observedFields
+            .filter((field) => !fromFields.has(field.path))
+            .map((field) => ({ kind, path: field.path }));
+          const removed = fromSchema.observedFields
+            .filter((field) => !toFields.has(field.path))
+            .map((field) => ({ kind, path: field.path }));
+          return {
+            kind,
+            addedTotal: added.length,
+            removedTotal: removed.length,
+            truncated: added.length > limit || removed.length > limit,
+            added: added.slice(0, limit),
+            removed: removed.slice(0, limit),
+          };
+        });
+  const considerations = migrationConsiderations({
+    domain: options.domain,
+    comparison: versionComparison,
+    classification,
+    pathChanges,
+    schemaChanges,
+  });
+
+  return {
+    schemaVersion: 1,
+    edition: editionId,
+    domain: options.domain,
+    from,
+    to,
+    summary: {
+      packFormatChanged: migrationPackFormatChanged(versionComparison, options.domain),
+      minorPackFormatChanged: migrationMinorPackFormatChanged(versionComparison, options.domain),
+      domainCoverageChanged:
+        versionComparison.domains[options.domain].from !==
+        versionComparison.domains[options.domain].to,
+      classifiedFiles: classification.classifiedFiles,
+      schemaBackedFiles: classification.schemaAvailableFiles,
+    },
+    versionComparison,
+    fileClassification: classification,
+    schemaLookups,
+    pathChanges,
+    schemaChanges,
+    considerations,
+    recommendedChecks:
+      options.domain === "datapack"
+        ? [
+            "datapack classify-files",
+            "datapack file-schema",
+            "datapack compare-schema",
+            "datapack compare-commands",
+            "datapack compare-vanilla-paths",
+          ]
+        : [
+            "resourcepack classify-files",
+            "resourcepack file-schema",
+            "resourcepack compare-vanilla-paths",
+            "resourcepack search-models",
+          ],
   };
 }
 

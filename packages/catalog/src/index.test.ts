@@ -26,6 +26,7 @@ import {
   getJavaReportsSummary,
   getOutputRequirement,
   getPackFileSchema,
+  getPackMigrationPlan,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -583,6 +584,44 @@ describe("catalog", () => {
     });
     expect(unknown.available).toBe(false);
     expect(unknown.jsonSchema).toBeNull();
+  });
+
+  it("builds pack migration plans with considerations", () => {
+    const datapack = getPackMigrationPlan({
+      domain: "datapack",
+      from: "1.20.6",
+      to: "1.21",
+      paths: [
+        "pack.mcmeta",
+        "data/example/advancement/root.json",
+        "data/example/functions/tick.mcfunction",
+      ],
+      limit: 5,
+    });
+    expect(datapack).toMatchObject({
+      schemaVersion: 1,
+      domain: "datapack",
+      from: "1.20.6",
+      to: "1.21",
+      summary: {
+        packFormatChanged: true,
+        schemaBackedFiles: 1,
+      },
+    });
+    expect(datapack.schemaLookups[0]?.file.kind).toBe("advancement");
+    expect(datapack.considerations.join("\n")).toContain("pack.mcmeta");
+    expect(datapack.recommendedChecks).toContain("datapack compare-schema");
+
+    const resourcepack = getPackMigrationPlan({
+      domain: "resourcepack",
+      from: "1.20.6",
+      to: "1.21",
+      paths: ["assets/example/items/widget.json"],
+      limit: 5,
+    });
+    expect(resourcepack.summary.packFormatChanged).toBe(true);
+    expect(resourcepack.schemaLookups[0]?.file.kind).toBe("item-definition");
+    expect(resourcepack.recommendedChecks).toContain("resourcepack file-schema");
   });
 
   it("keeps Minecraft Wiki prose out of redistributable data", () => {

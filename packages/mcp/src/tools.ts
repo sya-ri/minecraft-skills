@@ -1,8 +1,8 @@
 import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
-  cleanCachedData,
   classifyPackFiles,
+  cleanCachedData,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -32,6 +32,7 @@ import {
   getJavaReportsSummary,
   getOutputRequirement,
   getPackFileSchema,
+  getPackMigrationPlan,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -674,6 +675,24 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_pack_migration_plan",
+    description:
+      "Build a datapack or resourcepack version migration plan from from/to versions and optional pack file paths. Includes pack format changes, file classification, observed schema lookups, path changes, and considerations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"] },
+        from: { type: "string" },
+        to: { type: "string" },
+        paths: { type: "array", items: { type: "string" } },
+        limit: { type: "number", default: 50 },
+      },
+      required: ["domain", "from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_commands",
     description:
       "Search executable Minecraft command syntax paths generated from official server reports.",
@@ -1289,6 +1308,29 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           version: typeof args.version === "string" ? args.version : "latest",
           path: args.path,
           ...(domain ? { domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_pack_migration_plan") {
+      if (args.domain !== "datapack" && args.domain !== "resourcepack") {
+        throw new Error("get_pack_migration_plan requires domain datapack or resourcepack");
+      }
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("get_pack_migration_plan requires string from and to");
+      }
+      if (args.paths !== undefined) {
+        if (!Array.isArray(args.paths) || !args.paths.every((path) => typeof path === "string")) {
+          throw new Error("get_pack_migration_plan paths must be string[]");
+        }
+      }
+      return text(
+        getPackMigrationPlan({
+          edition,
+          domain: args.domain,
+          from: args.from,
+          to: args.to,
+          ...(Array.isArray(args.paths) ? { paths: args.paths } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
         }),
       );
     }

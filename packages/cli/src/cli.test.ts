@@ -515,6 +515,36 @@ describe("minecraft-skills CLI", () => {
     expect(resourcepack.stdout.join("\n")).toContain('"path": "model.type"');
   });
 
+  it("prints pack migration plans", async () => {
+    const datapack = await capture([
+      "datapack",
+      "migration-plan",
+      "1.20.6",
+      "1.21",
+      "pack.mcmeta",
+      "data/example/advancement/root.json",
+      "--limit",
+      "5",
+    ]);
+    expect(datapack.code).toBe(0);
+    expect(datapack.stdout.join("\n")).toContain('"domain": "datapack"');
+    expect(datapack.stdout.join("\n")).toContain('"schemaBackedFiles": 1');
+    expect(datapack.stdout.join("\n")).toContain('"datapack compare-schema"');
+
+    const resourcepack = await capture([
+      "resourcepack",
+      "migration-plan",
+      "1.20.6",
+      "1.21",
+      "assets/example/items/widget.json",
+      "--limit",
+      "5",
+    ]);
+    expect(resourcepack.code).toBe(0);
+    expect(resourcepack.stdout.join("\n")).toContain('"domain": "resourcepack"');
+    expect(resourcepack.stdout.join("\n")).toContain('"resourcepack file-schema"');
+  });
+
   it("searches vanilla paths", async () => {
     const result = await capture([
       "resourcepack",
