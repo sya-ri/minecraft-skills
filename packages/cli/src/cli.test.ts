@@ -123,6 +123,19 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("paper-event-candidate-unverified");
   });
 
+  it("searches authoring scenarios", async () => {
+    const result = await capture([
+      "authoring-scenario-search",
+      "Paper event listener",
+      "--domain",
+      "paper-plugin",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"query": "Paper event listener"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
+    expect(result.stdout.join("\n")).toContain('"matchedTokens"');
+  });
+
   it("prints authoring plans", async () => {
     const result = await capture(["authoring-plan", "paper-event-listener-review", "1.21.11"]);
     expect(result.code).toBe(0);

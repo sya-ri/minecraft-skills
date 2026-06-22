@@ -62,6 +62,7 @@ import {
   type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
+  searchAuthoringScenarios,
   searchCommands,
   searchDatapackSchema,
   searchPaperEvents,
@@ -172,6 +173,21 @@ export const tools: ToolDefinition[] = [
         id: { type: "string" },
       },
       required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_authoring_scenarios",
+    description:
+      "Search authoring scenarios by task wording using scenario, recipe, and intent text. Results include matched fields only; they are routing hints, not generated facts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
+      },
+      required: ["query"],
       additionalProperties: false,
     },
   },
@@ -947,6 +963,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_recipe requires string id");
       }
       return text(getAuthoringRecipe(args.id));
+    }
+    if (name === "search_authoring_scenarios") {
+      if (typeof args.query !== "string") {
+        throw new Error("search_authoring_scenarios requires string query");
+      }
+      return text(
+        searchAuthoringScenarios({
+          query: args.query,
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
     }
     if (name === "list_authoring_scenarios") {
       return text(

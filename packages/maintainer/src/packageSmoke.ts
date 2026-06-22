@@ -126,13 +126,14 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResponsePattern, getSupportMatrix, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResponsePattern, getSupportMatrix, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport, searchAuthoringScenarios } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
             'const checklist = getAuthoringChecklist("paper-plugin");',
             'const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });',
             'const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });',
+            'const scenarioSearch = searchAuthoringScenarios({ query: "Paper event listener", domain: "paper-plugin" });',
             'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });',
             'const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });',
             'const factSurface = getFactSurface("datapack-schema-surface");',
@@ -142,6 +143,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
             'if (!listAuthoringRecipes({ domain: "paper-plugin" }).some((recipe) => recipe.id === "paper-event-listener") || !getAuthoringRecipe("paper-event-listener").steps.some((step) => step.id === "discover-event-candidates")) throw new Error("bad authoring recipes");',
             'if (!listAuthoringScenarios({ domain: "paper-plugin" }).some((scenario) => scenario.id === "paper-event-listener-review") || !getAuthoringScenario("paper-event-listener-review").requiredLookups.diagnostics.includes("paper-event-candidate-unverified")) throw new Error("bad authoring scenarios");',
+            'if (scenarioSearch.results[0]?.scenario.id !== "paper-event-listener-review" || !scenarioSearch.results[0]?.matches.some((match) => match.matchedTokens.includes("event"))) throw new Error("bad authoring scenario search");',
             'if (!listAuthoringGuardrails({ domain: "paper-plugin" }).some((guardrail) => guardrail.id === "paper-api-surface-limits") || !getAuthoringGuardrail("paper-api-surface-limits").rules.some((rule) => rule.includes("Javadocs package"))) throw new Error("bad authoring guardrails");',
             'if (!listAuthoringDiagnostics({ domain: "paper-plugin" }).some((diagnostic) => diagnostic.id === "paper-api-member-unverified") || !getAuthoringDiagnostic("paper-api-member-unverified").tools.packageApis.includes("searchPaperMembers")) throw new Error("bad authoring diagnostics");',
             'if (!listClaimPolicies({ domain: "paper-plugin" }).some((policy) => policy.id === "paper-type-or-member-exists") || !getClaimPolicy("command-syntax-exists").allowedWording.some((wording) => wording.includes("parser shape"))) throw new Error("bad claim policies");',
@@ -204,6 +206,26 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     }
     if (!commands.at(-1)?.stdout.includes("paper-api-member-unverified")) {
       throw new Error("minecraft-skills authoring-context did not include diagnostics");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        [
+          "exec",
+          "minecraft-skills",
+          "authoring-scenario-search",
+          "Paper event listener",
+          "--domain",
+          "paper-plugin",
+        ],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("paper-event-listener-review")) {
+      throw new Error("minecraft-skills authoring-scenario-search did not route listener task");
+    }
+    if (!commands.at(-1)?.stdout.includes("matchedTokens")) {
+      throw new Error("minecraft-skills authoring-scenario-search did not include match evidence");
     }
     commands.push(
       runCommand(

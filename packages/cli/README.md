@@ -20,6 +20,7 @@ minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills authoring-recipes --domain paper-plugin
 minecraft-skills authoring-recipe paper-event-listener
+minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin
 minecraft-skills authoring-scenarios --domain paper-plugin
 minecraft-skills authoring-scenario paper-event-listener-review
 minecraft-skills authoring-plan paper-event-listener-review 1.21.11
@@ -77,6 +78,8 @@ SHA-256 verified heavyweight data in the local OS cache.
 `authoring-context <domain> [version]` returns preflight, recipes, scenarios, guardrails,
 diagnostics, intent lookup routing, and evidence in one payload for starting an authoring task.
 `authoring-recipes` lists ordered workflows for common authoring tasks.
+`authoring-scenario-search <query>` searches existing scenario, recipe, and intent text so an agent
+can route task wording to a scenario without inventing one.
 `authoring-scenarios` lists realistic task shapes and required lookup IDs for evaluation.
 `authoring-plan <scenario-id> [version]` resolves one scenario into the exact recipes, intent
 lookups, diagnostics, claim policies, fact surfaces, response patterns, and optional evidence to use.

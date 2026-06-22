@@ -50,6 +50,7 @@ import {
   listSkills,
   listVersionSupport,
   resolveVersion,
+  searchAuthoringScenarios,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -156,6 +157,19 @@ describe("catalog", () => {
     );
 
     expect(() => getAuthoringScenario("missing")).toThrow("Unknown authoring scenario: missing");
+  });
+
+  it("searches authoring scenarios from task wording", () => {
+    const result = searchAuthoringScenarios({
+      query: "Paper event listener",
+      domain: "paper-plugin",
+    });
+
+    expect(result.domain).toBe("paper-plugin");
+    expect(result.results[0]?.scenario.id).toBe("paper-event-listener-review");
+    expect(result.results[0]?.matches.some((match) => match.source === "recipe")).toBe(true);
+    expect(result.results[0]?.matches.flatMap((match) => match.matchedTokens)).toContain("event");
+    expect(result.results.every((entry) => entry.score > 0)).toBe(true);
   });
 
   it("builds authoring plans with scenario lookups resolved", () => {

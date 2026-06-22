@@ -24,6 +24,7 @@ Useful first commands:
 
 ```sh
 minecraft-skills authoring-context paper-plugin 1.21.11
+minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin
 minecraft-skills authoring-plan paper-event-listener-review 1.21.11
 minecraft-skills authoring-recipes --domain datapack
 minecraft-skills commands 26.2 --prefix execute

@@ -19,6 +19,8 @@ The public entrypoints are designed around two workflows:
 
 - Start broad with `authoring-context <domain> <version>` to get domain guidance, available
   surfaces, evidence, diagnostics, and response rules.
+- Search from task wording with `authoring-scenario-search <query> --domain <domain>` when an
+  agent needs a data-backed route into the right scenario.
 - Start from a known task shape with `authoring-plan <scenario-id> <version>` to resolve a scenario
   into the exact recipes, intent lookups, diagnostics, claim policies, fact surfaces, and response
   patterns an agent should use.
@@ -42,6 +44,7 @@ minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills authoring-recipes --domain paper-plugin
 minecraft-skills authoring-recipe paper-event-listener
+minecraft-skills authoring-scenario-search "Paper event listener" --domain paper-plugin
 minecraft-skills authoring-scenarios --domain paper-plugin
 minecraft-skills authoring-scenario paper-event-listener-review
 minecraft-skills authoring-plan paper-event-listener-review 1.21.11
@@ -102,6 +105,7 @@ Use these together before writing or reviewing generated output:
 - `authoring-context`: preflight, recipes, scenarios, guardrails, diagnostics, claim policies, output
   requirements, response patterns, intent routing, and evidence in one payload.
 - `authoring-recipes`: ordered lookup workflows for common tasks.
+- `authoring-scenario-search`: task-wording search over existing scenario, recipe, and intent text.
 - `authoring-scenarios`: realistic task shapes plus required lookup IDs for evaluation and
   self-review.
 - `authoring-plan`: one scenario with all required recipes, intent lookups, diagnostics, claim
@@ -159,6 +163,7 @@ import {
   getClaimPolicy,
   getOutputRequirement,
   getResponsePattern,
+  searchAuthoringScenarios,
   searchCommands,
   searchPaperMembers,
   searchVanillaPaths,
@@ -168,6 +173,10 @@ const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11"
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const scenario = getAuthoringScenario("paper-event-listener-review");
+const matchingScenarios = searchAuthoringScenarios({
+  query: "Paper event listener",
+  domain: "paper-plugin",
+});
 const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");

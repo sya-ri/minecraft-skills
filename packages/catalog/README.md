@@ -58,6 +58,7 @@ import {
   listIntentLookups,
   listOutputRequirements,
   listResponsePatterns,
+  searchAuthoringScenarios,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -78,6 +79,10 @@ const checklists = listAuthoringChecklists();
 const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
+const scenarioMatches = searchAuthoringScenarios({
+  query: "Paper event listener",
+  domain: "paper-plugin",
+});
 const listenerScenario = getAuthoringScenario("paper-event-listener-review");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");

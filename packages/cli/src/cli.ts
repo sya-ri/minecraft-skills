@@ -67,6 +67,7 @@ import {
   type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
+  searchAuthoringScenarios,
   searchCommands,
   searchDatapackSchema,
   searchPaperEvents,
@@ -130,6 +131,7 @@ Usage:
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
   minecraft-skills authoring-recipes [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-recipe <id>
+  minecraft-skills authoring-scenario-search <query> [--domain datapack|resourcepack|paper-plugin] [--limit 10]
   minecraft-skills authoring-scenarios [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-scenario <id>
   minecraft-skills authoring-plan <scenario-id> [version] [--edition java]
@@ -200,6 +202,8 @@ Commands:
                  List task recipes that order exact lookups for common authoring work.
   authoring-recipe
                  Print one task recipe by id.
+  authoring-scenario-search
+                 Search scenarios by task wording using scenario, recipe, and intent text.
   authoring-scenarios
                  List realistic authoring scenarios and the required lookups to evaluate them.
   authoring-scenario
@@ -418,6 +422,22 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-recipe command requires an id");
       }
       printJson(output, getAuthoringRecipe(id));
+      return 0;
+    }
+
+    if (command === "authoring-scenario-search") {
+      const query = positionalArgs(args).join(" ");
+      if (!query) {
+        throw new Error("authoring-scenario-search command requires a query");
+      }
+      printJson(
+        output,
+        searchAuthoringScenarios({
+          query,
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+          ...(args.includes("--limit") ? { limit: Number(readOption(args, "--limit", "10")) } : {}),
+        }),
+      );
       return 0;
     }
 

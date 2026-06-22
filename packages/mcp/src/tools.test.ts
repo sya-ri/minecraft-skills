@@ -15,6 +15,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_recipes");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_recipe");
+    expect(tools.map((tool) => tool.name)).toContain("search_authoring_scenarios");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_scenarios");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_scenario");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_plan");
@@ -88,6 +89,7 @@ describe("MCP tools", () => {
         "get_authoring_checklist",
         "list_authoring_recipes",
         "get_authoring_recipe",
+        "search_authoring_scenarios",
         "list_authoring_scenarios",
         "get_authoring_scenario",
         "get_authoring_plan",
@@ -199,6 +201,16 @@ describe("MCP tools", () => {
     });
     expect(single.content[0]?.text).toContain('"paper-event-listener"');
     expect(single.content[0]?.text).toContain("paper-event-candidate-unverified");
+  });
+
+  it("calls authoring scenario search tool", async () => {
+    const result = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper event listener",
+      domain: "paper-plugin",
+    });
+    expect(result.content[0]?.text).toContain('"query": "Paper event listener"');
+    expect(result.content[0]?.text).toContain('"id": "paper-event-listener-review"');
+    expect(result.content[0]?.text).toContain('"matchedTokens"');
   });
 
   it("calls authoring plan tool", async () => {

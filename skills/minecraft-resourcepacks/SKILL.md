@@ -23,45 +23,48 @@ version-specific facts.
 5. Use `authoring-recipes --domain resourcepack`, MCP `list_authoring_recipes`, or package
    `listAuthoringRecipes({ domain: "resourcepack" })` to choose an ordered workflow for common
    resource pack asset, model, item definition, and migration tasks.
-6. Use `authoring-scenarios --domain resourcepack`, MCP `list_authoring_scenarios`, or package
-   `listAuthoringScenarios({ domain: "resourcepack" })` when you need a realistic evaluation case
-   for the user's task shape.
-7. After choosing a scenario, use `authoring-plan <scenario-id> <version>`, MCP
+6. Use `authoring-scenario-search "<task>" --domain resourcepack`, MCP
+   `search_authoring_scenarios`, or package `searchAuthoringScenarios({ query, domain:
+   "resourcepack" })` to route user wording to an existing scenario without inventing one.
+7. Use `authoring-scenarios --domain resourcepack`, MCP `list_authoring_scenarios`, or package
+   `listAuthoringScenarios({ domain: "resourcepack" })` when you need all realistic evaluation
+   cases for the domain.
+8. After choosing a scenario, use `authoring-plan <scenario-id> <version>`, MCP
    `get_authoring_plan`, or package `getAuthoringPlan({ scenario, version })` to resolve the exact
    recipes, intent lookups, diagnostics, claim policies, fact surfaces, response patterns, and
    evidence required for that task.
-8. Use `authoring-context resourcepack <version>`, MCP `get_authoring_context`, or package
+9. Use `authoring-context resourcepack <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "resourcepack", version })` when you need preflight, intent
    routing, and evidence in one payload.
-9. Use `authoring-guardrails --domain resourcepack` and
+10. Use `authoring-guardrails --domain resourcepack` and
    `authoring-diagnostics --domain resourcepack`, MCP `list_authoring_guardrails` and
    `list_authoring_diagnostics`, or package `listAuthoringGuardrails({ domain: "resourcepack" })`
    and `listAuthoringDiagnostics({ domain: "resourcepack" })` before finalizing generated files.
-10. Use `claim-policies --domain resourcepack`, MCP `list_claim_policies`, or package
+11. Use `claim-policies --domain resourcepack`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "resourcepack" })` before making version, path, model, or item
    definition claims.
-11. Use `output-requirements --domain resourcepack` and `response-patterns --domain resourcepack`,
+12. Use `output-requirements --domain resourcepack` and `response-patterns --domain resourcepack`,
    MCP `list_output_requirements` and `list_response_patterns`, or package
    `listOutputRequirements({ domain: "resourcepack" })` and
    `listResponsePatterns({ domain: "resourcepack" })` before finalizing an answer or generated
    files.
-12. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+13. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-13. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
+14. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "resourcepack", version })` before generating resource pack
    files.
-14. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+15. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific resource pack facts are bundled.
-15. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
+16. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "resourcepack" })` when choosing among target versions.
-16. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
+17. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "resourcepack", version })` when explaining which sources and
    extracted files back an answer.
-17. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
+18. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
    additions/removals.
-18. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+19. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-19. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+20. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
@@ -71,6 +74,7 @@ version-specific facts.
   `minecraft-skills authoring-context resourcepack <version>`,
   `minecraft-skills authoring-recipes --domain resourcepack`,
   `minecraft-skills authoring-recipe <id>`,
+  `minecraft-skills authoring-scenario-search "<task>" --domain resourcepack`,
   `minecraft-skills authoring-scenarios --domain resourcepack`,
   `minecraft-skills authoring-scenario <id>`,
   `minecraft-skills authoring-plan <scenario-id> <version>`,

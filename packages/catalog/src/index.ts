@@ -176,6 +176,34 @@ export type AuthoringScenarioQuery = {
   domain?: string;
 };
 
+export type AuthoringScenarioSearchOptions = {
+  query: string;
+  domain?: string;
+  limit?: number;
+};
+
+export type AuthoringScenarioSearchMatch = {
+  source: "scenario" | "recipe" | "intent";
+  id: string;
+  field: string;
+  text: string;
+  matchedTokens: string[];
+};
+
+export type AuthoringScenarioSearchResult = {
+  scenario: AuthoringScenarioData;
+  score: number;
+  matches: AuthoringScenarioSearchMatch[];
+};
+
+export type AuthoringScenarioSearchResults = {
+  query: string;
+  domain?: DomainIdData;
+  limit: number;
+  truncated: boolean;
+  results: AuthoringScenarioSearchResult[];
+};
+
 export type AuthoringGuardrailQuery = {
   domain?: string;
 };
@@ -827,6 +855,175 @@ export function getAuthoringScenario(id: string): AuthoringScenarioData {
     throw new Error(`Unknown authoring scenario: ${id}`);
   }
   return AuthoringScenario.assert(found);
+}
+
+const scenarioSearchStopWords = new Set([
+  "and",
+  "for",
+  "the",
+  "that",
+  "this",
+  "with",
+  "from",
+  "into",
+  "when",
+  "what",
+  "which",
+  "create",
+  "review",
+  "write",
+  "generate",
+]);
+
+function tokenizeScenarioSearch(value: string): string[] {
+  const tokens = value
+    .toLowerCase()
+    .split(/[^a-z0-9_.-]+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3 && !scenarioSearchStopWords.has(token));
+  return [...new Set(tokens)];
+}
+
+function scoreScenarioSearchText(
+  options: {
+    source: AuthoringScenarioSearchMatch["source"];
+    id: string;
+    field: string;
+    text: string;
+    weight: number;
+  },
+  tokens: string[],
+): { score: number; match?: AuthoringScenarioSearchMatch } {
+  const haystack = options.text.toLowerCase();
+  const matchedTokens = tokens.filter((token) => haystack.includes(token));
+  if (matchedTokens.length === 0) {
+    return { score: 0 };
+  }
+  return {
+    score: matchedTokens.length * options.weight,
+    match: {
+      source: options.source,
+      id: options.id,
+      field: options.field,
+      text: options.text,
+      matchedTokens,
+    },
+  };
+}
+
+function collectScenarioSearchTexts(scenario: AuthoringScenarioData): Array<{
+  source: AuthoringScenarioSearchMatch["source"];
+  id: string;
+  field: string;
+  text: string;
+  weight: number;
+}> {
+  return [
+    { source: "scenario", id: scenario.id, field: "id", text: scenario.id, weight: 6 },
+    { source: "scenario", id: scenario.id, field: "title", text: scenario.title, weight: 6 },
+    {
+      source: "scenario",
+      id: scenario.id,
+      field: "userPrompt",
+      text: scenario.userPrompt,
+      weight: 5,
+    },
+    ...scenario.useWhen.map((text) => ({
+      source: "scenario" as const,
+      id: scenario.id,
+      field: "useWhen",
+      text,
+      weight: 4,
+    })),
+    ...scenario.successCriteria.map((text) => ({
+      source: "scenario" as const,
+      id: scenario.id,
+      field: "successCriteria",
+      text,
+      weight: 2,
+    })),
+    ...scenario.mustAvoid.map((text) => ({
+      source: "scenario" as const,
+      id: scenario.id,
+      field: "mustAvoid",
+      text,
+      weight: 1,
+    })),
+    {
+      source: "scenario",
+      id: scenario.id,
+      field: "failureMode",
+      text: scenario.failureMode,
+      weight: 1,
+    },
+    ...scenario.requiredLookups.recipes.flatMap((id) => {
+      const recipe = getAuthoringRecipe(id);
+      return [
+        { source: "recipe" as const, id, field: "id", text: recipe.id, weight: 4 },
+        { source: "recipe" as const, id, field: "title", text: recipe.title, weight: 4 },
+        ...recipe.when.map((text) => ({
+          source: "recipe" as const,
+          id,
+          field: "when",
+          text,
+          weight: 3,
+        })),
+      ];
+    }),
+    ...scenario.requiredLookups.intents.flatMap((id) => {
+      const intent = getIntentLookup(id);
+      return [
+        { source: "intent" as const, id, field: "id", text: intent.id, weight: 3 },
+        { source: "intent" as const, id, field: "title", text: intent.title, weight: 3 },
+        ...intent.when.map((text) => ({
+          source: "intent" as const,
+          id,
+          field: "when",
+          text,
+          weight: 2,
+        })),
+      ];
+    }),
+  ];
+}
+
+export function searchAuthoringScenarios(
+  options: AuthoringScenarioSearchOptions,
+): AuthoringScenarioSearchResults {
+  const query = options.query.trim();
+  if (!query) {
+    throw new Error("Authoring scenario search requires a non-empty query");
+  }
+  const limit = normalizeLimit(options.limit, 10, 100);
+  const domain = options.domain ? DomainId.assert(options.domain) : undefined;
+  const tokens = tokenizeScenarioSearch(query);
+  const scenarios = listAuthoringScenarios(domain ? { domain } : {});
+  const scored = scenarios
+    .map((scenario) => {
+      let score = 0;
+      const matches: AuthoringScenarioSearchMatch[] = [];
+      for (const text of collectScenarioSearchTexts(scenario)) {
+        const result = scoreScenarioSearchText(text, tokens);
+        score += result.score;
+        if (result.match) {
+          matches.push(result.match);
+        }
+      }
+      return { scenario, score, matches };
+    })
+    .filter((result) => result.score > 0)
+    .sort(
+      (left, right) =>
+        right.score - left.score || left.scenario.id.localeCompare(right.scenario.id),
+    );
+
+  return {
+    query,
+    ...(domain ? { domain } : {}),
+    limit,
+    truncated: scored.length > limit,
+    results: scored.slice(0, limit),
+  };
 }
 
 function requireSingleScenarioDomain(scenario: AuthoringScenarioData): DomainIdData {
