@@ -12,7 +12,7 @@ Useful project source:
 
 Bundled canonical data:
 
-- CLI: `minecraft-skills paper`
+- CLI: `minecraft-skills plugin paper info`
 - MCP: `get_paper_plugin_data`
 - Package API: `getPaperPluginData()` from `@minecraft-skills/catalog`
 

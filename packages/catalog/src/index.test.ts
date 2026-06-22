@@ -374,7 +374,7 @@ describe("catalog", () => {
 
     const paper = getIntentLookup("verify-paper-type-or-member");
     expect(paper.domains).toEqual(["paper-plugin"]);
-    expect(paper.lookups[0]?.tools.cli).toContain("paper members");
+    expect(paper.lookups[0]?.tools.cli).toContain("plugin paper members");
     expect(paper.lookups[0]?.tools.mcp).toContain("search_paper_members");
     expect(paper.lookups[0]?.failureMode).toContain("does not prove runtime behavior");
 

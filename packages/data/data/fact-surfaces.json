@@ -17,7 +17,7 @@
         "does not include snapshot support unless explicitly bundled",
         "does not imply Paper has published a matching server for the same Java version"
       ],
-      "cli": ["version list", "version latest", "version show", "version compare"],
+      "cli": ["minecraft list", "minecraft latest", "minecraft show", "minecraft compare"],
       "mcp": ["list_versions", "latest_version", "get_version", "compare_versions"],
       "packageApis": ["listVersions", "resolveVersion", "getVersionDetail", "compareVersions"]
     },
@@ -36,7 +36,7 @@
         "does not explain behavioral migration steps by itself",
         "does not make unsupported versions compatible"
       ],
-      "cli": ["version pack-formats", "version show", "version compare"],
+      "cli": ["minecraft pack-formats", "minecraft show", "minecraft compare"],
       "mcp": ["list_pack_formats", "get_version", "compare_versions"],
       "packageApis": ["listPackFormats", "getVersionDetail", "compareVersions"]
     },
@@ -93,7 +93,7 @@
         "does not include modded, server-specific, or third-party pack files",
         "samples are representative, not complete lists"
       ],
-      "cli": ["resourcepack vanilla-inventory", "version compare"],
+      "cli": ["minecraft vanilla-inventory", "minecraft compare"],
       "mcp": ["get_vanilla_inventory", "compare_versions"],
       "packageApis": ["getVanillaInventory", "compareVersions"]
     },
@@ -171,7 +171,7 @@
         "does not prove a future Paper build exists before PaperMC publishes it",
         "does not include third-party forks"
       ],
-      "cli": ["paper info", "paper api"],
+      "cli": ["plugin paper info", "plugin paper api"],
       "mcp": ["get_paper_plugin_data", "get_paper_api_reference"],
       "packageApis": ["getPaperPluginData", "getPaperApiReference"]
     },
@@ -190,7 +190,7 @@
         "does not include method-level API details",
         "does not copy Javadocs prose or prove method behavior"
       ],
-      "cli": ["paper api-index", "paper compare-api"],
+      "cli": ["plugin paper api-index", "plugin paper compare-api"],
       "mcp": ["get_paper_api_index", "compare_paper_api"],
       "packageApis": ["getPaperApiIndex", "comparePaperApi"]
     },
@@ -210,7 +210,12 @@
         "does not prove method behavior, overload semantics, nullability, or thread safety",
         "does not replace Paper documentation for Folia-sensitive behavior"
       ],
-      "cli": ["paper api-surface", "paper types", "paper members", "paper compare-api-surface"],
+      "cli": [
+        "plugin paper api-surface",
+        "plugin paper types",
+        "plugin paper members",
+        "plugin paper compare-api-surface"
+      ],
       "mcp": [
         "get_paper_api_surface",
         "search_paper_types",
@@ -240,7 +245,7 @@
         "search results are discovery candidates and still need Paper/Bukkit API verification",
         "does not prove event firing order or cancellation semantics"
       ],
-      "cli": ["paper events"],
+      "cli": ["plugin paper events"],
       "mcp": ["search_paper_events"],
       "packageApis": ["buildPaperEventSearchUrl", "searchPaperEvents"]
     }

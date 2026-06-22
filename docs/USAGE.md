@@ -17,47 +17,49 @@ or reviewing authoring output:
 
 The public entrypoints are designed around two workflows:
 
-- Start broad with `authoring context <domain> <version>` to get domain guidance, available
-  surfaces, evidence, diagnostics, and response rules.
-- Search from task wording with `authoring search-scenarios <query> --domain <domain>` when an
-  agent needs a data-backed route into the right scenario.
-- Start from a known task shape with `authoring plan <scenario-id> <version>` to resolve a scenario
-  into the exact recipes, intent lookups, diagnostics, claim policies, fact surfaces, and response
-  patterns an agent should use.
+- Start broad with `datapack context <version>`, `resourcepack context <version>`, or
+  `plugin paper context <version>` to get domain guidance, available surfaces, evidence,
+  diagnostics, and response rules.
+- Search from task wording with `datapack search-scenarios <query>`,
+  `resourcepack search-scenarios <query>`, or `plugin paper search-scenarios <query>` when an agent
+  needs a data-backed route into the right scenario.
+- Start from a known task shape with `datapack plan`, `resourcepack plan`, or `plugin paper plan` to
+  resolve a scenario into the exact recipes, intent lookups, diagnostics, claim policies, fact
+  surfaces, and response patterns an agent should use.
 
 ## CLI
 
 Install/run after publishing:
 
 ```sh
-npx minecraft-skills version latest
+npx minecraft-skills minecraft latest
 ```
 
 Common entrypoints:
 
 ```sh
-minecraft-skills version latest
+minecraft-skills minecraft latest
 minecraft-skills skill list
 minecraft-skills skill show minecraft-paper-plugins
 minecraft-skills skill write minecraft-paper-plugins --output ./skills
 
-minecraft-skills authoring context paper-plugin 1.21.11
-minecraft-skills authoring recipes --domain paper-plugin
-minecraft-skills authoring recipe paper-event-listener
-minecraft-skills authoring search-scenarios "Paper event listener" --domain paper-plugin
-minecraft-skills authoring scenarios --domain paper-plugin
-minecraft-skills authoring scenario paper-event-listener-review
-minecraft-skills authoring plan paper-event-listener-review 1.21.11
-minecraft-skills authoring preflight paper-plugin 1.21.11
-minecraft-skills authoring evidence paper-plugin 1.21.11
-minecraft-skills authoring intents --domain paper-plugin
-minecraft-skills authoring fact-surfaces --domain paper-plugin
-minecraft-skills authoring claim-policies --domain paper-plugin
-minecraft-skills authoring diagnostics --domain paper-plugin
-minecraft-skills authoring output-requirements --domain paper-plugin
-minecraft-skills authoring response-patterns --domain paper-plugin
+minecraft-skills plugin paper context 1.21.11
+minecraft-skills plugin paper recipes
+minecraft-skills plugin paper recipe paper-event-listener
+minecraft-skills plugin paper search-scenarios "Paper event listener"
+minecraft-skills plugin paper scenarios
+minecraft-skills plugin paper scenario paper-event-listener-review
+minecraft-skills plugin paper plan paper-event-listener-review 1.21.11
+minecraft-skills plugin paper preflight 1.21.11
+minecraft-skills plugin paper evidence 1.21.11
+minecraft-skills plugin paper intents
+minecraft-skills plugin paper fact-surfaces
+minecraft-skills plugin paper claim-policies
+minecraft-skills plugin paper diagnostics
+minecraft-skills plugin paper output-requirements
+minecraft-skills plugin paper response-patterns
 
-minecraft-skills version support --domain paper-plugin
+minecraft-skills minecraft support --domain paper-plugin
 minecraft-skills data manifest
 minecraft-skills data fetch paper-api-surface --version 1.21.11
 ```
@@ -65,8 +67,8 @@ minecraft-skills data fetch paper-api-surface --version 1.21.11
 Data pack lookups:
 
 ```sh
-minecraft-skills version show 26.2
-minecraft-skills version pack-formats
+minecraft-skills minecraft show 26.2
+minecraft-skills minecraft pack-formats
 minecraft-skills datapack commands 26.2 --prefix execute --contains run
 minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills datapack schema 26.2
@@ -87,36 +89,45 @@ minecraft-skills resourcepack search-models 26.2 --kind item-definition --contai
 Paper plugin lookups:
 
 ```sh
-minecraft-skills paper info
-minecraft-skills paper api 1.21.11
-minecraft-skills paper api-index 1.21.11
-minecraft-skills paper api-surface 1.21.11
-minecraft-skills paper types 1.21.11 --contains org.bukkit.entity.Player
-minecraft-skills paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
-minecraft-skills paper compare-api 1.20.4 1.21.11
-minecraft-skills paper compare-api-surface 1.21.11 1.21.11
-minecraft-skills paper events "player join" --version 1.21.11
+minecraft-skills plugin paper info
+minecraft-skills plugin paper api 1.21.11
+minecraft-skills plugin paper api-index 1.21.11
+minecraft-skills plugin paper api-surface 1.21.11
+minecraft-skills plugin paper types 1.21.11 --contains org.bukkit.entity.Player
+minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin paper compare-api 1.20.4 1.21.11
+minecraft-skills plugin paper compare-api-surface 1.21.11 1.21.11
+minecraft-skills plugin paper events "player join" --version 1.21.11
 ```
 
 ## Authoring Safety Data
 
 Use these together before writing or reviewing generated output:
 
-- `authoring context`: preflight, recipes, scenarios, guardrails, diagnostics, claim policies, output
-  requirements, response patterns, intent routing, and evidence in one payload.
-- `authoring recipes`: ordered lookup workflows for common tasks.
-- `authoring search-scenarios`: task-wording search over existing scenario, recipe, and intent text.
-- `authoring scenarios`: realistic task shapes plus required lookup IDs for evaluation and
-  self-review.
-- `authoring plan`: one scenario with all required recipes, intent lookups, diagnostics, claim
-  policies, fact surfaces, response patterns, and optional version evidence resolved.
-- `authoring diagnostics`: pass/fail checks to run before returning generated files, code, or
-  source-backed answers.
-- `authoring claim-policies`: required evidence plus safe and unsafe wording for specific claim types.
-- `authoring output-requirements`: final-answer and generated-file checks.
-- `authoring response-patterns`: answer shapes for verified facts, missing evidence, and
+- `datapack context`, `resourcepack context`, or `plugin paper context`: preflight, recipes,
+  scenarios, guardrails, diagnostics, claim policies, output requirements, response patterns,
+  intent routing, and evidence in one payload.
+- `datapack recipes`, `resourcepack recipes`, or `plugin paper recipes`: ordered lookup workflows
+  for common tasks.
+- `datapack search-scenarios`, `resourcepack search-scenarios`, or
+  `plugin paper search-scenarios`: task-wording search over existing scenario, recipe, and intent
+  text.
+- `datapack scenarios`, `resourcepack scenarios`, or `plugin paper scenarios`: realistic task
+  shapes plus required lookup IDs for evaluation and self-review.
+- `datapack plan`, `resourcepack plan`, or `plugin paper plan`: one scenario with all required
+  recipes, intent lookups, diagnostics, claim policies, fact surfaces, response patterns, and
+  optional version evidence resolved.
+- `datapack diagnostics`, `resourcepack diagnostics`, or `plugin paper diagnostics`: pass/fail
+  checks to run before returning generated files, code, or source-backed answers.
+- `datapack claim-policies`, `resourcepack claim-policies`, or `plugin paper claim-policies`:
+  required evidence plus safe and unsafe wording for specific claim types.
+- `datapack output-requirements`, `resourcepack output-requirements`, or
+  `plugin paper output-requirements`: final-answer and generated-file checks.
+- `datapack response-patterns`, `resourcepack response-patterns`, or
+  `plugin paper response-patterns`: answer shapes for verified facts, missing evidence, and
   non-guarantees.
-- `authoring fact-surfaces`: what each machine-verifiable data surface can and cannot prove.
+- `datapack fact-surfaces`, `resourcepack fact-surfaces`, or `plugin paper fact-surfaces`: what
+  each machine-verifiable data surface can and cannot prove.
 
 ## MCP
 

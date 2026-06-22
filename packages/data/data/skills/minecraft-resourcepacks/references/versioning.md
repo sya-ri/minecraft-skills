@@ -14,9 +14,9 @@ Current bundled data:
 - Vanilla model JSON and item definition JSON shape summaries for Java 1.13+: extracted from
   official Mojang client jars
 
-Use `minecraft-skills version show <version>` for per-version pack format facts. Use
+Use `minecraft-skills minecraft show <version>` for per-version pack format facts. Use
 `minecraft-skills resourcepack vanilla-paths <version>` to search bundled vanilla
-`assets/<namespace>/...` paths, or `minecraft-skills resourcepack vanilla-inventory <version>` for top-level
+`assets/<namespace>/...` paths, or `minecraft-skills minecraft vanilla-inventory <version>` for top-level
 directories and representative paths. Use `minecraft-skills resourcepack models <version>` for
 observed model/item definition keys, display contexts, texture variables, override predicates, item
 model types, and property keys. Use `minecraft-skills resourcepack search-models <version>` to search vanilla

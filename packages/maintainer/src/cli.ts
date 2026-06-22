@@ -190,6 +190,55 @@ function collectPublicEntrypoints(root: string): PublicEntrypoints {
     ...[...cliSource.matchAll(/"([^"]+ [^"]+)": "[^"]+"/g)].map((match) => match[1] ?? ""),
     ...[...cliSource.matchAll(/groupedCommand === "([^"]+)"/g)].map((match) => match[1] ?? ""),
   ]);
+  const authoringSubcommands = [
+    "context",
+    "preflight",
+    "evidence",
+    "checklists",
+    "checklist",
+    "recipes",
+    "recipe",
+    "search-scenarios",
+    "scenario-search",
+    "scenarios",
+    "scenario",
+    "plan",
+    "guardrails",
+    "guardrail",
+    "diagnostics",
+    "diagnostic",
+    "intents",
+    "intent",
+    "fact-surfaces",
+    "fact-surface",
+    "claim-policies",
+    "claim-policy",
+    "output-requirements",
+    "output-requirement",
+    "response-patterns",
+    "response-pattern",
+  ];
+  for (const group of ["datapack", "resourcepack"]) {
+    for (const subcommand of authoringSubcommands) {
+      cliCommands.add(`${group} ${subcommand}`);
+    }
+  }
+  for (const subcommand of authoringSubcommands) {
+    cliCommands.add(`plugin paper ${subcommand}`);
+  }
+  for (const subcommand of [
+    "info",
+    "api",
+    "api-index",
+    "compare-api",
+    "api-surface",
+    "types",
+    "members",
+    "compare-api-surface",
+    "events",
+  ]) {
+    cliCommands.add(`plugin paper ${subcommand}`);
+  }
   const mcpTools = new Set(
     [
       ...readFileSync(join(root, "packages/mcp/src/tools.ts"), "utf8").matchAll(/name: "([^"]+)"/g),

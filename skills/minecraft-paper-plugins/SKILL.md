@@ -14,61 +14,63 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 
 1. Resolve the target Minecraft/Paper version if the user asks for version-specific behavior.
 2. Read `references/sources.md` before citing plugin API or event facts.
-3. Use `intent-lookups --domain paper-plugin`, MCP `list_intent_lookups`, or package
+3. Use `minecraft-skills plugin paper intents`, MCP `list_intent_lookups`, or package
    `listIntentLookups({ domain: "paper-plugin" })` to choose the exact lookup path for the user's
    intent.
-4. Use `authoring-recipes --domain paper-plugin`, MCP `list_authoring_recipes`, or package
+4. Use `minecraft-skills plugin paper recipes`, MCP `list_authoring_recipes`, or package
    `listAuthoringRecipes({ domain: "paper-plugin" })` to choose an ordered workflow for listener,
    API, scheduler, or Folia-sensitive code.
-5. Use `authoring-scenario-search "<task>" --domain paper-plugin`, MCP
+5. Use `minecraft-skills plugin paper search-scenarios "<task>"`, MCP
    `search_authoring_scenarios`, or package `searchAuthoringScenarios({ query, domain:
    "paper-plugin" })` to route user wording to an existing scenario without inventing one.
-6. Use `authoring-scenarios --domain paper-plugin`, MCP `list_authoring_scenarios`, or package
+6. Use `minecraft-skills plugin paper scenarios`, MCP `list_authoring_scenarios`, or package
    `listAuthoringScenarios({ domain: "paper-plugin" })` when you need all realistic evaluation
    cases for the domain.
-7. After choosing a scenario, use `authoring-plan <scenario-id> <version>`, MCP
+7. After choosing a scenario, use `minecraft-skills plugin paper plan <scenario-id> <version>`, MCP
    `get_authoring_plan`, or package `getAuthoringPlan({ scenario, version })` to resolve the exact
    recipes, intent lookups, diagnostics, claim policies, fact surfaces, response patterns, and
    evidence required for that task.
-8. Use `authoring-context paper-plugin <version>`, MCP `get_authoring_context`, or package
+8. Use `minecraft-skills plugin paper context <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "paper-plugin", version })` when you need preflight, intent
    routing, and evidence in one payload.
-9. Use `authoring-guardrails --domain paper-plugin` and
-   `authoring-diagnostics --domain paper-plugin`, MCP `list_authoring_guardrails` and
+9. Use `minecraft-skills plugin paper guardrails` and
+   `minecraft-skills plugin paper diagnostics`, MCP `list_authoring_guardrails` and
    `list_authoring_diagnostics`, or package `listAuthoringGuardrails({ domain: "paper-plugin" })`
    and `listAuthoringDiagnostics({ domain: "paper-plugin" })` before finalizing generated plugin
    code.
-10. Use `claim-policies --domain paper-plugin`, MCP `list_claim_policies`, or package
+10. Use `minecraft-skills plugin paper claim-policies`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "paper-plugin" })` before making Paper support, API, event, or
    Folia/thread-safety claims.
-11. Use `output-requirements --domain paper-plugin` and `response-patterns --domain paper-plugin`,
-   MCP `list_output_requirements` and `list_response_patterns`, or package
+11. Use `minecraft-skills plugin paper output-requirements` and
+   `minecraft-skills plugin paper response-patterns`, MCP `list_output_requirements` and
+   `list_response_patterns`, or package
    `listOutputRequirements({ domain: "paper-plugin" })` and
    `listResponsePatterns({ domain: "paper-plugin" })` before finalizing an answer or generated
    code.
-12. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
-   each plugin data surface can and cannot prove.
-13. Use `preflight paper-plugin <version>`, MCP `get_authoring_preflight`, or package
+12. Use `minecraft-skills plugin paper fact-surfaces`, MCP `list_fact_surfaces`, or package
+   `listFactSurfaces()` to check what each plugin data surface can and cannot prove.
+13. Use `minecraft-skills plugin paper preflight <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "paper-plugin", version })` before generating plugin code.
-14. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
-   latest bundled Java/Paper aliases and whether Paper API surface facts are bundled or
-   downloadable.
-15. Use `version-support --domain paper-plugin`, MCP `list_version_support`, or package
+14. Use `minecraft-skills minecraft support-matrix`, MCP `get_support_matrix`, or package
+   `getSupportMatrix()` to check the latest bundled Java/Paper aliases and whether Paper API
+   surface facts are bundled or downloadable.
+15. Use `minecraft-skills minecraft support --domain paper-plugin`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "paper-plugin" })` when choosing among Paper target versions.
-16. Use `evidence paper-plugin <version>`, MCP `get_evidence_bundle`, or package
+16. Use `minecraft-skills plugin paper evidence <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "paper-plugin", version })` when explaining which sources and
    extracted files back an answer.
-17. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
+17. Use `minecraft-skills plugin paper info` or MCP `get_paper_plugin_data` to check bundled Paper support,
    latest Paper build metadata, and the event search API contract.
-18. Use `minecraft-skills paper api <version>` or MCP `get_paper_api_reference` to resolve the
+18. Use `minecraft-skills plugin paper api <version>` or MCP `get_paper_api_reference` to resolve the
    versioned Paper API dependency, Javadocs URL, and Folia/scheduler docs.
-19. Use `minecraft-skills paper compare-api <from> <to>` or MCP `compare_paper_api` to inspect
+19. Use `minecraft-skills plugin paper compare-api <from> <to>` or MCP `compare_paper_api` to inspect
    versioned Paper Javadocs package additions/removals before discussing server API changes.
-20. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
-   or MCP `get_data_manifest`, then fetch the matching `paper-api-surface` entry before relying on
-   it.
-21. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
-   Javadocs type/member names. Treat labels as API surface facts, not method behavior prose.
+20. If Paper type/member surface facts are needed but not available locally, inspect
+   `minecraft-skills data manifest` or MCP `get_data_manifest`, then fetch the matching
+   `paper-api-surface` entry before relying on it.
+21. Use `minecraft-skills plugin paper api-surface`, `minecraft-skills plugin paper types`,
+   `minecraft-skills plugin paper members`, or the matching MCP tools to inspect Javadocs
+   type/member names. Treat labels as API surface facts, not method behavior prose.
 22. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
 23. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text.
@@ -77,37 +79,37 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 
 ## Optional Tools
 
-- CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
-  `minecraft-skills authoring preflight paper-plugin <version>`,
-  `minecraft-skills authoring context paper-plugin <version>`,
-  `minecraft-skills authoring recipes --domain paper-plugin`,
-  `minecraft-skills authoring recipe <id>`,
-  `minecraft-skills authoring search-scenarios "<task>" --domain paper-plugin`,
-  `minecraft-skills authoring scenarios --domain paper-plugin`,
-  `minecraft-skills authoring scenario <id>`,
-  `minecraft-skills authoring plan <scenario-id> <version>`,
-  `minecraft-skills authoring guardrails --domain paper-plugin`,
-  `minecraft-skills authoring diagnostics --domain paper-plugin`,
-  `minecraft-skills authoring diagnostic <id>`,
-  `minecraft-skills authoring claim-policies --domain paper-plugin`,
-  `minecraft-skills authoring output-requirements --domain paper-plugin`,
-  `minecraft-skills authoring response-patterns --domain paper-plugin`,
-  `minecraft-skills authoring response-pattern <id>`,
-  `minecraft-skills authoring evidence paper-plugin <version>`,
-  `minecraft-skills authoring intents --domain paper-plugin`,
-  `minecraft-skills authoring intent <id>`,
-  `minecraft-skills authoring checklist paper-plugin`,
-  `minecraft-skills version support --domain paper-plugin`,
-  `minecraft-skills authoring fact-surfaces --domain paper-plugin`,
-  `minecraft-skills data support-matrix`, `minecraft-skills data manifest`,
+- CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills plugin paper info`,
+  `minecraft-skills plugin paper preflight <version>`,
+  `minecraft-skills plugin paper context <version>`,
+  `minecraft-skills plugin paper recipes`,
+  `minecraft-skills plugin paper recipe <id>`,
+  `minecraft-skills plugin paper search-scenarios "<task>"`,
+  `minecraft-skills plugin paper scenarios`,
+  `minecraft-skills plugin paper scenario <id>`,
+  `minecraft-skills plugin paper plan <scenario-id> <version>`,
+  `minecraft-skills plugin paper guardrails`,
+  `minecraft-skills plugin paper diagnostics`,
+  `minecraft-skills plugin paper diagnostic <id>`,
+  `minecraft-skills plugin paper claim-policies`,
+  `minecraft-skills plugin paper output-requirements`,
+  `minecraft-skills plugin paper response-patterns`,
+  `minecraft-skills plugin paper response-pattern <id>`,
+  `minecraft-skills plugin paper evidence <version>`,
+  `minecraft-skills plugin paper intents`,
+  `minecraft-skills plugin paper intent <id>`,
+  `minecraft-skills plugin paper checklist`,
+  `minecraft-skills minecraft support --domain paper-plugin`,
+  `minecraft-skills plugin paper fact-surfaces`,
+  `minecraft-skills minecraft support-matrix`, `minecraft-skills data manifest`,
   `minecraft-skills data fetch paper-api-surface --version <version>`,
-  `minecraft-skills paper api <version>`, `minecraft-skills paper api-index <version>`,
-  `minecraft-skills paper api-surface <version>`,
-  `minecraft-skills paper types <version>`,
-  `minecraft-skills paper members <version>`,
-  `minecraft-skills paper compare-api <from> <to>`,
-  `minecraft-skills paper compare-api-surface <from> <to>`,
-  `minecraft-skills paper events <query>`, `minecraft-skills version compare <from> <to>`
+  `minecraft-skills plugin paper api <version>`, `minecraft-skills plugin paper api-index <version>`,
+  `minecraft-skills plugin paper api-surface <version>`,
+  `minecraft-skills plugin paper types <version>`,
+  `minecraft-skills plugin paper members <version>`,
+  `minecraft-skills plugin paper compare-api <from> <to>`,
+  `minecraft-skills plugin paper compare-api-surface <from> <to>`,
+  `minecraft-skills plugin paper events <query>`, `minecraft-skills minecraft compare <from> <to>`
 - MCP: `@minecraft-skills/mcp` exposes domain, reference, version comparison, and Paper plugin data
   tools, Paper API reference/index/surface lookup, Paper API package and type/member comparison,
   Paper type/member search, data manifest/cache/fetch, support matrix, plus live Paper/Bukkit event

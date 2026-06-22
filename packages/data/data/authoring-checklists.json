@@ -11,10 +11,10 @@
           "reason": "Data pack syntax, pack formats, command trees, and vanilla data paths are version-specific.",
           "tools": {
             "cli": [
-              "version latest",
-              "version show",
-              "version pack-formats",
-              "data support-matrix"
+              "minecraft latest",
+              "minecraft show",
+              "minecraft pack-formats",
+              "minecraft support-matrix"
             ],
             "mcp": ["latest_version", "get_version", "list_pack_formats", "get_support_matrix"],
             "packageApis": [
@@ -34,7 +34,14 @@
           "id": "inspect-data-surface-limits",
           "reason": "minecraft-skills surfaces distinguish observed facts from normative specifications.",
           "tools": {
-            "cli": ["authoring fact-surfaces", "authoring fact-surface"],
+            "cli": [
+              "datapack fact-surfaces",
+              "resourcepack fact-surfaces",
+              "plugin paper fact-surfaces",
+              "datapack fact-surface",
+              "resourcepack fact-surface",
+              "plugin paper fact-surface"
+            ],
             "mcp": ["list_fact_surfaces", "get_fact_surface"],
             "packageApis": ["listFactSurfaces", "getFactSurface"]
           },
@@ -116,10 +123,10 @@
           "reason": "Resource pack formats, vanilla asset paths, model shapes, and item definitions are version-specific.",
           "tools": {
             "cli": [
-              "version latest",
-              "version show",
-              "version pack-formats",
-              "data support-matrix"
+              "minecraft latest",
+              "minecraft show",
+              "minecraft pack-formats",
+              "minecraft support-matrix"
             ],
             "mcp": ["latest_version", "get_version", "list_pack_formats", "get_support_matrix"],
             "packageApis": [
@@ -139,7 +146,14 @@
           "id": "inspect-data-surface-limits",
           "reason": "Resource pack model summaries are extracted from vanilla assets and are not normative schemas.",
           "tools": {
-            "cli": ["authoring fact-surfaces", "authoring fact-surface"],
+            "cli": [
+              "datapack fact-surfaces",
+              "resourcepack fact-surfaces",
+              "plugin paper fact-surfaces",
+              "datapack fact-surface",
+              "resourcepack fact-surface",
+              "plugin paper fact-surface"
+            ],
             "mcp": ["list_fact_surfaces", "get_fact_surface"],
             "packageApis": ["listFactSurfaces", "getFactSurface"]
           },
@@ -188,7 +202,7 @@
           "id": "resolve-paper-support",
           "reason": "Paper support can lag the latest Java release, and plugin API references are tied to supported Minecraft versions.",
           "tools": {
-            "cli": ["paper info", "paper api", "data support-matrix"],
+            "cli": ["plugin paper info", "plugin paper api", "minecraft support-matrix"],
             "mcp": ["get_paper_plugin_data", "get_paper_api_reference", "get_support_matrix"],
             "packageApis": ["getPaperPluginData", "getPaperApiReference", "getSupportMatrix"]
           },
@@ -202,7 +216,14 @@
           "id": "inspect-api-surface-limits",
           "reason": "Javadocs package/type/member indexes prove names and labels, not behavior, nullability, or thread safety.",
           "tools": {
-            "cli": ["authoring fact-surfaces", "authoring fact-surface"],
+            "cli": [
+              "datapack fact-surfaces",
+              "resourcepack fact-surfaces",
+              "plugin paper fact-surfaces",
+              "datapack fact-surface",
+              "resourcepack fact-surface",
+              "plugin paper fact-surface"
+            ],
             "mcp": ["list_fact_surfaces", "get_fact_surface"],
             "packageApis": ["listFactSurfaces", "getFactSurface"]
           },
@@ -217,11 +238,11 @@
           "reason": "Paper Javadocs indexes and event search reduce hallucinated class names, methods, and event candidates.",
           "tools": {
             "cli": [
-              "paper api-index",
-              "paper api-surface",
-              "paper types",
-              "paper members",
-              "paper events"
+              "plugin paper api-index",
+              "plugin paper api-surface",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper events"
             ],
             "mcp": [
               "get_paper_api_index",
@@ -248,7 +269,7 @@
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {
-            "cli": ["paper api"],
+            "cli": ["plugin paper api"],
             "mcp": ["get_paper_api_reference"],
             "packageApis": ["getPaperApiReference"]
           },

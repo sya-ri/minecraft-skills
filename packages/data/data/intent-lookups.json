@@ -15,7 +15,12 @@
         {
           "purpose": "Resolve the exact version, domain coverage, pack formats, Paper support, and surface availability.",
           "tools": {
-            "cli": ["version support", "authoring preflight"],
+            "cli": [
+              "minecraft support",
+              "datapack preflight",
+              "resourcepack preflight",
+              "plugin paper preflight"
+            ],
             "mcp": ["list_version_support", "get_authoring_preflight"],
             "packageApis": ["listVersionSupport", "getAuthoringPreflight"]
           },
@@ -40,18 +45,42 @@
           "purpose": "Load the domain checklist, exact fact surfaces, resolved version coverage, downloadable data state, and warnings.",
           "tools": {
             "cli": [
-              "authoring context",
-              "authoring recipes",
-              "authoring scenarios",
-              "authoring guardrails",
-              "authoring diagnostics",
-              "authoring claim-policies",
-              "authoring output-requirements",
-              "authoring response-patterns",
-              "authoring preflight",
-              "authoring checklist",
-              "authoring fact-surfaces",
-              "authoring evidence"
+              "datapack context",
+              "resourcepack context",
+              "plugin paper context",
+              "datapack recipes",
+              "resourcepack recipes",
+              "plugin paper recipes",
+              "datapack scenarios",
+              "resourcepack scenarios",
+              "plugin paper scenarios",
+              "datapack guardrails",
+              "resourcepack guardrails",
+              "plugin paper guardrails",
+              "datapack diagnostics",
+              "resourcepack diagnostics",
+              "plugin paper diagnostics",
+              "datapack claim-policies",
+              "resourcepack claim-policies",
+              "plugin paper claim-policies",
+              "datapack output-requirements",
+              "resourcepack output-requirements",
+              "plugin paper output-requirements",
+              "datapack response-patterns",
+              "resourcepack response-patterns",
+              "plugin paper response-patterns",
+              "datapack preflight",
+              "resourcepack preflight",
+              "plugin paper preflight",
+              "datapack checklist",
+              "resourcepack checklist",
+              "plugin paper checklist",
+              "datapack fact-surfaces",
+              "resourcepack fact-surfaces",
+              "plugin paper fact-surfaces",
+              "datapack evidence",
+              "resourcepack evidence",
+              "plugin paper evidence"
             ],
             "mcp": [
               "get_authoring_context",
@@ -105,7 +134,7 @@
         {
           "purpose": "Read exact pack format values extracted from bundled version metadata.",
           "tools": {
-            "cli": ["version pack-formats", "version show", "version support"],
+            "cli": ["minecraft pack-formats", "minecraft show", "minecraft support"],
             "mcp": ["list_pack_formats", "get_version", "list_version_support"],
             "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
           },
@@ -190,7 +219,7 @@
             "cli": [
               "datapack vanilla-paths",
               "datapack compare-vanilla-paths",
-              "datapack vanilla-inventory"
+              "minecraft vanilla-inventory"
             ],
             "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
             "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
@@ -218,7 +247,7 @@
             "cli": [
               "resourcepack vanilla-paths",
               "resourcepack compare-vanilla-paths",
-              "resourcepack vanilla-inventory"
+              "minecraft vanilla-inventory"
             ],
             "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
             "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
@@ -267,7 +296,12 @@
         {
           "purpose": "Resolve whether Paper publishes builds for the Minecraft version and get official API/Javadocs links.",
           "tools": {
-            "cli": ["paper info", "paper api", "version support", "authoring preflight"],
+            "cli": [
+              "plugin paper info",
+              "plugin paper api",
+              "minecraft support",
+              "plugin paper preflight"
+            ],
             "mcp": [
               "get_paper_plugin_data",
               "get_paper_api_reference",
@@ -302,10 +336,10 @@
           "purpose": "Search Paper Javadocs package, type, and member surfaces for the target supported version.",
           "tools": {
             "cli": [
-              "paper api-index",
-              "paper api-surface",
-              "paper types",
-              "paper members",
+              "plugin paper api-index",
+              "plugin paper api-surface",
+              "plugin paper types",
+              "plugin paper members",
               "data fetch",
               "data manifest"
             ],
@@ -346,7 +380,12 @@
         {
           "purpose": "Search configured event-list data, then verify candidates against Paper Javadocs surfaces.",
           "tools": {
-            "cli": ["paper events", "paper types", "paper members", "paper api-surface"],
+            "cli": [
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api-surface"
+            ],
             "mcp": [
               "search_paper_events",
               "search_paper_types",
@@ -381,10 +420,16 @@
           "purpose": "Return source policy, primary sources, relevant data files, fact surface guarantees, and warnings.",
           "tools": {
             "cli": [
-              "authoring evidence",
+              "datapack evidence",
+              "resourcepack evidence",
+              "plugin paper evidence",
               "source policy",
-              "authoring fact-surfaces",
-              "authoring fact-surface"
+              "datapack fact-surfaces",
+              "resourcepack fact-surfaces",
+              "plugin paper fact-surfaces",
+              "datapack fact-surface",
+              "resourcepack fact-surface",
+              "plugin paper fact-surface"
             ],
             "mcp": [
               "get_evidence_bundle",

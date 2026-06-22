@@ -13,11 +13,11 @@ Current bundled data:
 - Vanilla server data inventories for Java 1.13+: extracted from official Mojang server jars
 - Command trees and generated vanilla server reports for Java 1.13+: bundled from official server reports
 
-Use `minecraft-skills version show <version>` for per-version pack format facts. Use
+Use `minecraft-skills minecraft show <version>` for per-version pack format facts. Use
 `minecraft-skills datapack commands <version>` to search executable command syntax paths when server reports
 are bundled for that version. Use `minecraft-skills datapack server-reports <version>` for root commands,
 argument parsers, datapack registry capabilities, and report coverage. Use
 `minecraft-skills datapack vanilla-paths <version>` to search bundled vanilla
-`data/<namespace>/...` paths, or `minecraft-skills resourcepack vanilla-inventory <version>` for top-level
+`data/<namespace>/...` paths, or `minecraft-skills minecraft vanilla-inventory <version>` for top-level
 directories, counts, representative paths, and full path arrays for Java 1.13+. When a requested
 fact is not extracted, explain the gap and use the source policy instead of guessing.

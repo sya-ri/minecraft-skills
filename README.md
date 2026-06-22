@@ -16,20 +16,20 @@ The project helps AI check real versioned data before it writes code or pack fil
 After publishing:
 
 ```sh
-npx minecraft-skills version latest
+npx minecraft-skills minecraft latest
 npx -y @minecraft-skills/mcp
 ```
 
 Useful first commands:
 
 ```sh
-minecraft-skills authoring context paper-plugin 1.21.11
-minecraft-skills authoring search-scenarios "Paper event listener" --domain paper-plugin
-minecraft-skills authoring plan paper-event-listener-review 1.21.11
-minecraft-skills authoring recipes --domain datapack
+minecraft-skills plugin paper context 1.21.11
+minecraft-skills plugin paper search-scenarios "Paper event listener"
+minecraft-skills plugin paper plan paper-event-listener-review 1.21.11
+minecraft-skills datapack recipes
 minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
-minecraft-skills paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
 ```
 
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see

@@ -16,7 +16,7 @@
           "id": "resolve-version-and-context",
           "action": "Resolve the target Java version, datapack coverage, source policy, fact surfaces, and output requirements.",
           "tools": {
-            "cli": ["authoring context", "authoring preflight", "authoring output-requirements"],
+            "cli": ["datapack context", "datapack preflight", "datapack output-requirements"],
             "mcp": ["get_authoring_context", "get_authoring_preflight", "list_output_requirements"],
             "packageApis": [
               "getAuthoringContext",
@@ -34,7 +34,7 @@
           "id": "verify-pack-format",
           "action": "Verify pack_format before generating or changing pack.mcmeta.",
           "tools": {
-            "cli": ["version pack-formats", "version show", "version support"],
+            "cli": ["minecraft pack-formats", "minecraft show", "minecraft support"],
             "mcp": ["list_pack_formats", "get_version", "list_version_support"],
             "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
           },
@@ -80,7 +80,7 @@
           "id": "resolve-version-and-context",
           "action": "Resolve target version coverage and whether the observed datapack schema surface is bundled, cached, downloadable, or missing.",
           "tools": {
-            "cli": ["authoring context", "authoring preflight", "data manifest"],
+            "cli": ["datapack context", "datapack preflight", "data manifest"],
             "mcp": ["get_authoring_context", "get_authoring_preflight", "get_data_manifest"],
             "packageApis": ["getAuthoringContext", "getAuthoringPreflight", "getDataManifest"]
           },
@@ -156,7 +156,11 @@
           "id": "resolve-version-and-context",
           "action": "Resolve target Java version, resourcepack coverage, fact surfaces, and output requirements.",
           "tools": {
-            "cli": ["authoring context", "authoring preflight", "authoring output-requirements"],
+            "cli": [
+              "resourcepack context",
+              "resourcepack preflight",
+              "resourcepack output-requirements"
+            ],
             "mcp": ["get_authoring_context", "get_authoring_preflight", "list_output_requirements"],
             "packageApis": [
               "getAuthoringContext",
@@ -174,7 +178,7 @@
           "id": "verify-pack-format",
           "action": "Verify resource pack format before generating or changing pack.mcmeta.",
           "tools": {
-            "cli": ["version pack-formats", "version show", "version support"],
+            "cli": ["minecraft pack-formats", "minecraft show", "minecraft support"],
             "mcp": ["list_pack_formats", "get_version", "list_version_support"],
             "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
           },
@@ -237,10 +241,10 @@
           "action": "Resolve target version, Paper support, API reference, guardrails, claim policies, and output requirements.",
           "tools": {
             "cli": [
-              "authoring context",
-              "paper info",
-              "paper api",
-              "authoring output-requirements"
+              "plugin paper context",
+              "plugin paper info",
+              "plugin paper api",
+              "plugin paper output-requirements"
             ],
             "mcp": [
               "get_authoring_context",
@@ -265,7 +269,12 @@
           "id": "discover-event-candidates",
           "action": "Use event search for candidates, then verify event type names against the Paper API surface.",
           "tools": {
-            "cli": ["paper events", "paper types", "paper api-surface", "data fetch"],
+            "cli": [
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper api-surface",
+              "data fetch"
+            ],
             "mcp": [
               "search_paper_events",
               "search_paper_types",
@@ -289,7 +298,12 @@
           "id": "verify-used-members",
           "action": "Search every referenced event, player, entity, server, scheduler, or component type/member name.",
           "tools": {
-            "cli": ["paper types", "paper members", "paper api-index", "paper api-surface"],
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api-index",
+              "plugin paper api-surface"
+            ],
             "mcp": [
               "search_paper_types",
               "search_paper_members",
@@ -333,7 +347,12 @@
           "id": "resolve-paper-support-and-reference",
           "action": "Resolve the target version's Paper support, dependency coordinates, Javadocs URL, and scheduler/Folia documentation links.",
           "tools": {
-            "cli": ["authoring context", "paper info", "paper api", "version support"],
+            "cli": [
+              "plugin paper context",
+              "plugin paper info",
+              "plugin paper api",
+              "minecraft support"
+            ],
             "mcp": [
               "get_authoring_context",
               "get_paper_plugin_data",
@@ -357,7 +376,12 @@
           "id": "verify-api-surface",
           "action": "Search types and members in the target Paper API surface and fetch the surface if it is downloadable but missing locally.",
           "tools": {
-            "cli": ["paper api-surface", "paper types", "paper members", "data fetch"],
+            "cli": [
+              "plugin paper api-surface",
+              "plugin paper types",
+              "plugin paper members",
+              "data fetch"
+            ],
             "mcp": [
               "get_paper_api_surface",
               "search_paper_types",
@@ -381,7 +405,7 @@
           "id": "flag-behavior-and-threading-limits",
           "action": "Use claim policies and Paper reference links to keep behavior, scheduler, and Folia claims bounded.",
           "tools": {
-            "cli": ["authoring claim-policies", "authoring guardrails", "paper api"],
+            "cli": ["plugin paper claim-policies", "plugin paper guardrails", "plugin paper api"],
             "mcp": ["list_claim_policies", "list_authoring_guardrails", "get_paper_api_reference"],
             "packageApis": ["listClaimPolicies", "listAuthoringGuardrails", "getPaperApiReference"]
           },

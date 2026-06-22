@@ -83,60 +83,54 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints fact surfaces and their non-guarantees", async () => {
-    const list = await capture(["authoring", "fact-surfaces", "--domain", "datapack"]);
+    const list = await capture(["datapack", "fact-surfaces"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "datapack-schema-surface"');
     expect(list.stdout.join("\n")).toContain('"id": "command-paths"');
 
-    const single = await capture(["authoring", "fact-surface", "paper-api-surface"]);
+    const single = await capture(["plugin", "paper", "fact-surface", "paper-api-surface"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("does not prove method behavior");
   });
 
   it("prints authoring checklists", async () => {
-    const list = await capture(["authoring", "checklists", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "checklists"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"domain": "paper-plugin"');
     expect(list.stdout.join("\n")).toContain("verify-types-members-and-events");
 
-    const single = await capture(["authoring", "checklist", "datapack"]);
+    const single = await capture(["datapack", "checklist"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("verify-commands-and-paths");
     expect(single.stdout.join("\n")).toContain("datapack search-schema");
   });
 
   it("prints authoring recipes", async () => {
-    const list = await capture(["authoring", "recipes", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "recipes"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-or-scheduler-code"');
 
-    const single = await capture(["authoring", "recipe", "datapack-function-command"]);
+    const single = await capture(["datapack", "recipe", "datapack-function-command"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("verify-command-path");
     expect(single.stdout.join("\n")).toContain("search_commands");
   });
 
   it("prints authoring scenarios", async () => {
-    const list = await capture(["authoring", "scenarios", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "scenarios"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-scheduler-review"');
 
-    const single = await capture(["authoring", "scenario", "paper-event-listener-review"]);
+    const single = await capture(["plugin", "paper", "scenario", "paper-event-listener-review"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain('"paper-event-listener"');
     expect(single.stdout.join("\n")).toContain("paper-event-candidate-unverified");
   });
 
   it("searches authoring scenarios", async () => {
-    const result = await capture([
-      "authoring",
-      "search-scenarios",
-      "Paper event listener",
-      "--domain",
-      "paper-plugin",
-    ]);
+    const result = await capture(["plugin", "paper", "search-scenarios", "Paper event listener"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"query": "Paper event listener"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
@@ -144,7 +138,13 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints authoring plans", async () => {
-    const result = await capture(["authoring", "plan", "paper-event-listener-review", "1.21.11"]);
+    const result = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-event-listener-review",
+      "1.21.11",
+    ]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"scenario"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
@@ -158,78 +158,83 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints authoring guardrails", async () => {
-    const list = await capture(["authoring", "guardrails", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "guardrails"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "global-source-provenance"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
 
-    const single = await capture(["authoring", "guardrail", "paper-api-surface-limits"]);
+    const single = await capture(["plugin", "paper", "guardrail", "paper-api-surface-limits"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("Javadocs package, type, and member indexes");
     expect(single.stdout.join("\n")).toContain("nonexistent APIs");
   });
 
   it("prints authoring diagnostics", async () => {
-    const list = await capture(["authoring", "diagnostics", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "diagnostics"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-member-unverified"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-threading-assumption"');
 
-    const single = await capture(["authoring", "diagnostic", "paper-api-member-unverified"]);
+    const single = await capture(["plugin", "paper", "diagnostic", "paper-api-member-unverified"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain('"severity": "error"');
     expect(single.stdout.join("\n")).toContain("searchPaperMembers");
   });
 
   it("prints claim policies", async () => {
-    const list = await capture(["authoring", "claim-policies", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "claim-policies"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-type-or-member-exists"');
     expect(list.stdout.join("\n")).toContain('"id": "folia-or-thread-safety"');
 
-    const single = await capture(["authoring", "claim-policy", "command-syntax-exists"]);
+    const single = await capture(["datapack", "claim-policy", "command-syntax-exists"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("parser shape, not gameplay behavior");
     expect(single.stdout.join("\n")).toContain("will succeed at runtime");
   });
 
   it("prints output requirements", async () => {
-    const list = await capture(["authoring", "output-requirements", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "output-requirements"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "global-version-and-evidence"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-plugin-output-safety"');
 
-    const single = await capture(["authoring", "output-requirement", "paper-plugin-output-safety"]);
+    const single = await capture([
+      "plugin",
+      "paper",
+      "output-requirement",
+      "paper-plugin-output-safety",
+    ]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("Javadocs type/member evidence");
     expect(single.stdout.join("\n")).toContain("unverified event class names");
   });
 
   it("prints response patterns", async () => {
-    const list = await capture(["authoring", "response-patterns", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "response-patterns"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "verified-authoring-answer"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-answer"');
 
-    const single = await capture(["authoring", "response-pattern", "paper-api-answer"]);
+    const single = await capture(["plugin", "paper", "response-pattern", "paper-api-answer"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("Javadocs type/member evidence");
     expect(single.stdout.join("\n")).toContain("name presence, not behavior");
   });
 
   it("prints authoring preflight payloads", async () => {
-    const datapack = await capture(["authoring", "preflight", "datapack", "26.2"]);
+    const datapack = await capture(["datapack", "preflight", "26.2"]);
     expect(datapack.code).toBe(0);
     expect(datapack.stdout.join("\n")).toContain('"resolvedVersion": "26.2"');
     expect(datapack.stdout.join("\n")).toContain('"id": "verify-commands-and-paths"');
 
-    const paper = await capture(["authoring", "preflight", "paper-plugin", "26.2"]);
+    const paper = await capture(["plugin", "paper", "preflight", "26.2"]);
     expect(paper.code).toBe(0);
     expect(paper.stdout.join("\n")).toContain("Paper is not marked supported for 26.2");
   });
 
   it("prints authoring contexts", async () => {
-    const result = await capture(["authoring", "context", "paper-plugin", "1.21.11"]);
+    const result = await capture(["plugin", "paper", "context", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain('"recipes"');
@@ -252,7 +257,7 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints evidence bundles", async () => {
-    const result = await capture(["authoring", "evidence", "paper-plugin", "1.21.11"]);
+    const result = await capture(["plugin", "paper", "evidence", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"minecraftWikiTextRedistribution": "forbidden"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');
@@ -260,12 +265,12 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints intent lookups", async () => {
-    const list = await capture(["authoring", "intents", "--domain", "paper-plugin"]);
+    const list = await capture(["plugin", "paper", "intents"]);
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "verify-paper-type-or-member"');
     expect(list.stdout.join("\n")).toContain('"id": "discover-paper-event-candidates"');
 
-    const single = await capture(["authoring", "intent", "verify-command-syntax"]);
+    const single = await capture(["datapack", "intent", "verify-command-syntax"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain('"search_commands"');
     expect(single.stdout.join("\n")).toContain("does not prove gameplay behavior");
@@ -286,14 +291,14 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints support matrix aliases", async () => {
-    const result = await capture(["data", "support-matrix"]);
+    const result = await capture(["minecraft", "support-matrix"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"latestWithDatapackSchemaSurface": "26.2"');
     expect(result.stdout.join("\n")).toContain('"latestWithPaperApiSurface": "1.21.11"');
   });
 
   it("prints per-version support", async () => {
-    const result = await capture(["version", "support", "--domain", "paper-plugin"]);
+    const result = await capture(["minecraft", "support", "--domain", "paper-plugin"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"version": "26.2"');
     expect(result.stdout.join("\n")).toContain('"supported": false');
@@ -340,16 +345,16 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints latest Java version", async () => {
-    expect((await capture(["version", "latest"])).stdout).toEqual(["26.2"]);
+    expect((await capture(["minecraft", "latest"])).stdout).toEqual(["26.2"]);
   });
 
   it("prints effective version coverage", async () => {
-    const result = await capture(["version", "list"]);
+    const result = await capture(["minecraft", "list"]);
     expect(result.stdout[0]).toBe("26.2\trelease\t2026-06-16T12:03:33+00:00\tversion-json-and-jar");
   });
 
   it("prints pack formats by version", async () => {
-    const result = await capture(["version", "pack-formats"]);
+    const result = await capture(["minecraft", "pack-formats"]);
     expect(result.stdout[0]).toContain("26.2\t2026-06-16T12:03:33+00:00\tdata=107");
     expect(result.stdout[0]).toContain("resource=88");
     expect(result.stdout[0]).toContain("paper=not-yet-published");
@@ -361,7 +366,7 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints Paper plugin support data", async () => {
-    const result = await capture(["paper", "info"]);
+    const result = await capture(["plugin", "paper", "info"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"minecraftVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain(
@@ -370,24 +375,25 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints Paper API references", async () => {
-    const result = await capture(["paper", "api", "1.21.11"]);
+    const result = await capture(["plugin", "paper", "api", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
     expect(result.stdout.join("\n")).toContain("https://jd.papermc.io/paper/1.21.11/");
   });
 
   it("prints Paper API package indexes", async () => {
-    const result = await capture(["paper", "api-index", "1.21.11"]);
+    const result = await capture(["plugin", "paper", "api-index", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain("io.papermc.paper.threadedregions.scheduler");
   });
 
   it("prints and searches Paper API surfaces", async () => {
-    const surface = await capture(["paper", "api-surface", "1.21.11"]);
+    const surface = await capture(["plugin", "paper", "api-surface", "1.21.11"]);
     expect(surface.code).toBe(0);
     expect(surface.stdout.join("\n")).toContain('"coverage": "javadocs-search-index"');
 
     const types = await capture([
+      "plugin",
       "paper",
       "types",
       "1.21.11",
@@ -400,6 +406,7 @@ describe("minecraft-skills CLI", () => {
     expect(types.stdout.join("\n")).toContain("org.bukkit.entity.Player");
 
     const members = await capture([
+      "plugin",
       "paper",
       "members",
       "1.21.11",
@@ -417,21 +424,21 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("compares Paper API package indexes", async () => {
-    const result = await capture(["paper", "compare-api", "1.20.4", "1.21.11"]);
+    const result = await capture(["plugin", "paper", "compare-api", "1.20.4", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"added"');
     expect(result.stdout.join("\n")).toContain("io.papermc.paper.datacomponent");
   });
 
   it("compares Paper API surfaces", async () => {
-    const result = await capture(["paper", "compare-api-surface", "1.21.11", "1.21.11"]);
+    const result = await capture(["plugin", "paper", "compare-api-surface", "1.21.11", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"addedTypes": []');
     expect(result.stdout.join("\n")).toContain('"changes": []');
   });
 
   it("prints vanilla inventory", async () => {
-    const result = await capture(["resourcepack", "vanilla-inventory"]);
+    const result = await capture(["minecraft", "vanilla-inventory"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"version": "26.2"');
     expect(result.stdout.join("\n")).toContain('"assets/minecraft/models"');
@@ -499,7 +506,7 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints version comparison", async () => {
-    const result = await capture(["version", "compare", "1.20.6", "1.21"]);
+    const result = await capture(["minecraft", "compare", "1.20.6", "1.21"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"from": "1.20.6"');
     expect(result.stdout.join("\n")).toContain('"to": "1.21"');
@@ -563,7 +570,14 @@ describe("minecraft-skills CLI", () => {
     }));
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await capture(["paper", "events", "player join", "--version", "1.21.11"]);
+    const result = await capture([
+      "plugin",
+      "paper",
+      "events",
+      "player join",
+      "--version",
+      "1.21.11",
+    ]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain("PlayerJoinEvent");
     const url = fetchMock.mock.calls[0]?.[0] ?? "";
@@ -578,15 +592,15 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("reports unknown grouped subcommands", async () => {
-    const result = await capture(["paper", "nope"]);
+    const result = await capture(["plugin", "nope"]);
     expect(result.code).toBe(1);
-    expect(result.stderr).toEqual(["Unknown subcommand: paper nope"]);
+    expect(result.stderr).toEqual(["Unknown subcommand: plugin nope"]);
   });
 
   it("rejects flat public command forms", async () => {
     const result = await capture(["paper-members", "1.21.11"]);
     expect(result.code).toBe(1);
-    expect(result.stderr).toEqual(["Use subcommands: minecraft-skills paper members"]);
+    expect(result.stderr).toEqual(["Use subcommands: minecraft-skills plugin paper members"]);
   });
 
   it("prints practical help with workflows and safety notes", async () => {
@@ -596,7 +610,7 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("Start here:");
     expect(output).toContain("Common workflows:");
     expect(output).toContain(
-      'minecraft-skills authoring search-scenarios "Paper event listener" --domain paper-plugin',
+      'minecraft-skills plugin paper search-scenarios "Paper event listener"',
     );
     expect(output).toContain("Grouped commands:");
     expect(output).not.toContain("Compatibility:");

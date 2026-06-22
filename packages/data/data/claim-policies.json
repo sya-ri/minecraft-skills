@@ -21,7 +21,16 @@
         "Assume the same value from a neighboring version."
       ],
       "tools": {
-        "cli": ["authoring context", "version support", "version show", "authoring evidence"],
+        "cli": [
+          "datapack context",
+          "resourcepack context",
+          "plugin paper context",
+          "minecraft support",
+          "minecraft show",
+          "datapack evidence",
+          "resourcepack evidence",
+          "plugin paper evidence"
+        ],
         "mcp": [
           "get_authoring_context",
           "list_version_support",
@@ -56,7 +65,7 @@
         "The data pack and resource pack pack_format values are interchangeable."
       ],
       "tools": {
-        "cli": ["version show", "version pack-formats", "version support"],
+        "cli": ["minecraft show", "minecraft pack-formats", "minecraft support"],
         "mcp": ["get_version", "list_pack_formats", "list_version_support"],
         "packageApis": ["getVersionDetail", "listPackFormats", "listVersionSupport"]
       },
@@ -85,7 +94,7 @@
           "datapack commands",
           "datapack compare-commands",
           "datapack server-reports",
-          "authoring fact-surface"
+          "datapack fact-surface"
         ],
         "mcp": ["search_commands", "compare_commands", "get_server_reports", "get_fact_surface"],
         "packageApis": [
@@ -154,7 +163,7 @@
         "cli": [
           "datapack vanilla-paths",
           "datapack compare-vanilla-paths",
-          "resourcepack vanilla-inventory"
+          "minecraft vanilla-inventory"
         ],
         "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
         "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
@@ -205,7 +214,12 @@
         "A Mojang version alone proves Paper support."
       ],
       "tools": {
-        "cli": ["paper info", "paper api", "version support", "authoring preflight"],
+        "cli": [
+          "plugin paper info",
+          "plugin paper api",
+          "minecraft support",
+          "plugin paper preflight"
+        ],
         "mcp": [
           "get_paper_plugin_data",
           "get_paper_api_reference",
@@ -240,7 +254,12 @@
         "Invent a method name when no member search result exists."
       ],
       "tools": {
-        "cli": ["paper api-index", "paper api-surface", "paper types", "paper members"],
+        "cli": [
+          "plugin paper api-index",
+          "plugin paper api-surface",
+          "plugin paper types",
+          "plugin paper members"
+        ],
         "mcp": [
           "get_paper_api_index",
           "get_paper_api_surface",
@@ -275,7 +294,12 @@
         "Generate listener code for an unverified event class name."
       ],
       "tools": {
-        "cli": ["paper events", "paper types", "paper members", "paper api-surface"],
+        "cli": [
+          "plugin paper events",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper api-surface"
+        ],
         "mcp": [
           "search_paper_events",
           "search_paper_types",
@@ -310,7 +334,7 @@
         "Global scheduler patterns are silently acceptable for Folia-sensitive work."
       ],
       "tools": {
-        "cli": ["paper api", "authoring fact-surface", "authoring guardrails"],
+        "cli": ["plugin paper api", "plugin paper fact-surface", "plugin paper guardrails"],
         "mcp": ["get_paper_api_reference", "get_fact_surface", "list_authoring_guardrails"],
         "packageApis": ["getPaperApiReference", "getFactSurface", "listAuthoringGuardrails"]
       },

@@ -164,14 +164,14 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
       ),
     );
     commands.push(
-      runCommand("pnpm", ["exec", "minecraft-skills", "version", "latest"], consumerDir),
+      runCommand("pnpm", ["exec", "minecraft-skills", "minecraft", "latest"], consumerDir),
     );
     const latest = commands.at(-1)?.stdout;
     if (latest !== "26.2") {
       throw new Error(`minecraft-skills latest returned ${latest}, expected 26.2`);
     }
     commands.push(
-      runCommand("pnpm", ["exec", "minecraft-skills", "data", "support-matrix"], consumerDir),
+      runCommand("pnpm", ["exec", "minecraft-skills", "minecraft", "support-matrix"], consumerDir),
     );
     if (!commands.at(-1)?.stdout.includes('"latestPaper": "1.21.11"')) {
       throw new Error("minecraft-skills support-matrix did not include latestPaper");
@@ -179,7 +179,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "version", "support", "--domain", "paper-plugin"],
+        ["exec", "minecraft-skills", "minecraft", "support", "--domain", "paper-plugin"],
         consumerDir,
       ),
     );
@@ -189,7 +189,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "context", "paper-plugin", "1.21.11"],
+        ["exec", "minecraft-skills", "plugin", "paper", "context", "1.21.11"],
         consumerDir,
       ),
     );
@@ -214,15 +214,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        [
-          "exec",
-          "minecraft-skills",
-          "authoring",
-          "search-scenarios",
-          "Paper event listener",
-          "--domain",
-          "paper-plugin",
-        ],
+        ["exec", "minecraft-skills", "plugin", "paper", "search-scenarios", "Paper event listener"],
         consumerDir,
       ),
     );
@@ -235,7 +227,15 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "plan", "paper-event-listener-review", "1.21.11"],
+        [
+          "exec",
+          "minecraft-skills",
+          "plugin",
+          "paper",
+          "plan",
+          "paper-event-listener-review",
+          "1.21.11",
+        ],
         consumerDir,
       ),
     );
@@ -248,7 +248,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "preflight", "paper-plugin", "26.2"],
+        ["exec", "minecraft-skills", "plugin", "paper", "preflight", "26.2"],
         consumerDir,
       ),
     );
@@ -258,7 +258,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "evidence", "paper-plugin", "1.21.11"],
+        ["exec", "minecraft-skills", "plugin", "paper", "evidence", "1.21.11"],
         consumerDir,
       ),
     );
@@ -266,11 +266,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
       throw new Error("minecraft-skills evidence did not include Paper Javadocs link");
     }
     commands.push(
-      runCommand(
-        "pnpm",
-        ["exec", "minecraft-skills", "authoring", "checklist", "paper-plugin"],
-        consumerDir,
-      ),
+      runCommand("pnpm", ["exec", "minecraft-skills", "plugin", "paper", "checklist"], consumerDir),
     );
     if (!commands.at(-1)?.stdout.includes("verify-types-members-and-events")) {
       throw new Error("minecraft-skills authoring-checklist did not include Paper checks");
@@ -278,7 +274,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "recipe", "paper-event-listener"],
+        ["exec", "minecraft-skills", "plugin", "paper", "recipe", "paper-event-listener"],
         consumerDir,
       ),
     );
@@ -288,7 +284,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "scenario", "paper-event-listener-review"],
+        ["exec", "minecraft-skills", "plugin", "paper", "scenario", "paper-event-listener-review"],
         consumerDir,
       ),
     );
@@ -298,7 +294,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "guardrail", "paper-api-surface-limits"],
+        ["exec", "minecraft-skills", "plugin", "paper", "guardrail", "paper-api-surface-limits"],
         consumerDir,
       ),
     );
@@ -308,7 +304,14 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "diagnostic", "paper-api-member-unverified"],
+        [
+          "exec",
+          "minecraft-skills",
+          "plugin",
+          "paper",
+          "diagnostic",
+          "paper-api-member-unverified",
+        ],
         consumerDir,
       ),
     );
@@ -318,7 +321,14 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "claim-policy", "paper-type-or-member-exists"],
+        [
+          "exec",
+          "minecraft-skills",
+          "plugin",
+          "paper",
+          "claim-policy",
+          "paper-type-or-member-exists",
+        ],
         consumerDir,
       ),
     );
@@ -331,7 +341,8 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
         [
           "exec",
           "minecraft-skills",
-          "authoring",
+          "plugin",
+          "paper",
           "output-requirement",
           "paper-plugin-output-safety",
         ],
@@ -344,7 +355,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "response-pattern", "paper-api-answer"],
+        ["exec", "minecraft-skills", "plugin", "paper", "response-pattern", "paper-api-answer"],
         consumerDir,
       ),
     );
@@ -354,7 +365,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "intent", "verify-paper-type-or-member"],
+        ["exec", "minecraft-skills", "plugin", "paper", "intent", "verify-paper-type-or-member"],
         consumerDir,
       ),
     );
@@ -364,7 +375,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand(
         "pnpm",
-        ["exec", "minecraft-skills", "authoring", "fact-surface", "paper-api-surface"],
+        ["exec", "minecraft-skills", "plugin", "paper", "fact-surface", "paper-api-surface"],
         consumerDir,
       ),
     );
