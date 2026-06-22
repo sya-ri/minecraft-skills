@@ -51,6 +51,9 @@ minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills server-reports latest
+minecraft-skills datapack-schema latest
+minecraft-skills search-datapack-schema latest --kind advancement --contains criteria
+minecraft-skills compare-datapack-schema 26.2 26.2 --kind advancement
 minecraft-skills commands latest --prefix execute --contains run
 minecraft-skills compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills resourcepack-models latest
@@ -61,22 +64,28 @@ minecraft-skills compare-vanilla-paths 1.20.6 1.21 --domain resourcepack --prefi
 minecraft-skills paper
 minecraft-skills paper-api 1.21.11
 minecraft-skills paper-api-index 1.21.11
+minecraft-skills paper-api-surface 1.21.11
+minecraft-skills paper-types 1.21.11 --contains org.bukkit.entity.Player
+minecraft-skills paper-members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills compare-paper-api 1.20.4 1.21.11
+minecraft-skills compare-paper-api-surface 1.21.11 1.21.11
 minecraft-skills paper-events "player join" --version 1.21.11
 minecraft-skills references --domain paper-plugin
 ```
 
 `minecraft-skills compare-commands` and `minecraft-skills compare-vanilla-paths` return added and
 removed command syntax or asset/data paths between bundled versions. `minecraft-skills
-resourcepack-models` returns observed vanilla model JSON and item definition JSON shape summaries
-extracted from official client jars. `minecraft-skills paper` returns PaperMC support metadata,
-per-version Paper build summaries, official Paper docs source links, and the
-`sya-ri/spigot-event-list` event search API contract. `minecraft-skills paper-api` returns the
-versioned Paper API dependency, Javadocs URL, Paper docs, and Folia/scheduler reference links.
-`minecraft-skills compare-paper-api` compares versioned Paper Javadocs package indexes so agents can
-spot API package surface changes without copying Javadocs prose. `minecraft-skills paper-events`
-calls the event API for live event discovery. `minecraft-skills skill <name>` returns the packaged
-Agent Skill payload, including `SKILL.md`, agent metadata, and generated references.
+datapack-schema` returns observed vanilla datapack JSON field shapes extracted from official server
+jars; it is not a normative schema. `minecraft-skills resourcepack-models` returns observed vanilla
+model JSON and item definition JSON shape summaries extracted from official client jars.
+`minecraft-skills paper` returns PaperMC support metadata, per-version Paper build summaries,
+official Paper docs source links, and the `sya-ri/spigot-event-list` event search API contract.
+`minecraft-skills paper-api` returns the versioned Paper API dependency, Javadocs URL, Paper docs,
+and Folia/scheduler reference links. `minecraft-skills paper-api-surface` returns Javadocs
+type/member search-index facts, and `minecraft-skills compare-paper-api-surface` compares those
+facts without copying Javadocs prose. `minecraft-skills paper-events` calls the event API for live
+event discovery. `minecraft-skills skill <name>` returns the packaged Agent Skill payload, including
+`SKILL.md`, agent metadata, and generated references.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
@@ -104,9 +113,9 @@ Typical stdio MCP client config:
 ```
 
 The server exposes tools for version lookup, pack formats, server reports, command search and
-comparison, vanilla asset/data path search and comparison, resource pack model summaries, Paper
-support metadata, installable skill folder discovery, packaged skill payload lookup, and
-Paper/Bukkit event search.
+comparison, observed datapack schema search/comparison, vanilla asset/data path search and
+comparison, resource pack model summaries, Paper support metadata, Paper type/member surface search,
+installable skill folder discovery, packaged skill payload lookup, and Paper/Bukkit event search.
 
 The server also exposes Agent Skill files as MCP resources under
 `minecraft-skills://skills/<skill>/...`, including `SKILL.md`, `agents/openai.yaml`, and generated
@@ -125,13 +134,19 @@ other tools:
 ```ts
 import {
   compareCommands,
+  compareDatapackSchema,
+  getDatapackSchemaSurface,
   compareVanillaPaths,
   getCoverageSummary,
+  getPaperApiSurface,
   getResourcepackModelSummary,
   getSkillPayload,
   getVersionDetail,
   listSkills,
   searchCommands,
+  searchDatapackSchema,
+  searchPaperMembers,
+  searchPaperTypes,
   searchResourcepackModelPaths,
 } from "@minecraft-skills/catalog";
 
@@ -141,6 +156,13 @@ const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const coverage = getCoverageSummary();
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
+const datapackSchema = getDatapackSchemaSurface("java", "26.2");
+const advancementFields = searchDatapackSchema({
+  version: "26.2",
+  kind: "advancement",
+  contains: "criteria",
+});
+const datapackSchemaDiff = compareDatapackSchema({ from: "26.2", to: "26.2" });
 const models = getResourcepackModelSummary("java", "26.2");
 const itemDefinitions = searchResourcepackModelPaths({
   version: "26.2",
@@ -152,6 +174,16 @@ const assetDiff = compareVanillaPaths({
   to: "1.21",
   domain: "resourcepack",
   prefix: "assets/minecraft/models/item/",
+});
+const paperSurface = getPaperApiSurface("1.21.11");
+const paperTypes = searchPaperTypes({
+  version: "1.21.11",
+  contains: "org.bukkit.entity.Player",
+});
+const playerMembers = searchPaperMembers({
+  version: "1.21.11",
+  type: "org.bukkit.entity.Player",
+  contains: "sendMessage",
 });
 ```
 

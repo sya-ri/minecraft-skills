@@ -119,11 +119,49 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("io.papermc.paper.threadedregions.scheduler");
   });
 
+  it("prints and searches Paper API surfaces", async () => {
+    const surface = await capture(["paper-api-surface", "1.21.11"]);
+    expect(surface.code).toBe(0);
+    expect(surface.stdout.join("\n")).toContain('"coverage": "javadocs-search-index"');
+
+    const types = await capture([
+      "paper-types",
+      "1.21.11",
+      "--contains",
+      "org.bukkit.entity.Player",
+      "--limit",
+      "5",
+    ]);
+    expect(types.code).toBe(0);
+    expect(types.stdout.join("\n")).toContain("org.bukkit.entity.Player");
+
+    const members = await capture([
+      "paper-members",
+      "1.21.11",
+      "--type",
+      "org.bukkit.entity.Player",
+      "--contains",
+      "sendMessage",
+      "--kind",
+      "method",
+      "--limit",
+      "5",
+    ]);
+    expect(members.code).toBe(0);
+    expect(members.stdout.join("\n")).toContain("sendMessage");
+  });
+
   it("compares Paper API package indexes", async () => {
     const result = await capture(["compare-paper-api", "1.20.4", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"added"');
     expect(result.stdout.join("\n")).toContain("io.papermc.paper.datacomponent");
+  });
+
+  it("compares Paper API surfaces", async () => {
+    const result = await capture(["compare-paper-api-surface", "1.21.11", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"addedTypes": []');
   });
 
   it("prints vanilla inventory", async () => {
@@ -132,6 +170,31 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"version": "26.2"');
     expect(result.stdout.join("\n")).toContain('"assets/minecraft/models"');
     expect(result.stdout.join("\n")).toContain('"data/minecraft/tags"');
+  });
+
+  it("prints and searches observed datapack schema surfaces", async () => {
+    const surface = await capture(["datapack-schema", "26.2"]);
+    expect(surface.code).toBe(0);
+    expect(surface.stdout.join("\n")).toContain("vanilla-observed-datapack-json-shape");
+
+    const search = await capture([
+      "search-datapack-schema",
+      "26.2",
+      "--kind",
+      "advancement",
+      "--contains",
+      "criteria",
+      "--limit",
+      "5",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"path": "$.criteria"');
+  });
+
+  it("compares observed datapack schema surfaces", async () => {
+    const result = await capture(["compare-datapack-schema", "26.2", "26.2"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"addedTotal": 0');
   });
 
   it("searches vanilla paths", async () => {

@@ -9,8 +9,14 @@ import {
   type EditionData,
   JavaReportsSummary,
   type JavaReportsSummaryData,
+  ObservedDatapackSchemaSurface,
+  type ObservedDatapackSchemaSurfaceData,
   PaperApiIndex,
   type PaperApiIndexData,
+  type PaperApiMemberData,
+  PaperApiSurface,
+  type PaperApiSurfaceData,
+  type PaperApiTypeData,
   PaperPluginData,
   type PaperPluginDataData,
   type ReferenceData,
@@ -32,7 +38,11 @@ export type {
   DomainIdData,
   EditionData,
   JavaReportsSummaryData,
+  ObservedDatapackSchemaSurfaceData,
   PaperApiIndexData,
+  PaperApiMemberData,
+  PaperApiSurfaceData,
+  PaperApiTypeData,
   PaperPluginDataData,
   ReferenceData,
   ResourcepackModelSummaryData,
@@ -137,6 +147,57 @@ export type PaperApiComparison = {
   removed: PaperApiIndexData["packages"];
 };
 
+export type PaperTypeSearchOptions = {
+  version?: string;
+  packageName?: string;
+  contains?: string;
+  limit?: number;
+};
+
+export type PaperTypeSearchResult = {
+  version: string;
+  totalTypes: number;
+  matchedTypes: number;
+  truncated: boolean;
+  types: PaperApiTypeData[];
+};
+
+export type PaperMemberSearchOptions = {
+  version?: string;
+  type?: string;
+  packageName?: string;
+  contains?: string;
+  kind?: PaperApiMemberData["kind"];
+  limit?: number;
+};
+
+export type PaperMemberSearchResult = {
+  version: string;
+  totalMembers: number;
+  matchedMembers: number;
+  truncated: boolean;
+  members: PaperApiMemberData[];
+};
+
+export type PaperApiSurfaceComparison = {
+  from: string;
+  to: string;
+  typeCount: {
+    from: number;
+    to: number;
+    changed: boolean;
+  };
+  memberCount: {
+    from: number;
+    to: number;
+    changed: boolean;
+  };
+  addedTypes: PaperApiTypeData[];
+  removedTypes: PaperApiTypeData[];
+  addedMembers: PaperApiMemberData[];
+  removedMembers: PaperApiMemberData[];
+};
+
 export type SkillReferencePayload = {
   reference: ReferenceData;
   markdown: string;
@@ -181,6 +242,7 @@ export type CoverageSummary = {
       commandPathIndexes: number;
       vanillaInventories: number;
       vanillaPathIndexes: number;
+      observedSchemaSurfaces: number;
       versionsWithoutUnknowns: number;
     };
     resourcepack: {
@@ -195,8 +257,10 @@ export type CoverageSummary = {
       latestBuild: number;
       versionBuilds: number;
       apiPackageIndexes: number;
+      apiSurfaces: number;
       versionsWithoutUnknowns: number;
       missingApiPackageIndexes: string[];
+      missingApiSurfaces: string[];
     };
   };
 };
@@ -246,6 +310,50 @@ export type VanillaPathComparisonResult = {
   truncated: boolean;
   added: string[];
   removed: string[];
+};
+
+export type DatapackSchemaSearchOptions = {
+  edition?: string;
+  version?: string;
+  kind?: string;
+  path?: string;
+  contains?: string;
+  limit?: number;
+};
+
+export type DatapackSchemaSearchResult = {
+  edition: EditionData;
+  version: string;
+  totalFields: number;
+  matchedFields: number;
+  truncated: boolean;
+  fields: Array<
+    ObservedDatapackSchemaSurfaceData["kinds"][number]["fieldPaths"][number] & {
+      kind: string;
+    }
+  >;
+};
+
+export type DatapackSchemaComparisonOptions = {
+  edition?: string;
+  from: string;
+  to: string;
+  kind?: string;
+  contains?: string;
+  limit?: number;
+};
+
+export type DatapackSchemaComparisonResult = {
+  edition: EditionData;
+  from: string;
+  to: string;
+  fromTotalFields: number;
+  toTotalFields: number;
+  addedTotal: number;
+  removedTotal: number;
+  truncated: boolean;
+  added: Array<{ kind: string; path: string }>;
+  removed: Array<{ kind: string; path: string }>;
 };
 
 export type CommandSearchOptions = {
@@ -469,6 +577,13 @@ function withPaperPluginCoverage(detail: VersionDetailData): VersionDetailData {
     if (hasPackageIndex) {
       facts.push(`paper_api_package_index=${detail.version}`);
     }
+    const paperApiSurfaceFact = `paper_api_surface=${detail.version}`;
+    if (
+      hasDataFile(`java/paper-api-surfaces/${detail.version}.json`) &&
+      !facts.includes(paperApiSurfaceFact)
+    ) {
+      facts.push(paperApiSurfaceFact);
+    }
     facts.push(
       `paper_folia_support_docs=${reference.docs.foliaSupport}`,
       `paper_scheduler_docs=${reference.docs.scheduling}`,
@@ -544,13 +659,21 @@ function withJavaReportsCoverage(detail: VersionDetailData): VersionDetailData {
   if (!hasDataFile(reportsPath)) {
     return detail;
   }
+  const facts = appendUnique(detail.domains.datapack.facts, `server_reports=${detail.version}`);
+  const datapackSchemaSurfaceFact = `datapack_schema_surface=${detail.version}`;
+  if (
+    hasDataFile(`java/datapack-schema-surfaces/${detail.version}.json`) &&
+    !facts.includes(datapackSchemaSurfaceFact)
+  ) {
+    facts.push(datapackSchemaSurfaceFact);
+  }
   return VersionDetail.assert({
     ...detail,
     domains: {
       ...detail.domains,
       datapack: {
         status: "reports-extracted",
-        facts: appendUnique(detail.domains.datapack.facts, `server_reports=${detail.version}`),
+        facts,
         unknowns: [],
       },
     },
@@ -659,6 +782,9 @@ export function getCoverageSummary(): CoverageSummary {
   const paperApiIndexes = paper.versions.filter((version) =>
     hasDataFile(`java/paper-api-indexes/${version}.json`),
   );
+  const paperApiSurfaces = paper.versions.filter((version) =>
+    hasDataFile(`java/paper-api-surfaces/${version}.json`),
+  );
 
   return {
     schemaVersion: 1,
@@ -700,6 +826,9 @@ export function getCoverageSummary(): CoverageSummary {
         vanillaPathIndexes: countExisting(
           versions.map((version) => `java/vanilla-paths/${version.id}.datapack.txt`),
         ),
+        observedSchemaSurfaces: countExisting(
+          versions.map((version) => `java/datapack-schema-surfaces/${version.id}.json`),
+        ),
         versionsWithoutUnknowns: datapackWithoutUnknowns,
       },
       resourcepack: {
@@ -720,10 +849,12 @@ export function getCoverageSummary(): CoverageSummary {
         latestBuild: paper.latest.build,
         versionBuilds: paper.versionBuilds.length,
         apiPackageIndexes: paperApiIndexes.length,
+        apiSurfaces: paperApiSurfaces.length,
         versionsWithoutUnknowns: paperWithoutUnknowns,
         missingApiPackageIndexes: paper.versions.filter(
           (version) => !paperApiIndexes.includes(version),
         ),
+        missingApiSurfaces: paper.versions.filter((version) => !paperApiSurfaces.includes(version)),
       },
     },
   };
@@ -811,6 +942,121 @@ export function comparePaperApi(fromRequested: string, toRequested: string): Pap
   };
 }
 
+export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
+  const reference = getPaperApiReference(requested);
+  if (!reference.supported) {
+    throw new Error(
+      `No bundled Paper API surface for ${reference.requestedVersion}; latest supported is ${reference.latestSupportedVersion}`,
+    );
+  }
+  const path = `java/paper-api-surfaces/${reference.minecraftVersion}.json`;
+  if (!hasDataFile(path)) {
+    throw new Error(`No bundled Paper API surface for ${reference.minecraftVersion}`);
+  }
+  return PaperApiSurface.assert(readDataJson(path));
+}
+
+export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTypeSearchResult {
+  const surface = getPaperApiSurface(options.version ?? "latest");
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const packageName = options.packageName?.trim();
+  const contains = options.contains?.trim().toLowerCase();
+  const matched = surface.types.filter((entry) => {
+    if (packageName && entry.packageName !== packageName) {
+      return false;
+    }
+    if (
+      contains &&
+      !entry.name.toLowerCase().includes(contains) &&
+      !entry.qualifiedName.toLowerCase().includes(contains)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    version: surface.minecraftVersion,
+    totalTypes: surface.types.length,
+    matchedTypes: matched.length,
+    truncated: matched.length > limit,
+    types: matched.slice(0, limit),
+  };
+}
+
+export function searchPaperMembers(
+  options: PaperMemberSearchOptions = {},
+): PaperMemberSearchResult {
+  const surface = getPaperApiSurface(options.version ?? "latest");
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const typeName = options.type?.trim();
+  const packageName = options.packageName?.trim();
+  const contains = options.contains?.trim().toLowerCase();
+  const matched = surface.members.filter((entry) => {
+    if (typeName && entry.qualifiedTypeName !== typeName && entry.typeName !== typeName) {
+      return false;
+    }
+    if (packageName && entry.packageName !== packageName) {
+      return false;
+    }
+    if (options.kind && entry.kind !== options.kind) {
+      return false;
+    }
+    if (
+      contains &&
+      !entry.name.toLowerCase().includes(contains) &&
+      !entry.label.toLowerCase().includes(contains) &&
+      !entry.qualifiedTypeName.toLowerCase().includes(contains)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    version: surface.minecraftVersion,
+    totalMembers: surface.members.length,
+    matchedMembers: matched.length,
+    truncated: matched.length > limit,
+    members: matched.slice(0, limit),
+  };
+}
+
+function memberKey(entry: PaperApiMemberData): string {
+  return `${entry.qualifiedTypeName}#${entry.label}`;
+}
+
+export function comparePaperApiSurface(
+  fromRequested: string,
+  toRequested: string,
+): PaperApiSurfaceComparison {
+  const from = getPaperApiSurface(fromRequested);
+  const to = getPaperApiSurface(toRequested);
+  const fromTypes = new Map(from.types.map((entry) => [entry.qualifiedName, entry]));
+  const toTypes = new Map(to.types.map((entry) => [entry.qualifiedName, entry]));
+  const fromMembers = new Map(from.members.map((entry) => [memberKey(entry), entry]));
+  const toMembers = new Map(to.members.map((entry) => [memberKey(entry), entry]));
+
+  return {
+    from: from.minecraftVersion,
+    to: to.minecraftVersion,
+    typeCount: {
+      from: from.typeCount,
+      to: to.typeCount,
+      changed: from.typeCount !== to.typeCount,
+    },
+    memberCount: {
+      from: from.memberCount,
+      to: to.memberCount,
+      changed: from.memberCount !== to.memberCount,
+    },
+    addedTypes: to.types.filter((entry) => !fromTypes.has(entry.qualifiedName)),
+    removedTypes: from.types.filter((entry) => !toTypes.has(entry.qualifiedName)),
+    addedMembers: to.members.filter((entry) => !fromMembers.has(memberKey(entry))),
+    removedMembers: from.members.filter((entry) => !toMembers.has(memberKey(entry))),
+  };
+}
+
 export function listPackFormats(edition = "java"): PackFormatSummary[] {
   return listVersions(edition).map((version) => {
     const detail = getVersionDetail(edition, version.id);
@@ -836,6 +1082,19 @@ export function getVanillaInventory(edition = "java", requested = "latest"): Van
   return VanillaInventory.assert(readDataJson(inventoryPath));
 }
 
+export function getDatapackSchemaSurface(
+  edition = "java",
+  requested = "latest",
+): ObservedDatapackSchemaSurfaceData {
+  const editionId = Edition.assert(edition);
+  const version = resolveVersion(editionId, requested);
+  const surfacePath = `${editionId}/datapack-schema-surfaces/${version}.json`;
+  if (!hasDataFile(surfacePath)) {
+    throw new Error(`No bundled observed datapack schema surface for ${editionId} ${version}`);
+  }
+  return ObservedDatapackSchemaSurface.assert(readDataJson(surfacePath));
+}
+
 export function getJavaReportsSummary(
   edition = "java",
   requested = "latest",
@@ -847,6 +1106,113 @@ export function getJavaReportsSummary(
     throw new Error(`No bundled server reports summary for ${editionId} ${version}`);
   }
   return JavaReportsSummary.assert(readDataJson(reportsPath));
+}
+
+function flattenDatapackFields(
+  surface: ObservedDatapackSchemaSurfaceData,
+): Array<
+  ObservedDatapackSchemaSurfaceData["kinds"][number]["fieldPaths"][number] & { kind: string }
+> {
+  return surface.kinds.flatMap((kind) =>
+    kind.fieldPaths.map((field) => ({
+      kind: kind.kind,
+      ...field,
+    })),
+  );
+}
+
+export function searchDatapackSchema(
+  options: DatapackSchemaSearchOptions = {},
+): DatapackSchemaSearchResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const surface = getDatapackSchemaSurface(editionId, options.version ?? "latest");
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const kind = options.kind?.trim();
+  const path = options.path?.trim();
+  const contains = options.contains?.trim().toLowerCase();
+  const fields = flattenDatapackFields(surface);
+  const matched = fields.filter((field) => {
+    if (kind && field.kind !== kind) {
+      return false;
+    }
+    if (path && field.path !== path) {
+      return false;
+    }
+    if (
+      contains &&
+      !field.kind.toLowerCase().includes(contains) &&
+      !field.path.toLowerCase().includes(contains)
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    edition: editionId,
+    version: surface.version,
+    totalFields: fields.length,
+    matchedFields: matched.length,
+    truncated: matched.length > limit,
+    fields: matched.slice(0, limit),
+  };
+}
+
+function fieldKey(entry: { kind: string; path: string }): string {
+  return `${entry.kind}\t${entry.path}`;
+}
+
+export function compareDatapackSchema(
+  options: DatapackSchemaComparisonOptions,
+): DatapackSchemaComparisonResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const from = getDatapackSchemaSurface(editionId, options.from);
+  const to = getDatapackSchemaSurface(editionId, options.to);
+  const kind = options.kind?.trim();
+  const contains = options.contains?.trim().toLowerCase();
+  const filter = (field: { kind: string; path: string }) => {
+    if (kind && field.kind !== kind) {
+      return false;
+    }
+    if (
+      contains &&
+      !field.kind.toLowerCase().includes(contains) &&
+      !field.path.toLowerCase().includes(contains)
+    ) {
+      return false;
+    }
+    return true;
+  };
+  const fromFields = flattenDatapackFields(from)
+    .filter(filter)
+    .map((field) => ({
+      kind: field.kind,
+      path: field.path,
+    }));
+  const toFields = flattenDatapackFields(to)
+    .filter(filter)
+    .map((field) => ({
+      kind: field.kind,
+      path: field.path,
+    }));
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const fromSet = new Set(fromFields.map(fieldKey));
+  const toSet = new Set(toFields.map(fieldKey));
+  const added = toFields.filter((entry) => !fromSet.has(fieldKey(entry)));
+  const removed = fromFields.filter((entry) => !toSet.has(fieldKey(entry)));
+
+  return {
+    edition: editionId,
+    from: from.version,
+    to: to.version,
+    fromTotalFields: fromFields.length,
+    toTotalFields: toFields.length,
+    addedTotal: added.length,
+    removedTotal: removed.length,
+    truncated: added.length > limit || removed.length > limit,
+    added: added.slice(0, limit),
+    removed: removed.slice(0, limit),
+  };
 }
 
 export function getResourcepackModelSummary(

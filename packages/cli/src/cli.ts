@@ -6,14 +6,20 @@ import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
   compareCommands,
+  compareDatapackSchema,
   comparePaperApi,
+  comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
+  type DatapackSchemaComparisonOptions,
+  type DatapackSchemaSearchOptions,
   getCoverageSummary,
+  getDatapackSchemaSurface,
   getDomain,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
+  getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSkillPayload,
@@ -25,10 +31,15 @@ import {
   listReferences,
   listSkills,
   listVersions,
+  type PaperMemberSearchOptions,
+  type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchCommands,
+  searchDatapackSchema,
   searchPaperEvents,
+  searchPaperMembers,
+  searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
   type VanillaPathComparisonOptions,
@@ -90,6 +101,9 @@ Usage:
   minecraft-skills show-version [version] [--edition java]
   minecraft-skills compare-versions <from> <to> [--edition java]
   minecraft-skills server-reports [version] [--edition java]
+  minecraft-skills datapack-schema [version] [--edition java]
+  minecraft-skills search-datapack-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
+  minecraft-skills compare-datapack-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
   minecraft-skills commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
   minecraft-skills compare-commands <from> <to> [--contains text] [--prefix literal] [--parser parser] [--limit 50]
   minecraft-skills resourcepack-models [version] [--edition java]
@@ -100,6 +114,10 @@ Usage:
   minecraft-skills paper-api [version]
   minecraft-skills paper-api-index [version]
   minecraft-skills compare-paper-api <from> <to>
+  minecraft-skills paper-api-surface [version]
+  minecraft-skills paper-types [version] [--package package.name] [--contains text] [--limit 50]
+  minecraft-skills paper-members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
+  minecraft-skills compare-paper-api-surface <from> <to>
   minecraft-skills paper-events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills references [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain <datapack|resourcepack|paper-plugin>
@@ -120,6 +138,12 @@ Commands:
                  Compare bundled version metadata and vanilla inventory summaries.
   server-reports
                  Print compact official server reports summary for a bundled version.
+  datapack-schema
+                 Print observed vanilla datapack JSON schema surface for a bundled version.
+  search-datapack-schema
+                 Search observed vanilla datapack JSON field paths.
+  compare-datapack-schema
+                 Compare observed datapack JSON field paths between bundled versions.
   commands       Search executable command syntax paths from generated server reports.
   compare-commands
                  Compare executable command syntax paths between bundled versions.
@@ -136,6 +160,12 @@ Commands:
                  Print Paper Javadocs package index for a supported version.
   compare-paper-api
                  Compare Paper Javadocs package indexes between supported versions.
+  paper-api-surface
+                 Print Paper Javadocs type and member search-index surface.
+  paper-types    Search Paper Javadocs type names.
+  paper-members  Search Paper Javadocs member labels by type/package/kind.
+  compare-paper-api-surface
+                 Compare Paper Javadocs type and member surfaces between versions.
   paper-events   Search Paper/Bukkit events through the configured spigot-event-list API.
   references     List generated skill references.
   domain         Print canonical JSON for an authoring domain.
@@ -293,6 +323,53 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (command === "server-reports") {
       const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getJavaReportsSummary(edition, requested));
+      return 0;
+    }
+
+    if (command === "datapack-schema") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      printJson(output, getDatapackSchemaSurface(edition, requested));
+      return 0;
+    }
+
+    if (command === "search-datapack-schema") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const schemaOptions: DatapackSchemaSearchOptions = {
+        edition,
+        version: requested,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--kind")) {
+        schemaOptions.kind = readOption(args, "--kind", "");
+      }
+      if (args.includes("--path")) {
+        schemaOptions.path = readOption(args, "--path", "");
+      }
+      if (args.includes("--contains")) {
+        schemaOptions.contains = readOption(args, "--contains", "");
+      }
+      printJson(output, searchDatapackSchema(schemaOptions));
+      return 0;
+    }
+
+    if (command === "compare-datapack-schema") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-datapack-schema command requires <from> and <to>");
+      }
+      const schemaOptions: DatapackSchemaComparisonOptions = {
+        edition,
+        from,
+        to,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--kind")) {
+        schemaOptions.kind = readOption(args, "--kind", "");
+      }
+      if (args.includes("--contains")) {
+        schemaOptions.contains = readOption(args, "--contains", "");
+      }
+      printJson(output, compareDatapackSchema(schemaOptions));
       return 0;
     }
 
@@ -465,6 +542,70 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("compare-paper-api command requires <from> and <to>");
       }
       printJson(output, comparePaperApi(from, to));
+      return 0;
+    }
+
+    if (command === "paper-api-surface") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      printJson(output, getPaperApiSurface(requested));
+      return 0;
+    }
+
+    if (command === "paper-types") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const searchOptions: PaperTypeSearchOptions = {
+        version: requested,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--package")) {
+        searchOptions.packageName = readOption(args, "--package", "");
+      }
+      if (args.includes("--contains")) {
+        searchOptions.contains = readOption(args, "--contains", "");
+      }
+      printJson(output, searchPaperTypes(searchOptions));
+      return 0;
+    }
+
+    if (command === "paper-members") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const searchOptions: PaperMemberSearchOptions = {
+        version: requested,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--type")) {
+        searchOptions.type = readOption(args, "--type", "");
+      }
+      if (args.includes("--package")) {
+        searchOptions.packageName = readOption(args, "--package", "");
+      }
+      if (args.includes("--contains")) {
+        searchOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--kind")) {
+        const kind = readOption(args, "--kind", "");
+        if (
+          kind !== "method" &&
+          kind !== "constructor" &&
+          kind !== "field-or-enum-constant" &&
+          kind !== "unknown"
+        ) {
+          throw new Error(
+            "paper-members --kind must be method, constructor, field-or-enum-constant, or unknown",
+          );
+        }
+        searchOptions.kind = kind;
+      }
+      printJson(output, searchPaperMembers(searchOptions));
+      return 0;
+    }
+
+    if (command === "compare-paper-api-surface") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-paper-api-surface command requires <from> and <to>");
+      }
+      printJson(output, comparePaperApiSurface(from, to));
       return 0;
     }
 

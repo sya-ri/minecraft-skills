@@ -104,6 +104,9 @@ node packages/maintainer/dist/cli.mjs ingest-paper-builds \
   --retrieved-at 2026-06-22T00:00:00+09:00
 node packages/maintainer/dist/cli.mjs ingest-paper-api-indexes \
   --retrieved-at 2026-06-22T00:00:00.000Z
+node packages/maintainer/dist/cli.mjs ingest-paper-api-surfaces \
+  --version 1.21.11 \
+  --retrieved-at 2026-06-22T00:00:00.000Z
 ```
 
 Regenerate all Java 1.13+ vanilla client asset and server data inventories:
@@ -113,6 +116,16 @@ node packages/maintainer/dist/cli.mjs ingest-vanilla-inventories \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
+Regenerate the observed datapack JSON schema surface for a Java release from an already downloaded
+server jar:
+
+```sh
+node packages/maintainer/dist/cli.mjs ingest-datapack-schema \
+  --version 26.2 \
+  --server-jar /tmp/minecraft-26.2-server.jar \
+  --retrieved-at 2026-06-22T00:00:00.000Z
+```
+
 Regenerate all Java 1.13+ resource pack model summaries:
 
 ```sh
@@ -120,8 +133,9 @@ node packages/maintainer/dist/cli.mjs ingest-resourcepack-models-all \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
-After changing generated reports, inventories, resource pack model summaries, Paper build data, or
-Paper API indexes, materialize derived coverage facts into the checked-in version detail JSON:
+After changing generated reports, inventories, resource pack model summaries, Paper build data,
+Paper API indexes, Paper API surfaces, or datapack schema surfaces, materialize derived coverage
+facts into the checked-in version detail JSON:
 
 ```sh
 node packages/maintainer/dist/cli.mjs materialize-version-details

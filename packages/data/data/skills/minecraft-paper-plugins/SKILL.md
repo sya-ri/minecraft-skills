@@ -20,21 +20,27 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
    versioned Paper API dependency, Javadocs URL, and Folia/scheduler docs.
 5. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
    versioned Paper Javadocs package additions/removals before discussing server API changes.
-6. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
-7. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
+6. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
+   Javadocs type/member names. Treat labels as API surface facts, not method behavior prose.
+7. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
+8. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text.
-8. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+9. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 
 ## Optional Tools
 
 - CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
   `minecraft-skills paper-api <version>`, `minecraft-skills paper-api-index <version>`,
+  `minecraft-skills paper-api-surface <version>`,
+  `minecraft-skills paper-types <version>`,
+  `minecraft-skills paper-members <version>`,
   `minecraft-skills compare-paper-api <from> <to>`,
+  `minecraft-skills compare-paper-api-surface <from> <to>`,
   `minecraft-skills paper-events <query>`, `minecraft-skills compare-versions <from> <to>`
 - MCP: `@minecraft-skills/mcp` exposes domain, reference, version comparison, and Paper plugin data
-  tools, Paper API reference/index lookup, Paper API package comparison, plus live Paper/Bukkit event
-  search when network access is available
+  tools, Paper API reference/index/surface lookup, Paper API package and type/member comparison,
+  Paper type/member search, plus live Paper/Bukkit event search when network access is available
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

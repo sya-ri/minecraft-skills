@@ -18,6 +18,9 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_server_reports");
     expect(tools.map((tool) => tool.name)).toContain("search_commands");
     expect(tools.map((tool) => tool.name)).toContain("compare_commands");
+    expect(tools.map((tool) => tool.name)).toContain("get_datapack_schema_surface");
+    expect(tools.map((tool) => tool.name)).toContain("search_datapack_schema");
+    expect(tools.map((tool) => tool.name)).toContain("compare_datapack_schema");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
@@ -26,6 +29,10 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_reference");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_index");
     expect(tools.map((tool) => tool.name)).toContain("compare_paper_api");
+    expect(tools.map((tool) => tool.name)).toContain("get_paper_api_surface");
+    expect(tools.map((tool) => tool.name)).toContain("search_paper_types");
+    expect(tools.map((tool) => tool.name)).toContain("search_paper_members");
+    expect(tools.map((tool) => tool.name)).toContain("compare_paper_api_surface");
     expect(tools.map((tool) => tool.name)).toContain("search_paper_events");
   });
 
@@ -49,11 +56,15 @@ describe("MCP tools", () => {
         "get_skill",
         "get_source_policy",
         "get_server_reports",
+        "get_datapack_schema_surface",
+        "search_datapack_schema",
         "search_commands",
         "get_resourcepack_model_summary",
         "search_resourcepack_models",
         "get_paper_plugin_data",
         "get_paper_api_reference",
+        "search_paper_types",
+        "search_paper_members",
         "search_paper_events",
       ]),
     );
@@ -123,6 +134,35 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain("io.papermc.paper.datacomponent");
   });
 
+  it("calls Paper API surface tools", async () => {
+    const surface = await callMinecraftSkillsTool("get_paper_api_surface", {
+      version: "1.21.11",
+    });
+    expect(surface.content[0]?.text).toContain('"coverage": "javadocs-search-index"');
+
+    const types = await callMinecraftSkillsTool("search_paper_types", {
+      version: "1.21.11",
+      contains: "org.bukkit.entity.Player",
+      limit: 5,
+    });
+    expect(types.content[0]?.text).toContain("org.bukkit.entity.Player");
+
+    const members = await callMinecraftSkillsTool("search_paper_members", {
+      version: "1.21.11",
+      type: "org.bukkit.entity.Player",
+      contains: "sendMessage",
+      kind: "method",
+      limit: 5,
+    });
+    expect(members.content[0]?.text).toContain("sendMessage");
+
+    const comparison = await callMinecraftSkillsTool("compare_paper_api_surface", {
+      from: "1.21.11",
+      to: "1.21.11",
+    });
+    expect(comparison.content[0]?.text).toContain('"addedTypes": []');
+  });
+
   it("calls list_pack_formats", async () => {
     const result = await callMinecraftSkillsTool("list_pack_formats", {});
     expect(result.content[0]?.text).toContain('"version": "26.2"');
@@ -133,6 +173,27 @@ describe("MCP tools", () => {
     const result = await callMinecraftSkillsTool("get_vanilla_inventory", {});
     expect(result.content[0]?.text).toContain('"version": "26.2"');
     expect(result.content[0]?.text).toContain('"assets/minecraft/models"');
+  });
+
+  it("calls observed datapack schema tools", async () => {
+    const surface = await callMinecraftSkillsTool("get_datapack_schema_surface", {
+      version: "26.2",
+    });
+    expect(surface.content[0]?.text).toContain("vanilla-observed-datapack-json-shape");
+
+    const search = await callMinecraftSkillsTool("search_datapack_schema", {
+      version: "26.2",
+      kind: "advancement",
+      contains: "criteria",
+      limit: 5,
+    });
+    expect(search.content[0]?.text).toContain('"path": "$.criteria"');
+
+    const comparison = await callMinecraftSkillsTool("compare_datapack_schema", {
+      from: "26.2",
+      to: "26.2",
+    });
+    expect(comparison.content[0]?.text).toContain('"addedTotal": 0');
   });
 
   it("calls search_vanilla_paths", async () => {

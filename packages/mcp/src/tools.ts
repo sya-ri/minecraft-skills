@@ -2,13 +2,19 @@ import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
   compareCommands,
+  compareDatapackSchema,
   comparePaperApi,
+  comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
+  type DatapackSchemaComparisonOptions,
+  type DatapackSchemaSearchOptions,
   getCoverageSummary,
+  getDatapackSchemaSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
+  getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSkillPayload,
@@ -20,10 +26,15 @@ import {
   listReferences,
   listSkills,
   listVersions,
+  type PaperMemberSearchOptions,
+  type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchCommands,
+  searchDatapackSchema,
   searchPaperEvents,
+  searchPaperMembers,
+  searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
   type VanillaPathComparisonOptions,
@@ -166,6 +177,54 @@ export const tools: ToolDefinition[] = [
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_datapack_schema_surface",
+    description:
+      "Get observed vanilla datapack JSON field shapes extracted from official server jar data for a bundled Java version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_datapack_schema",
+    description:
+      "Search observed vanilla datapack JSON field paths by kind, exact path, or text. This is observed vanilla data, not a normative schema.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        kind: { type: "string" },
+        path: { type: "string" },
+        contains: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_datapack_schema",
+    description:
+      "Compare observed vanilla datapack JSON field paths between bundled Java versions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        from: { type: "string" },
+        to: { type: "string" },
+        kind: { type: "string" },
+        contains: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      required: ["from", "to"],
       additionalProperties: false,
     },
   },
@@ -345,6 +404,65 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_paper_api_surface",
+    description:
+      "Get Paper Javadocs type and member search-index surface for a supported Minecraft version without copying Javadocs prose.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_paper_types",
+    description: "Search Paper Javadocs type names by package or text for a supported version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", default: "latest" },
+        packageName: { type: "string" },
+        contains: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_paper_members",
+    description:
+      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", default: "latest" },
+        type: { type: "string" },
+        packageName: { type: "string" },
+        kind: {
+          type: "string",
+          enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
+        },
+        contains: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_paper_api_surface",
+    description: "Compare Paper Javadocs type and member search-index surfaces between versions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        from: { type: "string" },
+        to: { type: "string" },
+      },
+      required: ["from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_paper_events",
     description: "Search Paper/Bukkit events through the configured sya-ri/spigot-event-list API.",
     inputSchema: {
@@ -432,6 +550,49 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_server_reports") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getJavaReportsSummary(edition, version));
+    }
+    if (name === "get_datapack_schema_surface") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getDatapackSchemaSurface(edition, version));
+    }
+    if (name === "search_datapack_schema") {
+      const schemaOptions: DatapackSchemaSearchOptions = {
+        edition,
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      if (typeof args.kind === "string") {
+        schemaOptions.kind = args.kind;
+      }
+      if (typeof args.path === "string") {
+        schemaOptions.path = args.path;
+      }
+      if (typeof args.contains === "string") {
+        schemaOptions.contains = args.contains;
+      }
+      if (typeof args.limit === "number") {
+        schemaOptions.limit = args.limit;
+      }
+      return text(searchDatapackSchema(schemaOptions));
+    }
+    if (name === "compare_datapack_schema") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_datapack_schema requires string from and to");
+      }
+      const schemaOptions: DatapackSchemaComparisonOptions = {
+        edition,
+        from: args.from,
+        to: args.to,
+      };
+      if (typeof args.kind === "string") {
+        schemaOptions.kind = args.kind;
+      }
+      if (typeof args.contains === "string") {
+        schemaOptions.contains = args.contains;
+      }
+      if (typeof args.limit === "number") {
+        schemaOptions.limit = args.limit;
+      }
+      return text(compareDatapackSchema(schemaOptions));
     }
     if (name === "search_commands") {
       const commandOptions: CommandSearchOptions = {
@@ -568,6 +729,57 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("compare_paper_api requires string from and to");
       }
       return text(comparePaperApi(args.from, args.to));
+    }
+    if (name === "get_paper_api_surface") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getPaperApiSurface(version));
+    }
+    if (name === "search_paper_types") {
+      const searchOptions: PaperTypeSearchOptions = {
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      if (typeof args.packageName === "string") {
+        searchOptions.packageName = args.packageName;
+      }
+      if (typeof args.contains === "string") {
+        searchOptions.contains = args.contains;
+      }
+      if (typeof args.limit === "number") {
+        searchOptions.limit = args.limit;
+      }
+      return text(searchPaperTypes(searchOptions));
+    }
+    if (name === "search_paper_members") {
+      const searchOptions: PaperMemberSearchOptions = {
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      if (typeof args.type === "string") {
+        searchOptions.type = args.type;
+      }
+      if (typeof args.packageName === "string") {
+        searchOptions.packageName = args.packageName;
+      }
+      if (
+        args.kind === "constructor" ||
+        args.kind === "method" ||
+        args.kind === "field-or-enum-constant" ||
+        args.kind === "unknown"
+      ) {
+        searchOptions.kind = args.kind;
+      }
+      if (typeof args.contains === "string") {
+        searchOptions.contains = args.contains;
+      }
+      if (typeof args.limit === "number") {
+        searchOptions.limit = args.limit;
+      }
+      return text(searchPaperMembers(searchOptions));
+    }
+    if (name === "compare_paper_api_surface") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_paper_api_surface requires string from and to");
+      }
+      return text(comparePaperApiSurface(args.from, args.to));
     }
     if (name === "search_paper_events") {
       if (typeof args.query !== "string") {

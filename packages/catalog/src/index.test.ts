@@ -2,14 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   buildPaperEventSearchUrl,
   compareCommands,
+  compareDatapackSchema,
   comparePaperApi,
+  comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
   getCoverageSummary,
+  getDatapackSchemaSurface,
   getDomain,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
+  getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSkillPayload,
@@ -21,6 +25,9 @@ import {
   listSkills,
   resolveVersion,
   searchCommands,
+  searchDatapackSchema,
+  searchPaperMembers,
+  searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
 } from "./index.js";
@@ -82,15 +89,18 @@ describe("catalog", () => {
       missing: 0,
     });
     expect(summary.java.datapack.serverReports).toBe(50);
+    expect(summary.java.datapack.observedSchemaSurfaces).toBe(1);
     expect(summary.java.resourcepack.modelSummaries).toBe(50);
     expect(summary.java.paperPlugin).toMatchObject({
       supportedVersions: 43,
       latestSupportedVersion: "1.21.11",
       latestBuild: 69,
       apiPackageIndexes: 43,
+      apiSurfaces: 1,
       versionsWithoutUnknowns: 43,
       missingApiPackageIndexes: [],
     });
+    expect(summary.java.paperPlugin.missingApiSurfaces).toHaveLength(42);
     expect(summary.skills).toEqual({
       total: 3,
       packagedPayloads: 3,
@@ -199,6 +209,43 @@ describe("catalog", () => {
     expect(comparison.added.map((entry) => entry.name)).toContain("io.papermc.paper.datacomponent");
   });
 
+  it("loads and searches Paper API type/member surfaces", () => {
+    const surface = getPaperApiSurface("1.21.11");
+    expect(surface.coverage).toBe("javadocs-search-index");
+    expect(surface.typeCount).toBeGreaterThan(1_000);
+    expect(surface.memberCount).toBeGreaterThan(20_000);
+    expect(
+      searchPaperTypes({
+        version: "1.21.11",
+        contains: "org.bukkit.entity.Player",
+        limit: 10,
+      }).types,
+    ).toContainEqual(expect.objectContaining({ qualifiedName: "org.bukkit.entity.Player" }));
+    expect(
+      searchPaperMembers({
+        version: "1.21.11",
+        type: "org.bukkit.entity.Player",
+        contains: "sendMessage",
+        kind: "method",
+        limit: 10,
+      }).members,
+    ).toContainEqual(
+      expect.objectContaining({
+        qualifiedTypeName: "org.bukkit.entity.Player",
+        name: "sendMessage",
+        kind: "method",
+      }),
+    );
+  });
+
+  it("compares Paper API surfaces", () => {
+    const comparison = comparePaperApiSurface("1.21.11", "1.21.11");
+    expect(comparison.typeCount.changed).toBe(false);
+    expect(comparison.memberCount.changed).toBe(false);
+    expect(comparison.addedTypes).toEqual([]);
+    expect(comparison.removedMembers).toEqual([]);
+  });
+
   it("builds Paper API references for unsupported future versions", () => {
     const reference = getPaperApiReference("26.2");
     expect(reference.supported).toBe(false);
@@ -221,6 +268,7 @@ describe("catalog", () => {
       "paper_javadocs=https://jd.papermc.io/paper/1.21.11/",
     );
     expect(version.domains["paper-plugin"].facts).toContain("paper_api_package_index=1.21.11");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_api_surface=1.21.11");
     expect(version.domains["paper-plugin"].facts).toContain(
       "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
     );
@@ -269,12 +317,34 @@ describe("catalog", () => {
     expect(inventory.datapack.topLevel.map((entry) => entry.path)).toContain("data/minecraft/tags");
   });
 
+  it("loads and searches observed datapack schema surfaces", () => {
+    const surface = getDatapackSchemaSurface("java", "26.2");
+    expect(surface.coverage).toBe("vanilla-observed-datapack-json-shape");
+    expect(surface.kindCount).toBeGreaterThan(20);
+    expect(surface.kinds.map((kind) => kind.kind)).toContain("advancement");
+    const search = searchDatapackSchema({
+      version: "26.2",
+      kind: "advancement",
+      contains: "criteria",
+      limit: 10,
+    });
+    expect(search.fields).toContainEqual(expect.objectContaining({ path: "$.criteria" }));
+  });
+
+  it("compares observed datapack schema surfaces", () => {
+    const comparison = compareDatapackSchema({ from: "26.2", to: "26.2" });
+    expect(comparison.addedTotal).toBe(0);
+    expect(comparison.removedTotal).toBe(0);
+    expect(comparison.added).toEqual([]);
+  });
+
   it("annotates version details when vanilla inventory is bundled", () => {
     const version = getVersionDetail("java", "26.2");
     expect(version.domains.datapack.status).toBe("reports-extracted");
     expect(version.domains.resourcepack.status).toBe("models-extracted");
     expect(version.domains.datapack.facts).toContain("vanilla_data_inventory=26.2");
     expect(version.domains.datapack.facts).toContain("server_reports=26.2");
+    expect(version.domains.datapack.facts).toContain("datapack_schema_surface=26.2");
     expect(version.domains.resourcepack.facts).toContain("vanilla_asset_inventory=26.2");
     expect(version.domains.resourcepack.facts).toContain("resourcepack_models=26.2");
     expect(version.domains.datapack.unknowns).toEqual([]);

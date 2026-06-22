@@ -188,6 +188,36 @@ export const PaperApiIndex = type({
   sources: Source.array(),
 });
 
+export const PaperApiType = type({
+  packageName: "string",
+  name: "string",
+  qualifiedName: "string",
+  url: "string",
+});
+
+export const PaperApiMember = type({
+  packageName: "string",
+  typeName: "string",
+  qualifiedTypeName: "string",
+  name: "string",
+  label: "string",
+  kind: "'constructor' | 'method' | 'field-or-enum-constant' | 'unknown'",
+  url: "string",
+});
+
+export const PaperApiSurface = type({
+  schemaVersion: "1",
+  projectId: "'paper'",
+  minecraftVersion: "string",
+  coverage: "'javadocs-search-index'",
+  javadocsUrl: "string",
+  typeCount: "number",
+  memberCount: "number",
+  types: PaperApiType.array(),
+  members: PaperApiMember.array(),
+  sources: Source.array(),
+});
+
 export const InventoryTopLevel = type({
   path: "string",
   count: "number",
@@ -208,6 +238,37 @@ export const VanillaInventory = type({
   coverage: "string",
   resources: InventorySection,
   datapack: InventorySection,
+  sources: Source.array(),
+});
+
+export const ObservedValueKindCount = type({
+  kind: "'array' | 'boolean' | 'null' | 'number' | 'object' | 'string'",
+  count: "number",
+});
+
+export const ObservedDatapackField = type({
+  path: "string",
+  count: "number",
+  valueKinds: ObservedValueKindCount.array(),
+  samples: "string[]",
+});
+
+export const ObservedDatapackKind = type({
+  kind: "string",
+  fileCount: "number",
+  topLevelKeys: ObservedDatapackField.array(),
+  fieldPaths: ObservedDatapackField.array(),
+});
+
+export const ObservedDatapackSchemaSurface = type({
+  schemaVersion: "1",
+  edition: "'java'",
+  version: "string",
+  coverage: "'vanilla-observed-datapack-json-shape'",
+  notes: "string[]",
+  kindCount: "number",
+  fileCount: "number",
+  kinds: ObservedDatapackKind.array(),
   sources: Source.array(),
 });
 
@@ -301,7 +362,11 @@ export type VersionDetailData = typeof VersionDetail.infer;
 export type DomainCoverageData = typeof DomainCoverage.infer;
 export type PaperPluginDataData = typeof PaperPluginData.infer;
 export type PaperApiIndexData = typeof PaperApiIndex.infer;
+export type PaperApiTypeData = typeof PaperApiType.infer;
+export type PaperApiMemberData = typeof PaperApiMember.infer;
+export type PaperApiSurfaceData = typeof PaperApiSurface.infer;
 export type VanillaInventoryData = typeof VanillaInventory.infer;
+export type ObservedDatapackSchemaSurfaceData = typeof ObservedDatapackSchemaSurface.infer;
 export type ResourcepackModelSummaryData = typeof ResourcepackModelSummary.infer;
 export type JavaReportsSummaryData = typeof JavaReportsSummary.infer;
 export type DomainIdData = typeof DomainId.infer;

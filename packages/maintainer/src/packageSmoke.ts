@@ -117,9 +117,11 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getCoverageSummary } from "@minecraft-skills/catalog";',
+            'import { getCoverageSummary, getDatapackSchemaSurface, getPaperApiSurface } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
-            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.paperPlugin.apiPackageIndexes !== 43 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
+            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.datapack.observedSchemaSurfaces !== 1 || coverage.java.paperPlugin.apiPackageIndexes !== 43 || coverage.java.paperPlugin.apiSurfaces !== 1 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
+            'if (getDatapackSchemaSurface("java", "26.2").coverage !== "vanilla-observed-datapack-json-shape") throw new Error("missing datapack schema surface");',
+            'if (getPaperApiSurface("1.21.11").coverage !== "javadocs-search-index") throw new Error("missing Paper API surface");',
           ].join(" "),
         ],
         consumerDir,

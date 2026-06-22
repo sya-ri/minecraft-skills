@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   getCatalog,
+  getDatapackSchemaSurface,
+  getPaperApiSurface,
   getPaperPluginData,
   getVersionDetail,
   listDomains,
@@ -11,6 +13,10 @@ import {
   listVersions,
 } from "@minecraft-skills/catalog";
 import { auditCurrentSources } from "./currentSources.js";
+import {
+  buildObservedDatapackSchemaSurface,
+  writeObservedDatapackSchemaSurface,
+} from "./datapackSchemaSurfaces.js";
 import { buildJavaVersionIndex } from "./javaManifest.js";
 import {
   buildJavaReportsSummary,
@@ -21,6 +27,7 @@ import { buildJavaVersionDetail } from "./javaVersionDetail.js";
 import { ingestJavaVersionDetails } from "./javaVersionDetails.js";
 import { runPackageSmoke } from "./packageSmoke.js";
 import { ingestPaperApiIndexes } from "./paperApiIndexes.js";
+import { ingestPaperApiSurfaces } from "./paperApiSurfaces.js";
 import { ingestPaperBuilds } from "./paperBuilds.js";
 import { buildPaperPluginData } from "./paperProject.js";
 import { ingestResourcepackModelSummaries } from "./resourcepackModelSummaries.js";
@@ -256,6 +263,17 @@ export function validateRepository(): ValidationResult {
     }
   }
 
+  requireDataFile(root, `java/datapack-schema-surfaces/${catalog.latest.java}.json`, messages);
+  try {
+    getDatapackSchemaSurface("java", catalog.latest.java);
+  } catch (error) {
+    messages.push(
+      `latest Java datapack schema surface must validate: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
   for (const paperVersion of paper.versions) {
     const prefix = `paper ${paperVersion}`;
     const detail = getVersionDetail("java", paperVersion);
@@ -283,6 +301,17 @@ export function validateRepository(): ValidationResult {
     }
   }
 
+  requireDataFile(root, `java/paper-api-surfaces/${paper.latest.minecraftVersion}.json`, messages);
+  try {
+    getPaperApiSurface(paper.latest.minecraftVersion);
+  } catch (error) {
+    messages.push(
+      `latest Paper API surface must validate: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+
   return {
     ok: messages.length === 0,
     messages,
@@ -304,9 +333,11 @@ Usage:
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-builds [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-api-indexes [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-paper-api-surfaces [--version <paper-version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer materialize-version-details
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-datapack-schema --version <version> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-resourcepack-models --version <version> --client-jar <client.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-resourcepack-models-all [--force] [--retrieved-at <iso>]
 
@@ -327,12 +358,16 @@ Commands:
   ingest-paper-builds  Download latest build summaries for all bundled Paper-supported versions.
   ingest-paper-api-indexes
                         Download Paper Javadocs package indexes for supported versions.
+  ingest-paper-api-surfaces
+                        Download Paper Javadocs type/member search indexes.
   materialize-version-details
                         Write derived domain coverage facts into checked-in version detail JSON.
   ingest-vanilla-inventory
                         Generate compact inventory for vanilla client assets and server data.
   ingest-vanilla-inventories
                         Download and generate missing vanilla inventories for all indexed Java releases.
+  ingest-datapack-schema
+                        Generate observed vanilla datapack JSON field-shape surface from a server jar.
   ingest-resourcepack-models
                         Generate compact resource pack model summary from a client jar.
   ingest-resourcepack-models-all
@@ -497,6 +532,19 @@ async function ingestAllPaperApiIndexes(args: string[]): Promise<void> {
   console.log(`wrote ${written} Paper API package index files`);
 }
 
+async function ingestAllPaperApiSurfaces(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const onlyVersion = readOption(args, "--version");
+  const written = await ingestPaperApiSurfaces({
+    root,
+    retrievedAt,
+    ...(onlyVersion ? { onlyVersion } : {}),
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} Paper API surface files`);
+}
+
 function readDownloadUrl(downloads: Record<string, unknown>, key: string): string {
   const download = downloads[key];
   if (download && typeof download === "object" && "url" in download) {
@@ -546,6 +594,28 @@ function ingestVanillaInventory(args: string[]): void {
   writeFileSync(output, `${JSON.stringify(inventory, null, 2)}\n`);
   writeVanillaPathIndex(root, detail.version, paths);
   console.log(`wrote Java ${detail.version} vanilla inventory to ${output}`);
+}
+
+function ingestDatapackSchema(args: string[]): void {
+  const version = readOption(args, "--version");
+  if (!version) {
+    throw new Error("ingest-datapack-schema requires --version <version>");
+  }
+  const serverJarPath = readOption(args, "--server-jar");
+  if (!serverJarPath) {
+    throw new Error("ingest-datapack-schema requires --server-jar <server.jar>");
+  }
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const root = findRepositoryRoot();
+  const detail = getVersionDetail("java", version);
+  const surface = buildObservedDatapackSchemaSurface({
+    version: detail.version,
+    serverJarPath,
+    serverJarUrl: readDownloadUrl(detail.downloads, "server"),
+    retrievedAt,
+  });
+  const output = writeObservedDatapackSchemaSurface({ root, surface });
+  console.log(`wrote Java ${detail.version} observed datapack schema surface to ${output}`);
 }
 
 async function ingestAllVanillaInventories(args: string[]): Promise<void> {
@@ -660,6 +730,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
       return 0;
     }
 
+    if (command === "ingest-paper-api-surfaces") {
+      await ingestAllPaperApiSurfaces(argv.slice(1));
+      return 0;
+    }
+
     if (command === "materialize-version-details") {
       const root = findRepositoryRoot();
       const written = materializeVersionDetails(root);
@@ -674,6 +749,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-vanilla-inventories") {
       await ingestAllVanillaInventories(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-datapack-schema") {
+      ingestDatapackSchema(argv.slice(1));
       return 0;
     }
 
