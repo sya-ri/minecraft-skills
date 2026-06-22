@@ -11,6 +11,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getClaimPolicy,
   getCoverageSummary,
   getDatapackSchemaSurface,
   getDomain,
@@ -30,6 +31,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listClaimPolicies,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -131,6 +133,23 @@ describe("catalog", () => {
     expect(() => getAuthoringGuardrail("missing")).toThrow("Unknown authoring guardrail: missing");
   });
 
+  it("lists claim policies for evidence-bounded wording", () => {
+    const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
+    expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
+    expect(paperPolicies.map((policy) => policy.id)).toContain("folia-or-thread-safety");
+
+    const commandPolicy = getClaimPolicy("command-syntax-exists");
+    expect(commandPolicy.domains).toEqual(["datapack"]);
+    expect(commandPolicy.allowedWording).toContain(
+      "The checked command path proves parser shape, not gameplay behavior.",
+    );
+    expect(commandPolicy.disallowedWording).toContain(
+      "The command will succeed at runtime because the parser path exists.",
+    );
+
+    expect(() => getClaimPolicy("missing")).toThrow("Unknown claim policy: missing");
+  });
+
   it("builds authoring preflight payloads with coverage warnings", () => {
     const datapack = getAuthoringPreflight({ domain: "datapack", version: "26.2" });
     expect(datapack).toMatchObject({
@@ -165,6 +184,9 @@ describe("catalog", () => {
     expect(context.preflight.checklist.domain).toBe("paper-plugin");
     expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
+    );
+    expect(context.claimPolicies.map((policy) => policy.id)).toContain(
+      "paper-type-or-member-exists",
     );
     expect(context.intentLookups.map((intent) => intent.id)).toContain(
       "verify-paper-type-or-member",

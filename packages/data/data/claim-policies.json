@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills fact surfaces, authoring guardrails, and intent lookup routing",
+  "policies": [
+    {
+      "id": "version-specific-fact",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "claim": "A Minecraft fact applies to a specific target version.",
+      "requiredEvidence": [
+        "resolved target version from authoring preflight, authoring context, or version detail",
+        "version support entry or evidence bundle for the target domain/version"
+      ],
+      "allowedWording": [
+        "For the checked target version, the bundled data shows ...",
+        "For this target version, minecraft-skills resolves ...",
+        "The available data does not verify this for the requested version."
+      ],
+      "disallowedWording": [
+        "This is true for all recent versions.",
+        "Latest Minecraft and latest Paper are the same target.",
+        "Assume the same value from a neighboring version."
+      ],
+      "tools": {
+        "cli": ["authoring-context", "version-support", "show-version", "evidence"],
+        "mcp": [
+          "get_authoring_context",
+          "list_version_support",
+          "get_version",
+          "get_evidence_bundle"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "listVersionSupport",
+          "getVersionDetail",
+          "getEvidenceBundle"
+        ]
+      },
+      "failureMode": "The answer can silently apply facts from the wrong Minecraft or Paper version."
+    },
+    {
+      "id": "pack-format-value",
+      "domains": ["datapack", "resourcepack"],
+      "claim": "A pack.mcmeta pack_format or supported_formats value is correct for a version.",
+      "requiredEvidence": [
+        "version detail packFormats.data or packFormats.resource for the exact version",
+        "version support entry for the requested pack domain"
+      ],
+      "allowedWording": [
+        "The checked version detail lists pack_format ...",
+        "For this version, use the data/resource pack format shown by version detail.",
+        "The bundled data does not contain a pack format value for this target."
+      ],
+      "disallowedWording": [
+        "This pack_format should work because it worked in the previous release.",
+        "Use the latest pack_format for any 1.21.x release.",
+        "The data pack and resource pack pack_format values are interchangeable."
+      ],
+      "tools": {
+        "cli": ["show-version", "pack-formats", "version-support"],
+        "mcp": ["get_version", "list_pack_formats", "list_version_support"],
+        "packageApis": ["getVersionDetail", "listPackFormats", "listVersionSupport"]
+      },
+      "failureMode": "Generated packs can use pack_format values from the wrong version or domain."
+    },
+    {
+      "id": "command-syntax-exists",
+      "domains": ["datapack"],
+      "claim": "A command syntax path exists in a target Java version.",
+      "requiredEvidence": [
+        "command path search result or server reports summary for the target version",
+        "command-paths fact surface non-guarantees were considered"
+      ],
+      "allowedWording": [
+        "The server-report command path surface contains this parser path.",
+        "The checked command path proves parser shape, not gameplay behavior.",
+        "The command path surface did not verify that command form."
+      ],
+      "disallowedWording": [
+        "This command is guaranteed to behave this way in game.",
+        "This command is permitted in every execution context.",
+        "The command will succeed at runtime because the parser path exists."
+      ],
+      "tools": {
+        "cli": ["commands", "compare-commands", "server-reports", "fact-surface"],
+        "mcp": ["search_commands", "compare_commands", "get_server_reports", "get_fact_surface"],
+        "packageApis": [
+          "searchCommands",
+          "compareCommands",
+          "getJavaReportsSummary",
+          "getFactSurface"
+        ]
+      },
+      "failureMode": "A parser-shape fact can be overstated as command behavior, permission, or runtime success."
+    },
+    {
+      "id": "datapack-json-field-shape",
+      "domains": ["datapack"],
+      "claim": "A datapack JSON field or top-level key appears in vanilla data.",
+      "requiredEvidence": [
+        "observed datapack schema surface for the target version",
+        "matching observed field path or top-level key for the relevant datapack kind"
+      ],
+      "allowedWording": [
+        "Observed vanilla files for this version include this field path.",
+        "This is observed vanilla shape, not a normative schema.",
+        "The observed surface does not prove whether the field is required or optional."
+      ],
+      "disallowedWording": [
+        "This field is required because it appears in vanilla files.",
+        "This is the full schema.",
+        "This proves third-party extensions are valid."
+      ],
+      "tools": {
+        "cli": ["datapack-schema", "search-datapack-schema", "fetch-data", "data-manifest"],
+        "mcp": [
+          "get_datapack_schema_surface",
+          "search_datapack_schema",
+          "fetch_data",
+          "get_data_manifest"
+        ],
+        "packageApis": [
+          "getDatapackSchemaSurface",
+          "searchDatapackSchema",
+          "fetchData",
+          "getDataManifest"
+        ]
+      },
+      "failureMode": "Observed vanilla JSON can be mistaken for a complete normative schema."
+    },
+    {
+      "id": "vanilla-path-exists",
+      "domains": ["datapack", "resourcepack"],
+      "claim": "A vanilla data or asset path exists in the target version.",
+      "requiredEvidence": [
+        "vanilla path search result for the target domain/version",
+        "vanilla inventory provenance for the target version"
+      ],
+      "allowedWording": [
+        "The bundled vanilla path inventory contains this path.",
+        "The path search did not find that vanilla path for the target version.",
+        "A path match proves file path presence only."
+      ],
+      "disallowedWording": [
+        "The file content is valid because the path exists.",
+        "The asset will render this way because the path exists.",
+        "A missing path can be invented from naming convention."
+      ],
+      "tools": {
+        "cli": ["vanilla-paths", "compare-vanilla-paths", "vanilla-inventory"],
+        "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
+        "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
+      },
+      "failureMode": "Generated packs can reference nonexistent vanilla paths or overstate what path presence proves."
+    },
+    {
+      "id": "resourcepack-model-field-shape",
+      "domains": ["resourcepack"],
+      "claim": "A resource pack model or item definition field appears in vanilla client data.",
+      "requiredEvidence": [
+        "resourcepack model summary for the target version",
+        "matching model or item definition path search result"
+      ],
+      "allowedWording": [
+        "Observed client files include this model or item definition field path.",
+        "This summary proves observed vanilla usage, not every accepted key.",
+        "The surface does not prove rendering semantics."
+      ],
+      "disallowedWording": [
+        "This is the complete resource pack model schema.",
+        "This key is required because vanilla uses it.",
+        "This proves how the model renders in every context."
+      ],
+      "tools": {
+        "cli": ["resourcepack-models", "search-models"],
+        "mcp": ["get_resourcepack_model_summary", "search_resourcepack_models"],
+        "packageApis": ["getResourcepackModelSummary", "searchResourcepackModelPaths"]
+      },
+      "failureMode": "Observed model data can be overstated as complete schema or rendering behavior."
+    },
+    {
+      "id": "paper-version-support",
+      "domains": ["paper-plugin"],
+      "claim": "Paper supports a target Minecraft version and dependency coordinates can be emitted.",
+      "requiredEvidence": [
+        "Paper project support metadata for the requested Minecraft version",
+        "Paper API reference with dependency coordinates for supported versions"
+      ],
+      "allowedWording": [
+        "Paper data marks this Minecraft version supported and provides API coordinates.",
+        "Paper is not marked supported for this Minecraft version in bundled data.",
+        "Latest bundled Java and latest supported Paper differ."
+      ],
+      "disallowedWording": [
+        "Use Paper coordinates for an unsupported future Minecraft version.",
+        "Paper always supports the latest Java release immediately.",
+        "A Mojang version alone proves Paper support."
+      ],
+      "tools": {
+        "cli": ["paper", "paper-api", "version-support", "preflight"],
+        "mcp": [
+          "get_paper_plugin_data",
+          "get_paper_api_reference",
+          "list_version_support",
+          "get_authoring_preflight"
+        ],
+        "packageApis": [
+          "getPaperPluginData",
+          "getPaperApiReference",
+          "listVersionSupport",
+          "getAuthoringPreflight"
+        ]
+      },
+      "failureMode": "Generated plugins can target unsupported Paper versions or emit invalid dependencies."
+    },
+    {
+      "id": "paper-type-or-member-exists",
+      "domains": ["paper-plugin"],
+      "claim": "A Paper, Bukkit, or Adventure type/member exists in the target Paper API surface.",
+      "requiredEvidence": [
+        "Paper Javadocs package index or type search result for the target version",
+        "Paper Javadocs member search result when naming methods, constructors, fields, or enum constants"
+      ],
+      "allowedWording": [
+        "The Javadocs search index contains this type or member label.",
+        "This proves name presence in Javadocs, not runtime behavior.",
+        "The API surface did not verify that type or member."
+      ],
+      "disallowedWording": [
+        "This method behaves this way because the name appears in Javadocs.",
+        "This member is thread-safe because it appears in the API surface.",
+        "Invent a method name when no member search result exists."
+      ],
+      "tools": {
+        "cli": ["paper-api-index", "paper-api-surface", "paper-types", "paper-members"],
+        "mcp": [
+          "get_paper_api_index",
+          "get_paper_api_surface",
+          "search_paper_types",
+          "search_paper_members"
+        ],
+        "packageApis": [
+          "getPaperApiIndex",
+          "getPaperApiSurface",
+          "searchPaperTypes",
+          "searchPaperMembers"
+        ]
+      },
+      "failureMode": "Generated plugin code can reference nonexistent API names or overstate name presence as behavior."
+    },
+    {
+      "id": "paper-event-candidate",
+      "domains": ["paper-plugin"],
+      "claim": "A Paper or Bukkit event is a candidate for a described plugin behavior.",
+      "requiredEvidence": [
+        "event search result from the configured event API",
+        "Paper Javadocs type/member confirmation for the candidate event class"
+      ],
+      "allowedWording": [
+        "This event is a candidate from event search and should be verified against API docs.",
+        "The event class name is confirmed in the Javadocs surface.",
+        "The event search did not verify firing order or cancellation semantics."
+      ],
+      "disallowedWording": [
+        "This event definitely fires for every described situation.",
+        "This proves cancellation or priority semantics.",
+        "Generate listener code for an unverified event class name."
+      ],
+      "tools": {
+        "cli": ["paper-events", "paper-types", "paper-members", "paper-api-surface"],
+        "mcp": [
+          "search_paper_events",
+          "search_paper_types",
+          "search_paper_members",
+          "get_paper_api_surface"
+        ],
+        "packageApis": [
+          "searchPaperEvents",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getPaperApiSurface"
+        ]
+      },
+      "failureMode": "Event discovery can be mistaken for authoritative behavior or generate listeners for unverified classes."
+    },
+    {
+      "id": "folia-or-thread-safety",
+      "domains": ["paper-plugin"],
+      "claim": "Plugin code is safe for Folia, scheduler, async, world, entity, or chunk access assumptions.",
+      "requiredEvidence": [
+        "Paper API reference links to scheduler and Folia documentation",
+        "explicit statement that API surface data does not prove thread safety"
+      ],
+      "allowedWording": [
+        "This code assumes the standard Paper scheduler unless Folia support is explicitly handled.",
+        "Consult the linked Paper scheduler and Folia documentation for behavior.",
+        "The API surface does not prove thread safety or Folia compatibility."
+      ],
+      "disallowedWording": [
+        "This is Folia-safe because the method exists.",
+        "Async world/entity/chunk access is safe without documentation evidence.",
+        "Global scheduler patterns are silently acceptable for Folia-sensitive work."
+      ],
+      "tools": {
+        "cli": ["paper-api", "fact-surface", "authoring-guardrails"],
+        "mcp": ["get_paper_api_reference", "get_fact_surface", "list_authoring_guardrails"],
+        "packageApis": ["getPaperApiReference", "getFactSurface", "listAuthoringGuardrails"]
+      },
+      "failureMode": "Generated plugins can hide unsafe threading assumptions or falsely claim Folia compatibility."
+    }
+  ]
+}

@@ -16,6 +16,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_guardrails");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_guardrail");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_context");
+    expect(tools.map((tool) => tool.name)).toContain("list_claim_policies");
+    expect(tools.map((tool) => tool.name)).toContain("get_claim_policy");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
@@ -76,6 +78,8 @@ describe("MCP tools", () => {
         "list_authoring_guardrails",
         "get_authoring_guardrail",
         "get_authoring_context",
+        "list_claim_policies",
+        "get_claim_policy",
         "get_authoring_preflight",
         "get_evidence_bundle",
         "list_intent_lookups",
@@ -160,6 +164,20 @@ describe("MCP tools", () => {
     expect(single.content[0]?.text).toContain("Javadocs package, type, and member indexes");
   });
 
+  it("calls claim policy tools", async () => {
+    const list = await callMinecraftSkillsTool("list_claim_policies", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "paper-type-or-member-exists"');
+    expect(list.content[0]?.text).toContain('"id": "folia-or-thread-safety"');
+
+    const single = await callMinecraftSkillsTool("get_claim_policy", {
+      id: "command-syntax-exists",
+    });
+    expect(single.content[0]?.text).toContain("parser shape, not gameplay behavior");
+    expect(single.content[0]?.text).toContain("will succeed at runtime");
+  });
+
   it("calls authoring preflight tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_preflight", {
       domain: "paper-plugin",
@@ -176,6 +194,7 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
     expect(result.content[0]?.text).toContain('"guardrails"');
+    expect(result.content[0]?.text).toContain('"claimPolicies"');
     expect(result.content[0]?.text).toContain('"intentLookups"');
     expect(result.content[0]?.text).toContain('"id": "verify-paper-type-or-member"');
     expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');

@@ -66,6 +66,11 @@ describe("@minecraft-skills/data", () => {
     );
   });
 
+  it("loads bundled claim policy JSON", () => {
+    const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
+    expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
+  });
+
   it("exposes a package data root", () => {
     expect(getDataRoot()).toMatch(/packages\/data\/data$/);
   });

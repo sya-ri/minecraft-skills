@@ -1,6 +1,7 @@
 import {
   getAuthoringChecklist,
   getAuthoringGuardrail,
+  getClaimPolicy,
   getDataManifest,
   getDatapackSchemaSurface,
   getFactSurface,
@@ -9,6 +10,7 @@ import {
   getSkillPayload,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listClaimPolicies,
   listFactSurfaces,
   listIntentLookups,
   listSkills,
@@ -97,6 +99,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     guardrails: authoringGuardrails,
   };
+  const claimPolicies = listClaimPolicies();
+  const claimPolicyIndex = {
+    schemaVersion: 1,
+    policies: claimPolicies,
+  };
   const factSurfaces = listFactSurfaces();
   const factSurfaceIndex = {
     schemaVersion: 1,
@@ -141,6 +148,22 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Output guardrail for ${guardrail.title}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(guardrail, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/claim-policies.json`,
+      name: "claim-policies.json",
+      title: "Minecraft Skills claim policies",
+      description: "Required evidence and allowed wording for Minecraft authoring claim types.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(claimPolicyIndex, null, 2)),
+    },
+    ...claimPolicies.map((policy) => ({
+      uri: `${dataResourceBase}/claim-policies/${policy.id}.json`,
+      name: `claim-policies/${policy.id}.json`,
+      title: policy.claim,
+      description: `Claim policy for ${policy.claim}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(policy, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/fact-surfaces.json`,
@@ -283,6 +306,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/claim-policies.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              policies: listClaimPolicies(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   const dataPrefix = `${dataResourceBase}/`;
   if (uri.startsWith(dataPrefix)) {
     const path = uri.slice(dataPrefix.length);
@@ -308,6 +350,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getAuthoringGuardrail(id), null, 2),
+          },
+        ],
+      };
+    }
+    const claimPolicyPrefix = "claim-policies/";
+    if (path.startsWith(claimPolicyPrefix) && path.endsWith(".json")) {
+      const id = path.slice(claimPolicyPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getClaimPolicy(id), null, 2),
           },
         ],
       };

@@ -51,6 +51,8 @@ describe("MCP prompts", () => {
     expect(text).toContain("get_evidence_bundle");
     expect(text).toContain("get_authoring_checklist");
     expect(text).toContain("list_authoring_guardrails");
+    expect(text).toContain("list_claim_policies");
+    expect(text).toContain("get_claim_policy");
     expect(text).toContain("list_fact_surfaces");
     expect(text).toContain("get_data_manifest");
     expect(text).toContain("get_source_policy");
@@ -74,6 +76,7 @@ describe("MCP prompts", () => {
     expect(text).toContain("get_evidence_bundle");
     expect(text).toContain("get_authoring_checklist");
     expect(text).toContain("list_authoring_guardrails");
+    expect(text).toContain("list_claim_policies");
     expect(text).toContain("list_fact_surfaces");
     expect(text).toContain("get_datapack_schema_surface");
     expect(text).toContain("search_datapack_schema");

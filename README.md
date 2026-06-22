@@ -50,6 +50,8 @@ minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills authoring-guardrails --domain paper-plugin
 minecraft-skills authoring-guardrail paper-api-surface-limits
+minecraft-skills claim-policies --domain paper-plugin
+minecraft-skills claim-policy paper-type-or-member-exists
 minecraft-skills intent-lookups --domain paper-plugin
 minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist datapack
@@ -113,6 +115,8 @@ facts.
 routing, and evidence in one payload for the start of an authoring task.
 `minecraft-skills authoring-guardrails` lists output rules and required evidence that prevent an
 agent from overstating observed data, unsupported Paper versions, or upstream prose.
+`minecraft-skills claim-policies` maps claim types to required evidence plus allowed and disallowed
+wording, so agents can avoid turning observed facts into unsupported guarantees.
 `minecraft-skills version-support` lists per-version pack formats, domain coverage, Paper support,
 and generated surface availability for target-version selection.
 `minecraft-skills evidence <domain> [version]` returns source policy, primary sources,
@@ -180,6 +184,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getClaimPolicy,
   getEvidenceBundle,
   getFactSurface,
   compareVanillaPaths,
@@ -193,6 +198,7 @@ import {
   listSkills,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listClaimPolicies,
   listFactSurfaces,
   searchCommands,
   searchDatapackSchema,
@@ -211,6 +217,8 @@ const paperEvidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21
 const checklists = listAuthoringChecklists();
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
+const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
+const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const factSurfaces = listFactSurfaces({ domain: "datapack" });
 const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");
 const coverage = getCoverageSummary();

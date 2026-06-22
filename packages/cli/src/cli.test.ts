@@ -111,6 +111,18 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("nonexistent APIs");
   });
 
+  it("prints claim policies", async () => {
+    const list = await capture(["claim-policies", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "paper-type-or-member-exists"');
+    expect(list.stdout.join("\n")).toContain('"id": "folia-or-thread-safety"');
+
+    const single = await capture(["claim-policy", "command-syntax-exists"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain("parser shape, not gameplay behavior");
+    expect(single.stdout.join("\n")).toContain("will succeed at runtime");
+  });
+
   it("prints authoring preflight payloads", async () => {
     const datapack = await capture(["preflight", "datapack", "26.2"]);
     expect(datapack.code).toBe(0);
@@ -128,6 +140,8 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain('"guardrails"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
+    expect(result.stdout.join("\n")).toContain('"claimPolicies"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-type-or-member-exists"');
     expect(result.stdout.join("\n")).toContain('"intentLookups"');
     expect(result.stdout.join("\n")).toContain('"id": "verify-paper-type-or-member"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');

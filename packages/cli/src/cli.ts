@@ -21,6 +21,7 @@ import {
   getAuthoringPreflight,
   getCacheDataRoot,
   getCacheRoot,
+  getClaimPolicy,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -42,6 +43,7 @@ import {
   listAuthoringChecklists,
   listAuthoringGuardrails,
   listCachedDataFiles,
+  listClaimPolicies,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -118,6 +120,8 @@ Usage:
   minecraft-skills authoring-guardrails [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-guardrail <id>
   minecraft-skills authoring-context <datapack|resourcepack|paper-plugin> [version] [--edition java]
+  minecraft-skills claim-policies [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills claim-policy <id>
   minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills intent-lookups [--domain datapack|resourcepack|paper-plugin]
@@ -176,6 +180,9 @@ Commands:
                  Print one output guardrail by id.
   authoring-context
                  Print preflight, intent lookups, and evidence for one authoring domain/version.
+  claim-policies
+                 List required evidence and allowed wording for Minecraft authoring claim types.
+  claim-policy   Print one claim policy by id.
   preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
   evidence       Print source policy, primary sources, data files, links, and warnings.
   intent-lookups
@@ -383,6 +390,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           ...(version ? { version } : {}),
         }),
       );
+      return 0;
+    }
+
+    if (command === "claim-policies") {
+      printJson(output, {
+        schemaVersion: 1,
+        policies: listClaimPolicies({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "claim-policy") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("claim-policy command requires an id");
+      }
+      printJson(output, getClaimPolicy(id));
       return 0;
     }
 

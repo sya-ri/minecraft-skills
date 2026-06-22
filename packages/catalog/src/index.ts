@@ -28,6 +28,10 @@ import {
   type AuthoringGuardrailIndexData,
   Catalog,
   type CatalogData,
+  ClaimPolicy,
+  type ClaimPolicyData,
+  ClaimPolicyIndex,
+  type ClaimPolicyIndexData,
   type DomainData,
   DomainId,
   type DomainIdData,
@@ -75,6 +79,8 @@ export type {
   AuthoringGuardrailIndexData,
   CachedDataFile,
   CatalogData,
+  ClaimPolicyData,
+  ClaimPolicyIndexData,
   DataManifest,
   DataManifestEntry,
   DomainData,
@@ -131,6 +137,10 @@ export type AuthoringChecklistQuery = {
 };
 
 export type AuthoringGuardrailQuery = {
+  domain?: string;
+};
+
+export type ClaimPolicyQuery = {
   domain?: string;
 };
 
@@ -419,6 +429,7 @@ export type AuthoringContext = {
   resolvedVersion: string;
   preflight: AuthoringPreflight;
   guardrails: AuthoringGuardrailData[];
+  claimPolicies: ClaimPolicyData[];
   intentLookups: IntentLookupData[];
   evidence: EvidenceBundle;
 };
@@ -724,6 +735,23 @@ export function getAuthoringGuardrail(id: string): AuthoringGuardrailData {
   return AuthoringGuardrail.assert(found);
 }
 
+export function listClaimPolicies(query: ClaimPolicyQuery = {}): ClaimPolicyData[] {
+  const index = ClaimPolicyIndex.assert(readDataJson("claim-policies.json"));
+  if (!query.domain) {
+    return index.policies;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.policies.filter((policy) => policy.domains.includes(domain));
+}
+
+export function getClaimPolicy(id: string): ClaimPolicyData {
+  const found = listClaimPolicies().find((policy) => policy.id === id);
+  if (!found) {
+    throw new Error(`Unknown claim policy: ${id}`);
+  }
+  return ClaimPolicy.assert(found);
+}
+
 export function listIntentLookups(query: IntentLookupQuery = {}): IntentLookupData[] {
   const index = IntentLookupIndex.assert(readDataJson("intent-lookups.json"));
   if (!query.domain) {
@@ -993,6 +1021,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     resolvedVersion: preflight.resolvedVersion,
     preflight,
     guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
+    claimPolicies: listClaimPolicies({ domain: preflight.domain }),
     intentLookups: listIntentLookups({ domain: preflight.domain }),
     evidence: getEvidenceBundle({
       domain: preflight.domain,

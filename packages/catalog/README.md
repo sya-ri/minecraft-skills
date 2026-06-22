@@ -24,6 +24,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getClaimPolicy,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -41,6 +42,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listClaimPolicies,
   listSkills,
   listVersionSupport,
   listFactSurfaces,
@@ -63,6 +65,8 @@ const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" 
 const checklists = listAuthoringChecklists();
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
+const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
+const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
 const intentLookups = listIntentLookups({ domain: "paper-plugin" });

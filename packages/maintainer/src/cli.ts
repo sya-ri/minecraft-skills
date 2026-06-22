@@ -20,6 +20,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listClaimPolicies,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -331,6 +332,51 @@ function requireAuthoringGuardrails(root: string, messages: string[]): void {
   }
 }
 
+function requireClaimPolicies(
+  root: string,
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  requireDataFile(root, "claim-policies.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  for (const policy of listClaimPolicies()) {
+    const prefix = `claim policy ${policy.id}`;
+    if (ids.has(policy.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(policy.id);
+    if (policy.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of policy.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (policy.requiredEvidence.length === 0) {
+      messages.push(`${prefix} must list required evidence`);
+    }
+    if (policy.allowedWording.length === 0) {
+      messages.push(`${prefix} must list allowed wording`);
+    }
+    if (policy.disallowedWording.length === 0) {
+      messages.push(`${prefix} must list disallowed wording`);
+    }
+    if (!policy.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+    if (
+      policy.tools.cli.length === 0 &&
+      policy.tools.mcp.length === 0 &&
+      policy.tools.packageApis.length === 0
+    ) {
+      messages.push(`${prefix} must expose at least one CLI, MCP, or package API entrypoint`);
+    }
+    requirePublicEntrypoints(prefix, policy.tools, publicEntrypoints, messages);
+  }
+}
+
 function requireIntentLookups(
   root: string,
   publicEntrypoints: PublicEntrypoints,
@@ -488,6 +534,7 @@ export function validateRepository(): ValidationResult {
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
   requireAuthoringGuardrails(root, messages);
+  requireClaimPolicies(root, publicEntrypoints, messages);
   requireIntentLookups(root, publicEntrypoints, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {

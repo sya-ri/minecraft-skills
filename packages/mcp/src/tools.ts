@@ -17,6 +17,7 @@ import {
   getAuthoringPreflight,
   getCacheDataRoot,
   getCacheRoot,
+  getClaimPolicy,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -37,6 +38,7 @@ import {
   listAuthoringChecklists,
   listAuthoringGuardrails,
   listCachedDataFiles,
+  listClaimPolicies,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -174,6 +176,30 @@ export const tools: ToolDefinition[] = [
         version: { type: "string", default: "latest" },
       },
       required: ["domain"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_claim_policies",
+    description:
+      "List required evidence, allowed wording, and disallowed wording for Minecraft authoring claim types.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_claim_policy",
+    description: "Get one Minecraft authoring claim policy by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
       additionalProperties: false,
     },
   },
@@ -787,6 +813,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.version === "string" ? { version: args.version } : {}),
         }),
       );
+    }
+    if (name === "list_claim_policies") {
+      return text(
+        listClaimPolicies({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_claim_policy") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_claim_policy requires string id");
+      }
+      return text(getClaimPolicy(args.id));
     }
     if (name === "get_authoring_preflight") {
       if (typeof args.domain !== "string") {
