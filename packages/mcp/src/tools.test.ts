@@ -390,7 +390,7 @@ describe("MCP tools", () => {
 
   it("calls data manifest and cache tools", async () => {
     const manifest = await callMinecraftSkillsTool("get_data_manifest", {});
-    expect(manifest.content[0]?.text).toContain('"dataVersion": "2026.06.23-1"');
+    expect(manifest.content[0]?.text).toContain('"dataVersion": "2026.06.23-2"');
 
     const matrix = await callMinecraftSkillsTool("get_support_matrix", {});
     expect(matrix.content[0]?.text).toContain('"latestWithPaperApiSurface": "26.2"');
