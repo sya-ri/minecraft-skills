@@ -32,6 +32,12 @@ describe("MCP resources", () => {
       "minecraft-skills://data/fact-surfaces/datapack-schema-surface.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/intent-lookups.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/intent-lookups/verify-paper-type-or-member.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/data-manifest.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -90,6 +96,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/fact-surfaces/datapack-schema-surface.json",
     );
     expect(factSurface.contents[0]?.text).toContain("not a normative schema");
+
+    const intentLookups = readMinecraftSkillsResource(
+      "minecraft-skills://data/intent-lookups.json",
+    );
+    expect(intentLookups.contents[0]?.text).toContain('"id": "verify-command-syntax"');
+
+    const intentLookup = readMinecraftSkillsResource(
+      "minecraft-skills://data/intent-lookups/verify-paper-type-or-member.json",
+    );
+    expect(intentLookup.contents[0]?.text).toContain('"search_paper_members"');
 
     const manifest = readMinecraftSkillsResource("minecraft-skills://data/data-manifest.json");
     expect(manifest.contents[0]?.text).toContain('"dataVersion": "2026.06.22-1"');

@@ -25,6 +25,7 @@ import {
   getDomain,
   getEvidenceBundle,
   getFactSurface,
+  getIntentLookup,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -40,6 +41,7 @@ import {
   listCachedDataFiles,
   listDomains,
   listFactSurfaces,
+  listIntentLookups,
   listPackFormats,
   listReferences,
   listSkills,
@@ -112,6 +114,8 @@ Usage:
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
   minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
+  minecraft-skills intent-lookups [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills intent-lookup <id>
   minecraft-skills fact-surfaces [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills fact-surface <id>
   minecraft-skills coverage
@@ -162,6 +166,9 @@ Commands:
                  Print the pre-generation checklist for one authoring domain.
   preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
   evidence       Print source policy, primary sources, data files, links, and warnings.
+  intent-lookups
+                 List intent-to-lookup routing entries for exact source-backed authoring.
+  intent-lookup  Print one intent-to-lookup routing entry by id.
   fact-surfaces  List machine-verifiable fact surfaces and their guarantees.
   fact-surface   Print one fact surface by id.
   coverage       Print bundled data coverage summary JSON.
@@ -361,6 +368,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           ...(version ? { version } : {}),
         }),
       );
+      return 0;
+    }
+
+    if (command === "intent-lookups") {
+      printJson(output, {
+        schemaVersion: 1,
+        intents: listIntentLookups({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "intent-lookup") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("intent-lookup command requires an id");
+      }
+      printJson(output, getIntentLookup(id));
       return 0;
     }
 

@@ -118,6 +118,18 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"kind": "paper-api-surface"');
   });
 
+  it("prints intent lookups", async () => {
+    const list = await capture(["intent-lookups", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "verify-paper-type-or-member"');
+    expect(list.stdout.join("\n")).toContain('"id": "discover-paper-event-candidates"');
+
+    const single = await capture(["intent-lookup", "verify-command-syntax"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain('"search_commands"');
+    expect(single.stdout.join("\n")).toContain("does not prove gameplay behavior");
+  });
+
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data-manifest"]);
     expect(manifest.code).toBe(0);

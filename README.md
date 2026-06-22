@@ -47,6 +47,8 @@ minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
+minecraft-skills intent-lookups --domain paper-plugin
+minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist datapack
 minecraft-skills authoring-checklists --domain paper-plugin
 minecraft-skills fact-surfaces --domain datapack
@@ -108,6 +110,9 @@ facts.
 and generated surface availability for target-version selection.
 `minecraft-skills evidence <domain> [version]` returns source policy, primary sources,
 version-source URLs, relevant checked data files, and warnings for explaining provenance.
+`minecraft-skills intent-lookups` maps a user intent such as command syntax, pack format, vanilla
+path, Paper dependency, Paper member, or event discovery to the exact CLI/MCP/package APIs and
+evidence surfaces an agent should inspect.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,

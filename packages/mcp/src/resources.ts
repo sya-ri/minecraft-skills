@@ -3,10 +3,12 @@ import {
   getDataManifest,
   getDatapackSchemaSurface,
   getFactSurface,
+  getIntentLookup,
   getPaperApiSurface,
   getSkillPayload,
   listAuthoringChecklists,
   listFactSurfaces,
+  listIntentLookups,
   listSkills,
 } from "@minecraft-skills/catalog";
 
@@ -93,6 +95,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     surfaces: factSurfaces,
   };
+  const intentLookups = listIntentLookups();
+  const intentLookupIndex = {
+    schemaVersion: 1,
+    intents: intentLookups,
+  };
   const dataResources: Resource[] = [
     {
       uri: `${dataResourceBase}/authoring-checklists.json`,
@@ -126,6 +133,22 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Guarantees and non-guarantees for ${surface.title}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(surface, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/intent-lookups.json`,
+      name: "intent-lookups.json",
+      title: "Minecraft Skills intent lookups",
+      description: "Intent-to-lookup routing entries for exact source-backed Minecraft authoring.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(intentLookupIndex, null, 2)),
+    },
+    ...intentLookups.map((intent) => ({
+      uri: `${dataResourceBase}/intent-lookups/${intent.id}.json`,
+      name: `intent-lookups/${intent.id}.json`,
+      title: intent.title,
+      description: `Lookup routing for ${intent.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(intent, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/data-manifest.json`,
@@ -198,6 +221,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/intent-lookups.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              intents: listIntentLookups(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   const dataPrefix = `${dataResourceBase}/`;
   if (uri.startsWith(dataPrefix)) {
     const path = uri.slice(dataPrefix.length);
@@ -223,6 +265,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getFactSurface(id), null, 2),
+          },
+        ],
+      };
+    }
+    const intentLookupPrefix = "intent-lookups/";
+    if (path.startsWith(intentLookupPrefix) && path.endsWith(".json")) {
+      const id = path.slice(intentLookupPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getIntentLookup(id), null, 2),
           },
         ],
       };

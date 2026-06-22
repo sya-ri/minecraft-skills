@@ -1,0 +1,367 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills public fact surfaces, authoring checklists, and source policy",
+  "intents": [
+    {
+      "id": "choose-target-version",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Choose a target Minecraft version",
+      "when": [
+        "the user did not specify a Minecraft version",
+        "the request asks whether a version is supported",
+        "the request needs pack_format, Paper build, or bundled surface availability"
+      ],
+      "lookups": [
+        {
+          "purpose": "Resolve the exact version, domain coverage, pack formats, Paper support, and surface availability.",
+          "tools": {
+            "cli": ["version-support", "preflight"],
+            "mcp": ["list_version_support", "get_authoring_preflight"],
+            "packageApis": ["listVersionSupport", "getAuthoringPreflight"]
+          },
+          "evidence": [
+            "Version support entry for the target domain/version",
+            "Authoring preflight warnings for missing coverage or unsupported Paper versions"
+          ],
+          "failureMode": "Do not assume latest Minecraft equals latest supported Paper, or that a version has every downloadable surface."
+        }
+      ]
+    },
+    {
+      "id": "prepare-generation",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Prepare before generating files or code",
+      "when": [
+        "the AI is about to write datapack files, resourcepack files, or Paper plugin code",
+        "the request needs a source-backed checklist before output"
+      ],
+      "lookups": [
+        {
+          "purpose": "Load the domain checklist, exact fact surfaces, resolved version coverage, downloadable data state, and warnings.",
+          "tools": {
+            "cli": ["preflight", "authoring-checklist", "fact-surfaces", "evidence"],
+            "mcp": [
+              "get_authoring_preflight",
+              "get_authoring_checklist",
+              "list_fact_surfaces",
+              "get_evidence_bundle"
+            ],
+            "packageApis": [
+              "getAuthoringPreflight",
+              "getAuthoringChecklist",
+              "listFactSurfaces",
+              "getEvidenceBundle"
+            ]
+          },
+          "evidence": [
+            "Checklist steps for the requested domain",
+            "Fact surface guarantees and non-guarantees",
+            "Evidence bundle links and data file availability"
+          ],
+          "failureMode": "Do not generate from memory when preflight reports missing downloadable data or coverage unknowns."
+        }
+      ]
+    },
+    {
+      "id": "verify-pack-format",
+      "domains": ["datapack", "resourcepack"],
+      "title": "Verify data or resource pack format values",
+      "when": [
+        "the request includes pack.mcmeta",
+        "the request asks which pack_format or minor format applies to a version"
+      ],
+      "lookups": [
+        {
+          "purpose": "Read exact pack format values extracted from bundled version metadata.",
+          "tools": {
+            "cli": ["pack-formats", "show-version", "version-support"],
+            "mcp": ["list_pack_formats", "get_version", "list_version_support"],
+            "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
+          },
+          "evidence": [
+            "Version detail packFormats.data and packFormats.resource",
+            "Version support entry for the requested domain"
+          ],
+          "failureMode": "Do not infer pack_format from neighboring Minecraft releases."
+        }
+      ]
+    },
+    {
+      "id": "verify-command-syntax",
+      "domains": ["datapack"],
+      "title": "Verify command syntax for functions or advancements",
+      "when": [
+        "the request includes commands, functions, predicates using command strings, or execute syntax",
+        "the request asks whether a command path exists in a target version"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search executable command syntax paths generated from official server reports.",
+          "tools": {
+            "cli": ["commands", "compare-commands", "server-reports"],
+            "mcp": ["search_commands", "compare_commands", "get_server_reports"],
+            "packageApis": ["searchCommands", "compareCommands", "getJavaReportsSummary"]
+          },
+          "evidence": [
+            "Executable command path results for the target version",
+            "Server reports summary provenance"
+          ],
+          "failureMode": "A matching command path proves parser shape only; it does not prove gameplay behavior or permission context."
+        }
+      ]
+    },
+    {
+      "id": "verify-datapack-json-shape",
+      "domains": ["datapack"],
+      "title": "Verify observed vanilla datapack JSON shape",
+      "when": [
+        "the request includes datapack JSON such as predicates, advancements, loot tables, recipes, tags, or worldgen files",
+        "the request asks for field names or top-level JSON keys"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search observed vanilla datapack JSON field paths and confirm downloadable surface availability.",
+          "tools": {
+            "cli": ["search-datapack-schema", "datapack-schema", "fetch-data", "data-manifest"],
+            "mcp": [
+              "search_datapack_schema",
+              "get_datapack_schema_surface",
+              "fetch_data",
+              "get_data_manifest"
+            ],
+            "packageApis": [
+              "searchDatapackSchema",
+              "getDatapackSchemaSurface",
+              "fetchData",
+              "getDataManifest"
+            ]
+          },
+          "evidence": [
+            "Observed datapack schema surface for the target version",
+            "Data manifest entry when the surface is downloadable"
+          ],
+          "failureMode": "Observed vanilla shape is not a normative schema and cannot prove required fields, optionality, or third-party extensions."
+        }
+      ]
+    },
+    {
+      "id": "verify-vanilla-data-path",
+      "domains": ["datapack"],
+      "title": "Verify vanilla server data paths",
+      "when": [
+        "the request references a vanilla datapack path or namespace",
+        "the request asks whether a function, tag, recipe, loot table, predicate, or worldgen file path exists"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search vanilla server data path inventories for the target version.",
+          "tools": {
+            "cli": ["vanilla-paths", "compare-vanilla-paths", "vanilla-inventory"],
+            "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
+            "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
+          },
+          "evidence": [
+            "Matching datapack path entries for the requested version",
+            "Vanilla inventory sources for that version"
+          ],
+          "failureMode": "A path match proves the bundled vanilla file path exists; it does not validate custom file content."
+        }
+      ]
+    },
+    {
+      "id": "verify-resourcepack-asset-path",
+      "domains": ["resourcepack"],
+      "title": "Verify vanilla resource asset paths",
+      "when": [
+        "the request references textures, models, sounds, lang files, atlases, or other client assets",
+        "the request asks whether a vanilla resource path exists"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search vanilla client resource path inventories for the target version.",
+          "tools": {
+            "cli": ["vanilla-paths", "compare-vanilla-paths", "vanilla-inventory"],
+            "mcp": ["search_vanilla_paths", "compare_vanilla_paths", "get_vanilla_inventory"],
+            "packageApis": ["searchVanillaPaths", "compareVanillaPaths", "getVanillaInventory"]
+          },
+          "evidence": [
+            "Matching resource path entries for the requested version",
+            "Vanilla inventory sources for that version"
+          ],
+          "failureMode": "A path match proves the bundled vanilla asset path exists; it does not prove rendering behavior."
+        }
+      ]
+    },
+    {
+      "id": "verify-resourcepack-model-shape",
+      "domains": ["resourcepack"],
+      "title": "Verify observed resource pack model and item definition shape",
+      "when": [
+        "the request includes model JSON or item definition JSON",
+        "the request asks which keys appear in vanilla model or item definition files"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search resource pack model and item definition summaries extracted from the client asset index.",
+          "tools": {
+            "cli": ["resourcepack-models", "search-models"],
+            "mcp": ["get_resourcepack_model_summary", "search_resourcepack_models"],
+            "packageApis": ["getResourcepackModelSummary", "searchResourcepackModelPaths"]
+          },
+          "evidence": [
+            "Model or item definition field path samples for the target version",
+            "Resource pack model summary coverage"
+          ],
+          "failureMode": "Observed client files do not prove every accepted key, required key, or rendering semantics."
+        }
+      ]
+    },
+    {
+      "id": "verify-paper-support-and-dependency",
+      "domains": ["paper-plugin"],
+      "title": "Verify Paper version support and dependency coordinates",
+      "when": [
+        "the request asks for a Paper API dependency",
+        "the request targets a Minecraft version for a Paper plugin"
+      ],
+      "lookups": [
+        {
+          "purpose": "Resolve whether Paper publishes builds for the Minecraft version and get official API/Javadocs links.",
+          "tools": {
+            "cli": ["paper", "paper-api", "version-support", "preflight"],
+            "mcp": [
+              "get_paper_plugin_data",
+              "get_paper_api_reference",
+              "list_version_support",
+              "get_authoring_preflight"
+            ],
+            "packageApis": [
+              "getPaperPluginData",
+              "getPaperApiReference",
+              "listVersionSupport",
+              "getAuthoringPreflight"
+            ]
+          },
+          "evidence": [
+            "Paper project version/build metadata",
+            "Paper API reference for the requested version"
+          ],
+          "failureMode": "Do not emit dependency coordinates for a Minecraft version that Paper data does not mark supported."
+        }
+      ]
+    },
+    {
+      "id": "verify-paper-type-or-member",
+      "domains": ["paper-plugin"],
+      "title": "Verify Paper API type or member names",
+      "when": [
+        "the request references a Paper, Bukkit, or Adventure class name",
+        "the request asks whether a method, constructor, field, or enum constant is present"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search Paper Javadocs package, type, and member surfaces for the target supported version.",
+          "tools": {
+            "cli": [
+              "paper-api-index",
+              "paper-api-surface",
+              "paper-types",
+              "paper-members",
+              "fetch-data",
+              "data-manifest"
+            ],
+            "mcp": [
+              "get_paper_api_index",
+              "get_paper_api_surface",
+              "search_paper_types",
+              "search_paper_members",
+              "fetch_data",
+              "get_data_manifest"
+            ],
+            "packageApis": [
+              "getPaperApiIndex",
+              "getPaperApiSurface",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "fetchData",
+              "getDataManifest"
+            ]
+          },
+          "evidence": [
+            "Javadocs package index for the requested version",
+            "Javadocs search-index type or member match"
+          ],
+          "failureMode": "A type or member match proves name presence in Javadocs only; it does not prove runtime behavior or correct usage."
+        }
+      ]
+    },
+    {
+      "id": "discover-paper-event-candidates",
+      "domains": ["paper-plugin"],
+      "title": "Discover Paper or Bukkit event candidates",
+      "when": [
+        "the request asks which event might handle a situation",
+        "the request references listener classes or @EventHandler"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search configured event-list data, then verify candidates against Paper Javadocs surfaces.",
+          "tools": {
+            "cli": ["paper-events", "paper-types", "paper-members", "paper-api-surface"],
+            "mcp": [
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_surface"
+            ],
+            "packageApis": [
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiSurface"
+            ]
+          },
+          "evidence": [
+            "Event search result URL and configured source",
+            "Javadocs type/member confirmation for candidate event classes"
+          ],
+          "failureMode": "Event search results are candidates; verify exact class and member names before generating listener code."
+        }
+      ]
+    },
+    {
+      "id": "explain-provenance",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Explain source provenance and limits",
+      "when": [
+        "the request asks why the AI believes an answer",
+        "the answer needs citations, license limits, or a statement of what the data can and cannot prove"
+      ],
+      "lookups": [
+        {
+          "purpose": "Return source policy, primary sources, relevant data files, fact surface guarantees, and warnings.",
+          "tools": {
+            "cli": ["evidence", "source-policy", "fact-surfaces", "fact-surface"],
+            "mcp": [
+              "get_evidence_bundle",
+              "get_source_policy",
+              "list_fact_surfaces",
+              "get_fact_surface"
+            ],
+            "packageApis": [
+              "getEvidenceBundle",
+              "getSourcePolicy",
+              "listFactSurfaces",
+              "getFactSurface"
+            ]
+          },
+          "evidence": [
+            "Evidence bundle for the target domain/version",
+            "Fact surface guarantees and non-guarantees"
+          ],
+          "failureMode": "Do not quote or redistribute Minecraft Wiki text; use it only for pointers and attribution according to source policy."
+        }
+      ]
+    }
+  ]
+}

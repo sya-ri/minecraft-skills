@@ -15,6 +15,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
+    expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
+    expect(tools.map((tool) => tool.name)).toContain("get_intent_lookup");
     expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
     expect(tools.map((tool) => tool.name)).toContain("get_fact_surface");
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
@@ -70,6 +72,8 @@ describe("MCP tools", () => {
         "get_authoring_checklist",
         "get_authoring_preflight",
         "get_evidence_bundle",
+        "list_intent_lookups",
+        "get_intent_lookup",
         "list_fact_surfaces",
         "get_fact_surface",
         "get_source_policy",
@@ -154,6 +158,20 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"minecraftWikiTextRedistribution": "forbidden"');
     expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');
     expect(result.content[0]?.text).toContain('"kind": "paper-api-surface"');
+  });
+
+  it("calls intent lookup tools", async () => {
+    const list = await callMinecraftSkillsTool("list_intent_lookups", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "verify-paper-type-or-member"');
+    expect(list.content[0]?.text).toContain('"id": "discover-paper-event-candidates"');
+
+    const single = await callMinecraftSkillsTool("get_intent_lookup", {
+      id: "verify-command-syntax",
+    });
+    expect(single.content[0]?.text).toContain('"search_commands"');
+    expect(single.content[0]?.text).toContain("does not prove gameplay behavior");
   });
 
   it("calls get_coverage_summary", async () => {

@@ -31,6 +31,7 @@ import { fetchData, getDataManifest, readDataJson, readDataText } from "@minecra
 const versions = readDataJson("java/versions.json");
 const checklists = readDataJson("authoring-checklists.json");
 const factSurfaces = readDataJson("fact-surfaces.json");
+const intentLookups = readDataJson("intent-lookups.json");
 const commandPaths = readDataText("java/command-paths/26.2.txt");
 const paperSkill = readDataText("skills/minecraft-paper-plugins/SKILL.md");
 const manifest = getDataManifest();

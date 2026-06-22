@@ -14,6 +14,7 @@ import {
   getDomain,
   getEvidenceBundle,
   getFactSurface,
+  getIntentLookup,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -28,6 +29,7 @@ import {
   listAuthoringChecklists,
   listDomains,
   listFactSurfaces,
+  listIntentLookups,
   listPackFormats,
   listSkills,
   listVersionSupport,
@@ -168,6 +170,20 @@ describe("catalog", () => {
         available: true,
       }),
     );
+  });
+
+  it("lists intent lookups for choosing exact fact surfaces", () => {
+    const datapack = listIntentLookups({ domain: "datapack" });
+    expect(datapack.map((intent) => intent.id)).toContain("verify-command-syntax");
+    expect(datapack.map((intent) => intent.id)).toContain("verify-datapack-json-shape");
+
+    const paper = getIntentLookup("verify-paper-type-or-member");
+    expect(paper.domains).toEqual(["paper-plugin"]);
+    expect(paper.lookups[0]?.tools.cli).toContain("paper-members");
+    expect(paper.lookups[0]?.tools.mcp).toContain("search_paper_members");
+    expect(paper.lookups[0]?.failureMode).toContain("does not prove runtime behavior");
+
+    expect(() => getIntentLookup("missing")).toThrow("Unknown intent lookup: missing");
   });
 
   it("lists per-version support for target selection", () => {

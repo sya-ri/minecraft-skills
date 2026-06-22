@@ -17,23 +17,26 @@ version-specific facts.
 3. If the `minecraft-skills` CLI, MCP server, or `@minecraft-skills/catalog` package is available,
    use it for machine-verifiable facts. Otherwise, use the bundled references in this skill and
    clearly state when strict data is not bundled.
-4. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+4. Use `intent-lookups --domain resourcepack`, MCP `list_intent_lookups`, or package
+   `listIntentLookups({ domain: "resourcepack" })` to choose the exact lookup path for the user's
+   intent.
+5. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-5. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
+6. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "resourcepack", version })` before generating resource pack
    files.
-6. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+7. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific resource pack facts are bundled.
-7. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
+8. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "resourcepack" })` when choosing among target versions.
-8. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
+9. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "resourcepack", version })` when explaining which sources and
    extracted files back an answer.
-9. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
+10. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
    additions/removals.
-10. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+11. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-11. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+12. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
@@ -41,6 +44,8 @@ version-specific facts.
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
   `minecraft-skills preflight resourcepack <version>`,
   `minecraft-skills evidence resourcepack <version>`,
+  `minecraft-skills intent-lookups --domain resourcepack`,
+  `minecraft-skills intent-lookup <id>`,
   `minecraft-skills authoring-checklist resourcepack`,
   `minecraft-skills version-support --domain resourcepack`,
   `minecraft-skills fact-surfaces --domain resourcepack`,

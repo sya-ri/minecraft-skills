@@ -52,6 +52,11 @@ describe("@minecraft-skills/data", () => {
     ]);
   });
 
+  it("loads bundled intent lookup JSON", () => {
+    const intents = readDataJson<{ intents: Array<{ id: string }> }>("intent-lookups.json");
+    expect(intents.intents.map((intent) => intent.id)).toContain("verify-paper-type-or-member");
+  });
+
   it("exposes a package data root", () => {
     expect(getDataRoot()).toMatch(/packages\/data\/data$/);
   });

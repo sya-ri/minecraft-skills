@@ -20,6 +20,7 @@ import {
   getDatapackSchemaSurface,
   getEvidenceBundle,
   getFactSurface,
+  getIntentLookup,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -35,6 +36,7 @@ import {
   listCachedDataFiles,
   listDomains,
   listFactSurfaces,
+  listIntentLookups,
   listPackFormats,
   listReferences,
   listSkills,
@@ -160,6 +162,30 @@ export const tools: ToolDefinition[] = [
         version: { type: "string", default: "latest" },
       },
       required: ["domain"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_intent_lookups",
+    description:
+      "List intent-to-lookup routing entries that tell an AI which exact minecraft-skills surfaces to inspect for a user request.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_intent_lookup",
+    description: "Get one intent-to-lookup routing entry by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
       additionalProperties: false,
     },
   },
@@ -718,6 +744,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.version === "string" ? { version: args.version } : {}),
         }),
       );
+    }
+    if (name === "list_intent_lookups") {
+      return text(
+        listIntentLookups({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_intent_lookup") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_intent_lookup requires string id");
+      }
+      return text(getIntentLookup(args.id));
     }
     if (name === "list_fact_surfaces") {
       return text(

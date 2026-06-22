@@ -27,6 +27,7 @@ import {
   getDatapackSchemaSurface,
   getEvidenceBundle,
   getFactSurface,
+  getIntentLookup,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
@@ -40,6 +41,7 @@ import {
   listSkills,
   listVersionSupport,
   listFactSurfaces,
+  listIntentLookups,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -57,6 +59,8 @@ const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" 
 const checklists = listAuthoringChecklists();
 const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
+const intentLookups = listIntentLookups({ domain: "paper-plugin" });
+const memberLookup = getIntentLookup("verify-paper-type-or-member");
 const coverage = getCoverageSummary();
 const support = getSupportMatrix();
 const versionSupport = listVersionSupport({ domain: "paper-plugin" });

@@ -106,6 +106,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'import { readDataText } from "@minecraft-skills/data";',
             'if (!readDataText("skills/minecraft-paper-plugins/SKILL.md").includes("# Minecraft Paper Plugins")) throw new Error("missing skill payload");',
             'if (!readDataText("authoring-checklists.json").includes("Paper Plugin Authoring Checklist")) throw new Error("missing authoring checklists");',
+            'if (!readDataText("intent-lookups.json").includes("verify-paper-type-or-member")) throw new Error("missing intent lookups");',
           ].join(" "),
         ],
         consumerDir,
@@ -118,7 +119,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces, listVersionSupport } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces, listIntentLookups, listVersionSupport } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
@@ -133,6 +134,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
             'if (!evidence.links.some((link) => link.id === "paper-javadocs") || evidence.sourcePolicy.minecraftWikiTextRedistribution !== "forbidden") throw new Error("bad evidence bundle");',
             'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
+            'if (!listIntentLookups({ domain: "paper-plugin" }).some((intent) => intent.id === "discover-paper-event-candidates") || !getIntentLookup("verify-paper-type-or-member").lookups[0].tools.mcp.includes("search_paper_members")) throw new Error("bad intent lookups");',
             'if (!factSurface.nonGuarantees.includes("not a normative schema") || listFactSurfaces({ domain: "paper-plugin" }).length < 4) throw new Error("bad fact surfaces");',
             'if (getDatapackSchemaSurface("java", "26.2").coverage !== "vanilla-observed-datapack-json-shape") throw new Error("missing datapack schema surface");',
             'if (getPaperApiSurface("1.21.11").coverage !== "javadocs-search-index") throw new Error("missing Paper API surface");',
@@ -189,6 +191,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     );
     if (!commands.at(-1)?.stdout.includes("verify-types-members-and-events")) {
       throw new Error("minecraft-skills authoring-checklist did not include Paper checks");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "intent-lookup", "verify-paper-type-or-member"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("search_paper_members")) {
+      throw new Error("minecraft-skills intent-lookup did not include Paper member lookup");
     }
     commands.push(
       runCommand(

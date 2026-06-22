@@ -103,6 +103,33 @@ export const AuthoringChecklistIndex = type({
   checklists: AuthoringChecklist.array(),
 });
 
+export const IntentLookupToolRefs = type({
+  cli: "string[]",
+  mcp: "string[]",
+  packageApis: "string[]",
+});
+
+export const IntentLookupStep = type({
+  purpose: "string",
+  tools: IntentLookupToolRefs,
+  evidence: "string[]",
+  failureMode: "string",
+});
+
+export const IntentLookup = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  when: "string[]",
+  lookups: IntentLookupStep.array(),
+});
+
+export const IntentLookupIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  intents: IntentLookup.array(),
+});
+
 export const VersionSummary = type({
   id: "string",
   type: "string",
@@ -402,6 +429,9 @@ export type CatalogData = typeof Catalog.infer;
 export type AuthoringChecklistData = typeof AuthoringChecklist.infer;
 export type AuthoringChecklistIndexData = typeof AuthoringChecklistIndex.infer;
 export type AuthoringChecklistStepData = typeof AuthoringChecklistStep.infer;
+export type IntentLookupData = typeof IntentLookup.infer;
+export type IntentLookupIndexData = typeof IntentLookupIndex.infer;
+export type IntentLookupStepData = typeof IntentLookupStep.infer;
 export type FactSurfaceData = typeof FactSurface.infer;
 export type FactSurfaceIndexData = typeof FactSurfaceIndex.infer;
 export type DomainData = typeof Domain.infer;

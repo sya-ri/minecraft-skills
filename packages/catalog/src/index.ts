@@ -33,6 +33,11 @@ import {
   type FactSurfaceData,
   FactSurfaceIndex,
   type FactSurfaceIndexData,
+  IntentLookup,
+  type IntentLookupData,
+  IntentLookupIndex,
+  type IntentLookupIndexData,
+  type IntentLookupStepData,
   JavaReportsSummary,
   type JavaReportsSummaryData,
   ObservedDatapackSchemaSurface,
@@ -73,6 +78,9 @@ export type {
   FactSurfaceIndexData,
   FetchDataOptions,
   FetchDataResult,
+  IntentLookupData,
+  IntentLookupIndexData,
+  IntentLookupStepData,
   JavaReportsSummaryData,
   ObservedDatapackSchemaSurfaceData,
   PaperApiIndexData,
@@ -113,6 +121,10 @@ export type FactSurfaceQuery = {
 };
 
 export type AuthoringChecklistQuery = {
+  domain?: string;
+};
+
+export type IntentLookupQuery = {
   domain?: string;
 };
 
@@ -663,6 +675,23 @@ export function getAuthoringChecklist(domain: string): AuthoringChecklistData {
     throw new Error(`Unknown authoring checklist domain: ${domain}`);
   }
   return AuthoringChecklist.assert(found);
+}
+
+export function listIntentLookups(query: IntentLookupQuery = {}): IntentLookupData[] {
+  const index = IntentLookupIndex.assert(readDataJson("intent-lookups.json"));
+  if (!query.domain) {
+    return index.intents;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.intents.filter((intent) => intent.domains.includes(domain));
+}
+
+export function getIntentLookup(id: string): IntentLookupData {
+  const found = listIntentLookups().find((intent) => intent.id === id);
+  if (!found) {
+    throw new Error(`Unknown intent lookup: ${id}`);
+  }
+  return IntentLookup.assert(found);
 }
 
 function relevantDownloadableEntries(domain: DomainIdData, version: string): DataManifestEntry[] {

@@ -19,6 +19,8 @@ minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
+minecraft-skills intent-lookups --domain paper-plugin
+minecraft-skills intent-lookup verify-paper-type-or-member
 minecraft-skills authoring-checklist paper-plugin
 minecraft-skills authoring-checklists --domain datapack
 minecraft-skills fact-surfaces --domain paper-plugin
@@ -63,6 +65,8 @@ explains what each machine-verifiable data surface can and cannot prove.
 `version-support` lists per-version coverage and surface availability for choosing a target version.
 `evidence <domain> [version]` returns source policy, source URLs, relevant data files, and warnings
 for provenance-aware answers.
+`intent-lookups` maps authoring intents to the exact CLI/MCP/package APIs and evidence surfaces an
+agent should inspect before answering.
 
 ## Data Sources
 

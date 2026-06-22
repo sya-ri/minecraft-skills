@@ -21,6 +21,7 @@ import {
   listAuthoringChecklists,
   listDomains,
   listFactSurfaces,
+  listIntentLookups,
   listReferences,
   listVersions,
 } from "@minecraft-skills/catalog";
@@ -299,6 +300,56 @@ function requireAuthoringChecklists(
   }
 }
 
+function requireIntentLookups(
+  root: string,
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  requireDataFile(root, "intent-lookups.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  for (const intent of listIntentLookups()) {
+    const prefix = `intent lookup ${intent.id}`;
+    if (ids.has(intent.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(intent.id);
+    if (intent.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of intent.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (intent.when.length === 0) {
+      messages.push(`${prefix} must describe when to use it`);
+    }
+    if (intent.lookups.length === 0) {
+      messages.push(`${prefix} must list at least one lookup`);
+    }
+    for (const [index, lookup] of intent.lookups.entries()) {
+      const lookupPrefix = `${prefix} lookup ${index + 1}`;
+      if (lookup.evidence.length === 0) {
+        messages.push(`${lookupPrefix} must list evidence expectations`);
+      }
+      if (!lookup.failureMode) {
+        messages.push(`${lookupPrefix} must describe a failure mode`);
+      }
+      if (
+        lookup.tools.cli.length === 0 &&
+        lookup.tools.mcp.length === 0 &&
+        lookup.tools.packageApis.length === 0
+      ) {
+        messages.push(
+          `${lookupPrefix} must expose at least one CLI, MCP, or package API entrypoint`,
+        );
+      }
+      requirePublicEntrypoints(lookupPrefix, lookup.tools, publicEntrypoints, messages);
+    }
+  }
+}
+
 function requireGeneratedHeader(root: string, path: string, messages: string[]): void {
   const absolutePath = join(root, path);
   requireFile(root, path, messages);
@@ -405,6 +456,7 @@ export function validateRepository(): ValidationResult {
   requireDataManifestIntegrity(root, messages);
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
+  requireIntentLookups(root, publicEntrypoints, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");

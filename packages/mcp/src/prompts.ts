@@ -31,6 +31,8 @@ const promptDefinitions: PromptDefinition[] = [
     tools: [
       "get_support_matrix",
       "list_version_support",
+      "list_intent_lookups",
+      "get_intent_lookup",
       "get_authoring_preflight",
       "get_evidence_bundle",
       "get_authoring_checklist",
@@ -62,6 +64,8 @@ const promptDefinitions: PromptDefinition[] = [
     tools: [
       "get_support_matrix",
       "list_version_support",
+      "list_intent_lookups",
+      "get_intent_lookup",
       "get_authoring_preflight",
       "get_evidence_bundle",
       "get_authoring_checklist",
@@ -88,6 +92,8 @@ const promptDefinitions: PromptDefinition[] = [
     tools: [
       "get_support_matrix",
       "list_version_support",
+      "list_intent_lookups",
+      "get_intent_lookup",
       "get_authoring_preflight",
       "get_evidence_bundle",
       "get_authoring_checklist",
@@ -139,6 +145,7 @@ ${tools}
 
 Preflight rules:
 - Prefer exact target-version data over latest-version data.
+- Call list_intent_lookups when deciding which exact lookup path matches the user's intent.
 - Call list_version_support when choosing among target versions or explaining coverage differences.
 - Call get_authoring_preflight for the relevant domain before generating files or code.
 - Call get_evidence_bundle when you need to cite or explain which sources and extracted files back an answer.
