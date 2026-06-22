@@ -18,11 +18,16 @@ minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills coverage
+minecraft-skills support-matrix
+minecraft-skills data-manifest
+minecraft-skills fetch-data paper-api-surface --version 1.21.11
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 26.2
 minecraft-skills compare-versions 1.20.6 1.21
 minecraft-skills server-reports latest
+minecraft-skills datapack-schema latest
+minecraft-skills search-datapack-schema latest --kind advancement --contains criteria
 minecraft-skills commands latest --prefix execute --limit 10
 minecraft-skills compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills vanilla-paths latest --domain datapack --contains recipe
@@ -33,9 +38,17 @@ minecraft-skills search-models latest --kind item-definition --contains bundle
 minecraft-skills paper
 minecraft-skills paper-api 1.21.11
 minecraft-skills paper-api-index 1.21.11
+minecraft-skills paper-api-surface 1.21.11
+minecraft-skills paper-types 1.21.11 --contains org.bukkit.entity.Player
+minecraft-skills paper-members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills compare-paper-api 1.20.4 1.21.11
+minecraft-skills compare-paper-api-surface 1.21.11 1.21.11
 minecraft-skills paper-events "player join" --version 1.21.11
 ```
+
+`support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
+downloadable. `data-manifest`, `cache-dir`, `cache-list`, `cache-clean`, and `fetch-data` manage
+SHA-256 verified heavyweight data in the local OS cache.
 
 ## Data Sources
 

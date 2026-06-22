@@ -48,11 +48,19 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `list_skills`
 - `get_skill`
 - `get_coverage_summary`
+- `get_data_manifest`
+- `get_support_matrix`
+- `get_cache_status`
+- `fetch_data`
+- `clean_cache`
 - `list_versions`
 - `get_version`
 - `list_pack_formats`
 - `compare_versions`
 - `get_server_reports`
+- `get_datapack_schema_surface`
+- `search_datapack_schema`
+- `compare_datapack_schema`
 - `search_commands`
 - `compare_commands`
 - `get_vanilla_inventory`
@@ -64,6 +72,10 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_paper_api_reference`
 - `get_paper_api_index`
 - `compare_paper_api`
+- `get_paper_api_surface`
+- `search_paper_types`
+- `search_paper_members`
+- `compare_paper_api_surface`
 - `search_paper_events`
 - `list_domains`
 - `list_references`
@@ -76,6 +88,12 @@ Agent Skill files are exposed under `minecraft-skills://skills/<skill>/...`, inc
 - `minecraft-skills://skills/minecraft-datapacks/SKILL.md`
 - `minecraft-skills://skills/minecraft-resourcepacks/SKILL.md`
 - `minecraft-skills://skills/minecraft-paper-plugins/SKILL.md`
+
+Data resources are exposed under `minecraft-skills://data/...`, including:
+
+- `minecraft-skills://data/data-manifest.json`
+- `minecraft-skills://data/java/datapack-schema-surfaces/26.2.json`
+- `minecraft-skills://data/java/paper-api-surfaces/1.21.11.json`
 
 ## Prompts
 

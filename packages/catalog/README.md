@@ -15,18 +15,28 @@ Node.js 22.12 or newer is required.
 ```ts
 import {
   compareCommands,
+  compareDatapackSchema,
   comparePaperApi,
+  comparePaperApiSurface,
   compareVanillaPaths,
+  fetchData,
   getCoverageSummary,
+  getDataManifest,
+  getDatapackSchemaSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
   getPaperApiReference,
+  getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
   getSkillPayload,
+  getSupportMatrix,
   getVersionDetail,
   listSkills,
   searchCommands,
+  searchDatapackSchema,
+  searchPaperMembers,
+  searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
 } from "@minecraft-skills/catalog";
@@ -35,9 +45,19 @@ const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const coverage = getCoverageSummary();
+const support = getSupportMatrix();
+const manifest = getDataManifest();
+await fetchData({ kind: "paper-api-surface", version: "1.21.11" });
 const reports = getJavaReportsSummary("java", "26.2");
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
+const datapackSchema = getDatapackSchemaSurface("java", "26.2");
+const advancementFields = searchDatapackSchema({
+  version: "26.2",
+  kind: "advancement",
+  contains: "criteria",
+});
+const datapackSchemaDiff = compareDatapackSchema({ from: "26.2", to: "26.2" });
 const models = getResourcepackModelSummary("java", "26.2");
 const bundles = searchResourcepackModelPaths({
   version: "26.2",
@@ -58,6 +78,14 @@ const pathDiff = compareVanillaPaths({
 const paperApi = getPaperApiReference("1.21.11");
 const paperApiIndex = getPaperApiIndex("1.21.11");
 const paperApiDiff = comparePaperApi("1.20.4", "1.21.11");
+const paperSurface = getPaperApiSurface("1.21.11");
+const paperTypes = searchPaperTypes({ version: "1.21.11", contains: "Player" });
+const paperMembers = searchPaperMembers({
+  version: "1.21.11",
+  type: "org.bukkit.entity.Player",
+  contains: "sendMessage",
+});
+const paperSurfaceDiff = comparePaperApiSurface("1.21.11", "1.21.11");
 const paper = getPaperPluginData();
 ```
 
