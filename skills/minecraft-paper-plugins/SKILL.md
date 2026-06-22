@@ -21,21 +21,23 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 5. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
    latest bundled Java/Paper aliases and whether Paper API surface facts are bundled or
    downloadable.
-6. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
+6. Use `version-support --domain paper-plugin`, MCP `list_version_support`, or package
+   `listVersionSupport({ domain: "paper-plugin" })` when choosing among Paper target versions.
+7. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
    latest Paper build metadata, and the event search API contract.
-7. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
+8. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
    versioned Paper API dependency, Javadocs URL, and Folia/scheduler docs.
-8. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
+9. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
    versioned Paper Javadocs package additions/removals before discussing server API changes.
-9. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
+10. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
    or MCP `get_data_manifest`, then fetch the matching `paper-api-surface` entry before relying on
    it.
-10. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
+11. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
    Javadocs type/member names. Treat labels as API surface facts, not method behavior prose.
-11. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
-12. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
+12. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
+13. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text.
-13. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+14. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 
 ## Optional Tools
@@ -43,6 +45,7 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 - CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
   `minecraft-skills preflight paper-plugin <version>`,
   `minecraft-skills authoring-checklist paper-plugin`,
+  `minecraft-skills version-support --domain paper-plugin`,
   `minecraft-skills fact-surfaces --domain paper-plugin`,
   `minecraft-skills support-matrix`, `minecraft-skills data-manifest`,
   `minecraft-skills fetch-data paper-api-surface --version <version>`,

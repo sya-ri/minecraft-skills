@@ -131,6 +131,15 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"latestWithPaperApiSurface": "1.21.11"');
   });
 
+  it("prints per-version support", async () => {
+    const result = await capture(["version-support", "--domain", "paper-plugin"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"version": "26.2"');
+    expect(result.stdout.join("\n")).toContain('"supported": false');
+    expect(result.stdout.join("\n")).toContain('"version": "1.21.11"');
+    expect(result.stdout.join("\n")).toContain('"latestBuild": 69');
+  });
+
   it("fetches downloadable data into the cache", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-cli-cache-"));
     const previousCacheDir = process.env.MINECRAFT_SKILLS_CACHE_DIR;

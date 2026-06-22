@@ -24,6 +24,7 @@ minecraft-skills fact-surfaces --domain paper-plugin
 minecraft-skills fact-surface paper-api-surface
 minecraft-skills coverage
 minecraft-skills support-matrix
+minecraft-skills version-support --domain paper-plugin
 minecraft-skills data-manifest
 minecraft-skills fetch-data paper-api-surface --version 1.21.11
 minecraft-skills versions
@@ -58,6 +59,7 @@ SHA-256 verified heavyweight data in the local OS cache.
 surfaces, relevant downloadable data, and warnings. `authoring-checklist <domain>` returns only the
 pre-generation checks an AI agent should perform before writing files or code. `fact-surfaces`
 explains what each machine-verifiable data surface can and cannot prove.
+`version-support` lists per-version coverage and surface availability for choosing a target version.
 
 ## Data Sources
 

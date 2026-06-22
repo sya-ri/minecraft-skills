@@ -37,6 +37,7 @@ import {
   listPackFormats,
   listReferences,
   listSkills,
+  listVersionSupport,
   listVersions,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
@@ -196,6 +197,19 @@ export const tools: ToolDefinition[] = [
     inputSchema: {
       type: "object",
       properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_version_support",
+    description:
+      "List per-version Minecraft domain coverage, pack formats, Paper support, and generated surface availability.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
       additionalProperties: false,
     },
   },
@@ -698,6 +712,14 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "get_support_matrix") {
       return text(getSupportMatrix());
+    }
+    if (name === "list_version_support") {
+      return text(
+        listVersionSupport({
+          edition,
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
     }
     if (name === "get_cache_status") {
       return text({

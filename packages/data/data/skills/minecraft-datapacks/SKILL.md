@@ -23,16 +23,18 @@ version-specific facts.
    `getAuthoringPreflight({ domain: "datapack", version })` before generating files or commands.
 6. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific facts are bundled and which heavyweight facts are downloadable.
-7. If an observed datapack schema surface is needed but not available locally, inspect
+7. Use `version-support --domain datapack`, MCP `list_version_support`, or package
+   `listVersionSupport({ domain: "datapack" })` when choosing among target versions.
+8. If an observed datapack schema surface is needed but not available locally, inspect
    `data-manifest` or MCP `get_data_manifest`, then fetch the matching
    `datapack-schema-surface` entry before relying on it.
-8. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
+9. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
    describing command or vanilla data additions/removals.
-9. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
+10. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
    datapack JSON field shapes. Treat this as observed vanilla data, not a normative schema.
-10. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+11. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-11. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+12. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
@@ -40,6 +42,7 @@ version-specific facts.
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
   `minecraft-skills preflight datapack <version>`,
   `minecraft-skills authoring-checklist datapack`,
+  `minecraft-skills version-support --domain datapack`,
   `minecraft-skills fact-surfaces --domain datapack`,
   `minecraft-skills support-matrix`, `minecraft-skills data-manifest`,
   `minecraft-skills fetch-data datapack-schema-surface --version <version>`,

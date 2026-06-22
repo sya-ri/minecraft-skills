@@ -42,6 +42,7 @@ import {
   listPackFormats,
   listReferences,
   listSkills,
+  listVersionSupport,
   listVersions,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
@@ -114,6 +115,7 @@ Usage:
   minecraft-skills coverage
   minecraft-skills data-manifest
   minecraft-skills support-matrix
+  minecraft-skills version-support [--domain datapack|resourcepack|paper-plugin] [--edition java]
   minecraft-skills cache-dir
   minecraft-skills cache-list
   minecraft-skills cache-clean
@@ -162,6 +164,8 @@ Commands:
   coverage       Print bundled data coverage summary JSON.
   data-manifest  Print downloadable data manifest JSON.
   support-matrix Print version aliases and bundled/downloadable data support matrix.
+  version-support
+                 Print per-version domain coverage, pack formats, Paper support, and surface availability.
   cache-dir      Print the OS cache directory used by minecraft-skills.
   cache-list     Print cached data files for the current data version.
   cache-clean    Remove cached files for the current data version.
@@ -372,6 +376,17 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
 
     if (command === "support-matrix") {
       printJson(output, getSupportMatrix());
+      return 0;
+    }
+
+    if (command === "version-support") {
+      printJson(output, {
+        schemaVersion: 1,
+        versions: listVersionSupport({
+          edition,
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
       return 0;
     }
 

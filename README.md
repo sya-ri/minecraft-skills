@@ -53,6 +53,7 @@ minecraft-skills fact-surface datapack-schema-surface
 minecraft-skills coverage
 minecraft-skills data-manifest
 minecraft-skills support-matrix
+minecraft-skills version-support --domain paper-plugin
 minecraft-skills cache-dir
 minecraft-skills fetch-data paper-api-surface --version 1.21.11
 minecraft-skills versions
@@ -102,6 +103,8 @@ perform before writing data pack files, resource pack files, or Paper plugin cod
 `minecraft-skills preflight <domain> [version]` combines the checklist with resolved version
 coverage, relevant fact surfaces, support matrix data, and warnings for missing or unsupported
 facts.
+`minecraft-skills version-support` lists per-version pack formats, domain coverage, Paper support,
+and generated surface availability for target-version selection.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
@@ -168,6 +171,7 @@ import {
   getSkillPayload,
   getSupportMatrix,
   getVersionDetail,
+  listVersionSupport,
   listSkills,
   listAuthoringChecklists,
   listFactSurfaces,
@@ -188,6 +192,7 @@ const factSurfaces = listFactSurfaces({ domain: "datapack" });
 const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");
 const coverage = getCoverageSummary();
 const support = getSupportMatrix();
+const versionSupport = listVersionSupport({ domain: "paper-plugin" });
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const datapackSchema = getDatapackSchemaSurface("java", "26.2");

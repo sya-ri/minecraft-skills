@@ -55,6 +55,7 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_coverage_summary`
 - `get_data_manifest`
 - `get_support_matrix`
+- `list_version_support`
 - `get_cache_status`
 - `fetch_data`
 - `clean_cache`

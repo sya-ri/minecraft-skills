@@ -118,7 +118,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getFactSurface, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getFactSurface, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces, listVersionSupport } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
@@ -130,6 +130,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "1.21.11") throw new Error("bad support matrix");',
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
             'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
+            'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
             'if (!factSurface.nonGuarantees.includes("not a normative schema") || listFactSurfaces({ domain: "paper-plugin" }).length < 4) throw new Error("bad fact surfaces");',
             'if (getDatapackSchemaSurface("java", "26.2").coverage !== "vanilla-observed-datapack-json-shape") throw new Error("missing datapack schema surface");',
             'if (getPaperApiSurface("1.21.11").coverage !== "javadocs-search-index") throw new Error("missing Paper API surface");',
@@ -146,6 +147,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(runCommand("pnpm", ["exec", "minecraft-skills", "support-matrix"], consumerDir));
     if (!commands.at(-1)?.stdout.includes('"latestPaper": "1.21.11"')) {
       throw new Error("minecraft-skills support-matrix did not include latestPaper");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "version-support", "--domain", "paper-plugin"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes('"latestBuild": 69')) {
+      throw new Error("minecraft-skills version-support did not include latest Paper build");
     }
     commands.push(
       runCommand(

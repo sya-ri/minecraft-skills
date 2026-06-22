@@ -19,6 +19,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
     expect(tools.map((tool) => tool.name)).toContain("get_data_manifest");
     expect(tools.map((tool) => tool.name)).toContain("get_support_matrix");
+    expect(tools.map((tool) => tool.name)).toContain("list_version_support");
     expect(tools.map((tool) => tool.name)).toContain("get_cache_status");
     expect(tools.map((tool) => tool.name)).toContain("fetch_data");
     expect(tools.map((tool) => tool.name)).toContain("clean_cache");
@@ -156,6 +157,12 @@ describe("MCP tools", () => {
 
     const matrix = await callMinecraftSkillsTool("get_support_matrix", {});
     expect(matrix.content[0]?.text).toContain('"latestWithPaperApiSurface": "1.21.11"');
+
+    const versionSupport = await callMinecraftSkillsTool("list_version_support", {
+      domain: "paper-plugin",
+    });
+    expect(versionSupport.content[0]?.text).toContain('"version": "26.2"');
+    expect(versionSupport.content[0]?.text).toContain('"supported": false');
 
     const cache = await callMinecraftSkillsTool("get_cache_status", {});
     expect(cache.content[0]?.text).toContain('"cacheRoot"');

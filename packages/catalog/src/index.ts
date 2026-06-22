@@ -309,6 +309,44 @@ export type AuthoringPreflight = {
   warnings: string[];
 };
 
+export type VersionSupportQuery = {
+  edition?: string;
+  domain?: string;
+};
+
+export type VersionSupportEntry = {
+  edition: EditionData;
+  version: string;
+  type: string;
+  releaseTime: string;
+  packFormats: VersionDetailData["packFormats"];
+  domains: VersionDetailData["domains"];
+  paper: {
+    supported: boolean;
+    latestBuild: number | null;
+    buildCount: number | null;
+  };
+  surfaces: {
+    datapackSchemaSurface: {
+      bundled: boolean;
+      cached: boolean;
+      downloadable: boolean;
+      available: boolean;
+    };
+    paperApiSurface: {
+      bundled: boolean;
+      cached: boolean;
+      downloadable: boolean;
+      available: boolean;
+    };
+    resourcepackModels: {
+      bundled: boolean;
+      cached: boolean;
+      available: boolean;
+    };
+  };
+};
+
 export type SkillReferencePayload = {
   reference: ReferenceData;
   markdown: string;
@@ -655,6 +693,67 @@ export function getAuthoringPreflight(options: AuthoringPreflightOptions): Autho
     ...(paper ? { paper } : {}),
     warnings,
   };
+}
+
+function manifestHasDownloadable(kind: string, version: string): boolean {
+  return getDataManifest().downloadable.some(
+    (entry) => entry.kind === kind && entry.version === version,
+  );
+}
+
+export function listVersionSupport(query: VersionSupportQuery = {}): VersionSupportEntry[] {
+  const edition = Edition.assert(query.edition ?? "java");
+  const domain = query.domain ? DomainId.assert(query.domain) : undefined;
+  const paper = getPaperPluginData();
+
+  return listVersions(edition)
+    .map((summary) => {
+      const detail = getVersionDetail(edition, summary.id);
+      const paperBuild = paper.versionBuilds.find(
+        (candidate) => candidate.minecraftVersion === summary.id,
+      );
+      const datapackSchemaPath = `${edition}/datapack-schema-surfaces/${summary.id}.json`;
+      const paperApiSurfacePath = `${edition}/paper-api-surfaces/${summary.id}.json`;
+      const resourcepackModelsPath = `${edition}/resourcepack-models/${summary.id}.json`;
+      return {
+        edition,
+        version: summary.id,
+        type: summary.type,
+        releaseTime: summary.releaseTime,
+        packFormats: detail.packFormats,
+        domains: detail.domains,
+        paper: {
+          supported: paper.versions.includes(summary.id),
+          latestBuild: paperBuild?.latestBuild ?? null,
+          buildCount: paperBuild?.buildCount ?? null,
+        },
+        surfaces: {
+          datapackSchemaSurface: {
+            bundled: hasBundledDataFile(datapackSchemaPath),
+            cached: hasCachedDataFile(datapackSchemaPath),
+            downloadable: manifestHasDownloadable("datapack-schema-surface", summary.id),
+            available: hasDataFile(datapackSchemaPath),
+          },
+          paperApiSurface: {
+            bundled: hasBundledDataFile(paperApiSurfacePath),
+            cached: hasCachedDataFile(paperApiSurfacePath),
+            downloadable: manifestHasDownloadable("paper-api-surface", summary.id),
+            available: hasDataFile(paperApiSurfacePath),
+          },
+          resourcepackModels: {
+            bundled: hasBundledDataFile(resourcepackModelsPath),
+            cached: hasCachedDataFile(resourcepackModelsPath),
+            available: hasDataFile(resourcepackModelsPath),
+          },
+        },
+      };
+    })
+    .filter((entry) => {
+      if (!domain) {
+        return true;
+      }
+      return entry.domains[domain].status !== "seed";
+    });
 }
 
 export function getSkill(name: string): SkillData {

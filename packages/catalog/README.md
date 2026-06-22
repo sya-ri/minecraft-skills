@@ -37,6 +37,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listSkills,
+  listVersionSupport,
   listFactSurfaces,
   searchCommands,
   searchDatapackSchema,
@@ -56,6 +57,7 @@ const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
 const coverage = getCoverageSummary();
 const support = getSupportMatrix();
+const versionSupport = listVersionSupport({ domain: "paper-plugin" });
 const manifest = getDataManifest();
 await fetchData({ kind: "paper-api-surface", version: "1.21.11" });
 const reports = getJavaReportsSummary("java", "26.2");

@@ -29,6 +29,7 @@ import {
   listFactSurfaces,
   listPackFormats,
   listSkills,
+  listVersionSupport,
   resolveVersion,
   searchCommands,
   searchDatapackSchema,
@@ -132,6 +133,36 @@ describe("catalog", () => {
     expect(paper.paper?.supported).toBe(false);
     expect(paper.warnings.join("\n")).toContain("Paper is not marked supported for 26.2");
     expect(paper.domainCoverage.status).toBe("not-yet-published");
+  });
+
+  it("lists per-version support for target selection", () => {
+    const support = listVersionSupport({ domain: "paper-plugin" });
+    expect(support).toHaveLength(50);
+    expect(support[0]).toMatchObject({
+      edition: "java",
+      version: "26.2",
+      paper: {
+        supported: false,
+      },
+      surfaces: {
+        datapackSchemaSurface: {
+          available: true,
+        },
+      },
+    });
+    const latestPaper = support.find((entry) => entry.version === "1.21.11");
+    expect(latestPaper).toMatchObject({
+      paper: {
+        supported: true,
+        latestBuild: 69,
+      },
+      surfaces: {
+        paperApiSurface: {
+          available: true,
+          downloadable: true,
+        },
+      },
+    });
   });
 
   it("summarizes bundled coverage", () => {

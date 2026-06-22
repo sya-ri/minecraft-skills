@@ -30,6 +30,7 @@ const promptDefinitions: PromptDefinition[] = [
       "Minecraft Java datapack authoring, commands, server reports, pack formats, and vanilla data paths.",
     tools: [
       "get_support_matrix",
+      "list_version_support",
       "get_authoring_preflight",
       "get_authoring_checklist",
       "list_fact_surfaces",
@@ -59,6 +60,7 @@ const promptDefinitions: PromptDefinition[] = [
       "Minecraft Java resource pack authoring, pack formats, model summaries, and vanilla asset paths.",
     tools: [
       "get_support_matrix",
+      "list_version_support",
       "get_authoring_preflight",
       "get_authoring_checklist",
       "list_fact_surfaces",
@@ -83,6 +85,7 @@ const promptDefinitions: PromptDefinition[] = [
       "Paper plugin authoring, supported Minecraft versions, Paper API references, Javadocs indexes, Folia notes, and Bukkit/Paper events.",
     tools: [
       "get_support_matrix",
+      "list_version_support",
       "get_authoring_preflight",
       "get_authoring_checklist",
       "list_fact_surfaces",
@@ -133,6 +136,7 @@ ${tools}
 
 Preflight rules:
 - Prefer exact target-version data over latest-version data.
+- Call list_version_support when choosing among target versions or explaining coverage differences.
 - Call get_authoring_preflight for the relevant domain before generating files or code.
 - Call get_authoring_checklist if you need the checklist without version coverage.
 - Call list_fact_surfaces when you need to know what a data surface can and cannot prove.
