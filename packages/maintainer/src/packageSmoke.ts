@@ -117,9 +117,13 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getCoverageSummary, getDatapackSchemaSurface, getPaperApiSurface } from "@minecraft-skills/catalog";',
+            'import { getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getPaperApiSurface, getSupportMatrix } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
+            "const manifest = getDataManifest();",
+            "const support = getSupportMatrix();",
             'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.datapack.observedSchemaSurfaces !== 1 || coverage.java.paperPlugin.apiPackageIndexes !== 43 || coverage.java.paperPlugin.apiSurfaces !== 1 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
+            'if (manifest.downloadable.length !== 2 || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
+            'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "1.21.11") throw new Error("bad support matrix");',
             'if (getDatapackSchemaSurface("java", "26.2").coverage !== "vanilla-observed-datapack-json-shape") throw new Error("missing datapack schema surface");',
             'if (getPaperApiSurface("1.21.11").coverage !== "javadocs-search-index") throw new Error("missing Paper API surface");',
           ].join(" "),
@@ -131,6 +135,10 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     const latest = commands.at(-1)?.stdout;
     if (latest !== "26.2") {
       throw new Error(`minecraft-skills latest returned ${latest}, expected 26.2`);
+    }
+    commands.push(runCommand("pnpm", ["exec", "minecraft-skills", "support-matrix"], consumerDir));
+    if (!commands.at(-1)?.stdout.includes('"latestPaper": "1.21.11"')) {
+      throw new Error("minecraft-skills support-matrix did not include latestPaper");
     }
     commands.push(
       runCommand(

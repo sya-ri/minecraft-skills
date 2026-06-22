@@ -1,4 +1,10 @@
-import { getSkillPayload, listSkills } from "@minecraft-skills/catalog";
+import {
+  getDataManifest,
+  getDatapackSchemaSurface,
+  getPaperApiSurface,
+  getSkillPayload,
+  listSkills,
+} from "@minecraft-skills/catalog";
 
 type Resource = {
   uri: string;
@@ -25,6 +31,7 @@ type SkillResource = {
 };
 
 const resourceBase = "minecraft-skills://skills";
+const dataResourceBase = "minecraft-skills://data";
 
 function textSize(text: string): number {
   return Buffer.byteLength(text, "utf8");
@@ -65,15 +72,79 @@ function makeSkillResources(skillName: string): SkillResource[] {
 }
 
 export function listMinecraftSkillsResources(): Resource[] {
-  return listSkills().flatMap((skill) =>
+  const skillResources = listSkills().flatMap((skill) =>
     makeSkillResources(skill.name).map(({ text, ...resource }) => ({
       ...resource,
       size: textSize(text),
     })),
   );
+  const manifest = getDataManifest();
+  const dataResources: Resource[] = [
+    {
+      uri: `${dataResourceBase}/data-manifest.json`,
+      name: "data-manifest.json",
+      title: "Minecraft Skills data manifest",
+      description: "Downloadable data manifest for minecraft-skills.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(manifest, null, 2)),
+    },
+    ...manifest.downloadable.map((entry) => ({
+      uri: `${dataResourceBase}/${entry.path}`,
+      name: entry.path,
+      title: `${entry.kind} ${entry.version ?? ""}`.trim(),
+      description: `Downloadable ${entry.kind} data for ${entry.version ?? entry.path}.`,
+      mimeType: "application/json",
+      size: entry.size,
+    })),
+  ];
+  return [...skillResources, ...dataResources];
 }
 
 export function readMinecraftSkillsResource(uri: string): { contents: ResourceContent[] } {
+  if (uri === `${dataResourceBase}/data-manifest.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(getDataManifest(), null, 2),
+        },
+      ],
+    };
+  }
+
+  const dataPrefix = `${dataResourceBase}/`;
+  if (uri.startsWith(dataPrefix)) {
+    const path = uri.slice(dataPrefix.length);
+    const entry = getDataManifest().downloadable.find((candidate) => candidate.path === path);
+    if (entry?.kind === "datapack-schema-surface" && entry.version) {
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(
+              getDatapackSchemaSurface(entry.edition ?? "java", entry.version),
+              null,
+              2,
+            ),
+          },
+        ],
+      };
+    }
+    if (entry?.kind === "paper-api-surface" && entry.version) {
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getPaperApiSurface(entry.version), null, 2),
+          },
+        ],
+      };
+    }
+  }
+
   for (const skill of listSkills()) {
     const found = makeSkillResources(skill.name).find((resource) => resource.uri === uri);
     if (found) {

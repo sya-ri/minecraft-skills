@@ -44,6 +44,35 @@ that point outside the package, which would make the published `@minecraft-skill
 the skill payloads. Repository validation checks that each mirrored skill payload matches the
 canonical `skills/` source.
 
+## Downloadable Data Manifest
+
+Heavy generated facts can be published as downloadable data entries in
+`packages/data/data/data-manifest.json`. Each entry must identify the relative data path, kind,
+version when applicable, byte size, SHA-256 digest, and download URL. Runtime fetchers verify the
+digest before moving files into the cache.
+
+Use this policy when adding entries:
+
+- Keep small indexes and skill payloads bundled so agents can start offline.
+- Put large generated surfaces in the manifest when they are expensive to ship repeatedly or useful
+  to refresh independently of code.
+- Never point an entry at prose copied from Minecraft Wiki or Javadocs. The downloadable file must
+  contain redistributable generated facts, source links, or original guidance.
+- Prefer immutable release asset URLs for public releases. `raw.githubusercontent.com/.../main/...`
+  is acceptable only while the repository is unreleased or for development snapshots.
+- Increment `dataVersion` when changing a downloadable file's bytes, path, hash, or semantics.
+
+Cache locations are runtime behavior and should stay stable:
+
+- macOS: `~/Library/Caches/minecraft-skills`
+- Linux: `${XDG_CACHE_HOME:-~/.cache}/minecraft-skills`
+- Windows: `%LOCALAPPDATA%\minecraft-skills\Cache`
+- Override: `MINECRAFT_SKILLS_CACHE_DIR`
+
+After adding or regenerating downloadable entries, update the manifest size and SHA-256 from the
+checked-in files and run package smoke tests. A packed consumer must be able to read the manifest,
+support matrix, bundled fallback data, and cached data paths.
+
 ## Maintainer Flow
 
 Before publishing or claiming the bundled data is current, compare checked-in latest metadata with

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "2026.06.22-1",
+  "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data",
+  "cache": {
+    "environmentVariable": "MINECRAFT_SKILLS_CACHE_DIR"
+  },
+  "downloadable": [
+    {
+      "path": "java/datapack-schema-surfaces/26.2.json",
+      "kind": "datapack-schema-surface",
+      "edition": "java",
+      "version": "26.2",
+      "size": 4935098,
+      "sha256": "eb1aed9b90f2319f8cdd384bba5ba4951f069a3ffc8944c9dff47952edc64f1a",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/datapack-schema-surfaces/26.2.json"
+    },
+    {
+      "path": "java/paper-api-surfaces/1.21.11.json",
+      "kind": "paper-api-surface",
+      "edition": "java",
+      "version": "1.21.11",
+      "size": 11872152,
+      "sha256": "005657a20bf10b4c93a95fbc4d4b905cb4cce22c15b13767886baeb368106612",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/paper-api-surfaces/1.21.11.json"
+    }
+  ]
+}

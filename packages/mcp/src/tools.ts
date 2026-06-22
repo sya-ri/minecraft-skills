@@ -1,6 +1,7 @@
 import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
+  cleanCachedData,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -9,7 +10,11 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  fetchData,
+  getCacheDataRoot,
+  getCacheRoot,
   getCoverageSummary,
+  getDataManifest,
   getDatapackSchemaSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -19,8 +24,10 @@ import {
   getResourcepackModelSummary,
   getSkillPayload,
   getSourcePolicy,
+  getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
+  listCachedDataFiles,
   listDomains,
   listPackFormats,
   listReferences,
@@ -100,6 +107,59 @@ export const tools: ToolDefinition[] = [
     name: "get_coverage_summary",
     description:
       "Get bundled data coverage counts for Java versions, datapacks, resourcepacks, Paper plugins, and packaged skills.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_data_manifest",
+    description: "Get the downloadable minecraft-skills data manifest and current data version.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_support_matrix",
+    description:
+      "Get version aliases and bundled/downloadable data support matrix for choosing the right Minecraft data target.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_cache_status",
+    description: "Get minecraft-skills cache directory and cached data files.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "fetch_data",
+    description:
+      "Download manifest data entries into the local minecraft-skills cache by kind, version, or path.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        kind: { type: "string" },
+        version: { type: "string" },
+        path: { type: "string" },
+        baseUrl: { type: "string" },
+        force: { type: "boolean", default: false },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "clean_cache",
+    description: "Remove cached files for the current minecraft-skills data version.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -527,6 +587,33 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "get_coverage_summary") {
       return text(getCoverageSummary());
+    }
+    if (name === "get_data_manifest") {
+      return text(getDataManifest());
+    }
+    if (name === "get_support_matrix") {
+      return text(getSupportMatrix());
+    }
+    if (name === "get_cache_status") {
+      return text({
+        cacheRoot: getCacheRoot(),
+        dataRoot: getCacheDataRoot(),
+        files: listCachedDataFiles(),
+      });
+    }
+    if (name === "fetch_data") {
+      return text(
+        await fetchData({
+          ...(typeof args.kind === "string" ? { kind: args.kind } : {}),
+          ...(typeof args.version === "string" ? { version: args.version } : {}),
+          ...(typeof args.path === "string" ? { path: args.path } : {}),
+          ...(typeof args.baseUrl === "string" ? { baseUrl: args.baseUrl } : {}),
+          force: args.force === true,
+        }),
+      );
+    }
+    if (name === "clean_cache") {
+      return text(cleanCachedData());
     }
     if (name === "latest_version") {
       return text(resolveVersion(edition, "latest"));

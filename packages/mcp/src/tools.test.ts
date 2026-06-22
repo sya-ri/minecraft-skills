@@ -12,6 +12,11 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("list_skills");
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
+    expect(tools.map((tool) => tool.name)).toContain("get_data_manifest");
+    expect(tools.map((tool) => tool.name)).toContain("get_support_matrix");
+    expect(tools.map((tool) => tool.name)).toContain("get_cache_status");
+    expect(tools.map((tool) => tool.name)).toContain("fetch_data");
+    expect(tools.map((tool) => tool.name)).toContain("clean_cache");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
@@ -97,6 +102,17 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"complete": true');
     expect(result.content[0]?.text).toContain('"latestSupportedVersion": "1.21.11"');
     expect(result.content[0]?.text).toContain('"packagedPayloads": 3');
+  });
+
+  it("calls data manifest and cache tools", async () => {
+    const manifest = await callMinecraftSkillsTool("get_data_manifest", {});
+    expect(manifest.content[0]?.text).toContain('"dataVersion": "2026.06.22-1"');
+
+    const matrix = await callMinecraftSkillsTool("get_support_matrix", {});
+    expect(matrix.content[0]?.text).toContain('"latestWithPaperApiSurface": "1.21.11"');
+
+    const cache = await callMinecraftSkillsTool("get_cache_status", {});
+    expect(cache.content[0]?.text).toContain('"cacheRoot"');
   });
 
   it("returns errors as tool results", async () => {

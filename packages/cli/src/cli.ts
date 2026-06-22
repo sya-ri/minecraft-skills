@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   type CommandComparisonOptions,
   type CommandSearchOptions,
+  cleanCachedData,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -13,7 +14,11 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  fetchData,
+  getCacheDataRoot,
+  getCacheRoot,
   getCoverageSummary,
+  getDataManifest,
   getDatapackSchemaSurface,
   getDomain,
   getJavaReportsSummary,
@@ -24,8 +29,10 @@ import {
   getResourcepackModelSummary,
   getSkillPayload,
   getSourcePolicy,
+  getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
+  listCachedDataFiles,
   listDomains,
   listPackFormats,
   listReferences,
@@ -95,6 +102,12 @@ Usage:
   minecraft-skills skill <name>
   minecraft-skills write-skill <name> --output <dir> [--force]
   minecraft-skills coverage
+  minecraft-skills data-manifest
+  minecraft-skills support-matrix
+  minecraft-skills cache-dir
+  minecraft-skills cache-list
+  minecraft-skills cache-clean
+  minecraft-skills fetch-data <kind> [--version version] [--path path] [--base-url url] [--force]
   minecraft-skills latest [--edition java]
   minecraft-skills versions [--edition java]
   minecraft-skills pack-formats [--edition java]
@@ -130,6 +143,12 @@ Commands:
   skill          Print packaged Agent Skill payload JSON.
   write-skill    Write a packaged Agent Skill folder to disk.
   coverage       Print bundled data coverage summary JSON.
+  data-manifest  Print downloadable data manifest JSON.
+  support-matrix Print version aliases and bundled/downloadable data support matrix.
+  cache-dir      Print the OS cache directory used by minecraft-skills.
+  cache-list     Print cached data files for the current data version.
+  cache-clean    Remove cached files for the current data version.
+  fetch-data     Download manifest data entries into the local cache.
   latest         Print the latest bundled version for an edition.
   versions       List bundled version metadata.
   pack-formats   List data/resource pack formats and Paper support by version.
@@ -272,6 +291,54 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
 
     if (command === "coverage") {
       printJson(output, getCoverageSummary());
+      return 0;
+    }
+
+    if (command === "data-manifest") {
+      printJson(output, getDataManifest());
+      return 0;
+    }
+
+    if (command === "support-matrix") {
+      printJson(output, getSupportMatrix());
+      return 0;
+    }
+
+    if (command === "cache-dir") {
+      output.write(getCacheRoot());
+      return 0;
+    }
+
+    if (command === "cache-list") {
+      printJson(output, {
+        cacheRoot: getCacheRoot(),
+        dataRoot: getCacheDataRoot(),
+        files: listCachedDataFiles(),
+      });
+      return 0;
+    }
+
+    if (command === "cache-clean") {
+      output.write(cleanCachedData());
+      return 0;
+    }
+
+    if (command === "fetch-data") {
+      const [kind] = positionalArgs(args);
+      const path = args.includes("--path") ? readOption(args, "--path", "") : undefined;
+      if (!kind && !path) {
+        throw new Error("fetch-data command requires <kind> or --path <path>");
+      }
+      printJson(
+        output,
+        await fetchData({
+          ...(kind ? { kind } : {}),
+          ...(path ? { path } : {}),
+          ...(args.includes("--version") ? { version: readOption(args, "--version", "") } : {}),
+          ...(args.includes("--base-url") ? { baseUrl: readOption(args, "--base-url", "") } : {}),
+          force: args.includes("--force"),
+        }),
+      );
       return 0;
     }
 

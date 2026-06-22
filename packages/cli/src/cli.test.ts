@@ -76,6 +76,64 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain('"packagedPayloads": 3');
   });
 
+  it("prints data manifest and cache state", async () => {
+    const manifest = await capture(["data-manifest"]);
+    expect(manifest.code).toBe(0);
+    expect(manifest.stdout.join("\n")).toContain('"dataVersion": "2026.06.22-1"');
+
+    const cacheDir = await capture(["cache-dir"]);
+    expect(cacheDir.code).toBe(0);
+    expect(cacheDir.stdout[0]).toContain("minecraft-skills");
+
+    const cacheList = await capture(["cache-list"]);
+    expect(cacheList.code).toBe(0);
+    expect(cacheList.stdout.join("\n")).toContain('"files"');
+  });
+
+  it("prints support matrix aliases", async () => {
+    const result = await capture(["support-matrix"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"latestWithDatapackSchemaSurface": "26.2"');
+    expect(result.stdout.join("\n")).toContain('"latestWithPaperApiSurface": "1.21.11"');
+  });
+
+  it("fetches downloadable data into the cache", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-cli-cache-"));
+    const previousCacheDir = process.env.MINECRAFT_SKILLS_CACHE_DIR;
+    process.env.MINECRAFT_SKILLS_CACHE_DIR = root;
+    try {
+      const body = readFileSync(
+        join(process.cwd(), "../data/data/java/datapack-schema-surfaces/26.2.json"),
+      );
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async (_url: string) => ({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          arrayBuffer: async () => body,
+        })),
+      );
+
+      const result = await capture([
+        "fetch-data",
+        "datapack-schema-surface",
+        "--version",
+        "26.2",
+        "--force",
+      ]);
+      expect(result.code).toBe(0);
+      expect(result.stdout.join("\n")).toContain("java/datapack-schema-surfaces/26.2.json");
+    } finally {
+      if (previousCacheDir === undefined) {
+        delete process.env.MINECRAFT_SKILLS_CACHE_DIR;
+      } else {
+        process.env.MINECRAFT_SKILLS_CACHE_DIR = previousCacheDir;
+      }
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("prints latest Java version", async () => {
     expect((await capture(["latest"])).stdout).toEqual(["26.2"]);
   });
@@ -162,6 +220,7 @@ describe("minecraft-skills CLI", () => {
     const result = await capture(["compare-paper-api-surface", "1.21.11", "1.21.11"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"addedTypes": []');
+    expect(result.stdout.join("\n")).toContain('"changes": []');
   });
 
   it("prints vanilla inventory", async () => {
@@ -195,6 +254,7 @@ describe("minecraft-skills CLI", () => {
     const result = await capture(["compare-datapack-schema", "26.2", "26.2"]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"addedTotal": 0');
+    expect(result.stdout.join("\n")).toContain('"changes": []');
   });
 
   it("searches vanilla paths", async () => {

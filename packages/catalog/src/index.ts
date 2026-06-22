@@ -1,4 +1,20 @@
-import { hasDataFile, readDataJson, readDataText } from "@minecraft-skills/data";
+import {
+  type CachedDataFile,
+  cleanCachedData,
+  type DataManifest,
+  type DataManifestEntry,
+  type FetchDataOptions,
+  type FetchDataResult,
+  fetchData,
+  getCacheDataRoot,
+  getCacheRoot,
+  getDataManifest,
+  hasBundledDataFile,
+  hasDataFile,
+  listCachedDataFiles,
+  readDataJson,
+  readDataText,
+} from "@minecraft-skills/data";
 import {
   Catalog,
   type CatalogData,
@@ -33,10 +49,15 @@ import {
 } from "./schemas.js";
 
 export type {
+  CachedDataFile,
   CatalogData,
+  DataManifest,
+  DataManifestEntry,
   DomainData,
   DomainIdData,
   EditionData,
+  FetchDataOptions,
+  FetchDataResult,
   JavaReportsSummaryData,
   ObservedDatapackSchemaSurfaceData,
   PaperApiIndexData,
@@ -51,6 +72,15 @@ export type {
   VersionDetailData,
   VersionIndexData,
   VersionSummaryData,
+};
+
+export {
+  cleanCachedData,
+  fetchData,
+  getCacheDataRoot,
+  getCacheRoot,
+  getDataManifest,
+  listCachedDataFiles,
 };
 
 export type PackFormatSummary = {
@@ -196,6 +226,35 @@ export type PaperApiSurfaceComparison = {
   removedTypes: PaperApiTypeData[];
   addedMembers: PaperApiMemberData[];
   removedMembers: PaperApiMemberData[];
+  changes: Array<
+    | { change: "added_type"; type: PaperApiTypeData }
+    | { change: "removed_type"; type: PaperApiTypeData }
+    | { change: "added_member"; member: PaperApiMemberData }
+    | { change: "removed_member"; member: PaperApiMemberData }
+  >;
+};
+
+export type SupportMatrix = {
+  schemaVersion: 1;
+  aliases: {
+    latestJava: string;
+    latestPaper: string;
+    latestWithDatapackSchemaSurface: string | null;
+    latestWithPaperApiSurface: string | null;
+    latestWithResourcepackModels: string | null;
+  };
+  bundled: {
+    javaVersions: number;
+    paperVersions: number;
+    datapackSchemaSurfaces: string[];
+    paperApiSurfaces: string[];
+    resourcepackModelSummaries: string[];
+  };
+  downloadable: Array<{
+    kind: string;
+    version?: string;
+    path: string;
+  }>;
 };
 
 export type SkillReferencePayload = {
@@ -354,6 +413,10 @@ export type DatapackSchemaComparisonResult = {
   truncated: boolean;
   added: Array<{ kind: string; path: string }>;
   removed: Array<{ kind: string; path: string }>;
+  changes: Array<
+    | { change: "field_path_added"; field: { kind: string; path: string } }
+    | { change: "field_path_removed"; field: { kind: string; path: string } }
+  >;
 };
 
 export type CommandSearchOptions = {
@@ -860,6 +923,43 @@ export function getCoverageSummary(): CoverageSummary {
   };
 }
 
+export function getSupportMatrix(): SupportMatrix {
+  const versions = listVersions("java");
+  const paper = getPaperPluginData();
+  const datapackSchemaSurfaces = versions
+    .map((version) => version.id)
+    .filter((version) => hasBundledDataFile(`java/datapack-schema-surfaces/${version}.json`));
+  const paperApiSurfaces = paper.versions.filter((version) =>
+    hasBundledDataFile(`java/paper-api-surfaces/${version}.json`),
+  );
+  const resourcepackModelSummaries = versions
+    .map((version) => version.id)
+    .filter((version) => hasBundledDataFile(`java/resourcepack-models/${version}.json`));
+
+  return {
+    schemaVersion: 1,
+    aliases: {
+      latestJava: versions[0]?.id ?? "",
+      latestPaper: paper.latest.minecraftVersion,
+      latestWithDatapackSchemaSurface: datapackSchemaSurfaces[0] ?? null,
+      latestWithPaperApiSurface: paperApiSurfaces[0] ?? null,
+      latestWithResourcepackModels: resourcepackModelSummaries[0] ?? null,
+    },
+    bundled: {
+      javaVersions: versions.length,
+      paperVersions: paper.versions.length,
+      datapackSchemaSurfaces,
+      paperApiSurfaces,
+      resourcepackModelSummaries,
+    },
+    downloadable: getDataManifest().downloadable.map((entry) => ({
+      kind: entry.kind,
+      ...(entry.version ? { version: entry.version } : {}),
+      path: entry.path,
+    })),
+  };
+}
+
 export function getPaperPluginData(): PaperPluginDataData {
   return PaperPluginData.assert(readDataJson("java/paper.json"));
 }
@@ -1036,6 +1136,10 @@ export function comparePaperApiSurface(
   const toTypes = new Map(to.types.map((entry) => [entry.qualifiedName, entry]));
   const fromMembers = new Map(from.members.map((entry) => [memberKey(entry), entry]));
   const toMembers = new Map(to.members.map((entry) => [memberKey(entry), entry]));
+  const addedTypes = to.types.filter((entry) => !fromTypes.has(entry.qualifiedName));
+  const removedTypes = from.types.filter((entry) => !toTypes.has(entry.qualifiedName));
+  const addedMembers = to.members.filter((entry) => !fromMembers.has(memberKey(entry)));
+  const removedMembers = from.members.filter((entry) => !toMembers.has(memberKey(entry)));
 
   return {
     from: from.minecraftVersion,
@@ -1050,10 +1154,16 @@ export function comparePaperApiSurface(
       to: to.memberCount,
       changed: from.memberCount !== to.memberCount,
     },
-    addedTypes: to.types.filter((entry) => !fromTypes.has(entry.qualifiedName)),
-    removedTypes: from.types.filter((entry) => !toTypes.has(entry.qualifiedName)),
-    addedMembers: to.members.filter((entry) => !fromMembers.has(memberKey(entry))),
-    removedMembers: from.members.filter((entry) => !toMembers.has(memberKey(entry))),
+    addedTypes,
+    removedTypes,
+    addedMembers,
+    removedMembers,
+    changes: [
+      ...addedTypes.map((type) => ({ change: "added_type" as const, type })),
+      ...removedTypes.map((type) => ({ change: "removed_type" as const, type })),
+      ...addedMembers.map((member) => ({ change: "added_member" as const, member })),
+      ...removedMembers.map((member) => ({ change: "removed_member" as const, member })),
+    ],
   };
 }
 
@@ -1212,6 +1322,10 @@ export function compareDatapackSchema(
     truncated: added.length > limit || removed.length > limit,
     added: added.slice(0, limit),
     removed: removed.slice(0, limit),
+    changes: [
+      ...added.map((field) => ({ change: "field_path_added" as const, field })),
+      ...removed.map((field) => ({ change: "field_path_removed" as const, field })),
+    ].slice(0, limit),
   };
 }
 

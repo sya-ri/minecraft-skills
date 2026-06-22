@@ -46,6 +46,10 @@ minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills coverage
+minecraft-skills data-manifest
+minecraft-skills support-matrix
+minecraft-skills cache-dir
+minecraft-skills fetch-data paper-api-surface --version 1.21.11
 minecraft-skills versions
 minecraft-skills pack-formats
 minecraft-skills show-version 1.21.11
@@ -90,6 +94,11 @@ event discovery. `minecraft-skills skill <name>` returns the packaged Agent Skil
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
 preserving `SKILL.md`, `agents/openai.yaml`, and generated references.
+`minecraft-skills data-manifest`, `cache-dir`, `cache-list`, `cache-clean`, and `fetch-data` expose
+downloadable heavy data and the local OS cache used by catalog lookups. Cache defaults are
+`~/Library/Caches/minecraft-skills` on macOS, `${XDG_CACHE_HOME:-~/.cache}/minecraft-skills` on
+Linux, and `%LOCALAPPDATA%\minecraft-skills\Cache` on Windows. Set
+`MINECRAFT_SKILLS_CACHE_DIR` to override the location.
 
 ## MCP
 
@@ -115,7 +124,8 @@ Typical stdio MCP client config:
 The server exposes tools for version lookup, pack formats, server reports, command search and
 comparison, observed datapack schema search/comparison, vanilla asset/data path search and
 comparison, resource pack model summaries, Paper support metadata, Paper type/member surface search,
-installable skill folder discovery, packaged skill payload lookup, and Paper/Bukkit event search.
+data manifest/cache status/fetch operations, installable skill folder discovery, packaged skill
+payload lookup, and Paper/Bukkit event search.
 
 The server also exposes Agent Skill files as MCP resources under
 `minecraft-skills://skills/<skill>/...`, including `SKILL.md`, `agents/openai.yaml`, and generated
@@ -141,6 +151,7 @@ import {
   getPaperApiSurface,
   getResourcepackModelSummary,
   getSkillPayload,
+  getSupportMatrix,
   getVersionDetail,
   listSkills,
   searchCommands,
@@ -154,6 +165,7 @@ const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const coverage = getCoverageSummary();
+const support = getSupportMatrix();
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const datapackSchema = getDatapackSchemaSurface("java", "26.2");

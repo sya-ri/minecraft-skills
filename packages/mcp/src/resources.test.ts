@@ -17,6 +17,19 @@ describe("MCP resources", () => {
     expect(resources.every((resource) => resource.size > 0)).toBe(true);
   });
 
+  it("lists data manifest and downloadable data resources", () => {
+    const resources = listMinecraftSkillsResources();
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/data-manifest.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/java/datapack-schema-surfaces/26.2.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/java/paper-api-surfaces/1.21.11.json",
+    );
+  });
+
   it("exposes every catalog skill payload as resources", () => {
     const resources = listMinecraftSkillsResources();
     const uris = new Set(resources.map((resource) => resource.uri));
@@ -45,6 +58,16 @@ describe("MCP resources", () => {
         text: expect.stringContaining("# Minecraft Paper Plugins"),
       }),
     ]);
+  });
+
+  it("reads data resources", () => {
+    const manifest = readMinecraftSkillsResource("minecraft-skills://data/data-manifest.json");
+    expect(manifest.contents[0]?.text).toContain('"dataVersion": "2026.06.22-1"');
+
+    const paperSurface = readMinecraftSkillsResource(
+      "minecraft-skills://data/java/paper-api-surfaces/1.21.11.json",
+    );
+    expect(paperSurface.contents[0]?.text).toContain('"coverage": "javadocs-search-index"');
   });
 
   it("rejects unknown resources", () => {

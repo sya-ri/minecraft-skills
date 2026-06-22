@@ -18,6 +18,7 @@ import {
   getResourcepackModelSummary,
   getSkillPayload,
   getSourcePolicy,
+  getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
   listDomains,
@@ -105,6 +106,22 @@ describe("catalog", () => {
       total: 3,
       packagedPayloads: 3,
     });
+  });
+
+  it("exposes support matrix aliases for data selection", () => {
+    const matrix = getSupportMatrix();
+    expect(matrix.aliases).toMatchObject({
+      latestJava: "26.2",
+      latestPaper: "1.21.11",
+      latestWithDatapackSchemaSurface: "26.2",
+      latestWithPaperApiSurface: "1.21.11",
+    });
+    expect(matrix.downloadable).toContainEqual(
+      expect.objectContaining({
+        kind: "datapack-schema-surface",
+        version: "26.2",
+      }),
+    );
   });
 
   it("resolves the latest Java version", () => {
@@ -244,6 +261,7 @@ describe("catalog", () => {
     expect(comparison.memberCount.changed).toBe(false);
     expect(comparison.addedTypes).toEqual([]);
     expect(comparison.removedMembers).toEqual([]);
+    expect(comparison.changes).toEqual([]);
   });
 
   it("builds Paper API references for unsupported future versions", () => {
@@ -336,6 +354,7 @@ describe("catalog", () => {
     expect(comparison.addedTotal).toBe(0);
     expect(comparison.removedTotal).toBe(0);
     expect(comparison.added).toEqual([]);
+    expect(comparison.changes).toEqual([]);
   });
 
   it("annotates version details when vanilla inventory is bundled", () => {
