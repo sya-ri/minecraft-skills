@@ -53,8 +53,11 @@ minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper search-scenarios "Paper event listener"
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills datapack recipes
+minecraft-skills datapack classify-files data/example/advancement/root.json
+minecraft-skills datapack migration-plan 1.20.6 1.21 data/example/advancement/root.json
 minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
+minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 ```
 

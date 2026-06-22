@@ -80,6 +80,9 @@ minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills datapack schema 26.2
 minecraft-skills datapack search-schema 26.2 --kind advancement --contains criteria
 minecraft-skills datapack compare-schema 26.2 26.2 --kind advancement
+minecraft-skills datapack classify-files data/example/advancement/root.json data/example/functions/tick.mcfunction
+minecraft-skills datapack file-schema 26.2 data/example/advancement/root.json
+minecraft-skills datapack migration-plan 1.20.6 1.21 data/example/advancement/root.json
 minecraft-skills datapack vanilla-paths 26.2 --contains recipe
 ```
 
@@ -90,6 +93,9 @@ minecraft-skills resourcepack vanilla-paths 26.2 --contains models/block/acacia_
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack models 26.2
 minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
+minecraft-skills resourcepack classify-files assets/example/items/widget.json assets/example/textures/item/widget.png
+minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
+minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 ```
 
 Paper plugin lookups:
@@ -168,6 +174,12 @@ The server exposes the same catalog as tools, resources, and prompts. Prompts:
 - `use_minecraft_datapacks`
 - `use_minecraft_resourcepacks`
 - `use_minecraft_paper_plugins`
+
+Pack analysis tools include:
+
+- `classify_pack_files`
+- `get_pack_file_schema`
+- `get_pack_migration_plan`
 
 Skill and data resources are exposed under:
 
