@@ -466,14 +466,32 @@ function requireAuthoringRecipes(
 function requireAuthoringScenarios(root: string, messages: string[]): void {
   requireDataFile(root, "authoring-scenarios.json", messages);
   const domains = new Set(listDomains().map((domain) => domain.id));
+  const recipeDomains = new Map(
+    listAuthoringRecipes().map((recipe) => [recipe.id, recipe.domains] as const),
+  );
+  const intentDomains = new Map(
+    listIntentLookups().map((intent) => [intent.id, intent.domains] as const),
+  );
+  const diagnosticDomains = new Map(
+    listAuthoringDiagnostics().map((diagnostic) => [diagnostic.id, diagnostic.domains] as const),
+  );
+  const claimPolicyDomains = new Map(
+    listClaimPolicies().map((policy) => [policy.id, policy.domains] as const),
+  );
+  const factSurfaceDomains = new Map(
+    listFactSurfaces().map((surface) => [surface.id, surface.domains] as const),
+  );
+  const responsePatternDomains = new Map(
+    listResponsePatterns().map((pattern) => [pattern.id, pattern.domains] as const),
+  );
   const ids = new Set<string>();
   const referenced = {
-    recipes: new Set(listAuthoringRecipes().map((recipe) => recipe.id)),
-    intents: new Set(listIntentLookups().map((intent) => intent.id)),
-    diagnostics: new Set(listAuthoringDiagnostics().map((diagnostic) => diagnostic.id)),
-    claimPolicies: new Set(listClaimPolicies().map((policy) => policy.id)),
-    factSurfaces: new Set(listFactSurfaces().map((surface) => surface.id)),
-    responsePatterns: new Set(listResponsePatterns().map((pattern) => pattern.id)),
+    recipes: recipeDomains,
+    intents: intentDomains,
+    diagnostics: diagnosticDomains,
+    claimPolicies: claimPolicyDomains,
+    factSurfaces: factSurfaceDomains,
+    responsePatterns: responsePatternDomains,
   };
   for (const scenario of listAuthoringScenarios()) {
     const prefix = `authoring scenario ${scenario.id}`;
@@ -510,8 +528,13 @@ function requireAuthoringScenarios(root: string, messages: string[]): void {
         messages.push(`${prefix} must reference at least one ${kind} entry`);
       }
       for (const id of actualIds) {
-        if (!expectedIds.has(id)) {
+        const referencedDomains = expectedIds.get(id);
+        if (!referencedDomains) {
           messages.push(`${prefix} references unknown ${kind} entry: ${id}`);
+          continue;
+        }
+        if (!referencedDomains.some((domain) => scenario.domains.includes(domain))) {
+          messages.push(`${prefix} references ${kind} entry outside scenario domains: ${id}`);
         }
       }
     }
