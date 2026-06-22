@@ -18,24 +18,8 @@ The project helps AI check real versioned data before it writes code or pack fil
 
 ## Start Here
 
-Use the Agent Skill folders when your AI tool supports installing skills directly from a GitHub
-repository path:
-
-```sh
-gh skills install sya-ri/minecraft-skills/skills/minecraft-datapacks
-gh skills install sya-ri/minecraft-skills/skills/minecraft-resourcepacks
-gh skills install sya-ri/minecraft-skills/skills/minecraft-paper-plugins
-```
-
-Or with an npm-based skills installer:
-
-```sh
-npx skills install sya-ri/minecraft-skills/skills/minecraft-datapacks
-npx skills install sya-ri/minecraft-skills/skills/minecraft-resourcepacks
-npx skills install sya-ri/minecraft-skills/skills/minecraft-paper-plugins
-```
-
-Configure the MCP server when your AI client supports stdio MCP:
+For AI clients that support MCP, start with the MCP server. It exposes the versioned data, authoring
+contexts, prompts, and lookup tools directly to the agent:
 
 ```json
 {
@@ -47,6 +31,13 @@ Configure the MCP server when your AI client supports stdio MCP:
   }
 }
 ```
+
+Then add the Agent Skill folders when your AI tool supports external skills. Use the installer
+syntax for your tool, and point it at one or more of these repository folders:
+
+- `skills/minecraft-datapacks`
+- `skills/minecraft-resourcepacks`
+- `skills/minecraft-paper-plugins`
 
 Install and run manually:
 
