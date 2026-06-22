@@ -4,31 +4,53 @@ All notable changes to this project are documented here.
 
 ## 0.1.0 - 2026-06-22
 
-### Added
+Initial public release of minecraft-skills.
 
-- Public CLI, package API, MCP server, and Agent Skill payloads for Minecraft datapack,
-  resourcepack, and Paper plugin authoring.
-- Java Edition 1.13+ version, pack format, command path, vanilla path, inventory, reports, and
-  coverage metadata.
-- Paper plugin support metadata, package indexes, Javadocs-derived type/member API surfaces, and
-  event-search routing through the `sya-ri/spigot-event-list` API contract.
+### Packages
+
+- `minecraft-skills`: public CLI for Minecraft version, datapack, resourcepack, Paper plugin, data,
+  and skill lookups.
+- `@minecraft-skills/catalog`: ArkType-validated package API for agents and tools.
+- `@minecraft-skills/data`: bundled canonical indexes plus a heavy-data manifest for on-demand
+  downloads.
+- `@minecraft-skills/mcp`: MCP server exposing the same versioned facts and authoring workflows.
+
+### Skills
+
+- Agent Skill payloads for Minecraft Java datapacks, resourcepacks, and Paper plugins.
+- Shared agent maintenance skill for future Minecraft/Paper version updates under `.agents/skills`,
+  with `.codex/skills` and `.claude/skills` symlinked to the canonical copy.
+
+### Versioned Data
+
+- Java Edition release coverage from 1.13 through 26.2.
+- Extracted pack formats, command paths, server reports, vanilla datapack/resourcepack paths,
+  vanilla inventories, and version detail metadata.
+- Observed datapack JSON shape surfaces and resourcepack model summaries as downloadable heavy data.
+- Paper support metadata from PaperMC downloads API, including alpha builds when Paper publishes
+  them.
+- Paper API package indexes and Javadocs-derived type/member surfaces through 26.2 where available.
+- Paper event-search routing through the `sya-ri/spigot-event-list` API contract.
+
+### Authoring Support
+
 - Authoring checklists, recipes, scenarios, diagnostics, guardrails, claim policies, output
-  requirements, response patterns, and evidence bundles for safer AI output.
-- Downloadable heavy data manifest and SHA-256 verified cache fetch support for datapack schema
-  surfaces, Paper API surfaces, and resourcepack model summaries.
-- Version-by-version support summary for Java, datapack, resourcepack, Paper, and heavy data
-  availability.
-- Weekly/manual GitHub Actions data refresh workflow that audits Mojang/PaperMC sources, regenerates
-  data when drift is detected, runs checks, and opens a pull request.
+  requirements, response patterns, and evidence bundles.
+- CLI/API/MCP preflight and context commands for safer AI output before generating datapacks,
+  resourcepacks, or Paper plugin code.
+- Version-by-version support table for Java, datapack, resourcepack, Paper, Paper API surfaces, and
+  downloadable heavy data.
 
-### Changed
+### Maintenance
 
-- Kept large generated surfaces out of the npm data package tarball; consumers fetch them into the
-  platform cache on demand.
-- Organized CLI commands under predictable `minecraft`, `datapack`, `resourcepack`, `plugin paper`,
-  `data`, and `skill` command groups.
+- Weekly/manual GitHub Actions data refresh workflow for Mojang and PaperMC source drift.
+- SHA-256 verified heavy-data manifest and cache fetch support.
+- Release verification through Biome, sherif, build, typecheck, Vitest, repository validation, npm
+  publish dry-run, and package smoke testing.
 
 ### Known Limits
 
-- Paper API type/member surfaces prove name presence only. They intentionally do not prove runtime
-  behavior, nullability, overload semantics, thread safety, or Folia safety.
+- Paper API type/member surfaces prove name presence only. They do not prove runtime behavior,
+  nullability, overload semantics, thread safety, or Folia safety.
+- Minecraft Wiki prose is not redistributed; agents should use bundled source references and fetch
+  current source pages when prose-level interpretation is needed.
