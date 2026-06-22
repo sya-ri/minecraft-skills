@@ -25,6 +25,7 @@ import {
   getIntentLookup,
   getJavaReportsSummary,
   getOutputRequirement,
+  getPackFileSchema,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -537,6 +538,51 @@ describe("catalog", () => {
         schemaAvailable: false,
       }),
     );
+  });
+
+  it("returns non-normative observed schemas for pack files", () => {
+    const datapack = getPackFileSchema({
+      version: "26.2",
+      path: "data/example/advancement/root.json",
+      domain: "datapack",
+    });
+    expect(datapack).toMatchObject({
+      available: true,
+      normative: false,
+      file: {
+        kind: "advancement",
+        schemaKind: "advancement",
+      },
+      coverage: "vanilla-observed-datapack-json-shape",
+    });
+    expect(datapack.observedFields.map((field) => field.path)).toContain("$.criteria");
+    expect(datapack.jsonSchema?.["x-minecraft-skills"]).toMatchObject({
+      normative: false,
+    });
+
+    const resourcepack = getPackFileSchema({
+      version: "26.2",
+      path: "assets/example/items/widget.json",
+      domain: "resourcepack",
+    });
+    expect(resourcepack).toMatchObject({
+      available: true,
+      normative: false,
+      file: {
+        kind: "item-definition",
+        schemaKind: "item-definition",
+      },
+      coverage: "client-resourcepack-models",
+    });
+    expect(resourcepack.observedFields.map((field) => field.path)).toContain("model.type");
+
+    const unknown = getPackFileSchema({
+      version: "26.2",
+      path: "assets/example/textures/item/widget.png",
+      domain: "resourcepack",
+    });
+    expect(unknown.available).toBe(false);
+    expect(unknown.jsonSchema).toBeNull();
   });
 
   it("keeps Minecraft Wiki prose out of redistributable data", () => {

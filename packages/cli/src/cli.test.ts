@@ -493,6 +493,28 @@ describe("minecraft-skills CLI", () => {
     expect(resourcepack.stdout.join("\n")).toContain('"schemaKind": "model"');
   });
 
+  it("prints observed schemas for pack files", async () => {
+    const datapack = await capture([
+      "datapack",
+      "file-schema",
+      "26.2",
+      "data/example/advancement/root.json",
+    ]);
+    expect(datapack.code).toBe(0);
+    expect(datapack.stdout.join("\n")).toContain('"normative": false');
+    expect(datapack.stdout.join("\n")).toContain('"path": "$.criteria"');
+
+    const resourcepack = await capture([
+      "resourcepack",
+      "file-schema",
+      "26.2",
+      "assets/example/items/widget.json",
+    ]);
+    expect(resourcepack.code).toBe(0);
+    expect(resourcepack.stdout.join("\n")).toContain('"schemaKind": "item-definition"');
+    expect(resourcepack.stdout.join("\n")).toContain('"path": "model.type"');
+  });
+
   it("searches vanilla paths", async () => {
     const result = await capture([
       "resourcepack",

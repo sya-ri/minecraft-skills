@@ -31,6 +31,7 @@ import {
   getIntentLookup,
   getJavaReportsSummary,
   getOutputRequirement,
+  getPackFileSchema,
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
@@ -657,6 +658,22 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_pack_file_schema",
+    description:
+      "Get an observed JSON Schema-style shape for one datapack or resourcepack file path when schema-backed data is available. Results are non-normative.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        path: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"] },
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_commands",
     description:
       "Search executable Minecraft command syntax paths generated from official server reports.",
@@ -1256,6 +1273,21 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       return text(
         classifyPackFiles({
           paths: args.paths,
+          ...(domain ? { domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_pack_file_schema") {
+      if (typeof args.path !== "string") {
+        throw new Error("get_pack_file_schema requires string path");
+      }
+      const domain =
+        args.domain === "datapack" || args.domain === "resourcepack" ? args.domain : undefined;
+      return text(
+        getPackFileSchema({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          path: args.path,
           ...(domain ? { domain } : {}),
         }),
       );

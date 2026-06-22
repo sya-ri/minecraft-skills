@@ -53,6 +53,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("search_datapack_schema");
     expect(tools.map((tool) => tool.name)).toContain("compare_datapack_schema");
     expect(tools.map((tool) => tool.name)).toContain("classify_pack_files");
+    expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
@@ -484,6 +485,16 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"kind": "advancement"');
     expect(result.content[0]?.text).toContain('"kind": "item-definition"');
     expect(result.content[0]?.text).toContain('"domain": "unknown"');
+  });
+
+  it("calls get_pack_file_schema", async () => {
+    const result = await callMinecraftSkillsTool("get_pack_file_schema", {
+      version: "26.2",
+      domain: "datapack",
+      path: "data/example/advancement/root.json",
+    });
+    expect(result.content[0]?.text).toContain('"normative": false');
+    expect(result.content[0]?.text).toContain('"path": "$.criteria"');
   });
 
   it("calls search_vanilla_paths", async () => {

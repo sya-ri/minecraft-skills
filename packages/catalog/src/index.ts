@@ -646,6 +646,33 @@ export type PackFileClassificationResult = {
   files: PackFileClassification[];
 };
 
+export type PackFileSchemaOptions = {
+  path: string;
+  version?: string;
+  edition?: string;
+  domain?: "datapack" | "resourcepack";
+};
+
+export type ObservedJsonSchemaField = {
+  path: string;
+  valueKinds: string[];
+  count: number;
+  samples: string[];
+};
+
+export type PackFileSchemaResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  file: PackFileClassification;
+  available: boolean;
+  normative: false;
+  coverage: string | null;
+  notes: string[];
+  observedFields: ObservedJsonSchemaField[];
+  jsonSchema: Record<string, unknown> | null;
+};
+
 export type VanillaPathSearchOptions = {
   edition?: string;
   version?: string;
@@ -2497,6 +2524,152 @@ export function classifyPackFiles(
     ),
     files,
   };
+}
+
+function jsonSchemaTypes(kinds: string[]): string[] {
+  return kinds
+    .map((kind) => (kind === "integer" ? "number" : kind))
+    .filter((kind, index, all) => all.indexOf(kind) === index)
+    .filter((kind) =>
+      ["array", "boolean", "null", "number", "object", "string"].includes(kind),
+    );
+}
+
+function observedFieldsJsonSchema(options: {
+  title: string;
+  description: string;
+  fields: ObservedJsonSchemaField[];
+  coverage: string;
+}): Record<string, unknown> {
+  const root = options.fields.find((field) => field.path === "$");
+  const type = root ? jsonSchemaTypes(root.valueKinds) : ["object"];
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    title: options.title,
+    description: options.description,
+    type: type.length === 1 ? type[0] : type,
+    additionalProperties: true,
+    "x-minecraft-skills": {
+      normative: false,
+      coverage: options.coverage,
+      fieldCount: options.fields.length,
+      observedFields: options.fields,
+      note: "Generated from observed vanilla files only. This is not a complete normative Minecraft schema.",
+    },
+  };
+}
+
+function datapackObservedFields(
+  kind: ObservedDatapackSchemaSurfaceData["kinds"][number],
+): ObservedJsonSchemaField[] {
+  return kind.fieldPaths.map((field) => ({
+    path: field.path,
+    valueKinds: field.valueKinds.map((valueKind) => valueKind.kind),
+    count: field.count,
+    samples: field.samples,
+  }));
+}
+
+function resourcepackObservedFields(
+  fields: ResourcepackModelSummaryData["modelJson"]["fieldPaths"],
+): ObservedJsonSchemaField[] {
+  return fields.map((field) => {
+    const separator = field.value.lastIndexOf(":");
+    const path = separator === -1 ? field.value : field.value.slice(0, separator);
+    const valueKind = separator === -1 ? "unknown" : field.value.slice(separator + 1);
+    return {
+      path: path || "$",
+      valueKinds: valueKind === "unknown" ? [] : [valueKind],
+      count: field.count,
+      samples: field.samples,
+    };
+  });
+}
+
+export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchemaResult {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const version = resolveVersion(editionId, options.version ?? "latest");
+  const file = classifyPackPath(options.path, options.domain);
+  const unavailable = (notes: string[]): PackFileSchemaResult => ({
+    schemaVersion: 1,
+    edition: editionId,
+    version,
+    file,
+    available: false,
+    normative: false,
+    coverage: null,
+    notes,
+    observedFields: [],
+    jsonSchema: null,
+  });
+
+  if (!file.schemaAvailable || !file.schemaKind) {
+    return unavailable([
+      "No observed JSON schema surface is available for this file kind.",
+      ...file.notes,
+    ]);
+  }
+
+  if (file.domain === "datapack") {
+    const surface = getDatapackSchemaSurface(editionId, version);
+    const kind = surface.kinds.find((entry) => entry.kind === file.schemaKind);
+    if (!kind) {
+      return unavailable([
+        `No observed datapack schema kind '${file.schemaKind}' is available for ${version}.`,
+      ]);
+    }
+    const observedFields = datapackObservedFields(kind);
+    return {
+      schemaVersion: 1,
+      edition: editionId,
+      version: surface.version,
+      file,
+      available: true,
+      normative: false,
+      coverage: surface.coverage,
+      notes: [
+        "This schema is generated from observed vanilla datapack JSON field shapes.",
+        "It is not a normative schema and cannot prove custom value validity.",
+      ],
+      observedFields,
+      jsonSchema: observedFieldsJsonSchema({
+        title: `Minecraft Java ${surface.version} datapack ${file.schemaKind}`,
+        description: `Observed vanilla datapack JSON shape for ${file.schemaKind}.`,
+        fields: observedFields,
+        coverage: surface.coverage,
+      }),
+    };
+  }
+
+  if (file.domain === "resourcepack") {
+    const summary = getResourcepackModelSummary(editionId, version);
+    const observedFields =
+      file.schemaKind === "item-definition"
+        ? resourcepackObservedFields(summary.itemDefinitionJson.fieldPaths)
+        : resourcepackObservedFields(summary.modelJson.fieldPaths);
+    return {
+      schemaVersion: 1,
+      edition: editionId,
+      version: summary.version,
+      file,
+      available: true,
+      normative: false,
+      coverage: summary.coverage,
+      notes: [
+        "This schema is generated from observed vanilla resourcepack model/item JSON shapes.",
+        "It is not a normative schema and cannot prove custom value validity.",
+      ],
+      observedFields,
+      jsonSchema: observedFieldsJsonSchema({
+        title: `Minecraft Java ${summary.version} resourcepack ${file.schemaKind}`,
+        description: `Observed vanilla resourcepack JSON shape for ${file.schemaKind}.`,
+        fields: observedFields,
+        coverage: summary.coverage,
+      }),
+    };
+  }
+
+  return unavailable(["Path does not match a schema-backed datapack or resourcepack JSON file."]);
 }
 
 function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimit: number): number {
