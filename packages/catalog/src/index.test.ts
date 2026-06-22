@@ -11,6 +11,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getAuthoringRecipe,
   getClaimPolicy,
   getCoverageSummary,
   getDatapackSchemaSurface,
@@ -32,6 +33,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listAuthoringRecipes,
   listClaimPolicies,
   listDomains,
   listFactSurfaces,
@@ -121,6 +123,19 @@ describe("catalog", () => {
     expect(() => getAuthoringChecklist("missing")).toThrow("missing");
   });
 
+  it("lists authoring recipes for ordered task workflows", () => {
+    const datapack = listAuthoringRecipes({ domain: "datapack" });
+    expect(datapack.map((recipe) => recipe.id)).toContain("datapack-function-command");
+    expect(datapack.map((recipe) => recipe.id)).toContain("datapack-observed-json");
+
+    const paper = getAuthoringRecipe("paper-event-listener");
+    expect(paper.domains).toEqual(["paper-plugin"]);
+    expect(paper.steps.map((step) => step.id)).toContain("discover-event-candidates");
+    expect(paper.finalChecks).toContain("paper-event-candidate");
+
+    expect(() => getAuthoringRecipe("missing")).toThrow("Unknown authoring recipe: missing");
+  });
+
   it("lists authoring guardrails for output safety", () => {
     const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
     expect(guardrails.map((guardrail) => guardrail.id)).toContain("global-source-provenance");
@@ -200,6 +215,7 @@ describe("catalog", () => {
       resolvedVersion: "1.21.11",
     });
     expect(context.preflight.checklist.domain).toBe("paper-plugin");
+    expect(context.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
     expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
     );

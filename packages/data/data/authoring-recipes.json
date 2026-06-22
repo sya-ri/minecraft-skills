@@ -1,0 +1,400 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills authoring checklists, intent lookups, claim policies, output requirements, and fact surfaces",
+  "recipes": [
+    {
+      "id": "datapack-function-command",
+      "domains": ["datapack"],
+      "title": "Generate or review a datapack function command",
+      "when": [
+        "the request writes .mcfunction files",
+        "the request includes execute, scoreboard, summon, data, function, or other command syntax",
+        "the request asks whether command syntax changed between versions"
+      ],
+      "steps": [
+        {
+          "id": "resolve-version-and-context",
+          "action": "Resolve the target Java version, datapack coverage, source policy, fact surfaces, and output requirements.",
+          "tools": {
+            "cli": ["authoring-context", "preflight", "output-requirements"],
+            "mcp": ["get_authoring_context", "get_authoring_preflight", "list_output_requirements"],
+            "packageApis": [
+              "getAuthoringContext",
+              "getAuthoringPreflight",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Resolved Java version and datapack coverage warnings",
+            "Datapack output requirements for final answer checks"
+          ],
+          "stopIfMissing": "Ask for a target version or state the latest bundled-version assumption before generating commands."
+        },
+        {
+          "id": "verify-pack-format",
+          "action": "Verify pack_format before generating or changing pack.mcmeta.",
+          "tools": {
+            "cli": ["pack-formats", "show-version", "version-support"],
+            "mcp": ["list_pack_formats", "get_version", "list_version_support"],
+            "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
+          },
+          "evidence": [
+            "Version detail packFormats.data for the target version",
+            "Version support entry for datapack"
+          ],
+          "stopIfMissing": "Do not infer pack_format from neighboring versions."
+        },
+        {
+          "id": "verify-command-path",
+          "action": "Search command paths for the target version and compare versions when migration is requested.",
+          "tools": {
+            "cli": ["commands", "compare-commands", "server-reports"],
+            "mcp": ["search_commands", "compare_commands", "get_server_reports"],
+            "packageApis": ["searchCommands", "compareCommands", "getJavaReportsSummary"]
+          },
+          "evidence": [
+            "Command path search result for the target version",
+            "Command comparison result when the task is a migration"
+          ],
+          "stopIfMissing": "If the command path is not found, do not generate that syntax as verified; report the gap or use a verified alternative."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "datapack-output-safety",
+        "command-syntax-exists"
+      ],
+      "failureMode": "Generated function files can contain plausible commands that are not present in the target version's command tree."
+    },
+    {
+      "id": "datapack-observed-json",
+      "domains": ["datapack"],
+      "title": "Generate or review datapack JSON with observed vanilla shapes",
+      "when": [
+        "the request writes advancements, loot tables, predicates, tags, recipes, item modifiers, or other datapack JSON",
+        "the request asks whether a JSON field shape exists in observed vanilla data",
+        "the request migrates datapack JSON between versions"
+      ],
+      "steps": [
+        {
+          "id": "resolve-version-and-context",
+          "action": "Resolve target version coverage and whether the observed datapack schema surface is bundled, cached, downloadable, or missing.",
+          "tools": {
+            "cli": ["authoring-context", "preflight", "data-manifest"],
+            "mcp": ["get_authoring_context", "get_authoring_preflight", "get_data_manifest"],
+            "packageApis": ["getAuthoringContext", "getAuthoringPreflight", "getDataManifest"]
+          },
+          "evidence": [
+            "Resolved Java version and datapack coverage warnings",
+            "Datapack schema surface availability for the target version"
+          ],
+          "stopIfMissing": "If the required observed surface is missing locally but downloadable, fetch it before using schema-surface claims."
+        },
+        {
+          "id": "search-observed-shape",
+          "action": "Search observed vanilla datapack JSON paths and compare versions when migration is requested.",
+          "tools": {
+            "cli": [
+              "datapack-schema",
+              "search-datapack-schema",
+              "compare-datapack-schema",
+              "fetch-data"
+            ],
+            "mcp": [
+              "get_datapack_schema_surface",
+              "search_datapack_schema",
+              "compare_datapack_schema",
+              "fetch_data"
+            ],
+            "packageApis": [
+              "getDatapackSchemaSurface",
+              "searchDatapackSchema",
+              "compareDatapackSchema",
+              "fetchData"
+            ]
+          },
+          "evidence": [
+            "Observed vanilla datapack JSON field shape match",
+            "Comparison result for changed observed paths when migration is requested"
+          ],
+          "stopIfMissing": "Do not call an observed field a complete or normative schema; state the gap when no observed match exists."
+        },
+        {
+          "id": "verify-vanilla-paths",
+          "action": "Verify referenced vanilla data paths if the JSON points at vanilla files, tags, loot tables, predicates, recipes, or functions.",
+          "tools": {
+            "cli": ["vanilla-paths", "compare-vanilla-paths"],
+            "mcp": ["search_vanilla_paths", "compare_vanilla_paths"],
+            "packageApis": ["searchVanillaPaths", "compareVanillaPaths"]
+          },
+          "evidence": [
+            "Target-version vanilla data path search result",
+            "Path comparison result when migrating"
+          ],
+          "stopIfMissing": "Do not invent vanilla data paths from naming convention."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "datapack-output-safety",
+        "datapack-json-field-shape",
+        "vanilla-path-exists"
+      ],
+      "failureMode": "Generated datapack JSON can overstate observed vanilla examples as a complete schema or reference nonexistent vanilla paths."
+    },
+    {
+      "id": "resourcepack-asset-model",
+      "domains": ["resourcepack"],
+      "title": "Generate or review resource pack assets, models, or item definitions",
+      "when": [
+        "the request writes resource pack pack.mcmeta, models, item definitions, textures, sounds, or language files",
+        "the request references vanilla assets",
+        "the request migrates resource pack paths or model JSON between versions"
+      ],
+      "steps": [
+        {
+          "id": "resolve-version-and-context",
+          "action": "Resolve target Java version, resourcepack coverage, fact surfaces, and output requirements.",
+          "tools": {
+            "cli": ["authoring-context", "preflight", "output-requirements"],
+            "mcp": ["get_authoring_context", "get_authoring_preflight", "list_output_requirements"],
+            "packageApis": [
+              "getAuthoringContext",
+              "getAuthoringPreflight",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Resolved Java version and resourcepack coverage warnings",
+            "Resourcepack output requirements for final answer checks"
+          ],
+          "stopIfMissing": "Ask for a target version or state the latest bundled-version assumption before generating resource pack files."
+        },
+        {
+          "id": "verify-pack-format",
+          "action": "Verify resource pack format before generating or changing pack.mcmeta.",
+          "tools": {
+            "cli": ["pack-formats", "show-version", "version-support"],
+            "mcp": ["list_pack_formats", "get_version", "list_version_support"],
+            "packageApis": ["listPackFormats", "getVersionDetail", "listVersionSupport"]
+          },
+          "evidence": [
+            "Version detail packFormats.resource for the target version",
+            "Version support entry for resourcepack"
+          ],
+          "stopIfMissing": "Do not infer resource pack format from neighboring versions."
+        },
+        {
+          "id": "verify-assets-and-model-shapes",
+          "action": "Search vanilla asset paths and observed model or item definition summaries for referenced paths and fields.",
+          "tools": {
+            "cli": [
+              "vanilla-paths",
+              "compare-vanilla-paths",
+              "resourcepack-models",
+              "search-models"
+            ],
+            "mcp": [
+              "search_vanilla_paths",
+              "compare_vanilla_paths",
+              "get_resourcepack_model_summary",
+              "search_resourcepack_models"
+            ],
+            "packageApis": [
+              "searchVanillaPaths",
+              "compareVanillaPaths",
+              "getResourcepackModelSummary",
+              "searchResourcepackModelPaths"
+            ]
+          },
+          "evidence": [
+            "Target-version vanilla asset path search result",
+            "Observed model or item definition field path match when claiming a field shape"
+          ],
+          "stopIfMissing": "Do not invent vanilla asset paths or present observed model summaries as complete rendering behavior."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "resourcepack-output-safety",
+        "resourcepack-model-field-shape",
+        "vanilla-path-exists"
+      ],
+      "failureMode": "Generated resource packs can reference nonexistent assets or overstate observed model data as a full client schema."
+    },
+    {
+      "id": "paper-event-listener",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review a Paper event listener",
+      "when": [
+        "the request asks for listener code",
+        "the request describes behavior that should happen on a Bukkit or Paper event",
+        "the request asks which event class to use"
+      ],
+      "steps": [
+        {
+          "id": "resolve-paper-support-and-context",
+          "action": "Resolve target version, Paper support, API reference, guardrails, claim policies, and output requirements.",
+          "tools": {
+            "cli": ["authoring-context", "paper", "paper-api", "output-requirements"],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_plugin_data",
+              "get_paper_api_reference",
+              "list_output_requirements"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperPluginData",
+              "getPaperApiReference",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Paper support metadata for the target version",
+            "Paper API reference and Javadocs URL for supported versions"
+          ],
+          "stopIfMissing": "Do not emit Paper dependency coordinates for an unsupported target version."
+        },
+        {
+          "id": "discover-event-candidates",
+          "action": "Use event search for candidates, then verify event type names against the Paper API surface.",
+          "tools": {
+            "cli": ["paper-events", "paper-types", "paper-api-surface", "fetch-data"],
+            "mcp": [
+              "search_paper_events",
+              "search_paper_types",
+              "get_paper_api_surface",
+              "fetch_data"
+            ],
+            "packageApis": [
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "getPaperApiSurface",
+              "fetchData"
+            ]
+          },
+          "evidence": [
+            "Event search result for the described behavior",
+            "Paper Javadocs type match for the selected event class"
+          ],
+          "stopIfMissing": "Treat search results as candidates only; do not generate listener code for an event class not verified by the API surface."
+        },
+        {
+          "id": "verify-used-members",
+          "action": "Search every referenced event, player, entity, server, scheduler, or component type/member name.",
+          "tools": {
+            "cli": ["paper-types", "paper-members", "paper-api-index", "paper-api-surface"],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_index",
+              "get_paper_api_surface"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiIndex",
+              "getPaperApiSurface"
+            ]
+          },
+          "evidence": [
+            "Paper Javadocs type search result for each referenced type",
+            "Paper Javadocs member search result for each referenced member label"
+          ],
+          "stopIfMissing": "Do not invent API names; name presence does not prove behavior, nullability, or thread safety."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-event-candidate",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Generated listener code can target unsupported Paper versions, unverified event classes, or invented API members."
+    },
+    {
+      "id": "paper-api-or-scheduler-code",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review Paper API, command, scheduler, or Folia-sensitive code",
+      "when": [
+        "the request writes Paper plugin code that calls Bukkit, Paper, Adventure, scheduler, world, entity, or chunk APIs",
+        "the request asks whether an API type or member exists",
+        "the request touches async work, scheduling, Folia, worlds, entities, or chunks"
+      ],
+      "steps": [
+        {
+          "id": "resolve-paper-support-and-reference",
+          "action": "Resolve the target version's Paper support, dependency coordinates, Javadocs URL, and scheduler/Folia documentation links.",
+          "tools": {
+            "cli": ["authoring-context", "paper", "paper-api", "version-support"],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_plugin_data",
+              "get_paper_api_reference",
+              "list_version_support"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperPluginData",
+              "getPaperApiReference",
+              "listVersionSupport"
+            ]
+          },
+          "evidence": [
+            "Paper support entry for the target version",
+            "Paper API dependency and documentation links for supported versions"
+          ],
+          "stopIfMissing": "State the Paper support gap instead of generating coordinates for unsupported latest Java versions."
+        },
+        {
+          "id": "verify-api-surface",
+          "action": "Search types and members in the target Paper API surface and fetch the surface if it is downloadable but missing locally.",
+          "tools": {
+            "cli": ["paper-api-surface", "paper-types", "paper-members", "fetch-data"],
+            "mcp": [
+              "get_paper_api_surface",
+              "search_paper_types",
+              "search_paper_members",
+              "fetch_data"
+            ],
+            "packageApis": [
+              "getPaperApiSurface",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "fetchData"
+            ]
+          },
+          "evidence": [
+            "Paper Javadocs type search result for each referenced type",
+            "Paper Javadocs member search result for each referenced member label"
+          ],
+          "stopIfMissing": "Do not emit unverified type or member names."
+        },
+        {
+          "id": "flag-behavior-and-threading-limits",
+          "action": "Use claim policies and Paper reference links to keep behavior, scheduler, and Folia claims bounded.",
+          "tools": {
+            "cli": ["claim-policies", "authoring-guardrails", "paper-api"],
+            "mcp": ["list_claim_policies", "list_authoring_guardrails", "get_paper_api_reference"],
+            "packageApis": ["listClaimPolicies", "listAuthoringGuardrails", "getPaperApiReference"]
+          },
+          "evidence": [
+            "Paper type/member claim policy",
+            "Folia or thread-safety claim policy when scheduling, worlds, entities, chunks, or async work are involved",
+            "Paper scheduler and Folia documentation links when relevant"
+          ],
+          "stopIfMissing": "Do not infer runtime behavior, nullability, thread safety, or Folia safety from Javadocs name presence alone."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Generated plugin code can compile against invented API names or hide behavior and threading assumptions."
+    }
+  ]
+}

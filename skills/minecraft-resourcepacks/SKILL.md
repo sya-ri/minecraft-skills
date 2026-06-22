@@ -20,34 +20,37 @@ version-specific facts.
 4. Use `intent-lookups --domain resourcepack`, MCP `list_intent_lookups`, or package
    `listIntentLookups({ domain: "resourcepack" })` to choose the exact lookup path for the user's
    intent.
-5. Use `authoring-context resourcepack <version>`, MCP `get_authoring_context`, or package
+5. Use `authoring-recipes --domain resourcepack`, MCP `list_authoring_recipes`, or package
+   `listAuthoringRecipes({ domain: "resourcepack" })` to choose an ordered workflow for common
+   resource pack asset, model, item definition, and migration tasks.
+6. Use `authoring-context resourcepack <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "resourcepack", version })` when you need preflight, intent
    routing, and evidence in one payload.
-6. Use `authoring-guardrails --domain resourcepack`, MCP `list_authoring_guardrails`, or package
+7. Use `authoring-guardrails --domain resourcepack`, MCP `list_authoring_guardrails`, or package
    `listAuthoringGuardrails({ domain: "resourcepack" })` before finalizing generated files.
-7. Use `claim-policies --domain resourcepack`, MCP `list_claim_policies`, or package
+8. Use `claim-policies --domain resourcepack`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "resourcepack" })` before making version, path, model, or item
    definition claims.
-8. Use `output-requirements --domain resourcepack`, MCP `list_output_requirements`, or package
+9. Use `output-requirements --domain resourcepack`, MCP `list_output_requirements`, or package
    `listOutputRequirements({ domain: "resourcepack" })` before finalizing an answer or generated
    files.
-9. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+10. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-10. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
+11. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "resourcepack", version })` before generating resource pack
    files.
-11. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+12. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific resource pack facts are bundled.
-12. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
+13. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "resourcepack" })` when choosing among target versions.
-13. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
+14. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "resourcepack", version })` when explaining which sources and
    extracted files back an answer.
-14. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
+15. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
    additions/removals.
-15. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+16. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-16. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+17. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
@@ -55,6 +58,8 @@ version-specific facts.
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
   `minecraft-skills preflight resourcepack <version>`,
   `minecraft-skills authoring-context resourcepack <version>`,
+  `minecraft-skills authoring-recipes --domain resourcepack`,
+  `minecraft-skills authoring-recipe <id>`,
   `minecraft-skills authoring-guardrails --domain resourcepack`,
   `minecraft-skills claim-policies --domain resourcepack`,
   `minecraft-skills output-requirements --domain resourcepack`,

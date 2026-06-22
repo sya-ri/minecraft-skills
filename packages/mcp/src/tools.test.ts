@@ -13,6 +13,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_checklists");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
+    expect(tools.map((tool) => tool.name)).toContain("list_authoring_recipes");
+    expect(tools.map((tool) => tool.name)).toContain("get_authoring_recipe");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_guardrails");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_guardrail");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_context");
@@ -77,6 +79,8 @@ describe("MCP tools", () => {
         "get_skill",
         "list_authoring_checklists",
         "get_authoring_checklist",
+        "list_authoring_recipes",
+        "get_authoring_recipe",
         "list_authoring_guardrails",
         "get_authoring_guardrail",
         "get_authoring_context",
@@ -155,6 +159,20 @@ describe("MCP tools", () => {
     expect(single.content[0]?.text).toContain("Folia");
   });
 
+  it("calls authoring recipe tools", async () => {
+    const list = await callMinecraftSkillsTool("list_authoring_recipes", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "paper-event-listener"');
+    expect(list.content[0]?.text).toContain('"id": "paper-api-or-scheduler-code"');
+
+    const single = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "datapack-function-command",
+    });
+    expect(single.content[0]?.text).toContain("verify-command-path");
+    expect(single.content[0]?.text).toContain("search_commands");
+  });
+
   it("calls authoring guardrail tools", async () => {
     const list = await callMinecraftSkillsTool("list_authoring_guardrails", {
       domain: "paper-plugin",
@@ -211,6 +229,8 @@ describe("MCP tools", () => {
       version: "1.21.11",
     });
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
+    expect(result.content[0]?.text).toContain('"recipes"');
+    expect(result.content[0]?.text).toContain('"id": "paper-event-listener"');
     expect(result.content[0]?.text).toContain('"guardrails"');
     expect(result.content[0]?.text).toContain('"claimPolicies"');
     expect(result.content[0]?.text).toContain('"outputRequirements"');

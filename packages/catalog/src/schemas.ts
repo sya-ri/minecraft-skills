@@ -103,6 +103,36 @@ export const AuthoringChecklistIndex = type({
   checklists: AuthoringChecklist.array(),
 });
 
+export const AuthoringRecipeToolRefs = type({
+  cli: "string[]",
+  mcp: "string[]",
+  packageApis: "string[]",
+});
+
+export const AuthoringRecipeStep = type({
+  id: "string",
+  action: "string",
+  tools: AuthoringRecipeToolRefs,
+  evidence: "string[]",
+  stopIfMissing: "string",
+});
+
+export const AuthoringRecipe = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  when: "string[]",
+  steps: AuthoringRecipeStep.array(),
+  finalChecks: "string[]",
+  failureMode: "string",
+});
+
+export const AuthoringRecipeIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  recipes: AuthoringRecipe.array(),
+});
+
 export const AuthoringGuardrail = type({
   id: "string",
   domains: DomainId.array(),
@@ -483,6 +513,9 @@ export type CatalogData = typeof Catalog.infer;
 export type AuthoringChecklistData = typeof AuthoringChecklist.infer;
 export type AuthoringChecklistIndexData = typeof AuthoringChecklistIndex.infer;
 export type AuthoringChecklistStepData = typeof AuthoringChecklistStep.infer;
+export type AuthoringRecipeData = typeof AuthoringRecipe.infer;
+export type AuthoringRecipeIndexData = typeof AuthoringRecipeIndex.infer;
+export type AuthoringRecipeStepData = typeof AuthoringRecipeStep.infer;
 export type AuthoringGuardrailData = typeof AuthoringGuardrail.infer;
 export type AuthoringGuardrailIndexData = typeof AuthoringGuardrailIndex.infer;
 export type ClaimPolicyData = typeof ClaimPolicy.infer;

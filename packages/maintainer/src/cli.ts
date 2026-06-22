@@ -20,6 +20,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listAuthoringRecipes,
   listClaimPolicies,
   listDomains,
   listFactSurfaces,
@@ -333,6 +334,78 @@ function requireAuthoringGuardrails(root: string, messages: string[]): void {
   }
 }
 
+function requireAuthoringRecipes(
+  root: string,
+  publicEntrypoints: PublicEntrypoints,
+  messages: string[],
+): void {
+  requireDataFile(root, "authoring-recipes.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const finalCheckIds = new Set([
+    ...listOutputRequirements().map((requirement) => requirement.id),
+    ...listClaimPolicies().map((policy) => policy.id),
+    ...listAuthoringGuardrails().map((guardrail) => guardrail.id),
+  ]);
+  const ids = new Set<string>();
+  for (const recipe of listAuthoringRecipes()) {
+    const prefix = `authoring recipe ${recipe.id}`;
+    if (ids.has(recipe.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(recipe.id);
+    if (recipe.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of recipe.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (recipe.when.length === 0) {
+      messages.push(`${prefix} must describe when to use it`);
+    }
+    if (recipe.steps.length === 0) {
+      messages.push(`${prefix} must list at least one step`);
+    }
+    if (recipe.finalChecks.length === 0) {
+      messages.push(`${prefix} must list final checks`);
+    }
+    for (const finalCheck of recipe.finalChecks) {
+      if (!finalCheckIds.has(finalCheck)) {
+        messages.push(`${prefix} references unknown final check: ${finalCheck}`);
+      }
+    }
+    if (!recipe.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+    const stepIds = new Set<string>();
+    for (const [index, step] of recipe.steps.entries()) {
+      const stepPrefix = `${prefix} step ${index + 1}`;
+      if (stepIds.has(step.id)) {
+        messages.push(`${stepPrefix} must not be duplicated`);
+      }
+      stepIds.add(step.id);
+      if (!step.action) {
+        messages.push(`${stepPrefix} must describe an action`);
+      }
+      if (step.evidence.length === 0) {
+        messages.push(`${stepPrefix} must list evidence expectations`);
+      }
+      if (!step.stopIfMissing) {
+        messages.push(`${stepPrefix} must describe what to do when evidence is missing`);
+      }
+      if (
+        step.tools.cli.length === 0 &&
+        step.tools.mcp.length === 0 &&
+        step.tools.packageApis.length === 0
+      ) {
+        messages.push(`${stepPrefix} must expose at least one CLI, MCP, or package API entrypoint`);
+      }
+      requirePublicEntrypoints(stepPrefix, step.tools, publicEntrypoints, messages);
+    }
+  }
+}
+
 function requireClaimPolicies(
   root: string,
   publicEntrypoints: PublicEntrypoints,
@@ -568,6 +641,7 @@ export function validateRepository(): ValidationResult {
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
   requireAuthoringGuardrails(root, messages);
+  requireAuthoringRecipes(root, publicEntrypoints, messages);
   requireClaimPolicies(root, publicEntrypoints, messages);
   requireOutputRequirements(root, messages);
   requireIntentLookups(root, publicEntrypoints, messages);

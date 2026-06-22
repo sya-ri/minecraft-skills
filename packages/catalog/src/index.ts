@@ -26,6 +26,11 @@ import {
   type AuthoringGuardrailData,
   AuthoringGuardrailIndex,
   type AuthoringGuardrailIndexData,
+  AuthoringRecipe,
+  type AuthoringRecipeData,
+  AuthoringRecipeIndex,
+  type AuthoringRecipeIndexData,
+  type AuthoringRecipeStepData,
   Catalog,
   type CatalogData,
   ClaimPolicy,
@@ -81,6 +86,9 @@ export type {
   AuthoringChecklistStepData,
   AuthoringGuardrailData,
   AuthoringGuardrailIndexData,
+  AuthoringRecipeData,
+  AuthoringRecipeIndexData,
+  AuthoringRecipeStepData,
   CachedDataFile,
   CatalogData,
   ClaimPolicyData,
@@ -139,6 +147,10 @@ export type FactSurfaceQuery = {
 };
 
 export type AuthoringChecklistQuery = {
+  domain?: string;
+};
+
+export type AuthoringRecipeQuery = {
   domain?: string;
 };
 
@@ -438,6 +450,7 @@ export type AuthoringContext = {
   requestedVersion: string;
   resolvedVersion: string;
   preflight: AuthoringPreflight;
+  recipes: AuthoringRecipeData[];
   guardrails: AuthoringGuardrailData[];
   claimPolicies: ClaimPolicyData[];
   outputRequirements: OutputRequirementData[];
@@ -725,6 +738,23 @@ export function getAuthoringChecklist(domain: string): AuthoringChecklistData {
     throw new Error(`Unknown authoring checklist domain: ${domain}`);
   }
   return AuthoringChecklist.assert(found);
+}
+
+export function listAuthoringRecipes(query: AuthoringRecipeQuery = {}): AuthoringRecipeData[] {
+  const index = AuthoringRecipeIndex.assert(readDataJson("authoring-recipes.json"));
+  if (!query.domain) {
+    return index.recipes;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.recipes.filter((recipe) => recipe.domains.includes(domain));
+}
+
+export function getAuthoringRecipe(id: string): AuthoringRecipeData {
+  const found = listAuthoringRecipes().find((recipe) => recipe.id === id);
+  if (!found) {
+    throw new Error(`Unknown authoring recipe: ${id}`);
+  }
+  return AuthoringRecipe.assert(found);
 }
 
 export function listAuthoringGuardrails(
@@ -1050,6 +1080,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     requestedVersion: preflight.requestedVersion,
     resolvedVersion: preflight.resolvedVersion,
     preflight,
+    recipes: listAuthoringRecipes({ domain: preflight.domain }),
     guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
     claimPolicies: listClaimPolicies({ domain: preflight.domain }),
     outputRequirements: listOutputRequirements({ domain: preflight.domain }),

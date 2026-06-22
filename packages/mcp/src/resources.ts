@@ -1,6 +1,7 @@
 import {
   getAuthoringChecklist,
   getAuthoringGuardrail,
+  getAuthoringRecipe,
   getClaimPolicy,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -11,6 +12,7 @@ import {
   getSkillPayload,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listAuthoringRecipes,
   listClaimPolicies,
   listFactSurfaces,
   listIntentLookups,
@@ -101,6 +103,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     guardrails: authoringGuardrails,
   };
+  const authoringRecipes = listAuthoringRecipes();
+  const authoringRecipeIndex = {
+    schemaVersion: 1,
+    recipes: authoringRecipes,
+  };
   const claimPolicies = listClaimPolicies();
   const claimPolicyIndex = {
     schemaVersion: 1,
@@ -155,6 +162,23 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Output guardrail for ${guardrail.title}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(guardrail, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/authoring-recipes.json`,
+      name: "authoring-recipes.json",
+      title: "Minecraft Skills authoring recipes",
+      description:
+        "Task recipes that order exact lookups for common datapack, resourcepack, and Paper plugin work.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(authoringRecipeIndex, null, 2)),
+    },
+    ...authoringRecipes.map((recipe) => ({
+      uri: `${dataResourceBase}/authoring-recipes/${recipe.id}.json`,
+      name: `authoring-recipes/${recipe.id}.json`,
+      title: recipe.title,
+      description: `Task recipe for ${recipe.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(recipe, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/claim-policies.json`,
@@ -310,6 +334,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/authoring-recipes.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              recipes: listAuthoringRecipes(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   if (uri === `${dataResourceBase}/intent-lookups.json`) {
     return {
       contents: [
@@ -405,6 +448,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getClaimPolicy(id), null, 2),
+          },
+        ],
+      };
+    }
+    const authoringRecipePrefix = "authoring-recipes/";
+    if (path.startsWith(authoringRecipePrefix) && path.endsWith(".json")) {
+      const id = path.slice(authoringRecipePrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getAuthoringRecipe(id), null, 2),
           },
         ],
       };

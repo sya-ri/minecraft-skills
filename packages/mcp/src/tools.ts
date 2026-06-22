@@ -15,6 +15,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getAuthoringRecipe,
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
@@ -38,6 +39,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listAuthoringRecipes,
   listCachedDataFiles,
   listClaimPolicies,
   listDomains,
@@ -143,6 +145,30 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "list_authoring_recipes",
+    description:
+      "List task recipes that order exact Minecraft authoring lookups for common datapack, resourcepack, and Paper plugin work.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_recipe",
+    description: "Get one Minecraft authoring task recipe by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "list_authoring_guardrails",
     description:
       "List output guardrails that prevent unsupported Minecraft authoring claims and generation steps.",
@@ -169,7 +195,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_authoring_context",
     description:
-      "Get preflight, intent lookup routing, and evidence bundle in one source-backed context before generating Minecraft files or code.",
+      "Get preflight, task recipes, intent lookup routing, and evidence bundle in one source-backed context before generating Minecraft files or code.",
     inputSchema: {
       type: "object",
       properties: {
@@ -814,6 +840,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_checklist requires string domain");
       }
       return text(getAuthoringChecklist(args.domain));
+    }
+    if (name === "list_authoring_recipes") {
+      return text(
+        listAuthoringRecipes({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_authoring_recipe") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_authoring_recipe requires string id");
+      }
+      return text(getAuthoringRecipe(args.id));
     }
     if (name === "list_authoring_guardrails") {
       return text(

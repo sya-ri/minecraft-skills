@@ -32,6 +32,12 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes/paper-event-listener.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/claim-policies.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -116,6 +122,14 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(guardrail.contents[0]?.text).toContain("Javadocs package, type, and member indexes");
+
+    const recipes = readMinecraftSkillsResource("minecraft-skills://data/authoring-recipes.json");
+    expect(recipes.contents[0]?.text).toContain('"id": "paper-event-listener"');
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/datapack-function-command.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("verify-command-path");
 
     const claimPolicies = readMinecraftSkillsResource(
       "minecraft-skills://data/claim-policies.json",

@@ -46,6 +46,8 @@ minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
+minecraft-skills authoring-recipes --domain paper-plugin
+minecraft-skills authoring-recipe paper-event-listener
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills authoring-guardrails --domain paper-plugin
@@ -114,7 +116,9 @@ perform before writing data pack files, resource pack files, or Paper plugin cod
 coverage, relevant fact surfaces, support matrix data, and warnings for missing or unsupported
 facts.
 `minecraft-skills authoring-context <domain> [version]` returns preflight, guardrails, intent lookup
-routing, and evidence in one payload for the start of an authoring task.
+routes, task recipes, and evidence in one payload for the start of an authoring task.
+`minecraft-skills authoring-recipes` lists ordered workflows for common tasks such as datapack
+commands, observed datapack JSON, resource pack models, Paper event listeners, and Paper API code.
 `minecraft-skills authoring-guardrails` lists output rules and required evidence that prevent an
 agent from overstating observed data, unsupported Paper versions, or upstream prose.
 `minecraft-skills claim-policies` maps claim types to required evidence plus allowed and disallowed
@@ -162,7 +166,7 @@ Typical stdio MCP client config:
 The server exposes tools for version lookup, pack formats, server reports, command search and
 comparison, observed datapack schema search/comparison, vanilla asset/data path search and
 comparison, resource pack model summaries, Paper support metadata, Paper type/member surface search,
-authoring checklists, data manifest/cache status/fetch operations, installable skill folder
+authoring checklists, authoring recipes, data manifest/cache status/fetch operations, installable skill folder
 discovery, packaged skill payload lookup, output requirements, and Paper/Bukkit event search.
 
 The server also exposes Agent Skill files as MCP resources under
@@ -188,6 +192,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getAuthoringRecipe,
   getClaimPolicy,
   getEvidenceBundle,
   getFactSurface,
@@ -203,6 +208,7 @@ import {
   listSkills,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listAuthoringRecipes,
   listClaimPolicies,
   listFactSurfaces,
   listOutputRequirements,
@@ -221,6 +227,8 @@ const paperContext = getAuthoringContext({ domain: "paper-plugin", version: "1.2
 const paperPreflight = getAuthoringPreflight({ domain: "paper-plugin", version: "1.21.11" });
 const paperEvidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });
 const checklists = listAuthoringChecklists();
+const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
+const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });

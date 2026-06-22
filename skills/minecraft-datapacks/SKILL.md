@@ -20,37 +20,40 @@ version-specific facts.
 4. Use `intent-lookups --domain datapack`, MCP `list_intent_lookups`, or package
    `listIntentLookups({ domain: "datapack" })` to choose the exact lookup path for the user's
    intent.
-5. Use `authoring-context datapack <version>`, MCP `get_authoring_context`, or package
+5. Use `authoring-recipes --domain datapack`, MCP `list_authoring_recipes`, or package
+   `listAuthoringRecipes({ domain: "datapack" })` to choose an ordered workflow for common tasks
+   such as function commands, observed JSON, and migrations.
+6. Use `authoring-context datapack <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "datapack", version })` when you need preflight, intent routing,
    and evidence in one payload.
-6. Use `authoring-guardrails --domain datapack`, MCP `list_authoring_guardrails`, or package
+7. Use `authoring-guardrails --domain datapack`, MCP `list_authoring_guardrails`, or package
    `listAuthoringGuardrails({ domain: "datapack" })` before finalizing generated files or commands.
-7. Use `claim-policies --domain datapack`, MCP `list_claim_policies`, or package
+8. Use `claim-policies --domain datapack`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "datapack" })` before making version, command, JSON shape, or path
    claims.
-8. Use `output-requirements --domain datapack`, MCP `list_output_requirements`, or package
+9. Use `output-requirements --domain datapack`, MCP `list_output_requirements`, or package
    `listOutputRequirements({ domain: "datapack" })` before finalizing an answer or generated files.
-9. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+10. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-10. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
+11. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "datapack", version })` before generating files or commands.
-11. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+12. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific facts are bundled and which heavyweight facts are downloadable.
-12. Use `version-support --domain datapack`, MCP `list_version_support`, or package
+13. Use `version-support --domain datapack`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "datapack" })` when choosing among target versions.
-13. Use `evidence datapack <version>`, MCP `get_evidence_bundle`, or package
+14. Use `evidence datapack <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "datapack", version })` when explaining which sources and extracted
    files back an answer.
-14. If an observed datapack schema surface is needed but not available locally, inspect
+15. If an observed datapack schema surface is needed but not available locally, inspect
    `data-manifest` or MCP `get_data_manifest`, then fetch the matching
    `datapack-schema-surface` entry before relying on it.
-15. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
+16. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
    describing command or vanilla data additions/removals.
-16. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
+17. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
    datapack JSON field shapes. Treat this as observed vanilla data, not a normative schema.
-17. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+18. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-18. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
+19. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
    rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
 
 ## Optional Tools
@@ -58,6 +61,8 @@ version-specific facts.
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
   `minecraft-skills preflight datapack <version>`,
   `minecraft-skills authoring-context datapack <version>`,
+  `minecraft-skills authoring-recipes --domain datapack`,
+  `minecraft-skills authoring-recipe <id>`,
   `minecraft-skills authoring-guardrails --domain datapack`,
   `minecraft-skills claim-policies --domain datapack`,
   `minecraft-skills output-requirements --domain datapack`,

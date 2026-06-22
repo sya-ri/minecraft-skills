@@ -41,6 +41,7 @@
           "tools": {
             "cli": [
               "authoring-context",
+              "authoring-recipes",
               "authoring-guardrails",
               "claim-policies",
               "output-requirements",
@@ -51,6 +52,7 @@
             ],
             "mcp": [
               "get_authoring_context",
+              "list_authoring_recipes",
               "list_authoring_guardrails",
               "list_claim_policies",
               "list_output_requirements",
@@ -61,6 +63,7 @@
             ],
             "packageApis": [
               "getAuthoringContext",
+              "listAuthoringRecipes",
               "listAuthoringGuardrails",
               "listClaimPolicies",
               "listOutputRequirements",

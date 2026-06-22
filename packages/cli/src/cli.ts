@@ -19,6 +19,7 @@ import {
   getAuthoringContext,
   getAuthoringGuardrail,
   getAuthoringPreflight,
+  getAuthoringRecipe,
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
@@ -43,6 +44,7 @@ import {
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringGuardrails,
+  listAuthoringRecipes,
   listCachedDataFiles,
   listClaimPolicies,
   listDomains,
@@ -119,6 +121,8 @@ Usage:
   minecraft-skills write-skill <name> --output <dir> [--force]
   minecraft-skills authoring-checklists [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
+  minecraft-skills authoring-recipes [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills authoring-recipe <id>
   minecraft-skills authoring-guardrails [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-guardrail <id>
   minecraft-skills authoring-context <datapack|resourcepack|paper-plugin> [version] [--edition java]
@@ -178,12 +182,16 @@ Commands:
                  List pre-generation checks for each supported authoring domain.
   authoring-checklist
                  Print the pre-generation checklist for one authoring domain.
+  authoring-recipes
+                 List task recipes that order exact lookups for common authoring work.
+  authoring-recipe
+                 Print one task recipe by id.
   authoring-guardrails
                  List output guardrails that prevent unsupported Minecraft authoring claims.
   authoring-guardrail
                  Print one output guardrail by id.
   authoring-context
-                 Print preflight, intent lookups, and evidence for one authoring domain/version.
+                 Print preflight, recipes, intent lookups, and evidence for one domain/version.
   claim-policies
                  List required evidence and allowed wording for Minecraft authoring claim types.
   claim-policy   Print one claim policy by id.
@@ -363,6 +371,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-checklist command requires a domain");
       }
       printJson(output, getAuthoringChecklist(domain));
+      return 0;
+    }
+
+    if (command === "authoring-recipes") {
+      printJson(output, {
+        schemaVersion: 1,
+        recipes: listAuthoringRecipes({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "authoring-recipe") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("authoring-recipe command requires an id");
+      }
+      printJson(output, getAuthoringRecipe(id));
       return 0;
     }
 
