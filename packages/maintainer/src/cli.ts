@@ -22,6 +22,7 @@ import {
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
+  listAuthoringScenarios,
   listClaimPolicies,
   listDomains,
   listFactSurfaces,
@@ -462,6 +463,61 @@ function requireAuthoringRecipes(
   }
 }
 
+function requireAuthoringScenarios(root: string, messages: string[]): void {
+  requireDataFile(root, "authoring-scenarios.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  const referenced = {
+    recipes: new Set(listAuthoringRecipes().map((recipe) => recipe.id)),
+    intents: new Set(listIntentLookups().map((intent) => intent.id)),
+    diagnostics: new Set(listAuthoringDiagnostics().map((diagnostic) => diagnostic.id)),
+    claimPolicies: new Set(listClaimPolicies().map((policy) => policy.id)),
+    factSurfaces: new Set(listFactSurfaces().map((surface) => surface.id)),
+    responsePatterns: new Set(listResponsePatterns().map((pattern) => pattern.id)),
+  };
+  for (const scenario of listAuthoringScenarios()) {
+    const prefix = `authoring scenario ${scenario.id}`;
+    if (ids.has(scenario.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(scenario.id);
+    if (scenario.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of scenario.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (!scenario.userPrompt) {
+      messages.push(`${prefix} must include a representative user prompt`);
+    }
+    if (scenario.useWhen.length === 0) {
+      messages.push(`${prefix} must describe when to use it`);
+    }
+    if (scenario.successCriteria.length === 0) {
+      messages.push(`${prefix} must list success criteria`);
+    }
+    if (scenario.mustAvoid.length === 0) {
+      messages.push(`${prefix} must list failure patterns to avoid`);
+    }
+    if (!scenario.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+    for (const [kind, expectedIds] of Object.entries(referenced)) {
+      const actualIds = scenario.requiredLookups[kind as keyof typeof scenario.requiredLookups];
+      if (actualIds.length === 0) {
+        messages.push(`${prefix} must reference at least one ${kind} entry`);
+      }
+      for (const id of actualIds) {
+        if (!expectedIds.has(id)) {
+          messages.push(`${prefix} references unknown ${kind} entry: ${id}`);
+        }
+      }
+    }
+  }
+}
+
 function requireClaimPolicies(
   root: string,
   publicEntrypoints: PublicEntrypoints,
@@ -738,6 +794,7 @@ export function validateRepository(): ValidationResult {
   requireAuthoringGuardrails(root, messages);
   requireAuthoringDiagnostics(root, publicEntrypoints, messages);
   requireAuthoringRecipes(root, publicEntrypoints, messages);
+  requireAuthoringScenarios(root, messages);
   requireClaimPolicies(root, publicEntrypoints, messages);
   requireOutputRequirements(root, messages);
   requireResponsePatterns(root, messages);

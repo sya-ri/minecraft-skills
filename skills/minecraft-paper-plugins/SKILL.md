@@ -20,49 +20,52 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 4. Use `authoring-recipes --domain paper-plugin`, MCP `list_authoring_recipes`, or package
    `listAuthoringRecipes({ domain: "paper-plugin" })` to choose an ordered workflow for listener,
    API, scheduler, or Folia-sensitive code.
-5. Use `authoring-context paper-plugin <version>`, MCP `get_authoring_context`, or package
+5. Use `authoring-scenarios --domain paper-plugin`, MCP `list_authoring_scenarios`, or package
+   `listAuthoringScenarios({ domain: "paper-plugin" })` when you need a realistic evaluation case
+   for the user's task shape.
+6. Use `authoring-context paper-plugin <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "paper-plugin", version })` when you need preflight, intent
    routing, and evidence in one payload.
-6. Use `authoring-guardrails --domain paper-plugin` and
+7. Use `authoring-guardrails --domain paper-plugin` and
    `authoring-diagnostics --domain paper-plugin`, MCP `list_authoring_guardrails` and
    `list_authoring_diagnostics`, or package `listAuthoringGuardrails({ domain: "paper-plugin" })`
    and `listAuthoringDiagnostics({ domain: "paper-plugin" })` before finalizing generated plugin
    code.
-7. Use `claim-policies --domain paper-plugin`, MCP `list_claim_policies`, or package
+8. Use `claim-policies --domain paper-plugin`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "paper-plugin" })` before making Paper support, API, event, or
    Folia/thread-safety claims.
-8. Use `output-requirements --domain paper-plugin` and `response-patterns --domain paper-plugin`,
+9. Use `output-requirements --domain paper-plugin` and `response-patterns --domain paper-plugin`,
    MCP `list_output_requirements` and `list_response_patterns`, or package
    `listOutputRequirements({ domain: "paper-plugin" })` and
    `listResponsePatterns({ domain: "paper-plugin" })` before finalizing an answer or generated
    code.
-9. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+10. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each plugin data surface can and cannot prove.
-10. Use `preflight paper-plugin <version>`, MCP `get_authoring_preflight`, or package
+11. Use `preflight paper-plugin <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "paper-plugin", version })` before generating plugin code.
-11. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
+12. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
    latest bundled Java/Paper aliases and whether Paper API surface facts are bundled or
    downloadable.
-12. Use `version-support --domain paper-plugin`, MCP `list_version_support`, or package
+13. Use `version-support --domain paper-plugin`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "paper-plugin" })` when choosing among Paper target versions.
-13. Use `evidence paper-plugin <version>`, MCP `get_evidence_bundle`, or package
+14. Use `evidence paper-plugin <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "paper-plugin", version })` when explaining which sources and
    extracted files back an answer.
-14. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
+15. Use `minecraft-skills paper` or MCP `get_paper_plugin_data` to check bundled Paper support,
    latest Paper build metadata, and the event search API contract.
-15. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
+16. Use `minecraft-skills paper-api <version>` or MCP `get_paper_api_reference` to resolve the
    versioned Paper API dependency, Javadocs URL, and Folia/scheduler docs.
-16. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
+17. Use `minecraft-skills compare-paper-api <from> <to>` or MCP `compare_paper_api` to inspect
    versioned Paper Javadocs package additions/removals before discussing server API changes.
-17. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
+18. If Paper type/member surface facts are needed but not available locally, inspect `data-manifest`
    or MCP `get_data_manifest`, then fetch the matching `paper-api-surface` entry before relying on
    it.
-18. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
+19. Use `paper-api-surface`, `paper-types`, `paper-members`, or the matching MCP tools to inspect
    Javadocs type/member names. Treat labels as API surface facts, not method behavior prose.
-19. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
-20. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
+20. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
+21. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text.
-21. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+22. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 
 ## Optional Tools
@@ -72,6 +75,8 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
   `minecraft-skills authoring-context paper-plugin <version>`,
   `minecraft-skills authoring-recipes --domain paper-plugin`,
   `minecraft-skills authoring-recipe <id>`,
+  `minecraft-skills authoring-scenarios --domain paper-plugin`,
+  `minecraft-skills authoring-scenario <id>`,
   `minecraft-skills authoring-guardrails --domain paper-plugin`,
   `minecraft-skills authoring-diagnostics --domain paper-plugin`,
   `minecraft-skills authoring-diagnostic <id>`,

@@ -111,6 +111,18 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("search_commands");
   });
 
+  it("prints authoring scenarios", async () => {
+    const list = await capture(["authoring-scenarios", "--domain", "paper-plugin"]);
+    expect(list.code).toBe(0);
+    expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-api-scheduler-review"');
+
+    const single = await capture(["authoring-scenario", "paper-event-listener-review"]);
+    expect(single.code).toBe(0);
+    expect(single.stdout.join("\n")).toContain('"paper-event-listener"');
+    expect(single.stdout.join("\n")).toContain("paper-event-candidate-unverified");
+  });
+
   it("prints authoring guardrails", async () => {
     const list = await capture(["authoring-guardrails", "--domain", "paper-plugin"]);
     expect(list.code).toBe(0);
@@ -188,6 +200,8 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain('"recipes"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener"');
+    expect(result.stdout.join("\n")).toContain('"scenarios"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
     expect(result.stdout.join("\n")).toContain('"guardrails"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
     expect(result.stdout.join("\n")).toContain('"diagnostics"');

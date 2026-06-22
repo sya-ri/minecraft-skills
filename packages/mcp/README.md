@@ -51,6 +51,8 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_authoring_checklist`
 - `list_authoring_recipes`
 - `get_authoring_recipe`
+- `list_authoring_scenarios`
+- `get_authoring_scenario`
 - `list_authoring_guardrails`
 - `get_authoring_guardrail`
 - `list_authoring_diagnostics`
@@ -116,6 +118,7 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/fact-surfaces.json`
 - `minecraft-skills://data/intent-lookups.json`
 - `minecraft-skills://data/authoring-recipes.json`
+- `minecraft-skills://data/authoring-scenarios.json`
 - `minecraft-skills://data/authoring-guardrails.json`
 - `minecraft-skills://data/authoring-diagnostics.json`
 - `minecraft-skills://data/claim-policies.json`
@@ -124,6 +127,7 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-checklists.json`
 - `minecraft-skills://data/authoring-checklists/paper-plugin.json`
 - `minecraft-skills://data/authoring-recipes/paper-event-listener.json`
+- `minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`

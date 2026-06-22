@@ -22,6 +22,8 @@ minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills authoring-recipes --domain paper-plugin
 minecraft-skills authoring-recipe paper-event-listener
+minecraft-skills authoring-scenarios --domain paper-plugin
+minecraft-skills authoring-scenario paper-event-listener-review
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills intent-lookups --domain paper-plugin
@@ -76,9 +78,11 @@ minecraft-skills paper-events "player join" --version 1.21.11
 
 Use these together before writing or reviewing generated output:
 
-- `authoring-context`: preflight, recipes, guardrails, diagnostics, claim policies, output
+- `authoring-context`: preflight, recipes, scenarios, guardrails, diagnostics, claim policies, output
   requirements, response patterns, intent routing, and evidence in one payload.
 - `authoring-recipes`: ordered lookup workflows for common tasks.
+- `authoring-scenarios`: realistic task shapes plus required lookup IDs for evaluation and
+  self-review.
 - `authoring-diagnostics`: pass/fail checks to run before returning generated files, code, or
   source-backed answers.
 - `claim-policies`: required evidence plus safe and unsafe wording for specific claim types.
@@ -127,6 +131,7 @@ import {
   getAuthoringContext,
   getAuthoringDiagnostic,
   getAuthoringRecipe,
+  getAuthoringScenario,
   getClaimPolicy,
   getOutputRequirement,
   getResponsePattern,
@@ -138,6 +143,7 @@ import {
 const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
+const scenario = getAuthoringScenario("paper-event-listener-review");
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const responsePattern = getResponsePattern("paper-api-answer");

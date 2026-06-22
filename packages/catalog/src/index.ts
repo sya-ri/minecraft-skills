@@ -35,6 +35,10 @@ import {
   AuthoringRecipeIndex,
   type AuthoringRecipeIndexData,
   type AuthoringRecipeStepData,
+  AuthoringScenario,
+  type AuthoringScenarioData,
+  AuthoringScenarioIndex,
+  type AuthoringScenarioIndexData,
   Catalog,
   type CatalogData,
   ClaimPolicy,
@@ -99,6 +103,8 @@ export type {
   AuthoringRecipeData,
   AuthoringRecipeIndexData,
   AuthoringRecipeStepData,
+  AuthoringScenarioData,
+  AuthoringScenarioIndexData,
   CachedDataFile,
   CatalogData,
   ClaimPolicyData,
@@ -163,6 +169,10 @@ export type AuthoringChecklistQuery = {
 };
 
 export type AuthoringRecipeQuery = {
+  domain?: string;
+};
+
+export type AuthoringScenarioQuery = {
   domain?: string;
 };
 
@@ -471,6 +481,7 @@ export type AuthoringContext = {
   resolvedVersion: string;
   preflight: AuthoringPreflight;
   recipes: AuthoringRecipeData[];
+  scenarios: AuthoringScenarioData[];
   guardrails: AuthoringGuardrailData[];
   diagnostics: AuthoringDiagnosticData[];
   claimPolicies: ClaimPolicyData[];
@@ -777,6 +788,25 @@ export function getAuthoringRecipe(id: string): AuthoringRecipeData {
     throw new Error(`Unknown authoring recipe: ${id}`);
   }
   return AuthoringRecipe.assert(found);
+}
+
+export function listAuthoringScenarios(
+  query: AuthoringScenarioQuery = {},
+): AuthoringScenarioData[] {
+  const index = AuthoringScenarioIndex.assert(readDataJson("authoring-scenarios.json"));
+  if (!query.domain) {
+    return index.scenarios;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.scenarios.filter((scenario) => scenario.domains.includes(domain));
+}
+
+export function getAuthoringScenario(id: string): AuthoringScenarioData {
+  const found = listAuthoringScenarios().find((scenario) => scenario.id === id);
+  if (!found) {
+    throw new Error(`Unknown authoring scenario: ${id}`);
+  }
+  return AuthoringScenario.assert(found);
 }
 
 export function listAuthoringGuardrails(
@@ -1139,6 +1169,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     resolvedVersion: preflight.resolvedVersion,
     preflight,
     recipes: listAuthoringRecipes({ domain: preflight.domain }),
+    scenarios: listAuthoringScenarios({ domain: preflight.domain }),
     guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
     diagnostics: listAuthoringDiagnostics({ domain: preflight.domain }),
     claimPolicies: listClaimPolicies({ domain: preflight.domain }),

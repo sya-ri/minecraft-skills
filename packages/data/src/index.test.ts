@@ -57,6 +57,15 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
   });
 
+  it("loads bundled authoring scenario JSON", () => {
+    const scenarios = readDataJson<{ scenarios: Array<{ id: string }> }>(
+      "authoring-scenarios.json",
+    );
+    expect(scenarios.scenarios.map((scenario) => scenario.id)).toContain(
+      "paper-event-listener-review",
+    );
+  });
+
   it("loads bundled intent lookup JSON", () => {
     const intents = readDataJson<{ intents: Array<{ id: string }> }>("intent-lookups.json");
     expect(intents.intents.map((intent) => intent.id)).toContain("verify-paper-type-or-member");

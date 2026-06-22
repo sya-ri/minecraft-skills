@@ -17,6 +17,7 @@ import {
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
+  getAuthoringScenario,
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
@@ -43,6 +44,7 @@ import {
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
+  listAuthoringScenarios,
   listCachedDataFiles,
   listClaimPolicies,
   listDomains,
@@ -163,6 +165,30 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_authoring_recipe",
     description: "Get one Minecraft authoring task recipe by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_authoring_scenarios",
+    description:
+      "List realistic Minecraft authoring scenarios and the required lookups for evaluating AI output.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_scenario",
+    description: "Get one Minecraft authoring scenario by id.",
     inputSchema: {
       type: "object",
       properties: {
@@ -905,6 +931,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_recipe requires string id");
       }
       return text(getAuthoringRecipe(args.id));
+    }
+    if (name === "list_authoring_scenarios") {
+      return text(
+        listAuthoringScenarios({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_authoring_scenario") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_authoring_scenario requires string id");
+      }
+      return text(getAuthoringScenario(args.id));
     }
     if (name === "list_authoring_guardrails") {
       return text(

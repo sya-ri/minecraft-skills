@@ -20,8 +20,8 @@ what is missing, and what must not be inferred.
 - A TypeScript catalog API with ArkType validation.
 - Bundled Java 1.13+ extracted data, plus SHA-256 verified cache downloads for heavier generated
   surfaces.
-- AI safety data: authoring checklists, recipes, guardrails, diagnostics, claim policies, output
-  requirements, and response patterns.
+- AI safety data: authoring checklists, recipes, scenarios, guardrails, diagnostics, claim
+  policies, output requirements, and response patterns.
 
 ## Quick Start
 

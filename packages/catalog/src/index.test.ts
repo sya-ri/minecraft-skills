@@ -13,6 +13,7 @@ import {
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
+  getAuthoringScenario,
   getClaimPolicy,
   getCoverageSummary,
   getDatapackSchemaSurface,
@@ -37,6 +38,7 @@ import {
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
+  listAuthoringScenarios,
   listClaimPolicies,
   listDomains,
   listFactSurfaces,
@@ -138,6 +140,21 @@ describe("catalog", () => {
     expect(paper.finalChecks).toContain("paper-event-candidate");
 
     expect(() => getAuthoringRecipe("missing")).toThrow("Unknown authoring recipe: missing");
+  });
+
+  it("lists authoring scenarios for realistic task evaluation", () => {
+    const paperScenarios = listAuthoringScenarios({ domain: "paper-plugin" });
+    expect(paperScenarios.map((scenario) => scenario.id)).toContain("paper-event-listener-review");
+    expect(paperScenarios.map((scenario) => scenario.id)).toContain("paper-api-scheduler-review");
+
+    const scenario = getAuthoringScenario("paper-event-listener-review");
+    expect(scenario.requiredLookups.recipes).toContain("paper-event-listener");
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-event-candidate-unverified");
+    expect(scenario.mustAvoid).toContain(
+      "generating listener code for an event candidate that was not API-verified",
+    );
+
+    expect(() => getAuthoringScenario("missing")).toThrow("Unknown authoring scenario: missing");
   });
 
   it("lists authoring guardrails for output safety", () => {
@@ -257,6 +274,9 @@ describe("catalog", () => {
     });
     expect(context.preflight.checklist.domain).toBe("paper-plugin");
     expect(context.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
+    expect(context.scenarios.map((scenario) => scenario.id)).toContain(
+      "paper-event-listener-review",
+    );
     expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
     );

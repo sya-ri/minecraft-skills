@@ -21,6 +21,7 @@ import {
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
+  getAuthoringScenario,
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
@@ -48,6 +49,7 @@ import {
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
+  listAuthoringScenarios,
   listCachedDataFiles,
   listClaimPolicies,
   listDomains,
@@ -127,6 +129,8 @@ Usage:
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
   minecraft-skills authoring-recipes [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-recipe <id>
+  minecraft-skills authoring-scenarios [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills authoring-scenario <id>
   minecraft-skills authoring-guardrails [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-guardrail <id>
   minecraft-skills authoring-diagnostics [--domain datapack|resourcepack|paper-plugin]
@@ -194,6 +198,10 @@ Commands:
                  List task recipes that order exact lookups for common authoring work.
   authoring-recipe
                  Print one task recipe by id.
+  authoring-scenarios
+                 List realistic authoring scenarios and the required lookups to evaluate them.
+  authoring-scenario
+                 Print one authoring scenario by id.
   authoring-guardrails
                  List output guardrails that prevent unsupported Minecraft authoring claims.
   authoring-guardrail
@@ -406,6 +414,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-recipe command requires an id");
       }
       printJson(output, getAuthoringRecipe(id));
+      return 0;
+    }
+
+    if (command === "authoring-scenarios") {
+      printJson(output, {
+        schemaVersion: 1,
+        scenarios: listAuthoringScenarios({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "authoring-scenario") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("authoring-scenario command requires an id");
+      }
+      printJson(output, getAuthoringScenario(id));
       return 0;
     }
 

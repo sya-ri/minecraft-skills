@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills authoring recipes, diagnostics, intent lookups, fact surfaces, and response patterns",
+  "scenarios": [
+    {
+      "id": "datapack-function-command-review",
+      "domains": ["datapack"],
+      "title": "Review or generate a datapack function command",
+      "userPrompt": "Write or review a .mcfunction command for a target Java version.",
+      "useWhen": [
+        "the request contains .mcfunction output",
+        "the request asks for execute, scoreboard, summon, data, function, or similar command syntax",
+        "the request asks whether a command changed between versions"
+      ],
+      "requiredLookups": {
+        "recipes": ["datapack-function-command"],
+        "intents": ["prepare-generation", "verify-command-syntax"],
+        "diagnostics": ["target-version-missing", "datapack-command-unverified"],
+        "claimPolicies": ["command-syntax-exists"],
+        "factSurfaces": ["java-version-metadata", "command-paths"],
+        "responsePatterns": ["datapack-command-answer"]
+      },
+      "successCriteria": [
+        "the target Java version is resolved or explicitly assumed",
+        "each command form is checked against target-version command paths or reported as unverified",
+        "parser-shape evidence is not described as gameplay behavior"
+      ],
+      "mustAvoid": [
+        "emitting command syntax from memory without command path evidence",
+        "claiming a command will run successfully because a parser path exists",
+        "using command facts from a different version without comparison evidence"
+      ],
+      "failureMode": "Generated datapack functions can contain plausible but unsupported command syntax."
+    },
+    {
+      "id": "datapack-json-shape-review",
+      "domains": ["datapack"],
+      "title": "Review or generate datapack JSON using observed vanilla shapes",
+      "userPrompt": "Create or review advancement, loot table, predicate, tag, recipe, or item modifier JSON.",
+      "useWhen": [
+        "the request writes datapack JSON",
+        "the request asks whether a JSON field shape appears in vanilla data",
+        "the request migrates datapack JSON between versions"
+      ],
+      "requiredLookups": {
+        "recipes": ["datapack-observed-json"],
+        "intents": ["prepare-generation", "verify-datapack-json-shape", "verify-vanilla-data-path"],
+        "diagnostics": [
+          "target-version-missing",
+          "observed-json-overstated",
+          "vanilla-path-unverified"
+        ],
+        "claimPolicies": ["datapack-json-field-shape", "vanilla-path-exists"],
+        "factSurfaces": ["datapack-schema-surface", "vanilla-paths"],
+        "responsePatterns": ["verified-authoring-answer", "missing-or-unsupported-answer"]
+      },
+      "successCriteria": [
+        "observed vanilla JSON shape evidence is tied to the target version",
+        "vanilla data paths are verified when referenced",
+        "observed JSON is described as non-normative"
+      ],
+      "mustAvoid": [
+        "calling observed vanilla JSON a complete schema",
+        "inferring required fields or custom validity from observed examples alone",
+        "inventing vanilla data paths from naming convention"
+      ],
+      "failureMode": "Generated datapack JSON can overstate observed examples or reference nonexistent vanilla data paths."
+    },
+    {
+      "id": "resourcepack-asset-model-review",
+      "domains": ["resourcepack"],
+      "title": "Review or generate resource pack assets, models, or item definitions",
+      "userPrompt": "Create or review resource pack pack.mcmeta, vanilla asset references, model JSON, or item definitions.",
+      "useWhen": [
+        "the request writes resource pack files",
+        "the request references vanilla assets, models, item definitions, textures, sounds, or language files",
+        "the request migrates resource pack paths or model JSON between versions"
+      ],
+      "requiredLookups": {
+        "recipes": ["resourcepack-asset-model"],
+        "intents": [
+          "prepare-generation",
+          "verify-pack-format",
+          "verify-resourcepack-asset-path",
+          "verify-resourcepack-model-shape"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "pack-format-unverified",
+          "vanilla-path-unverified",
+          "observed-json-overstated"
+        ],
+        "claimPolicies": [
+          "pack-format-value",
+          "resourcepack-model-field-shape",
+          "vanilla-path-exists"
+        ],
+        "factSurfaces": ["pack-formats", "vanilla-paths", "resourcepack-model-summary"],
+        "responsePatterns": ["resourcepack-asset-answer"]
+      },
+      "successCriteria": [
+        "resource pack format is verified for the target version when pack.mcmeta is emitted",
+        "vanilla asset paths are exact target-version matches",
+        "model and item definition shape claims are framed as observed vanilla data"
+      ],
+      "mustAvoid": [
+        "guessing asset paths from naming conventions",
+        "claiming rendering behavior from path presence alone",
+        "presenting observed model summaries as complete client schemas"
+      ],
+      "failureMode": "Generated resource packs can reference nonexistent assets or overstate observed model data."
+    },
+    {
+      "id": "paper-event-listener-review",
+      "domains": ["paper-plugin"],
+      "title": "Review or generate a Paper event listener",
+      "userPrompt": "Create or review Paper listener code for a described gameplay event.",
+      "useWhen": [
+        "the request asks which event class to use",
+        "the request emits listener code",
+        "the request describes behavior that should run on a Bukkit or Paper event"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-event-listener"],
+        "intents": [
+          "prepare-generation",
+          "discover-paper-event-candidates",
+          "verify-paper-type-or-member"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "paper-event-candidate"],
+        "factSurfaces": ["paper-builds", "paper-api-surface", "paper-event-search"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "Paper support is resolved before dependency coordinates are emitted",
+        "event search results are treated as candidates",
+        "selected event classes and referenced members are verified against the target Paper API surface"
+      ],
+      "mustAvoid": [
+        "generating listener code for an event candidate that was not API-verified",
+        "inventing event methods or Paper/Bukkit member names",
+        "claiming event firing behavior from event name presence alone"
+      ],
+      "failureMode": "Generated listener code can target nonexistent event classes or unsupported event behavior."
+    },
+    {
+      "id": "paper-api-scheduler-review",
+      "domains": ["paper-plugin"],
+      "title": "Review or generate Paper API or scheduler-sensitive code",
+      "userPrompt": "Create or review Paper plugin code that uses API members, scheduling, async work, worlds, entities, chunks, or Folia-sensitive behavior.",
+      "useWhen": [
+        "the request emits Paper plugin code with API calls",
+        "the request touches worlds, entities, chunks, scheduling, async work, or Folia",
+        "the request asks whether an API member exists or is safe to call"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-api-or-scheduler-code"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "Paper support and API reference are resolved for the target version",
+        "every referenced type or member is searched in the target Paper API surface",
+        "threading, scheduler, Folia, behavior, and nullability assumptions are not inferred from name presence"
+      ],
+      "mustAvoid": [
+        "emitting dependency coordinates for unsupported Paper versions",
+        "claiming method behavior from Javadocs search-index name presence",
+        "hiding scheduler or Folia assumptions when code touches sensitive state"
+      ],
+      "failureMode": "Generated Paper plugin code can compile against invented APIs or hide unsafe threading assumptions."
+    }
+  ]
+}

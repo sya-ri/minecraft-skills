@@ -3,6 +3,7 @@ import {
   getAuthoringDiagnostic,
   getAuthoringGuardrail,
   getAuthoringRecipe,
+  getAuthoringScenario,
   getClaimPolicy,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -16,6 +17,7 @@ import {
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
+  listAuthoringScenarios,
   listClaimPolicies,
   listFactSurfaces,
   listIntentLookups,
@@ -117,6 +119,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     recipes: authoringRecipes,
   };
+  const authoringScenarios = listAuthoringScenarios();
+  const authoringScenarioIndex = {
+    schemaVersion: 1,
+    scenarios: authoringScenarios,
+  };
   const claimPolicies = listClaimPolicies();
   const claimPolicyIndex = {
     schemaVersion: 1,
@@ -209,6 +216,22 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Task recipe for ${recipe.title}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(recipe, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/authoring-scenarios.json`,
+      name: "authoring-scenarios.json",
+      title: "Minecraft Skills authoring scenarios",
+      description: "Realistic authoring scenarios and required lookups for evaluating AI output.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(authoringScenarioIndex, null, 2)),
+    },
+    ...authoringScenarios.map((scenario) => ({
+      uri: `${dataResourceBase}/authoring-scenarios/${scenario.id}.json`,
+      name: `authoring-scenarios/${scenario.id}.json`,
+      title: scenario.title,
+      description: `Authoring scenario for ${scenario.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(scenario, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/claim-policies.json`,
@@ -418,6 +441,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/authoring-scenarios.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              scenarios: listAuthoringScenarios(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   if (uri === `${dataResourceBase}/intent-lookups.json`) {
     return {
       contents: [
@@ -558,6 +600,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getAuthoringRecipe(id), null, 2),
+          },
+        ],
+      };
+    }
+    const authoringScenarioPrefix = "authoring-scenarios/";
+    if (path.startsWith(authoringScenarioPrefix) && path.endsWith(".json")) {
+      const id = path.slice(authoringScenarioPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getAuthoringScenario(id), null, 2),
           },
         ],
       };

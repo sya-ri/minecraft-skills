@@ -133,6 +133,33 @@ export const AuthoringRecipeIndex = type({
   recipes: AuthoringRecipe.array(),
 });
 
+export const AuthoringScenarioLookups = type({
+  recipes: "string[]",
+  intents: "string[]",
+  diagnostics: "string[]",
+  claimPolicies: "string[]",
+  factSurfaces: "string[]",
+  responsePatterns: "string[]",
+});
+
+export const AuthoringScenario = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  userPrompt: "string",
+  useWhen: "string[]",
+  requiredLookups: AuthoringScenarioLookups,
+  successCriteria: "string[]",
+  mustAvoid: "string[]",
+  failureMode: "string",
+});
+
+export const AuthoringScenarioIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  scenarios: AuthoringScenario.array(),
+});
+
 export const AuthoringGuardrail = type({
   id: "string",
   domains: DomainId.array(),
@@ -560,6 +587,8 @@ export type AuthoringChecklistStepData = typeof AuthoringChecklistStep.infer;
 export type AuthoringRecipeData = typeof AuthoringRecipe.infer;
 export type AuthoringRecipeIndexData = typeof AuthoringRecipeIndex.infer;
 export type AuthoringRecipeStepData = typeof AuthoringRecipeStep.infer;
+export type AuthoringScenarioData = typeof AuthoringScenario.infer;
+export type AuthoringScenarioIndexData = typeof AuthoringScenarioIndex.infer;
 export type AuthoringGuardrailData = typeof AuthoringGuardrail.infer;
 export type AuthoringGuardrailIndexData = typeof AuthoringGuardrailIndex.infer;
 export type AuthoringDiagnosticData = typeof AuthoringDiagnostic.infer;

@@ -26,6 +26,7 @@ import {
   getAuthoringGuardrail,
   getAuthoringPreflight,
   getAuthoringRecipe,
+  getAuthoringScenario,
   getClaimPolicy,
   getCoverageSummary,
   getDataManifest,
@@ -48,6 +49,7 @@ import {
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
   listAuthoringRecipes,
+  listAuthoringScenarios,
   listClaimPolicies,
   listSkills,
   listVersionSupport,
@@ -73,6 +75,8 @@ const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" 
 const checklists = listAuthoringChecklists();
 const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
+const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
+const listenerScenario = getAuthoringScenario("paper-event-listener-review");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });

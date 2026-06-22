@@ -35,6 +35,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_intent_lookup",
       "list_authoring_recipes",
       "get_authoring_recipe",
+      "list_authoring_scenarios",
+      "get_authoring_scenario",
       "get_authoring_context",
       "get_authoring_preflight",
       "get_evidence_bundle",
@@ -81,6 +83,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_intent_lookup",
       "list_authoring_recipes",
       "get_authoring_recipe",
+      "list_authoring_scenarios",
+      "get_authoring_scenario",
       "get_authoring_context",
       "get_authoring_preflight",
       "get_evidence_bundle",
@@ -122,6 +126,8 @@ const promptDefinitions: PromptDefinition[] = [
       "get_intent_lookup",
       "list_authoring_recipes",
       "get_authoring_recipe",
+      "list_authoring_scenarios",
+      "get_authoring_scenario",
       "get_authoring_context",
       "get_authoring_preflight",
       "get_evidence_bundle",
@@ -186,6 +192,7 @@ Preflight rules:
 - Prefer exact target-version data over latest-version data.
 - Call list_intent_lookups when deciding which exact lookup path matches the user's intent.
 - Call list_authoring_recipes when you need an ordered workflow for common authoring tasks.
+- Call list_authoring_scenarios when you need a realistic evaluation case for the user's task shape.
 - Call get_authoring_context when you need preflight, recipes, intent lookup routing, and evidence in one payload.
 - Call list_version_support when choosing among target versions or explaining coverage differences.
 - Call get_authoring_preflight for the relevant domain before generating files or code.

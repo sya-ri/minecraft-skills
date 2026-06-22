@@ -7,6 +7,7 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Java 1.13+ release index and version details.
 - Machine-readable authoring checklists for pre-generation AI validation.
 - Machine-readable authoring recipes for ordered common-task lookup workflows.
+- Machine-readable authoring scenarios for realistic task evaluation and self-review.
 - Machine-readable authoring guardrails for output safety.
 - Machine-readable authoring diagnostics for pre-finalization pass/fail checks.
 - Machine-readable claim policies for evidence-bounded wording.
@@ -37,6 +38,7 @@ import { fetchData, getDataManifest, readDataJson, readDataText } from "@minecra
 const versions = readDataJson("java/versions.json");
 const checklists = readDataJson("authoring-checklists.json");
 const recipes = readDataJson("authoring-recipes.json");
+const scenarios = readDataJson("authoring-scenarios.json");
 const guardrails = readDataJson("authoring-guardrails.json");
 const diagnostics = readDataJson("authoring-diagnostics.json");
 const claimPolicies = readDataJson("claim-policies.json");

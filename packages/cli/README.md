@@ -20,6 +20,8 @@ minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills authoring-context paper-plugin 1.21.11
 minecraft-skills authoring-recipes --domain paper-plugin
 minecraft-skills authoring-recipe paper-event-listener
+minecraft-skills authoring-scenarios --domain paper-plugin
+minecraft-skills authoring-scenario paper-event-listener-review
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills authoring-guardrails --domain paper-plugin
@@ -71,9 +73,10 @@ minecraft-skills paper-events "player join" --version 1.21.11
 `support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data-manifest`, `cache-dir`, `cache-list`, `cache-clean`, and `fetch-data` manage
 SHA-256 verified heavyweight data in the local OS cache.
-`authoring-context <domain> [version]` returns preflight, recipes, guardrails, diagnostics, intent
-lookup routing, and evidence in one payload for starting an authoring task.
+`authoring-context <domain> [version]` returns preflight, recipes, scenarios, guardrails,
+diagnostics, intent lookup routing, and evidence in one payload for starting an authoring task.
 `authoring-recipes` lists ordered workflows for common authoring tasks.
+`authoring-scenarios` lists realistic task shapes and required lookup IDs for evaluation.
 `authoring-guardrails` lists output rules and required evidence that prevent unsupported claims.
 `authoring-diagnostics` lists pass/fail checks to run before returning generated files, code, or
 source-backed answers.

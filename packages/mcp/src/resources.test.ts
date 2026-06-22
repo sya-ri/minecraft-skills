@@ -44,6 +44,12 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/paper-event-listener.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/claim-policies.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -152,6 +158,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/datapack-function-command.json",
     );
     expect(recipe.contents[0]?.text).toContain("verify-command-path");
+
+    const scenarios = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios.json",
+    );
+    expect(scenarios.contents[0]?.text).toContain('"id": "paper-event-listener-review"');
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-event-candidate-unverified");
 
     const claimPolicies = readMinecraftSkillsResource(
       "minecraft-skills://data/claim-policies.json",
