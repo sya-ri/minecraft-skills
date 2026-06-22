@@ -10,11 +10,15 @@ All notable changes to this project are documented here.
   prohibited automation, and structured community datasets.
 - Recommended structured community source entries for PrismarineJS `minecraft-data`,
   PrismarineJS `minecraft-assets`, and `misode/mcmeta`.
+- `docs/SOURCE_STRATEGY.md` for source tiers, importer policy, structured community dataset use,
+  and claim wording.
 
 ### Changed
 
 - Minecraft Wiki is now treated as human-only background; AI workflows must not fetch, crawl,
   summarize, or cite Wiki pages as machine evidence.
+- Maintainer validation now rejects Minecraft Wiki URLs, deprecated Wiki navigation source entries,
+  and old Wiki navigation/provenance wording in agent-facing files.
 
 ## 0.1.1 - 2026-06-23
 

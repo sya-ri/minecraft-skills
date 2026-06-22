@@ -168,6 +168,9 @@ and docs, structured community datasets, and the `sya-ri/spigot-event-list` API 
 Minecraft Wiki is human-only background; AI workflows should not fetch, crawl, summarize, or cite
 Wiki pages.
 
+See [SOURCE_STRATEGY.md](SOURCE_STRATEGY.md) for source tiers, community structured datasets, and
+validation rules.
+
 ## MCP
 
 Run the server with:

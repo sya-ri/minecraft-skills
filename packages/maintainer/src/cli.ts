@@ -264,6 +264,91 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
   }
 }
 
+function walkTextFiles(root: string, directory: string, files: string[] = []): string[] {
+  const absoluteDirectory = join(root, directory);
+  if (!existsSync(absoluteDirectory)) {
+    return files;
+  }
+  for (const entry of readdirSync(absoluteDirectory)) {
+    const path = join(directory, entry);
+    const absolutePath = join(root, path);
+    const stat = statSync(absolutePath);
+    if (stat.isDirectory()) {
+      if (
+        path === ".git" ||
+        path === "node_modules" ||
+        path.endsWith("/dist") ||
+        path === "packages/data/data/java"
+      ) {
+        continue;
+      }
+      walkTextFiles(root, path, files);
+    } else if (/\.(?:md|json|ts|yaml|yml)$/.test(entry)) {
+      files.push(path);
+    }
+  }
+  return files;
+}
+
+function requireSourcePolicyIntegrity(root: string, messages: string[]): void {
+  const sourcePolicy = getCatalog().sourcePolicy;
+  if (sourcePolicy.minecraftWikiAutomation !== "forbidden") {
+    messages.push("source policy must forbid Minecraft Wiki automation");
+  }
+  if (
+    !sourcePolicy.prohibitedAutomation.some((rule) =>
+      rule.includes("Do not fetch, crawl, summarize, or cite Minecraft Wiki pages"),
+    )
+  ) {
+    messages.push("source policy must explicitly prohibit AI use of Minecraft Wiki pages");
+  }
+  for (const domain of getCatalog().domains) {
+    for (const source of domain.primarySources) {
+      if (source.url.includes("minecraft.wiki") || source.id.includes("minecraft-wiki")) {
+        messages.push(`domain ${domain.id} must not expose Minecraft Wiki as a primary source`);
+      }
+      if (source.kind === "community-navigation") {
+        messages.push(`domain ${domain.id} must not use community-navigation source kind`);
+      }
+    }
+  }
+
+  const requiredDatasetIds = new Set([
+    "prismarinejs-minecraft-data",
+    "prismarinejs-minecraft-assets",
+    "misode-mcmeta",
+  ]);
+  const actualDatasetIds = new Set(
+    sourcePolicy.recommendedCommunityDatasets.map((dataset) => dataset.id),
+  );
+  for (const id of requiredDatasetIds) {
+    if (!actualDatasetIds.has(id)) {
+      messages.push(`source policy must list recommended community dataset: ${id}`);
+    }
+  }
+
+  const forbiddenPatterns = [
+    /https?:\/\/(?:www\.)?minecraft\.wiki\b/i,
+    /\bminecraft-wiki-(?:datapack|resourcepack|source|wiki)\b/i,
+    /\bcommunity-navigation\b/i,
+    /Minecraft Wiki may be used/i,
+    /Use Minecraft Wiki (?!is human-only|pages are human-only)/i,
+    /Minecraft Wiki is used only for/i,
+    /navigation and provenance/i,
+  ];
+  for (const path of walkTextFiles(root, ".")) {
+    if (path === "docs/SOURCE_STRATEGY.md" || path === "packages/maintainer/src/cli.ts") {
+      continue;
+    }
+    const content = readFileSync(join(root, path), "utf8");
+    for (const pattern of forbiddenPatterns) {
+      if (pattern.test(content)) {
+        messages.push(`forbidden Minecraft Wiki source wording in ${path}: ${pattern}`);
+      }
+    }
+  }
+}
+
 type PublicEntrypoints = {
   cliCommands: Set<string>;
   mcpTools: Set<string>;
@@ -1082,6 +1167,7 @@ export function validateRepository(): ValidationResult {
   const publicEntrypoints = collectPublicEntrypoints(root);
 
   requireDataManifestIntegrity(root, messages);
+  requireSourcePolicyIntegrity(root, messages);
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
   requireAuthoringGuardrails(root, messages);

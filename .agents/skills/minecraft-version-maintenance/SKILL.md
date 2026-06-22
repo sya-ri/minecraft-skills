@@ -113,6 +113,8 @@ Update documentation only after data generation and `materialize-version-details
 - `README.md`: update quick-start examples if latest recommended Java/Paper versions changed.
 - `docs/USAGE.md`: update CLI/API/MCP examples when latest supported versions or command shapes
   changed.
+- `docs/SOURCE_STRATEGY.md`: update when source tiers, allowed structured community datasets,
+  forbidden automation, or importer policy changes.
 - Package READMEs under `packages/*/README.md`: keep examples aligned with `docs/USAGE.md`.
 - `CHANGELOG.md`: update when preparing or amending a release.
 - `CONTRIBUTING.md`: update only when the maintenance process or source policy changes.

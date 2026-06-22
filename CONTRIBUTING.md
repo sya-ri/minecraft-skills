@@ -71,6 +71,8 @@ Use this policy when adding entries:
 - Do not add Minecraft Wiki pages as AI-fetchable sources. Treat them as human-only background; use
   Mojang/Paper sources, generated data, or allowed structured community datasets for machine
   evidence.
+- Keep [docs/SOURCE_STRATEGY.md](docs/SOURCE_STRATEGY.md) aligned with source policy, validation,
+  and any structured community dataset importers.
 - Prefer immutable release asset URLs for public releases. `raw.githubusercontent.com/.../main/...`
   is acceptable only while the repository is unreleased or for development snapshots.
 - Increment `dataVersion` when changing a downloadable file's bytes, path, hash, or semantics.

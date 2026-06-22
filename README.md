@@ -77,6 +77,9 @@ Minecraft Wiki is human-only background for this project. AI workflows should no
 summarize, or cite Wiki pages; use bundled data, Mojang/Paper sources, source reports, and allowed
 structured datasets instead.
 
+See [Source Strategy](docs/SOURCE_STRATEGY.md) for source tiers, community structured datasets, and
+validation rules.
+
 ## Packages
 
 - `packages/data`: canonical versioned JSON/text data, publishable as `@minecraft-skills/data`.
