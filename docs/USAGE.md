@@ -60,6 +60,12 @@ minecraft-skills plugin paper output-requirements
 minecraft-skills plugin paper response-patterns
 
 minecraft-skills minecraft support --domain paper-plugin
+```
+
+For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
+support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).
+
+```sh
 minecraft-skills data manifest
 minecraft-skills data fetch paper-api-surface --version 1.21.11
 ```

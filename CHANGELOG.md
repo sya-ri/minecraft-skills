@@ -16,6 +16,8 @@ All notable changes to this project are documented here.
   requirements, response patterns, and evidence bundles for safer AI output.
 - Downloadable heavy data manifest and SHA-256 verified cache fetch support for datapack schema
   surfaces, Paper API surfaces, and resourcepack model summaries.
+- Version-by-version support summary for Java, datapack, resourcepack, Paper, and heavy data
+  availability.
 - Weekly/manual GitHub Actions data refresh workflow that audits Mojang/PaperMC sources, regenerates
   data when drift is detected, runs checks, and opens a pull request.
 

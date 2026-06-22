@@ -33,7 +33,8 @@ minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --
 ```
 
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see
-[docs/USAGE.md](docs/USAGE.md).
+[docs/USAGE.md](docs/USAGE.md). Version-by-version coverage is summarized in
+[docs/VERSION_SUPPORT.md](docs/VERSION_SUPPORT.md).
 
 Release notes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
