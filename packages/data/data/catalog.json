@@ -11,13 +11,136 @@
   "sourcePolicy": {
     "license": "MIT",
     "minecraftWikiTextRedistribution": "forbidden",
-    "minecraftWikiUse": "Use Minecraft Wiki for navigation, source URLs, revision metadata, and independent verification. Do not redistribute copied or closely paraphrased Wiki prose in MIT packages.",
+    "minecraftWikiUse": "Do not fetch, crawl, summarize, or cite Minecraft Wiki pages as machine evidence. Treat Minecraft Wiki as human-only background outside automated workflows.",
+    "minecraftWikiAutomation": "forbidden",
     "factPriority": [
       "Mojang official version metadata",
       "Extracted vanilla game data",
       "PaperMC official documentation and API artifacts",
-      "Minecraft Wiki links and revision metadata for navigation and cross-checking",
+      "Structured community datasets with explicit source policy and machine-readable data",
       "Human-authored reviewed guidance"
+    ],
+    "sourceTiers": [
+      {
+        "id": "canonical-official",
+        "title": "Canonical official data",
+        "useFor": [
+          "version identity, release order, pack formats, generated reports, vanilla asset/data paths, and Paper support facts",
+          "claims that must be precise for target-version code generation"
+        ],
+        "examples": [
+          "Mojang version manifest and per-version metadata",
+          "official client/server jars and generated data reports",
+          "PaperMC downloads API and Paper Javadocs"
+        ],
+        "limits": [
+          "does not explain every gameplay behavior or authoring convention",
+          "jar-derived observations still need non-guarantees when they are not normative schemas"
+        ]
+      },
+      {
+        "id": "derived-bundled",
+        "title": "minecraft-skills derived data",
+        "useFor": [
+          "fast local lookups, version comparisons, schema-like observed shapes, migration planning, and validation preflights"
+        ],
+        "examples": [
+          "command paths",
+          "vanilla path indexes",
+          "datapack schema surfaces",
+          "resourcepack model summaries",
+          "Paper API surfaces"
+        ],
+        "limits": [
+          "derived surfaces prove only the guarantees documented by their fact surface",
+          "missing extracted data is a gap, not permission to guess"
+        ]
+      },
+      {
+        "id": "community-structured",
+        "title": "Structured community datasets",
+        "useFor": [
+          "supplemental searchable indexes when official data is too low-level",
+          "candidate expansion for blocks, items, entities, recipes, protocol metadata, assets, and generated data history"
+        ],
+        "examples": [
+          "PrismarineJS/minecraft-data",
+          "PrismarineJS/minecraft-assets",
+          "misode/mcmeta"
+        ],
+        "limits": [
+          "not canonical unless corroborated by Mojang or Paper sources",
+          "respect each upstream project's license, source notes, and update cadence"
+        ]
+      },
+      {
+        "id": "human-reviewed-guidance",
+        "title": "Human-reviewed guidance",
+        "useFor": [
+          "workflow ordering, output guardrails, response patterns, and source-use policy"
+        ],
+        "examples": [
+          "reviewed minecraft-skills recipes",
+          "claim policies",
+          "diagnostics",
+          "maintainer documentation"
+        ],
+        "limits": [
+          "must not introduce version facts without backing data",
+          "must mark assumptions and unverified behavior as gaps"
+        ]
+      },
+      {
+        "id": "human-only-background",
+        "title": "Human-only background",
+        "useFor": ["manual maintainer reading outside automated AI retrieval"],
+        "examples": ["Minecraft Wiki pages"],
+        "limits": [
+          "not fetched, crawled, summarized, or cited by AI tools",
+          "not redistributed or closely paraphrased in package data, skills, docs, or generated answers"
+        ]
+      }
+    ],
+    "prohibitedAutomation": [
+      "Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows.",
+      "Do not copy or closely paraphrase upstream prose from Minecraft Wiki, Paper docs, Javadocs, or community datasets.",
+      "Do not treat community structured datasets as canonical when Mojang or Paper data disagrees or is unavailable."
+    ],
+    "recommendedCommunityDatasets": [
+      {
+        "id": "prismarinejs-minecraft-data",
+        "title": "PrismarineJS minecraft-data",
+        "url": "https://github.com/PrismarineJS/minecraft-data",
+        "useFor": [
+          "blocks, items, entities, recipes, commands, protocol versions, features, sounds, and language-index lookups"
+        ],
+        "limits": [
+          "supplemental structured data; some upstream data has historical wiki-derived source notes",
+          "must be cross-checked before making canonical target-version claims"
+        ]
+      },
+      {
+        "id": "prismarinejs-minecraft-assets",
+        "title": "PrismarineJS minecraft-assets",
+        "url": "https://github.com/PrismarineJS/minecraft-assets",
+        "useFor": [
+          "resourcepack asset names, image-oriented asset indexes, and legacy texture mapping candidates"
+        ],
+        "limits": [
+          "supplemental asset dataset; prefer official jar extraction for canonical vanilla path presence"
+        ]
+      },
+      {
+        "id": "misode-mcmeta",
+        "title": "misode mcmeta",
+        "url": "https://github.com/misode/mcmeta",
+        "useFor": [
+          "version-controlled generated data/assets history, assets-json, data-json, summaries, registries, and diffs"
+        ],
+        "limits": [
+          "community processed dataset; use as structured corroboration and import source, not as a prose authority"
+        ]
+      }
     ]
   },
   "domains": [
@@ -34,9 +157,14 @@
           "url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
         },
         {
-          "id": "minecraft-wiki-datapack",
-          "kind": "community-navigation",
-          "url": "https://minecraft.wiki/w/Data_pack"
+          "id": "misode-mcmeta-data-json",
+          "kind": "community-structured",
+          "url": "https://github.com/misode/mcmeta"
+        },
+        {
+          "id": "prismarinejs-minecraft-data",
+          "kind": "community-structured",
+          "url": "https://github.com/PrismarineJS/minecraft-data"
         }
       ]
     },
@@ -53,9 +181,14 @@
           "url": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
         },
         {
-          "id": "minecraft-wiki-resourcepack",
-          "kind": "community-navigation",
-          "url": "https://minecraft.wiki/w/Resource_pack"
+          "id": "misode-mcmeta-assets-json",
+          "kind": "community-structured",
+          "url": "https://github.com/misode/mcmeta"
+        },
+        {
+          "id": "prismarinejs-minecraft-assets",
+          "kind": "community-structured",
+          "url": "https://github.com/PrismarineJS/minecraft-assets"
         }
       ]
     },

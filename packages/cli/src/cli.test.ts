@@ -264,6 +264,26 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"kind": "paper-api-surface"');
   });
 
+  it("prints source reports", async () => {
+    const result = await capture(["source", "report", "datapack", "26.2"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"minecraftWikiAutomation": "forbidden"');
+    expect(result.stdout.join("\n")).toContain('"id": "prismarinejs-minecraft-data"');
+    expect(result.stdout.join("\n")).toContain('"id": "misode-mcmeta-data-json"');
+
+    const alias = await capture(["minecraft", "sources", "resourcepack", "26.2"]);
+    expect(alias.code).toBe(0);
+    expect(alias.stdout.join("\n")).toContain('"id": "prismarinejs-minecraft-assets"');
+
+    const datasets = await capture(["source", "datasets"]);
+    expect(datasets.code).toBe(0);
+    expect(datasets.stdout.join("\n")).toContain('"id": "misode-mcmeta"');
+
+    const tier = await capture(["source", "tier", "community-structured"]);
+    expect(tier.code).toBe(0);
+    expect(tier.stdout.join("\n")).toContain("PrismarineJS/minecraft-data");
+  });
+
   it("prints intent lookups", async () => {
     const list = await capture(["plugin", "paper", "intents"]);
     expect(list.code).toBe(0);

@@ -32,6 +32,11 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_response_pattern");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
+    expect(tools.map((tool) => tool.name)).toContain("get_source_report");
+    expect(tools.map((tool) => tool.name)).toContain("list_source_tiers");
+    expect(tools.map((tool) => tool.name)).toContain("get_source_tier");
+    expect(tools.map((tool) => tool.name)).toContain("list_community_datasets");
+    expect(tools.map((tool) => tool.name)).toContain("get_community_dataset");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
     expect(tools.map((tool) => tool.name)).toContain("get_intent_lookup");
     expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
@@ -110,6 +115,9 @@ describe("MCP tools", () => {
         "get_response_pattern",
         "get_authoring_preflight",
         "get_evidence_bundle",
+        "get_source_report",
+        "list_source_tiers",
+        "list_community_datasets",
         "list_intent_lookups",
         "get_intent_lookup",
         "list_fact_surfaces",
@@ -339,6 +347,24 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"minecraftWikiTextRedistribution": "forbidden"');
     expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');
     expect(result.content[0]?.text).toContain('"kind": "paper-api-surface"');
+  });
+
+  it("calls source report tool", async () => {
+    const result = await callMinecraftSkillsTool("get_source_report", {
+      domain: "resourcepack",
+      version: "26.2",
+    });
+    expect(result.content[0]?.text).toContain('"minecraftWikiAutomation": "forbidden"');
+    expect(result.content[0]?.text).toContain('"id": "prismarinejs-minecraft-assets"');
+    expect(result.content[0]?.text).toContain('"id": "misode-mcmeta-assets-json"');
+
+    const datasets = await callMinecraftSkillsTool("list_community_datasets", {});
+    expect(datasets.content[0]?.text).toContain('"id": "prismarinejs-minecraft-data"');
+
+    const tier = await callMinecraftSkillsTool("get_source_tier", {
+      id: "human-only-background",
+    });
+    expect(tier.content[0]?.text).toContain("Minecraft Wiki pages");
   });
 
   it("calls intent lookup tools", async () => {

@@ -23,6 +23,7 @@ import {
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
+  getCommunityDataset,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -41,6 +42,8 @@ import {
   getResponsePattern,
   getSkillPayload,
   getSourcePolicy,
+  getSourceReport,
+  getSourceTier,
   getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
@@ -51,6 +54,7 @@ import {
   listAuthoringScenarios,
   listCachedDataFiles,
   listClaimPolicies,
+  listCommunityDatasets,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -59,6 +63,7 @@ import {
   listReferences,
   listResponsePatterns,
   listSkills,
+  listSourceTiers,
   listVersionSupport,
   listVersions,
   type PaperMemberSearchOptions,
@@ -396,6 +401,64 @@ export const tools: ToolDefinition[] = [
         version: { type: "string", default: "latest" },
       },
       required: ["domain"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_source_report",
+    description:
+      "Get source tiers, prohibited automation, community structured datasets, and optional domain/version provenance. Use this before deciding whether an external source is allowed.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_source_tiers",
+    description:
+      "List allowed source tiers and limits, including official, derived, community structured, human-reviewed, and human-only background tiers.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_source_tier",
+    description: "Get one source tier by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_community_datasets",
+    description:
+      "List recommended structured community datasets such as PrismarineJS/minecraft-data, PrismarineJS/minecraft-assets, and misode/mcmeta.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_community_dataset",
+    description: "Get one recommended structured community dataset by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
       additionalProperties: false,
     },
   },
@@ -1180,6 +1243,33 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.version === "string" ? { version: args.version } : {}),
         }),
       );
+    }
+    if (name === "get_source_report") {
+      return text(
+        getSourceReport({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+          edition,
+          ...(typeof args.version === "string" ? { version: args.version } : {}),
+        }),
+      );
+    }
+    if (name === "list_source_tiers") {
+      return text(listSourceTiers());
+    }
+    if (name === "get_source_tier") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_source_tier requires string id");
+      }
+      return text(getSourceTier(args.id));
+    }
+    if (name === "list_community_datasets") {
+      return text(listCommunityDatasets());
+    }
+    if (name === "get_community_dataset") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_community_dataset requires string id");
+      }
+      return text(getCommunityDataset(args.id));
     }
     if (name === "list_intent_lookups") {
       return text(

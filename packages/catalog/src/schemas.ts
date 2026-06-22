@@ -36,6 +36,22 @@ export const Skill = type({
   description: "string",
 });
 
+export const SourceTier = type({
+  id: "string",
+  title: "string",
+  useFor: "string[]",
+  examples: "string[]",
+  limits: "string[]",
+});
+
+export const CommunityDataset = type({
+  id: "string",
+  title: "string",
+  url: "string",
+  useFor: "string[]",
+  limits: "string[]",
+});
+
 export const Catalog = type({
   schemaVersion: "1",
   latest: {
@@ -50,7 +66,11 @@ export const Catalog = type({
     license: "string",
     minecraftWikiTextRedistribution: "string",
     minecraftWikiUse: "string",
+    minecraftWikiAutomation: "string",
     factPriority: "string[]",
+    sourceTiers: SourceTier.array(),
+    prohibitedAutomation: "string[]",
+    recommendedCommunityDatasets: CommunityDataset.array(),
   },
   domains: Domain.array(),
   skills: Skill.array(),

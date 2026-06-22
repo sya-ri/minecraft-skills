@@ -64,8 +64,8 @@ version-specific facts.
    additions/removals.
 19. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-20. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
-   rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
+20. Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows. Use bundled data,
+   Mojang-derived data, source reports, and allowed structured community datasets instead.
 
 ## Optional Tools
 
@@ -86,6 +86,7 @@ version-specific facts.
   `minecraft-skills resourcepack response-patterns`,
   `minecraft-skills resourcepack response-pattern <id>`,
   `minecraft-skills resourcepack evidence <version>`,
+  `minecraft-skills source report resourcepack <version>`,
   `minecraft-skills resourcepack intents`,
   `minecraft-skills resourcepack intent <id>`,
   `minecraft-skills resourcepack checklist`,

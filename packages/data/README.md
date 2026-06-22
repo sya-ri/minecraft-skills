@@ -56,4 +56,5 @@ await fetchData({ kind: "paper-api-surface", version: "26.2" });
 Downloaded data is cached under the platform cache directory for the manifest data version. Set
 `MINECRAFT_SKILLS_CACHE_DIR` to override that location.
 
-Minecraft Wiki prose is not redistributed in this package.
+Minecraft Wiki prose is not redistributed in this package, and Wiki pages are not AI-fetchable
+sources for minecraft-skills workflows.

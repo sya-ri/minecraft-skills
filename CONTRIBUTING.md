@@ -65,8 +65,12 @@ Use this policy when adding entries:
 - Keep small indexes and skill payloads bundled so agents can start offline.
 - Put large generated surfaces in the manifest when they are expensive to ship repeatedly or useful
   to refresh independently of code.
-- Never point an entry at prose copied from Minecraft Wiki or Javadocs. The downloadable file must
-  contain redistributable generated facts, source links, or original guidance.
+- Never point an entry at prose copied from Minecraft Wiki, Paper docs, Javadocs, or community
+  dataset documentation. The downloadable file must contain redistributable generated facts, source
+  links, or original guidance.
+- Do not add Minecraft Wiki pages as AI-fetchable sources. Treat them as human-only background; use
+  Mojang/Paper sources, generated data, or allowed structured community datasets for machine
+  evidence.
 - Prefer immutable release asset URLs for public releases. `raw.githubusercontent.com/.../main/...`
   is acceptable only while the repository is unreleased or for development snapshots.
 - Increment `dataVersion` when changing a downloadable file's bytes, path, hash, or semantics.

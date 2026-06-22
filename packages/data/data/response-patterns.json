@@ -30,7 +30,8 @@
       "mustAvoid": [
         "presenting missing data as a likely fact",
         "claiming support for another version without a comparison",
-        "copying upstream prose from Minecraft Wiki, Paper docs, or Javadocs"
+        "fetching, citing, or summarizing Minecraft Wiki pages in AI workflows",
+        "copying upstream prose from Paper docs, Javadocs, or community datasets"
       ],
       "failureMode": "A response can sound authoritative while hiding version assumptions or unsupported claims."
     },

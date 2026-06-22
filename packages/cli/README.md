@@ -97,12 +97,15 @@ only the pre-generation checks an AI agent should perform before writing files o
 `datapack fact-surfaces`, `resourcepack fact-surfaces`, or `plugin paper fact-surfaces` explains what each machine-verifiable data surface can and cannot prove.
 `minecraft support` lists per-version coverage and surface availability for choosing a target version.
 `datapack evidence [version]`, `resourcepack evidence [version]`, or `plugin paper evidence [version]` returns source policy, source URLs, relevant data files, and
-warnings for provenance-aware answers.
+warnings for provenance-aware answers. `source report [domain] [version]` returns source tiers,
+prohibited automation, structured community datasets, and optional domain/version provenance.
+`source datasets` lists recommended structured community datasets such as PrismarineJS and
+misode/mcmeta.
 `datapack intents`, `resourcepack intents`, or `plugin paper intents` maps authoring intents to the exact CLI/MCP/package APIs and evidence surfaces
 an agent should inspect before answering.
 
 ## Data Sources
 
 Bundled facts come from Mojang version metadata, extracted official client/server jars, PaperMC API
-and docs, and the `sya-ri/spigot-event-list` API contract. Minecraft Wiki is used only for
-navigation and provenance, not redistributed prose.
+and docs, structured community datasets, and the `sya-ri/spigot-event-list` API contract. Minecraft
+Wiki is human-only background; AI workflows should not fetch, crawl, summarize, or cite Wiki pages.

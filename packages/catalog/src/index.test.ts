@@ -35,6 +35,8 @@ import {
   getResponsePattern,
   getSkillPayload,
   getSourcePolicy,
+  getSourceReport,
+  getSourceTier,
   getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
@@ -44,6 +46,7 @@ import {
   listAuthoringRecipes,
   listAuthoringScenarios,
   listClaimPolicies,
+  listCommunityDatasets,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -51,6 +54,7 @@ import {
   listPackFormats,
   listResponsePatterns,
   listSkills,
+  listSourceTiers,
   listVersionSupport,
   resolveVersion,
   searchAuthoringScenarios,
@@ -369,6 +373,37 @@ describe("catalog", () => {
         path: "java/paper-api-surfaces/1.21.11.json",
         available: true,
       }),
+    );
+  });
+
+  it("builds source reports with allowed source tiers", () => {
+    const policy = getSourcePolicy();
+    expect(policy.minecraftWikiAutomation).toBe("forbidden");
+    expect(policy.sourceTiers.map((tier) => tier.id)).toContain("community-structured");
+    expect(policy.recommendedCommunityDatasets.map((source) => source.id)).toContain(
+      "prismarinejs-minecraft-data",
+    );
+    expect(policy.recommendedCommunityDatasets.map((source) => source.id)).toContain(
+      "misode-mcmeta",
+    );
+    expect(listSourceTiers().map((tier) => tier.id)).toContain("canonical-official");
+    expect(getSourceTier("community-structured").examples).toContain("PrismarineJS/minecraft-data");
+    expect(listCommunityDatasets().map((dataset) => dataset.id)).toContain(
+      "prismarinejs-minecraft-assets",
+    );
+
+    const report = getSourceReport({ domain: "datapack", version: "26.2" });
+    expect(report.domain).toBe("datapack");
+    expect(report.resolvedVersion).toBe("26.2");
+    expect(report.primarySources?.map((source) => source.id)).toEqual(
+      expect.arrayContaining([
+        "mojang-version-manifest-v2",
+        "misode-mcmeta-data-json",
+        "prismarinejs-minecraft-data",
+      ]),
+    );
+    expect(report.prohibitedAutomation).toContain(
+      "Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows.",
     );
   });
 
@@ -764,6 +799,7 @@ describe("catalog", () => {
 
   it("keeps Minecraft Wiki prose out of redistributable data", () => {
     expect(getSourcePolicy().minecraftWikiTextRedistribution).toBe("forbidden");
+    expect(getSourcePolicy().minecraftWikiAutomation).toBe("forbidden");
   });
 
   it("loads Paper plugin source metadata", () => {

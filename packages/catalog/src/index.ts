@@ -244,6 +244,12 @@ export type EvidenceBundleOptions = {
   version?: string;
 };
 
+export type SourceReportOptions = {
+  domain?: string;
+  edition?: string;
+  version?: string;
+};
+
 export type AuthoringContextOptions = {
   domain: string;
   edition?: string;
@@ -511,6 +517,28 @@ export type EvidenceBundle = {
   }>;
   warnings: string[];
 };
+
+export type SourceReport = {
+  schemaVersion: 1;
+  sourcePolicy: CatalogData["sourcePolicy"];
+  domains: CatalogData["domains"];
+  recommendedCommunityDatasets: CatalogData["sourcePolicy"]["recommendedCommunityDatasets"];
+  prohibitedAutomation: string[];
+  domain?: EvidenceBundle["domain"];
+  edition?: EvidenceBundle["edition"];
+  requestedVersion?: EvidenceBundle["requestedVersion"];
+  resolvedVersion?: EvidenceBundle["resolvedVersion"];
+  primarySources?: EvidenceBundle["primarySources"];
+  versionSources?: EvidenceBundle["versionSources"];
+  factSurfaces?: EvidenceBundle["factSurfaces"];
+  dataFiles?: EvidenceBundle["dataFiles"];
+  links?: EvidenceBundle["links"];
+  warnings?: EvidenceBundle["warnings"];
+};
+
+export type SourceTierData = CatalogData["sourcePolicy"]["sourceTiers"][number];
+export type CommunityDatasetData =
+  CatalogData["sourcePolicy"]["recommendedCommunityDatasets"][number];
 
 export type AuthoringContext = {
   schemaVersion: 1;
@@ -1902,6 +1930,63 @@ export function getVersionDetail(edition = "java", requested = "latest"): Versio
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
   return getCatalog().sourcePolicy;
+}
+
+export function listSourceTiers(): SourceTierData[] {
+  return getSourcePolicy().sourceTiers;
+}
+
+export function getSourceTier(id: string): SourceTierData {
+  const tier = listSourceTiers().find((candidate) => candidate.id === id);
+  if (!tier) {
+    throw new Error(`Unknown source tier: ${id}`);
+  }
+  return tier;
+}
+
+export function listCommunityDatasets(): CommunityDatasetData[] {
+  return getSourcePolicy().recommendedCommunityDatasets;
+}
+
+export function getCommunityDataset(id: string): CommunityDatasetData {
+  const dataset = listCommunityDatasets().find((candidate) => candidate.id === id);
+  if (!dataset) {
+    throw new Error(`Unknown community dataset: ${id}`);
+  }
+  return dataset;
+}
+
+export function getSourceReport(options: SourceReportOptions = {}): SourceReport {
+  const catalog = getCatalog();
+  const sourcePolicy = getSourcePolicy();
+  const base = {
+    schemaVersion: 1 as const,
+    sourcePolicy,
+    domains: catalog.domains,
+    recommendedCommunityDatasets: sourcePolicy.recommendedCommunityDatasets,
+    prohibitedAutomation: sourcePolicy.prohibitedAutomation,
+  };
+  if (!options.domain) {
+    return base;
+  }
+  const evidence = getEvidenceBundle({
+    domain: options.domain,
+    ...(options.edition ? { edition: options.edition } : {}),
+    ...(options.version ? { version: options.version } : {}),
+  });
+  return {
+    ...base,
+    domain: evidence.domain,
+    edition: evidence.edition,
+    requestedVersion: evidence.requestedVersion,
+    resolvedVersion: evidence.resolvedVersion,
+    primarySources: evidence.primarySources,
+    versionSources: evidence.versionSources,
+    factSurfaces: evidence.factSurfaces,
+    dataFiles: evidence.dataFiles,
+    links: evidence.links,
+    warnings: evidence.warnings,
+  };
 }
 
 function countExisting(paths: string[]): number {

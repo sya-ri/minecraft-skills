@@ -68,8 +68,8 @@ version-specific facts.
    datapack JSON field shapes. Treat this as observed vanilla data, not a normative schema.
 21. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-22. Use Minecraft Wiki only as navigation/provenance unless the content has been independently
-   rewritten and reviewed. Do not copy or closely paraphrase Wiki prose.
+22. Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows. Use bundled data,
+   Mojang-derived data, source reports, and allowed structured community datasets instead.
 
 ## Optional Tools
 
@@ -90,6 +90,7 @@ version-specific facts.
   `minecraft-skills datapack response-patterns`,
   `minecraft-skills datapack response-pattern <id>`,
   `minecraft-skills datapack evidence <version>`,
+  `minecraft-skills source report datapack <version>`,
   `minecraft-skills datapack intents`,
   `minecraft-skills datapack intent <id>`,
   `minecraft-skills datapack checklist`,
@@ -111,5 +112,6 @@ version-specific facts.
 
 ## Source Priority
 
-Use official Mojang version metadata and extracted vanilla game data for facts. Use Minecraft Wiki
-links for source discovery and cross-checking, not as redistributable prose.
+Use official Mojang version metadata and extracted vanilla game data for facts. Use
+`source report`/`get_source_report` to confirm allowed source tiers. Treat Minecraft Wiki as
+human-only background and do not fetch, crawl, summarize, or cite it in AI workflows.

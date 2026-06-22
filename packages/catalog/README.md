@@ -44,6 +44,7 @@ import {
   getResourcepackModelSummary,
   getResponsePattern,
   getSkillPayload,
+  getSourceReport,
   getSupportMatrix,
   getVersionDetail,
   listAuthoringChecklists,
@@ -52,7 +53,9 @@ import {
   listAuthoringRecipes,
   listAuthoringScenarios,
   listClaimPolicies,
+  listCommunityDatasets,
   listSkills,
+  listSourceTiers,
   listVersionSupport,
   listFactSurfaces,
   listIntentLookups,
@@ -142,9 +145,18 @@ const paperMembers = searchPaperMembers({
 });
 const paperSurfaceDiff = comparePaperApiSurface("26.2", "26.2");
 const paper = getPaperPluginData();
+const sources = getSourceReport({ domain: "datapack", version: "26.2" });
+const sourceTiers = listSourceTiers();
+const communityDatasets = listCommunityDatasets();
 ```
 
 ## Coverage
 
 Primary support starts at Java Edition 1.13 and includes Java data packs, Java resource packs, and
 Paper-first plugins. The package treats unknown fields as gaps instead of inferred facts.
+
+`getSourceReport({ domain, version })` returns source tiers, prohibited automation, structured
+community datasets, and optional domain/version provenance. Minecraft Wiki is human-only
+background; AI workflows should not fetch, crawl, summarize, or cite Wiki pages.
+`listSourceTiers()` and `listCommunityDatasets()` expose the source policy as smaller lookup
+surfaces for agents.

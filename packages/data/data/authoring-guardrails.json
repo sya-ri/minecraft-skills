@@ -8,12 +8,13 @@
       "title": "Use source-backed facts without redistributing upstream prose",
       "rules": [
         "Prefer exact target-version data over latest-version data.",
-        "Use Minecraft Wiki, Paper docs, and Javadocs links as provenance and navigation; do not copy or closely paraphrase upstream prose.",
+        "Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows; use source-policy/source-report to choose allowed sources.",
+        "Use Paper docs, Javadocs links, and allowed structured community datasets as provenance only within their documented source tier; do not copy or closely paraphrase upstream prose.",
         "Treat null, unknown, seed, missing, not-extracted, or not-yet-published values as gaps, not facts.",
         "When evidence is unavailable, state the gap instead of filling it from memory."
       ],
       "requiredEvidence": [
-        "source-policy or evidence bundle when citing provenance",
+        "source-policy, source-report, or evidence bundle when citing provenance",
         "target version detail or support entry when giving version-specific facts"
       ],
       "failureMode": "Hallucinated facts, unsupported citations, or license-sensitive copied prose can enter generated output."

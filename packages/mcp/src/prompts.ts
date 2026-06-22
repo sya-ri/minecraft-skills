@@ -57,6 +57,9 @@ const promptDefinitions: PromptDefinition[] = [
       "get_data_manifest",
       "get_coverage_summary",
       "get_source_policy",
+      "get_source_report",
+      "list_source_tiers",
+      "list_community_datasets",
       "get_version",
       "compare_versions",
       "get_server_reports",
@@ -106,6 +109,9 @@ const promptDefinitions: PromptDefinition[] = [
       "list_fact_surfaces",
       "get_coverage_summary",
       "get_source_policy",
+      "get_source_report",
+      "list_source_tiers",
+      "list_community_datasets",
       "get_version",
       "compare_versions",
       "get_vanilla_inventory",
@@ -152,6 +158,9 @@ const promptDefinitions: PromptDefinition[] = [
       "get_data_manifest",
       "get_coverage_summary",
       "get_source_policy",
+      "get_source_report",
+      "list_source_tiers",
+      "list_community_datasets",
       "get_paper_plugin_data",
       "get_paper_api_reference",
       "get_paper_api_index",
@@ -202,6 +211,7 @@ Preflight rules:
 - Call search_authoring_scenarios when you have task wording and need scenario routing before choosing a plan.
 - Call get_authoring_plan after choosing a scenario so the required lookups are resolved in one payload.
 - Call get_authoring_context when you need preflight, recipes, intent lookup routing, and evidence in one payload.
+- Call get_source_report before using or recommending external sources so prohibited automation and source tiers are explicit.
 - Call list_version_support when choosing among target versions or explaining coverage differences.
 - Call get_authoring_preflight for the relevant domain before generating files or code.
 - Call get_evidence_bundle when you need to cite or explain which sources and extracted files back an answer.
@@ -216,7 +226,8 @@ Preflight rules:
 - Call get_data_manifest and fetch_data when a relevant downloadable surface is missing locally.
 - Use compare tools when answering migration or compatibility questions.
 - Treat unknown, missing, or not-extracted fields as gaps, not facts.
-- Do not copy Minecraft Wiki, Paper docs, or Javadocs prose; use linked sources as provenance and summarize in your own words.`;
+- Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows.
+- Do not copy Minecraft Wiki, Paper docs, Javadocs, or community dataset prose; use allowed structured data and linked sources as provenance, then summarize in your own words.`;
 
   return {
     description: definition.description,

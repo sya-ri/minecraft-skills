@@ -70,11 +70,12 @@ Release notes are tracked in [CHANGELOG.md](CHANGELOG.md).
 ## Source Policy
 
 Primary support starts at Java Edition 1.13. Redistributable facts should come from official Mojang
-metadata, extracted vanilla client/server data, PaperMC API artifacts and docs, the
-`sya-ri/spigot-event-list` API contract, or reviewed original guidance.
+metadata, extracted vanilla client/server data, PaperMC API artifacts and docs, structured
+community datasets, the `sya-ri/spigot-event-list` API contract, or reviewed original guidance.
 
-Minecraft Wiki may be used for navigation and provenance, but copied or closely paraphrased Wiki
-prose is not redistributed.
+Minecraft Wiki is human-only background for this project. AI workflows should not fetch, crawl,
+summarize, or cite Wiki pages; use bundled data, Mojang/Paper sources, source reports, and allowed
+structured datasets instead.
 
 ## Packages
 

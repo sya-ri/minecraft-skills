@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+
+- Source tier and source report APIs, CLI commands, and MCP tools for checking allowed evidence,
+  prohibited automation, and structured community datasets.
+- Recommended structured community source entries for PrismarineJS `minecraft-data`,
+  PrismarineJS `minecraft-assets`, and `misode/mcmeta`.
+
+### Changed
+
+- Minecraft Wiki is now treated as human-only background; AI workflows must not fetch, crawl,
+  summarize, or cite Wiki pages as machine evidence.
+
 ## 0.1.1 - 2026-06-23
 
 ### Added

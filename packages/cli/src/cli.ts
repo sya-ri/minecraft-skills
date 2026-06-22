@@ -27,6 +27,7 @@ import {
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
+  getCommunityDataset,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -46,6 +47,8 @@ import {
   getResponsePattern,
   getSkillPayload,
   getSourcePolicy,
+  getSourceReport,
+  getSourceTier,
   getSupportMatrix,
   getVanillaInventory,
   getVersionDetail,
@@ -56,6 +59,7 @@ import {
   listAuthoringScenarios,
   listCachedDataFiles,
   listClaimPolicies,
+  listCommunityDatasets,
   listDomains,
   listFactSurfaces,
   listIntentLookups,
@@ -64,6 +68,7 @@ import {
   listReferences,
   listResponsePatterns,
   listSkills,
+  listSourceTiers,
   listVersionSupport,
   listVersions,
   type PaperMemberSearchOptions,
@@ -219,6 +224,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft support-matrix": "support-matrix",
     "minecraft pack-formats": "pack-formats",
     "minecraft vanilla-inventory": "vanilla-inventory",
+    "minecraft sources": "source-report",
     "datapack server-reports": "server-reports",
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
@@ -242,6 +248,11 @@ function normalizeSubcommands(argv: string[]): string[] {
     "domain list": "domains",
     "domain show": "domain",
     "source policy": "source-policy",
+    "source report": "source-report",
+    "source tiers": "source-tiers",
+    "source tier": "source-tier",
+    "source datasets": "community-datasets",
+    "source dataset": "community-dataset",
   };
 
   if (groupedCommand === "datapack vanilla-paths") {
@@ -406,6 +417,11 @@ const flatCommandSuggestions: Record<string, string> = {
   references: "reference list",
   domain: "domain show",
   "source-policy": "source policy",
+  "source-report": "source report or minecraft sources",
+  "source-tiers": "source tiers",
+  "source-tier": "source tier",
+  "community-datasets": "source datasets",
+  "community-dataset": "source dataset",
 };
 
 const commandGroups = new Set([
@@ -490,6 +506,14 @@ Start here:
   minecraft-skills resourcepack evidence [version]
   minecraft-skills plugin paper evidence [version]
       Print source policy, data files, links, and warnings for provenance-aware answers.
+  minecraft-skills source report [domain] [version]
+  minecraft-skills minecraft sources [domain] [version]
+      Print allowed source tiers, prohibited automation, community structured datasets, and optional
+      domain/version provenance.
+  minecraft-skills source tiers
+  minecraft-skills source datasets
+      Inspect source tiers and recommended structured community datasets such as PrismarineJS and
+      misode/mcmeta.
 
 Domains:
   datapack        Java data packs: commands, server reports, pack formats, vanilla data paths,
@@ -526,6 +550,8 @@ Safety notes:
   - Paper Javadocs indexes prove API name presence, not behavior, nullability, overload semantics,
     thread safety, or Folia safety.
   - Paper event search results are candidates until checked against Paper/Bukkit API surfaces.
+  - Minecraft Wiki pages are human-only background: do not fetch, crawl, summarize, or cite them in
+    AI workflows.
 
 Grouped commands:
   minecraft-skills datapack context|preflight|evidence [version] [--edition java]
@@ -570,11 +596,14 @@ Grouped commands:
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory
+  minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
   minecraft-skills skill list|show|write
   minecraft-skills reference list [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain show <datapack|resourcepack|paper-plugin>
   minecraft-skills source policy
+  minecraft-skills source report [datapack|resourcepack|paper-plugin] [version]
+  minecraft-skills source tiers|tier|datasets|dataset
 
 Command reference:
   domain list    List supported authoring domains.
@@ -616,6 +645,13 @@ Command reference:
   reference list Print generated skill references.
   domain show    Print canonical JSON for an authoring domain.
   source policy  Print source and license policy JSON.
+  source report  Print source tiers, prohibited automation, community datasets, and optional
+                 domain/version provenance.
+  source tiers   Print source tier JSON entries.
+  source tier    Print one source tier by id.
+  source datasets
+                 Print recommended structured community dataset JSON entries.
+  source dataset Print one structured community dataset by id.
 
 Options:
   --domain <domain>      Filter to datapack, resourcepack, or paper-plugin where supported.
@@ -1539,6 +1575,48 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
 
     if (command === "source-policy") {
       printJson(output, getSourcePolicy());
+      return 0;
+    }
+
+    if (command === "source-report") {
+      const [domain, positionalVersion] = positionalArgs(args);
+      const version = readOption(args, "--version", positionalVersion ?? "");
+      printJson(
+        output,
+        getSourceReport({
+          ...(domain ? { domain } : {}),
+          edition: readOption(args, "--edition", "java"),
+          ...(version ? { version } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "source-tiers") {
+      printJson(output, listSourceTiers());
+      return 0;
+    }
+
+    if (command === "source-tier") {
+      const id = args[0];
+      if (!id) {
+        throw new Error("source tier command requires an id");
+      }
+      printJson(output, getSourceTier(id));
+      return 0;
+    }
+
+    if (command === "community-datasets") {
+      printJson(output, listCommunityDatasets());
+      return 0;
+    }
+
+    if (command === "community-dataset") {
+      const id = args[0];
+      if (!id) {
+        throw new Error("source dataset command requires an id");
+      }
+      printJson(output, getCommunityDataset(id));
       return 0;
     }
 

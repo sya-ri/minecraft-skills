@@ -52,6 +52,8 @@ minecraft-skills plugin paper scenario paper-event-listener-review
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
+minecraft-skills source report paper-plugin 26.2
+minecraft-skills source datasets
 minecraft-skills plugin paper intents
 minecraft-skills plugin paper fact-surfaces
 minecraft-skills plugin paper claim-policies
@@ -155,6 +157,16 @@ Use these together before writing or reviewing generated output:
   non-guarantees.
 - `datapack fact-surfaces`, `resourcepack fact-surfaces`, or `plugin paper fact-surfaces`: what
   each machine-verifiable data surface can and cannot prove.
+- `source report [domain] [version]` or `minecraft sources [domain] [version]`: allowed source
+  tiers, prohibited automation, structured community datasets, and optional domain/version
+  provenance.
+
+## Source Policy
+
+Bundled facts come from Mojang version metadata, extracted official client/server jars, PaperMC API
+and docs, structured community datasets, and the `sya-ri/spigot-event-list` API contract.
+Minecraft Wiki is human-only background; AI workflows should not fetch, crawl, summarize, or cite
+Wiki pages.
 
 ## MCP
 

@@ -423,6 +423,7 @@
               "datapack evidence",
               "resourcepack evidence",
               "plugin paper evidence",
+              "source report",
               "source policy",
               "datapack fact-surfaces",
               "resourcepack fact-surfaces",
@@ -433,12 +434,14 @@
             ],
             "mcp": [
               "get_evidence_bundle",
+              "get_source_report",
               "get_source_policy",
               "list_fact_surfaces",
               "get_fact_surface"
             ],
             "packageApis": [
               "getEvidenceBundle",
+              "getSourceReport",
               "getSourcePolicy",
               "listFactSurfaces",
               "getFactSurface"
@@ -448,7 +451,7 @@
             "Evidence bundle for the target domain/version",
             "Fact surface guarantees and non-guarantees"
           ],
-          "failureMode": "Do not quote or redistribute Minecraft Wiki text; use it only for pointers and attribution according to source policy."
+          "failureMode": "Do not fetch, quote, cite, or redistribute Minecraft Wiki text in AI workflows; use allowed machine-readable sources from source policy/source report."
         }
       ]
     }
