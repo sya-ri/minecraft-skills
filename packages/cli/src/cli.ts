@@ -37,6 +37,7 @@ import {
   getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getResponsePattern,
   getSkillPayload,
   getSourcePolicy,
   getSupportMatrix,
@@ -53,6 +54,7 @@ import {
   listOutputRequirements,
   listPackFormats,
   listReferences,
+  listResponsePatterns,
   listSkills,
   listVersionSupport,
   listVersions,
@@ -130,6 +132,8 @@ Usage:
   minecraft-skills claim-policy <id>
   minecraft-skills output-requirements [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills output-requirement <id>
+  minecraft-skills response-patterns [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills response-pattern <id>
   minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills intent-lookups [--domain datapack|resourcepack|paper-plugin]
@@ -199,6 +203,10 @@ Commands:
                  List required final-output checks for Minecraft authoring responses.
   output-requirement
                  Print one final-output requirement by id.
+  response-patterns
+                 List response patterns for source-backed Minecraft authoring answers.
+  response-pattern
+                 Print one response pattern by id.
   preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
   evidence       Print source policy, primary sources, data files, links, and warnings.
   intent-lookups
@@ -463,6 +471,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("output-requirement command requires an id");
       }
       printJson(output, getOutputRequirement(id));
+      return 0;
+    }
+
+    if (command === "response-patterns") {
+      printJson(output, {
+        schemaVersion: 1,
+        patterns: listResponsePatterns({
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+        }),
+      });
+      return 0;
+    }
+
+    if (command === "response-pattern") {
+      const id = positionalArgs(args)[0];
+      if (!id) {
+        throw new Error("response-pattern command requires an id");
+      }
+      printJson(output, getResponsePattern(id));
       return 0;
     }
 

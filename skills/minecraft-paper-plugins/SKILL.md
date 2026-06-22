@@ -28,8 +28,10 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 7. Use `claim-policies --domain paper-plugin`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "paper-plugin" })` before making Paper support, API, event, or
    Folia/thread-safety claims.
-8. Use `output-requirements --domain paper-plugin`, MCP `list_output_requirements`, or package
-   `listOutputRequirements({ domain: "paper-plugin" })` before finalizing an answer or generated
+8. Use `output-requirements --domain paper-plugin` and `response-patterns --domain paper-plugin`,
+   MCP `list_output_requirements` and `list_response_patterns`, or package
+   `listOutputRequirements({ domain: "paper-plugin" })` and
+   `listResponsePatterns({ domain: "paper-plugin" })` before finalizing an answer or generated
    code.
 9. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each plugin data surface can and cannot prove.
@@ -70,6 +72,8 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
   `minecraft-skills authoring-guardrails --domain paper-plugin`,
   `minecraft-skills claim-policies --domain paper-plugin`,
   `minecraft-skills output-requirements --domain paper-plugin`,
+  `minecraft-skills response-patterns --domain paper-plugin`,
+  `minecraft-skills response-pattern <id>`,
   `minecraft-skills evidence paper-plugin <version>`,
   `minecraft-skills intent-lookups --domain paper-plugin`,
   `minecraft-skills intent-lookup <id>`,

@@ -26,6 +26,7 @@ import {
   getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getResponsePattern,
   getSkillPayload,
   getSourcePolicy,
   getSupportMatrix,
@@ -40,6 +41,7 @@ import {
   listIntentLookups,
   listOutputRequirements,
   listPackFormats,
+  listResponsePatterns,
   listSkills,
   listVersionSupport,
   resolveVersion,
@@ -183,6 +185,22 @@ describe("catalog", () => {
     expect(() => getOutputRequirement("missing")).toThrow("Unknown output requirement: missing");
   });
 
+  it("lists response patterns for source-backed answers", () => {
+    const paperPatterns = listResponsePatterns({ domain: "paper-plugin" });
+    expect(paperPatterns.map((pattern) => pattern.id)).toContain("verified-authoring-answer");
+    expect(paperPatterns.map((pattern) => pattern.id)).toContain("paper-api-answer");
+
+    const pattern = getResponsePattern("paper-api-answer");
+    expect(pattern.requiredSections).toContain(
+      "Javadocs type/member evidence for referenced API names",
+    );
+    expect(pattern.gapStatements).toContain(
+      "The Javadocs search index proves name presence, not behavior, nullability, or thread safety.",
+    );
+
+    expect(() => getResponsePattern("missing")).toThrow("Unknown response pattern: missing");
+  });
+
   it("builds authoring preflight payloads with coverage warnings", () => {
     const datapack = getAuthoringPreflight({ domain: "datapack", version: "26.2" });
     expect(datapack).toMatchObject({
@@ -225,6 +243,7 @@ describe("catalog", () => {
     expect(context.outputRequirements.map((requirement) => requirement.id)).toContain(
       "paper-plugin-output-safety",
     );
+    expect(context.responsePatterns.map((pattern) => pattern.id)).toContain("paper-api-answer");
     expect(context.intentLookups.map((intent) => intent.id)).toContain(
       "verify-paper-type-or-member",
     );

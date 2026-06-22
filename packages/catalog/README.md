@@ -39,6 +39,7 @@ import {
   getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getResponsePattern,
   getSkillPayload,
   getSupportMatrix,
   getVersionDetail,
@@ -51,6 +52,7 @@ import {
   listFactSurfaces,
   listIntentLookups,
   listOutputRequirements,
+  listResponsePatterns,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -75,6 +77,8 @@ const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
 const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirements = listOutputRequirements({ domain: "paper-plugin" });
 const paperOutputRequirement = getOutputRequirement("paper-plugin-output-safety");
+const responsePatterns = listResponsePatterns({ domain: "paper-plugin" });
+const paperApiAnswer = getResponsePattern("paper-api-answer");
 const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
 const intentLookups = listIntentLookups({ domain: "paper-plugin" });

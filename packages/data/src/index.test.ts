@@ -85,6 +85,11 @@ describe("@minecraft-skills/data", () => {
     );
   });
 
+  it("loads bundled response pattern JSON", () => {
+    const patterns = readDataJson<{ patterns: Array<{ id: string }> }>("response-patterns.json");
+    expect(patterns.patterns.map((pattern) => pattern.id)).toContain("paper-api-answer");
+  });
+
   it("exposes a package data root", () => {
     expect(getDataRoot()).toMatch(/packages\/data\/data$/);
   });

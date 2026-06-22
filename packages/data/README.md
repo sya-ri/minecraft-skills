@@ -10,6 +10,7 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Machine-readable authoring guardrails for output safety.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
+- Machine-readable response patterns for verified facts, missing evidence, and gap wording.
 - Machine-readable fact surface guidance that states what each data surface can and cannot prove.
 - Extracted data/resource pack format numbers.
 - Official server report summaries and command path indexes.
@@ -38,6 +39,7 @@ const recipes = readDataJson("authoring-recipes.json");
 const guardrails = readDataJson("authoring-guardrails.json");
 const claimPolicies = readDataJson("claim-policies.json");
 const outputRequirements = readDataJson("output-requirements.json");
+const responsePatterns = readDataJson("response-patterns.json");
 const factSurfaces = readDataJson("fact-surfaces.json");
 const intentLookups = readDataJson("intent-lookups.json");
 const commandPaths = readDataText("java/command-paths/26.2.txt");

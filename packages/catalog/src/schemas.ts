@@ -187,6 +187,24 @@ export const OutputRequirementIndex = type({
   requirements: OutputRequirement.array(),
 });
 
+export const ResponsePattern = type({
+  id: "string",
+  domains: DomainId.array(),
+  title: "string",
+  useWhen: "string[]",
+  requiredSections: "string[]",
+  evidenceStatements: "string[]",
+  gapStatements: "string[]",
+  mustAvoid: "string[]",
+  failureMode: "string",
+});
+
+export const ResponsePatternIndex = type({
+  schemaVersion: "1",
+  generatedFrom: "string",
+  patterns: ResponsePattern.array(),
+});
+
 export const IntentLookupToolRefs = type({
   cli: "string[]",
   mcp: "string[]",
@@ -522,6 +540,8 @@ export type ClaimPolicyData = typeof ClaimPolicy.infer;
 export type ClaimPolicyIndexData = typeof ClaimPolicyIndex.infer;
 export type OutputRequirementData = typeof OutputRequirement.infer;
 export type OutputRequirementIndexData = typeof OutputRequirementIndex.infer;
+export type ResponsePatternData = typeof ResponsePattern.infer;
+export type ResponsePatternIndexData = typeof ResponsePatternIndex.infer;
 export type IntentLookupData = typeof IntentLookup.infer;
 export type IntentLookupIndexData = typeof IntentLookupIndex.infer;
 export type IntentLookupStepData = typeof IntentLookupStep.infer;

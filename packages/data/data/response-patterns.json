@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "minecraft-skills evidence bundles, claim policies, output requirements, and authoring recipes",
+  "patterns": [
+    {
+      "id": "verified-authoring-answer",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Answer with verified facts and explicit gaps",
+      "useWhen": [
+        "the answer includes Minecraft authoring facts for a target version",
+        "the answer summarizes generated files or code",
+        "the answer uses bundled, cached, or downloaded minecraft-skills data"
+      ],
+      "requiredSections": [
+        "target version or explicit latest-bundled assumption",
+        "verified facts with the data surface or tool that verified each fact",
+        "gaps or assumptions that remain unverified",
+        "final output requirements that were applied"
+      ],
+      "evidenceStatements": [
+        "State whether the evidence came from bundled data, cached/downloaded data, or a stated gap.",
+        "Name the exact fact surface when it affects interpretation, such as command paths, observed JSON shapes, vanilla paths, or Paper API surface.",
+        "Use claim policy wording when a surface has non-guarantees."
+      ],
+      "gapStatements": [
+        "The available data does not verify this for the requested version.",
+        "This surface proves name or path presence only; it does not prove runtime behavior.",
+        "I am treating the target as the latest bundled version because no version was specified."
+      ],
+      "mustAvoid": [
+        "presenting missing data as a likely fact",
+        "claiming support for another version without a comparison",
+        "copying upstream prose from Minecraft Wiki, Paper docs, or Javadocs"
+      ],
+      "failureMode": "A response can sound authoritative while hiding version assumptions or unsupported claims."
+    },
+    {
+      "id": "missing-or-unsupported-answer",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Answer when requested evidence is missing or unsupported",
+      "useWhen": [
+        "preflight reports coverage unknowns or unsupported Paper",
+        "a search returns no command path, vanilla path, JSON field, type, member, or event candidate",
+        "a required downloadable surface is not available locally"
+      ],
+      "requiredSections": [
+        "the requested fact that could not be verified",
+        "the exact lookup or surface that failed to verify it",
+        "whether a downloadable surface may fill the gap",
+        "a safe alternative or a request for target-version/source clarification when available"
+      ],
+      "evidenceStatements": [
+        "Use the failed lookup name and target version instead of general uncertainty.",
+        "For unsupported Paper versions, state that bundled Paper support does not mark the version supported.",
+        "For missing downloadable data, point to data-manifest or fetch-data instead of guessing."
+      ],
+      "gapStatements": [
+        "The checked surface did not verify that fact for this target version.",
+        "Do not generate this as verified until the missing surface is fetched or another source verifies it.",
+        "The latest Java release and latest supported Paper version differ in the bundled support matrix."
+      ],
+      "mustAvoid": [
+        "inventing syntax, paths, events, types, or members from naming convention",
+        "using neighboring versions as proof",
+        "emitting Paper dependency coordinates for an unsupported version"
+      ],
+      "failureMode": "An AI may fill missing evidence with plausible Minecraft knowledge that is wrong for the target version."
+    },
+    {
+      "id": "datapack-command-answer",
+      "domains": ["datapack"],
+      "title": "Answer about datapack command syntax",
+      "useWhen": [
+        "the answer includes .mcfunction commands",
+        "the answer discusses command parser paths",
+        "the answer migrates command syntax between versions"
+      ],
+      "requiredSections": [
+        "target Java version",
+        "command path search or comparison result",
+        "statement that command path evidence proves parser shape only",
+        "remaining gameplay, permission, or runtime assumptions"
+      ],
+      "evidenceStatements": [
+        "Reference commands, compare-commands, or server-reports results.",
+        "When migrating, distinguish added and removed parser paths.",
+        "Use command-syntax-exists claim policy wording."
+      ],
+      "gapStatements": [
+        "The command path surface did not verify that command form.",
+        "Parser-path presence does not guarantee runtime success.",
+        "This command still needs in-game behavior testing if behavior matters."
+      ],
+      "mustAvoid": [
+        "claiming a command will succeed at runtime because a parser path exists",
+        "assuming command syntax from a nearby release",
+        "omitting the target version for generated commands"
+      ],
+      "failureMode": "Generated datapack functions can contain target-version-invalid or behavior-overstated commands."
+    },
+    {
+      "id": "resourcepack-asset-answer",
+      "domains": ["resourcepack"],
+      "title": "Answer about resource pack assets, models, or item definitions",
+      "useWhen": [
+        "the answer references vanilla asset paths",
+        "the answer writes model or item definition JSON",
+        "the answer explains resource pack migration"
+      ],
+      "requiredSections": [
+        "target Java version",
+        "resource pack format evidence when pack.mcmeta is included",
+        "vanilla asset path search or comparison evidence",
+        "observed-only wording for model or item definition shapes"
+      ],
+      "evidenceStatements": [
+        "Reference vanilla-paths or compare-vanilla-paths for paths.",
+        "Reference resourcepack-models or search-models for observed model and item definition shapes.",
+        "Use resourcepack-model-field-shape and vanilla-path-exists claim policy wording."
+      ],
+      "gapStatements": [
+        "The path inventory did not find that vanilla asset for this target version.",
+        "Observed client files do not prove complete rendering behavior.",
+        "The model summary does not prove every accepted key."
+      ],
+      "mustAvoid": [
+        "inventing vanilla asset paths from naming convention",
+        "claiming rendering behavior from path presence",
+        "presenting observed client files as a complete resource pack schema"
+      ],
+      "failureMode": "Generated resource packs can reference missing assets or overstate observed client data."
+    },
+    {
+      "id": "paper-api-answer",
+      "domains": ["paper-plugin"],
+      "title": "Answer about Paper API, events, or scheduler-sensitive code",
+      "useWhen": [
+        "the answer includes Paper plugin code",
+        "the answer names Paper, Bukkit, or Adventure types or members",
+        "the answer discusses events, scheduling, async work, worlds, entities, chunks, or Folia"
+      ],
+      "requiredSections": [
+        "target Paper-supported Minecraft version or support gap",
+        "Paper API reference or support metadata for dependency coordinates",
+        "Javadocs type/member evidence for referenced API names",
+        "threading, scheduler, Folia, behavior, or nullability assumptions that remain unproven"
+      ],
+      "evidenceStatements": [
+        "Reference paper, paper-api, paper-api-surface, paper-types, paper-members, or paper-events results.",
+        "Treat event search results as candidates until the event type is verified against the API surface.",
+        "Use paper-type-or-member-exists, paper-event-candidate, and folia-or-thread-safety claim policy wording."
+      ],
+      "gapStatements": [
+        "The Javadocs search index proves name presence, not behavior, nullability, or thread safety.",
+        "The event search result is a candidate and still needs API surface verification.",
+        "The bundled data does not mark this Minecraft version as Paper-supported."
+      ],
+      "mustAvoid": [
+        "emitting dependency coordinates for unsupported Paper versions",
+        "inventing listener event classes or method names",
+        "claiming Folia safety from type/member presence alone"
+      ],
+      "failureMode": "Generated Paper plugins can target unsupported versions, invented API names, or unsafe threading assumptions."
+    }
+  ]
+}

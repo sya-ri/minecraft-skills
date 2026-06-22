@@ -9,6 +9,7 @@ import {
   getIntentLookup,
   getOutputRequirement,
   getPaperApiSurface,
+  getResponsePattern,
   getSkillPayload,
   listAuthoringChecklists,
   listAuthoringGuardrails,
@@ -17,6 +18,7 @@ import {
   listFactSurfaces,
   listIntentLookups,
   listOutputRequirements,
+  listResponsePatterns,
   listSkills,
 } from "@minecraft-skills/catalog";
 
@@ -118,6 +120,11 @@ export function listMinecraftSkillsResources(): Resource[] {
     schemaVersion: 1,
     requirements: outputRequirements,
   };
+  const responsePatterns = listResponsePatterns();
+  const responsePatternIndex = {
+    schemaVersion: 1,
+    patterns: responsePatterns,
+  };
   const factSurfaces = listFactSurfaces();
   const factSurfaceIndex = {
     schemaVersion: 1,
@@ -211,6 +218,22 @@ export function listMinecraftSkillsResources(): Resource[] {
       description: `Final-output requirement for ${requirement.title}.`,
       mimeType: "application/json",
       size: textSize(JSON.stringify(requirement, null, 2)),
+    })),
+    {
+      uri: `${dataResourceBase}/response-patterns.json`,
+      name: "response-patterns.json",
+      title: "Minecraft Skills response patterns",
+      description: "Response patterns for source-backed Minecraft authoring answers.",
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(responsePatternIndex, null, 2)),
+    },
+    ...responsePatterns.map((pattern) => ({
+      uri: `${dataResourceBase}/response-patterns/${pattern.id}.json`,
+      name: `response-patterns/${pattern.id}.json`,
+      title: pattern.title,
+      description: `Response pattern for ${pattern.title}.`,
+      mimeType: "application/json",
+      size: textSize(JSON.stringify(pattern, null, 2)),
     })),
     {
       uri: `${dataResourceBase}/fact-surfaces.json`,
@@ -410,6 +433,25 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
     };
   }
 
+  if (uri === `${dataResourceBase}/response-patterns.json`) {
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            {
+              schemaVersion: 1,
+              patterns: listResponsePatterns(),
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+    };
+  }
+
   const dataPrefix = `${dataResourceBase}/`;
   if (uri.startsWith(dataPrefix)) {
     const path = uri.slice(dataPrefix.length);
@@ -474,6 +516,19 @@ export function readMinecraftSkillsResource(uri: string): { contents: ResourceCo
             uri,
             mimeType: "application/json",
             text: JSON.stringify(getOutputRequirement(id), null, 2),
+          },
+        ],
+      };
+    }
+    const responsePatternPrefix = "response-patterns/";
+    if (path.startsWith(responsePatternPrefix) && path.endsWith(".json")) {
+      const id = path.slice(responsePatternPrefix.length, -".json".length);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify(getResponsePattern(id), null, 2),
           },
         ],
       };

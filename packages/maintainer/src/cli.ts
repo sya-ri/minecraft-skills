@@ -27,6 +27,7 @@ import {
   listIntentLookups,
   listOutputRequirements,
   listReferences,
+  listResponsePatterns,
   listVersions,
 } from "@minecraft-skills/catalog";
 import { auditCurrentSources } from "./currentSources.js";
@@ -484,6 +485,45 @@ function requireOutputRequirements(root: string, messages: string[]): void {
   }
 }
 
+function requireResponsePatterns(root: string, messages: string[]): void {
+  requireDataFile(root, "response-patterns.json", messages);
+  const domains = new Set(listDomains().map((domain) => domain.id));
+  const ids = new Set<string>();
+  for (const pattern of listResponsePatterns()) {
+    const prefix = `response pattern ${pattern.id}`;
+    if (ids.has(pattern.id)) {
+      messages.push(`${prefix} must not be duplicated`);
+    }
+    ids.add(pattern.id);
+    if (pattern.domains.length === 0) {
+      messages.push(`${prefix} must list at least one domain`);
+    }
+    for (const domain of pattern.domains) {
+      if (!domains.has(domain)) {
+        messages.push(`${prefix} references unknown domain: ${domain}`);
+      }
+    }
+    if (pattern.useWhen.length === 0) {
+      messages.push(`${prefix} must describe when to use it`);
+    }
+    if (pattern.requiredSections.length === 0) {
+      messages.push(`${prefix} must list required answer sections`);
+    }
+    if (pattern.evidenceStatements.length === 0) {
+      messages.push(`${prefix} must list evidence statements`);
+    }
+    if (pattern.gapStatements.length === 0) {
+      messages.push(`${prefix} must list gap statements`);
+    }
+    if (pattern.mustAvoid.length === 0) {
+      messages.push(`${prefix} must list avoided response patterns`);
+    }
+    if (!pattern.failureMode) {
+      messages.push(`${prefix} must describe a failure mode`);
+    }
+  }
+}
+
 function requireIntentLookups(
   root: string,
   publicEntrypoints: PublicEntrypoints,
@@ -644,6 +684,7 @@ export function validateRepository(): ValidationResult {
   requireAuthoringRecipes(root, publicEntrypoints, messages);
   requireClaimPolicies(root, publicEntrypoints, messages);
   requireOutputRequirements(root, messages);
+  requireResponsePatterns(root, messages);
   requireIntentLookups(root, publicEntrypoints, messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {

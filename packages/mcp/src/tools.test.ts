@@ -22,6 +22,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_claim_policy");
     expect(tools.map((tool) => tool.name)).toContain("list_output_requirements");
     expect(tools.map((tool) => tool.name)).toContain("get_output_requirement");
+    expect(tools.map((tool) => tool.name)).toContain("list_response_patterns");
+    expect(tools.map((tool) => tool.name)).toContain("get_response_pattern");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
@@ -88,6 +90,8 @@ describe("MCP tools", () => {
         "get_claim_policy",
         "list_output_requirements",
         "get_output_requirement",
+        "list_response_patterns",
+        "get_response_pattern",
         "get_authoring_preflight",
         "get_evidence_bundle",
         "list_intent_lookups",
@@ -214,6 +218,20 @@ describe("MCP tools", () => {
     expect(single.content[0]?.text).toContain("unverified event class names");
   });
 
+  it("calls response pattern tools", async () => {
+    const list = await callMinecraftSkillsTool("list_response_patterns", {
+      domain: "paper-plugin",
+    });
+    expect(list.content[0]?.text).toContain('"id": "verified-authoring-answer"');
+    expect(list.content[0]?.text).toContain('"id": "paper-api-answer"');
+
+    const single = await callMinecraftSkillsTool("get_response_pattern", {
+      id: "paper-api-answer",
+    });
+    expect(single.content[0]?.text).toContain("Javadocs type/member evidence");
+    expect(single.content[0]?.text).toContain("name presence, not behavior");
+  });
+
   it("calls authoring preflight tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_preflight", {
       domain: "paper-plugin",
@@ -234,6 +252,7 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"guardrails"');
     expect(result.content[0]?.text).toContain('"claimPolicies"');
     expect(result.content[0]?.text).toContain('"outputRequirements"');
+    expect(result.content[0]?.text).toContain('"responsePatterns"');
     expect(result.content[0]?.text).toContain('"intentLookups"');
     expect(result.content[0]?.text).toContain('"id": "verify-paper-type-or-member"');
     expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');

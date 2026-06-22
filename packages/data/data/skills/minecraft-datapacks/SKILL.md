@@ -31,8 +31,10 @@ version-specific facts.
 8. Use `claim-policies --domain datapack`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "datapack" })` before making version, command, JSON shape, or path
    claims.
-9. Use `output-requirements --domain datapack`, MCP `list_output_requirements`, or package
-   `listOutputRequirements({ domain: "datapack" })` before finalizing an answer or generated files.
+9. Use `output-requirements --domain datapack` and `response-patterns --domain datapack`, MCP
+   `list_output_requirements` and `list_response_patterns`, or package
+   `listOutputRequirements({ domain: "datapack" })` and
+   `listResponsePatterns({ domain: "datapack" })` before finalizing an answer or generated files.
 10. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
 11. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
@@ -66,6 +68,8 @@ version-specific facts.
   `minecraft-skills authoring-guardrails --domain datapack`,
   `minecraft-skills claim-policies --domain datapack`,
   `minecraft-skills output-requirements --domain datapack`,
+  `minecraft-skills response-patterns --domain datapack`,
+  `minecraft-skills response-pattern <id>`,
   `minecraft-skills evidence datapack <version>`,
   `minecraft-skills intent-lookups --domain datapack`,
   `minecraft-skills intent-lookup <id>`,

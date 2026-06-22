@@ -32,6 +32,7 @@ import {
   getPaperApiSurface,
   getPaperPluginData,
   getResourcepackModelSummary,
+  getResponsePattern,
   getSkillPayload,
   getSourcePolicy,
   getSupportMatrix,
@@ -48,6 +49,7 @@ import {
   listOutputRequirements,
   listPackFormats,
   listReferences,
+  listResponsePatterns,
   listSkills,
   listVersionSupport,
   listVersions,
@@ -246,6 +248,30 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_output_requirement",
     description: "Get one Minecraft authoring final-output requirement by id.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+      },
+      required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_response_patterns",
+    description:
+      "List response patterns for source-backed Minecraft authoring answers, including verified facts, gaps, and non-guarantees.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_response_pattern",
+    description: "Get one Minecraft authoring response pattern by id.",
     inputSchema: {
       type: "object",
       properties: {
@@ -904,6 +930,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_output_requirement requires string id");
       }
       return text(getOutputRequirement(args.id));
+    }
+    if (name === "list_response_patterns") {
+      return text(
+        listResponsePatterns({
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+        }),
+      );
+    }
+    if (name === "get_response_pattern") {
+      if (typeof args.id !== "string") {
+        throw new Error("get_response_pattern requires string id");
+      }
+      return text(getResponsePattern(args.id));
     }
     if (name === "get_authoring_preflight") {
       if (typeof args.domain !== "string") {

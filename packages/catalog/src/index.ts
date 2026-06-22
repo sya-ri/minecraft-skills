@@ -70,6 +70,10 @@ import {
   type ReferenceData,
   ResourcepackModelSummary,
   type ResourcepackModelSummaryData,
+  ResponsePattern,
+  type ResponsePatternData,
+  ResponsePatternIndex,
+  type ResponsePatternIndexData,
   type SkillData,
   VanillaInventory,
   type VanillaInventoryData,
@@ -116,6 +120,8 @@ export type {
   PaperPluginDataData,
   ReferenceData,
   ResourcepackModelSummaryData,
+  ResponsePatternData,
+  ResponsePatternIndexData,
   SkillData,
   VanillaInventoryData,
   VersionDetailData,
@@ -163,6 +169,10 @@ export type ClaimPolicyQuery = {
 };
 
 export type OutputRequirementQuery = {
+  domain?: string;
+};
+
+export type ResponsePatternQuery = {
   domain?: string;
 };
 
@@ -454,6 +464,7 @@ export type AuthoringContext = {
   guardrails: AuthoringGuardrailData[];
   claimPolicies: ClaimPolicyData[];
   outputRequirements: OutputRequirementData[];
+  responsePatterns: ResponsePatternData[];
   intentLookups: IntentLookupData[];
   evidence: EvidenceBundle;
 };
@@ -812,6 +823,23 @@ export function getOutputRequirement(id: string): OutputRequirementData {
   return OutputRequirement.assert(found);
 }
 
+export function listResponsePatterns(query: ResponsePatternQuery = {}): ResponsePatternData[] {
+  const index = ResponsePatternIndex.assert(readDataJson("response-patterns.json"));
+  if (!query.domain) {
+    return index.patterns;
+  }
+  const domain = DomainId.assert(query.domain);
+  return index.patterns.filter((pattern) => pattern.domains.includes(domain));
+}
+
+export function getResponsePattern(id: string): ResponsePatternData {
+  const found = listResponsePatterns().find((pattern) => pattern.id === id);
+  if (!found) {
+    throw new Error(`Unknown response pattern: ${id}`);
+  }
+  return ResponsePattern.assert(found);
+}
+
 export function listIntentLookups(query: IntentLookupQuery = {}): IntentLookupData[] {
   const index = IntentLookupIndex.assert(readDataJson("intent-lookups.json"));
   if (!query.domain) {
@@ -1084,6 +1112,7 @@ export function getAuthoringContext(options: AuthoringContextOptions): Authoring
     guardrails: listAuthoringGuardrails({ domain: preflight.domain }),
     claimPolicies: listClaimPolicies({ domain: preflight.domain }),
     outputRequirements: listOutputRequirements({ domain: preflight.domain }),
+    responsePatterns: listResponsePatterns({ domain: preflight.domain }),
     intentLookups: listIntentLookups({ domain: preflight.domain }),
     evidence: getEvidenceBundle({
       domain: preflight.domain,
