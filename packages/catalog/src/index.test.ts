@@ -577,6 +577,24 @@ describe("catalog", () => {
     });
     expect(resourcepack.observedFields.map((field) => field.path)).toContain("model.type");
 
+    const oldItemDefinition = getPackFileSchema({
+      version: "1.20.6",
+      path: "assets/example/items/widget.json",
+      domain: "resourcepack",
+    });
+    expect(oldItemDefinition.available).toBe(false);
+    expect(oldItemDefinition.notes.join("\n")).toContain("does not expose assets/minecraft/items");
+
+    const oldSingularAdvancement = getPackFileSchema({
+      version: "1.20.6",
+      path: "data/example/advancement/root.json",
+      domain: "datapack",
+    });
+    expect(oldSingularAdvancement.available).toBe(false);
+    expect(oldSingularAdvancement.notes.join("\n")).toContain(
+      "does not expose datapack schema kind 'advancement'",
+    );
+
     const unknown = getPackFileSchema({
       version: "26.2",
       path: "assets/example/textures/item/widget.png",
@@ -592,7 +610,7 @@ describe("catalog", () => {
     const paths = [
       ["datapack", "pack.mcmeta"],
       ["datapack", "data/example/tags/block/widgets.json"],
-      ["datapack", "data/example/functions/tick.mcfunction"],
+      ["datapack", "data/example/function/tick.mcfunction"],
       ["datapack", "data/example/structure/widgets/root.nbt"],
       ["resourcepack", "pack.mcmeta"],
       ["resourcepack", "assets/example/blockstates/widget.json"],
@@ -635,7 +653,7 @@ describe("catalog", () => {
       to: "1.21",
       summary: {
         packFormatChanged: true,
-        schemaBackedFiles: 3,
+        schemaBackedFiles: 2,
       },
     });
     expect(datapack.schemaLookups.map((lookup) => lookup.file.kind)).toEqual([
@@ -643,6 +661,7 @@ describe("catalog", () => {
       "advancement",
       "function",
     ]);
+    expect(datapack.schemaLookups.map((lookup) => lookup.available)).toEqual([true, true, false]);
     expect(datapack.considerations.join("\n")).toContain("pack.mcmeta");
     expect(datapack.recommendedChecks).toContain("datapack compare-schema");
 
@@ -654,7 +673,9 @@ describe("catalog", () => {
       limit: 5,
     });
     expect(resourcepack.summary.packFormatChanged).toBe(true);
+    expect(resourcepack.summary.schemaBackedFiles).toBe(0);
     expect(resourcepack.schemaLookups[0]?.file.kind).toBe("item-definition");
+    expect(resourcepack.schemaLookups[0]?.available).toBe(false);
     expect(resourcepack.recommendedChecks).toContain("resourcepack file-schema");
   });
 

@@ -2393,8 +2393,12 @@ function pathExtension(path: string): string | null {
   return dot === -1 ? null : file.slice(dot + 1).toLowerCase();
 }
 
+function normalizePackPath(path: string): string {
+  return path.replaceAll("\\", "/").replace(/^\/+/, "");
+}
+
 function classifyDatapackPath(path: string): PackFileClassification | undefined {
-  const normalized = path.replaceAll("\\", "/").replace(/^\/+/, "");
+  const normalized = normalizePackPath(path);
   if (normalized === "pack.mcmeta") {
     return {
       path,
@@ -2451,7 +2455,7 @@ function classifyDatapackPath(path: string): PackFileClassification | undefined 
 }
 
 function classifyResourcepackPath(path: string): PackFileClassification | undefined {
-  const normalized = path.replaceAll("\\", "/").replace(/^\/+/, "");
+  const normalized = normalizePackPath(path);
   if (normalized === "pack.mcmeta") {
     return {
       path,
@@ -2932,6 +2936,93 @@ function staticPackFileSchema(options: {
   };
 }
 
+function resourcepackVersionHasTopLevel(
+  edition: EditionData,
+  version: string,
+  topLevel: string,
+): boolean {
+  if (topLevel === "pack.mcmeta") {
+    return true;
+  }
+  const paths = readVanillaPathList(edition, version, "resourcepack");
+  return paths.some(
+    (path) =>
+      path === `assets/minecraft/${topLevel}` || path.startsWith(`assets/minecraft/${topLevel}/`),
+  );
+}
+
+function unsupportedSchemaResult(options: {
+  edition: EditionData;
+  version: string;
+  file: PackFileClassification;
+  notes: string[];
+}): PackFileSchemaResult {
+  return {
+    schemaVersion: 1,
+    edition: options.edition,
+    version: options.version,
+    file: {
+      ...options.file,
+      schemaAvailable: false,
+      schemaKind: null,
+    },
+    available: false,
+    normative: false,
+    coverage: null,
+    notes: options.notes,
+    observedFields: [],
+    jsonSchema: null,
+  };
+}
+
+function staticSchemaVersionSupport(options: {
+  edition: EditionData;
+  version: string;
+  file: PackFileClassification;
+  detail: VersionDetailData;
+}): string[] {
+  const { file } = options;
+  const normalized = normalizePackPath(file.path);
+  const parts = normalized.split("/");
+  if (file.kind === "pack-metadata") {
+    return [];
+  }
+  if (file.domain === "datapack") {
+    if (file.kind === "function") {
+      const expected = (options.detail.packFormats.data ?? 0) >= 48 ? "function" : "functions";
+      if (parts[2] !== expected) {
+        return [
+          `Target version ${options.version} expects datapack function files under data/<namespace>/${expected}/.`,
+        ];
+      }
+    }
+    if (file.kind === "structure") {
+      const expected = (options.detail.packFormats.data ?? 0) >= 48 ? "structure" : "structures";
+      if (parts[2] !== expected) {
+        return [
+          `Target version ${options.version} expects datapack structure files under data/<namespace>/${expected}/.`,
+        ];
+      }
+    }
+  }
+  if (file.domain === "resourcepack") {
+    const topLevel = parts[2];
+    if (!topLevel) {
+      return [`Target version ${options.version} has no matching resourcepack top-level path.`];
+    }
+    if (topLevel === "sounds.json" || topLevel === "sounds") {
+      return [];
+    }
+    const probe = topLevel === "sounds.json" ? "sounds.json" : topLevel;
+    if (!resourcepackVersionHasTopLevel(options.edition, options.version, probe)) {
+      return [
+        `Target version ${options.version} does not expose assets/minecraft/${probe} in bundled vanilla resourcepack paths.`,
+      ];
+    }
+  }
+  return [];
+}
+
 export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchemaResult {
   const editionId = Edition.assert(options.edition ?? "java");
   const version = resolveVersion(editionId, options.version ?? "latest");
@@ -2956,11 +3047,44 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
     return unavailable(["No schema is available for this file kind.", ...file.notes]);
   }
 
+  const staticSupportErrors = staticSchemaVersionSupport({
+    edition: editionId,
+    version,
+    file,
+    detail,
+  });
+  if (staticSupportErrors.length > 0) {
+    return unsupportedSchemaResult({
+      edition: editionId,
+      version,
+      file,
+      notes: [
+        ...staticSupportErrors,
+        "No schema is returned because the requested file kind or layout is not supported by the target version data.",
+      ],
+    });
+  }
+
+  if (file.kind === "pack-metadata") {
+    return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+  }
+
   if (file.domain === "datapack") {
     const surface = getDatapackSchemaSurface(editionId, version);
     const kind = surface.kinds.find((entry) => entry.kind === file.schemaKind);
     if (!kind) {
-      return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+      if (file.kind === "function" || file.kind === "structure") {
+        return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+      }
+      return unsupportedSchemaResult({
+        edition: editionId,
+        version,
+        file,
+        notes: [
+          `Target version ${version} does not expose datapack schema kind '${file.schemaKind}'.`,
+          "No schema is returned because using a kind from another version would be misleading.",
+        ],
+      });
     }
     const observedFields = datapackObservedFields(kind);
     return {
@@ -3418,7 +3542,7 @@ export function getPackMigrationPlan(options: PackMigrationPlanOptions): PackMig
         versionComparison.domains[options.domain].from !==
         versionComparison.domains[options.domain].to,
       classifiedFiles: classification.classifiedFiles,
-      schemaBackedFiles: classification.schemaAvailableFiles,
+      schemaBackedFiles: schemaLookups.filter((lookup) => lookup.available).length,
     },
     versionComparison,
     fileClassification: classification,

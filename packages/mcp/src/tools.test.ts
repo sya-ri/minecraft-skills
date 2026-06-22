@@ -507,7 +507,7 @@ describe("MCP tools", () => {
       limit: 5,
     });
     expect(result.content[0]?.text).toContain('"domain": "resourcepack"');
-    expect(result.content[0]?.text).toContain('"schemaBackedFiles": 1');
+    expect(result.content[0]?.text).toContain('"schemaBackedFiles": 0');
     expect(result.content[0]?.text).toContain('"resourcepack file-schema"');
   });
 
