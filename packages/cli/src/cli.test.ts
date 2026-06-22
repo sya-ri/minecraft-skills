@@ -528,7 +528,7 @@ describe("minecraft-skills CLI", () => {
     ]);
     expect(datapack.code).toBe(0);
     expect(datapack.stdout.join("\n")).toContain('"domain": "datapack"');
-    expect(datapack.stdout.join("\n")).toContain('"schemaBackedFiles": 1');
+    expect(datapack.stdout.join("\n")).toContain('"schemaBackedFiles": 2');
     expect(datapack.stdout.join("\n")).toContain('"datapack compare-schema"');
 
     const resourcepack = await capture([

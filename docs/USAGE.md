@@ -98,6 +98,14 @@ minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 ```
 
+`file-schema` returns the best available schema for known pack file kinds. For model/item JSON and
+datapack JSON kinds with extracted vanilla examples, the result includes observed fields. For
+`pack.mcmeta`, tags, functions, structures, blockstates, sounds, atlases, fonts, language files,
+textures, particles, shaders, post effects, equipment, and sound assets, it returns a non-normative
+format schema so agents can still reason about the file safely. Binary/text assets identify their
+container format and link back to the relevant command or in-game validation checks instead of
+pretending to validate payload internals.
+
 Paper plugin lookups:
 
 ```sh

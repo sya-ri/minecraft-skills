@@ -2403,8 +2403,8 @@ function classifyDatapackPath(path: string): PackFileClassification | undefined 
       namespace: null,
       extension: "mcmeta",
       json: true,
-      schemaAvailable: false,
-      schemaKind: null,
+      schemaAvailable: true,
+      schemaKind: "pack-metadata",
       notes: [
         "pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous.",
       ],
@@ -2429,7 +2429,12 @@ function classifyDatapackPath(path: string): PackFileClassification | undefined 
     kind = "structure";
   }
 
-  const schemaAvailable = json && parts[2] !== "tags" && parts[2] !== "functions";
+  const schemaAvailable =
+    json ||
+    kind === "function" ||
+    kind === "structure" ||
+    extension === "mcfunction" ||
+    extension === "nbt";
   return {
     path,
     domain: "datapack",
@@ -2455,8 +2460,8 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
       namespace: null,
       extension: "mcmeta",
       json: true,
-      schemaAvailable: false,
-      schemaKind: null,
+      schemaAvailable: true,
+      schemaKind: "pack-metadata",
       notes: [
         "pack.mcmeta is shared by datapacks and resourcepacks; pass a domain when ambiguous.",
       ],
@@ -2480,14 +2485,40 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
     schemaKind = "item-definition";
   } else if (parts[2] === "blockstates") {
     kind = "blockstate";
+    schemaKind = "blockstate";
   } else if (parts[2] === "lang") {
     kind = "language";
+    schemaKind = "language";
   } else if (parts[2] === "textures") {
     kind = `texture/${parts[3] ?? "unknown"}`;
+    schemaKind = "texture";
   } else if (parts[2] === "sounds.json") {
     kind = "sounds";
+    schemaKind = "sounds";
+  } else if (parts[2] === "atlases") {
+    kind = "atlas";
+    schemaKind = "atlas";
+  } else if (parts[2] === "font" || parts[2] === "fonts") {
+    kind = "font";
+    schemaKind = "font";
+  } else if (parts[2] === "particles") {
+    kind = "particle";
+    schemaKind = "particle";
+  } else if (parts[2] === "shaders") {
+    kind = `shader/${parts[3] ?? "unknown"}`;
+    schemaKind = "shader";
+  } else if (parts[2] === "post_effect") {
+    kind = "post-effect";
+    schemaKind = "post-effect";
+  } else if (parts[2] === "equipment") {
+    kind = "equipment";
+    schemaKind = "equipment";
+  } else if (parts[2] === "sounds") {
+    kind = "sound-asset";
+    schemaKind = "sound-asset";
   }
 
+  const schemaAvailable = Boolean(schemaKind) || json;
   return {
     path,
     domain: "resourcepack",
@@ -2495,8 +2526,8 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
     namespace: parts[1],
     extension,
     json,
-    schemaAvailable: json && schemaKind !== null,
-    schemaKind,
+    schemaAvailable,
+    schemaKind: schemaKind ?? (json ? kind : null),
     notes:
       json && schemaKind
         ? [
@@ -2628,10 +2659,286 @@ function resourcepackObservedFields(
   });
 }
 
+function objectSchema(properties: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+    type: "object",
+    additionalProperties: true,
+    properties,
+  };
+}
+
+function arrayOf(itemSchema: Record<string, unknown>): Record<string, unknown> {
+  return {
+    type: "array",
+    items: itemSchema,
+  };
+}
+
+function stringOrStringArraySchema(): Record<string, unknown> {
+  return {
+    oneOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
+  };
+}
+
+function packMetadataJsonSchema(domain: "datapack" | "resourcepack", packFormat: number | null) {
+  return objectSchema({
+    pack: {
+      type: "object",
+      required: ["pack_format", "description"],
+      additionalProperties: true,
+      properties: {
+        pack_format: packFormat === null ? { type: "integer" } : { const: packFormat },
+        supported_formats: {
+          oneOf: [
+            { type: "integer" },
+            {
+              type: "object",
+              additionalProperties: true,
+              properties: {
+                min_inclusive: { type: "integer" },
+                max_inclusive: { type: "integer" },
+              },
+            },
+          ],
+        },
+        description: {},
+      },
+    },
+    ...(domain === "resourcepack"
+      ? {
+          overlays: {
+            type: "object",
+            additionalProperties: true,
+            properties: {
+              entries: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: true,
+                  properties: {
+                    directory: { type: "string" },
+                    formats: {},
+                  },
+                },
+              },
+            },
+          },
+        }
+      : {}),
+  });
+}
+
+function staticPackFileJsonSchema(options: {
+  file: PackFileClassification;
+  version: string;
+  packFormat: number | null;
+}): Record<string, unknown> | null {
+  const { file } = options;
+  if (
+    file.schemaKind === "pack-metadata" &&
+    (file.domain === "datapack" || file.domain === "resourcepack")
+  ) {
+    return packMetadataJsonSchema(file.domain, options.packFormat);
+  }
+  if (file.domain === "datapack") {
+    if (file.kind.startsWith("tag/") || file.kind === "tag") {
+      return objectSchema({
+        replace: { type: "boolean" },
+        values: {
+          type: "array",
+          items: {
+            oneOf: [
+              { type: "string" },
+              {
+                type: "object",
+                required: ["id"],
+                additionalProperties: true,
+                properties: {
+                  id: { type: "string" },
+                  required: { type: "boolean" },
+                },
+              },
+            ],
+          },
+        },
+      });
+    }
+    if (file.kind === "function" || file.extension === "mcfunction") {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "string",
+        contentMediaType: "text/x-minecraft-function",
+        "x-minecraft-skills": {
+          lineFormat:
+            "UTF-8 text. Each non-empty, non-comment line is a Minecraft command without a leading slash.",
+          commandLookup:
+            "Use search_commands or compare_commands for target-version command syntax.",
+        },
+      };
+    }
+    if (file.kind === "structure" || file.extension === "nbt") {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "string",
+        contentEncoding: "base64",
+        contentMediaType: "application/octet-stream",
+        "x-minecraft-skills": {
+          format: "Minecraft binary NBT structure file.",
+          note: "This identifies the file format only; minecraft-skills does not validate NBT payload structure.",
+        },
+      };
+    }
+    if (file.json) {
+      return objectSchema();
+    }
+  }
+
+  if (file.domain === "resourcepack") {
+    if (file.schemaKind === "blockstate") {
+      return objectSchema({
+        variants: {
+          type: "object",
+          additionalProperties: {
+            oneOf: [
+              { type: "object", additionalProperties: true },
+              { type: "array", items: { type: "object", additionalProperties: true } },
+            ],
+          },
+        },
+        multipart: arrayOf(objectSchema()),
+      });
+    }
+    if (file.schemaKind === "sounds") {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "object",
+        additionalProperties: {
+          type: "object",
+          additionalProperties: true,
+          properties: {
+            replace: { type: "boolean" },
+            subtitle: { type: "string" },
+            sounds: arrayOf({
+              oneOf: [
+                { type: "string" },
+                {
+                  type: "object",
+                  additionalProperties: true,
+                  properties: {
+                    name: { type: "string" },
+                    type: { type: "string" },
+                    volume: { type: "number" },
+                    pitch: { type: "number" },
+                    weight: { type: "integer" },
+                    stream: { type: "boolean" },
+                    attenuation_distance: { type: "integer" },
+                    preload: { type: "boolean" },
+                  },
+                },
+              ],
+            }),
+          },
+        },
+      };
+    }
+    if (file.schemaKind === "atlas") {
+      return objectSchema({
+        sources: arrayOf(objectSchema()),
+      });
+    }
+    if (file.schemaKind === "font") {
+      return objectSchema({
+        providers: arrayOf(objectSchema()),
+      });
+    }
+    if (file.schemaKind === "language") {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "object",
+        additionalProperties: { type: "string" },
+      };
+    }
+    if (file.schemaKind === "particle") {
+      return objectSchema({
+        textures: stringOrStringArraySchema(),
+      });
+    }
+    if (file.schemaKind === "shader" || file.schemaKind === "post-effect") {
+      return objectSchema();
+    }
+    if (file.schemaKind === "equipment") {
+      return objectSchema();
+    }
+    if (file.schemaKind === "texture") {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "string",
+        contentEncoding: "base64",
+        contentMediaType: file.extension === "png" ? "image/png" : "application/octet-stream",
+        "x-minecraft-skills": {
+          format: "Resource pack texture asset.",
+          note: "This identifies the asset file format only; minecraft-skills does not validate image dimensions or animation metadata.",
+        },
+      };
+    }
+    if (file.schemaKind === "sound-asset") {
+      return {
+        $schema: "https://json-schema.org/draft/2020-12/schema",
+        type: "string",
+        contentEncoding: "base64",
+        contentMediaType: file.extension === "ogg" ? "audio/ogg" : "application/octet-stream",
+        "x-minecraft-skills": {
+          format: "Resource pack sound asset.",
+          note: "This identifies the asset file format only; minecraft-skills does not validate audio codec details.",
+        },
+      };
+    }
+    if (file.json) {
+      return objectSchema();
+    }
+  }
+  return null;
+}
+
+function staticPackFileSchema(options: {
+  edition: EditionData;
+  version: string;
+  file: PackFileClassification;
+  packFormat: number | null;
+}): PackFileSchemaResult {
+  const jsonSchema = staticPackFileJsonSchema({
+    file: options.file,
+    version: options.version,
+    packFormat: options.packFormat,
+  });
+  return {
+    schemaVersion: 1,
+    edition: options.edition,
+    version: options.version,
+    file: options.file,
+    available: jsonSchema !== null,
+    normative: false,
+    coverage: jsonSchema ? "known-pack-file-format" : null,
+    notes: jsonSchema
+      ? [
+          "This schema describes the known file container/shape only.",
+          "It is not a complete normative Minecraft validation schema.",
+          "Use observedFields when present for vanilla-observed shape evidence.",
+        ]
+      : ["No schema is available for this file kind."],
+    observedFields: [],
+    jsonSchema,
+  };
+}
+
 export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchemaResult {
   const editionId = Edition.assert(options.edition ?? "java");
   const version = resolveVersion(editionId, options.version ?? "latest");
+  const detail = getVersionDetail(editionId, version);
   const file = classifyPackPath(options.path, options.domain);
+  const packFormat =
+    file.domain === "datapack" ? detail.packFormats.data : detail.packFormats.resource;
   const unavailable = (notes: string[]): PackFileSchemaResult => ({
     schemaVersion: 1,
     edition: editionId,
@@ -2646,19 +2953,14 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
   });
 
   if (!file.schemaAvailable || !file.schemaKind) {
-    return unavailable([
-      "No observed JSON schema surface is available for this file kind.",
-      ...file.notes,
-    ]);
+    return unavailable(["No schema is available for this file kind.", ...file.notes]);
   }
 
   if (file.domain === "datapack") {
     const surface = getDatapackSchemaSurface(editionId, version);
     const kind = surface.kinds.find((entry) => entry.kind === file.schemaKind);
     if (!kind) {
-      return unavailable([
-        `No observed datapack schema kind '${file.schemaKind}' is available for ${version}.`,
-      ]);
+      return staticPackFileSchema({ edition: editionId, version, file, packFormat });
     }
     const observedFields = datapackObservedFields(kind);
     return {
@@ -2684,6 +2986,9 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
   }
 
   if (file.domain === "resourcepack") {
+    if (file.schemaKind !== "model" && file.schemaKind !== "item-definition") {
+      return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+    }
     const summary = getResourcepackModelSummary(editionId, version);
     const observedFields =
       file.schemaKind === "item-definition"
@@ -3033,7 +3338,15 @@ export function getPackMigrationPlan(options: PackMigrationPlanOptions): PackMig
   const schemaKinds = uniqueStrings(
     classification.files
       .map((file) => file.schemaKind)
-      .filter((kind): kind is string => typeof kind === "string"),
+      .filter((kind): kind is string => {
+        if (typeof kind !== "string") {
+          return false;
+        }
+        if (options.domain === "resourcepack") {
+          return kind === "model" || kind === "item-definition";
+        }
+        return !["function", "structure", "pack-metadata"].includes(kind);
+      }),
   );
   const schemaChanges =
     options.domain === "datapack"

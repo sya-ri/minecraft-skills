@@ -582,8 +582,38 @@ describe("catalog", () => {
       path: "assets/example/textures/item/widget.png",
       domain: "resourcepack",
     });
-    expect(unknown.available).toBe(false);
-    expect(unknown.jsonSchema).toBeNull();
+    expect(unknown.available).toBe(true);
+    expect(unknown.jsonSchema).toMatchObject({
+      contentMediaType: "image/png",
+    });
+  });
+
+  it("returns schemas for known datapack and resourcepack file formats", () => {
+    const paths = [
+      ["datapack", "pack.mcmeta"],
+      ["datapack", "data/example/tags/block/widgets.json"],
+      ["datapack", "data/example/functions/tick.mcfunction"],
+      ["datapack", "data/example/structure/widgets/root.nbt"],
+      ["resourcepack", "pack.mcmeta"],
+      ["resourcepack", "assets/example/blockstates/widget.json"],
+      ["resourcepack", "assets/example/sounds.json"],
+      ["resourcepack", "assets/example/atlases/blocks.json"],
+      ["resourcepack", "assets/example/font/default.json"],
+      ["resourcepack", "assets/example/lang/en_us.json"],
+      ["resourcepack", "assets/example/textures/item/widget.png"],
+      ["resourcepack", "assets/example/sounds/widget.ogg"],
+      ["resourcepack", "assets/example/particles/widget.json"],
+      ["resourcepack", "assets/example/shaders/core/widget.json"],
+      ["resourcepack", "assets/example/post_effect/widget.json"],
+      ["resourcepack", "assets/example/equipment/widget.json"],
+    ] as const;
+
+    for (const [domain, path] of paths) {
+      const schema = getPackFileSchema({ version: "26.2", domain, path });
+      expect(schema.available, path).toBe(true);
+      expect(schema.normative).toBe(false);
+      expect(schema.jsonSchema, path).not.toBeNull();
+    }
   });
 
   it("builds pack migration plans with considerations", () => {
@@ -605,10 +635,14 @@ describe("catalog", () => {
       to: "1.21",
       summary: {
         packFormatChanged: true,
-        schemaBackedFiles: 1,
+        schemaBackedFiles: 3,
       },
     });
-    expect(datapack.schemaLookups[0]?.file.kind).toBe("advancement");
+    expect(datapack.schemaLookups.map((lookup) => lookup.file.kind)).toEqual([
+      "pack-metadata",
+      "advancement",
+      "function",
+    ]);
     expect(datapack.considerations.join("\n")).toContain("pack.mcmeta");
     expect(datapack.recommendedChecks).toContain("datapack compare-schema");
 
