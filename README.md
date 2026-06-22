@@ -1,5 +1,10 @@
 # minecraft-skills
 
+[![npm](https://img.shields.io/npm/v/minecraft-skills.svg)](https://www.npmjs.com/package/minecraft-skills)
+[![npm data](https://img.shields.io/npm/v/%40minecraft-skills%2Fdata.svg?label=%40minecraft-skills%2Fdata)](https://www.npmjs.com/package/@minecraft-skills/data)
+[![npm catalog](https://img.shields.io/npm/v/%40minecraft-skills%2Fcatalog.svg?label=%40minecraft-skills%2Fcatalog)](https://www.npmjs.com/package/@minecraft-skills/catalog)
+[![npm mcp](https://img.shields.io/npm/v/%40minecraft-skills%2Fmcp.svg?label=%40minecraft-skills%2Fmcp)](https://www.npmjs.com/package/@minecraft-skills/mcp)
+
 Minecraft authoring facts, Agent Skills, CLI, and MCP tools for AI agents that create or review
 Java data packs, Java resource packs, and Paper plugins.
 
@@ -13,7 +18,37 @@ The project helps AI check real versioned data before it writes code or pack fil
 
 ## Start Here
 
-Install and run:
+Use the Agent Skill folders when your AI tool supports installing skills directly from a GitHub
+repository path:
+
+```sh
+gh skills install sya-ri/minecraft-skills/skills/minecraft-datapacks
+gh skills install sya-ri/minecraft-skills/skills/minecraft-resourcepacks
+gh skills install sya-ri/minecraft-skills/skills/minecraft-paper-plugins
+```
+
+Or with an npm-based skills installer:
+
+```sh
+npx skills install sya-ri/minecraft-skills/skills/minecraft-datapacks
+npx skills install sya-ri/minecraft-skills/skills/minecraft-resourcepacks
+npx skills install sya-ri/minecraft-skills/skills/minecraft-paper-plugins
+```
+
+Configure the MCP server when your AI client supports stdio MCP:
+
+```json
+{
+  "mcpServers": {
+    "minecraft-skills": {
+      "command": "npx",
+      "args": ["-y", "@minecraft-skills/mcp"]
+    }
+  }
+}
+```
+
+Install and run manually:
 
 ```sh
 npx minecraft-skills minecraft latest
