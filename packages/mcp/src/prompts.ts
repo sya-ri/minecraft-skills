@@ -32,6 +32,7 @@ const promptDefinitions: PromptDefinition[] = [
       "get_support_matrix",
       "list_version_support",
       "get_authoring_preflight",
+      "get_evidence_bundle",
       "get_authoring_checklist",
       "list_fact_surfaces",
       "get_data_manifest",
@@ -62,6 +63,7 @@ const promptDefinitions: PromptDefinition[] = [
       "get_support_matrix",
       "list_version_support",
       "get_authoring_preflight",
+      "get_evidence_bundle",
       "get_authoring_checklist",
       "list_fact_surfaces",
       "get_coverage_summary",
@@ -87,6 +89,7 @@ const promptDefinitions: PromptDefinition[] = [
       "get_support_matrix",
       "list_version_support",
       "get_authoring_preflight",
+      "get_evidence_bundle",
       "get_authoring_checklist",
       "list_fact_surfaces",
       "get_data_manifest",
@@ -138,6 +141,7 @@ Preflight rules:
 - Prefer exact target-version data over latest-version data.
 - Call list_version_support when choosing among target versions or explaining coverage differences.
 - Call get_authoring_preflight for the relevant domain before generating files or code.
+- Call get_evidence_bundle when you need to cite or explain which sources and extracted files back an answer.
 - Call get_authoring_checklist if you need the checklist without version coverage.
 - Call list_fact_surfaces when you need to know what a data surface can and cannot prove.
 - Call get_support_matrix before using heavyweight surfaces so you know what is bundled, cached, or downloadable.

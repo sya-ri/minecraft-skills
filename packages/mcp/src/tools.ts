@@ -18,6 +18,7 @@ import {
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
+  getEvidenceBundle,
   getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -136,6 +137,21 @@ export const tools: ToolDefinition[] = [
     name: "get_authoring_preflight",
     description:
       "Get resolved version, checklist, fact surfaces, coverage, relevant downloadable data, and warnings before generating Minecraft files or code.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+      },
+      required: ["domain"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_evidence_bundle",
+    description:
+      "Get source policy, primary sources, version sources, relevant data files, links, and warnings for a Minecraft authoring domain/version.",
     inputSchema: {
       type: "object",
       properties: {
@@ -685,6 +701,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       }
       return text(
         getAuthoringPreflight({
+          domain: args.domain,
+          edition,
+          ...(typeof args.version === "string" ? { version: args.version } : {}),
+        }),
+      );
+    }
+    if (name === "get_evidence_bundle") {
+      if (typeof args.domain !== "string") {
+        throw new Error("get_evidence_bundle requires string domain");
+      }
+      return text(
+        getEvidenceBundle({
           domain: args.domain,
           edition,
           ...(typeof args.version === "string" ? { version: args.version } : {}),

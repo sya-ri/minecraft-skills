@@ -14,6 +14,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_checklists");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
+    expect(tools.map((tool) => tool.name)).toContain("get_evidence_bundle");
     expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
     expect(tools.map((tool) => tool.name)).toContain("get_fact_surface");
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
@@ -68,6 +69,7 @@ describe("MCP tools", () => {
         "list_authoring_checklists",
         "get_authoring_checklist",
         "get_authoring_preflight",
+        "get_evidence_bundle",
         "list_fact_surfaces",
         "get_fact_surface",
         "get_source_policy",
@@ -142,6 +144,16 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"resolvedVersion": "26.2"');
     expect(result.content[0]?.text).toContain("Paper is not marked supported for 26.2");
+  });
+
+  it("calls evidence bundle tool", async () => {
+    const result = await callMinecraftSkillsTool("get_evidence_bundle", {
+      domain: "paper-plugin",
+      version: "1.21.11",
+    });
+    expect(result.content[0]?.text).toContain('"minecraftWikiTextRedistribution": "forbidden"');
+    expect(result.content[0]?.text).toContain('"id": "paper-javadocs"');
+    expect(result.content[0]?.text).toContain('"kind": "paper-api-surface"');
   });
 
   it("calls get_coverage_summary", async () => {

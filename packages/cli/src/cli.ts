@@ -23,6 +23,7 @@ import {
   getDataManifest,
   getDatapackSchemaSurface,
   getDomain,
+  getEvidenceBundle,
   getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -110,6 +111,7 @@ Usage:
   minecraft-skills authoring-checklists [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
   minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
+  minecraft-skills evidence <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills fact-surfaces [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills fact-surface <id>
   minecraft-skills coverage
@@ -159,6 +161,7 @@ Commands:
   authoring-checklist
                  Print the pre-generation checklist for one authoring domain.
   preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
+  evidence       Print source policy, primary sources, data files, links, and warnings.
   fact-surfaces  List machine-verifiable fact surfaces and their guarantees.
   fact-surface   Print one fact surface by id.
   coverage       Print bundled data coverage summary JSON.
@@ -337,6 +340,22 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       printJson(
         output,
         getAuthoringPreflight({
+          domain,
+          edition,
+          ...(version ? { version } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "evidence") {
+      const [domain, version] = positionalArgs(args);
+      if (!domain) {
+        throw new Error("evidence command requires a domain");
+      }
+      printJson(
+        output,
+        getEvidenceBundle({
           domain,
           edition,
           ...(version ? { version } : {}),

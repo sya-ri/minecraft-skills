@@ -12,6 +12,7 @@ import {
   getCoverageSummary,
   getDatapackSchemaSurface,
   getDomain,
+  getEvidenceBundle,
   getFactSurface,
   getJavaReportsSummary,
   getPaperApiIndex,
@@ -133,6 +134,40 @@ describe("catalog", () => {
     expect(paper.paper?.supported).toBe(false);
     expect(paper.warnings.join("\n")).toContain("Paper is not marked supported for 26.2");
     expect(paper.domainCoverage.status).toBe("not-yet-published");
+  });
+
+  it("builds evidence bundles for answer provenance", () => {
+    const datapack = getEvidenceBundle({ domain: "datapack", version: "26.2" });
+    expect(datapack).toMatchObject({
+      schemaVersion: 1,
+      domain: "datapack",
+      resolvedVersion: "26.2",
+      sourcePolicy: {
+        minecraftWikiTextRedistribution: "forbidden",
+      },
+    });
+    expect(datapack.primarySources.map((source) => source.id)).toContain(
+      "mojang-version-manifest-v2",
+    );
+    expect(datapack.factSurfaces.map((surface) => surface.id)).toContain("command-paths");
+    expect(datapack.dataFiles).toContainEqual(
+      expect.objectContaining({
+        kind: "server-reports",
+        path: "java/reports/26.2.json",
+        available: true,
+      }),
+    );
+    expect(datapack.links.map((link) => link.id)).toContain("mojang-version-json");
+
+    const paper = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });
+    expect(paper.links.map((link) => link.id)).toContain("paper-javadocs");
+    expect(paper.dataFiles).toContainEqual(
+      expect.objectContaining({
+        kind: "paper-api-surface",
+        path: "java/paper-api-surfaces/1.21.11.json",
+        available: true,
+      }),
+    );
   });
 
   it("lists per-version support for target selection", () => {

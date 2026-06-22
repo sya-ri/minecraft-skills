@@ -122,6 +122,12 @@ export type AuthoringPreflightOptions = {
   version?: string;
 };
 
+export type EvidenceBundleOptions = {
+  domain: string;
+  edition?: string;
+  version?: string;
+};
+
 export type InventoryTopLevelChange = {
   path: string;
   from?: {
@@ -345,6 +351,36 @@ export type VersionSupportEntry = {
       available: boolean;
     };
   };
+};
+
+export type EvidenceBundle = {
+  schemaVersion: 1;
+  domain: DomainIdData;
+  edition: EditionData;
+  requestedVersion: string;
+  resolvedVersion: string;
+  sourcePolicy: CatalogData["sourcePolicy"];
+  primarySources: DomainData["primarySources"];
+  versionSources: VersionDetailData["sources"];
+  factSurfaces: Array<
+    Pick<
+      FactSurfaceData,
+      "id" | "title" | "dataKind" | "coverage" | "provenance" | "guarantees" | "nonGuarantees"
+    >
+  >;
+  dataFiles: Array<{
+    kind: string;
+    path: string;
+    bundled: boolean;
+    cached: boolean;
+    available: boolean;
+  }>;
+  links: Array<{
+    id: string;
+    kind: string;
+    url: string;
+  }>;
+  warnings: string[];
 };
 
 export type SkillReferencePayload = {
@@ -754,6 +790,121 @@ export function listVersionSupport(query: VersionSupportQuery = {}): VersionSupp
       }
       return entry.domains[domain].status !== "seed";
     });
+}
+
+function evidenceDataFilePaths(domain: DomainIdData, edition: EditionData, version: string) {
+  const common = [
+    { kind: "version-detail", path: `${edition}/version-details/${version}.json` },
+    { kind: "vanilla-inventory", path: `${edition}/vanilla-inventories/${version}.json` },
+  ];
+  if (domain === "datapack") {
+    return [
+      ...common,
+      { kind: "server-reports", path: `${edition}/reports/${version}.json` },
+      { kind: "command-paths", path: `${edition}/command-paths/${version}.txt` },
+      { kind: "vanilla-paths", path: `${edition}/vanilla-paths/${version}.datapack.txt` },
+      {
+        kind: "datapack-schema-surface",
+        path: `${edition}/datapack-schema-surfaces/${version}.json`,
+      },
+    ];
+  }
+  if (domain === "resourcepack") {
+    return [
+      ...common,
+      { kind: "vanilla-paths", path: `${edition}/vanilla-paths/${version}.resourcepack.txt` },
+      {
+        kind: "resourcepack-model-summary",
+        path: `${edition}/resourcepack-models/${version}.json`,
+      },
+    ];
+  }
+  return [
+    { kind: "paper-project", path: `${edition}/paper.json` },
+    { kind: "paper-api-index", path: `${edition}/paper-api-indexes/${version}.json` },
+    { kind: "paper-api-surface", path: `${edition}/paper-api-surfaces/${version}.json` },
+  ];
+}
+
+function uniqueLinks(links: EvidenceBundle["links"]): EvidenceBundle["links"] {
+  const seen = new Set<string>();
+  return links.filter((link) => {
+    const key = `${link.id}\0${link.url}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+export function getEvidenceBundle(options: EvidenceBundleOptions): EvidenceBundle {
+  const preflight = getAuthoringPreflight(options);
+  const domain = preflight.domain;
+  const edition = preflight.edition;
+  const domainData = getDomain(domain);
+  const factSurfaces = preflight.factSurfaces.map(
+    ({ id, title, dataKind, coverage, provenance, guarantees, nonGuarantees }) => ({
+      id,
+      title,
+      dataKind,
+      coverage,
+      provenance,
+      guarantees,
+      nonGuarantees,
+    }),
+  );
+  const dataFiles = evidenceDataFilePaths(domain, edition, preflight.resolvedVersion).map(
+    (entry) => ({
+      ...entry,
+      bundled: hasBundledDataFile(entry.path),
+      cached: hasCachedDataFile(entry.path),
+      available: hasDataFile(entry.path),
+    }),
+  );
+  const paperLinks = preflight.paper
+    ? [
+        { id: "paper-dev-docs", kind: "official", url: preflight.paper.docs.paperDev },
+        { id: "paper-scheduler-docs", kind: "official", url: preflight.paper.docs.scheduling },
+        {
+          id: "paper-folia-support-docs",
+          kind: "official",
+          url: preflight.paper.docs.foliaSupport,
+        },
+        { id: "folia-overview-docs", kind: "official", url: preflight.paper.docs.foliaOverview },
+        ...(preflight.paper.javadocsUrl
+          ? [{ id: "paper-javadocs", kind: "official-api", url: preflight.paper.javadocsUrl }]
+          : []),
+        { id: "spigot-event-list-api", kind: "project-api", url: preflight.paper.eventSearch.url },
+      ]
+    : [];
+
+  return {
+    schemaVersion: 1,
+    domain,
+    edition,
+    requestedVersion: preflight.requestedVersion,
+    resolvedVersion: preflight.resolvedVersion,
+    sourcePolicy: getSourcePolicy(),
+    primarySources: domainData.primarySources,
+    versionSources: preflight.version.sources,
+    factSurfaces,
+    dataFiles,
+    links: uniqueLinks([
+      ...domainData.primarySources.map((source) => ({
+        id: source.id,
+        kind: source.kind,
+        url: source.url,
+      })),
+      ...preflight.version.sources.map((source) => ({
+        id: source.id,
+        kind: source.kind,
+        url: source.url,
+      })),
+      ...paperLinks,
+    ]),
+    warnings: preflight.warnings,
+  };
 }
 
 export function getSkill(name: string): SkillData {

@@ -18,6 +18,7 @@ minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
 minecraft-skills preflight paper-plugin 1.21.11
+minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills authoring-checklist paper-plugin
 minecraft-skills authoring-checklists --domain datapack
 minecraft-skills fact-surfaces --domain paper-plugin
@@ -60,6 +61,8 @@ surfaces, relevant downloadable data, and warnings. `authoring-checklist <domain
 pre-generation checks an AI agent should perform before writing files or code. `fact-surfaces`
 explains what each machine-verifiable data surface can and cannot prove.
 `version-support` lists per-version coverage and surface availability for choosing a target version.
+`evidence <domain> [version]` returns source policy, source URLs, relevant data files, and warnings
+for provenance-aware answers.
 
 ## Data Sources
 

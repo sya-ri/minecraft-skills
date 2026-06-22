@@ -45,6 +45,7 @@ describe("MCP prompts", () => {
     expect(text).toContain("get_support_matrix");
     expect(text).toContain("list_version_support");
     expect(text).toContain("get_authoring_preflight");
+    expect(text).toContain("get_evidence_bundle");
     expect(text).toContain("get_authoring_checklist");
     expect(text).toContain("list_fact_surfaces");
     expect(text).toContain("get_data_manifest");
@@ -64,6 +65,7 @@ describe("MCP prompts", () => {
     expect(text).toContain("get_support_matrix");
     expect(text).toContain("list_version_support");
     expect(text).toContain("get_authoring_preflight");
+    expect(text).toContain("get_evidence_bundle");
     expect(text).toContain("get_authoring_checklist");
     expect(text).toContain("list_fact_surfaces");
     expect(text).toContain("get_datapack_schema_surface");
