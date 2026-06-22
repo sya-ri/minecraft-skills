@@ -16,6 +16,7 @@ import {
   readDataJson,
   readDataText,
 } from "@minecraft-skills/data";
+import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
 import {
   AuthoringChecklist,
   type AuthoringChecklistData,
@@ -671,6 +672,58 @@ export type PackFileSchemaResult = {
   notes: string[];
   observedFields: ObservedJsonSchemaField[];
   jsonSchema: Record<string, unknown> | null;
+};
+
+export type PackFileValidationInput = {
+  path: string;
+  content: string | unknown;
+};
+
+export type PackFileValidationOptions = PackFileValidationInput & {
+  version?: string;
+  edition?: string;
+  domain?: "datapack" | "resourcepack";
+};
+
+export type PackFilesValidationOptions = {
+  files: PackFileValidationInput[];
+  version?: string;
+  edition?: string;
+  domain?: "datapack" | "resourcepack";
+};
+
+export type PackFileValidationIssue = {
+  path: string;
+  message: string;
+  keyword: string | null;
+  schemaPath: string | null;
+  params: Record<string, unknown>;
+};
+
+export type PackFileValidationResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  path: string;
+  file: PackFileClassification;
+  schemaAvailable: boolean;
+  validated: boolean;
+  valid: boolean;
+  contentKind: "json" | "text" | "unknown";
+  notes: string[];
+  issues: PackFileValidationIssue[];
+};
+
+export type PackFilesValidationResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  requestedDomain?: "datapack" | "resourcepack";
+  totalFiles: number;
+  validatedFiles: number;
+  validFiles: number;
+  invalidFiles: number;
+  files: PackFileValidationResult[];
 };
 
 export type PackMigrationPlanOptions = {
@@ -3141,6 +3194,156 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
   }
 
   return unavailable(["Path does not match a schema-backed datapack or resourcepack JSON file."]);
+}
+
+function validationIssue(options: {
+  path: string;
+  message: string;
+  keyword?: string | null;
+  schemaPath?: string | null;
+  params?: Record<string, unknown>;
+}): PackFileValidationIssue {
+  return {
+    path: options.path,
+    message: options.message,
+    keyword: options.keyword ?? null,
+    schemaPath: options.schemaPath ?? null,
+    params: options.params ?? {},
+  };
+}
+
+function ajvIssue(path: string, error: ErrorObject): PackFileValidationIssue {
+  return validationIssue({
+    path: error.instancePath || path,
+    message: error.message ?? "Schema validation failed.",
+    keyword: error.keyword,
+    schemaPath: error.schemaPath,
+    params: error.params as Record<string, unknown>,
+  });
+}
+
+function parseValidationContent(options: {
+  content: string | unknown;
+  file: PackFileClassification;
+}): {
+  value: unknown;
+  contentKind: PackFileValidationResult["contentKind"];
+  issue?: PackFileValidationIssue;
+} {
+  if (typeof options.content !== "string") {
+    return { value: options.content, contentKind: "unknown" };
+  }
+  if (!options.file.json) {
+    return { value: options.content, contentKind: "text" };
+  }
+  try {
+    return { value: JSON.parse(options.content) as unknown, contentKind: "json" };
+  } catch (error) {
+    return {
+      value: null,
+      contentKind: "json",
+      issue: validationIssue({
+        path: options.file.path,
+        message: `Invalid JSON: ${error instanceof Error ? error.message : String(error)}`,
+        keyword: "parse",
+      }),
+    };
+  }
+}
+
+export function validatePackFileContent(
+  options: PackFileValidationOptions,
+): PackFileValidationResult {
+  const schema = getPackFileSchema(options);
+  const notes = [...schema.notes];
+  const base = {
+    schemaVersion: 1 as const,
+    edition: schema.edition,
+    version: schema.version,
+    path: options.path,
+    file: schema.file,
+    schemaAvailable: schema.available,
+  };
+
+  if (!schema.available || !schema.jsonSchema) {
+    return {
+      ...base,
+      validated: false,
+      valid: false,
+      contentKind: "unknown",
+      notes: [
+        ...notes,
+        "Content was not validated because no version-compatible schema is available.",
+      ],
+      issues: [
+        validationIssue({
+          path: options.path,
+          message: "No version-compatible schema is available for this file.",
+          keyword: "schema-unavailable",
+        }),
+      ],
+    };
+  }
+
+  const parsed = parseValidationContent({
+    content: options.content,
+    file: schema.file,
+  });
+  if (parsed.issue) {
+    return {
+      ...base,
+      validated: false,
+      valid: false,
+      contentKind: parsed.contentKind,
+      notes,
+      issues: [parsed.issue],
+    };
+  }
+
+  const ajv = new Ajv2020({
+    allErrors: true,
+    strict: false,
+    validateFormats: false,
+  });
+  const validate = ajv.compile(schema.jsonSchema);
+  const valid = validate(parsed.value);
+  const issues = valid ? [] : (validate.errors ?? []).map((error) => ajvIssue(options.path, error));
+
+  return {
+    ...base,
+    validated: true,
+    valid,
+    contentKind: parsed.contentKind,
+    notes,
+    issues,
+  };
+}
+
+export function validatePackFilesContent(
+  options: PackFilesValidationOptions,
+): PackFilesValidationResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const version = resolveVersion(edition, options.version ?? "latest");
+  const files = options.files.map((file) =>
+    validatePackFileContent({
+      edition,
+      version,
+      path: file.path,
+      content: file.content,
+      ...(options.domain ? { domain: options.domain } : {}),
+    }),
+  );
+  return {
+    schemaVersion: 1,
+    edition,
+    version,
+    ...(options.domain ? { requestedDomain: options.domain } : {}),
+    totalFiles: files.length,
+    validatedFiles: files.filter((file) => file.validated).length,
+    validFiles: files.filter((file) => file.valid).length,
+    invalidFiles: files.filter((file) => !file.valid).length,
+    files,
+  };
 }
 
 function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimit: number): number {

@@ -6,6 +6,6 @@ export default defineConfig({
   dts: true,
   clean: true,
   deps: {
-    neverBundle: ["@minecraft-skills/data", "arktype"],
+    neverBundle: ["@minecraft-skills/data", "ajv", "arktype"],
   },
 });

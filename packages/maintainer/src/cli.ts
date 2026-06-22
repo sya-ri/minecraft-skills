@@ -32,6 +32,7 @@ import {
   listReferences,
   listResponsePatterns,
   listVersions,
+  validatePackFileContent,
 } from "@minecraft-skills/catalog";
 import { auditCurrentSources } from "./currentSources.js";
 import { ingestDatapackSchemaSurfaces } from "./datapackSchemaSurfaceSummaries.js";
@@ -947,6 +948,99 @@ function materializeVersionDetails(root: string): number {
   return written;
 }
 
+function requirePackContentValidationSamples(messages: string[]): void {
+  const latest = getVersionDetail("java", "latest");
+  const dataPackFormat = latest.packFormats.data;
+  const resourcePackFormat = latest.packFormats.resource;
+  const samples = [
+    validatePackFileContent({
+      version: latest.version,
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: dataPackFormat,
+          description: "minecraft-skills validation sample",
+        },
+      },
+    }),
+    validatePackFileContent({
+      version: latest.version,
+      domain: "resourcepack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: resourcePackFormat,
+          description: "minecraft-skills validation sample",
+        },
+      },
+    }),
+    validatePackFileContent({
+      version: latest.version,
+      domain: "datapack",
+      path: "data/minecraft/advancement/validation_sample.json",
+      content: {
+        criteria: {
+          impossible: {
+            trigger: "minecraft:impossible",
+          },
+        },
+      },
+    }),
+    validatePackFileContent({
+      version: latest.version,
+      domain: "resourcepack",
+      path: "assets/minecraft/models/item/validation_sample.json",
+      content: {
+        parent: "minecraft:item/generated",
+        textures: {
+          layer0: "minecraft:item/stick",
+        },
+      },
+    }),
+  ];
+
+  for (const sample of samples) {
+    if (!sample.valid) {
+      messages.push(
+        `pack content validation sample must pass: ${sample.version} ${sample.path}: ${sample.issues
+          .map((issue) => issue.message)
+          .join("; ")}`,
+      );
+    }
+  }
+
+  const unsupportedOldLayout = validatePackFileContent({
+    version: "1.20.6",
+    domain: "resourcepack",
+    path: "assets/minecraft/items/validation_sample.json",
+    content: {
+      model: {
+        type: "minecraft:model",
+        model: "minecraft:item/stick",
+      },
+    },
+  });
+  if (unsupportedOldLayout.valid || unsupportedOldLayout.schemaAvailable) {
+    messages.push("pack content validation must reject resourcepack item definitions on 1.20.6");
+  }
+
+  const wrongPackFormat = validatePackFileContent({
+    version: latest.version,
+    domain: "datapack",
+    path: "pack.mcmeta",
+    content: {
+      pack: {
+        pack_format: (dataPackFormat ?? 0) + 1,
+        description: "minecraft-skills validation sample",
+      },
+    },
+  });
+  if (wrongPackFormat.valid) {
+    messages.push("pack content validation must reject mismatched pack.mcmeta pack_format");
+  }
+}
+
 export function validateRepository(): ValidationResult {
   const messages: string[] = [];
   const root = findRepositoryRoot();
@@ -966,6 +1060,7 @@ export function validateRepository(): ValidationResult {
   requireOutputRequirements(root, messages);
   requireResponsePatterns(root, messages);
   requireIntentLookups(root, publicEntrypoints, messages);
+  requirePackContentValidationSamples(messages);
 
   if (catalog.supportPolicy.javaPrimarySince !== "1.13") {
     messages.push("Java primary support must start at 1.13");

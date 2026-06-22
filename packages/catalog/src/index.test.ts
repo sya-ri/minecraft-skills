@@ -60,6 +60,8 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  validatePackFileContent,
+  validatePackFilesContent,
 } from "./index.js";
 
 describe("catalog", () => {
@@ -632,6 +634,87 @@ describe("catalog", () => {
       expect(schema.normative).toBe(false);
       expect(schema.jsonSchema, path).not.toBeNull();
     }
+  });
+
+  it("validates pack file content against version-aware schemas", () => {
+    const packMetadata = validatePackFileContent({
+      version: "26.2",
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: JSON.stringify({
+        pack: {
+          pack_format: 107,
+          description: "test",
+        },
+      }),
+    });
+    expect(packMetadata).toMatchObject({
+      validated: true,
+      valid: true,
+      contentKind: "json",
+      schemaAvailable: true,
+    });
+
+    const wrongPackFormat = validatePackFileContent({
+      version: "26.2",
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: 90,
+          description: "test",
+        },
+      },
+    });
+    expect(wrongPackFormat.valid).toBe(false);
+    expect(wrongPackFormat.issues.map((issue) => issue.keyword)).toContain("const");
+
+    const invalidJson = validatePackFileContent({
+      version: "26.2",
+      domain: "datapack",
+      path: "data/example/advancement/root.json",
+      content: "{",
+    });
+    expect(invalidJson).toMatchObject({
+      validated: false,
+      valid: false,
+      contentKind: "json",
+    });
+    expect(invalidJson.issues[0]?.keyword).toBe("parse");
+
+    const unsupportedVersionLayout = validatePackFileContent({
+      version: "1.20.6",
+      domain: "resourcepack",
+      path: "assets/example/items/widget.json",
+      content: { model: { type: "minecraft:model", model: "minecraft:item/widget" } },
+    });
+    expect(unsupportedVersionLayout).toMatchObject({
+      validated: false,
+      valid: false,
+      schemaAvailable: false,
+    });
+    expect(unsupportedVersionLayout.issues[0]?.keyword).toBe("schema-unavailable");
+
+    const batch = validatePackFilesContent({
+      version: "26.2",
+      domain: "resourcepack",
+      files: [
+        {
+          path: "assets/example/models/item/widget.json",
+          content: { parent: "minecraft:item/generated" },
+        },
+        {
+          path: "assets/example/lang/en_us.json",
+          content: { "item.example.widget": "Widget" },
+        },
+      ],
+    });
+    expect(batch).toMatchObject({
+      totalFiles: 2,
+      validatedFiles: 2,
+      validFiles: 2,
+      invalidFiles: 0,
+    });
   });
 
   it("builds pack migration plans with considerations", () => {

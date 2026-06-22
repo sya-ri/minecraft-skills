@@ -54,6 +54,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("compare_datapack_schema");
     expect(tools.map((tool) => tool.name)).toContain("classify_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
+    expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
@@ -496,6 +497,26 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"normative": false');
     expect(result.content[0]?.text).toContain('"path": "$.criteria"');
+  });
+
+  it("calls validate_pack_files", async () => {
+    const result = await callMinecraftSkillsTool("validate_pack_files", {
+      version: "26.2",
+      domain: "datapack",
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: {
+            pack: {
+              pack_format: 107,
+              description: "test",
+            },
+          },
+        },
+      ],
+    });
+    expect(result.content[0]?.text).toContain('"validatedFiles": 1');
+    expect(result.content[0]?.text).toContain('"validFiles": 1');
   });
 
   it("calls get_pack_migration_plan", async () => {

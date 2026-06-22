@@ -75,6 +75,7 @@ import {
   searchVanillaPaths,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
+  validatePackFilesContent,
 } from "@minecraft-skills/catalog";
 
 export type ToolContent = {
@@ -671,6 +672,33 @@ export const tools: ToolDefinition[] = [
         domain: { type: "string", enum: ["datapack", "resourcepack"] },
       },
       required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_pack_files",
+    description:
+      "Validate datapack or resourcepack file contents against the version-aware non-normative pack file schemas exposed by minecraft-skills.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"] },
+        files: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string" },
+              content: {},
+            },
+            required: ["path", "content"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["domain", "files"],
       additionalProperties: false,
     },
   },
@@ -1308,6 +1336,37 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           version: typeof args.version === "string" ? args.version : "latest",
           path: args.path,
           ...(domain ? { domain } : {}),
+        }),
+      );
+    }
+    if (name === "validate_pack_files") {
+      if (args.domain !== "datapack" && args.domain !== "resourcepack") {
+        throw new Error("validate_pack_files requires domain datapack or resourcepack");
+      }
+      if (!Array.isArray(args.files)) {
+        throw new Error("validate_pack_files requires files array");
+      }
+      const files = args.files.map((file) => {
+        if (
+          typeof file !== "object" ||
+          file === null ||
+          !("path" in file) ||
+          typeof file.path !== "string" ||
+          !("content" in file)
+        ) {
+          throw new Error("validate_pack_files files must include string path and content");
+        }
+        return {
+          path: file.path,
+          content: file.content as string | unknown,
+        };
+      });
+      return text(
+        validatePackFilesContent({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          domain: args.domain,
+          files,
         }),
       );
     }

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -513,6 +513,26 @@ describe("minecraft-skills CLI", () => {
     expect(resourcepack.code).toBe(0);
     expect(resourcepack.stdout.join("\n")).toContain('"schemaKind": "item-definition"');
     expect(resourcepack.stdout.join("\n")).toContain('"path": "model.type"');
+  });
+
+  it("validates pack files from disk", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-pack-"));
+    const file = join(root, "pack.mcmeta");
+    writeFileSync(
+      file,
+      `${JSON.stringify({
+        pack: {
+          pack_format: 107,
+          description: "test",
+        },
+      })}\n`,
+    );
+    const result = await capture(["datapack", "validate-files", "26.2", file, "--pack-root", root]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"validatedFiles": 1');
+    expect(result.stdout.join("\n")).toContain('"validFiles": 1');
+    expect(result.stdout.join("\n")).toContain('"path": "pack.mcmeta"');
+    rmSync(root, { recursive: true, force: true });
   });
 
   it("prints pack migration plans", async () => {
