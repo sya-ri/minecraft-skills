@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/sya-ri/minecraft-skills.git"
+    "url": "git+https://github.com/sya-ri/minecraft-skills.git"
   },
   "bugs": {
     "url": "https://github.com/sya-ri/minecraft-skills/issues"
