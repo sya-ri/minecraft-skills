@@ -22,6 +22,7 @@ minecraft-skills authoring-recipes --domain paper-plugin
 minecraft-skills authoring-recipe paper-event-listener
 minecraft-skills authoring-scenarios --domain paper-plugin
 minecraft-skills authoring-scenario paper-event-listener-review
+minecraft-skills authoring-plan paper-event-listener-review 1.21.11
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills authoring-guardrails --domain paper-plugin
@@ -77,6 +78,8 @@ SHA-256 verified heavyweight data in the local OS cache.
 diagnostics, intent lookup routing, and evidence in one payload for starting an authoring task.
 `authoring-recipes` lists ordered workflows for common authoring tasks.
 `authoring-scenarios` lists realistic task shapes and required lookup IDs for evaluation.
+`authoring-plan <scenario-id> [version]` resolves one scenario into the exact recipes, intent
+lookups, diagnostics, claim policies, fact surfaces, response patterns, and optional evidence to use.
 `authoring-guardrails` lists output rules and required evidence that prevent unsupported claims.
 `authoring-diagnostics` lists pass/fail checks to run before returning generated files, code, or
 source-backed answers.

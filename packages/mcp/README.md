@@ -53,6 +53,7 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_authoring_recipe`
 - `list_authoring_scenarios`
 - `get_authoring_scenario`
+- `get_authoring_plan`
 - `list_authoring_guardrails`
 - `get_authoring_guardrail`
 - `list_authoring_diagnostics`

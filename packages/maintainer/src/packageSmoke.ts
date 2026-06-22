@@ -126,12 +126,13 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResponsePattern, getSupportMatrix, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResponsePattern, getSupportMatrix, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
             'const checklist = getAuthoringChecklist("paper-plugin");',
             'const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });',
+            'const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });',
             'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });',
             'const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });',
             'const factSurface = getFactSurface("datapack-schema-surface");',
@@ -147,6 +148,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'if (!listOutputRequirements({ domain: "paper-plugin" }).some((requirement) => requirement.id === "paper-plugin-output-safety") || !getOutputRequirement("paper-plugin-output-safety").mustNotInclude.some((rule) => rule.includes("unverified event class names"))) throw new Error("bad output requirements");',
             'if (!listResponsePatterns({ domain: "paper-plugin" }).some((pattern) => pattern.id === "paper-api-answer") || !getResponsePattern("paper-api-answer").gapStatements.some((statement) => statement.includes("name presence"))) throw new Error("bad response patterns");',
             'if (!context.recipes.some((recipe) => recipe.id === "paper-event-listener") || !context.scenarios.some((scenario) => scenario.id === "paper-event-listener-review") || !context.guardrails.some((guardrail) => guardrail.id === "paper-api-surface-limits") || !context.diagnostics.some((diagnostic) => diagnostic.id === "paper-api-member-unverified") || !context.claimPolicies.some((policy) => policy.id === "paper-type-or-member-exists") || !context.outputRequirements.some((requirement) => requirement.id === "paper-plugin-output-safety") || !context.responsePatterns.some((pattern) => pattern.id === "paper-api-answer") || !context.intentLookups.some((intent) => intent.id === "verify-paper-type-or-member") || !context.evidence.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring context");',
+            'if (plan.scenario.id !== "paper-event-listener-review" || !plan.recipes.some((recipe) => recipe.id === "paper-event-listener") || !plan.diagnostics.some((diagnostic) => diagnostic.id === "paper-event-candidate-unverified") || plan.preflight?.resolvedVersion !== "1.21.11" || !plan.evidence?.links.some((link) => link.id === "paper-javadocs")) throw new Error("bad authoring plan");',
             'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
             'if (!evidence.links.some((link) => link.id === "paper-javadocs") || evidence.sourcePolicy.minecraftWikiTextRedistribution !== "forbidden") throw new Error("bad evidence bundle");',
             'if (!listVersionSupport({ domain: "paper-plugin" }).some((entry) => entry.version === "1.21.11" && entry.paper.supported)) throw new Error("bad version support");',
@@ -202,6 +204,19 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     }
     if (!commands.at(-1)?.stdout.includes("paper-api-member-unverified")) {
       throw new Error("minecraft-skills authoring-context did not include diagnostics");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "authoring-plan", "paper-event-listener-review", "1.21.11"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("paper-event-candidate-unverified")) {
+      throw new Error("minecraft-skills authoring-plan did not include required diagnostics");
+    }
+    if (!commands.at(-1)?.stdout.includes('"id": "paper-javadocs"')) {
+      throw new Error("minecraft-skills authoring-plan did not include evidence links");
     }
     commands.push(
       runCommand(

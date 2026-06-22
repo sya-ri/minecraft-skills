@@ -24,6 +24,7 @@ import {
   getAuthoringContext,
   getAuthoringDiagnostic,
   getAuthoringGuardrail,
+  getAuthoringPlan,
   getAuthoringPreflight,
   getAuthoringRecipe,
   getAuthoringScenario,
@@ -70,6 +71,7 @@ const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const checklist = getAuthoringChecklist("paper-plugin");
 const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });
+const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "1.21.11" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });
 const checklists = listAuthoringChecklists();

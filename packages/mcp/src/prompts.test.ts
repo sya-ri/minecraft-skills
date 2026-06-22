@@ -50,6 +50,7 @@ describe("MCP prompts", () => {
     expect(text).toContain("get_authoring_recipe");
     expect(text).toContain("list_authoring_scenarios");
     expect(text).toContain("get_authoring_scenario");
+    expect(text).toContain("get_authoring_plan");
     expect(text).toContain("get_authoring_context");
     expect(text).toContain("get_authoring_preflight");
     expect(text).toContain("get_evidence_bundle");
@@ -83,6 +84,7 @@ describe("MCP prompts", () => {
     expect(text).toContain("list_intent_lookups");
     expect(text).toContain("list_authoring_recipes");
     expect(text).toContain("list_authoring_scenarios");
+    expect(text).toContain("get_authoring_plan");
     expect(text).toContain("get_authoring_context");
     expect(text).toContain("get_authoring_preflight");
     expect(text).toContain("get_evidence_bundle");

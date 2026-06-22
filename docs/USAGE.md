@@ -3,6 +3,26 @@
 This page is the practical reference for the public CLI, MCP server, package APIs, and bundled
 Agent Skill folders.
 
+## What You Can Build With It
+
+Use minecraft-skills when an AI agent needs exact, version-aware Minecraft facts before generating
+or reviewing authoring output:
+
+- Data packs: command tree paths, observed datapack JSON shapes, pack formats, and vanilla datapack
+  file paths.
+- Resource packs: pack formats, vanilla asset/model paths, and observed model/item definition
+  shapes.
+- Paper plugins: supported Paper versions, Paper API package/type/member indexes, Javadocs-derived
+  surfaces, and event discovery from the `sya-ri/spigot-event-list` API contract.
+
+The public entrypoints are designed around two workflows:
+
+- Start broad with `authoring-context <domain> <version>` to get domain guidance, available
+  surfaces, evidence, diagnostics, and response rules.
+- Start from a known task shape with `authoring-plan <scenario-id> <version>` to resolve a scenario
+  into the exact recipes, intent lookups, diagnostics, claim policies, fact surfaces, and response
+  patterns an agent should use.
+
 ## CLI
 
 Install/run after publishing:
@@ -24,6 +44,7 @@ minecraft-skills authoring-recipes --domain paper-plugin
 minecraft-skills authoring-recipe paper-event-listener
 minecraft-skills authoring-scenarios --domain paper-plugin
 minecraft-skills authoring-scenario paper-event-listener-review
+minecraft-skills authoring-plan paper-event-listener-review 1.21.11
 minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills evidence paper-plugin 1.21.11
 minecraft-skills intent-lookups --domain paper-plugin
@@ -83,6 +104,8 @@ Use these together before writing or reviewing generated output:
 - `authoring-recipes`: ordered lookup workflows for common tasks.
 - `authoring-scenarios`: realistic task shapes plus required lookup IDs for evaluation and
   self-review.
+- `authoring-plan`: one scenario with all required recipes, intent lookups, diagnostics, claim
+  policies, fact surfaces, response patterns, and optional version evidence resolved.
 - `authoring-diagnostics`: pass/fail checks to run before returning generated files, code, or
   source-backed answers.
 - `claim-policies`: required evidence plus safe and unsafe wording for specific claim types.
@@ -130,6 +153,7 @@ Use `@minecraft-skills/catalog` for validated data access:
 import {
   getAuthoringContext,
   getAuthoringDiagnostic,
+  getAuthoringPlan,
   getAuthoringRecipe,
   getAuthoringScenario,
   getClaimPolicy,
@@ -144,6 +168,7 @@ const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11"
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const scenario = getAuthoringScenario("paper-event-listener-review");
+const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "1.21.11" });
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const responsePattern = getResponsePattern("paper-api-answer");

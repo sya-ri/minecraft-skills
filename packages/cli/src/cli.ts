@@ -19,6 +19,7 @@ import {
   getAuthoringContext,
   getAuthoringDiagnostic,
   getAuthoringGuardrail,
+  getAuthoringPlan,
   getAuthoringPreflight,
   getAuthoringRecipe,
   getAuthoringScenario,
@@ -131,6 +132,7 @@ Usage:
   minecraft-skills authoring-recipe <id>
   minecraft-skills authoring-scenarios [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-scenario <id>
+  minecraft-skills authoring-plan <scenario-id> [version] [--edition java]
   minecraft-skills authoring-guardrails [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-guardrail <id>
   minecraft-skills authoring-diagnostics [--domain datapack|resourcepack|paper-plugin]
@@ -202,6 +204,8 @@ Commands:
                  List realistic authoring scenarios and the required lookups to evaluate them.
   authoring-scenario
                  Print one authoring scenario by id.
+  authoring-plan
+                 Print one scenario with all required lookups resolved, optionally with preflight/evidence.
   authoring-guardrails
                  List output guardrails that prevent unsupported Minecraft authoring claims.
   authoring-guardrail
@@ -433,6 +437,22 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-scenario command requires an id");
       }
       printJson(output, getAuthoringScenario(id));
+      return 0;
+    }
+
+    if (command === "authoring-plan") {
+      const [scenario, version] = positionalArgs(args);
+      if (!scenario) {
+        throw new Error("authoring-plan command requires a scenario id");
+      }
+      printJson(
+        output,
+        getAuthoringPlan({
+          scenario,
+          edition,
+          ...(version ? { version } : {}),
+        }),
+      );
       return 0;
     }
 

@@ -218,6 +218,12 @@ export type AuthoringContextOptions = {
   version?: string;
 };
 
+export type AuthoringPlanOptions = {
+  scenario: string;
+  edition?: string;
+  version?: string;
+};
+
 export type InventoryTopLevelChange = {
   path: string;
   from?: {
@@ -489,6 +495,20 @@ export type AuthoringContext = {
   responsePatterns: ResponsePatternData[];
   intentLookups: IntentLookupData[];
   evidence: EvidenceBundle;
+};
+
+export type AuthoringPlan = {
+  schemaVersion: 1;
+  scenario: AuthoringScenarioData;
+  domain: DomainIdData;
+  recipes: AuthoringRecipeData[];
+  intentLookups: IntentLookupData[];
+  diagnostics: AuthoringDiagnosticData[];
+  claimPolicies: ClaimPolicyData[];
+  factSurfaces: FactSurfaceData[];
+  responsePatterns: ResponsePatternData[];
+  preflight?: AuthoringPreflight;
+  evidence?: EvidenceBundle;
 };
 
 export type SkillReferencePayload = {
@@ -807,6 +827,46 @@ export function getAuthoringScenario(id: string): AuthoringScenarioData {
     throw new Error(`Unknown authoring scenario: ${id}`);
   }
   return AuthoringScenario.assert(found);
+}
+
+function requireSingleScenarioDomain(scenario: AuthoringScenarioData): DomainIdData {
+  if (scenario.domains.length !== 1) {
+    throw new Error(`Authoring scenario must have exactly one domain: ${scenario.id}`);
+  }
+  return DomainId.assert(scenario.domains[0]);
+}
+
+export function getAuthoringPlan(options: AuthoringPlanOptions): AuthoringPlan {
+  const scenario = getAuthoringScenario(options.scenario);
+  const domain = requireSingleScenarioDomain(scenario);
+  const preflight = options.version
+    ? getAuthoringPreflight({
+        domain,
+        version: options.version,
+        ...(options.edition ? { edition: options.edition } : {}),
+      })
+    : undefined;
+  const evidence = preflight
+    ? getEvidenceBundle({
+        domain,
+        edition: preflight.edition,
+        version: preflight.resolvedVersion,
+      })
+    : undefined;
+
+  return {
+    schemaVersion: 1,
+    scenario,
+    domain,
+    recipes: scenario.requiredLookups.recipes.map(getAuthoringRecipe),
+    intentLookups: scenario.requiredLookups.intents.map(getIntentLookup),
+    diagnostics: scenario.requiredLookups.diagnostics.map(getAuthoringDiagnostic),
+    claimPolicies: scenario.requiredLookups.claimPolicies.map(getClaimPolicy),
+    factSurfaces: scenario.requiredLookups.factSurfaces.map(getFactSurface),
+    responsePatterns: scenario.requiredLookups.responsePatterns.map(getResponsePattern),
+    ...(preflight ? { preflight } : {}),
+    ...(evidence ? { evidence } : {}),
+  };
 }
 
 export function listAuthoringGuardrails(

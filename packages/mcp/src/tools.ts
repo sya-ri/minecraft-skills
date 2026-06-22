@@ -15,6 +15,7 @@ import {
   getAuthoringContext,
   getAuthoringDiagnostic,
   getAuthoringGuardrail,
+  getAuthoringPlan,
   getAuthoringPreflight,
   getAuthoringRecipe,
   getAuthoringScenario,
@@ -195,6 +196,21 @@ export const tools: ToolDefinition[] = [
         id: { type: "string" },
       },
       required: ["id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_authoring_plan",
+    description:
+      "Get one authoring scenario with required recipes, intents, diagnostics, claim policies, fact surfaces, and response patterns resolved.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        scenario: { type: "string" },
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string" },
+      },
+      required: ["scenario"],
       additionalProperties: false,
     },
   },
@@ -944,6 +960,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error("get_authoring_scenario requires string id");
       }
       return text(getAuthoringScenario(args.id));
+    }
+    if (name === "get_authoring_plan") {
+      if (typeof args.scenario !== "string") {
+        throw new Error("get_authoring_plan requires string scenario");
+      }
+      return text(
+        getAuthoringPlan({
+          scenario: args.scenario,
+          edition,
+          ...(typeof args.version === "string" ? { version: args.version } : {}),
+        }),
+      );
     }
     if (name === "list_authoring_guardrails") {
       return text(

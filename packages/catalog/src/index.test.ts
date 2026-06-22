@@ -11,6 +11,7 @@ import {
   getAuthoringContext,
   getAuthoringDiagnostic,
   getAuthoringGuardrail,
+  getAuthoringPlan,
   getAuthoringPreflight,
   getAuthoringRecipe,
   getAuthoringScenario,
@@ -155,6 +156,28 @@ describe("catalog", () => {
     );
 
     expect(() => getAuthoringScenario("missing")).toThrow("Unknown authoring scenario: missing");
+  });
+
+  it("builds authoring plans with scenario lookups resolved", () => {
+    const plan = getAuthoringPlan({
+      scenario: "paper-event-listener-review",
+      version: "1.21.11",
+    });
+
+    expect(plan.domain).toBe("paper-plugin");
+    expect(plan.scenario.id).toBe("paper-event-listener-review");
+    expect(plan.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
+    expect(plan.intentLookups.map((intent) => intent.id)).toContain(
+      "discover-paper-event-candidates",
+    );
+    expect(plan.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-event-candidate-unverified",
+    );
+    expect(plan.claimPolicies.map((policy) => policy.id)).toContain("paper-event-candidate");
+    expect(plan.factSurfaces.map((surface) => surface.id)).toContain("paper-event-search");
+    expect(plan.responsePatterns.map((pattern) => pattern.id)).toContain("paper-api-answer");
+    expect(plan.preflight?.resolvedVersion).toBe("1.21.11");
+    expect(plan.evidence?.links.map((link) => link.id)).toContain("paper-javadocs");
   });
 
   it("lists authoring guardrails for output safety", () => {

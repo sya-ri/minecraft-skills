@@ -123,6 +123,20 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("paper-event-candidate-unverified");
   });
 
+  it("prints authoring plans", async () => {
+    const result = await capture(["authoring-plan", "paper-event-listener-review", "1.21.11"]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"scenario"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
+    expect(result.stdout.join("\n")).toContain('"recipes"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener"');
+    expect(result.stdout.join("\n")).toContain('"diagnostics"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-candidate-unverified"');
+    expect(result.stdout.join("\n")).toContain('"preflight"');
+    expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');
+  });
+
   it("prints authoring guardrails", async () => {
     const list = await capture(["authoring-guardrails", "--domain", "paper-plugin"]);
     expect(list.code).toBe(0);
