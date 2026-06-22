@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   statSync,
@@ -33,6 +34,7 @@ import {
   listVersions,
 } from "@minecraft-skills/catalog";
 import { auditCurrentSources } from "./currentSources.js";
+import { ingestDatapackSchemaSurfaces } from "./datapackSchemaSurfaceSummaries.js";
 import {
   buildObservedDatapackSchemaSurface,
   writeObservedDatapackSchemaSurface,
@@ -102,6 +104,71 @@ function readJsonFile<T>(path: string): T {
 
 function sha256File(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function versionFromJsonFileName(file: string): string | undefined {
+  return file.endsWith(".json") ? file.slice(0, -".json".length) : undefined;
+}
+
+function buildDataManifestEntries(root: string): DataManifestEntry[] {
+  const dataRoot = join(root, "packages/data/data");
+  const sections: Array<{
+    directory: string;
+    kind: DataManifestEntry["kind"];
+  }> = [
+    {
+      directory: "java/datapack-schema-surfaces",
+      kind: "datapack-schema-surface",
+    },
+    {
+      directory: "java/paper-api-surfaces",
+      kind: "paper-api-surface",
+    },
+  ];
+  const baseUrl = getDataManifest().defaultBaseUrl.replace(/\/+$/, "");
+  const entries: DataManifestEntry[] = [];
+
+  for (const section of sections) {
+    const absoluteDirectory = join(dataRoot, section.directory);
+    if (!existsSync(absoluteDirectory)) {
+      continue;
+    }
+    for (const file of readdirSync(absoluteDirectory).sort((left, right) =>
+      left.localeCompare(right, undefined, { numeric: true }),
+    )) {
+      const version = versionFromJsonFileName(file);
+      if (!version) {
+        continue;
+      }
+      const path = `${section.directory}/${file}`;
+      const absolutePath = join(dataRoot, path);
+      entries.push({
+        path,
+        kind: section.kind,
+        edition: "java",
+        version,
+        size: statSync(absolutePath).size,
+        sha256: sha256File(absolutePath),
+        url: `${baseUrl}/${path}`,
+      });
+    }
+  }
+
+  return entries;
+}
+
+function writeDataManifest(root: string, dataVersion?: string): string {
+  const current = getDataManifest();
+  const manifest = {
+    schemaVersion: 1,
+    dataVersion: dataVersion ?? current.dataVersion,
+    defaultBaseUrl: current.defaultBaseUrl,
+    cache: current.cache,
+    downloadable: buildDataManifestEntries(root),
+  };
+  const output = join(root, dataFilePath("data-manifest.json"));
+  writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`);
+  return output;
 }
 
 function isSafeRelativePath(path: string): boolean {
@@ -181,6 +248,16 @@ type PublicEntrypoints = {
   cliCommands: Set<string>;
   mcpTools: Set<string>;
   packageApis: Set<string>;
+};
+
+type DataManifestEntry = {
+  path: string;
+  kind: "datapack-schema-surface" | "paper-api-surface";
+  edition: "java";
+  version: string;
+  size: number;
+  sha256: string;
+  url: string;
 };
 
 function collectPublicEntrypoints(root: string): PublicEntrypoints {
@@ -1014,6 +1091,7 @@ Usage:
   minecraft-skills-maintainer validate
   minecraft-skills-maintainer audit-current-sources
   minecraft-skills-maintainer package-smoke [--keep-temp]
+  minecraft-skills-maintainer write-data-manifest [--data-version <version>]
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
@@ -1022,11 +1100,12 @@ Usage:
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> --latest-builds-json <builds.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-builds [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-api-indexes [--retrieved-at <iso>]
-  minecraft-skills-maintainer ingest-paper-api-surfaces [--version <paper-version>] [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-paper-api-surfaces [--version <paper-version>] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer materialize-version-details
   minecraft-skills-maintainer ingest-vanilla-inventory --version <version> --client-jar <client.jar> --server-jar <server.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-vanilla-inventories [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-datapack-schema --version <version> --server-jar <server.jar> [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-datapack-schemas-all [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-resourcepack-models --version <version> --client-jar <client.jar> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-resourcepack-models-all [--force] [--retrieved-at <iso>]
 
@@ -1034,6 +1113,7 @@ Commands:
   validate              Validate checked-in data, catalog, and generated skills.
   audit-current-sources Compare bundled latest Java/Paper data with Mojang and PaperMC APIs.
   package-smoke         Pack public packages, install them in a temp project, and smoke-test imports/bins.
+  write-data-manifest   Regenerate downloadable heavy data manifest from checked-in surface files.
   ingest-java-manifest  Generate Java 1.13+ release index from Mojang version manifest.
   ingest-java-version-detail
                         Generate detail JSON from Mojang version JSON and optional client jar.
@@ -1057,6 +1137,8 @@ Commands:
                         Download and generate missing vanilla inventories for all indexed Java releases.
   ingest-datapack-schema
                         Generate observed vanilla datapack JSON field-shape surface from a server jar.
+  ingest-datapack-schemas-all
+                        Download and generate missing observed datapack JSON field-shape surfaces for all indexed Java releases.
   ingest-resourcepack-models
                         Generate compact resource pack model summary from a client jar.
   ingest-resourcepack-models-all
@@ -1229,9 +1311,16 @@ async function ingestAllPaperApiSurfaces(args: string[]): Promise<void> {
     root,
     retrievedAt,
     ...(onlyVersion ? { onlyVersion } : {}),
+    force: args.includes("--force"),
     log: (message) => console.log(message),
   });
   console.log(`wrote ${written} Paper API surface files`);
+}
+
+function regenerateDataManifest(args: string[]): void {
+  const root = findRepositoryRoot();
+  const output = writeDataManifest(root, readOption(args, "--data-version"));
+  console.log(`wrote data manifest to ${output}`);
 }
 
 function readDownloadUrl(downloads: Record<string, unknown>, key: string): string {
@@ -1307,6 +1396,18 @@ function ingestDatapackSchema(args: string[]): void {
   console.log(`wrote Java ${detail.version} observed datapack schema surface to ${output}`);
 }
 
+async function ingestAllDatapackSchemas(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
+  const written = await ingestDatapackSchemaSurfaces({
+    root,
+    retrievedAt,
+    force: args.includes("--force"),
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} datapack schema surface files`);
+}
+
 async function ingestAllVanillaInventories(args: string[]): Promise<void> {
   const root = findRepositoryRoot();
   const retrievedAt = readOption(args, "--retrieved-at") ?? new Date().toISOString();
@@ -1379,6 +1480,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
       return 0;
     }
 
+    if (command === "write-data-manifest") {
+      regenerateDataManifest(argv.slice(1));
+      return 0;
+    }
+
     if (command === "ingest-java-manifest") {
       ingestJavaManifest(argv.slice(1));
       return 0;
@@ -1443,6 +1549,11 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
 
     if (command === "ingest-datapack-schema") {
       ingestDatapackSchema(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "ingest-datapack-schemas-all") {
+      await ingestAllDatapackSchemas(argv.slice(1));
       return 0;
     }
 

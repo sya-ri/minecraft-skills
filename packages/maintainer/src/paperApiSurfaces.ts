@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getPaperPluginData } from "@minecraft-skills/catalog";
 
@@ -44,6 +44,7 @@ export type IngestPaperApiSurfacesOptions = {
   root: string;
   retrievedAt: string;
   onlyVersion?: string;
+  force?: boolean;
   log?: (message: string) => void;
 };
 
@@ -191,20 +192,35 @@ export async function ingestPaperApiSurfaces(
   let written = 0;
 
   for (const version of versions) {
+    const output = join(outputRoot, `${version}.json`);
+    if (!options.force && !options.onlyVersion && existsSync(output)) {
+      options.log?.(`skip ${version}: Paper API surface already exists`);
+      continue;
+    }
     const javadocsUrl = `https://jd.papermc.io/paper/${version}/`;
-    options.log?.(`fetch ${version}: Paper Javadocs type/member search indexes`);
-    const [typeSearchIndexJs, memberSearchIndexJs] = await Promise.all([
-      fetchText(new URL("type-search-index.js", javadocsUrl).toString()),
-      fetchText(new URL("member-search-index.js", javadocsUrl).toString()),
-    ]);
-    const surface = buildPaperApiSurface({
-      minecraftVersion: version,
-      javadocsUrl,
-      typeSearchIndexJs,
-      memberSearchIndexJs,
-      retrievedAt: options.retrievedAt,
-    });
-    writeFileSync(join(outputRoot, `${version}.json`), `${JSON.stringify(surface, null, 2)}\n`);
+    let surface: PaperApiSurface;
+    try {
+      options.log?.(`fetch ${version}: Paper Javadocs type/member search indexes`);
+      const [typeSearchIndexJs, memberSearchIndexJs] = await Promise.all([
+        fetchText(new URL("type-search-index.js", javadocsUrl).toString()),
+        fetchText(new URL("member-search-index.js", javadocsUrl).toString()),
+      ]);
+      surface = buildPaperApiSurface({
+        minecraftVersion: version,
+        javadocsUrl,
+        typeSearchIndexJs,
+        memberSearchIndexJs,
+        retrievedAt: options.retrievedAt,
+      });
+    } catch (error) {
+      if (options.onlyVersion) {
+        throw error;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      options.log?.(`skip ${version}: Paper API surface unavailable (${message})`);
+      continue;
+    }
+    writeFileSync(output, `${JSON.stringify(surface, null, 2)}\n`);
     written += 1;
   }
 

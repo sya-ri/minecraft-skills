@@ -218,7 +218,7 @@ describe("MCP resources", () => {
     expect(intentLookup.contents[0]?.text).toContain('"search_paper_members"');
 
     const manifest = readMinecraftSkillsResource("minecraft-skills://data/data-manifest.json");
-    expect(manifest.contents[0]?.text).toContain('"dataVersion": "2026.06.22-1"');
+    expect(manifest.contents[0]?.text).toContain('"dataVersion": "2026.06.22-2"');
 
     const paperSurface = readMinecraftSkillsResource(
       "minecraft-skills://data/java/paper-api-surfaces/1.21.11.json",

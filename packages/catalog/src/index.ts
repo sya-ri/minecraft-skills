@@ -147,6 +147,9 @@ export {
   getCacheDataRoot,
   getCacheRoot,
   getDataManifest,
+  hasBundledDataFile,
+  hasCachedDataFile,
+  hasDataFile,
   listCachedDataFiles,
 };
 
@@ -1881,7 +1884,7 @@ export function getSupportMatrix(): SupportMatrix {
       latestJava: versions[0]?.id ?? "",
       latestPaper: paper.latest.minecraftVersion,
       latestWithDatapackSchemaSurface: datapackSchemaSurfaces[0] ?? null,
-      latestWithPaperApiSurface: paperApiSurfaces[0] ?? null,
+      latestWithPaperApiSurface: paperApiSurfaces.at(-1) ?? null,
       latestWithResourcepackModels: resourcepackModelSummaries[0] ?? null,
     },
     bundled: {

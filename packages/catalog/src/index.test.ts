@@ -428,18 +428,18 @@ describe("catalog", () => {
       missing: 0,
     });
     expect(summary.java.datapack.serverReports).toBe(50);
-    expect(summary.java.datapack.observedSchemaSurfaces).toBe(1);
+    expect(summary.java.datapack.observedSchemaSurfaces).toBe(50);
     expect(summary.java.resourcepack.modelSummaries).toBe(50);
     expect(summary.java.paperPlugin).toMatchObject({
       supportedVersions: 43,
       latestSupportedVersion: "1.21.11",
       latestBuild: 69,
       apiPackageIndexes: 43,
-      apiSurfaces: 1,
+      apiSurfaces: 23,
       versionsWithoutUnknowns: 43,
       missingApiPackageIndexes: [],
     });
-    expect(summary.java.paperPlugin.missingApiSurfaces).toHaveLength(42);
+    expect(summary.java.paperPlugin.missingApiSurfaces).toHaveLength(20);
     expect(summary.skills).toEqual({
       total: 3,
       packagedPayloads: 3,

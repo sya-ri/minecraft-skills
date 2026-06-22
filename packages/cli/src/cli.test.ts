@@ -279,7 +279,7 @@ describe("minecraft-skills CLI", () => {
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data", "manifest"]);
     expect(manifest.code).toBe(0);
-    expect(manifest.stdout.join("\n")).toContain('"dataVersion": "2026.06.22-1"');
+    expect(manifest.stdout.join("\n")).toContain('"dataVersion": "2026.06.22-2"');
 
     const cacheDir = await capture(["data", "cache-dir"]);
     expect(cacheDir.code).toBe(0);

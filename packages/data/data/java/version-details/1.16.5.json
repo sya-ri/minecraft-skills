@@ -51,7 +51,12 @@
   "domains": {
     "datapack": {
       "status": "reports-extracted",
-      "facts": ["data_pack_format=6", "vanilla_data_inventory=1.16.5", "server_reports=1.16.5"],
+      "facts": [
+        "data_pack_format=6",
+        "vanilla_data_inventory=1.16.5",
+        "server_reports=1.16.5",
+        "datapack_schema_surface=1.16.5"
+      ],
       "unknowns": []
     },
     "resourcepack": {
@@ -73,6 +78,7 @@
         "paper_api_dependency=io.papermc.paper:paper-api:1.16.5-R0.1-SNAPSHOT",
         "paper_javadocs=https://jd.papermc.io/paper/1.16.5/",
         "paper_api_package_index=1.16.5",
+        "paper_api_surface=1.16.5",
         "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
         "paper_scheduler_docs=https://docs.papermc.io/paper/dev/scheduler/"
       ],

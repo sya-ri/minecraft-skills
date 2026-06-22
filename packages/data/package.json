@@ -35,6 +35,8 @@
   "types": "./dist/index.d.mts",
   "files": [
     "data",
+    "!data/java/datapack-schema-surfaces",
+    "!data/java/paper-api-surfaces",
     "dist"
   ],
   "scripts": {

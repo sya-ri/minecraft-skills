@@ -51,7 +51,12 @@
   "domains": {
     "datapack": {
       "status": "reports-extracted",
-      "facts": ["data_pack_format=8", "vanilla_data_inventory=1.18", "server_reports=1.18"],
+      "facts": [
+        "data_pack_format=8",
+        "vanilla_data_inventory=1.18",
+        "server_reports=1.18",
+        "datapack_schema_surface=1.18"
+      ],
       "unknowns": []
     },
     "resourcepack": {
