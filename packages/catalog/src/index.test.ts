@@ -8,6 +8,7 @@ import {
   compareVanillaPaths,
   compareVersions,
   getAuthoringChecklist,
+  getAuthoringPreflight,
   getCoverageSummary,
   getDatapackSchemaSurface,
   getDomain,
@@ -107,6 +108,30 @@ describe("catalog", () => {
     expect(paper.steps.flatMap((step) => step.tools.packageApis)).toContain("searchPaperMembers");
 
     expect(() => getAuthoringChecklist("missing")).toThrow("missing");
+  });
+
+  it("builds authoring preflight payloads with coverage warnings", () => {
+    const datapack = getAuthoringPreflight({ domain: "datapack", version: "26.2" });
+    expect(datapack).toMatchObject({
+      schemaVersion: 1,
+      domain: "datapack",
+      resolvedVersion: "26.2",
+    });
+    expect(datapack.checklist.domain).toBe("datapack");
+    expect(datapack.factSurfaces.map((surface) => surface.id)).toContain("command-paths");
+    expect(datapack.domainCoverage.unknowns).toEqual([]);
+    expect(datapack.downloadable).toContainEqual(
+      expect.objectContaining({
+        kind: "datapack-schema-surface",
+        version: "26.2",
+        available: true,
+      }),
+    );
+
+    const paper = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
+    expect(paper.paper?.supported).toBe(false);
+    expect(paper.warnings.join("\n")).toContain("Paper is not marked supported for 26.2");
+    expect(paper.domainCoverage.status).toBe("not-yet-published");
   });
 
   it("summarizes bundled coverage", () => {

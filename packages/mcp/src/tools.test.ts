@@ -13,6 +13,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_skill");
     expect(tools.map((tool) => tool.name)).toContain("list_authoring_checklists");
     expect(tools.map((tool) => tool.name)).toContain("get_authoring_checklist");
+    expect(tools.map((tool) => tool.name)).toContain("get_authoring_preflight");
     expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
     expect(tools.map((tool) => tool.name)).toContain("get_fact_surface");
     expect(tools.map((tool) => tool.name)).toContain("get_coverage_summary");
@@ -65,6 +66,7 @@ describe("MCP tools", () => {
         "get_skill",
         "list_authoring_checklists",
         "get_authoring_checklist",
+        "get_authoring_preflight",
         "list_fact_surfaces",
         "get_fact_surface",
         "get_source_policy",
@@ -130,6 +132,15 @@ describe("MCP tools", () => {
     });
     expect(single.content[0]?.text).toContain("verify-types-members-and-events");
     expect(single.content[0]?.text).toContain("Folia");
+  });
+
+  it("calls authoring preflight tool", async () => {
+    const result = await callMinecraftSkillsTool("get_authoring_preflight", {
+      domain: "paper-plugin",
+      version: "26.2",
+    });
+    expect(result.content[0]?.text).toContain('"resolvedVersion": "26.2"');
+    expect(result.content[0]?.text).toContain("Paper is not marked supported for 26.2");
   });
 
   it("calls get_coverage_summary", async () => {

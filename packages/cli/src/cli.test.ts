@@ -99,6 +99,17 @@ describe("minecraft-skills CLI", () => {
     expect(single.stdout.join("\n")).toContain("search-datapack-schema");
   });
 
+  it("prints authoring preflight payloads", async () => {
+    const datapack = await capture(["preflight", "datapack", "26.2"]);
+    expect(datapack.code).toBe(0);
+    expect(datapack.stdout.join("\n")).toContain('"resolvedVersion": "26.2"');
+    expect(datapack.stdout.join("\n")).toContain('"id": "verify-commands-and-paths"');
+
+    const paper = await capture(["preflight", "paper-plugin", "26.2"]);
+    expect(paper.code).toBe(0);
+    expect(paper.stdout.join("\n")).toContain("Paper is not marked supported for 26.2");
+  });
+
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data-manifest"]);
     expect(manifest.code).toBe(0);

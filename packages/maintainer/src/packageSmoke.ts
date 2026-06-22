@@ -118,16 +118,18 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { getAuthoringChecklist, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getFactSurface, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces } from "@minecraft-skills/catalog";',
+            'import { getAuthoringChecklist, getAuthoringPreflight, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getFactSurface, getPaperApiSurface, getSupportMatrix, listAuthoringChecklists, listFactSurfaces } from "@minecraft-skills/catalog";',
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
             "const support = getSupportMatrix();",
             'const checklist = getAuthoringChecklist("paper-plugin");',
+            'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });',
             'const factSurface = getFactSurface("datapack-schema-surface");',
             'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.datapack.observedSchemaSurfaces !== 1 || coverage.java.paperPlugin.apiPackageIndexes !== 43 || coverage.java.paperPlugin.apiSurfaces !== 1 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
             'if (manifest.downloadable.length !== 2 || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
             'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "1.21.11") throw new Error("bad support matrix");',
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
+            'if (!preflight.warnings.some((warning) => warning.includes("Paper is not marked supported for 26.2"))) throw new Error("bad authoring preflight");',
             'if (!factSurface.nonGuarantees.includes("not a normative schema") || listFactSurfaces({ domain: "paper-plugin" }).length < 4) throw new Error("bad fact surfaces");',
             'if (getDatapackSchemaSurface("java", "26.2").coverage !== "vanilla-observed-datapack-json-shape") throw new Error("missing datapack schema surface");',
             'if (getPaperApiSurface("1.21.11").coverage !== "javadocs-search-index") throw new Error("missing Paper API surface");',
@@ -144,6 +146,16 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(runCommand("pnpm", ["exec", "minecraft-skills", "support-matrix"], consumerDir));
     if (!commands.at(-1)?.stdout.includes('"latestPaper": "1.21.11"')) {
       throw new Error("minecraft-skills support-matrix did not include latestPaper");
+    }
+    commands.push(
+      runCommand(
+        "pnpm",
+        ["exec", "minecraft-skills", "preflight", "paper-plugin", "26.2"],
+        consumerDir,
+      ),
+    );
+    if (!commands.at(-1)?.stdout.includes("Paper is not marked supported for 26.2")) {
+      throw new Error("minecraft-skills preflight did not include Paper support warning");
     }
     commands.push(
       runCommand(

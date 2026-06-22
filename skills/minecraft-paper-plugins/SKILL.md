@@ -16,8 +16,8 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 2. Read `references/sources.md` before citing plugin API or event facts.
 3. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each plugin data surface can and cannot prove.
-4. Use `authoring-checklist paper-plugin`, MCP `get_authoring_checklist`, or package
-   `getAuthoringChecklist("paper-plugin")` before generating plugin code.
+4. Use `preflight paper-plugin <version>`, MCP `get_authoring_preflight`, or package
+   `getAuthoringPreflight({ domain: "paper-plugin", version })` before generating plugin code.
 5. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check the
    latest bundled Java/Paper aliases and whether Paper API surface facts are bundled or
    downloadable.
@@ -41,6 +41,7 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 ## Optional Tools
 
 - CLI: `minecraft-skills domain paper-plugin`, `minecraft-skills paper`,
+  `minecraft-skills preflight paper-plugin <version>`,
   `minecraft-skills authoring-checklist paper-plugin`,
   `minecraft-skills fact-surfaces --domain paper-plugin`,
   `minecraft-skills support-matrix`, `minecraft-skills data-manifest`,

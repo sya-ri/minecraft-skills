@@ -43,6 +43,7 @@ describe("MCP prompts", () => {
     const text = result.messages[0]?.content.type === "text" ? result.messages[0].content.text : "";
     expect(text).toContain("minecraft-skills://skills/minecraft-paper-plugins/SKILL.md");
     expect(text).toContain("get_support_matrix");
+    expect(text).toContain("get_authoring_preflight");
     expect(text).toContain("get_authoring_checklist");
     expect(text).toContain("list_fact_surfaces");
     expect(text).toContain("get_data_manifest");
@@ -60,6 +61,7 @@ describe("MCP prompts", () => {
   it("builds datapack prompt text with schema lookup tools", () => {
     const text = textFromPrompt("use_minecraft_datapacks");
     expect(text).toContain("get_support_matrix");
+    expect(text).toContain("get_authoring_preflight");
     expect(text).toContain("get_authoring_checklist");
     expect(text).toContain("list_fact_surfaces");
     expect(text).toContain("get_datapack_schema_surface");

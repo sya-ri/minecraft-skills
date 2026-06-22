@@ -10,6 +10,7 @@ import {
   getCacheRoot,
   getDataManifest,
   hasBundledDataFile,
+  hasCachedDataFile,
   hasDataFile,
   listCachedDataFiles,
   readDataJson,
@@ -113,6 +114,12 @@ export type FactSurfaceQuery = {
 
 export type AuthoringChecklistQuery = {
   domain?: string;
+};
+
+export type AuthoringPreflightOptions = {
+  domain: string;
+  edition?: string;
+  version?: string;
 };
 
 export type InventoryTopLevelChange = {
@@ -277,6 +284,29 @@ export type SupportMatrix = {
     version?: string;
     path: string;
   }>;
+};
+
+export type AuthoringPreflight = {
+  schemaVersion: 1;
+  domain: DomainIdData;
+  edition: EditionData;
+  requestedVersion: string;
+  resolvedVersion: string;
+  checklist: AuthoringChecklistData;
+  factSurfaces: FactSurfaceData[];
+  version: VersionDetailData;
+  domainCoverage: VersionDetailData["domains"][DomainIdData];
+  supportMatrix: SupportMatrix;
+  downloadable: Array<{
+    kind: string;
+    version?: string;
+    path: string;
+    bundled: boolean;
+    cached: boolean;
+    available: boolean;
+  }>;
+  paper?: PaperApiReference;
+  warnings: string[];
 };
 
 export type SkillReferencePayload = {
@@ -559,6 +589,72 @@ export function getAuthoringChecklist(domain: string): AuthoringChecklistData {
     throw new Error(`Unknown authoring checklist domain: ${domain}`);
   }
   return AuthoringChecklist.assert(found);
+}
+
+function relevantDownloadableEntries(domain: DomainIdData, version: string): DataManifestEntry[] {
+  return getDataManifest().downloadable.filter((entry) => {
+    if (entry.version && entry.version !== version) {
+      return false;
+    }
+    if (domain === "datapack") {
+      return entry.kind === "datapack-schema-surface";
+    }
+    if (domain === "paper-plugin") {
+      return entry.kind === "paper-api-surface";
+    }
+    return false;
+  });
+}
+
+export function getAuthoringPreflight(options: AuthoringPreflightOptions): AuthoringPreflight {
+  const domain = DomainId.assert(options.domain);
+  const edition = Edition.assert(options.edition ?? "java");
+  const requestedVersion = options.version ?? "latest";
+  const paper = domain === "paper-plugin" ? getPaperApiReference(requestedVersion) : undefined;
+  const resolvedVersion = paper?.requestedVersion ?? resolveVersion(edition, requestedVersion);
+  const version = getVersionDetail(edition, resolvedVersion);
+  const domainCoverage = version.domains[domain];
+  const downloadable = relevantDownloadableEntries(domain, resolvedVersion).map((entry) => ({
+    kind: entry.kind,
+    ...(entry.version ? { version: entry.version } : {}),
+    path: entry.path,
+    bundled: hasBundledDataFile(entry.path),
+    cached: hasCachedDataFile(entry.path),
+    available: hasDataFile(entry.path),
+  }));
+  const warnings: string[] = [];
+
+  if (domainCoverage.unknowns.length > 0) {
+    warnings.push(
+      `Domain coverage has unknowns for ${domain} ${resolvedVersion}: ${domainCoverage.unknowns.join(", ")}`,
+    );
+  }
+  if (paper && !paper.supported) {
+    warnings.push(
+      `Paper is not marked supported for ${paper.requestedVersion}; latest supported Paper version is ${paper.latestSupportedVersion}`,
+    );
+  }
+  for (const entry of downloadable) {
+    if (!entry.available) {
+      warnings.push(`Download ${entry.kind} ${entry.version ?? entry.path} before relying on it`);
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    domain,
+    edition,
+    requestedVersion,
+    resolvedVersion,
+    checklist: getAuthoringChecklist(domain),
+    factSurfaces: listFactSurfaces({ domain }),
+    version,
+    domainCoverage,
+    supportMatrix: getSupportMatrix(),
+    downloadable,
+    ...(paper ? { paper } : {}),
+    warnings,
+  };
 }
 
 export function getSkill(name: string): SkillData {

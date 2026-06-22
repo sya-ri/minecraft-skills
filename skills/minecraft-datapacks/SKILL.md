@@ -19,8 +19,8 @@ version-specific facts.
    clearly state when strict data is not bundled.
 4. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-5. Use `authoring-checklist datapack`, MCP `get_authoring_checklist`, or package
-   `getAuthoringChecklist("datapack")` before generating files or commands.
+5. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
+   `getAuthoringPreflight({ domain: "datapack", version })` before generating files or commands.
 6. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific facts are bundled and which heavyweight facts are downloadable.
 7. If an observed datapack schema surface is needed but not available locally, inspect
@@ -38,6 +38,7 @@ version-specific facts.
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
+  `minecraft-skills preflight datapack <version>`,
   `minecraft-skills authoring-checklist datapack`,
   `minecraft-skills fact-surfaces --domain datapack`,
   `minecraft-skills support-matrix`, `minecraft-skills data-manifest`,

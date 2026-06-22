@@ -45,6 +45,7 @@ minecraft-skills latest
 minecraft-skills skills
 minecraft-skills skill minecraft-paper-plugins
 minecraft-skills write-skill minecraft-paper-plugins --output ./skills
+minecraft-skills preflight paper-plugin 1.21.11
 minecraft-skills authoring-checklist datapack
 minecraft-skills authoring-checklists --domain paper-plugin
 minecraft-skills fact-surfaces --domain datapack
@@ -98,6 +99,9 @@ event discovery. `minecraft-skills skill <name>` returns the packaged Agent Skil
 and cannot prove, so agents can avoid treating observed data as normative specification.
 `minecraft-skills authoring-checklist <domain>` returns the pre-generation checks an agent should
 perform before writing data pack files, resource pack files, or Paper plugin code.
+`minecraft-skills preflight <domain> [version]` combines the checklist with resolved version
+coverage, relevant fact surfaces, support matrix data, and warnings for missing or unsupported
+facts.
 `minecraft-skills coverage` returns bundled coverage counts for Java releases, datapack/resourcepack
 facts, Paper plugin data, and packaged skill payloads.
 `minecraft-skills write-skill <name> --output <dir>` writes a packaged Agent Skill folder to disk,
@@ -155,6 +159,7 @@ import {
   compareDatapackSchema,
   getDatapackSchemaSurface,
   getAuthoringChecklist,
+  getAuthoringPreflight,
   getFactSurface,
   compareVanillaPaths,
   getCoverageSummary,
@@ -177,6 +182,7 @@ const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const datapackChecklist = getAuthoringChecklist("datapack");
+const paperPreflight = getAuthoringPreflight({ domain: "paper-plugin", version: "1.21.11" });
 const checklists = listAuthoringChecklists();
 const factSurfaces = listFactSurfaces({ domain: "datapack" });
 const schemaSurfacePolicy = getFactSurface("datapack-schema-surface");

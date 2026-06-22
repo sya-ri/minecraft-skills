@@ -49,6 +49,7 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 - `get_skill`
 - `list_authoring_checklists`
 - `get_authoring_checklist`
+- `get_authoring_preflight`
 - `list_fact_surfaces`
 - `get_fact_surface`
 - `get_coverage_summary`

@@ -19,8 +19,9 @@ version-specific facts.
    clearly state when strict data is not bundled.
 4. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-5. Use `authoring-checklist resourcepack`, MCP `get_authoring_checklist`, or package
-   `getAuthoringChecklist("resourcepack")` before generating resource pack files.
+5. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
+   `getAuthoringPreflight({ domain: "resourcepack", version })` before generating resource pack
+   files.
 6. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific resource pack facts are bundled.
 7. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
@@ -33,6 +34,7 @@ version-specific facts.
 ## Optional Tools
 
 - CLI: `minecraft-skills show-version <version>`, `minecraft-skills pack-formats`,
+  `minecraft-skills preflight resourcepack <version>`,
   `minecraft-skills authoring-checklist resourcepack`,
   `minecraft-skills fact-surfaces --domain resourcepack`,
   `minecraft-skills support-matrix`,

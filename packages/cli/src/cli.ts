@@ -16,6 +16,7 @@ import {
   type DatapackSchemaSearchOptions,
   fetchData,
   getAuthoringChecklist,
+  getAuthoringPreflight,
   getCacheDataRoot,
   getCacheRoot,
   getCoverageSummary,
@@ -107,6 +108,7 @@ Usage:
   minecraft-skills write-skill <name> --output <dir> [--force]
   minecraft-skills authoring-checklists [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills authoring-checklist <datapack|resourcepack|paper-plugin>
+  minecraft-skills preflight <datapack|resourcepack|paper-plugin> [version] [--edition java]
   minecraft-skills fact-surfaces [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills fact-surface <id>
   minecraft-skills coverage
@@ -154,6 +156,7 @@ Commands:
                  List pre-generation checks for each supported authoring domain.
   authoring-checklist
                  Print the pre-generation checklist for one authoring domain.
+  preflight      Print resolved version, checklist, fact surfaces, coverage, and warnings.
   fact-surfaces  List machine-verifiable fact surfaces and their guarantees.
   fact-surface   Print one fact surface by id.
   coverage       Print bundled data coverage summary JSON.
@@ -319,6 +322,22 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         throw new Error("authoring-checklist command requires a domain");
       }
       printJson(output, getAuthoringChecklist(domain));
+      return 0;
+    }
+
+    if (command === "preflight") {
+      const [domain, version] = positionalArgs(args);
+      if (!domain) {
+        throw new Error("preflight command requires a domain");
+      }
+      printJson(
+        output,
+        getAuthoringPreflight({
+          domain,
+          edition,
+          ...(version ? { version } : {}),
+        }),
+      );
       return 0;
     }
 

@@ -21,6 +21,7 @@ import {
   compareVanillaPaths,
   fetchData,
   getAuthoringChecklist,
+  getAuthoringPreflight,
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
@@ -49,6 +50,7 @@ const version = getVersionDetail("java", "26.2");
 const skills = listSkills();
 const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const checklist = getAuthoringChecklist("paper-plugin");
+const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "1.21.11" });
 const checklists = listAuthoringChecklists();
 const factSurfaces = listFactSurfaces({ domain: "paper-plugin" });
 const apiSurfacePolicy = getFactSurface("paper-api-surface");
