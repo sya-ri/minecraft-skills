@@ -110,7 +110,7 @@ function versionFromJsonFileName(file: string): string | undefined {
   return file.endsWith(".json") ? file.slice(0, -".json".length) : undefined;
 }
 
-function buildDataManifestEntries(root: string): DataManifestEntry[] {
+function buildDataManifestEntries(root: string, baseUrl: string): DataManifestEntry[] {
   const dataRoot = join(root, "packages/data/data");
   const sections: Array<{
     directory: string;
@@ -129,7 +129,7 @@ function buildDataManifestEntries(root: string): DataManifestEntry[] {
       kind: "resourcepack-model-summary",
     },
   ];
-  const baseUrl = getDataManifest().defaultBaseUrl.replace(/\/+$/, "");
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
   const entries: DataManifestEntry[] = [];
 
   for (const section of sections) {
@@ -153,7 +153,7 @@ function buildDataManifestEntries(root: string): DataManifestEntry[] {
         version,
         size: statSync(absolutePath).size,
         sha256: sha256File(absolutePath),
-        url: `${baseUrl}/${path}`,
+        url: `${normalizedBaseUrl}/${path}`,
       });
     }
   }
@@ -161,14 +161,15 @@ function buildDataManifestEntries(root: string): DataManifestEntry[] {
   return entries;
 }
 
-function writeDataManifest(root: string, dataVersion?: string): string {
+function writeDataManifest(root: string, dataVersion?: string, baseUrl?: string): string {
   const current = getDataManifest();
+  const manifestBaseUrl = baseUrl ?? current.defaultBaseUrl;
   const manifest = {
     schemaVersion: 1,
     dataVersion: dataVersion ?? current.dataVersion,
-    defaultBaseUrl: current.defaultBaseUrl,
+    defaultBaseUrl: manifestBaseUrl,
     cache: current.cache,
-    downloadable: buildDataManifestEntries(root),
+    downloadable: buildDataManifestEntries(root, manifestBaseUrl),
   };
   const output = join(root, dataFilePath("data-manifest.json"));
   writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -1109,7 +1110,7 @@ Usage:
   minecraft-skills-maintainer validate
   minecraft-skills-maintainer audit-current-sources
   minecraft-skills-maintainer package-smoke [--keep-temp]
-  minecraft-skills-maintainer write-data-manifest [--data-version <version>]
+  minecraft-skills-maintainer write-data-manifest [--data-version <version>] [--base-url <url>]
   minecraft-skills-maintainer ingest-java-manifest --input <manifest.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
@@ -1337,7 +1338,11 @@ async function ingestAllPaperApiSurfaces(args: string[]): Promise<void> {
 
 function regenerateDataManifest(args: string[]): void {
   const root = findRepositoryRoot();
-  const output = writeDataManifest(root, readOption(args, "--data-version"));
+  const output = writeDataManifest(
+    root,
+    readOption(args, "--data-version"),
+    readOption(args, "--base-url"),
+  );
   console.log(`wrote data manifest to ${output}`);
 }
 

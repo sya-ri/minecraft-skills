@@ -177,7 +177,8 @@ Regenerate the downloadable data manifest after changing any heavy surface:
 
 ```sh
 node packages/maintainer/dist/cli.mjs write-data-manifest \
-  --data-version 2026.06.22-5
+  --data-version 2026.06.22-5 \
+  --base-url https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.0/packages/data/data
 ```
 
 After changing generated reports, inventories, resource pack model summaries, Paper build data,

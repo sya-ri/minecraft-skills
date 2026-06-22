@@ -13,7 +13,7 @@ The project helps AI check real versioned data before it writes code or pack fil
 
 ## Start Here
 
-After publishing:
+Install and run:
 
 ```sh
 npx minecraft-skills minecraft latest

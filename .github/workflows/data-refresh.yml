@@ -84,7 +84,8 @@ jobs:
             --retrieved-at "$RETRIEVED_AT"
           node packages/maintainer/dist/cli.mjs materialize-version-details
           node packages/maintainer/dist/cli.mjs write-data-manifest \
-            --data-version "$DATA_VERSION"
+            --data-version "$DATA_VERSION" \
+            --base-url "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data"
           mise exec -- pnpm exec biome check . --write
 
       - name: Check refreshed data
