@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -16,12 +16,22 @@ export type PackageSmokeResult = {
 };
 
 const publishablePackages = [
-  ["@minecraft-skills/data", "minecraft-skills-data-0.1.3.tgz"],
-  ["@minecraft-skills/catalog", "minecraft-skills-catalog-0.1.3.tgz"],
-  ["@minecraft-skills/rcon", "minecraft-skills-rcon-0.1.3.tgz"],
-  ["minecraft-skills", "minecraft-skills-0.1.3.tgz"],
-  ["@minecraft-skills/mcp", "minecraft-skills-mcp-0.1.3.tgz"],
+  ["@minecraft-skills/data", "packages/data"],
+  ["@minecraft-skills/catalog", "packages/catalog"],
+  ["@minecraft-skills/rcon", "packages/rcon"],
+  ["minecraft-skills", "packages/cli"],
+  ["@minecraft-skills/mcp", "packages/mcp"],
 ] as const;
+
+function packageVersion(root: string, packageDir: string): string {
+  return (
+    JSON.parse(readFileSync(join(root, packageDir, "package.json"), "utf8")) as { version: string }
+  ).version;
+}
+
+function tarballName(packageName: string, version: string): string {
+  return `${packageName.replace(/^@/, "").replace("/", "-")}-${version}.tgz`;
+}
 
 function runCommand(
   command: string,
@@ -62,7 +72,12 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     mkdirSync(tarballDir, { recursive: true });
     mkdirSync(consumerDir, { recursive: true });
 
-    for (const [packageName] of publishablePackages) {
+    const packedPackages = publishablePackages.map(([packageName, packageDir]) => ({
+      packageName,
+      tarball: tarballName(packageName, packageVersion(root, packageDir)),
+    }));
+
+    for (const { packageName } of packedPackages) {
       commands.push(
         runCommand(
           "pnpm",
@@ -73,7 +88,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     }
 
     const dependencies = Object.fromEntries(
-      publishablePackages.map(([packageName, tarball]) => [
+      packedPackages.map(({ packageName, tarball }) => [
         packageName,
         `file:${join(tarballDir, tarball)}`,
       ]),
@@ -95,8 +110,8 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
       join(consumerDir, "pnpm-workspace.yaml"),
       [
         "overrides:",
-        ...publishablePackages.map(
-          ([packageName, tarball]) => `  "${packageName}": "file:${join(tarballDir, tarball)}"`,
+        ...packedPackages.map(
+          ({ packageName, tarball }) => `  "${packageName}": "file:${join(tarballDir, tarball)}"`,
         ),
         "",
       ].join("\n"),
@@ -138,7 +153,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { cleanCachedData, fetchData, getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResourcepackModelSummary, getResponsePattern, getSupportMatrix, hasBundledDataFile, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport, searchAuthoringScenarios } from "@minecraft-skills/catalog";',
+            'import { cleanCachedData, explainPackPath, fetchData, findDatapackEntries, findResourcepackAssets, getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResourcepackModelSummary, getResponsePattern, getSupportMatrix, hasBundledDataFile, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport, searchAll, searchAuthoringScenarios, suggestMinecraftLookups } from "@minecraft-skills/catalog";',
             'import { readFileSync } from "node:fs";',
             'import { join } from "node:path";',
             `const sourceDataRoot = ${JSON.stringify(sourceDataRoot)};`,

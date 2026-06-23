@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.4 - 2026-06-24
+
+### Added
+
+- Version-aware `pack.mcmeta` schema handling for legacy pack formats, 1.20.2+ range metadata, and
+  1.21.9+ minor-aware pack format metadata.
+- Pack format lookup APIs, CLI commands, and MCP tools for resolving version to pack format and
+  pack format to matching bundled versions.
+- Optional `InventivetalentDev/minecraft-assets` resource pack asset cache helpers for one-file
+  fetches, version path indexes, archive references, CLI commands, and MCP tools.
+- Discovery-oriented search tools across catalog guidance, datapack command/schema/path indexes,
+  resourcepack path/model/asset indexes, and Paper API indexes.
+- Path explanation and lookup suggestion tools for routing natural-language Minecraft tasks to the
+  right CLI, package API, or MCP lookups.
+
+### Changed
+
+- Resource pack validation now treats unknown custom folders and missing minecraft-skills schemas as
+  unvalidated gaps rather than proof that a file is invalid.
+- Known target-version layout mismatches, invalid JSON, and pack format mismatches still fail
+  validation.
+- Source policy now documents `InventivetalentDev/minecraft-assets` as a supplemental mirror while
+  keeping Mojang-derived data canonical for version-specific claims.
+
 ## 0.1.3 - 2026-06-23
 
 ### Added

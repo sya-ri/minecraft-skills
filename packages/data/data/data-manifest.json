@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "dataVersion": "2026.06.23-2",
-  "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data",
+  "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data",
   "cache": {
     "environmentVariable": "MINECRAFT_SKILLS_CACHE_DIR"
   },
@@ -13,7 +13,7 @@
       "version": "1.13.1",
       "size": 943487,
       "sha256": "dfcfb25adc9d94b2f7dba817aee523afe05fef9d8784712974a77dd9131681cb",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.13.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.13.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.13.2.json",
@@ -22,7 +22,7 @@
       "version": "1.13.2",
       "size": 943487,
       "sha256": "e514dce9ee002c1785974d2d7e1319701730b2def67652e099f99bfd034403e6",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.13.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.13.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.13.json",
@@ -31,7 +31,7 @@
       "version": "1.13",
       "size": 943517,
       "sha256": "d011f24eb15a882a7c330b86d735cf007e81ee15f6096ce82489c08569d69482",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.13.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.13.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.14.1.json",
@@ -40,7 +40,7 @@
       "version": "1.14.1",
       "size": 1285253,
       "sha256": "d7749040498f3c34e0f3f6e3b998a4bfaf37a4cea830c4ce117a954f693095ba",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.14.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.14.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.14.2.json",
@@ -49,7 +49,7 @@
       "version": "1.14.2",
       "size": 1285253,
       "sha256": "b0d60fb19e49bc05416215b178ed6575be66cdb77272b5c168a3427bbf7c903d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.14.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.14.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.14.3.json",
@@ -58,7 +58,7 @@
       "version": "1.14.3",
       "size": 1284901,
       "sha256": "2daa5199e9bd123c801e11d3153825a77680341ba8b6c87e9ebb3b5257063286",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.14.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.14.3.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.14.4.json",
@@ -67,7 +67,7 @@
       "version": "1.14.4",
       "size": 1284901,
       "sha256": "860c0e11401baca508c57b2ff40b6b33efef9622f1a55e55d9561acdc42a4ea8",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.14.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.14.4.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.14.json",
@@ -76,7 +76,7 @@
       "version": "1.14",
       "size": 1285251,
       "sha256": "f59e2f4b9ee0dc678c16aaed5f7b44617ab57aa67edf4dc215c4fffe29648a94",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.14.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.14.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.15.1.json",
@@ -85,7 +85,7 @@
       "version": "1.15.1",
       "size": 1271815,
       "sha256": "b52383b27adbc94b314c95b2ad0b5c98d93fe13c2b9d1b87c8fa4a9001cb9fc7",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.15.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.15.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.15.2.json",
@@ -94,7 +94,7 @@
       "version": "1.15.2",
       "size": 1271815,
       "sha256": "ce8b131cf268428762e46d5d4851bfd7cfe2dfe061bc50aa2e0d953961fa1e22",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.15.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.15.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.15.json",
@@ -103,7 +103,7 @@
       "version": "1.15",
       "size": 1271813,
       "sha256": "7b51cf49da611cde32a039748c8b8054537f59885ab04f4446a160f3e0516fd6",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.15.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.15.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.16.1.json",
@@ -112,7 +112,7 @@
       "version": "1.16.1",
       "size": 1538730,
       "sha256": "ef0047b283c6dcf6d499c1893760fd5ec2c2efc118b50d777a3c3b442a276d79",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.16.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.16.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.16.2.json",
@@ -121,7 +121,7 @@
       "version": "1.16.2",
       "size": 1542479,
       "sha256": "e17aa4d14581927956587f57c665f32e95d4135401996acb5c6ce47a57f0d818",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.16.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.16.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.16.3.json",
@@ -130,7 +130,7 @@
       "version": "1.16.3",
       "size": 1542479,
       "sha256": "35af0452d4b8603a8bc9a9cb9f729bd06bbbd515023408e2f7d212f4815a1ed7",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.16.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.16.3.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.16.4.json",
@@ -139,7 +139,7 @@
       "version": "1.16.4",
       "size": 1542479,
       "sha256": "28ad2455ba6c422a4f9169ccdb3a4735b11bc032a1926d741a56ce0fe70ce849",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.16.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.16.4.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.16.5.json",
@@ -148,7 +148,7 @@
       "version": "1.16.5",
       "size": 1542479,
       "sha256": "92ef553f5c94fe7d8588324f7e22c9116ee3ea2020a73e0df875821bd56a690a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.16.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.16.5.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.16.json",
@@ -157,7 +157,7 @@
       "version": "1.16",
       "size": 1538728,
       "sha256": "a557415dfec279b7ddaa87c68116ebcd1fce64647d04bc3dd7d72845f898be58",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.16.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.16.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.17.1.json",
@@ -166,7 +166,7 @@
       "version": "1.17.1",
       "size": 1995072,
       "sha256": "8ba5fd8bf1dd4eed444b5e87f89a350ce0d20d77a28e3c93b30f463e34964829",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.17.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.17.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.17.json",
@@ -175,7 +175,7 @@
       "version": "1.17",
       "size": 1995070,
       "sha256": "fa36e57aeb5d6dd0cda573450b1feafa839708edf258a89b9ca2dd15ab59c81a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.17.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.17.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.18.1.json",
@@ -184,7 +184,7 @@
       "version": "1.18.1",
       "size": 2030263,
       "sha256": "eb0b890ee54a8a6898403928a4eb73957a01aa594d607fc6bec98f67f4335fc5",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.18.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.18.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.18.2.json",
@@ -193,7 +193,7 @@
       "version": "1.18.2",
       "size": 2035189,
       "sha256": "b775c3bdbb715eeb38c34a60b3aaa5f6ead7d9d0c865676c57ad758b35f31bfc",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.18.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.18.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.18.json",
@@ -202,7 +202,7 @@
       "version": "1.18",
       "size": 2030261,
       "sha256": "6f8bd65790d6f786d6b4e795af23964a74332ec93e856e7ba3d4a3c410e03ce9",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.18.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.18.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.19.1.json",
@@ -211,7 +211,7 @@
       "version": "1.19.1",
       "size": 2227989,
       "sha256": "056c5bfe69b86657609a8cb6791985482e7078244defd7aad6bff045cd35d6cc",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.19.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.19.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.19.2.json",
@@ -220,7 +220,7 @@
       "version": "1.19.2",
       "size": 2227989,
       "sha256": "5b688452b01c047a58add415fa619118d7514e46bb145adb5d145cf1e7faa3f2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.19.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.19.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.19.3.json",
@@ -229,7 +229,7 @@
       "version": "1.19.3",
       "size": 3894780,
       "sha256": "1b397f7a4e4f046180fd323d74e64ecd415ed9672663f5321c467e61c3f4eddc",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.19.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.19.3.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.19.4.json",
@@ -238,7 +238,7 @@
       "version": "1.19.4",
       "size": 4295057,
       "sha256": "a58999b5e6dfe729c8519a51a81586e9acf0907e7c39298b76cb556c93507590",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.19.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.19.4.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.19.json",
@@ -247,7 +247,7 @@
       "version": "1.19",
       "size": 2227987,
       "sha256": "d55003173cd9400ae84fe2a6526c414097adac37dad42678590506dbfc35ba4a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.19.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.19.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.1.json",
@@ -256,7 +256,7 @@
       "version": "1.20.1",
       "size": 3944101,
       "sha256": "a4ae44bbcf060193791721e5aed13a6b5c3e2554c4c3d8946fe2607d7f05cb45",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.2.json",
@@ -265,7 +265,7 @@
       "version": "1.20.2",
       "size": 3970318,
       "sha256": "3b67b9fbe30c7fd2b49f5954da54d31c4bd5ec9adecb39ac54cb612f93da743b",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.3.json",
@@ -274,7 +274,7 @@
       "version": "1.20.3",
       "size": 4406699,
       "sha256": "944ae86ad1ab99a67416a04462eca78b10a72e2b1e3d7031a03ce3a13ddb5160",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.3.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.4.json",
@@ -283,7 +283,7 @@
       "version": "1.20.4",
       "size": 4406699,
       "sha256": "fa08f5da1039515d71cd9f7909e3f806d27e509632028b42ffc29c42ef0def97",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.4.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.5.json",
@@ -292,7 +292,7 @@
       "version": "1.20.5",
       "size": 4325661,
       "sha256": "0a0879d07d61efa8853b3e5151aba165c84f4a154696324d14581e4cdfdea8c8",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.5.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.6.json",
@@ -301,7 +301,7 @@
       "version": "1.20.6",
       "size": 4325661,
       "sha256": "9ec9142a243f0e66a37f79f32354aa2514fe8e69fd734de9dfd9cd3af22f8fad",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.6.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.6.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.20.json",
@@ -310,7 +310,7 @@
       "version": "1.20",
       "size": 3944099,
       "sha256": "775fa1ccdbd6e84d9a4518a81bf745cc67f1b143efb3b79452f041574c3e392c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.20.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.20.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.1.json",
@@ -319,7 +319,7 @@
       "version": "1.21.1",
       "size": 4164255,
       "sha256": "7303467868ba35a88917a1bca6e279e6a9b06ed287b3d82b083c77211186ae51",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.2.json",
@@ -328,7 +328,7 @@
       "version": "1.21.2",
       "size": 4658961,
       "sha256": "992decf25f8cc71ace66fab8b54e316d23398a7e2387a7887dbff748c0390021",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.3.json",
@@ -337,7 +337,7 @@
       "version": "1.21.3",
       "size": 4658961,
       "sha256": "a0746dd02e59971d3e9e66eb40060de61d2d938e4a74f4bc1ab14a4b0bcc67f2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.3.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.4.json",
@@ -346,7 +346,7 @@
       "version": "1.21.4",
       "size": 4221596,
       "sha256": "50a519aa10ffb1f570ba278efe830d1234c5cadfe7e9a1e5b9a79741c366db89",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.4.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.5.json",
@@ -355,7 +355,7 @@
       "version": "1.21.5",
       "size": 4294369,
       "sha256": "59c6ba7ef9eb54e1f16390f26ed290d3bd573328b8e7092a31b1aed38da8fc55",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.5.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.6.json",
@@ -364,7 +364,7 @@
       "version": "1.21.6",
       "size": 4328109,
       "sha256": "21c120b981fdc282ae0ea27dd8590476282b1c46bb316a464194ad4bde04213f",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.6.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.6.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.7.json",
@@ -373,7 +373,7 @@
       "version": "1.21.7",
       "size": 4329481,
       "sha256": "3e0ecef50a656f514056e3031dc8d3026606eb96e8cf051ad615b701d5079cc2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.7.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.7.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.8.json",
@@ -382,7 +382,7 @@
       "version": "1.21.8",
       "size": 4329481,
       "sha256": "1cbb11809c815f7e95708880ddf2acd9dc6208ad25632c97b82454a871bb063c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.8.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.8.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.9.json",
@@ -391,7 +391,7 @@
       "version": "1.21.9",
       "size": 4464125,
       "sha256": "49db90dea7f8961ddb5c8f1ecc41c1ec71cd0762e2088097427be78b7628185d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.9.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.9.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.10.json",
@@ -400,7 +400,7 @@
       "version": "1.21.10",
       "size": 4464126,
       "sha256": "1b7148f9fc3edb673931eaeaad56e6787e1e0f8e1137d1e0cd2f81464b48ac82",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.10.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.10.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.11.json",
@@ -409,7 +409,7 @@
       "version": "1.21.11",
       "size": 4589134,
       "sha256": "e83031a5d0d5221ee76656bead44266cea64bcef839a6ec24b3b9673a77cbea0",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.11.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.11.json"
     },
     {
       "path": "java/datapack-schema-surfaces/1.21.json",
@@ -418,7 +418,7 @@
       "version": "1.21",
       "size": 4164253,
       "sha256": "27eb6a8ed68406620ef9646a031623ee8ab1f480a748f264c6268fbae770c2e1",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/1.21.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/1.21.json"
     },
     {
       "path": "java/datapack-schema-surfaces/26.1.1.json",
@@ -427,7 +427,7 @@
       "version": "26.1.1",
       "size": 4796181,
       "sha256": "8930f1aa73120b7bb944298fd838920434f4cab03fa4cbf315ed0d508c134f3f",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/26.1.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/26.1.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/26.1.2.json",
@@ -436,7 +436,7 @@
       "version": "26.1.2",
       "size": 4796181,
       "sha256": "0d5d79a40d47c76f441b162de23f3764a7defcc3c9bc07e3b18ed67c3e2cd487",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/26.1.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/26.1.2.json"
     },
     {
       "path": "java/datapack-schema-surfaces/26.1.json",
@@ -445,7 +445,7 @@
       "version": "26.1",
       "size": 4796179,
       "sha256": "8a1aed608de435b83a678a9e7fecf6dae26d202019532901f8bab81201ac9d7e",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/26.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/26.1.json"
     },
     {
       "path": "java/datapack-schema-surfaces/26.2.json",
@@ -454,7 +454,7 @@
       "version": "26.2",
       "size": 4935098,
       "sha256": "eb1aed9b90f2319f8cdd384bba5ba4951f069a3ffc8944c9dff47952edc64f1a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/datapack-schema-surfaces/26.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/datapack-schema-surfaces/26.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.13.1.json",
@@ -463,7 +463,7 @@
       "version": "1.13.1",
       "size": 4114237,
       "sha256": "ef36a349f7f2e7ad1fe876c67a993f85ff4a6d61a34ac3d9ed7c1926ab3721cc",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.13.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.13.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.13.2.json",
@@ -472,7 +472,7 @@
       "version": "1.13.2",
       "size": 4287036,
       "sha256": "f2826a94ce6d212cdfbecd656cca4015e5bef6435e5527b11697127c55ebfb9c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.13.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.13.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.14.1.json",
@@ -481,7 +481,7 @@
       "version": "1.14.1",
       "size": 4487045,
       "sha256": "a75470070efc351a42e1e50c80ef7a8d6563826ec63a04ac94b655aaadd26a8c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.14.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.14.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.14.2.json",
@@ -490,7 +490,7 @@
       "version": "1.14.2",
       "size": 4491070,
       "sha256": "7cbe007c6ceebea742bc0dc71870360b98709b5b149ae1b69c744a11b1b5af69",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.14.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.14.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.14.3.json",
@@ -499,7 +499,7 @@
       "version": "1.14.3",
       "size": 4496451,
       "sha256": "1a9211dc892e49a6a2dc15c151c7f5b7f5ba5e1423db725ff12f4413e2eb1749",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.14.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.14.3.json"
     },
     {
       "path": "java/paper-api-surfaces/1.14.4.json",
@@ -508,7 +508,7 @@
       "version": "1.14.4",
       "size": 4531325,
       "sha256": "22aab31932f12ea6d8dbb35ed18603017c860e622b2f334e59f41b92c84ecec1",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.14.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.14.4.json"
     },
     {
       "path": "java/paper-api-surfaces/1.15.1.json",
@@ -517,7 +517,7 @@
       "version": "1.15.1",
       "size": 3267393,
       "sha256": "e7669f61f2e985fec1f29dbca90e5d77e43cc5876f8cc6d00433cccb0e2e691c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.15.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.15.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.15.2.json",
@@ -526,7 +526,7 @@
       "version": "1.15.2",
       "size": 4746773,
       "sha256": "b132a4ba7901b1ab5cc8e0151c3a4d6ba24227d9c344a73607698789a65218c3",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.15.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.15.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.16.1.json",
@@ -535,7 +535,7 @@
       "version": "1.16.1",
       "size": 4929616,
       "sha256": "bc33c6f2bb56f121bbf0a7af7f1c9f844dd9e74604d8cf608a1bfab16f909e61",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.16.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.16.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.16.2.json",
@@ -544,7 +544,7 @@
       "version": "1.16.2",
       "size": 4973276,
       "sha256": "f6021cce6448c31e00f87aa015b8000b2ff47a38fb77def842e5307810e3bc22",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.16.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.16.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.16.3.json",
@@ -553,7 +553,7 @@
       "version": "1.16.3",
       "size": 4982570,
       "sha256": "18a5abca3cf6714ee9c30eff589a050b1f6e13469ddda45f00f7a9319e1aedd3",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.16.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.16.3.json"
     },
     {
       "path": "java/paper-api-surfaces/1.16.4.json",
@@ -562,7 +562,7 @@
       "version": "1.16.4",
       "size": 5074626,
       "sha256": "0e0df9ca3ea825accc6f52efa4d96cc5d5fffdbc1998fb239841b583d790ff43",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.16.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.16.4.json"
     },
     {
       "path": "java/paper-api-surfaces/1.16.5.json",
@@ -571,7 +571,7 @@
       "version": "1.16.5",
       "size": 5353880,
       "sha256": "666be4c7084e20b75a98cbb1a2ed15d2ece68c41f711741155a346fa3a1e548a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.16.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.16.5.json"
     },
     {
       "path": "java/paper-api-surfaces/1.17.1.json",
@@ -580,7 +580,7 @@
       "version": "1.17.1",
       "size": 5739224,
       "sha256": "74d12587b0c99e1d863edd951b818f5eab834a4a7fbf2613c17f4054cc8714fe",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.17.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.17.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.18.1.json",
@@ -589,7 +589,7 @@
       "version": "1.18.1",
       "size": 5831646,
       "sha256": "6df49f128e8c1c635fb628d031630854c75c802eaa6800343af62b2dee65b544",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.18.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.18.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.18.2.json",
@@ -598,7 +598,7 @@
       "version": "1.18.2",
       "size": 5909896,
       "sha256": "b271cbbfc5a7cf625c56d291f4c7d02789ae6d5a473a1b8a4124a36c514e9830",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.18.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.18.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.19.1.json",
@@ -607,7 +607,7 @@
       "version": "1.19.1",
       "size": 6083595,
       "sha256": "da62dc750f9fd14145f974d9215058fc9473c95dca70a1adaad40891a825efcc",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.19.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.19.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.19.2.json",
@@ -616,7 +616,7 @@
       "version": "1.19.2",
       "size": 6206980,
       "sha256": "c428442e9b44eb6da1a4812a0c679ce36b3525989c3b2903fd4e9c6e50dd0a9d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.19.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.19.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.19.3.json",
@@ -625,7 +625,7 @@
       "version": "1.19.3",
       "size": 6404261,
       "sha256": "0dff2f2caf60c084cdf0fdb41692305b3a73b11323153f2437532eee4fb7df86",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.19.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.19.3.json"
     },
     {
       "path": "java/paper-api-surfaces/1.19.4.json",
@@ -634,7 +634,7 @@
       "version": "1.19.4",
       "size": 6611198,
       "sha256": "69880cd48c847d8ef31ce81e313398b95e77891c0eb8f62137c636f5bd66b6d3",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.19.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.19.4.json"
     },
     {
       "path": "java/paper-api-surfaces/1.20.1.json",
@@ -643,7 +643,7 @@
       "version": "1.20.1",
       "size": 6762996,
       "sha256": "b9695f696efc24b28d9fce06b0761bc7f3622ebd302635b6e338deb1e8446785",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.20.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.20.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.20.2.json",
@@ -652,7 +652,7 @@
       "version": "1.20.2",
       "size": 6915323,
       "sha256": "efa5278a270b61cfccc511b4641ad2a55297f5bc9b2552ac659cef21757b18aa",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.20.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.20.2.json"
     },
     {
       "path": "java/paper-api-surfaces/1.20.4.json",
@@ -661,7 +661,7 @@
       "version": "1.20.4",
       "size": 7171115,
       "sha256": "02023355b78c5cb14e8db2ab5aee739d143e9eef49c998439a8cbc9e5b1991b4",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.20.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.20.4.json"
     },
     {
       "path": "java/paper-api-surfaces/1.20.5.json",
@@ -670,7 +670,7 @@
       "version": "1.20.5",
       "size": 7275433,
       "sha256": "419f54e4b4445e3b78b1b87c9194388e08c671412bfe1d7d6fbe16b61de3b814",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.20.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.20.5.json"
     },
     {
       "path": "java/paper-api-surfaces/1.20.6.json",
@@ -679,7 +679,7 @@
       "version": "1.20.6",
       "size": 8306781,
       "sha256": "22c89be648f54bf2f163abca575aa2929b548a662ce5bd9d7daec9a86ed6ed94",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.20.6.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.20.6.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.1.json",
@@ -688,7 +688,7 @@
       "version": "1.21.1",
       "size": 9524873,
       "sha256": "718f324e461b56e9698f15b6a0ba9358eeea0fe7939e11957392b13c75fdd8b2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.1.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.3.json",
@@ -697,7 +697,7 @@
       "version": "1.21.3",
       "size": 10768973,
       "sha256": "2e17a9683e844fb6f84f259a6be206d9850d71ef8695d291f35c88c7bff7ce01",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.3.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.4.json",
@@ -706,7 +706,7 @@
       "version": "1.21.4",
       "size": 10914470,
       "sha256": "5015367555db0ae8564b128ace3e185ff56f53a8e6d97e76dade83c37e867af2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.4.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.5.json",
@@ -715,7 +715,7 @@
       "version": "1.21.5",
       "size": 11197225,
       "sha256": "38497bba6bb3799a03fa42de532012c5727077d095e72402eae3ea9227f24083",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.5.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.6.json",
@@ -724,7 +724,7 @@
       "version": "1.21.6",
       "size": 11270983,
       "sha256": "06ee5c29c8fbb9c3e8f28e97d59c2e640446ee1a8bbacfbca385e1a255490dd9",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.6.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.6.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.7.json",
@@ -733,7 +733,7 @@
       "version": "1.21.7",
       "size": 11400351,
       "sha256": "63347acfb39533ceafff085cb35b24aadf1cf93680b8e79d9641b2d0006ff5e9",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.7.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.7.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.8.json",
@@ -742,7 +742,7 @@
       "version": "1.21.8",
       "size": 11429373,
       "sha256": "7333a85c323687d7aac4be63580c775f5afbed6137f2e4d714aaa753f576b5a5",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.8.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.8.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.9.json",
@@ -751,7 +751,7 @@
       "version": "1.21.9",
       "size": 11628437,
       "sha256": "df73f9157f5637b1f798419f44ff6dbf9f19254c2eb4a38c9a59d9a3b8bc2c6a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.9.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.9.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.10.json",
@@ -760,7 +760,7 @@
       "version": "1.21.10",
       "size": 11663648,
       "sha256": "b97b61ad1f05acf1b08a1899370cfb498a3312417542b6387065fcbb5755bf29",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.10.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.10.json"
     },
     {
       "path": "java/paper-api-surfaces/1.21.11.json",
@@ -769,7 +769,7 @@
       "version": "1.21.11",
       "size": 11872152,
       "sha256": "005657a20bf10b4c93a95fbc4d4b905cb4cce22c15b13767886baeb368106612",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/1.21.11.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/1.21.11.json"
     },
     {
       "path": "java/paper-api-surfaces/26.1.1.json",
@@ -778,7 +778,7 @@
       "version": "26.1.1",
       "size": 11964164,
       "sha256": "706ae4721b2d134e810eef4d000303f6cfc220c00358108feb7c55f56a04c9b4",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/26.1.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/26.1.1.json"
     },
     {
       "path": "java/paper-api-surfaces/26.1.2.json",
@@ -787,7 +787,7 @@
       "version": "26.1.2",
       "size": 11996578,
       "sha256": "23fac5b3ef6159ebb77cc955db45f59992981df53d81a193092b6706c3cf27a0",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/26.1.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/26.1.2.json"
     },
     {
       "path": "java/paper-api-surfaces/26.2.json",
@@ -796,7 +796,7 @@
       "version": "26.2",
       "size": 12119798,
       "sha256": "344c40ae688b26551a25cae805cb344c9a41bcbc94d09f2288a29deaf31e1192",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/paper-api-surfaces/26.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/paper-api-surfaces/26.2.json"
     },
     {
       "path": "java/resourcepack-models/1.13.1.json",
@@ -805,7 +805,7 @@
       "version": "1.13.1",
       "size": 104506,
       "sha256": "145d718370fd0d352c3f7ce36b0596b94ff094702790e085cbba4a184c892e6d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.13.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.13.1.json"
     },
     {
       "path": "java/resourcepack-models/1.13.2.json",
@@ -814,7 +814,7 @@
       "version": "1.13.2",
       "size": 104506,
       "sha256": "f34dc1dfbebf70d974d08cd320da6c4cd3bbb3154a899304a65fddfc9d836189",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.13.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.13.2.json"
     },
     {
       "path": "java/resourcepack-models/1.13.json",
@@ -823,7 +823,7 @@
       "version": "1.13",
       "size": 104504,
       "sha256": "6e4849b1381fce1a246fe83ec4ac2ed2ff029ec2ce9981abb183cba89147cf7a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.13.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.13.json"
     },
     {
       "path": "java/resourcepack-models/1.14.1.json",
@@ -832,7 +832,7 @@
       "version": "1.14.1",
       "size": 110030,
       "sha256": "6f2a33d6421a050643ec36ee378aae855fad09c20f14df960ab0e66b3188d5c7",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.14.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.14.1.json"
     },
     {
       "path": "java/resourcepack-models/1.14.2.json",
@@ -841,7 +841,7 @@
       "version": "1.14.2",
       "size": 110030,
       "sha256": "036f7bd5ccd2e8fc7540a8e105341d32b26a1a6f5e5ad0656da4522fe38e93f3",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.14.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.14.2.json"
     },
     {
       "path": "java/resourcepack-models/1.14.3.json",
@@ -850,7 +850,7 @@
       "version": "1.14.3",
       "size": 110030,
       "sha256": "114e13dcdb8a21ff01c2dda59f793e46d8a17ebb9cc7d4f592325789447f5d97",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.14.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.14.3.json"
     },
     {
       "path": "java/resourcepack-models/1.14.4.json",
@@ -859,7 +859,7 @@
       "version": "1.14.4",
       "size": 110030,
       "sha256": "d72966af82608a98c3a432cf9af53700f6a5d886673f3ebb80b41244a152d493",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.14.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.14.4.json"
     },
     {
       "path": "java/resourcepack-models/1.14.json",
@@ -868,7 +868,7 @@
       "version": "1.14",
       "size": 110028,
       "sha256": "8e9c40fe0e8228b1b08574cb43335d1a186581e5fe5f3508486b99d6a8f2eb94",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.14.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.14.json"
     },
     {
       "path": "java/resourcepack-models/1.15.1.json",
@@ -877,7 +877,7 @@
       "version": "1.15.1",
       "size": 110000,
       "sha256": "301a751b85085132a21526bd396589fda80392954e0d9917f07dac92f5fecb08",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.15.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.15.1.json"
     },
     {
       "path": "java/resourcepack-models/1.15.2.json",
@@ -886,7 +886,7 @@
       "version": "1.15.2",
       "size": 110783,
       "sha256": "3acd29af1fa08f1429d26f4a654854857663dcc6bb8c19c3c32944a974f62073",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.15.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.15.2.json"
     },
     {
       "path": "java/resourcepack-models/1.15.json",
@@ -895,7 +895,7 @@
       "version": "1.15",
       "size": 109998,
       "sha256": "27f88201216a9eb846f13e4a08cdc1c1642b8c19d2e56af94af1f84fcea8cfcb",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.15.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.15.json"
     },
     {
       "path": "java/resourcepack-models/1.16.1.json",
@@ -904,7 +904,7 @@
       "version": "1.16.1",
       "size": 112525,
       "sha256": "a308924ce78d7785276585d5e58db3010d2560c42ac5828807122d9e251b7e16",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.16.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.16.1.json"
     },
     {
       "path": "java/resourcepack-models/1.16.2.json",
@@ -913,7 +913,7 @@
       "version": "1.16.2",
       "size": 112525,
       "sha256": "b13a821b6b4af1cd50f371319f94fb72a0612749029724f68b6fcae51c029dd1",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.16.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.16.2.json"
     },
     {
       "path": "java/resourcepack-models/1.16.3.json",
@@ -922,7 +922,7 @@
       "version": "1.16.3",
       "size": 112525,
       "sha256": "e72142d81498be8a83dc583df3cf484f46f82ef79ee230a6c80f2d6e786e6221",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.16.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.16.3.json"
     },
     {
       "path": "java/resourcepack-models/1.16.4.json",
@@ -931,7 +931,7 @@
       "version": "1.16.4",
       "size": 112525,
       "sha256": "47811b161e9a30a03ad788cad4fd7c63d150fbb9c2ca98b5693b177e36adaf23",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.16.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.16.4.json"
     },
     {
       "path": "java/resourcepack-models/1.16.5.json",
@@ -940,7 +940,7 @@
       "version": "1.16.5",
       "size": 112525,
       "sha256": "4dfd05a956cfe7d378359116ccbe3155dcae36f6bd8027bbbf61d92de453a713",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.16.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.16.5.json"
     },
     {
       "path": "java/resourcepack-models/1.16.json",
@@ -949,7 +949,7 @@
       "version": "1.16",
       "size": 112523,
       "sha256": "996af106f13012e1f125d207f8eea26130a6ba4754574e1e5b41ccd84a78d064",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.16.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.16.json"
     },
     {
       "path": "java/resourcepack-models/1.17.1.json",
@@ -958,7 +958,7 @@
       "version": "1.17.1",
       "size": 117141,
       "sha256": "078e1366bcca49e8b1bf8cf4f00acd1698e1077b6af4d396c16c2bb4453260c2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.17.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.17.1.json"
     },
     {
       "path": "java/resourcepack-models/1.17.json",
@@ -967,7 +967,7 @@
       "version": "1.17",
       "size": 117139,
       "sha256": "c4dc4524148ee42bd8a495e0d4e08a9d72b05d343a2e059e913046bf40e05e3d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.17.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.17.json"
     },
     {
       "path": "java/resourcepack-models/1.18.1.json",
@@ -976,7 +976,7 @@
       "version": "1.18.1",
       "size": 117140,
       "sha256": "b1810888d50f9a903fdce0a2cbdf5de8d0229049e18045f07717559546398f03",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.18.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.18.1.json"
     },
     {
       "path": "java/resourcepack-models/1.18.2.json",
@@ -985,7 +985,7 @@
       "version": "1.18.2",
       "size": 117140,
       "sha256": "58fd2dedfad540b0fee3eabd3a3aff6b2f539a4abd610c21561fa239a07dd89a",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.18.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.18.2.json"
     },
     {
       "path": "java/resourcepack-models/1.18.json",
@@ -994,7 +994,7 @@
       "version": "1.18",
       "size": 117138,
       "sha256": "0fc3a3d5e2e6ec284b8506937aaa4ef0d246c76881d6e47ea43f549f4df65c48",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.18.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.18.json"
     },
     {
       "path": "java/resourcepack-models/1.19.1.json",
@@ -1003,7 +1003,7 @@
       "version": "1.19.1",
       "size": 120452,
       "sha256": "e829742fc56554cb6b082ec48c140a13b8f5b823b0f40cb64352541d1db3e491",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.19.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.19.1.json"
     },
     {
       "path": "java/resourcepack-models/1.19.2.json",
@@ -1012,7 +1012,7 @@
       "version": "1.19.2",
       "size": 120452,
       "sha256": "80e3343e4c668499ae2e8e020a4f1f82fd95d22f2e0c4c421973ae3b19181fac",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.19.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.19.2.json"
     },
     {
       "path": "java/resourcepack-models/1.19.3.json",
@@ -1021,7 +1021,7 @@
       "version": "1.19.3",
       "size": 124624,
       "sha256": "d129529e2634f605c4be4cc123316b6a5ae14d49cd10a7949c15e004ced958ae",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.19.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.19.3.json"
     },
     {
       "path": "java/resourcepack-models/1.19.4.json",
@@ -1030,7 +1030,7 @@
       "version": "1.19.4",
       "size": 128091,
       "sha256": "d9d367e5b9d7888de4a86dcb826817fc9a281966da0d974f44e1fd72f1a6e702",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.19.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.19.4.json"
     },
     {
       "path": "java/resourcepack-models/1.19.json",
@@ -1039,7 +1039,7 @@
       "version": "1.19",
       "size": 120450,
       "sha256": "225758fafe1fcc24c8652ae3b7fe67bd66f7b2a03382d2d5a7c405fb04ebda6d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.19.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.19.json"
     },
     {
       "path": "java/resourcepack-models/1.20.1.json",
@@ -1048,7 +1048,7 @@
       "version": "1.20.1",
       "size": 133792,
       "sha256": "cd3cc95b27d758357b73bb58f038a137203f04cc9120f53c70623a9cd9a65934",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.1.json"
     },
     {
       "path": "java/resourcepack-models/1.20.2.json",
@@ -1057,7 +1057,7 @@
       "version": "1.20.2",
       "size": 133809,
       "sha256": "be48c504b4e201d6e70ce82c1df0f08be94e59f157932f917f0dcc0c9c9e24e2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.2.json"
     },
     {
       "path": "java/resourcepack-models/1.20.3.json",
@@ -1066,7 +1066,7 @@
       "version": "1.20.3",
       "size": 133826,
       "sha256": "7008965826e421c5f6bc26d78d44b3d65f40e15e0f1b8bbba232d7d9a79f2e8c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.3.json"
     },
     {
       "path": "java/resourcepack-models/1.20.4.json",
@@ -1075,7 +1075,7 @@
       "version": "1.20.4",
       "size": 133826,
       "sha256": "c47a7e3cd680dfd24e0aea93ac563406eac327f90f6212427b88619f14331533",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.4.json"
     },
     {
       "path": "java/resourcepack-models/1.20.5.json",
@@ -1084,7 +1084,7 @@
       "version": "1.20.5",
       "size": 134277,
       "sha256": "c5d22a4aba18e64ff576a9cb8d41d7ba61feb9e6917339a0c40d95770ef78eef",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.5.json"
     },
     {
       "path": "java/resourcepack-models/1.20.6.json",
@@ -1093,7 +1093,7 @@
       "version": "1.20.6",
       "size": 134277,
       "sha256": "d56be3db81abe0e289ae6599b37a69d0e74fcb8fc15d7b048eed7a3ebaa04fe9",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.6.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.6.json"
     },
     {
       "path": "java/resourcepack-models/1.20.json",
@@ -1102,7 +1102,7 @@
       "version": "1.20",
       "size": 133790,
       "sha256": "403d5d43e4ca5d7849b0a9da4b55352aa3e3594db01543dcc613d79f4bc92eb9",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.20.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.20.json"
     },
     {
       "path": "java/resourcepack-models/1.21.1.json",
@@ -1111,7 +1111,7 @@
       "version": "1.21.1",
       "size": 134277,
       "sha256": "bb3a5bc17fecacadf60b962ce80201c66f75b86842248fdb940437cac977dc35",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.1.json"
     },
     {
       "path": "java/resourcepack-models/1.21.2.json",
@@ -1120,7 +1120,7 @@
       "version": "1.21.2",
       "size": 143200,
       "sha256": "dc0820530d0d1bad97cb9e14465335add2883e64b96f1b8af62d58ff4c573ea1",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.2.json"
     },
     {
       "path": "java/resourcepack-models/1.21.3.json",
@@ -1129,7 +1129,7 @@
       "version": "1.21.3",
       "size": 143200,
       "sha256": "10b65c2bc9e3881950c3b892298f2f4546668197bfd136ffa24045bd81e230b5",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.3.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.3.json"
     },
     {
       "path": "java/resourcepack-models/1.21.4.json",
@@ -1138,7 +1138,7 @@
       "version": "1.21.4",
       "size": 172406,
       "sha256": "0121fa9d857340a204977626f278d2b01a8b8c37c534f2ae94a67acf688ffc0e",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.4.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.4.json"
     },
     {
       "path": "java/resourcepack-models/1.21.5.json",
@@ -1147,7 +1147,7 @@
       "version": "1.21.5",
       "size": 173613,
       "sha256": "afa868e23f625b94de1bc0fb3a640d15f501966e4049d550df5e68d72f3d09af",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.5.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.5.json"
     },
     {
       "path": "java/resourcepack-models/1.21.6.json",
@@ -1156,7 +1156,7 @@
       "version": "1.21.6",
       "size": 174426,
       "sha256": "4046d1099e65d89b5884432535b69d3ed827c44e12f4e3037362d537e15a0289",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.6.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.6.json"
     },
     {
       "path": "java/resourcepack-models/1.21.7.json",
@@ -1165,7 +1165,7 @@
       "version": "1.21.7",
       "size": 174426,
       "sha256": "710ab6c945d2eb766852df5acdcc23be5e6795efd5d261057d0cadcc81c80a7d",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.7.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.7.json"
     },
     {
       "path": "java/resourcepack-models/1.21.8.json",
@@ -1174,7 +1174,7 @@
       "version": "1.21.8",
       "size": 174426,
       "sha256": "6256a8491ec322c4f61376f8272e0cde5f0bfda2f28fc51a3602b06681987f26",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.8.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.8.json"
     },
     {
       "path": "java/resourcepack-models/1.21.9.json",
@@ -1183,7 +1183,7 @@
       "version": "1.21.9",
       "size": 177481,
       "sha256": "83d65d68b7f17147504a834fa7725c0c53cffd694d138bc64c6f70e1c57d217c",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.9.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.9.json"
     },
     {
       "path": "java/resourcepack-models/1.21.10.json",
@@ -1192,7 +1192,7 @@
       "version": "1.21.10",
       "size": 177482,
       "sha256": "f966ed5360d146b7b6eeea1033420279612f4ea079dce60017dd5d475aef10b2",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.10.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.10.json"
     },
     {
       "path": "java/resourcepack-models/1.21.11.json",
@@ -1201,7 +1201,7 @@
       "version": "1.21.11",
       "size": 178374,
       "sha256": "cfcfc826b99e86e96c4180bb0d3c5cf86861f56755c64f0486abeaab865baada",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.11.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.11.json"
     },
     {
       "path": "java/resourcepack-models/1.21.json",
@@ -1210,7 +1210,7 @@
       "version": "1.21",
       "size": 134275,
       "sha256": "2bed26efa970465c98bbd85d0ad097e031eebbd591e0351cda097be50053f344",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/1.21.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/1.21.json"
     },
     {
       "path": "java/resourcepack-models/26.1.1.json",
@@ -1219,7 +1219,7 @@
       "version": "26.1.1",
       "size": 195925,
       "sha256": "cf8cd13180c8a7b134118eb7df32c32d0de1151200d55f7e4059a666c2ff1cee",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/26.1.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/26.1.1.json"
     },
     {
       "path": "java/resourcepack-models/26.1.2.json",
@@ -1228,7 +1228,7 @@
       "version": "26.1.2",
       "size": 195925,
       "sha256": "bb787ebbe218fef9242ca66cadc1ac5bf7b9b608c12f0f2975134433c237d608",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/26.1.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/26.1.2.json"
     },
     {
       "path": "java/resourcepack-models/26.1.json",
@@ -1237,7 +1237,7 @@
       "version": "26.1",
       "size": 195923,
       "sha256": "ed80a584ef7e8d5b128a7e8cf5bb885ecc6a069a568d03c852a332150fac37ad",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/26.1.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/26.1.json"
     },
     {
       "path": "java/resourcepack-models/26.2.json",
@@ -1246,7 +1246,7 @@
       "version": "26.2",
       "size": 195241,
       "sha256": "0ba509f69fcc564d5ff7536bdf2bfb5d7e5b10117fe56ce16675f6ca6b2c072f",
-      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.3/packages/data/data/java/resourcepack-models/26.2.json"
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.4/packages/data/data/java/resourcepack-models/26.2.json"
     }
   ]
 }
