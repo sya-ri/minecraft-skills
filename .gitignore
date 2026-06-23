@@ -5,3 +5,5 @@ dist/
 .DS_Store
 *.log
 *.tgz
+.minecraft-skills/rcon.json
+minecraft-skills.rcon.json

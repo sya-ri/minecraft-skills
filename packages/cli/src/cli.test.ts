@@ -17,6 +17,7 @@ async function capture(argv: string[]) {
 describe("minecraft-skills CLI", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("prints domains", async () => {
@@ -80,6 +81,48 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain('"complete": true');
     expect(output).toContain('"latestSupportedVersion": "26.2"');
     expect(output).toContain('"packagedPayloads": 3');
+  });
+
+  it("creates RCON config files and warns before overwriting", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-rcon-cli-"));
+    const configPath = join(root, "rcon.json");
+    try {
+      const created = await capture([
+        "rcon",
+        "init",
+        "--config",
+        configPath,
+        "--preset",
+        "guarded",
+      ]);
+      expect(created.code).toBe(0);
+      expect(created.stdout.join("\n")).toContain('"written": true');
+      expect(readFileSync(configPath, "utf8")).toContain('"preset": "guarded"');
+
+      const blocked = await capture(["rcon", "init", "--config", configPath, "--preset", "full"]);
+      expect(blocked.code).toBe(0);
+      expect(blocked.stdout.join("\n")).toContain('"written": false');
+      expect(blocked.stdout.join("\n")).toContain("already exists");
+      expect(readFileSync(configPath, "utf8")).toContain('"preset": "guarded"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("prints RCON status without secrets", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-rcon-cli-"));
+    const configPath = join(root, "rcon.json");
+    try {
+      await capture(["rcon", "init", "--config", configPath]);
+      vi.stubEnv("MINECRAFT_SKILLS_RCON_PASSWORD", "secret");
+
+      const status = await capture(["rcon", "status", "--config", configPath]);
+      expect(status.code).toBe(0);
+      expect(status.stdout.join("\n")).toContain('"configured": true');
+      expect(status.stdout.join("\n")).not.toContain("secret");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("prints fact surfaces and their non-guarantees", async () => {

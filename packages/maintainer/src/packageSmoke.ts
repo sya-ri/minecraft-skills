@@ -18,6 +18,7 @@ export type PackageSmokeResult = {
 const publishablePackages = [
   ["@minecraft-skills/data", "minecraft-skills-data-0.1.2.tgz"],
   ["@minecraft-skills/catalog", "minecraft-skills-catalog-0.1.2.tgz"],
+  ["@minecraft-skills/rcon", "minecraft-skills-rcon-0.1.2.tgz"],
   ["minecraft-skills", "minecraft-skills-0.1.2.tgz"],
   ["@minecraft-skills/mcp", "minecraft-skills-mcp-0.1.2.tgz"],
 ] as const;
@@ -192,6 +193,22 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     if (latest !== "26.2") {
       throw new Error(`minecraft-skills latest returned ${latest}, expected 26.2`);
     }
+    commands.push(
+      runCommand(
+        "node",
+        [
+          "--input-type=module",
+          "--eval",
+          [
+            'import { evaluateRconPermission, getRconConfigStatus } from "@minecraft-skills/rcon";',
+            'if (!evaluateRconPermission("list").allowed) throw new Error("RCON readonly list should be allowed");',
+            'if (evaluateRconPermission("give @p diamond").allowed) throw new Error("RCON readonly give should be denied");',
+            'if (getRconConfigStatus({ configPath: "./missing-rcon.json" }).configured) throw new Error("missing RCON config should not be configured");',
+          ].join(" "),
+        ],
+        consumerDir,
+      ),
+    );
     commands.push(
       runCommand("pnpm", ["exec", "minecraft-skills", "minecraft", "support-matrix"], consumerDir),
     );

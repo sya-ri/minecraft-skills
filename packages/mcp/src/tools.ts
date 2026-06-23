@@ -84,6 +84,12 @@ import {
   type VanillaPathSearchOptions,
   validatePackFilesContent,
 } from "@minecraft-skills/catalog";
+import {
+  createRconConfig,
+  getRconConfigStatus,
+  isRconConfigured,
+  runRconCommand,
+} from "@minecraft-skills/rcon";
 
 export type ToolContent = {
   type: "text";
@@ -273,6 +279,37 @@ export const tools: ToolDefinition[] = [
         limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
       },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_rcon_config_status",
+    description:
+      "Inspect Minecraft RCON configuration resolution without exposing secrets. This tool is available even when RCON execution is not configured.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        configPath: { type: "string" },
+        profile: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "create_rcon_config",
+    description:
+      "Create an example Minecraft RCON config file. Existing files are not overwritten unless force is true; the result includes a warning when a file already exists.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        configPath: { type: "string" },
+        profile: { type: "string" },
+        host: { type: "string" },
+        port: { type: ["number", "string"] },
+        passwordEnv: { type: "string" },
+        preset: { type: "string", enum: ["readonly", "guarded", "full"], default: "readonly" },
+        force: { type: "boolean", default: false },
+      },
       additionalProperties: false,
     },
   },
@@ -1081,6 +1118,27 @@ export const tools: ToolDefinition[] = [
   },
 ];
 
+const runRconCommandTool: ToolDefinition = {
+  name: "run_rcon_command",
+  description:
+    "Run one Minecraft RCON command if the selected profile is configured and its regex permissions allow the command. Do not retry with broader profiles after a permission rejection.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      command: { type: "string" },
+      configPath: { type: "string" },
+      profile: { type: "string" },
+      timeoutMs: { type: "number", default: 2000 },
+    },
+    required: ["command"],
+    additionalProperties: false,
+  },
+};
+
+export function listMinecraftSkillsTools(): ToolDefinition[] {
+  return isRconConfigured() ? [...tools, runRconCommandTool] : tools;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
@@ -1190,6 +1248,46 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
           ...(typeof args.kind === "string" ? { kind: args.kind as CatalogSearchKind } : {}),
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "get_rcon_config_status") {
+      return text(
+        getRconConfigStatus({
+          ...(typeof args.configPath === "string" ? { configPath: args.configPath } : {}),
+          ...(typeof args.profile === "string" ? { profile: args.profile } : {}),
+        }),
+      );
+    }
+    if (name === "create_rcon_config") {
+      const preset =
+        args.preset === "readonly" || args.preset === "guarded" || args.preset === "full"
+          ? args.preset
+          : undefined;
+      return text(
+        createRconConfig({
+          ...(typeof args.configPath === "string" ? { configPath: args.configPath } : {}),
+          ...(typeof args.profile === "string" ? { profile: args.profile } : {}),
+          ...(typeof args.host === "string" ? { host: args.host } : {}),
+          ...(typeof args.port === "number" || typeof args.port === "string"
+            ? { port: args.port }
+            : {}),
+          ...(typeof args.passwordEnv === "string" ? { passwordEnv: args.passwordEnv } : {}),
+          ...(preset ? { preset } : {}),
+          force: args.force === true,
+        }),
+      );
+    }
+    if (name === "run_rcon_command") {
+      if (typeof args.command !== "string") {
+        throw new Error("run_rcon_command requires string command");
+      }
+      return text(
+        await runRconCommand({
+          command: args.command,
+          ...(typeof args.configPath === "string" ? { configPath: args.configPath } : {}),
+          ...(typeof args.profile === "string" ? { profile: args.profile } : {}),
+          ...(typeof args.timeoutMs === "number" ? { timeoutMs: args.timeoutMs } : {}),
         }),
       );
     }

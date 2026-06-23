@@ -63,6 +63,9 @@ importers:
       '@minecraft-skills/catalog':
         specifier: workspace:0.1.2
         version: link:../catalog
+      '@minecraft-skills/rcon':
+        specifier: workspace:0.1.2
+        version: link:../rcon
     devDependencies:
       '@types/node':
         specifier: 26.0.0
@@ -128,9 +131,30 @@ importers:
       '@minecraft-skills/catalog':
         specifier: workspace:0.1.2
         version: link:../catalog
+      '@minecraft-skills/rcon':
+        specifier: workspace:0.1.2
+        version: link:../rcon
       '@modelcontextprotocol/sdk':
         specifier: 1.29.0
         version: 1.29.0(zod@4.4.3)
+    devDependencies:
+      '@types/node':
+        specifier: 26.0.0
+        version: 26.0.0
+      '@typescript/native-preview':
+        specifier: 7.0.0-dev.20260621.1
+        version: 7.0.0-dev.20260621.1
+      tsdown:
+        specifier: 0.22.3
+        version: 0.22.3(@typescript/native-preview@7.0.0-dev.20260621.1)(typescript@6.0.3)
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.9
+        version: 4.1.9(@types/node@26.0.0)(vite@8.0.16(@types/node@26.0.0))
+
+  packages/rcon:
     devDependencies:
       '@types/node':
         specifier: 26.0.0

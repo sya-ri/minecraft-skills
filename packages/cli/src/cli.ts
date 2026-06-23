@@ -89,6 +89,12 @@ import {
   type VanillaPathSearchOptions,
   validatePackFilesContent,
 } from "@minecraft-skills/catalog";
+import {
+  createRconConfig,
+  getRconConfigStatus,
+  type RconPermissionPreset,
+  runRconCommand,
+} from "@minecraft-skills/rcon";
 
 type Output = {
   write: (value: string) => void;
@@ -260,6 +266,9 @@ function normalizeSubcommands(argv: string[]): string[] {
     "source datasets": "community-datasets",
     "source dataset": "community-dataset",
     "source search": "catalog-search",
+    "rcon status": "rcon-status",
+    "rcon init": "rcon-init",
+    "rcon run": "rcon-run",
   };
 
   if (groupedCommand === "datapack vanilla-paths") {
@@ -429,6 +438,9 @@ const flatCommandSuggestions: Record<string, string> = {
   "source-tier": "source tier",
   "community-datasets": "source datasets",
   "community-dataset": "source dataset",
+  "rcon-status": "rcon status",
+  "rcon-init": "rcon init",
+  "rcon-run": "rcon run",
 };
 
 const commandGroups = new Set([
@@ -437,6 +449,7 @@ const commandGroups = new Set([
   "datapack",
   "resourcepack",
   "plugin",
+  "rcon",
   "skill",
   "reference",
   "domain",
@@ -524,6 +537,13 @@ Start here:
   minecraft-skills minecraft sources [domain] [version]
       Print allowed source tiers, prohibited automation, community structured datasets, and optional
       domain/version provenance.
+  minecraft-skills rcon status [--config path] [--profile name]
+      Inspect resolved RCON configuration without printing secrets.
+  minecraft-skills rcon init [--config path] [--profile local] [--preset readonly|guarded|full]
+      Write an example RCON config. Existing files produce a warning and are not overwritten unless
+      --force is passed.
+  minecraft-skills rcon run <command...> [--config path] [--profile name]
+      Run one Minecraft RCON command only if the selected profile permissions allow it.
   minecraft-skills source tiers
   minecraft-skills source datasets
       Inspect source tiers and recommended structured community datasets such as PrismarineJS and
@@ -622,6 +642,9 @@ Grouped commands:
   minecraft-skills source report [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills source tiers|tier|datasets|dataset
   minecraft-skills source search <query> [--kind source-tier|community-dataset] [--limit 10]
+  minecraft-skills rcon status [--config path] [--profile name]
+  minecraft-skills rcon init [--config path] [--profile name] [--preset readonly|guarded|full] [--force]
+  minecraft-skills rcon run <command...> [--config path] [--profile name] [--timeout-ms 2000]
 
 Command reference:
   domain list    List supported authoring domains.
@@ -672,6 +695,9 @@ Command reference:
   source datasets
                  Print recommended structured community dataset JSON entries.
   source dataset Print one structured community dataset by id.
+  rcon status   Print RCON config resolution status without secrets.
+  rcon init     Create an RCON config file. Existing files are not overwritten unless --force is set.
+  rcon run      Run one policy-checked Minecraft RCON command.
 
 Options:
   --domain <domain>      Filter to datapack, resourcepack, or paper-plugin where supported.
@@ -684,6 +710,12 @@ Options:
 Cache:
   Heavy generated surfaces are listed in data manifest and stored in the OS cache. Use data cache-dir,
   data cache-list, data cache-clean, and data fetch. Set MINECRAFT_SKILLS_CACHE_DIR to override it.
+
+RCON:
+  Config search order is --config, MINECRAFT_SKILLS_RCON_CONFIG, ./.minecraft-skills/rcon.json,
+  ./minecraft-skills.rcon.json, user config, then env-only profile. Use $env:NAME in config values
+  for secrets. Permissions use regex strings, deny before allow, with readonly, guarded, and full
+  presets.
 
 More:
   docs/USAGE.md has full CLI, MCP, package API, cache, and skill usage.`);
@@ -735,6 +767,14 @@ function writeSkillFolder(name: string, outputRoot: string, force: boolean): str
   }
 
   return written;
+}
+
+function readRconPreset(args: string[], fallback: RconPermissionPreset): RconPermissionPreset {
+  const value = readOption(args, "--preset", fallback);
+  if (value === "readonly" || value === "guarded" || value === "full") {
+    return value;
+  }
+  throw new Error("rcon --preset must be readonly, guarded, or full");
 }
 
 export async function runCli(argv: string[], output: Output = defaultOutput): Promise<number> {
@@ -1137,6 +1177,54 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           ...(args.includes("--version") ? { version: readOption(args, "--version", "") } : {}),
           ...(args.includes("--base-url") ? { baseUrl: readOption(args, "--base-url", "") } : {}),
           force: args.includes("--force"),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "rcon-status") {
+      printJson(
+        output,
+        getRconConfigStatus({
+          ...(args.includes("--config") ? { configPath: readOption(args, "--config", "") } : {}),
+          ...(args.includes("--profile") ? { profile: readOption(args, "--profile", "") } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "rcon-init") {
+      printJson(
+        output,
+        createRconConfig({
+          ...(args.includes("--config") ? { configPath: readOption(args, "--config", "") } : {}),
+          ...(args.includes("--profile") ? { profile: readOption(args, "--profile", "") } : {}),
+          ...(args.includes("--host") ? { host: readOption(args, "--host", "") } : {}),
+          ...(args.includes("--port") ? { port: readOption(args, "--port", "") } : {}),
+          ...(args.includes("--password-env")
+            ? { passwordEnv: readOption(args, "--password-env", "") }
+            : {}),
+          preset: readRconPreset(args, "readonly"),
+          force: args.includes("--force"),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "rcon-run") {
+      const rconCommand = positionalArgs(args).join(" ");
+      if (!rconCommand) {
+        throw new Error("rcon run command requires a Minecraft command");
+      }
+      printJson(
+        output,
+        await runRconCommand({
+          command: rconCommand,
+          ...(args.includes("--config") ? { configPath: readOption(args, "--config", "") } : {}),
+          ...(args.includes("--profile") ? { profile: readOption(args, "--profile", "") } : {}),
+          ...(args.includes("--timeout-ms")
+            ? { timeoutMs: Number(readOption(args, "--timeout-ms", "2000")) }
+            : {}),
         }),
       );
       return 0;

@@ -68,6 +68,10 @@ minecraft-skills plugin paper output-requirements
 minecraft-skills plugin paper response-patterns
 
 minecraft-skills minecraft support --domain paper-plugin
+
+minecraft-skills rcon init --config ./.minecraft-skills/rcon.json --preset readonly
+minecraft-skills rcon status --config ./.minecraft-skills/rcon.json
+minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
@@ -77,6 +81,9 @@ support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.m
 minecraft-skills data manifest
 minecraft-skills data fetch paper-api-surface --version 26.2
 ```
+
+RCON configuration, permission presets, and MCP tool behavior are documented in
+[RCON.md](RCON.md).
 
 Data pack lookups:
 

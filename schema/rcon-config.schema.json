@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/schema/rcon-config.schema.json",
+  "title": "minecraft-skills RCON config",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "defaultProfile": {
+      "type": "string"
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/profile"
+      }
+    }
+  },
+  "required": ["profiles"],
+  "$defs": {
+    "envOrString": {
+      "type": "string"
+    },
+    "envOrPort": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "host": {
+          "$ref": "#/$defs/envOrString"
+        },
+        "port": {
+          "$ref": "#/$defs/envOrPort"
+        },
+        "password": {
+          "$ref": "#/$defs/envOrString"
+        },
+        "timeoutMs": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "permissions": {
+          "$ref": "#/$defs/permissions"
+        }
+      },
+      "required": ["host", "port", "password"]
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "preset": {
+          "type": "string",
+          "enum": ["readonly", "guarded", "full"]
+        },
+        "defaultMode": {
+          "type": "string",
+          "enum": ["allow", "deny"]
+        },
+        "allow": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "deny": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

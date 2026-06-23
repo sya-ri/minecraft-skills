@@ -1,10 +1,11 @@
 import { listDomains } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { callMinecraftSkillsTool, tools } from "./tools.js";
+import { callMinecraftSkillsTool, listMinecraftSkillsTools, tools } from "./tools.js";
 
 describe("MCP tools", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it("exposes catalog tools", () => {
@@ -37,6 +38,9 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_source_tier");
     expect(tools.map((tool) => tool.name)).toContain("list_community_datasets");
     expect(tools.map((tool) => tool.name)).toContain("get_community_dataset");
+    expect(tools.map((tool) => tool.name)).toContain("get_rcon_config_status");
+    expect(tools.map((tool) => tool.name)).toContain("create_rcon_config");
+    expect(tools.map((tool) => tool.name)).not.toContain("run_rcon_command");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
     expect(tools.map((tool) => tool.name)).toContain("get_intent_lookup");
     expect(tools.map((tool) => tool.name)).toContain("list_fact_surfaces");
@@ -137,6 +141,13 @@ describe("MCP tools", () => {
         "search_paper_events",
       ]),
     );
+  });
+
+  it("adds RCON command tool only when RCON is configured", () => {
+    expect(listMinecraftSkillsTools().map((tool) => tool.name)).not.toContain("run_rcon_command");
+    vi.stubEnv("MINECRAFT_SKILLS_RCON_HOST", "127.0.0.1");
+    vi.stubEnv("MINECRAFT_SKILLS_RCON_PASSWORD", "secret");
+    expect(listMinecraftSkillsTools().map((tool) => tool.name)).toContain("run_rcon_command");
   });
 
   it("calls latest_version", async () => {

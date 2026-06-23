@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/minecraft-skills.svg)](https://www.npmjs.com/package/minecraft-skills)
 [![npm data](https://img.shields.io/npm/v/%40minecraft-skills%2Fdata.svg?label=%40minecraft-skills%2Fdata)](https://www.npmjs.com/package/@minecraft-skills/data)
 [![npm catalog](https://img.shields.io/npm/v/%40minecraft-skills%2Fcatalog.svg?label=%40minecraft-skills%2Fcatalog)](https://www.npmjs.com/package/@minecraft-skills/catalog)
+[![npm rcon](https://img.shields.io/npm/v/%40minecraft-skills%2Frcon.svg?label=%40minecraft-skills%2Frcon)](https://www.npmjs.com/package/@minecraft-skills/rcon)
 [![npm mcp](https://img.shields.io/npm/v/%40minecraft-skills%2Fmcp.svg?label=%40minecraft-skills%2Fmcp)](https://www.npmjs.com/package/@minecraft-skills/mcp)
 
 Minecraft authoring facts, Agent Skills, CLI, and MCP tools for AI agents that create or review
@@ -65,6 +66,7 @@ minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --con
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see
 [docs/USAGE.md](docs/USAGE.md). Version-by-version coverage is summarized in
 [docs/VERSION_SUPPORT.md](docs/VERSION_SUPPORT.md).
+RCON setup and permission presets are documented in [docs/RCON.md](docs/RCON.md).
 
 Release notes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
@@ -85,6 +87,8 @@ validation rules.
 
 - `packages/data`: canonical versioned JSON/text data, publishable as `@minecraft-skills/data`.
 - `packages/catalog`: ArkType-validated read APIs, publishable as `@minecraft-skills/catalog`.
+- `packages/rcon`: RCON config, permission, and execution utilities, publishable as
+  `@minecraft-skills/rcon`.
 - `packages/cli`: public CLI, publishable as `minecraft-skills`.
 - `packages/mcp`: MCP server, publishable as `@minecraft-skills/mcp`.
 - `packages/maintainer`: private maintainer validation and generation tooling.

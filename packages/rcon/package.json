@@ -1,21 +1,18 @@
 {
-  "name": "minecraft-skills",
+  "name": "@minecraft-skills/rcon",
   "version": "0.1.2",
   "type": "module",
-  "description": "Public CLI for Minecraft Skills lookup, references, and validation.",
+  "description": "RCON configuration, permissions, and execution utilities for Minecraft Skills.",
   "license": "MIT",
   "keywords": [
     "minecraft",
-    "datapack",
-    "resourcepack",
-    "paper",
-    "cli",
+    "rcon",
     "ai"
   ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sya-ri/minecraft-skills.git",
-    "directory": "packages/cli"
+    "directory": "packages/rcon"
   },
   "bugs": {
     "url": "https://github.com/sya-ri/minecraft-skills/issues"
@@ -29,14 +26,11 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/cli.d.mts",
-      "default": "./dist/cli.mjs"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     }
   },
-  "types": "./dist/cli.d.mts",
-  "bin": {
-    "minecraft-skills": "./dist/cli.mjs"
-  },
+  "types": "./dist/index.d.mts",
   "files": [
     "dist"
   ],
@@ -46,10 +40,6 @@
     "typecheck": "tsgo -p tsconfig.json --noEmit",
     "typecheck:tsc": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
-  },
-  "dependencies": {
-    "@minecraft-skills/catalog": "workspace:0.1.2",
-    "@minecraft-skills/rcon": "workspace:0.1.2"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

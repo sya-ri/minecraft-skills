@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@minecraft-skills/catalog": "workspace:0.1.2",
+    "@minecraft-skills/rcon": "workspace:0.1.2",
     "@modelcontextprotocol/sdk": "1.29.0"
   },
   "devDependencies": {

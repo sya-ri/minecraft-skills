@@ -13,7 +13,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { getMinecraftSkillsPrompt, prompts } from "./prompts.js";
 import { listMinecraftSkillsResources, readMinecraftSkillsResource } from "./resources.js";
-import { callMinecraftSkillsTool, tools } from "./tools.js";
+import { callMinecraftSkillsTool, listMinecraftSkillsTools } from "./tools.js";
 
 function isDirectRun(metaUrl: string): boolean {
   return process.argv[1]
@@ -48,7 +48,9 @@ export function createServer(): Server {
   server.setRequestHandler(GetPromptRequestSchema, async (request) =>
     getMinecraftSkillsPrompt(request.params.name, request.params.arguments),
   );
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: listMinecraftSkillsTools(),
+  }));
   server.setRequestHandler(CallToolRequestSchema, async (request) =>
     callMinecraftSkillsTool(request.params.name, request.params.arguments),
   );
