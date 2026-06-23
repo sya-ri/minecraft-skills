@@ -42,6 +42,18 @@ mise exec -- pnpm --filter @minecraft-skills/mcp build
 }
 ```
 
+## Agent Instructions
+
+For steadier Minecraft answers, add a short project instruction to `AGENTS.md`, `CLAUDE.md`, or the
+equivalent agent guidance file:
+
+```md
+Use minecraft-skills MCP tools whenever a task involves Minecraft.
+Do not guess Minecraft facts when a minecraft-skills MCP lookup can verify them.
+If MCP cannot answer, check local project files or approved web sources; label any remaining
+assumption and ask the user to confirm it.
+```
+
 ## Tools
 
 - `latest_version`
