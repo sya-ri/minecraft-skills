@@ -57,6 +57,8 @@ minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills datapack recipes
 minecraft-skills datapack classify-files data/example/advancement/root.json
 minecraft-skills datapack migration-plan 1.20.6 1.21 data/example/advancement/root.json
+minecraft-skills minecraft pack-format 26.2 datapack
+minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json

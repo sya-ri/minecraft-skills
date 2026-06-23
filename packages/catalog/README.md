@@ -36,6 +36,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getPackFormat,
   getOutputRequirement,
   getPaperApiIndex,
   getPaperApiReference,
@@ -61,6 +62,7 @@ import {
   listIntentLookups,
   listOutputRequirements,
   listResponsePatterns,
+  findVersionsByPackFormat,
   searchAuthoringScenarios,
   searchCommands,
   searchDatapackSchema,
@@ -107,6 +109,11 @@ const versionSupport = listVersionSupport({ domain: "paper-plugin" });
 const manifest = getDataManifest();
 await fetchData({ kind: "paper-api-surface", version: "26.2" });
 const reports = getJavaReportsSummary("java", "26.2");
+const packFormat = getPackFormat("java", "26.2", "datapack");
+const packFormatVersions = findVersionsByPackFormat({
+  domain: "resourcepack",
+  format: 88,
+});
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
 const datapackSchema = getDatapackSchemaSurface("java", "26.2");

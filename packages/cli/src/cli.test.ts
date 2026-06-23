@@ -423,6 +423,18 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout[0]).toContain("paper=api-reference-linked");
   });
 
+  it("prints one pack format and reverse pack format matches", async () => {
+    const format = await capture(["minecraft", "pack-format", "26.2", "datapack"]);
+    expect(format.code).toBe(0);
+    expect(format.stdout.join("\n")).toContain('"format": 107');
+    expect(format.stdout.join("\n")).toContain('"minor": 1');
+
+    const versions = await capture(["minecraft", "versions-for-pack-format", "resourcepack", "88"]);
+    expect(versions.code).toBe(0);
+    expect(versions.stdout.join("\n")).toContain('"version": "26.2"');
+    expect(versions.stdout.join("\n")).toContain('"domain": "resourcepack"');
+  });
+
   it("filters references by domain", async () => {
     const result = await capture(["reference", "list", "--domain", "paper-plugin"]);
     expect(result.stdout.join("\n")).toContain("minecraft-paper-plugins");

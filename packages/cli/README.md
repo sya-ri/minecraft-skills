@@ -49,6 +49,8 @@ minecraft-skills data manifest
 minecraft-skills data fetch paper-api-surface --version 26.2
 minecraft-skills minecraft list
 minecraft-skills minecraft pack-formats
+minecraft-skills minecraft pack-format 26.2 datapack
+minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills minecraft show 26.2
 minecraft-skills minecraft compare 1.20.6 1.21
 minecraft-skills datapack server-reports latest

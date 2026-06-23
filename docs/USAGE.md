@@ -90,6 +90,8 @@ Data pack lookups:
 ```sh
 minecraft-skills minecraft show 26.2
 minecraft-skills minecraft pack-formats
+minecraft-skills minecraft pack-format 26.2 datapack
+minecraft-skills minecraft versions-for-pack-format datapack 107 --minor 1
 minecraft-skills datapack commands 26.2 --prefix execute --contains run
 minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills datapack schema 26.2
@@ -104,6 +106,8 @@ minecraft-skills datapack vanilla-paths 26.2 --contains recipe
 Resource pack lookups:
 
 ```sh
+minecraft-skills minecraft pack-format 26.2 resourcepack
+minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/block/acacia_button
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack models 26.2
@@ -226,6 +230,8 @@ Pack analysis tools include:
 - `classify_pack_files`
 - `get_pack_file_schema`
 - `get_pack_migration_plan`
+- `get_pack_format`
+- `find_versions_by_pack_format`
 
 Skill and data resources are exposed under:
 
@@ -245,7 +251,9 @@ import {
   getAuthoringScenario,
   getClaimPolicy,
   getOutputRequirement,
+  getPackFormat,
   getResponsePattern,
+  findVersionsByPackFormat,
   searchAuthoringScenarios,
   searchCommands,
   searchPaperMembers,
@@ -264,6 +272,11 @@ const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const responsePattern = getResponsePattern("paper-api-answer");
+const packFormat = getPackFormat("java", "26.2", "datapack");
+const matchingPackVersions = findVersionsByPackFormat({
+  domain: "resourcepack",
+  format: 88,
+});
 
 const commandMatches = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const assetMatches = searchVanillaPaths({

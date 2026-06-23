@@ -164,6 +164,38 @@ export type PackFormatSummary = {
   paperPluginStatus: string;
 };
 
+export type PackFormatDomain = "datapack" | "resourcepack";
+
+export type PackFormatLookup = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  releaseTime: string;
+  domain: PackFormatDomain;
+  format: number | null;
+  minor: number | null;
+  status: VersionDetailData["packFormats"]["status"];
+};
+
+export type PackFormatVersionMatch = {
+  version: string;
+  releaseTime: string;
+  domain: PackFormatDomain;
+  format: number;
+  minor: number | null;
+  exactMinor: boolean;
+  paperPluginStatus: string;
+};
+
+export type PackFormatVersionSearch = {
+  schemaVersion: 1;
+  edition: EditionData;
+  domain: PackFormatDomain;
+  format: number;
+  minor: number | null;
+  matches: PackFormatVersionMatch[];
+};
+
 export type FactSurfaceQuery = {
   domain?: string;
 };
@@ -2845,6 +2877,95 @@ export function listPackFormats(edition = "java"): PackFormatSummary[] {
       paperPluginStatus: detail.domains["paper-plugin"].status,
     };
   });
+}
+
+function packFormatForDomain(
+  detail: VersionDetailData,
+  domain: PackFormatDomain,
+): { format: number | null; minor: number | null } {
+  return domain === "datapack"
+    ? { format: detail.packFormats.data, minor: detail.packFormats.dataMinor }
+    : { format: detail.packFormats.resource, minor: detail.packFormats.resourceMinor };
+}
+
+function assertPackFormatDomain(value: string): PackFormatDomain {
+  if (value === "datapack" || value === "resourcepack") {
+    return value;
+  }
+  throw new Error("pack format domain must be datapack or resourcepack");
+}
+
+function assertNonNegativeInteger(value: number, label: string): number {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+  return value;
+}
+
+export function getPackFormat(
+  edition = "java",
+  requested = "latest",
+  domain: PackFormatDomain = "datapack",
+): PackFormatLookup {
+  const editionId = Edition.assert(edition);
+  const domainId = assertPackFormatDomain(domain);
+  const version = resolveVersion(editionId, requested);
+  const detail = getVersionDetail(editionId, version);
+  const format = packFormatForDomain(detail, domainId);
+  return {
+    schemaVersion: 1,
+    edition: editionId,
+    version: detail.version,
+    releaseTime: detail.releaseTime,
+    domain: domainId,
+    format: format.format,
+    minor: format.minor,
+    status: detail.packFormats.status,
+  };
+}
+
+export function findVersionsByPackFormat(options: {
+  edition?: string;
+  domain: PackFormatDomain;
+  format: number;
+  minor?: number | null;
+}): PackFormatVersionSearch {
+  const editionId = Edition.assert(options.edition ?? "java");
+  const domain = assertPackFormatDomain(options.domain);
+  const targetFormat = assertNonNegativeInteger(options.format, "format");
+  const targetMinor =
+    options.minor === undefined || options.minor === null
+      ? null
+      : assertNonNegativeInteger(options.minor, "minor");
+  const matches = listVersions(editionId).flatMap((version): PackFormatVersionMatch[] => {
+    const detail = getVersionDetail(editionId, version.id);
+    const format = packFormatForDomain(detail, domain);
+    if (format.format !== targetFormat) {
+      return [];
+    }
+    if (targetMinor !== null && format.minor !== targetMinor) {
+      return [];
+    }
+    return [
+      {
+        version: detail.version,
+        releaseTime: detail.releaseTime,
+        domain,
+        format: format.format,
+        minor: format.minor,
+        exactMinor: targetMinor !== null,
+        paperPluginStatus: detail.domains["paper-plugin"].status,
+      },
+    ];
+  });
+  return {
+    schemaVersion: 1,
+    edition: editionId,
+    domain,
+    format: targetFormat,
+    minor: targetMinor,
+    matches,
+  };
 }
 
 export function getVanillaInventory(edition = "java", requested = "latest"): VanillaInventoryData {

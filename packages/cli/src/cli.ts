@@ -17,6 +17,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   fetchData,
+  findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
   getAuthoringDiagnostic,
@@ -39,6 +40,7 @@ import {
   getJavaReportsSummary,
   getOutputRequirement,
   getPackFileSchema,
+  getPackFormat,
   getPackMigrationPlan,
   getPaperApiIndex,
   getPaperApiReference,
@@ -134,6 +136,20 @@ function positionalArgs(args: string[]): string[] {
     positional.push(arg);
   }
   return positional;
+}
+
+function readPackFormatDomain(value: string): "datapack" | "resourcepack" {
+  if (value === "datapack" || value === "resourcepack") {
+    return value;
+  }
+  throw new Error("pack format domain must be datapack or resourcepack");
+}
+
+function readIntegerArg(value: string | undefined, label: string): number {
+  if (!value || !/^\d+$/.test(value)) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+  return Number(value);
 }
 
 function packRelativePath(filePath: string, packRoot: string): string {
@@ -234,6 +250,8 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft support": "version-support",
     "minecraft support-matrix": "support-matrix",
     "minecraft pack-formats": "pack-formats",
+    "minecraft pack-format": "pack-format",
+    "minecraft versions-for-pack-format": "versions-for-pack-format",
     "minecraft vanilla-inventory": "vanilla-inventory",
     "minecraft sources": "source-report",
     "minecraft search": "catalog-search",
@@ -632,6 +650,8 @@ Grouped commands:
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory
+  minecraft-skills minecraft pack-format [version] [datapack|resourcepack]
+  minecraft-skills minecraft versions-for-pack-format <datapack|resourcepack> <format> [minor]
   minecraft-skills minecraft search <query> [--domain datapack|resourcepack|paper-plugin] [--kind kind] [--limit 10]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
@@ -675,7 +695,7 @@ Command reference:
                  Print bundled coverage or downloadable data manifest JSON.
   data cache-dir|cache-list|cache-clean|fetch
                  Inspect, clean, or download SHA-256 verified cache data.
-  minecraft latest|list|pack-formats|show|compare|support|support-matrix|vanilla-inventory
+  minecraft latest|list|pack-formats|pack-format|versions-for-pack-format|show|compare|support|support-matrix|vanilla-inventory
                  Inspect bundled version metadata and per-domain version support.
   datapack server-reports|schema|search-schema|compare-schema|commands|compare-commands
                  Inspect command paths, observed datapack JSON shapes, file schemas, file kinds, and file content validation.
@@ -1257,6 +1277,39 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           ].join("\t"),
         );
       }
+      return 0;
+    }
+
+    if (command === "pack-format") {
+      const [requested = "latest", positionalDomain] = positionalArgs(args);
+      const domain = readPackFormatDomain(
+        readOption(args, "--domain", positionalDomain ?? "datapack"),
+      );
+      printJson(output, getPackFormat(edition, requested, domain));
+      return 0;
+    }
+
+    if (command === "versions-for-pack-format") {
+      const [positionalDomain, positionalFormat, positionalMinor] = positionalArgs(args);
+      const domain = readPackFormatDomain(
+        args.includes("--domain") ? readOption(args, "--domain", "") : (positionalDomain ?? ""),
+      );
+      const format = readIntegerArg(
+        args.includes("--format") ? readOption(args, "--format", "") : positionalFormat,
+        "format",
+      );
+      const minorText = args.includes("--minor")
+        ? readOption(args, "--minor", "")
+        : positionalMinor;
+      printJson(
+        output,
+        findVersionsByPackFormat({
+          edition,
+          domain,
+          format,
+          ...(minorText === undefined ? {} : { minor: readIntegerArg(minorText, "minor") }),
+        }),
+      );
       return 0;
     }
 

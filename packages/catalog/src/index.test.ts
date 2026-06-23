@@ -8,6 +8,7 @@ import {
   comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
+  findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
   getAuthoringDiagnostic,
@@ -26,6 +27,7 @@ import {
   getJavaReportsSummary,
   getOutputRequirement,
   getPackFileSchema,
+  getPackFormat,
   getPackMigrationPlan,
   getPaperApiIndex,
   getPaperApiReference,
@@ -1134,6 +1136,40 @@ describe("catalog", () => {
       data: 4,
       resource: 4,
     });
+  });
+
+  it("looks up pack formats by version and versions by pack format", () => {
+    expect(getPackFormat("java", "26.2", "datapack")).toMatchObject({
+      version: "26.2",
+      domain: "datapack",
+      format: 107,
+      minor: 1,
+    });
+    expect(getPackFormat("java", "1.20.2", "resourcepack")).toMatchObject({
+      version: "1.20.2",
+      domain: "resourcepack",
+      format: 18,
+      minor: null,
+    });
+
+    const legacyMatches = findVersionsByPackFormat({
+      domain: "datapack",
+      format: 4,
+    });
+    expect(legacyMatches.matches.map((match) => match.version)).toContain("1.13");
+    expect(legacyMatches.matches.map((match) => match.version)).toContain("1.14.4");
+
+    const minorMatches = findVersionsByPackFormat({
+      domain: "datapack",
+      format: 101,
+      minor: 1,
+    });
+    expect(minorMatches.matches.map((match) => match.version)).toEqual([
+      "26.1.2",
+      "26.1.1",
+      "26.1",
+    ]);
+    expect(minorMatches.matches.every((match) => match.exactMinor)).toBe(true);
   });
 
   it("loads vanilla inventory for latest release", () => {

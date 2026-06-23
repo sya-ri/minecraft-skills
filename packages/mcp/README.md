@@ -94,6 +94,8 @@ assumption and ask the user to confirm it.
 - `list_versions`
 - `get_version`
 - `list_pack_formats`
+- `get_pack_format`
+- `find_versions_by_pack_format`
 - `compare_versions`
 - `get_server_reports`
 - `get_datapack_schema_surface`

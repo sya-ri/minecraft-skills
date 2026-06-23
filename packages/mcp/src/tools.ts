@@ -13,6 +13,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   fetchData,
+  findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
   getAuthoringDiagnostic,
@@ -34,6 +35,7 @@ import {
   getJavaReportsSummary,
   getOutputRequirement,
   getPackFileSchema,
+  getPackFormat,
   getPackMigrationPlan,
   getPaperApiIndex,
   getPaperApiReference,
@@ -707,6 +709,36 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_pack_format",
+    description:
+      "Get the data pack or resource pack format for one bundled Minecraft version, including minor format when available.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"], default: "datapack" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "find_versions_by_pack_format",
+    description:
+      "Find bundled Minecraft versions that use a data pack or resource pack format, optionally matching a minor format.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"] },
+        format: { type: "integer", minimum: 0 },
+        minor: { type: "integer", minimum: 0 },
+      },
+      required: ["domain", "format"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "compare_versions",
     description:
       "Compare bundled Minecraft version metadata, pack formats, Paper status, and vanilla inventory summaries.",
@@ -1157,6 +1189,20 @@ function text(value: unknown): ToolResult {
   };
 }
 
+function packFormatDomainArg(value: unknown): "datapack" | "resourcepack" {
+  if (value === "datapack" || value === "resourcepack") {
+    return value;
+  }
+  throw new Error("pack format domain must be datapack or resourcepack");
+}
+
+function integerArg(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+  return value;
+}
+
 export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
   const args = asRecord(input);
   const edition = typeof args.edition === "string" ? args.edition : "java";
@@ -1495,6 +1541,21 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "list_pack_formats") {
       return text(listPackFormats(edition));
+    }
+    if (name === "get_pack_format") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      const domain = packFormatDomainArg(args.domain ?? "datapack");
+      return text(getPackFormat(edition, version, domain));
+    }
+    if (name === "find_versions_by_pack_format") {
+      return text(
+        findVersionsByPackFormat({
+          edition,
+          domain: packFormatDomainArg(args.domain),
+          format: integerArg(args.format, "format"),
+          ...(args.minor === undefined ? {} : { minor: integerArg(args.minor, "minor") }),
+        }),
+      );
     }
     if (name === "compare_versions") {
       if (typeof args.from !== "string" || typeof args.to !== "string") {

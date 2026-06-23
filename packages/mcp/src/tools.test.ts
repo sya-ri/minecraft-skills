@@ -54,6 +54,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("clean_cache");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
+    expect(tools.map((tool) => tool.name)).toContain("get_pack_format");
+    expect(tools.map((tool) => tool.name)).toContain("find_versions_by_pack_format");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_server_reports");
     expect(tools.map((tool) => tool.name)).toContain("search_commands");
@@ -496,6 +498,22 @@ describe("MCP tools", () => {
     const result = await callMinecraftSkillsTool("list_pack_formats", {});
     expect(result.content[0]?.text).toContain('"version": "26.2"');
     expect(result.content[0]?.text).toContain('"data": 107');
+  });
+
+  it("calls pack format lookup tools", async () => {
+    const format = await callMinecraftSkillsTool("get_pack_format", {
+      version: "26.2",
+      domain: "datapack",
+    });
+    expect(format.content[0]?.text).toContain('"format": 107');
+    expect(format.content[0]?.text).toContain('"minor": 1');
+
+    const versions = await callMinecraftSkillsTool("find_versions_by_pack_format", {
+      domain: "resourcepack",
+      format: 88,
+    });
+    expect(versions.content[0]?.text).toContain('"version": "26.2"');
+    expect(versions.content[0]?.text).toContain('"domain": "resourcepack"');
   });
 
   it("calls get_vanilla_inventory", async () => {
