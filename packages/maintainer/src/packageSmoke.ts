@@ -16,11 +16,11 @@ export type PackageSmokeResult = {
 };
 
 const publishablePackages = [
-  ["@minecraft-skills/data", "minecraft-skills-data-0.1.2.tgz"],
-  ["@minecraft-skills/catalog", "minecraft-skills-catalog-0.1.2.tgz"],
-  ["@minecraft-skills/rcon", "minecraft-skills-rcon-0.1.2.tgz"],
-  ["minecraft-skills", "minecraft-skills-0.1.2.tgz"],
-  ["@minecraft-skills/mcp", "minecraft-skills-mcp-0.1.2.tgz"],
+  ["@minecraft-skills/data", "minecraft-skills-data-0.1.3.tgz"],
+  ["@minecraft-skills/catalog", "minecraft-skills-catalog-0.1.3.tgz"],
+  ["@minecraft-skills/rcon", "minecraft-skills-rcon-0.1.3.tgz"],
+  ["minecraft-skills", "minecraft-skills-0.1.3.tgz"],
+  ["@minecraft-skills/mcp", "minecraft-skills-mcp-0.1.3.tgz"],
 ] as const;
 
 function runCommand(

@@ -1,6 +1,6 @@
 {
   "name": "minecraft-skills",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Public CLI for Minecraft Skills lookup, references, and validation.",
   "license": "MIT",
@@ -48,8 +48,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@minecraft-skills/catalog": "workspace:0.1.2",
-    "@minecraft-skills/rcon": "workspace:0.1.2"
+    "@minecraft-skills/catalog": "workspace:0.1.3",
+    "@minecraft-skills/rcon": "workspace:0.1.3"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

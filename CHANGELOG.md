@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.3 - 2026-06-23
+
+### Added
+
+- `@minecraft-skills/rcon` package for RCON configuration, regex permissions, and command
+  execution utilities.
+- `minecraft-skills rcon status`, `minecraft-skills rcon init`, and `minecraft-skills rcon run`
+  CLI commands.
+- MCP RCON config/status tools, with command execution exposed only when RCON configuration is
+  present.
+- Catalog search commands and tools for finding recipes, scenarios, guardrails, diagnostics, claim
+  policies, fact surfaces, source tiers, datasets, and version-support entries without listing all
+  data first.
+- RCON configuration JSON Schema and documentation.
+
+### Changed
+
+- Agent Skill payloads now describe CLI command usage only, instead of mixing CLI, MCP, and package
+  API entrypoints.
+- Maintainer validation now checks version-support documentation and prevents MCP/package API
+  entrypoint wording from returning to Skill-facing files.
+
 ## 0.1.2 - 2026-06-23
 
 ### Added

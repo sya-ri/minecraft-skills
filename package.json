@@ -1,6 +1,6 @@
 {
   "name": "minecraft-skills-workspace",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "type": "module",
   "description": "Versioned Minecraft data, skills, CLI, and MCP tooling for AI-assisted authors.",
