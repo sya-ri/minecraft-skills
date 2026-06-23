@@ -1,4 +1,5 @@
 import {
+  type CatalogSearchKind,
   type CommandComparisonOptions,
   type CommandSearchOptions,
   classifyPackFiles,
@@ -71,6 +72,7 @@ import {
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchAuthoringScenarios,
+  searchCatalog,
   searchCommands,
   searchDatapackSchema,
   searchPaperEvents,
@@ -236,6 +238,41 @@ export const tools: ToolDefinition[] = [
         version: { type: "string" },
       },
       required: ["scenario"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_catalog",
+    description:
+      "Search lightweight minecraft-skills catalog entries before listing everything. Use this to find relevant skills, references, fact surfaces, recipes, scenarios, guardrails, diagnostics, claim policies, output requirements, response patterns, intent lookups, source tiers, community datasets, and version-support entries.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        kind: {
+          type: "string",
+          enum: [
+            "skill",
+            "reference",
+            "fact-surface",
+            "authoring-checklist",
+            "authoring-recipe",
+            "authoring-scenario",
+            "authoring-guardrail",
+            "authoring-diagnostic",
+            "claim-policy",
+            "output-requirement",
+            "response-pattern",
+            "intent-lookup",
+            "source-tier",
+            "community-dataset",
+            "version-support",
+          ],
+        },
+        limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
+      },
+      required: ["query"],
       additionalProperties: false,
     },
   },
@@ -1140,6 +1177,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           scenario: args.scenario,
           edition,
           ...(typeof args.version === "string" ? { version: args.version } : {}),
+        }),
+      );
+    }
+    if (name === "search_catalog") {
+      if (typeof args.query !== "string") {
+        throw new Error("search_catalog requires string query");
+      }
+      return text(
+        searchCatalog({
+          query: args.query,
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+          ...(typeof args.kind === "string" ? { kind: args.kind as CatalogSearchKind } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
         }),
       );
     }

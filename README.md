@@ -50,6 +50,7 @@ Useful first commands:
 
 ```sh
 minecraft-skills plugin paper context 26.2
+minecraft-skills plugin paper search "event listener" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "Paper event listener"
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills datapack recipes

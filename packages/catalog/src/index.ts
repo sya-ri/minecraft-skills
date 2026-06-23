@@ -208,6 +208,55 @@ export type AuthoringScenarioSearchResults = {
   results: AuthoringScenarioSearchResult[];
 };
 
+export type CatalogSearchKind =
+  | "skill"
+  | "reference"
+  | "fact-surface"
+  | "authoring-checklist"
+  | "authoring-recipe"
+  | "authoring-scenario"
+  | "authoring-guardrail"
+  | "authoring-diagnostic"
+  | "claim-policy"
+  | "output-requirement"
+  | "response-pattern"
+  | "intent-lookup"
+  | "source-tier"
+  | "community-dataset"
+  | "version-support";
+
+export type CatalogSearchOptions = {
+  query: string;
+  domain?: string;
+  kind?: CatalogSearchKind;
+  limit?: number;
+};
+
+export type CatalogSearchMatch = {
+  field: string;
+  text: string;
+  matchedTokens: string[];
+};
+
+export type CatalogSearchResult = {
+  kind: CatalogSearchKind;
+  id: string;
+  title: string;
+  domains: DomainIdData[];
+  score: number;
+  matches: CatalogSearchMatch[];
+  item: unknown;
+};
+
+export type CatalogSearchResults = {
+  query: string;
+  domain?: DomainIdData;
+  kind?: CatalogSearchKind;
+  limit: number;
+  truncated: boolean;
+  results: CatalogSearchResult[];
+};
+
 export type AuthoringGuardrailQuery = {
   domain?: string;
 };
@@ -1356,6 +1405,428 @@ export function getIntentLookup(id: string): IntentLookupData {
     throw new Error(`Unknown intent lookup: ${id}`);
   }
   return IntentLookup.assert(found);
+}
+
+const catalogSearchKinds = new Set<CatalogSearchKind>([
+  "skill",
+  "reference",
+  "fact-surface",
+  "authoring-checklist",
+  "authoring-recipe",
+  "authoring-scenario",
+  "authoring-guardrail",
+  "authoring-diagnostic",
+  "claim-policy",
+  "output-requirement",
+  "response-pattern",
+  "intent-lookup",
+  "source-tier",
+  "community-dataset",
+  "version-support",
+]);
+
+type CatalogSearchCandidate = {
+  kind: CatalogSearchKind;
+  id: string;
+  title: string;
+  domains: DomainIdData[];
+  fields: Array<{ field: string; text: string; weight: number }>;
+  item: unknown;
+};
+
+function parseCatalogSearchKind(kind: string): CatalogSearchKind {
+  if (catalogSearchKinds.has(kind as CatalogSearchKind)) {
+    return kind as CatalogSearchKind;
+  }
+  throw new Error(`Unknown catalog search kind: ${kind}`);
+}
+
+function candidateDomains(value: { domain?: string; domains?: string[] }): DomainIdData[] {
+  if (value.domain) {
+    return [DomainId.assert(value.domain)];
+  }
+  return (value.domains ?? []).map((domain) => DomainId.assert(domain));
+}
+
+function addTexts(
+  fields: Array<{ field: string; text: string; weight: number }>,
+  field: string,
+  values: unknown,
+  weight: number,
+): void {
+  if (typeof values === "string") {
+    fields.push({ field, text: values, weight });
+    return;
+  }
+  if (Array.isArray(values)) {
+    for (const value of values) {
+      addTexts(fields, field, value, weight);
+    }
+  }
+}
+
+function collectCatalogSearchCandidates(): CatalogSearchCandidate[] {
+  const candidates: CatalogSearchCandidate[] = [];
+  for (const skill of listSkills()) {
+    candidates.push({
+      kind: "skill",
+      id: skill.name,
+      title: skill.title,
+      domains: [skill.domain],
+      fields: [
+        { field: "name", text: skill.name, weight: 6 },
+        { field: "title", text: skill.title, weight: 5 },
+        { field: "path", text: skill.path, weight: 2 },
+      ],
+      item: skill,
+    });
+  }
+  for (const reference of listReferences()) {
+    candidates.push({
+      kind: "reference",
+      id: reference.id,
+      title: reference.title,
+      domains: [reference.domain],
+      fields: [
+        { field: "id", text: reference.id, weight: 6 },
+        { field: "title", text: reference.title, weight: 5 },
+        { field: "path", text: reference.path, weight: 2 },
+      ],
+      item: reference,
+    });
+  }
+  for (const surface of listFactSurfaces()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: surface.id, weight: 6 },
+      { field: "title", text: surface.title, weight: 5 },
+      { field: "dataKind", text: surface.dataKind, weight: 4 },
+      { field: "coverage", text: surface.coverage, weight: 2 },
+      { field: "provenance", text: surface.provenance, weight: 2 },
+    ];
+    addTexts(fields, "guarantees", surface.guarantees, 2);
+    addTexts(fields, "nonGuarantees", surface.nonGuarantees, 2);
+    addTexts(fields, "cli", surface.cli, 3);
+    addTexts(fields, "mcp", surface.mcp, 3);
+    addTexts(fields, "packageApis", surface.packageApis, 3);
+    candidates.push({
+      kind: "fact-surface",
+      id: surface.id,
+      title: surface.title,
+      domains: candidateDomains(surface),
+      fields,
+      item: surface,
+    });
+  }
+  for (const checklist of listAuthoringChecklists()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "domain", text: checklist.domain, weight: 6 },
+      { field: "title", text: checklist.title, weight: 5 },
+    ];
+    for (const step of checklist.steps) {
+      addTexts(fields, "steps.id", step.id, 4);
+      addTexts(fields, "steps.reason", step.reason, 2);
+      addTexts(fields, "steps.evidence", step.evidence, 2);
+      addTexts(fields, "steps.failureMode", step.failureMode, 1);
+      addTexts(fields, "steps.tools.cli", step.tools.cli, 3);
+      addTexts(fields, "steps.tools.mcp", step.tools.mcp, 3);
+      addTexts(fields, "steps.tools.packageApis", step.tools.packageApis, 3);
+    }
+    candidates.push({
+      kind: "authoring-checklist",
+      id: checklist.domain,
+      title: checklist.title,
+      domains: [checklist.domain],
+      fields,
+      item: checklist,
+    });
+  }
+  for (const recipe of listAuthoringRecipes()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: recipe.id, weight: 6 },
+      { field: "title", text: recipe.title, weight: 5 },
+    ];
+    addTexts(fields, "when", recipe.when, 4);
+    addTexts(fields, "finalChecks", recipe.finalChecks, 3);
+    addTexts(fields, "failureMode", recipe.failureMode, 1);
+    for (const step of recipe.steps) {
+      addTexts(fields, "steps.id", step.id, 4);
+      addTexts(fields, "steps.action", step.action, 3);
+      addTexts(fields, "steps.evidence", step.evidence, 2);
+      addTexts(fields, "steps.stopIfMissing", step.stopIfMissing, 2);
+      addTexts(fields, "steps.tools.cli", step.tools.cli, 3);
+      addTexts(fields, "steps.tools.mcp", step.tools.mcp, 3);
+      addTexts(fields, "steps.tools.packageApis", step.tools.packageApis, 3);
+    }
+    candidates.push({
+      kind: "authoring-recipe",
+      id: recipe.id,
+      title: recipe.title,
+      domains: recipe.domains,
+      fields,
+      item: recipe,
+    });
+  }
+  for (const scenario of listAuthoringScenarios()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: scenario.id, weight: 6 },
+      { field: "title", text: scenario.title, weight: 5 },
+      { field: "userPrompt", text: scenario.userPrompt, weight: 4 },
+      { field: "failureMode", text: scenario.failureMode, weight: 1 },
+    ];
+    addTexts(fields, "useWhen", scenario.useWhen, 4);
+    addTexts(fields, "successCriteria", scenario.successCriteria, 2);
+    addTexts(fields, "mustAvoid", scenario.mustAvoid, 2);
+    addTexts(fields, "requiredLookups.recipes", scenario.requiredLookups.recipes, 3);
+    addTexts(fields, "requiredLookups.intents", scenario.requiredLookups.intents, 3);
+    addTexts(fields, "requiredLookups.diagnostics", scenario.requiredLookups.diagnostics, 3);
+    addTexts(fields, "requiredLookups.claimPolicies", scenario.requiredLookups.claimPolicies, 3);
+    addTexts(fields, "requiredLookups.factSurfaces", scenario.requiredLookups.factSurfaces, 3);
+    addTexts(
+      fields,
+      "requiredLookups.responsePatterns",
+      scenario.requiredLookups.responsePatterns,
+      3,
+    );
+    candidates.push({
+      kind: "authoring-scenario",
+      id: scenario.id,
+      title: scenario.title,
+      domains: scenario.domains,
+      fields,
+      item: scenario,
+    });
+  }
+  for (const guardrail of listAuthoringGuardrails()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: guardrail.id, weight: 6 },
+      { field: "title", text: guardrail.title, weight: 5 },
+      { field: "failureMode", text: guardrail.failureMode, weight: 1 },
+    ];
+    addTexts(fields, "rules", guardrail.rules, 3);
+    addTexts(fields, "requiredEvidence", guardrail.requiredEvidence, 2);
+    candidates.push({
+      kind: "authoring-guardrail",
+      id: guardrail.id,
+      title: guardrail.title,
+      domains: guardrail.domains,
+      fields,
+      item: guardrail,
+    });
+  }
+  for (const diagnostic of listAuthoringDiagnostics()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: diagnostic.id, weight: 6 },
+      { field: "title", text: diagnostic.title, weight: 5 },
+      { field: "severity", text: diagnostic.severity, weight: 4 },
+      { field: "failureMode", text: diagnostic.failureMode, weight: 1 },
+    ];
+    addTexts(fields, "detectWhen", diagnostic.detectWhen, 3);
+    addTexts(fields, "requiredChecks", diagnostic.requiredChecks, 3);
+    addTexts(fields, "evidence", diagnostic.evidence, 2);
+    addTexts(fields, "failIf", diagnostic.failIf, 2);
+    addTexts(fields, "safeResponse", diagnostic.safeResponse, 2);
+    candidates.push({
+      kind: "authoring-diagnostic",
+      id: diagnostic.id,
+      title: diagnostic.title,
+      domains: diagnostic.domains,
+      fields,
+      item: diagnostic,
+    });
+  }
+  for (const policy of listClaimPolicies()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: policy.id, weight: 6 },
+      { field: "claim", text: policy.claim, weight: 5 },
+      { field: "failureMode", text: policy.failureMode, weight: 1 },
+    ];
+    addTexts(fields, "requiredEvidence", policy.requiredEvidence, 3);
+    addTexts(fields, "allowedWording", policy.allowedWording, 2);
+    addTexts(fields, "disallowedWording", policy.disallowedWording, 2);
+    candidates.push({
+      kind: "claim-policy",
+      id: policy.id,
+      title: policy.claim,
+      domains: policy.domains,
+      fields,
+      item: policy,
+    });
+  }
+  for (const requirement of listOutputRequirements()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: requirement.id, weight: 6 },
+      { field: "title", text: requirement.title, weight: 5 },
+      { field: "failureMode", text: requirement.failureMode, weight: 1 },
+    ];
+    addTexts(fields, "mustInclude", requirement.mustInclude, 3);
+    addTexts(fields, "includeWhenRelevant", requirement.includeWhenRelevant, 2);
+    addTexts(fields, "mustNotInclude", requirement.mustNotInclude, 2);
+    candidates.push({
+      kind: "output-requirement",
+      id: requirement.id,
+      title: requirement.title,
+      domains: requirement.domains,
+      fields,
+      item: requirement,
+    });
+  }
+  for (const pattern of listResponsePatterns()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: pattern.id, weight: 6 },
+      { field: "title", text: pattern.title, weight: 5 },
+      { field: "failureMode", text: pattern.failureMode, weight: 1 },
+    ];
+    addTexts(fields, "useWhen", pattern.useWhen, 4);
+    addTexts(fields, "requiredSections", pattern.requiredSections, 3);
+    addTexts(fields, "evidenceStatements", pattern.evidenceStatements, 2);
+    addTexts(fields, "gapStatements", pattern.gapStatements, 2);
+    addTexts(fields, "mustAvoid", pattern.mustAvoid, 2);
+    candidates.push({
+      kind: "response-pattern",
+      id: pattern.id,
+      title: pattern.title,
+      domains: pattern.domains,
+      fields,
+      item: pattern,
+    });
+  }
+  for (const intent of listIntentLookups()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: intent.id, weight: 6 },
+      { field: "title", text: intent.title, weight: 5 },
+    ];
+    addTexts(fields, "when", intent.when, 4);
+    for (const lookup of intent.lookups) {
+      addTexts(fields, "lookups.purpose", lookup.purpose, 3);
+      addTexts(fields, "lookups.evidence", lookup.evidence, 2);
+      addTexts(fields, "lookups.failureMode", lookup.failureMode, 1);
+      addTexts(fields, "lookups.tools.cli", lookup.tools.cli, 3);
+      addTexts(fields, "lookups.tools.mcp", lookup.tools.mcp, 3);
+      addTexts(fields, "lookups.tools.packageApis", lookup.tools.packageApis, 3);
+    }
+    candidates.push({
+      kind: "intent-lookup",
+      id: intent.id,
+      title: intent.title,
+      domains: intent.domains,
+      fields,
+      item: intent,
+    });
+  }
+  for (const tier of listSourceTiers()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: tier.id, weight: 6 },
+      { field: "title", text: tier.title, weight: 5 },
+    ];
+    addTexts(fields, "useFor", tier.useFor, 3);
+    addTexts(fields, "limits", tier.limits, 2);
+    addTexts(fields, "examples", tier.examples, 2);
+    candidates.push({
+      kind: "source-tier",
+      id: tier.id,
+      title: tier.title,
+      domains: [],
+      fields,
+      item: tier,
+    });
+  }
+  for (const dataset of listCommunityDatasets()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "id", text: dataset.id, weight: 6 },
+      { field: "title", text: dataset.title, weight: 5 },
+      { field: "url", text: dataset.url, weight: 2 },
+    ];
+    addTexts(fields, "useFor", dataset.useFor, 3);
+    addTexts(fields, "limits", dataset.limits, 2);
+    candidates.push({
+      kind: "community-dataset",
+      id: dataset.id,
+      title: dataset.title,
+      domains: [],
+      fields,
+      item: dataset,
+    });
+  }
+  for (const support of listVersionSupport()) {
+    const fields: CatalogSearchCandidate["fields"] = [
+      { field: "version", text: support.version, weight: 6 },
+      { field: "releaseTime", text: support.releaseTime, weight: 2 },
+      {
+        field: "paper.supported",
+        text: support.paper.supported ? "paper supported" : "paper unsupported",
+        weight: 3,
+      },
+    ];
+    for (const domain of Object.values(support.domains)) {
+      addTexts(fields, "domains.status", domain.status, 3);
+      addTexts(fields, "domains.facts", domain.facts, 2);
+      addTexts(fields, "domains.unknowns", domain.unknowns, 2);
+    }
+    candidates.push({
+      kind: "version-support",
+      id: support.version,
+      title: support.version,
+      domains: ["datapack", "resourcepack", "paper-plugin"],
+      fields,
+      item: support,
+    });
+  }
+  return candidates;
+}
+
+export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResults {
+  const query = options.query.trim();
+  if (!query) {
+    throw new Error("Catalog search requires a non-empty query");
+  }
+  const limit = normalizeLimit(options.limit, 10, 100);
+  const domain = options.domain ? DomainId.assert(options.domain) : undefined;
+  const kind = options.kind ? parseCatalogSearchKind(options.kind) : undefined;
+  const tokens = tokenizeScenarioSearch(query);
+  const scored = collectCatalogSearchCandidates()
+    .filter((candidate) => !kind || candidate.kind === kind)
+    .filter(
+      (candidate) =>
+        !domain || candidate.domains.length === 0 || candidate.domains.includes(domain),
+    )
+    .map((candidate) => {
+      let score = 0;
+      const matches: CatalogSearchMatch[] = [];
+      for (const field of candidate.fields) {
+        const haystack = field.text.toLowerCase();
+        const matchedTokens = tokens.filter((token) => haystack.includes(token));
+        if (matchedTokens.length === 0) {
+          continue;
+        }
+        score += matchedTokens.length * field.weight;
+        matches.push({ field: field.field, text: field.text, matchedTokens });
+      }
+      return { candidate, score, matches };
+    })
+    .filter((result) => result.score > 0)
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.candidate.kind.localeCompare(right.candidate.kind) ||
+        left.candidate.id.localeCompare(right.candidate.id),
+    );
+
+  return {
+    query,
+    ...(domain ? { domain } : {}),
+    ...(kind ? { kind } : {}),
+    limit,
+    truncated: scored.length > limit,
+    results: scored.slice(0, limit).map(({ candidate, score, matches }) => ({
+      kind: candidate.kind,
+      id: candidate.id,
+      title: candidate.title,
+      domains: candidate.domains,
+      score,
+      matches,
+      item: candidate.item,
+    })),
+  };
 }
 
 function relevantDownloadableEntries(domain: DomainIdData, version: string): DataManifestEntry[] {

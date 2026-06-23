@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  type CatalogSearchKind,
   type CommandComparisonOptions,
   type CommandSearchOptions,
   classifyPackFiles,
@@ -76,6 +77,7 @@ import {
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchAuthoringScenarios,
+  searchCatalog,
   searchCommands,
   searchDatapackSchema,
   searchPaperEvents,
@@ -183,6 +185,9 @@ function normalizeDomainAuthoringSubcommand(
   if (subcommand === "evidence") {
     return ["evidence", domain, ...rest];
   }
+  if (subcommand === "search") {
+    return ["catalog-search", ...withAuthoringDomain(rest, domain)];
+  }
   if (subcommand === "checklist") {
     return ["authoring-checklist", domain, ...rest];
   }
@@ -225,6 +230,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft pack-formats": "pack-formats",
     "minecraft vanilla-inventory": "vanilla-inventory",
     "minecraft sources": "source-report",
+    "minecraft search": "catalog-search",
     "datapack server-reports": "server-reports",
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
@@ -253,6 +259,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "source tier": "source-tier",
     "source datasets": "community-datasets",
     "source dataset": "community-dataset",
+    "source search": "catalog-search",
   };
 
   if (groupedCommand === "datapack vanilla-paths") {
@@ -441,6 +448,7 @@ const pluginPaperSuggestions: Record<string, string> = {
   preflight: "plugin paper preflight",
   evidence: "plugin paper evidence",
   "search-scenarios": "plugin paper search-scenarios",
+  search: "plugin paper search",
   plan: "plugin paper plan",
   recipes: "plugin paper recipes",
   recipe: "plugin paper recipe",
@@ -494,6 +502,12 @@ Start here:
   minecraft-skills resourcepack search-scenarios <query>
   minecraft-skills plugin paper search-scenarios <query>
       Route a user task to existing scenarios using scenario, recipe, and intent text.
+  minecraft-skills datapack search <query> [--kind kind] [--limit 10]
+  minecraft-skills resourcepack search <query> [--kind kind] [--limit 10]
+  minecraft-skills plugin paper search <query> [--kind kind] [--limit 10]
+      Search lightweight catalog entries before using broad list commands. Covers skills,
+      references, fact surfaces, recipes, scenarios, guardrails, diagnostics, claim policies,
+      output requirements, response patterns, intent lookups, source tiers, datasets, and support.
   minecraft-skills plugin paper plan <scenario-id> [version]
       Resolve one scenario into exact recipes, intent lookups, diagnostics, claim policies,
       fact surfaces, response patterns, and optional version evidence.
@@ -559,6 +573,8 @@ Grouped commands:
   minecraft-skills plugin paper context|preflight|evidence [version] [--edition java]
   minecraft-skills datapack|resourcepack search-scenarios <query> [--limit 10]
   minecraft-skills plugin paper search-scenarios <query> [--limit 10]
+  minecraft-skills datapack|resourcepack search <query> [--kind kind] [--limit 10]
+  minecraft-skills plugin paper search <query> [--kind kind] [--limit 10]
   minecraft-skills datapack|resourcepack plan <scenario-id> [version] [--edition java]
   minecraft-skills plugin paper plan <scenario-id> [version] [--edition java]
   minecraft-skills datapack|resourcepack recipes|recipe|scenarios|scenario|checklists|checklist
@@ -596,6 +612,7 @@ Grouped commands:
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory
+  minecraft-skills minecraft search <query> [--domain datapack|resourcepack|paper-plugin] [--kind kind] [--limit 10]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
   minecraft-skills skill list|show|write
@@ -604,6 +621,7 @@ Grouped commands:
   minecraft-skills source policy
   minecraft-skills source report [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills source tiers|tier|datasets|dataset
+  minecraft-skills source search <query> [--kind source-tier|community-dataset] [--limit 10]
 
 Command reference:
   domain list    List supported authoring domains.
@@ -614,6 +632,8 @@ Command reference:
                  Print preflight, recipes, diagnostics, intent lookups, and evidence for a domain.
   datapack|resourcepack search-scenarios; plugin paper search-scenarios
                  Search scenarios by task wording using scenario, recipe, and intent text.
+  datapack|resourcepack search; plugin paper search; minecraft search
+                 Search lightweight catalog entries by text, kind, and domain before listing all entries.
   datapack|resourcepack plan; plugin paper plan
                  Print one scenario with all required lookups resolved.
   datapack|resourcepack preflight; plugin paper preflight
@@ -1556,6 +1576,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       for (const reference of listReferences(domain)) {
         output.write(`${reference.domain}\t${reference.id}\t${reference.path}`);
       }
+      return 0;
+    }
+
+    if (command === "catalog-search") {
+      const query = positionalArgs(args).join(" ");
+      if (!query) {
+        throw new Error("search command requires a query");
+      }
+      printJson(
+        output,
+        searchCatalog({
+          query,
+          ...(args.includes("--domain") ? { domain: readOption(args, "--domain", "") } : {}),
+          ...(args.includes("--kind")
+            ? { kind: readOption(args, "--kind", "") as CatalogSearchKind }
+            : {}),
+          ...(args.includes("--limit") ? { limit: Number(readOption(args, "--limit", "10")) } : {}),
+        }),
+      );
       return 0;
     }
 

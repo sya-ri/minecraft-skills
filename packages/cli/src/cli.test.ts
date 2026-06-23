@@ -640,6 +640,34 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("execute");
   });
 
+  it("searches lightweight catalog entries by domain", async () => {
+    const result = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "event listener",
+      "--kind",
+      "authoring-recipe",
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"kind": "authoring-recipe"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener"');
+  });
+
+  it("searches lightweight catalog entries across domains", async () => {
+    const result = await capture([
+      "minecraft",
+      "search",
+      "prismarine assets",
+      "--kind",
+      "community-dataset",
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"id": "prismarinejs-minecraft-assets"');
+  });
+
   it("compares command paths", async () => {
     const result = await capture([
       "datapack",
@@ -725,6 +753,7 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain(
       'minecraft-skills plugin paper search-scenarios "Paper event listener"',
     );
+    expect(output).toContain("minecraft-skills plugin paper search <query>");
     expect(output).toContain("Grouped commands:");
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");

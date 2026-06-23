@@ -102,6 +102,7 @@ describe("MCP tools", () => {
         "list_authoring_scenarios",
         "get_authoring_scenario",
         "get_authoring_plan",
+        "search_catalog",
         "list_authoring_guardrails",
         "get_authoring_guardrail",
         "list_authoring_diagnostics",
@@ -238,6 +239,17 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"id": "paper-event-candidate-unverified"');
     expect(result.content[0]?.text).toContain('"preflight"');
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
+  });
+
+  it("calls catalog search tool", async () => {
+    const result = await callMinecraftSkillsTool("search_catalog", {
+      query: "Paper event listener",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+
+    expect(result.content[0]?.text).toContain('"kind": "authoring-recipe"');
+    expect(result.content[0]?.text).toContain('"id": "paper-event-listener"');
   });
 
   it("calls authoring guardrail tools", async () => {

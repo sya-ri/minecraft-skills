@@ -23,6 +23,10 @@ The public entrypoints are designed around two workflows:
 - Search from task wording with `datapack search-scenarios <query>`,
   `resourcepack search-scenarios <query>`, or `plugin paper search-scenarios <query>` when an agent
   needs a data-backed route into the right scenario.
+- Search lightweight catalog entries with `datapack search <query>`, `resourcepack search <query>`,
+  `plugin paper search <query>`, or `minecraft search <query>` before using broad `list_*`
+  commands. Add `--kind` to narrow to recipes, intents, guardrails, diagnostics, claim policies,
+  fact surfaces, source tiers, community datasets, or version support entries.
 - Start from a known task shape with `datapack plan`, `resourcepack plan`, or `plugin paper plan` to
   resolve a scenario into the exact recipes, intent lookups, diagnostics, claim policies, fact
   surfaces, and response patterns an agent should use.
@@ -46,6 +50,7 @@ minecraft-skills skill write minecraft-paper-plugins --output ./skills
 minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper recipes
 minecraft-skills plugin paper recipe paper-event-listener
+minecraft-skills plugin paper search "event listener" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "Paper event listener"
 minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
@@ -54,6 +59,7 @@ minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
 minecraft-skills source datasets
+minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills plugin paper intents
 minecraft-skills plugin paper fact-surfaces
 minecraft-skills plugin paper claim-policies

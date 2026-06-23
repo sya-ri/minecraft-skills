@@ -17,58 +17,62 @@ version-specific facts.
 3. If the `minecraft-skills` CLI, MCP server, or `@minecraft-skills/catalog` package is available,
    use it for machine-verifiable facts. Otherwise, use the bundled references in this skill and
    clearly state when strict data is not bundled.
-4. Use `intent-lookups --domain datapack`, MCP `list_intent_lookups`, or package
+4. Use `minecraft-skills datapack search "<task>"`, MCP `search_catalog`, or package
+   `searchCatalog({ query, domain: "datapack" })` before broad list commands when you need to find
+   relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source tiers,
+   datasets, or version-support entries.
+5. Use `intent-lookups --domain datapack`, MCP `list_intent_lookups`, or package
    `listIntentLookups({ domain: "datapack" })` to choose the exact lookup path for the user's
    intent.
-5. Use `authoring-recipes --domain datapack`, MCP `list_authoring_recipes`, or package
+6. Use `authoring-recipes --domain datapack`, MCP `list_authoring_recipes`, or package
    `listAuthoringRecipes({ domain: "datapack" })` to choose an ordered workflow for common tasks
    such as function commands, observed JSON, and migrations.
-6. Use `authoring-scenario-search "<task>" --domain datapack`, MCP `search_authoring_scenarios`,
+7. Use `authoring-scenario-search "<task>" --domain datapack`, MCP `search_authoring_scenarios`,
    or package `searchAuthoringScenarios({ query, domain: "datapack" })` to route user wording to
    an existing scenario without inventing one.
-7. Use `authoring-scenarios --domain datapack`, MCP `list_authoring_scenarios`, or package
+8. Use `authoring-scenarios --domain datapack`, MCP `list_authoring_scenarios`, or package
    `listAuthoringScenarios({ domain: "datapack" })` when you need all realistic evaluation cases
    for the domain.
-8. After choosing a scenario, use `authoring-plan <scenario-id> <version>`, MCP
+9. After choosing a scenario, use `authoring-plan <scenario-id> <version>`, MCP
    `get_authoring_plan`, or package `getAuthoringPlan({ scenario, version })` to resolve the exact
    recipes, intent lookups, diagnostics, claim policies, fact surfaces, response patterns, and
    evidence required for that task.
-9. Use `authoring-context datapack <version>`, MCP `get_authoring_context`, or package
+10. Use `authoring-context datapack <version>`, MCP `get_authoring_context`, or package
    `getAuthoringContext({ domain: "datapack", version })` when you need preflight, intent routing,
    and evidence in one payload.
-10. Use `authoring-guardrails --domain datapack` and `authoring-diagnostics --domain datapack`, MCP
+11. Use `authoring-guardrails --domain datapack` and `authoring-diagnostics --domain datapack`, MCP
    `list_authoring_guardrails` and `list_authoring_diagnostics`, or package
    `listAuthoringGuardrails({ domain: "datapack" })` and
    `listAuthoringDiagnostics({ domain: "datapack" })` before finalizing generated files or
    commands.
-11. Use `claim-policies --domain datapack`, MCP `list_claim_policies`, or package
+12. Use `claim-policies --domain datapack`, MCP `list_claim_policies`, or package
    `listClaimPolicies({ domain: "datapack" })` before making version, command, JSON shape, or path
    claims.
-12. Use `output-requirements --domain datapack` and `response-patterns --domain datapack`, MCP
+13. Use `output-requirements --domain datapack` and `response-patterns --domain datapack`, MCP
    `list_output_requirements` and `list_response_patterns`, or package
    `listOutputRequirements({ domain: "datapack" })` and
    `listResponsePatterns({ domain: "datapack" })` before finalizing an answer or generated files.
-13. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
+14. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
    each data surface can and cannot prove.
-14. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
+15. Use `preflight datapack <version>`, MCP `get_authoring_preflight`, or package
    `getAuthoringPreflight({ domain: "datapack", version })` before generating files or commands.
-15. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
+16. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
    version-specific facts are bundled and which heavyweight facts are downloadable.
-16. Use `version-support --domain datapack`, MCP `list_version_support`, or package
+17. Use `version-support --domain datapack`, MCP `list_version_support`, or package
    `listVersionSupport({ domain: "datapack" })` when choosing among target versions.
-17. Use `evidence datapack <version>`, MCP `get_evidence_bundle`, or package
+18. Use `evidence datapack <version>`, MCP `get_evidence_bundle`, or package
    `getEvidenceBundle({ domain: "datapack", version })` when explaining which sources and extracted
    files back an answer.
-18. If an observed datapack schema surface is needed but not available locally, inspect
+19. If an observed datapack schema surface is needed but not available locally, inspect
    `data-manifest` or MCP `get_data_manifest`, then fetch the matching
    `datapack-schema-surface` entry before relying on it.
-19. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
+20. For migrations between versions, inspect `compare-commands` and `compare-vanilla-paths` before
    describing command or vanilla data additions/removals.
-20. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
+21. Use `datapack-schema`, `search-datapack-schema`, or the matching MCP tools for observed vanilla
    datapack JSON field shapes. Treat this as observed vanilla data, not a normative schema.
-21. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
+22. Treat `null`, `unknown`, `seed`, and `not-extracted` fields as gaps. Do not convert them into
    facts.
-22. Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows. Use bundled data,
+23. Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows. Use bundled data,
    Mojang-derived data, source reports, and allowed structured community datasets instead.
 
 ## Optional Tools
@@ -76,6 +80,7 @@ version-specific facts.
 - CLI: `minecraft-skills minecraft show <version>`, `minecraft-skills minecraft pack-formats`,
   `minecraft-skills datapack preflight <version>`,
   `minecraft-skills datapack context <version>`,
+  `minecraft-skills datapack search "<task>"`,
   `minecraft-skills datapack recipes`,
   `minecraft-skills datapack recipe <id>`,
   `minecraft-skills datapack search-scenarios "<task>"`,
@@ -107,7 +112,7 @@ version-specific facts.
   `minecraft-skills datapack compare-vanilla-paths <from> <to>`, `minecraft-skills minecraft vanilla-inventory <version>`
 - MCP: `@minecraft-skills/mcp` exposes version, comparison, pack format, server reports, command
   search/comparison, observed datapack schema, vanilla inventory, vanilla path search/comparison,
-  data manifest/cache/fetch, support matrix, and reference lookup tools
+  catalog search, data manifest/cache/fetch, support matrix, and reference lookup tools
 - Package API: `@minecraft-skills/catalog`
 
 ## Source Priority

@@ -58,6 +58,7 @@ import {
   listVersionSupport,
   resolveVersion,
   searchAuthoringScenarios,
+  searchCatalog,
   searchCommands,
   searchDatapackSchema,
   searchPaperMembers,
@@ -179,6 +180,32 @@ describe("catalog", () => {
     expect(result.results[0]?.matches.some((match) => match.source === "recipe")).toBe(true);
     expect(result.results[0]?.matches.flatMap((match) => match.matchedTokens)).toContain("event");
     expect(result.results.every((entry) => entry.score > 0)).toBe(true);
+  });
+
+  it("searches lightweight catalog entries by text, kind, and domain", () => {
+    const result = searchCatalog({
+      query: "Paper event listener",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+
+    expect(result.domain).toBe("paper-plugin");
+    expect(result.kind).toBe("authoring-recipe");
+    expect(result.results[0]).toEqual(
+      expect.objectContaining({
+        kind: "authoring-recipe",
+        id: "paper-event-listener",
+      }),
+    );
+    expect(result.results[0]?.matches.map((match) => match.field)).toContain("title");
+
+    const sourceResult = searchCatalog({
+      query: "prismarine assets",
+      kind: "community-dataset",
+    });
+    expect(sourceResult.results.map((entry) => entry.id)).toContain(
+      "prismarinejs-minecraft-assets",
+    );
   });
 
   it("builds authoring plans with scenario lookups resolved", () => {
