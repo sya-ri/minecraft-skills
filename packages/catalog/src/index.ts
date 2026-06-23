@@ -3347,11 +3347,14 @@ function resourcepackObservedFields(
   });
 }
 
-function objectSchema(properties: Record<string, unknown> = {}): Record<string, unknown> {
+function objectSchema(
+  properties: Record<string, unknown> = {},
+  options: { additionalProperties?: boolean } = {},
+): Record<string, unknown> {
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",
     type: "object",
-    additionalProperties: true,
+    additionalProperties: options.additionalProperties ?? true,
     properties,
   };
 }
@@ -3369,31 +3372,133 @@ function stringOrStringArraySchema(): Record<string, unknown> {
   };
 }
 
-function packMetadataJsonSchema(domain: "datapack" | "resourcepack", packFormat: number | null) {
-  return objectSchema({
-    pack: {
-      type: "object",
-      required: ["pack_format", "description"],
-      additionalProperties: true,
-      properties: {
-        pack_format: packFormat === null ? { type: "integer" } : { const: packFormat },
-        supported_formats: {
-          oneOf: [
-            { type: "integer" },
-            {
-              type: "object",
-              additionalProperties: true,
-              properties: {
-                min_inclusive: { type: "integer" },
-                max_inclusive: { type: "integer" },
-              },
-            },
-          ],
+function packFormatRangeSchema(packFormat: number | null): Record<string, unknown> {
+  return {
+    oneOf: [
+      packFormat === null ? { type: "integer" } : { const: packFormat },
+      {
+        type: "object",
+        additionalProperties: false,
+        required: ["min_inclusive", "max_inclusive"],
+        properties: {
+          min_inclusive: { type: "integer" },
+          max_inclusive: { type: "integer" },
         },
-        description: {},
       },
-    },
-    ...(domain === "resourcepack"
+    ],
+  };
+}
+
+function packFormatValueSchema(packFormat: number | null): Record<string, unknown> {
+  return {
+    oneOf: [
+      packFormat === null ? { type: "integer" } : { const: packFormat },
+      {
+        type: "array",
+        prefixItems: [
+          packFormat === null ? { type: "integer" } : { const: packFormat },
+          { type: "integer" },
+        ],
+        minItems: 2,
+        maxItems: 2,
+      },
+      {
+        type: "object",
+        additionalProperties: true,
+        properties: {
+          major: packFormat === null ? { type: "integer" } : { const: packFormat },
+          minor: { type: "integer" },
+        },
+      },
+    ],
+  };
+}
+
+function supportsPackMetadataRanges(detail: VersionDetailData): boolean {
+  const firstSupported = getVersionDetail("java", "1.20.2");
+  return Date.parse(detail.releaseTime) >= Date.parse(firstSupported.releaseTime);
+}
+
+function supportsMinorPackMetadata(detail: VersionDetailData, domain: "datapack" | "resourcepack") {
+  return domain === "datapack"
+    ? detail.packFormats.dataMinor !== null
+    : detail.packFormats.resourceMinor !== null;
+}
+
+function packMetadataFormatMode(
+  detail: VersionDetailData,
+  domain: "datapack" | "resourcepack",
+): "legacy" | "range" | "minor" {
+  if (supportsMinorPackMetadata(detail, domain)) {
+    return "minor";
+  }
+  if (supportsPackMetadataRanges(detail)) {
+    return "range";
+  }
+  return "legacy";
+}
+
+function packMetadataSupportedFormatsSchema(mode: "range" | "minor"): Record<string, unknown> {
+  if (mode === "range") {
+    return packFormatRangeSchema(null);
+  }
+  return {
+    oneOf: [
+      packFormatRangeSchema(null),
+      {
+        type: "object",
+        additionalProperties: true,
+        properties: {
+          min_format: packFormatValueSchema(null),
+          max_format: packFormatValueSchema(null),
+          formats: packFormatRangeSchema(null),
+        },
+        anyOf: [
+          { required: ["min_format"] },
+          { required: ["max_format"] },
+          { required: ["formats"] },
+        ],
+      },
+    ],
+  };
+}
+
+function packMetadataJsonSchema(options: {
+  domain: "datapack" | "resourcepack";
+  detail: VersionDetailData;
+  packFormat: number | null;
+}) {
+  const { domain, detail, packFormat } = options;
+  const mode = packMetadataFormatMode(detail, domain);
+  const packProperties: Record<string, unknown> = {
+    pack_format: packFormat === null ? { type: "integer" } : { const: packFormat },
+    description: {},
+  };
+  const packSchema: Record<string, unknown> = {
+    type: "object",
+    required: ["pack_format", "description"],
+    additionalProperties: true,
+    properties: packProperties,
+  };
+  if (mode === "minor") {
+    packSchema.required = ["description"];
+    packSchema.anyOf = [
+      { required: ["pack_format"] },
+      { required: ["supported_formats"] },
+      { required: ["min_format", "max_format"] },
+    ];
+    packProperties.min_format = packFormatValueSchema(packFormat);
+    packProperties.max_format = packFormatValueSchema(packFormat);
+    packProperties.supported_formats = packMetadataSupportedFormatsSchema(mode);
+  } else if (mode === "range") {
+    packProperties.supported_formats = packMetadataSupportedFormatsSchema(mode);
+  } else {
+    packSchema.not = { required: ["supported_formats"] };
+  }
+
+  const rootProperties = {
+    pack: packSchema,
+    ...(mode === "range" || mode === "minor"
       ? {
           overlays: {
             type: "object",
@@ -3403,10 +3508,14 @@ function packMetadataJsonSchema(domain: "datapack" | "resourcepack", packFormat:
                 type: "array",
                 items: {
                   type: "object",
+                  required: ["directory", "formats"],
                   additionalProperties: true,
                   properties: {
                     directory: { type: "string" },
-                    formats: {},
+                    formats:
+                      mode === "minor"
+                        ? packMetadataSupportedFormatsSchema(mode)
+                        : packFormatRangeSchema(null),
                   },
                 },
               },
@@ -3414,12 +3523,45 @@ function packMetadataJsonSchema(domain: "datapack" | "resourcepack", packFormat:
           },
         }
       : {}),
-  });
+  };
+  const schema = objectSchema(rootProperties);
+  if (mode === "legacy") {
+    schema.not = { required: ["overlays"] };
+  }
+  schema["x-minecraft-skills"] = {
+    packMetadataFormat: mode,
+    evidence:
+      mode === "legacy"
+        ? "Mojang client jar pack.mcmeta/version.json pack format extraction; no OverlayMetadataSection in official mappings before 1.20.2."
+        : mode === "range"
+          ? "Mojang official client mappings expose OverlayMetadataSection and PackMetadataSection#getDeclaredPackVersions from 1.20.2."
+          : "Mojang official client mappings expose PackFormat plus min_format/max_format/supported_formats codec fields from 1.21.9.",
+  };
+  return schema;
+}
+
+function packMetadataNotes(detail: VersionDetailData): string[] {
+  const dataMode = packMetadataFormatMode(detail, "datapack");
+  const resourceMode = packMetadataFormatMode(detail, "resourcepack");
+  if (dataMode === "minor" || resourceMode === "minor") {
+    return [
+      "pack.mcmeta uses target-version pack format data and permits the minor-aware min_format/max_format metadata shape for versions whose Mojang metadata includes pack format minors.",
+    ];
+  }
+  if (dataMode === "range" || resourceMode === "range") {
+    return [
+      "pack.mcmeta uses the target version pack_format and permits supported_formats/overlays range metadata for versions with pack metadata range support.",
+    ];
+  }
+  return [
+    "pack.mcmeta uses the target version pack_format and rejects supported_formats/overlays because the target version predates pack metadata range support.",
+  ];
 }
 
 function staticPackFileJsonSchema(options: {
   file: PackFileClassification;
   version: string;
+  detail: VersionDetailData;
   packFormat: number | null;
 }): Record<string, unknown> | null {
   const { file } = options;
@@ -3437,7 +3579,11 @@ function staticPackFileJsonSchema(options: {
     file.schemaKind === "pack-metadata" &&
     (file.domain === "datapack" || file.domain === "resourcepack")
   ) {
-    return packMetadataJsonSchema(file.domain, options.packFormat);
+    return packMetadataJsonSchema({
+      domain: file.domain,
+      detail: options.detail,
+      packFormat: options.packFormat,
+    });
   }
   if (file.domain === "datapack") {
     if (file.kind.startsWith("tag/") || file.kind === "tag") {
@@ -3639,13 +3785,30 @@ function staticPackFileSchema(options: {
   edition: EditionData;
   version: string;
   file: PackFileClassification;
+  detail: VersionDetailData;
   packFormat: number | null;
 }): PackFileSchemaResult {
   const jsonSchema = staticPackFileJsonSchema({
     file: options.file,
     version: options.version,
+    detail: options.detail,
     packFormat: options.packFormat,
   });
+  const notes =
+    jsonSchema && options.file.schemaKind === "pack-metadata"
+      ? [
+          "This schema describes the known file container/shape only.",
+          ...packMetadataNotes(options.detail),
+          "It is not a complete normative Minecraft validation schema.",
+          "Use observedFields when present for vanilla-observed shape evidence.",
+        ]
+      : jsonSchema
+        ? [
+            "This schema describes the known file container/shape only.",
+            "It is not a complete normative Minecraft validation schema.",
+            "Use observedFields when present for vanilla-observed shape evidence.",
+          ]
+        : ["No schema is available for this file kind."];
   return {
     schemaVersion: 1,
     edition: options.edition,
@@ -3654,13 +3817,7 @@ function staticPackFileSchema(options: {
     available: jsonSchema !== null,
     normative: false,
     coverage: jsonSchema ? "known-pack-file-format" : null,
-    notes: jsonSchema
-      ? [
-          "This schema describes the known file container/shape only.",
-          "It is not a complete normative Minecraft validation schema.",
-          "Use observedFields when present for vanilla-observed shape evidence.",
-        ]
-      : ["No schema is available for this file kind."],
+    notes,
     observedFields: [],
     jsonSchema,
   };
@@ -3799,7 +3956,7 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
   }
 
   if (file.kind === "pack-metadata" || file.kind === "asset-root-marker") {
-    return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+    return staticPackFileSchema({ edition: editionId, version, file, detail, packFormat });
   }
 
   if (file.domain === "datapack") {
@@ -3807,10 +3964,10 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
     const kind = surface.kinds.find((entry) => entry.kind === file.schemaKind);
     if (!kind) {
       if (file.kind === "function" || file.kind === "structure") {
-        return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+        return staticPackFileSchema({ edition: editionId, version, file, detail, packFormat });
       }
       if (file.json && isEmbeddedDatapackPath(file.path)) {
-        return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+        return staticPackFileSchema({ edition: editionId, version, file, detail, packFormat });
       }
       return unsupportedSchemaResult({
         edition: editionId,
@@ -3847,7 +4004,7 @@ export function getPackFileSchema(options: PackFileSchemaOptions): PackFileSchem
 
   if (file.domain === "resourcepack") {
     if (file.schemaKind !== "model" && file.schemaKind !== "item-definition") {
-      return staticPackFileSchema({ edition: editionId, version, file, packFormat });
+      return staticPackFileSchema({ edition: editionId, version, file, detail, packFormat });
     }
     const summary = getResourcepackModelSummary(editionId, version);
     const observedFields =

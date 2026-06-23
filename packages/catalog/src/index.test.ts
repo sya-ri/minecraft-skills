@@ -731,6 +731,144 @@ describe("catalog", () => {
     expect(wrongPackFormat.valid).toBe(false);
     expect(wrongPackFormat.issues.map((issue) => issue.keyword)).toContain("const");
 
+    const legacySupportedFormats = validatePackFileContent({
+      version: "1.20.1",
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: 15,
+          supported_formats: {
+            min_inclusive: 15,
+            max_inclusive: 18,
+          },
+          description: "test",
+        },
+      },
+    });
+    expect(legacySupportedFormats.valid).toBe(false);
+    expect(legacySupportedFormats.issues.map((issue) => issue.keyword)).toContain("not");
+
+    const rangedSupportedFormats = validatePackFileContent({
+      version: "1.20.2",
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: 18,
+          supported_formats: {
+            min_inclusive: 15,
+            max_inclusive: 18,
+          },
+          description: "test",
+        },
+      },
+    });
+    expect(rangedSupportedFormats.valid).toBe(true);
+
+    const legacyOverlays = validatePackFileContent({
+      version: "1.20.1",
+      domain: "resourcepack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: 15,
+          description: "test",
+        },
+        overlays: {
+          entries: [
+            {
+              directory: "old",
+              formats: {
+                min_inclusive: 15,
+                max_inclusive: 18,
+              },
+            },
+          ],
+        },
+      },
+    });
+    expect(legacyOverlays.valid).toBe(false);
+    expect(legacyOverlays.issues.map((issue) => issue.keyword)).toContain("not");
+
+    const rangedOverlays = validatePackFileContent({
+      version: "1.20.2",
+      domain: "resourcepack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          pack_format: 18,
+          description: "test",
+        },
+        overlays: {
+          entries: [
+            {
+              directory: "old",
+              formats: {
+                min_inclusive: 15,
+                max_inclusive: 18,
+              },
+            },
+          ],
+        },
+      },
+    });
+    expect(rangedOverlays.valid).toBe(true);
+
+    const minorPackFormat = validatePackFileContent({
+      version: "1.21.9",
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          description: "test",
+          min_format: [88, 0],
+          max_format: [88, 0],
+        },
+      },
+    });
+    expect(minorPackFormat.valid).toBe(true);
+
+    const minorSupportedFormats = validatePackFileContent({
+      version: "1.21.9",
+      domain: "resourcepack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          description: "test",
+          supported_formats: {
+            min_format: [69, 0],
+            max_format: [69, 0],
+          },
+        },
+        overlays: {
+          entries: [
+            {
+              directory: "minor",
+              formats: {
+                min_format: 69,
+                max_format: [69, 0],
+              },
+            },
+          ],
+        },
+      },
+    });
+    expect(minorSupportedFormats.valid).toBe(true);
+
+    const missingMinorFormat = validatePackFileContent({
+      version: "1.21.9",
+      domain: "datapack",
+      path: "pack.mcmeta",
+      content: {
+        pack: {
+          description: "test",
+        },
+      },
+    });
+    expect(missingMinorFormat.valid).toBe(false);
+    expect(missingMinorFormat.issues.map((issue) => issue.keyword)).toContain("anyOf");
+
     const invalidJson = validatePackFileContent({
       version: "26.2",
       domain: "datapack",
