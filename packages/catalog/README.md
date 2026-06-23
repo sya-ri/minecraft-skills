@@ -19,9 +19,12 @@ import {
   comparePaperApi,
   comparePaperApiSurface,
   compareVanillaPaths,
+  explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsIndex,
+  findDatapackEntries,
+  findResourcepackAssets,
   getAuthoringChecklist,
   getAuthoringContext,
   getAuthoringDiagnostic,
@@ -67,6 +70,7 @@ import {
   listResponsePatterns,
   findVersionsByPackFormat,
   searchAuthoringScenarios,
+  searchAll,
   searchCommands,
   searchDatapackSchema,
   searchMinecraftAssets,
@@ -74,6 +78,7 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  suggestMinecraftLookups,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
@@ -124,6 +129,23 @@ const assetPaths = searchMinecraftAssets({ version: "26.2", contains: "diamond_s
 const assetFile = await fetchMinecraftAssetFile({
   version: "26.2",
   path: "assets/minecraft/models/item/diamond_sword.json",
+});
+const anyMinecraftMatches = searchAll({ version: "26.2", query: "bundle item model" });
+const datapackEntries = findDatapackEntries({ version: "26.2", query: "execute" });
+const resourcepackAssets = findResourcepackAssets({
+  version: "26.2",
+  query: "diamond sword",
+  kind: "item-definition",
+});
+const pathExplanation = explainPackPath({
+  version: "26.2",
+  path: "assets/example/items/widget.json",
+  domain: "resourcepack",
+});
+const lookupSuggestions = suggestMinecraftLookups({
+  version: "26.2",
+  task: "migrate resource pack item model",
+  domain: "resourcepack",
 });
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });

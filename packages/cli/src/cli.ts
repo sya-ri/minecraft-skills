@@ -16,10 +16,13 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
+  findDatapackEntries,
+  findResourcepackAssets,
   findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
@@ -82,6 +85,7 @@ import {
   type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
+  searchAll,
   searchAuthoringScenarios,
   searchCatalog,
   searchCommands,
@@ -92,6 +96,7 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validatePackFilesContent,
@@ -155,6 +160,46 @@ function readIntegerArg(value: string | undefined, label: string): number {
     throw new Error(`${label} must be a non-negative integer`);
   }
   return Number(value);
+}
+
+function readOptionalAuthoringDomain(
+  value: string,
+): "datapack" | "resourcepack" | "paper-plugin" | undefined {
+  if (!value) {
+    return undefined;
+  }
+  if (value === "datapack" || value === "resourcepack" || value === "paper-plugin") {
+    return value;
+  }
+  throw new Error("domain must be datapack, resourcepack, or paper-plugin");
+}
+
+function readResourcepackAssetKind(
+  value: string,
+):
+  | "model"
+  | "item-definition"
+  | "texture"
+  | "sound"
+  | "language"
+  | "blockstate"
+  | "atlas"
+  | "font"
+  | "any" {
+  if (
+    value === "model" ||
+    value === "item-definition" ||
+    value === "texture" ||
+    value === "sound" ||
+    value === "language" ||
+    value === "blockstate" ||
+    value === "atlas" ||
+    value === "font" ||
+    value === "any"
+  ) {
+    return value;
+  }
+  throw new Error("resourcepack assets find --kind is invalid");
 }
 
 function packRelativePath(filePath: string, packRoot: string): string {
@@ -260,6 +305,9 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft vanilla-inventory": "vanilla-inventory",
     "minecraft sources": "source-report",
     "minecraft search": "catalog-search",
+    "minecraft search-all": "search-all",
+    "minecraft explain-path": "explain-path",
+    "minecraft suggest-lookups": "suggest-lookups",
     "datapack server-reports": "server-reports",
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
@@ -268,6 +316,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "datapack file-schema": "file-schema",
     "datapack validate-files": "validate-files",
     "datapack migration-plan": "migration-plan",
+    "datapack find": "datapack-find",
     "datapack commands": "commands",
     "datapack compare-commands": "compare-commands",
     "resourcepack models": "resourcepack-models",
@@ -342,6 +391,8 @@ function normalizeSubcommands(argv: string[]): string[] {
       status: "resourcepack-assets-status",
       fetch: "resourcepack-assets-fetch",
       search: "resourcepack-assets-search",
+      find: "resourcepack-assets-find",
+      related: "resourcepack-assets-related",
       get: "resourcepack-assets-get",
     };
     const command = assetAliases[assetSubcommand ?? ""];
@@ -651,6 +702,7 @@ Grouped commands:
   minecraft-skills datapack file-schema [version] <path>
   minecraft-skills datapack validate-files <version> <file...> [--pack-root dir]
   minecraft-skills datapack migration-plan <from> <to> [path...] [--limit 50]
+  minecraft-skills datapack find <query...> [--version latest] [--limit 25]
   minecraft-skills datapack server-reports [version] [--edition java]
   minecraft-skills datapack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills resourcepack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
@@ -663,6 +715,8 @@ Grouped commands:
   minecraft-skills resourcepack assets status [version]
   minecraft-skills resourcepack assets fetch [version] [--index-only] [--force]
   minecraft-skills resourcepack assets search [version] [--prefix path] [--contains text] [--extension json] [--limit 50] [--fetch]
+  minecraft-skills resourcepack assets find <query...> [--version latest] [--kind model|item-definition|texture|sound|language|blockstate|atlas|font|any] [--limit 25]
+  minecraft-skills resourcepack assets related [version] <path>
   minecraft-skills resourcepack assets get <version> <path> [--force]
   minecraft-skills plugin paper info
   minecraft-skills plugin paper api|api-index|api-surface [version]
@@ -673,6 +727,9 @@ Grouped commands:
   minecraft-skills minecraft pack-format [version] [datapack|resourcepack]
   minecraft-skills minecraft versions-for-pack-format <datapack|resourcepack> <format> [minor]
   minecraft-skills minecraft search <query> [--domain datapack|resourcepack|paper-plugin] [--kind kind] [--limit 10]
+  minecraft-skills minecraft search-all <query...> [--version latest] [--domain datapack|resourcepack|paper-plugin] [--limit 20]
+  minecraft-skills minecraft explain-path [version] <path> [--domain datapack|resourcepack]
+  minecraft-skills minecraft suggest-lookups <task...> [--version latest] [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
   minecraft-skills skill list|show|write
@@ -1425,7 +1482,7 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (command === "file-schema") {
       const positionals = positionalArgs(args);
       const [first, second] = positionals;
-      const version = second ? first : "latest";
+      const version = (second ? first : "latest") ?? "latest";
       const path = second ?? first;
       if (!path) {
         throw new Error("file-schema command requires <path> or <version> <path>");
@@ -1491,6 +1548,23 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           to,
           paths,
           limit: Number(readOption(args, "--limit", "50")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "datapack-find") {
+      const query = positionalArgs(args).join(" ");
+      if (!query) {
+        throw new Error("datapack find command requires a query");
+      }
+      printJson(
+        output,
+        findDatapackEntries({
+          edition,
+          version: readOption(args, "--version", "latest"),
+          query,
+          limit: Number(readOption(args, "--limit", "25")),
         }),
       );
       return 0;
@@ -1621,6 +1695,44 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           ...(args.includes("--extension")
             ? { extension: readOption(args, "--extension", "") }
             : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "resourcepack-assets-find") {
+      const query = positionalArgs(args).join(" ");
+      if (!query) {
+        throw new Error("resourcepack assets find command requires a query");
+      }
+      printJson(
+        output,
+        findResourcepackAssets({
+          edition,
+          version: readOption(args, "--version", "latest"),
+          query,
+          kind: readResourcepackAssetKind(readOption(args, "--kind", "any")),
+          limit: Number(readOption(args, "--limit", "25")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "resourcepack-assets-related") {
+      const positionals = positionalArgs(args);
+      const [first, second] = positionals;
+      const version = second ? (first ?? "latest") : "latest";
+      const path = second ?? first;
+      if (!path) {
+        throw new Error("resourcepack assets related command requires <path> or <version> <path>");
+      }
+      printJson(
+        output,
+        explainPackPath({
+          edition,
+          version,
+          path,
+          domain: "resourcepack",
         }),
       );
       return 0;
@@ -1828,6 +1940,72 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
             ? { kind: readOption(args, "--kind", "") as CatalogSearchKind }
             : {}),
           ...(args.includes("--limit") ? { limit: Number(readOption(args, "--limit", "10")) } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "search-all") {
+      const query = positionalArgs(args).join(" ");
+      if (!query) {
+        throw new Error("search-all command requires a query");
+      }
+      const domain = args.includes("--domain")
+        ? readOptionalAuthoringDomain(readOption(args, "--domain", ""))
+        : undefined;
+      printJson(
+        output,
+        searchAll({
+          edition,
+          version: readOption(args, "--version", "latest"),
+          query,
+          ...(domain ? { domain } : {}),
+          limit: Number(readOption(args, "--limit", "20")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "explain-path") {
+      const positionals = positionalArgs(args);
+      const [first, second] = positionals;
+      const version = (second ? first : readOption(args, "--version", "latest")) ?? "latest";
+      const path = second ?? first;
+      if (!path) {
+        throw new Error("explain-path command requires <path> or <version> <path>");
+      }
+      const domain = args.includes("--domain") ? readOption(args, "--domain", "") : "";
+      if (domain && domain !== "datapack" && domain !== "resourcepack") {
+        throw new Error("explain-path --domain must be datapack or resourcepack");
+      }
+      printJson(
+        output,
+        explainPackPath({
+          edition,
+          version,
+          path,
+          ...(domain === "datapack" || domain === "resourcepack" ? { domain } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "suggest-lookups") {
+      const task = positionalArgs(args).join(" ");
+      if (!task) {
+        throw new Error("suggest-lookups command requires a task");
+      }
+      const domain = args.includes("--domain")
+        ? readOptionalAuthoringDomain(readOption(args, "--domain", ""))
+        : undefined;
+      printJson(
+        output,
+        suggestMinecraftLookups({
+          edition,
+          version: readOption(args, "--version", "latest"),
+          task,
+          ...(domain ? { domain } : {}),
+          limit: Number(readOption(args, "--limit", "8")),
         }),
       );
       return 0;

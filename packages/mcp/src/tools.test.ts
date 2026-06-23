@@ -70,6 +70,11 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
     expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
+    expect(tools.map((tool) => tool.name)).toContain("search_all");
+    expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
+    expect(tools.map((tool) => tool.name)).toContain("find_resourcepack_assets");
+    expect(tools.map((tool) => tool.name)).toContain("explain_pack_path");
+    expect(tools.map((tool) => tool.name)).toContain("suggest_minecraft_lookups");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_assets_status");
@@ -678,6 +683,43 @@ describe("MCP tools", () => {
       contains: "bundle",
     });
     expect(result.content[0]?.text).toContain("assets/minecraft/items/bundle.json");
+  });
+
+  it("calls discovery-oriented search tools", async () => {
+    const search = await callMinecraftSkillsTool("search_all", {
+      version: "26.2",
+      query: "bundle",
+      domain: "resourcepack",
+      limit: 80,
+    });
+    expect(search.content[0]?.text).toContain("resourcepack-models");
+
+    const datapack = await callMinecraftSkillsTool("find_datapack_entries", {
+      version: "26.2",
+      query: "execute",
+    });
+    expect(datapack.content[0]?.text).toContain('"source": "commands"');
+
+    const resourcepack = await callMinecraftSkillsTool("find_resourcepack_assets", {
+      version: "26.2",
+      query: "bundle",
+      kind: "item-definition",
+    });
+    expect(resourcepack.content[0]?.text).toContain("assets/minecraft/items/bundle.json");
+
+    const explanation = await callMinecraftSkillsTool("explain_pack_path", {
+      version: "26.2",
+      domain: "resourcepack",
+      path: "assets/example/items/widget.json",
+    });
+    expect(explanation.content[0]?.text).toContain('"kind": "item-definition"');
+
+    const suggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "26.2",
+      domain: "resourcepack",
+      task: "migrate resource pack item model",
+    });
+    expect(suggestions.content[0]?.text).toContain("resourcepack assets find");
   });
 
   it("calls external resourcepack asset cache tools", async () => {

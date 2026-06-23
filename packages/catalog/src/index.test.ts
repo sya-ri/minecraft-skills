@@ -8,6 +8,9 @@ import {
   comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
+  explainPackPath,
+  findDatapackEntries,
+  findResourcepackAssets,
   findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
@@ -59,6 +62,7 @@ import {
   listSourceTiers,
   listVersionSupport,
   resolveVersion,
+  searchAll,
   searchAuthoringScenarios,
   searchCatalog,
   searchCommands,
@@ -67,6 +71,7 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  suggestMinecraftLookups,
   validatePackFileContent,
   validatePackFilesContent,
 } from "./index.js";
@@ -1353,5 +1358,64 @@ describe("catalog", () => {
     expect(result.version).toBe("26.2");
     expect(result.paths).toContain("assets/minecraft/items/bundle.json");
     expect(result.paths.every((path) => path.includes("/items/"))).toBe(true);
+  });
+
+  it("searches across Minecraft surfaces", () => {
+    const result = searchAll({
+      version: "26.2",
+      query: "bundle",
+      domain: "resourcepack",
+      limit: 80,
+    });
+    expect(result.results.map((entry) => entry.surface)).toContain("resourcepack-models");
+    expect(result.results.map((entry) => entry.title)).toContain(
+      "assets/minecraft/items/bundle.json",
+    );
+  });
+
+  it("finds resourcepack assets from all available indexes", () => {
+    const result = findResourcepackAssets({
+      version: "26.2",
+      query: "bundle",
+      kind: "item-definition",
+    });
+    expect(
+      result.sections.some((section) =>
+        section.paths.includes("assets/minecraft/items/bundle.json"),
+      ),
+    ).toBe(true);
+  });
+
+  it("finds datapack entries", () => {
+    const result = findDatapackEntries({
+      version: "26.2",
+      query: "execute",
+      limit: 10,
+    });
+    expect(result.sections.find((section) => section.source === "commands")?.total).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("explains pack paths with next lookups", () => {
+    const result = explainPackPath({
+      version: "26.2",
+      domain: "resourcepack",
+      path: "assets/example/items/widget.json",
+    });
+    expect(result.classification.kind).toBe("item-definition");
+    expect(result.nextLookups.join("\n")).toContain("resourcepack file-schema");
+  });
+
+  it("suggests lookup tools from task text", () => {
+    const result = suggestMinecraftLookups({
+      version: "26.2",
+      task: "migrate resource pack item model",
+      domain: "resourcepack",
+    });
+    expect(result.suggestedTools.map((entry) => entry.tool).join("\n")).toContain(
+      "resourcepack assets find",
+    );
+    expect(result.catalog.results.length).toBeGreaterThan(0);
   });
 });

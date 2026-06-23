@@ -60,6 +60,9 @@ minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
 minecraft-skills source datasets
 minecraft-skills minecraft search "prismarine assets" --kind community-dataset
+minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
+minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
+minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
 minecraft-skills plugin paper fact-surfaces
 minecraft-skills plugin paper claim-policies
@@ -92,6 +95,7 @@ minecraft-skills minecraft show 26.2
 minecraft-skills minecraft pack-formats
 minecraft-skills minecraft pack-format 26.2 datapack
 minecraft-skills minecraft versions-for-pack-format datapack 107 --minor 1
+minecraft-skills datapack find execute
 minecraft-skills datapack commands 26.2 --prefix execute --contains run
 minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills datapack schema 26.2
@@ -112,6 +116,7 @@ minecraft-skills resourcepack vanilla-paths 26.2 --contains models/block/acacia_
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack assets status 26.2
 minecraft-skills resourcepack assets fetch 26.2 --index-only
+minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --extension json --fetch
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models 26.2
@@ -245,6 +250,11 @@ Pack analysis tools include:
 - `fetch_resourcepack_assets`
 - `search_resourcepack_assets`
 - `get_resourcepack_asset`
+- `search_all`
+- `find_datapack_entries`
+- `find_resourcepack_assets`
+- `explain_pack_path`
+- `suggest_minecraft_lookups`
 
 Skill and data resources are exposed under:
 

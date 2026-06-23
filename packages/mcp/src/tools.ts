@@ -12,10 +12,13 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
+  findDatapackEntries,
+  findResourcepackAssets,
   findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
@@ -78,6 +81,7 @@ import {
   type ResourcepackModelPathSearchOptions,
   readCachedMinecraftAssetText,
   resolveVersion,
+  searchAll,
   searchAuthoringScenarios,
   searchCatalog,
   searchCommands,
@@ -88,6 +92,7 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validatePackFilesContent,
@@ -896,6 +901,102 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "search_all",
+    description:
+      "Search across Minecraft catalog guidance, datapack command/schema/path indexes, resourcepack path/model/asset indexes, and Paper API indexes.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        query: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        limit: { type: "number", default: 20 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "find_datapack_entries",
+    description: "Search datapack commands, observed schema paths, and vanilla datapack paths.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        query: { type: "string" },
+        limit: { type: "number", default: 25 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "find_resourcepack_assets",
+    description:
+      "Search resourcepack vanilla paths, model/item summaries, and cached external asset indexes together.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        query: { type: "string" },
+        kind: {
+          type: "string",
+          enum: [
+            "model",
+            "item-definition",
+            "texture",
+            "sound",
+            "language",
+            "blockstate",
+            "atlas",
+            "font",
+            "any",
+          ],
+          default: "any",
+        },
+        limit: { type: "number", default: 25 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "explain_pack_path",
+    description:
+      "Classify one datapack/resourcepack path, return its best schema, notes, and next lookup commands.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        path: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack"] },
+      },
+      required: ["path"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "suggest_minecraft_lookups",
+    description:
+      "Suggest the next minecraft-skills tools to call for a natural-language Minecraft task.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        task: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        limit: { type: "number", default: 8 },
+      },
+      required: ["task"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_commands",
     description:
       "Search executable Minecraft command syntax paths generated from official server reports.",
@@ -1276,6 +1377,62 @@ function integerArg(value: unknown, label: string): number {
     throw new Error(`${label} must be a non-negative integer`);
   }
   return value;
+}
+
+function authoringDomainArg(
+  value: unknown,
+): "datapack" | "resourcepack" | "paper-plugin" | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === "datapack" || value === "resourcepack" || value === "paper-plugin") {
+    return value;
+  }
+  throw new Error("domain must be datapack, resourcepack, or paper-plugin");
+}
+
+function optionalPackDomainArg(value: unknown): "datapack" | "resourcepack" | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === "datapack" || value === "resourcepack") {
+    return value;
+  }
+  throw new Error("domain must be datapack or resourcepack");
+}
+
+function resourcepackAssetKindArg(
+  value: unknown,
+):
+  | "model"
+  | "item-definition"
+  | "texture"
+  | "sound"
+  | "language"
+  | "blockstate"
+  | "atlas"
+  | "font"
+  | "any"
+  | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (
+    value === "model" ||
+    value === "item-definition" ||
+    value === "texture" ||
+    value === "sound" ||
+    value === "language" ||
+    value === "blockstate" ||
+    value === "atlas" ||
+    value === "font" ||
+    value === "any"
+  ) {
+    return value;
+  }
+  throw new Error(
+    "kind must be model, item-definition, texture, sound, language, blockstate, atlas, font, or any",
+  );
 }
 
 function isTextLikeAsset(path: string): boolean {
@@ -1767,6 +1924,78 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           from: args.from,
           to: args.to,
           ...(Array.isArray(args.paths) ? { paths: args.paths } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "search_all") {
+      if (typeof args.query !== "string") {
+        throw new Error("search_all requires string query");
+      }
+      const domain = authoringDomainArg(args.domain);
+      return text(
+        searchAll({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          query: args.query,
+          ...(domain ? { domain } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "find_datapack_entries") {
+      if (typeof args.query !== "string") {
+        throw new Error("find_datapack_entries requires string query");
+      }
+      return text(
+        findDatapackEntries({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          query: args.query,
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "find_resourcepack_assets") {
+      if (typeof args.query !== "string") {
+        throw new Error("find_resourcepack_assets requires string query");
+      }
+      const kind = resourcepackAssetKindArg(args.kind);
+      return text(
+        findResourcepackAssets({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          query: args.query,
+          ...(kind ? { kind } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "explain_pack_path") {
+      if (typeof args.path !== "string") {
+        throw new Error("explain_pack_path requires string path");
+      }
+      const domain = optionalPackDomainArg(args.domain);
+      return text(
+        explainPackPath({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          path: args.path,
+          ...(domain ? { domain } : {}),
+        }),
+      );
+    }
+    if (name === "suggest_minecraft_lookups") {
+      if (typeof args.task !== "string") {
+        throw new Error("suggest_minecraft_lookups requires string task");
+      }
+      const domain = authoringDomainArg(args.domain);
+      return text(
+        suggestMinecraftLookups({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          task: args.task,
+          ...(domain ? { domain } : {}),
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
         }),
       );

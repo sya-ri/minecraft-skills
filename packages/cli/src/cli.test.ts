@@ -757,6 +757,56 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("assets/minecraft/items/bundle.json");
   });
 
+  it("prints discovery-oriented search helpers", async () => {
+    const searchAll = await capture([
+      "minecraft",
+      "search-all",
+      "bundle",
+      "--domain",
+      "resourcepack",
+      "--limit",
+      "80",
+    ]);
+    expect(searchAll.code).toBe(0);
+    expect(searchAll.stdout.join("\n")).toContain("resourcepack-models");
+
+    const datapack = await capture(["datapack", "find", "execute", "--limit", "5"]);
+    expect(datapack.code).toBe(0);
+    expect(datapack.stdout.join("\n")).toContain('"source": "commands"');
+
+    const resourcepack = await capture([
+      "resourcepack",
+      "assets",
+      "find",
+      "bundle",
+      "--kind",
+      "item-definition",
+    ]);
+    expect(resourcepack.code).toBe(0);
+    expect(resourcepack.stdout.join("\n")).toContain("assets/minecraft/items/bundle.json");
+
+    const explain = await capture([
+      "minecraft",
+      "explain-path",
+      "26.2",
+      "assets/example/items/widget.json",
+      "--domain",
+      "resourcepack",
+    ]);
+    expect(explain.code).toBe(0);
+    expect(explain.stdout.join("\n")).toContain('"kind": "item-definition"');
+
+    const suggestions = await capture([
+      "minecraft",
+      "suggest-lookups",
+      "migrate resource pack item model",
+      "--domain",
+      "resourcepack",
+    ]);
+    expect(suggestions.code).toBe(0);
+    expect(suggestions.stdout.join("\n")).toContain("resourcepack assets find");
+  });
+
   it("caches and searches external resourcepack assets", async () => {
     const cacheDir = mkdtempSync(join(tmpdir(), "minecraft-skills-cli-assets-"));
     vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", cacheDir);

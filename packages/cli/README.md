@@ -48,6 +48,9 @@ minecraft-skills minecraft support --domain paper-plugin
 minecraft-skills data manifest
 minecraft-skills data fetch paper-api-surface --version 26.2
 minecraft-skills minecraft list
+minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
+minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
+minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills minecraft pack-formats
 minecraft-skills minecraft pack-format 26.2 datapack
 minecraft-skills minecraft versions-for-pack-format resourcepack 88
@@ -55,6 +58,7 @@ minecraft-skills minecraft show 26.2
 minecraft-skills minecraft compare 1.20.6 1.21
 minecraft-skills datapack server-reports latest
 minecraft-skills datapack schema latest
+minecraft-skills datapack find execute
 minecraft-skills datapack search-schema latest --kind advancement --contains criteria
 minecraft-skills datapack commands latest --prefix execute --limit 10
 minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
@@ -63,6 +67,7 @@ minecraft-skills resourcepack vanilla-paths latest --contains models/block
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack assets status 26.2
 minecraft-skills resourcepack assets fetch 26.2 --index-only
+minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --extension json --fetch
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models latest
