@@ -14,55 +14,39 @@ version-specific facts.
 
 1. If the user gives no version, assume the latest bundled Java release and state that assumption.
 2. Read `references/versioning.md` before making pack format or asset schema claims.
-3. If the `minecraft-skills` CLI, MCP server, or `@minecraft-skills/catalog` package is available,
-   use it for machine-verifiable facts. Otherwise, use the bundled references in this skill and
-   clearly state when strict data is not bundled.
-4. Use `minecraft-skills resourcepack search "<task>"`, MCP `search_catalog`, or package
-   `searchCatalog({ query, domain: "resourcepack" })` before broad list commands when you need to
+3. Use the `minecraft-skills` CLI for machine-verifiable facts. If the CLI is not available, use
+   the bundled references in this skill and clearly state when strict data is not bundled.
+4. Use `minecraft-skills resourcepack search "<task>"` before broad list commands when you need to
    find relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source
    tiers, datasets, or version-support entries.
-5. Use `intent-lookups --domain resourcepack`, MCP `list_intent_lookups`, or package
-   `listIntentLookups({ domain: "resourcepack" })` to choose the exact lookup path for the user's
+5. Use `minecraft-skills resourcepack intents` to choose the exact lookup path for the user's
    intent.
-6. Use `authoring-recipes --domain resourcepack`, MCP `list_authoring_recipes`, or package
-   `listAuthoringRecipes({ domain: "resourcepack" })` to choose an ordered workflow for common
-   resource pack asset, model, item definition, and migration tasks.
-7. Use `authoring-scenario-search "<task>" --domain resourcepack`, MCP
-   `search_authoring_scenarios`, or package `searchAuthoringScenarios({ query, domain:
-   "resourcepack" })` to route user wording to an existing scenario without inventing one.
-8. Use `authoring-scenarios --domain resourcepack`, MCP `list_authoring_scenarios`, or package
-   `listAuthoringScenarios({ domain: "resourcepack" })` when you need all realistic evaluation
-   cases for the domain.
-9. After choosing a scenario, use `authoring-plan <scenario-id> <version>`, MCP
-   `get_authoring_plan`, or package `getAuthoringPlan({ scenario, version })` to resolve the exact
-   recipes, intent lookups, diagnostics, claim policies, fact surfaces, response patterns, and
-   evidence required for that task.
-10. Use `authoring-context resourcepack <version>`, MCP `get_authoring_context`, or package
-   `getAuthoringContext({ domain: "resourcepack", version })` when you need preflight, intent
-   routing, and evidence in one payload.
-11. Use `authoring-guardrails --domain resourcepack` and
-   `authoring-diagnostics --domain resourcepack`, MCP `list_authoring_guardrails` and
-   `list_authoring_diagnostics`, or package `listAuthoringGuardrails({ domain: "resourcepack" })`
-   and `listAuthoringDiagnostics({ domain: "resourcepack" })` before finalizing generated files.
-12. Use `claim-policies --domain resourcepack`, MCP `list_claim_policies`, or package
-   `listClaimPolicies({ domain: "resourcepack" })` before making version, path, model, or item
+6. Use `minecraft-skills resourcepack recipes` to choose an ordered workflow for common resource
+   pack asset, model, item definition, and migration tasks.
+7. Use `minecraft-skills resourcepack search-scenarios "<task>"` to route user wording to an
+   existing scenario without inventing one.
+8. Use `minecraft-skills resourcepack scenarios` when you need all realistic evaluation cases for
+   the domain.
+9. After choosing a scenario, use `minecraft-skills resourcepack plan <scenario-id> <version>` to
+   resolve the exact recipes, intent lookups, diagnostics, claim policies, fact surfaces, response
+   patterns, and evidence required for that task.
+10. Use `minecraft-skills resourcepack context <version>` when you need preflight, intent routing,
+   and evidence in one payload.
+11. Use `minecraft-skills resourcepack guardrails` and `minecraft-skills resourcepack diagnostics`
+   before finalizing generated files.
+12. Use `minecraft-skills resourcepack claim-policies` before making version, path, model, or item
    definition claims.
-13. Use `output-requirements --domain resourcepack` and `response-patterns --domain resourcepack`,
-   MCP `list_output_requirements` and `list_response_patterns`, or package
-   `listOutputRequirements({ domain: "resourcepack" })` and
-   `listResponsePatterns({ domain: "resourcepack" })` before finalizing an answer or generated
+13. Use `minecraft-skills resourcepack output-requirements` and
+   `minecraft-skills resourcepack response-patterns` before finalizing an answer or generated
    files.
-14. Use `fact-surfaces`, MCP `list_fact_surfaces`, or package `listFactSurfaces()` to check what
-   each data surface can and cannot prove.
-15. Use `preflight resourcepack <version>`, MCP `get_authoring_preflight`, or package
-   `getAuthoringPreflight({ domain: "resourcepack", version })` before generating resource pack
-   files.
-16. Use `support-matrix`, MCP `get_support_matrix`, or package `getSupportMatrix()` to check which
-   version-specific resource pack facts are bundled.
-17. Use `version-support --domain resourcepack`, MCP `list_version_support`, or package
-   `listVersionSupport({ domain: "resourcepack" })` when choosing among target versions.
-18. Use `evidence resourcepack <version>`, MCP `get_evidence_bundle`, or package
-   `getEvidenceBundle({ domain: "resourcepack", version })` when explaining which sources and
+14. Use `minecraft-skills resourcepack fact-surfaces` to check what each data surface can and cannot
+   prove.
+15. Use `minecraft-skills resourcepack preflight <version>` before generating resource pack files.
+16. Use `minecraft-skills minecraft support-matrix` to check which version-specific resource pack
+   facts are bundled.
+17. Use `minecraft-skills minecraft support --domain resourcepack` when choosing among target
+   versions.
+18. Use `minecraft-skills resourcepack evidence <version>` when explaining which sources and
    extracted files back an answer.
 19. For migrations between versions, inspect `compare-vanilla-paths` before describing vanilla asset
    additions/removals.
@@ -71,9 +55,9 @@ version-specific facts.
 21. Do not fetch, crawl, summarize, or cite Minecraft Wiki pages in AI workflows. Use bundled data,
    Mojang-derived data, source reports, and allowed structured community datasets instead.
 
-## Optional Tools
+## CLI Commands
 
-- CLI: `minecraft-skills minecraft show <version>`, `minecraft-skills minecraft pack-formats`,
+- `minecraft-skills minecraft show <version>`, `minecraft-skills minecraft pack-formats`,
   `minecraft-skills resourcepack preflight <version>`,
   `minecraft-skills resourcepack context <version>`,
   `minecraft-skills resourcepack search "<task>"`,
@@ -102,7 +86,3 @@ version-specific facts.
   `minecraft-skills resourcepack compare-vanilla-paths <from> <to>`,
   `minecraft-skills minecraft vanilla-inventory <version>`,
   `minecraft-skills resourcepack models <version>`, `minecraft-skills resourcepack search-models <version>`
-- MCP: `@minecraft-skills/mcp` exposes version, comparison, pack format, vanilla inventory, and
-  vanilla path comparison and path/model search tools, catalog search, support matrix, plus
-  reference lookup tools
-- Package API: `@minecraft-skills/catalog`
