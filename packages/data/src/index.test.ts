@@ -5,17 +5,25 @@ import { describe, expect, it } from "vitest";
 import {
   cleanCachedData,
   fetchData,
+  fetchMinecraftAssetFile,
+  fetchMinecraftAssetsArchive,
+  fetchMinecraftAssetsIndex,
   getCacheDataRoot,
   getCachedDataPath,
+  getCachedMinecraftAssetPath,
   getCacheRoot,
   getDataManifest,
   getDataRoot,
+  getMinecraftAssetsStatus,
   hasBundledDataFile,
   hasCachedDataFile,
+  hasCachedMinecraftAssetFile,
   hasDataFile,
   listCachedDataFiles,
+  readCachedMinecraftAssetText,
   readDataJson,
   readDataText,
+  searchMinecraftAssets,
 } from "./index.js";
 
 describe("@minecraft-skills/data", () => {
@@ -233,6 +241,80 @@ describe("@minecraft-skills/data", () => {
       ).rejects.toThrow("Integrity mismatch");
 
       expect(hasCachedDataFile("java/datapack-schema-surfaces/26.2.json")).toBe(false);
+    });
+  });
+
+  it("caches Minecraft assets by single file and searchable version index", async () => {
+    await withCacheDir(async () => {
+      const tree = {
+        tree: [
+          { path: "assets/minecraft/models/item/diamond_sword.json", type: "blob" },
+          { path: "assets/minecraft/textures/item/diamond_sword.png", type: "blob" },
+          { path: "README.md", type: "blob" },
+        ],
+      };
+      const fetchMock: typeof fetch = async (input, _init) => {
+        const url = String(input);
+        if (url.includes("/git/trees/1.21.8")) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            json: async () => tree,
+          } as unknown as Response;
+        }
+        if (url.endsWith("/assets/minecraft/models/item/diamond_sword.json")) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            arrayBuffer: async () => Buffer.from('{"parent":"minecraft:item/generated"}'),
+          } as unknown as Response;
+        }
+        if (url.endsWith("/1.21.8.zip")) {
+          return {
+            ok: true,
+            status: 200,
+            statusText: "OK",
+            arrayBuffer: async () => Buffer.from("zip bytes"),
+          } as unknown as Response;
+        }
+        throw new Error(`unexpected url ${url}`);
+      };
+
+      const index = await fetchMinecraftAssetsIndex({
+        version: "1.21.8",
+        fetch: fetchMock,
+      });
+      expect(index.pathCount).toBe(2);
+
+      const search = searchMinecraftAssets({
+        version: "1.21.8",
+        contains: "diamond_sword",
+        extension: "json",
+      });
+      expect(search.matches).toEqual(["assets/minecraft/models/item/diamond_sword.json"]);
+
+      const file = await fetchMinecraftAssetFile({
+        version: "1.21.8",
+        path: "assets/minecraft/models/item/diamond_sword.json",
+        fetch: fetchMock,
+      });
+      expect(file.cached).toBe(false);
+      expect(hasCachedMinecraftAssetFile("1.21.8", file.path)).toBe(true);
+      expect(readCachedMinecraftAssetText("1.21.8", file.path)).toContain("generated");
+      expect(getCachedMinecraftAssetPath("1.21.8", file.path)).toBe(file.file);
+
+      const archive = await fetchMinecraftAssetsArchive({
+        version: "1.21.8",
+        fetch: fetchMock,
+      });
+      expect(archive.bytes).toBe(9);
+      expect(getMinecraftAssetsStatus("1.21.8")).toMatchObject({
+        indexCached: true,
+        archiveCached: true,
+        cachedFileCount: 1,
+      });
     });
   });
 });

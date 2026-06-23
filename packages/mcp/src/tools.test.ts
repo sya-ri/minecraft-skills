@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { listDomains } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { callMinecraftSkillsTool, listMinecraftSkillsTools, tools } from "./tools.js";
@@ -69,6 +72,10 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_model_summary");
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_models");
+    expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_assets_status");
+    expect(tools.map((tool) => tool.name)).toContain("fetch_resourcepack_assets");
+    expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_assets");
+    expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_asset");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("compare_vanilla_paths");
@@ -671,6 +678,72 @@ describe("MCP tools", () => {
       contains: "bundle",
     });
     expect(result.content[0]?.text).toContain("assets/minecraft/items/bundle.json");
+  });
+
+  it("calls external resourcepack asset cache tools", async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), "minecraft-skills-mcp-assets-"));
+    vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", cacheDir);
+    vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/git/trees/26.2")) {
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: async () => ({
+            tree: [
+              { path: "assets/minecraft/models/item/apple.json", type: "blob" },
+              { path: "assets/minecraft/textures/item/apple.png", type: "blob" },
+            ],
+          }),
+        } as unknown as Response;
+      }
+      if (url.endsWith("/assets/minecraft/models/item/apple.json")) {
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          arrayBuffer: async () => Buffer.from('{"parent":"minecraft:item/generated"}'),
+        } as unknown as Response;
+      }
+      if (url.endsWith("/26.2.zip")) {
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          arrayBuffer: async () => Buffer.from("zip bytes"),
+        } as unknown as Response;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+    try {
+      const fetchResult = await callMinecraftSkillsTool("fetch_resourcepack_assets", {
+        version: "26.2",
+        indexOnly: true,
+      });
+      expect(fetchResult.content[0]?.text).toContain('"pathCount": 2');
+
+      const search = await callMinecraftSkillsTool("search_resourcepack_assets", {
+        version: "26.2",
+        extension: "json",
+      });
+      expect(search.content[0]?.text).toContain("assets/minecraft/models/item/apple.json");
+
+      const asset = await callMinecraftSkillsTool("get_resourcepack_asset", {
+        version: "26.2",
+        path: "assets/minecraft/models/item/apple.json",
+      });
+      expect(asset.content[0]?.text).toContain('"cached": false');
+      expect(asset.content[0]?.text).toContain('"content"');
+
+      const status = await callMinecraftSkillsTool("get_resourcepack_assets_status", {
+        version: "26.2",
+      });
+      expect(status.content[0]?.text).toContain('"indexCached": true');
+      expect(status.content[0]?.text).toContain('"cachedFileCount": 1');
+    } finally {
+      rmSync(cacheDir, { recursive: true, force: true });
+    }
   });
 
   it("calls search_paper_events", async () => {

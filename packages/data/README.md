@@ -26,6 +26,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Download manifest metadata for heavyweight generated datapack schema surfaces, Paper API
   surfaces, and resourcepack model summaries that can be fetched into an OS cache with SHA-256
   verification.
+- Optional `InventivetalentDev/minecraft-assets` resource pack asset cache helpers for one-file
+  fetches, version path indexes, and version archive references.
 
 ## Use
 
@@ -34,7 +36,15 @@ stable read APIs. This package is useful when an agent or tool needs direct acce
 JSON/text data files.
 
 ```ts
-import { fetchData, getDataManifest, readDataJson, readDataText } from "@minecraft-skills/data";
+import {
+  fetchData,
+  fetchMinecraftAssetFile,
+  fetchMinecraftAssetsIndex,
+  getDataManifest,
+  searchMinecraftAssets,
+  readDataJson,
+  readDataText,
+} from "@minecraft-skills/data";
 
 const versions = readDataJson("java/versions.json");
 const checklists = readDataJson("authoring-checklists.json");
@@ -51,10 +61,18 @@ const commandPaths = readDataText("java/command-paths/26.2.txt");
 const paperSkill = readDataText("skills/minecraft-paper-plugins/SKILL.md");
 const manifest = getDataManifest();
 await fetchData({ kind: "paper-api-surface", version: "26.2" });
+await fetchMinecraftAssetsIndex({ version: "26.2" });
+const assets = searchMinecraftAssets({ version: "26.2", contains: "diamond_sword" });
+await fetchMinecraftAssetFile({
+  version: "26.2",
+  path: "assets/minecraft/models/item/diamond_sword.json",
+});
 ```
 
 Downloaded data is cached under the platform cache directory for the manifest data version. Set
 `MINECRAFT_SKILLS_CACHE_DIR` to override that location.
+External resource pack asset references are cached under `minecraft-assets/<version>` in the same
+cache root.
 
 Minecraft Wiki prose is not redistributed in this package, and Wiki pages are not AI-fetchable
 sources for minecraft-skills workflows.

@@ -66,6 +66,7 @@
         "examples": [
           "PrismarineJS/minecraft-data",
           "PrismarineJS/minecraft-assets",
+          "InventivetalentDev/minecraft-assets",
           "misode/mcmeta"
         ],
         "limits": [
@@ -128,6 +129,18 @@
         ],
         "limits": [
           "supplemental asset dataset; prefer official jar extraction for canonical vanilla path presence"
+        ]
+      },
+      {
+        "id": "inventivetalentdev-minecraft-assets",
+        "title": "InventivetalentDev minecraft-assets",
+        "url": "https://github.com/InventivetalentDev/minecraft-assets",
+        "useFor": [
+          "on-demand resourcepack asset file lookup, version path index search, and cached archive references extracted from Minecraft client assets"
+        ],
+        "limits": [
+          "supplemental mirror; prefer Mojang metadata, official jars, and generated vanilla inventories for canonical path-presence claims",
+          "cache files on demand instead of redistributing asset payloads in npm packages"
         ]
       },
       {

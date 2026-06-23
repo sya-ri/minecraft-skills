@@ -316,6 +316,7 @@ function requireSourcePolicyIntegrity(root: string, messages: string[]): void {
   const requiredDatasetIds = new Set([
     "prismarinejs-minecraft-data",
     "prismarinejs-minecraft-assets",
+    "inventivetalentdev-minecraft-assets",
     "misode-mcmeta",
   ]);
   const actualDatasetIds = new Set(

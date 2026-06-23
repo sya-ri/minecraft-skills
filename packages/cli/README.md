@@ -61,6 +61,10 @@ minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills datapack vanilla-paths latest --contains recipe
 minecraft-skills resourcepack vanilla-paths latest --contains models/block
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
+minecraft-skills resourcepack assets status 26.2
+minecraft-skills resourcepack assets fetch 26.2 --index-only
+minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --extension json --fetch
+minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models latest
 minecraft-skills resourcepack search-models latest --kind item-definition --contains bundle
 minecraft-skills plugin paper info

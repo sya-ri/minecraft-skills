@@ -20,6 +20,8 @@ import {
   comparePaperApiSurface,
   compareVanillaPaths,
   fetchData,
+  fetchMinecraftAssetFile,
+  fetchMinecraftAssetsIndex,
   getAuthoringChecklist,
   getAuthoringContext,
   getAuthoringDiagnostic,
@@ -36,6 +38,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getMinecraftAssetsStatus,
   getPackFormat,
   getOutputRequirement,
   getPaperApiIndex,
@@ -66,6 +69,7 @@ import {
   searchAuthoringScenarios,
   searchCommands,
   searchDatapackSchema,
+  searchMinecraftAssets,
   searchPaperMembers,
   searchPaperTypes,
   searchResourcepackModelPaths,
@@ -113,6 +117,13 @@ const packFormat = getPackFormat("java", "26.2", "datapack");
 const packFormatVersions = findVersionsByPackFormat({
   domain: "resourcepack",
   format: 88,
+});
+const assetStatus = getMinecraftAssetsStatus("26.2");
+await fetchMinecraftAssetsIndex({ version: "26.2" });
+const assetPaths = searchMinecraftAssets({ version: "26.2", contains: "diamond_sword" });
+const assetFile = await fetchMinecraftAssetFile({
+  version: "26.2",
+  path: "assets/minecraft/models/item/diamond_sword.json",
 });
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });

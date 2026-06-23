@@ -110,6 +110,10 @@ minecraft-skills minecraft pack-format 26.2 resourcepack
 minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/block/acacia_button
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
+minecraft-skills resourcepack assets status 26.2
+minecraft-skills resourcepack assets fetch 26.2 --index-only
+minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --extension json --fetch
+minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models 26.2
 minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
 minecraft-skills resourcepack classify-files assets/example/items/widget.json assets/example/textures/item/widget.png
@@ -232,6 +236,10 @@ Pack analysis tools include:
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
+- `get_resourcepack_assets_status`
+- `fetch_resourcepack_assets`
+- `search_resourcepack_assets`
+- `get_resourcepack_asset`
 
 Skill and data resources are exposed under:
 
@@ -250,12 +258,14 @@ import {
   getAuthoringRecipe,
   getAuthoringScenario,
   getClaimPolicy,
+  getMinecraftAssetsStatus,
   getOutputRequirement,
   getPackFormat,
   getResponsePattern,
   findVersionsByPackFormat,
   searchAuthoringScenarios,
   searchCommands,
+  searchMinecraftAssets,
   searchPaperMembers,
   searchVanillaPaths,
 } from "@minecraft-skills/catalog";
@@ -276,6 +286,12 @@ const packFormat = getPackFormat("java", "26.2", "datapack");
 const matchingPackVersions = findVersionsByPackFormat({
   domain: "resourcepack",
   format: 88,
+});
+const assetStatus = getMinecraftAssetsStatus("26.2");
+const resourcepackAssetMatches = searchMinecraftAssets({
+  version: "26.2",
+  contains: "diamond_sword",
+  extension: "json",
 });
 
 const commandMatches = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
@@ -311,6 +327,9 @@ minecraft-skills skill write minecraft-paper-plugins --output ./skills
 
 Heavy generated surfaces are listed in `data manifest` and downloaded with `data fetch`. This
 includes datapack schema surfaces, Paper API type/member surfaces, and resourcepack model summaries.
+External resource pack asset references from `InventivetalentDev/minecraft-assets` use a separate
+`minecraft-assets/<version>` cache. `resourcepack assets get` caches one file, while
+`resourcepack assets fetch` caches the searchable path index and archive for a version.
 Cache defaults:
 
 - macOS: `~/Library/Caches/minecraft-skills`

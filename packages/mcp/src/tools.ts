@@ -13,6 +13,9 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   fetchData,
+  fetchMinecraftAssetFile,
+  fetchMinecraftAssetsArchive,
+  fetchMinecraftAssetsIndex,
   findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
@@ -33,6 +36,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getMinecraftAssetsStatus,
   getOutputRequirement,
   getPackFileSchema,
   getPackFormat,
@@ -72,11 +76,13 @@ import {
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
+  readCachedMinecraftAssetText,
   resolveVersion,
   searchAuthoringScenarios,
   searchCatalog,
   searchCommands,
   searchDatapackSchema,
+  searchMinecraftAssets,
   searchPaperEvents,
   searchPaperMembers,
   searchPaperTypes,
@@ -956,6 +962,75 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "get_resourcepack_assets_status",
+    description:
+      "Inspect the local cache state for InventivetalentDev/minecraft-assets resource pack assets for a Minecraft version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        ref: { type: "string" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "fetch_resourcepack_assets",
+    description:
+      "Cache a Minecraft version's InventivetalentDev/minecraft-assets path index and optionally its archive.zip.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        ref: { type: "string" },
+        indexOnly: { type: "boolean", default: false },
+        force: { type: "boolean", default: false },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_resourcepack_assets",
+    description:
+      "Search a cached InventivetalentDev/minecraft-assets path index for vanilla resource pack asset paths.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        ref: { type: "string" },
+        prefix: { type: "string" },
+        contains: { type: "string" },
+        suffix: { type: "string" },
+        extension: { type: "string" },
+        limit: { type: "number", default: 50 },
+        fetch: { type: "boolean", default: false },
+        force: { type: "boolean", default: false },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_resourcepack_asset",
+    description:
+      "Fetch one InventivetalentDev/minecraft-assets resource pack file into cache and return metadata plus text content for text-like files.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string" },
+        ref: { type: "string" },
+        path: { type: "string" },
+        force: { type: "boolean", default: false },
+        includeContent: { type: "boolean", default: true },
+      },
+      required: ["version", "path"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_vanilla_inventory",
     description:
       "Get compact inventory of vanilla client assets and server data bundled for a Minecraft version.",
@@ -1201,6 +1276,10 @@ function integerArg(value: unknown, label: string): number {
     throw new Error(`${label} must be a non-negative integer`);
   }
   return value;
+}
+
+function isTextLikeAsset(path: string): boolean {
+  return /\.(json|mcmeta|txt|lang|properties|fsh|vsh|glsl)$/i.test(path);
 }
 
 export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
@@ -1756,6 +1835,73 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         searchOptions.limit = args.limit;
       }
       return text(searchResourcepackModelPaths(searchOptions));
+    }
+    if (name === "get_resourcepack_assets_status") {
+      const requested = typeof args.version === "string" ? args.version : "latest";
+      const version = resolveVersion(edition, requested);
+      return text(
+        getMinecraftAssetsStatus(version, typeof args.ref === "string" ? args.ref : version),
+      );
+    }
+    if (name === "fetch_resourcepack_assets") {
+      const requested = typeof args.version === "string" ? args.version : "latest";
+      const version = resolveVersion(edition, requested);
+      const ref = typeof args.ref === "string" ? args.ref : version;
+      return text(
+        args.indexOnly === true
+          ? await fetchMinecraftAssetsIndex({
+              version,
+              ref,
+              force: args.force === true,
+            })
+          : await fetchMinecraftAssetsArchive({
+              version,
+              ref,
+              force: args.force === true,
+            }),
+      );
+    }
+    if (name === "search_resourcepack_assets") {
+      const requested = typeof args.version === "string" ? args.version : "latest";
+      const version = resolveVersion(edition, requested);
+      const ref = typeof args.ref === "string" ? args.ref : version;
+      if (args.fetch === true) {
+        await fetchMinecraftAssetsIndex({
+          version,
+          ref,
+          force: args.force === true,
+        });
+      }
+      return text(
+        searchMinecraftAssets({
+          version,
+          ref,
+          ...(typeof args.prefix === "string" ? { prefix: args.prefix } : {}),
+          ...(typeof args.contains === "string" ? { contains: args.contains } : {}),
+          ...(typeof args.suffix === "string" ? { suffix: args.suffix } : {}),
+          ...(typeof args.extension === "string" ? { extension: args.extension } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "get_resourcepack_asset") {
+      if (typeof args.version !== "string" || typeof args.path !== "string") {
+        throw new Error("get_resourcepack_asset requires string version and path");
+      }
+      const version = resolveVersion(edition, args.version);
+      const result = await fetchMinecraftAssetFile({
+        version,
+        path: args.path,
+        ref: typeof args.ref === "string" ? args.ref : version,
+        force: args.force === true,
+      });
+      const includeContent = args.includeContent !== false && isTextLikeAsset(args.path);
+      return text({
+        ...result,
+        ...(includeContent
+          ? { content: readCachedMinecraftAssetText(version, args.path).slice(0, 200_000) }
+          : {}),
+      });
     }
     if (name === "get_vanilla_inventory") {
       const version = typeof args.version === "string" ? args.version : "latest";

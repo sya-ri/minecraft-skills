@@ -757,6 +757,77 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("assets/minecraft/items/bundle.json");
   });
 
+  it("caches and searches external resourcepack assets", async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), "minecraft-skills-cli-assets-"));
+    vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", cacheDir);
+    vi.stubGlobal("fetch", async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes("/git/trees/26.2")) {
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: async () => ({
+            tree: [
+              { path: "assets/minecraft/models/item/apple.json", type: "blob" },
+              { path: "assets/minecraft/textures/item/apple.png", type: "blob" },
+            ],
+          }),
+        } as unknown as Response;
+      }
+      if (url.endsWith("/26.2.zip")) {
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          arrayBuffer: async () => Buffer.from("zip bytes"),
+        } as unknown as Response;
+      }
+      if (url.endsWith("/assets/minecraft/models/item/apple.json")) {
+        return {
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          arrayBuffer: async () => Buffer.from('{"parent":"minecraft:item/generated"}'),
+        } as unknown as Response;
+      }
+      throw new Error(`unexpected url ${url}`);
+    });
+    try {
+      const fetchResult = await capture(["resourcepack", "assets", "fetch", "26.2"]);
+      expect(fetchResult.code).toBe(0);
+      expect(fetchResult.stdout.join("\n")).toContain('"bytes": 9');
+
+      const search = await capture([
+        "resourcepack",
+        "assets",
+        "search",
+        "26.2",
+        "--extension",
+        "json",
+      ]);
+      expect(search.code).toBe(0);
+      expect(search.stdout.join("\n")).toContain("assets/minecraft/models/item/apple.json");
+
+      const get = await capture([
+        "resourcepack",
+        "assets",
+        "get",
+        "26.2",
+        "assets/minecraft/models/item/apple.json",
+      ]);
+      expect(get.code).toBe(0);
+      expect(get.stdout.join("\n")).toContain('"cached": false');
+
+      const status = await capture(["resourcepack", "assets", "status", "26.2"]);
+      expect(status.code).toBe(0);
+      expect(status.stdout.join("\n")).toContain('"archiveCached": true');
+      expect(status.stdout.join("\n")).toContain('"cachedFileCount": 1');
+    } finally {
+      rmSync(cacheDir, { recursive: true, force: true });
+    }
+  });
+
   it("searches Paper events", async () => {
     const fetchMock = vi.fn(async (_url: string) => ({
       ok: true,

@@ -17,6 +17,9 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   fetchData,
+  fetchMinecraftAssetFile,
+  fetchMinecraftAssetsArchive,
+  fetchMinecraftAssetsIndex,
   findVersionsByPackFormat,
   getAuthoringChecklist,
   getAuthoringContext,
@@ -38,6 +41,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getMinecraftAssetsStatus,
   getOutputRequirement,
   getPackFileSchema,
   getPackFormat,
@@ -82,6 +86,7 @@ import {
   searchCatalog,
   searchCommands,
   searchDatapackSchema,
+  searchMinecraftAssets,
   searchPaperEvents,
   searchPaperMembers,
   searchPaperTypes,
@@ -330,6 +335,17 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
   if (groupedCommand === "resourcepack migration-plan") {
     return ["migration-plan", ...withDefaultDomain(rest, "resourcepack")];
+  }
+  if (group === "resourcepack" && subcommand === "assets") {
+    const [assetSubcommand, ...assetRest] = rest;
+    const assetAliases: Record<string, string> = {
+      status: "resourcepack-assets-status",
+      fetch: "resourcepack-assets-fetch",
+      search: "resourcepack-assets-search",
+      get: "resourcepack-assets-get",
+    };
+    const command = assetAliases[assetSubcommand ?? ""];
+    return command ? [command, ...assetRest] : argv;
   }
   if (group === "resourcepack") {
     const command = normalizeDomainAuthoringSubcommand("resourcepack", subcommand, rest);
@@ -644,6 +660,10 @@ Grouped commands:
   minecraft-skills resourcepack validate-files <version> <file...> [--pack-root dir]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
+  minecraft-skills resourcepack assets status [version]
+  minecraft-skills resourcepack assets fetch [version] [--index-only] [--force]
+  minecraft-skills resourcepack assets search [version] [--prefix path] [--contains text] [--extension json] [--limit 50] [--fetch]
+  minecraft-skills resourcepack assets get <version> <path> [--force]
   minecraft-skills plugin paper info
   minecraft-skills plugin paper api|api-index|api-surface [version]
   minecraft-skills plugin paper types [version] [--package package.name] [--contains text] [--limit 50]
@@ -701,7 +721,7 @@ Command reference:
                  Inspect command paths, observed datapack JSON shapes, file schemas, file kinds, and file content validation.
   datapack vanilla-paths|compare-vanilla-paths
                  Search or compare bundled vanilla datapack paths.
-  resourcepack vanilla-paths|compare-vanilla-paths|models|search-models
+  resourcepack vanilla-paths|compare-vanilla-paths|models|search-models|assets
                  Inspect vanilla assets, model summaries, item/model paths, file schemas, file kinds, and file content validation.
   plugin paper info|api|api-index|compare-api|api-surface|types|members|compare-api-surface|events
                  Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
@@ -1547,6 +1567,80 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         modelOptions.kind = kind;
       }
       printJson(output, searchResourcepackModelPaths(modelOptions));
+      return 0;
+    }
+
+    if (command === "resourcepack-assets-status") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const version = resolveVersion(edition, requested);
+      printJson(output, getMinecraftAssetsStatus(version, readOption(args, "--ref", version)));
+      return 0;
+    }
+
+    if (command === "resourcepack-assets-fetch") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const version = resolveVersion(edition, requested);
+      const ref = readOption(args, "--ref", version);
+      printJson(
+        output,
+        args.includes("--index-only")
+          ? await fetchMinecraftAssetsIndex({
+              version,
+              ref,
+              force: args.includes("--force"),
+            })
+          : await fetchMinecraftAssetsArchive({
+              version,
+              ref,
+              force: args.includes("--force"),
+            }),
+      );
+      return 0;
+    }
+
+    if (command === "resourcepack-assets-search") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const version = resolveVersion(edition, requested);
+      const ref = readOption(args, "--ref", version);
+      if (args.includes("--fetch")) {
+        await fetchMinecraftAssetsIndex({
+          version,
+          ref,
+          force: args.includes("--force"),
+        });
+      }
+      printJson(
+        output,
+        searchMinecraftAssets({
+          version,
+          ref,
+          limit: Number(readOption(args, "--limit", "50")),
+          ...(args.includes("--prefix") ? { prefix: readOption(args, "--prefix", "") } : {}),
+          ...(args.includes("--contains") ? { contains: readOption(args, "--contains", "") } : {}),
+          ...(args.includes("--suffix") ? { suffix: readOption(args, "--suffix", "") } : {}),
+          ...(args.includes("--extension")
+            ? { extension: readOption(args, "--extension", "") }
+            : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "resourcepack-assets-get") {
+      const [requested, assetPath] = positionalArgs(args);
+      if (!requested || !assetPath) {
+        throw new Error("resourcepack assets get command requires <version> and <path>");
+      }
+      const version = resolveVersion(edition, requested);
+      printJson(
+        output,
+        await fetchMinecraftAssetFile({
+          version,
+          path: assetPath,
+          ref: readOption(args, "--ref", version),
+          force: args.includes("--force"),
+        }),
+      );
       return 0;
     }
 

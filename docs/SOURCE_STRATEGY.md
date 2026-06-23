@@ -36,6 +36,7 @@ machine-readable facts with explicit limits, not copied as prose.
 | --- | --- | --- |
 | PrismarineJS `minecraft-data` | Blocks, items, entities, recipes, protocol versions, features, commands, sounds, and language-index lookups. | Supplemental; cross-check with Mojang-derived data before canonical claims. |
 | PrismarineJS `minecraft-assets` | Resource pack asset names, image-oriented asset indexes, and legacy texture mapping candidates. | Supplemental; official jar extraction remains canonical for vanilla path presence. |
+| `InventivetalentDev/minecraft-assets` | On-demand resource pack asset file lookup, version path index search, and cached archive references extracted from Minecraft client assets. | Supplemental mirror; do not treat as more canonical than Mojang metadata, official jars, or generated vanilla inventories. |
 | `misode/mcmeta` | Version-controlled generated data/assets history, summaries, registries, and diffs. | Community processed; use as structured corroboration and migration input. |
 
 ## Importer Policy
@@ -70,4 +71,5 @@ Use this wording discipline in generated answers and docs:
 - Domains do not expose Minecraft Wiki entries as primary sources.
 - Deprecated source kind `community-navigation` is not used.
 - Agent-facing files do not reintroduce Minecraft Wiki URLs or old "navigation/provenance" wording.
-- PrismarineJS and `misode/mcmeta` remain listed as recommended structured community datasets.
+- PrismarineJS, `InventivetalentDev/minecraft-assets`, and `misode/mcmeta` remain listed as
+  recommended structured community datasets.

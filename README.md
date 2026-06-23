@@ -61,6 +61,8 @@ minecraft-skills minecraft pack-format 26.2 datapack
 minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
+minecraft-skills resourcepack assets search 26.2 --contains models/item --fetch
+minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 ```

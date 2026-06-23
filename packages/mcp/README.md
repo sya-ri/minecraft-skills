@@ -108,6 +108,10 @@ assumption and ask the user to confirm it.
 - `compare_vanilla_paths`
 - `get_resourcepack_model_summary`
 - `search_resourcepack_models`
+- `get_resourcepack_assets_status`
+- `fetch_resourcepack_assets`
+- `search_resourcepack_assets`
+- `get_resourcepack_asset`
 - `get_paper_plugin_data`
 - `get_paper_api_reference`
 - `get_paper_api_index`

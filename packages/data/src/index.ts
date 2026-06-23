@@ -16,6 +16,10 @@ import { fileURLToPath } from "node:url";
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const dataRoot = join(packageRoot, "data");
 const cacheEnvName = "MINECRAFT_SKILLS_CACHE_DIR";
+const minecraftAssetsRepository = "InventivetalentDev/minecraft-assets";
+const minecraftAssetsRawBase = `https://raw.githubusercontent.com/${minecraftAssetsRepository}`;
+const minecraftAssetsApiBase = `https://api.github.com/repos/${minecraftAssetsRepository}`;
+const minecraftAssetsArchiveBase = `https://github.com/${minecraftAssetsRepository}/archive`;
 
 export type DataManifestEntry = {
   path: string;
@@ -69,6 +73,108 @@ export type CachedDataFile = {
   bytes: number;
 };
 
+export type MinecraftAssetsSource = {
+  schemaVersion: 1;
+  repository: typeof minecraftAssetsRepository;
+  version: string;
+  ref: string;
+  fetchedAt: string;
+  urls: {
+    tree: string;
+    rawBase: string;
+    archive: string;
+  };
+};
+
+export type MinecraftAssetsIndex = {
+  schemaVersion: 1;
+  source: MinecraftAssetsSource;
+  paths: string[];
+};
+
+export type MinecraftAssetsStatus = {
+  schemaVersion: 1;
+  version: string;
+  ref: string;
+  cacheRoot: string;
+  versionRoot: string;
+  sourceFile: string;
+  indexFile: string;
+  archiveFile: string;
+  sourceCached: boolean;
+  indexCached: boolean;
+  archiveCached: boolean;
+  cachedFileCount: number;
+};
+
+export type FetchMinecraftAssetFileOptions = {
+  version: string;
+  path: string;
+  ref?: string;
+  force?: boolean;
+  fetch?: typeof fetch;
+};
+
+export type FetchMinecraftAssetFileResult = {
+  schemaVersion: 1;
+  version: string;
+  ref: string;
+  path: string;
+  file: string;
+  bytes: number;
+  cached: boolean;
+  source: MinecraftAssetsSource;
+};
+
+export type FetchMinecraftAssetsIndexOptions = {
+  version: string;
+  ref?: string;
+  force?: boolean;
+  fetch?: typeof fetch;
+};
+
+export type FetchMinecraftAssetsIndexResult = {
+  schemaVersion: 1;
+  version: string;
+  ref: string;
+  file: string;
+  pathCount: number;
+  cached: boolean;
+  source: MinecraftAssetsSource;
+};
+
+export type FetchMinecraftAssetsArchiveOptions = FetchMinecraftAssetsIndexOptions;
+
+export type FetchMinecraftAssetsArchiveResult = {
+  schemaVersion: 1;
+  version: string;
+  ref: string;
+  file: string;
+  bytes: number;
+  cached: boolean;
+  index: FetchMinecraftAssetsIndexResult;
+  source: MinecraftAssetsSource;
+};
+
+export type SearchMinecraftAssetsOptions = {
+  version: string;
+  ref?: string;
+  prefix?: string;
+  contains?: string;
+  suffix?: string;
+  extension?: string;
+  limit?: number;
+};
+
+export type SearchMinecraftAssetsResult = {
+  schemaVersion: 1;
+  version: string;
+  ref: string;
+  source: MinecraftAssetsSource;
+  total: number;
+  matches: string[];
+};
+
 function assertSafeRelativePath(relativePath: string): void {
   if (
     relativePath.length === 0 ||
@@ -77,6 +183,25 @@ function assertSafeRelativePath(relativePath: string): void {
     relativePath.split(/[\\/]/).includes("..")
   ) {
     throw new Error(`Data path must be a safe relative path: ${relativePath}`);
+  }
+}
+
+function assertSafeMinecraftVersion(version: string): void {
+  if (
+    version.length === 0 ||
+    version.includes("\0") ||
+    version.includes("/") ||
+    version.includes("\\") ||
+    version.split(".").includes("..")
+  ) {
+    throw new Error(`Minecraft asset version must be a safe ref-like value: ${version}`);
+  }
+}
+
+function assertSafeAssetPath(assetPath: string): void {
+  assertSafeRelativePath(assetPath);
+  if (!assetPath.startsWith("assets/")) {
+    throw new Error(`Minecraft asset path must start with assets/: ${assetPath}`);
   }
 }
 
@@ -111,6 +236,88 @@ function cacheRootForPlatform(): string {
 function cacheDataRoot(dataVersion = getDataManifest().dataVersion): string {
   assertSafeRelativePath(dataVersion);
   return join(cacheRootForPlatform(), "data", dataVersion);
+}
+
+function minecraftAssetsRoot(): string {
+  return join(cacheRootForPlatform(), "minecraft-assets");
+}
+
+function minecraftAssetsVersionRoot(version: string): string {
+  assertSafeMinecraftVersion(version);
+  return join(minecraftAssetsRoot(), version);
+}
+
+function minecraftAssetsSourceFile(version: string): string {
+  return join(minecraftAssetsVersionRoot(version), "source.json");
+}
+
+function minecraftAssetsIndexFile(version: string): string {
+  return join(minecraftAssetsVersionRoot(version), "index.json");
+}
+
+function minecraftAssetsArchiveFile(version: string): string {
+  return join(minecraftAssetsVersionRoot(version), "archive.zip");
+}
+
+function minecraftAssetsCachedFile(version: string, assetPath: string): string {
+  assertSafeAssetPath(assetPath);
+  return join(minecraftAssetsVersionRoot(version), "files", assetPath);
+}
+
+function minecraftAssetsRef(version: string, ref = version): string {
+  assertSafeMinecraftVersion(version);
+  if (ref.length === 0 || ref.includes("\0")) {
+    throw new Error(`Minecraft asset ref must be a safe non-empty value: ${ref}`);
+  }
+  return ref;
+}
+
+function encodeRef(ref: string): string {
+  return ref
+    .split("/")
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+}
+
+function minecraftAssetsSource(version: string, ref = version): MinecraftAssetsSource {
+  const resolvedRef = minecraftAssetsRef(version, ref);
+  const encodedRef = encodeRef(resolvedRef);
+  return {
+    schemaVersion: 1,
+    repository: minecraftAssetsRepository,
+    version,
+    ref: resolvedRef,
+    fetchedAt: new Date().toISOString(),
+    urls: {
+      tree: `${minecraftAssetsApiBase}/git/trees/${encodedRef}?recursive=1`,
+      rawBase: `${minecraftAssetsRawBase}/${encodedRef}`,
+      archive: `${minecraftAssetsArchiveBase}/${encodedRef}.zip`,
+    },
+  };
+}
+
+function cachedMinecraftAssetsSource(version: string): MinecraftAssetsSource | undefined {
+  const file = minecraftAssetsSourceFile(version);
+  if (!existsSync(file)) {
+    return undefined;
+  }
+  return JSON.parse(readFileSync(file, "utf8")) as MinecraftAssetsSource;
+}
+
+function assertCompatibleMinecraftAssetsRef(
+  version: string,
+  ref: string,
+  force: boolean | undefined,
+): void {
+  if (force) {
+    return;
+  }
+  const cached = cachedMinecraftAssetsSource(version);
+  if (cached && cached.ref !== ref) {
+    throw new Error(
+      `Minecraft assets cache for ${version} uses ref ${cached.ref}, not ${ref}; pass force to replace it`,
+    );
+  }
 }
 
 function cachedPath(relativePath: string, dataVersion = getDataManifest().dataVersion): string {
@@ -176,6 +383,26 @@ export function getCachedDataPath(
   return cachedPath(relativePath, dataVersion);
 }
 
+export function getMinecraftAssetsCacheRoot(): string {
+  return minecraftAssetsRoot();
+}
+
+export function getMinecraftAssetsVersionCacheRoot(version: string): string {
+  return minecraftAssetsVersionRoot(version);
+}
+
+export function getCachedMinecraftAssetPath(version: string, assetPath: string): string {
+  return minecraftAssetsCachedFile(version, assetPath);
+}
+
+export function hasCachedMinecraftAssetFile(version: string, assetPath: string): boolean {
+  return existsSync(minecraftAssetsCachedFile(version, assetPath));
+}
+
+export function readCachedMinecraftAssetText(version: string, assetPath: string): string {
+  return readFileSync(minecraftAssetsCachedFile(version, assetPath), "utf8");
+}
+
 export function listCachedDataFiles(dataVersion = getDataManifest().dataVersion): CachedDataFile[] {
   const root = cacheDataRoot(dataVersion);
   if (!existsSync(root)) {
@@ -209,6 +436,53 @@ export function listCachedDataFiles(dataVersion = getDataManifest().dataVersion)
   return found.sort((left, right) => left.path.localeCompare(right.path));
 }
 
+function countCachedMinecraftAssetFiles(version: string): number {
+  const root = join(minecraftAssetsVersionRoot(version), "files");
+  if (!existsSync(root)) {
+    return 0;
+  }
+  let count = 0;
+  const stack = [root];
+  while (stack.length > 0) {
+    const current = stack.pop();
+    if (!current) {
+      continue;
+    }
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const absolute = join(current, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(absolute);
+        continue;
+      }
+      if (entry.isFile()) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+}
+
+export function getMinecraftAssetsStatus(version: string, ref = version): MinecraftAssetsStatus {
+  const resolvedRef = minecraftAssetsRef(version, ref);
+  const sourceFile = minecraftAssetsSourceFile(version);
+  const indexFile = minecraftAssetsIndexFile(version);
+  const archiveFile = minecraftAssetsArchiveFile(version);
+  return {
+    schemaVersion: 1,
+    version,
+    ref: resolvedRef,
+    cacheRoot: minecraftAssetsRoot(),
+    versionRoot: minecraftAssetsVersionRoot(version),
+    sourceFile,
+    indexFile,
+    archiveFile,
+    sourceCached: existsSync(sourceFile),
+    indexCached: existsSync(indexFile),
+    archiveCached: existsSync(archiveFile),
+    cachedFileCount: countCachedMinecraftAssetFiles(version),
+  };
+}
+
 function matchingEntries(options: FetchDataOptions): DataManifestEntry[] {
   const manifest = getDataManifest();
   return manifest.downloadable.filter((entry) => {
@@ -240,6 +514,28 @@ async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Buffer>
   return Buffer.from(await response.arrayBuffer());
 }
 
+async function fetchJson<T>(url: string, fetchImpl: typeof fetch): Promise<T> {
+  const response = await fetchImpl(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+  }
+  return (await response.json()) as T;
+}
+
+function writeJsonAtomic(file: string, value: unknown): void {
+  mkdirSync(dirname(file), { recursive: true });
+  const tempFile = join(tmpdir(), `minecraft-skills-${process.pid}-${Date.now()}.tmp`);
+  writeFileSync(tempFile, `${JSON.stringify(value, null, 2)}\n`);
+  renameSync(tempFile, file);
+}
+
+function writeBytesAtomic(file: string, bytes: Buffer): void {
+  mkdirSync(dirname(file), { recursive: true });
+  const tempFile = join(tmpdir(), `minecraft-skills-${process.pid}-${Date.now()}.tmp`);
+  writeFileSync(tempFile, bytes);
+  renameSync(tempFile, file);
+}
+
 function sha256(buffer: Buffer): string {
   return createHash("sha256").update(buffer).digest("hex");
 }
@@ -267,10 +563,7 @@ export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDa
         `Integrity mismatch for ${entry.path}: expected ${entry.sha256}, got ${actualSha256}`,
       );
     }
-    mkdirSync(dirname(output), { recursive: true });
-    const tempFile = join(tmpdir(), `minecraft-skills-${process.pid}-${Date.now()}.tmp`);
-    writeFileSync(tempFile, bytes);
-    renameSync(tempFile, output);
+    writeBytesAtomic(output, bytes);
     fetched.push({
       path: entry.path,
       file: output,
@@ -284,6 +577,175 @@ export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDa
     cacheRoot: getCacheRoot(),
     fetched,
     skipped,
+  };
+}
+
+export async function fetchMinecraftAssetFile(
+  options: FetchMinecraftAssetFileOptions,
+): Promise<FetchMinecraftAssetFileResult> {
+  const source = minecraftAssetsSource(options.version, options.ref);
+  assertCompatibleMinecraftAssetsRef(options.version, source.ref, options.force);
+  assertSafeAssetPath(options.path);
+  const output = minecraftAssetsCachedFile(options.version, options.path);
+  if (!options.force && existsSync(output)) {
+    return {
+      schemaVersion: 1,
+      version: options.version,
+      ref: source.ref,
+      path: options.path,
+      file: output,
+      bytes: statSync(output).size,
+      cached: true,
+      source,
+    };
+  }
+  const url = `${source.urls.rawBase}/${options.path}`;
+  const bytes = await fetchBytes(url, options.fetch ?? fetch);
+  writeBytesAtomic(output, bytes);
+  writeJsonAtomic(minecraftAssetsSourceFile(options.version), source);
+  return {
+    schemaVersion: 1,
+    version: options.version,
+    ref: source.ref,
+    path: options.path,
+    file: output,
+    bytes: bytes.length,
+    cached: false,
+    source,
+  };
+}
+
+type GitHubTreeResponse = {
+  tree?: Array<{
+    path?: string;
+    type?: string;
+  }>;
+  truncated?: boolean;
+};
+
+export async function fetchMinecraftAssetsIndex(
+  options: FetchMinecraftAssetsIndexOptions,
+): Promise<FetchMinecraftAssetsIndexResult> {
+  const source = minecraftAssetsSource(options.version, options.ref);
+  assertCompatibleMinecraftAssetsRef(options.version, source.ref, options.force);
+  const output = minecraftAssetsIndexFile(options.version);
+  if (!options.force && existsSync(output)) {
+    const index = JSON.parse(readFileSync(output, "utf8")) as MinecraftAssetsIndex;
+    return {
+      schemaVersion: 1,
+      version: options.version,
+      ref: index.source.ref,
+      file: output,
+      pathCount: index.paths.length,
+      cached: true,
+      source: index.source,
+    };
+  }
+  const tree = await fetchJson<GitHubTreeResponse>(source.urls.tree, options.fetch ?? fetch);
+  if (!Array.isArray(tree.tree)) {
+    throw new Error(`Invalid GitHub tree response for ${minecraftAssetsRepository} ${source.ref}`);
+  }
+  if (tree.truncated) {
+    throw new Error(
+      `GitHub tree response was truncated for ${minecraftAssetsRepository} ${source.ref}`,
+    );
+  }
+  const paths = tree.tree
+    .filter((entry) => entry.type === "blob" && typeof entry.path === "string")
+    .map((entry) => entry.path ?? "")
+    .filter((path) => path.startsWith("assets/"))
+    .sort((left, right) => left.localeCompare(right));
+  const index: MinecraftAssetsIndex = {
+    schemaVersion: 1,
+    source,
+    paths,
+  };
+  writeJsonAtomic(output, index);
+  writeJsonAtomic(minecraftAssetsSourceFile(options.version), source);
+  return {
+    schemaVersion: 1,
+    version: options.version,
+    ref: source.ref,
+    file: output,
+    pathCount: paths.length,
+    cached: false,
+    source,
+  };
+}
+
+export async function fetchMinecraftAssetsArchive(
+  options: FetchMinecraftAssetsArchiveOptions,
+): Promise<FetchMinecraftAssetsArchiveResult> {
+  const source = minecraftAssetsSource(options.version, options.ref);
+  assertCompatibleMinecraftAssetsRef(options.version, source.ref, options.force);
+  const output = minecraftAssetsArchiveFile(options.version);
+  const index = await fetchMinecraftAssetsIndex(options);
+  if (!options.force && existsSync(output)) {
+    return {
+      schemaVersion: 1,
+      version: options.version,
+      ref: source.ref,
+      file: output,
+      bytes: statSync(output).size,
+      cached: true,
+      index,
+      source,
+    };
+  }
+  const bytes = await fetchBytes(source.urls.archive, options.fetch ?? fetch);
+  writeBytesAtomic(output, bytes);
+  writeJsonAtomic(minecraftAssetsSourceFile(options.version), source);
+  return {
+    schemaVersion: 1,
+    version: options.version,
+    ref: source.ref,
+    file: output,
+    bytes: bytes.length,
+    cached: false,
+    index,
+    source,
+  };
+}
+
+export function readMinecraftAssetsIndex(version: string): MinecraftAssetsIndex {
+  return JSON.parse(
+    readFileSync(minecraftAssetsIndexFile(version), "utf8"),
+  ) as MinecraftAssetsIndex;
+}
+
+export function searchMinecraftAssets(
+  options: SearchMinecraftAssetsOptions,
+): SearchMinecraftAssetsResult {
+  const index = readMinecraftAssetsIndex(options.version);
+  if (options.ref && options.ref !== index.source.ref) {
+    throw new Error(
+      `Cached Minecraft assets index for ${options.version} uses ref ${index.source.ref}, not ${options.ref}`,
+    );
+  }
+  const limit = options.limit ?? 50;
+  let paths = index.paths;
+  if (options.prefix) {
+    paths = paths.filter((path) => path.startsWith(options.prefix ?? ""));
+  }
+  if (options.contains) {
+    paths = paths.filter((path) => path.includes(options.contains ?? ""));
+  }
+  if (options.suffix) {
+    paths = paths.filter((path) => path.endsWith(options.suffix ?? ""));
+  }
+  if (options.extension) {
+    const extension = options.extension.startsWith(".")
+      ? options.extension
+      : `.${options.extension}`;
+    paths = paths.filter((path) => path.endsWith(extension));
+  }
+  return {
+    schemaVersion: 1,
+    version: index.source.version,
+    ref: index.source.ref,
+    source: index.source,
+    total: paths.length,
+    matches: paths.slice(0, limit),
   };
 }
 
