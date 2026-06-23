@@ -205,6 +205,16 @@ Typical stdio MCP client config:
 }
 ```
 
+For steadier agent behavior, add this to `AGENTS.md`, `CLAUDE.md`, or the equivalent project
+instruction file:
+
+```md
+Use minecraft-skills MCP tools whenever a task involves Minecraft.
+Do not guess Minecraft facts when a minecraft-skills MCP lookup can verify them.
+If MCP cannot answer, check local project files or approved web sources; label any remaining
+assumption and ask the user to confirm it.
+```
+
 The server exposes the same catalog as tools, resources, and prompts. Prompts:
 
 - `use_minecraft_datapacks`
