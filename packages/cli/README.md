@@ -101,7 +101,7 @@ warnings for provenance-aware answers. `source report [domain] [version]` return
 prohibited automation, structured community datasets, and optional domain/version provenance.
 `source datasets` lists recommended structured community datasets such as PrismarineJS and
 misode/mcmeta.
-`datapack intents`, `resourcepack intents`, or `plugin paper intents` maps authoring intents to the exact CLI/MCP/package APIs and evidence surfaces
+`datapack intents`, `resourcepack intents`, or `plugin paper intents` maps authoring intents to the exact CLI commands and evidence surfaces
 an agent should inspect before answering.
 
 ## Data Sources

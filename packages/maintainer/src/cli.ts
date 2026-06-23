@@ -349,6 +349,39 @@ function requireSourcePolicyIntegrity(root: string, messages: string[]): void {
   }
 }
 
+function requireDocumentationIntegrity(root: string, messages: string[]): void {
+  const packageJson = readJsonFile<{ version: string }>(join(root, "package.json"));
+  const versionSupport = readFileSync(join(root, "docs/VERSION_SUPPORT.md"), "utf8");
+  if (!versionSupport.includes(`minecraft-skills ${packageJson.version}`)) {
+    messages.push("docs/VERSION_SUPPORT.md must reference the current workspace version");
+  }
+
+  const forbiddenSkillEntrypointPatterns = [
+    /\bMCP\b/,
+    /\bmcp\b/,
+    /\bPackage API\b/,
+    /\bpackage API\b/,
+    /@minecraft-skills\/catalog/,
+    /@minecraft-skills\/mcp/,
+    /\b(?:get|list|search|compare)_[a-z_]+\b/,
+  ];
+  for (const domain of listDomains()) {
+    const paths = [`skills/${domain.skill}/SKILL.md`];
+    for (const reference of listReferences().filter((entry) => entry.domain === domain.id)) {
+      paths.push(reference.path);
+    }
+    for (const path of paths) {
+      const content = readFileSync(join(root, dataFilePath(path)), "utf8");
+      for (const pattern of forbiddenSkillEntrypointPatterns) {
+        if (pattern.test(content)) {
+          messages.push(`skill-facing file must only document CLI entrypoints: ${path}`);
+          break;
+        }
+      }
+    }
+  }
+}
+
 type PublicEntrypoints = {
   cliCommands: Set<string>;
   mcpTools: Set<string>;
@@ -1168,6 +1201,7 @@ export function validateRepository(): ValidationResult {
 
   requireDataManifestIntegrity(root, messages);
   requireSourcePolicyIntegrity(root, messages);
+  requireDocumentationIntegrity(root, messages);
   requireFactSurfaces(root, publicEntrypoints, messages);
   requireAuthoringChecklists(root, publicEntrypoints, messages);
   requireAuthoringGuardrails(root, messages);
