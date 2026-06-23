@@ -895,7 +895,52 @@ describe("catalog", () => {
       valid: false,
       schemaAvailable: false,
     });
-    expect(unsupportedVersionLayout.issues[0]?.keyword).toBe("schema-unavailable");
+    expect(unsupportedVersionLayout.issues[0]?.keyword).toBe("version-layout-unsupported");
+
+    const latestItemDefinitionWithCustomFields = validatePackFileContent({
+      version: "26.2",
+      domain: "resourcepack",
+      path: "assets/example/items/widget.json",
+      content: {
+        model: {
+          type: "minecraft:condition",
+          property: "minecraft:using_item",
+          on_true: { type: "minecraft:model", model: "minecraft:item/widget_active" },
+          on_false: { type: "minecraft:model", model: "minecraft:item/widget" },
+        },
+        oversize_in_gui: true,
+      },
+    });
+    expect(latestItemDefinitionWithCustomFields).toMatchObject({
+      validated: true,
+      valid: true,
+      schemaAvailable: true,
+    });
+
+    const customJsonLayout = validatePackFileContent({
+      version: "26.2",
+      domain: "resourcepack",
+      path: "assets/example/custom/widget.json",
+      content: { custom: true },
+    });
+    expect(customJsonLayout).toMatchObject({
+      validated: true,
+      valid: true,
+      schemaAvailable: true,
+    });
+
+    const unknownBinaryLayout = validatePackFileContent({
+      version: "26.2",
+      domain: "resourcepack",
+      path: "assets/example/custom/widget.bin",
+      content: "bytes",
+    });
+    expect(unknownBinaryLayout).toMatchObject({
+      validated: false,
+      valid: true,
+      schemaAvailable: false,
+    });
+    expect(unknownBinaryLayout.issues).toEqual([]);
 
     const batch = validatePackFilesContent({
       version: "26.2",

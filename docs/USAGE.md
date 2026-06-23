@@ -129,6 +129,11 @@ format schema so agents can still reason about the file safely. Binary/text asse
 container format and link back to the relevant command or in-game validation checks instead of
 pretending to validate payload internals.
 
+`validate-files` is conservative: invalid JSON, pack format mismatches, and known layouts used
+before their target-version support are reported as invalid. Missing minecraft-skills schemas or
+custom resource pack folders are reported as unvalidated gaps rather than proof that the file is
+invalid.
+
 Paper plugin lookups:
 
 ```sh

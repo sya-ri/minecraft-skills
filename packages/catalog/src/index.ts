@@ -3991,6 +3991,24 @@ function resourcepackVersionHasTopLevel(
   );
 }
 
+const knownVanillaResourcepackTopLevels = new Set([
+  "atlases",
+  "blockstates",
+  "equipment",
+  "font",
+  "fonts",
+  "items",
+  "lang",
+  "models",
+  "particles",
+  "post_effect",
+  "shaders",
+  "sounds",
+  "sounds.json",
+  "texts",
+  "textures",
+]);
+
 function unsupportedSchemaResult(options: {
   edition: EditionData;
   version: string;
@@ -4052,6 +4070,9 @@ function staticSchemaVersionSupport(options: {
     const topLevel = parts[2];
     if (!topLevel) {
       return [`Target version ${options.version} has no matching resourcepack top-level path.`];
+    }
+    if (!knownVanillaResourcepackTopLevels.has(topLevel)) {
+      return [];
     }
     if (topLevel === "sounds.json" || topLevel === "sounds") {
       return [];
@@ -4215,6 +4236,15 @@ function ajvIssue(path: string, error: ErrorObject): PackFileValidationIssue {
   });
 }
 
+function unavailableSchemaIsVersionMismatch(schema: PackFileSchemaResult): boolean {
+  return schema.notes.some(
+    (note) =>
+      note.includes("not supported by the target version data") ||
+      note.includes("expects datapack") ||
+      note.includes("does not expose assets/minecraft/"),
+  );
+}
+
 const validationAjv = new Ajv2020({
   allErrors: true,
   strict: false,
@@ -4292,22 +4322,27 @@ export function validatePackFileContent(
   };
 
   if (!schema.available || !schema.jsonSchema) {
+    const versionMismatch = unavailableSchemaIsVersionMismatch(schema);
     return {
       ...base,
       validated: false,
-      valid: false,
+      valid: !versionMismatch,
       contentKind: "unknown",
       notes: [
         ...notes,
-        "Content was not validated because no version-compatible schema is available.",
+        versionMismatch
+          ? "Content was rejected because this file layout is not version-compatible with the target version data."
+          : "Content was not validated because minecraft-skills has no version-compatible schema for this file kind.",
       ],
-      issues: [
-        validationIssue({
-          path: options.path,
-          message: "No version-compatible schema is available for this file.",
-          keyword: "schema-unavailable",
-        }),
-      ],
+      issues: versionMismatch
+        ? [
+            validationIssue({
+              path: options.path,
+              message: "This file layout is not supported by the target Minecraft version data.",
+              keyword: "version-layout-unsupported",
+            }),
+          ]
+        : [],
     };
   }
 
