@@ -117,6 +117,7 @@ an agent should inspect before answering.
 
 ## Data Sources
 
-Bundled facts come from Mojang version metadata, extracted official client/server jars, PaperMC API
-and docs, structured community datasets, and the `sya-ri/spigot-event-list` API contract. Minecraft
-Wiki is human-only background; AI workflows should not fetch, crawl, summarize, or cite Wiki pages.
+Bundled facts come from Mojang version metadata and downloads served through Piston endpoints,
+extracted official client/server jars, PaperMC API and docs, structured community datasets, and the
+`sya-ri/spigot-event-list` API contract. Minecraft Wiki is human-only background; AI workflows
+should not fetch, crawl, summarize, or cite Wiki pages.

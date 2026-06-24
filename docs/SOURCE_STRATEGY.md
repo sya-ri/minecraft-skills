@@ -17,8 +17,9 @@ navigation entries as agent-usable sources. `pnpm validate` enforces this.
 Use `minecraft-skills source report`, `minecraft-skills source tiers`, or MCP
 `get_source_report`/`list_source_tiers` to inspect the machine-readable form of this policy.
 
-- `canonical-official`: Mojang version metadata, official jars, generated reports, PaperMC API, and
-  Paper Javadocs. Use this for version-specific facts that generated files or code depend on.
+- `canonical-official`: Mojang version metadata and downloads served through Piston endpoints,
+  official jars, generated reports, PaperMC API, and Paper Javadocs. Use this for version-specific
+  facts that generated files or code depend on.
 - `derived-bundled`: minecraft-skills indexes generated from official or accepted structured data,
   such as command paths, vanilla paths, observed JSON surfaces, and Paper API surfaces.
 - `community-structured`: structured datasets that help fill search and migration workflows, but
@@ -38,6 +39,18 @@ machine-readable facts with explicit limits, not copied as prose.
 | PrismarineJS `minecraft-assets` | Resource pack asset names, image-oriented asset indexes, and legacy texture mapping candidates. | Supplemental; official jar extraction remains canonical for vanilla path presence. |
 | `InventivetalentDev/minecraft-assets` | On-demand resource pack asset file lookup, version path index search, and cached archive references extracted from Minecraft client assets. | Supplemental mirror; do not treat as more canonical than Mojang metadata, official jars, or generated vanilla inventories. |
 | `misode/mcmeta` | Version-controlled generated data/assets history, summaries, registries, and diffs. | Community processed; use as structured corroboration and migration input. |
+
+## Mojang Piston Endpoints
+
+Piston is Mojang's official delivery infrastructure for Java Edition metadata and downloads. In
+practice, minecraft-skills treats `piston-meta.mojang.com` as the source for version manifests and
+per-version metadata, and `piston-data.mojang.com` as the source for official client/server jar
+downloads referenced by that metadata.
+
+Use Piston-backed Mojang data for release ids, release times, jar URLs, SHA-1 hashes, protocol/world
+versions, Java runtime metadata, and pack format extraction inputs. Refer to it in user-facing docs
+as "Mojang official version metadata and downloads, served through Piston endpoints" so the
+infrastructure name does not look like a third-party source.
 
 ## Importer Policy
 

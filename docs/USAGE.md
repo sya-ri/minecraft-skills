@@ -194,8 +194,9 @@ Use these together before writing or reviewing generated output:
 
 ## Source Policy
 
-Bundled facts come from Mojang version metadata, extracted official client/server jars, PaperMC API
-and docs, structured community datasets, and the `sya-ri/spigot-event-list` API contract.
+Bundled facts come from Mojang version metadata and downloads served through Piston endpoints,
+extracted official client/server jars, PaperMC API and docs, structured community datasets, and the
+`sya-ri/spigot-event-list` API contract.
 Minecraft Wiki is human-only background; AI workflows should not fetch, crawl, summarize, or cite
 Wiki pages.
 
@@ -243,9 +244,15 @@ Pack analysis tools include:
 
 - `classify_pack_files`
 - `get_pack_file_schema`
+- `validate_datapack_json`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
+- `get_mojang_version_metadata`
+- `fetch_mojang_server_jar`
+- `search_vanilla_datapack_json_files`
+- `get_vanilla_datapack_json`
+- `search_community_datasets`
 - `get_resourcepack_assets_status`
 - `fetch_resourcepack_assets`
 - `search_resourcepack_assets`
@@ -274,6 +281,7 @@ import {
   getAuthoringScenario,
   getClaimPolicy,
   getMinecraftAssetsStatus,
+  getMojangVersionMetadata,
   getOutputRequirement,
   getPackFormat,
   getResponsePattern,
@@ -298,6 +306,7 @@ const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const responsePattern = getResponsePattern("paper-api-answer");
 const packFormat = getPackFormat("java", "26.2", "datapack");
+const mojangMetadata = getMojangVersionMetadata("java", "26.2");
 const matchingPackVersions = findVersionsByPackFormat({
   domain: "resourcepack",
   format: 88,
@@ -321,6 +330,13 @@ const playerMembers = searchPaperMembers({
   contains: "sendMessage",
 });
 ```
+
+Piston is Mojang's official metadata/download infrastructure, not a third-party dataset. Use
+`get_mojang_version_metadata` when an agent needs the official version metadata URL, client/server
+jar URLs, SHA-1s, protocol/world versions, Java runtime metadata, or pack format evidence. Use
+`fetch_mojang_server_jar` before `search_vanilla_datapack_json_files` or
+`get_vanilla_datapack_json` when exact vanilla `data/**/*.json` content is needed from the official
+server jar.
 
 Use `@minecraft-skills/data` only when direct access to bundled JSON/text files is needed.
 
