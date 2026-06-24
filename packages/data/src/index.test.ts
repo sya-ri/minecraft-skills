@@ -317,4 +317,12 @@ describe("@minecraft-skills/data", () => {
       });
     });
   });
+
+  it("explains how to fetch a missing Minecraft assets index", async () => {
+    await withCacheDir(() => {
+      expect(() => searchMinecraftAssets({ version: "1.21.8", contains: "bundle" })).toThrow(
+        /fetch_resourcepack_assets.*indexOnly/,
+      );
+    });
+  });
 });

@@ -2091,6 +2091,28 @@ function manifestHasDownloadable(kind: string, version: string): boolean {
   );
 }
 
+function unavailableDataFileMessage(options: {
+  label: string;
+  kind: string;
+  edition: string;
+  version: string;
+  path: string;
+}): string {
+  const entry = getDataManifest().downloadable.find(
+    (candidate) => candidate.kind === options.kind && candidate.path === options.path,
+  );
+  const base = `No available ${options.label} for ${options.edition} ${options.version}.`;
+  if (!entry) {
+    return base;
+  }
+  return [
+    base,
+    `This data is downloadable.`,
+    `In MCP, call fetch_data with {"kind":"${options.kind}","version":"${options.version}"}, then retry this lookup.`,
+    `In CLI, run minecraft-skills data fetch --kind ${options.kind} --version ${options.version}.`,
+  ].join(" ");
+}
+
 export function listVersionSupport(query: VersionSupportQuery = {}): VersionSupportEntry[] {
   const edition = Edition.assert(query.edition ?? "java");
   const domain = query.domain ? DomainId.assert(query.domain) : undefined;
@@ -2903,7 +2925,15 @@ export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
   }
   const path = `java/paper-api-surfaces/${reference.minecraftVersion}.json`;
   if (!hasDataFile(path)) {
-    throw new Error(`No bundled Paper API surface for ${reference.minecraftVersion}`);
+    throw new Error(
+      unavailableDataFileMessage({
+        label: "Paper API surface",
+        kind: "paper-api-surface",
+        edition: "java",
+        version: reference.minecraftVersion,
+        path,
+      }),
+    );
   }
   return PaperApiSurface.assert(readDataJson(path));
 }
@@ -3148,7 +3178,15 @@ export function getDatapackSchemaSurface(
   }
   const surfacePath = `${editionId}/datapack-schema-surfaces/${version}.json`;
   if (!hasDataFile(surfacePath)) {
-    throw new Error(`No bundled observed datapack schema surface for ${editionId} ${version}`);
+    throw new Error(
+      unavailableDataFileMessage({
+        label: "observed datapack schema surface",
+        kind: "datapack-schema-surface",
+        edition: editionId,
+        version,
+        path: surfacePath,
+      }),
+    );
   }
   const surface = ObservedDatapackSchemaSurface.assert(readDataJson(surfacePath));
   datapackSchemaSurfaceCache.set(cacheKey, surface);
@@ -3294,7 +3332,15 @@ export function getResourcepackModelSummary(
   }
   const modelsPath = `${editionId}/resourcepack-models/${version}.json`;
   if (!hasDataFile(modelsPath)) {
-    throw new Error(`No bundled resourcepack model summary for ${editionId} ${version}`);
+    throw new Error(
+      unavailableDataFileMessage({
+        label: "resourcepack model summary",
+        kind: "resourcepack-model-summary",
+        edition: editionId,
+        version,
+        path: modelsPath,
+      }),
+    );
   }
   const summary = ResourcepackModelSummary.assert(readDataJson(modelsPath));
   resourcepackModelSummaryCache.set(cacheKey, summary);

@@ -708,9 +708,17 @@ export async function fetchMinecraftAssetsArchive(
 }
 
 export function readMinecraftAssetsIndex(version: string): MinecraftAssetsIndex {
-  return JSON.parse(
-    readFileSync(minecraftAssetsIndexFile(version), "utf8"),
-  ) as MinecraftAssetsIndex;
+  const indexFile = minecraftAssetsIndexFile(version);
+  if (!existsSync(indexFile)) {
+    throw new Error(
+      [
+        `No cached Minecraft assets index for ${version}.`,
+        `In MCP, call fetch_resourcepack_assets with {"version":"${version}","indexOnly":true}, then retry the search.`,
+        `In CLI, run minecraft-skills resourcepack assets fetch ${version} --index-only.`,
+      ].join(" "),
+    );
+  }
+  return JSON.parse(readFileSync(indexFile, "utf8")) as MinecraftAssetsIndex;
 }
 
 export function searchMinecraftAssets(

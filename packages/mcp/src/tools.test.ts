@@ -759,6 +759,14 @@ describe("MCP tools", () => {
       throw new Error(`unexpected url ${url}`);
     });
     try {
+      const missingIndex = await callMinecraftSkillsTool("search_resourcepack_assets", {
+        version: "26.2",
+        extension: "json",
+      });
+      expect(missingIndex.isError).toBe(true);
+      expect(missingIndex.content[0]?.text).toContain("fetch_resourcepack_assets");
+      expect(missingIndex.content[0]?.text).toContain('"indexOnly":true');
+
       const fetchResult = await callMinecraftSkillsTool("fetch_resourcepack_assets", {
         version: "26.2",
         indexOnly: true,
