@@ -914,6 +914,32 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "validate_datapack_json",
+    description:
+      "Validate one or more datapack JSON files for a target Java version. This is a discoverable datapack JSON validator alias for validate_pack_files using domain=datapack.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        files: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string" },
+              content: {},
+            },
+            required: ["path", "content"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["files"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_pack_migration_plan",
     description:
       "Build a datapack or resourcepack version migration plan from from/to versions and optional pack file paths. Includes pack format changes, file classification, observed schema lookups, path changes, and considerations.",
@@ -1978,6 +2004,34 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           edition,
           version: typeof args.version === "string" ? args.version : "latest",
           domain: args.domain,
+          files,
+        }),
+      );
+    }
+    if (name === "validate_datapack_json") {
+      if (!Array.isArray(args.files)) {
+        throw new Error("validate_datapack_json requires files array");
+      }
+      const files = args.files.map((file) => {
+        if (
+          typeof file !== "object" ||
+          file === null ||
+          !("path" in file) ||
+          typeof file.path !== "string" ||
+          !("content" in file)
+        ) {
+          throw new Error("validate_datapack_json files must include string path and content");
+        }
+        return {
+          path: file.path,
+          content: file.content as string | unknown,
+        };
+      });
+      return text(
+        validatePackFilesContent({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          domain: "datapack",
           files,
         }),
       );

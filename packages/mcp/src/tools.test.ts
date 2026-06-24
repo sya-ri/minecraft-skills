@@ -136,6 +136,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("classify_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
     expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
+    expect(tools.map((tool) => tool.name)).toContain("validate_datapack_json");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
@@ -700,6 +701,26 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"validatedFiles": 1');
     expect(result.content[0]?.text).toContain('"validFiles": 1');
+  });
+
+  it("calls validate_datapack_json", async () => {
+    const result = await callMinecraftSkillsTool("validate_datapack_json", {
+      version: "26.2",
+      files: [
+        {
+          path: "data/example/recipe/widget.json",
+          content: {
+            type: "minecraft:crafting_shapeless",
+            ingredients: ["minecraft:stone"],
+            result: {
+              id: "minecraft:stone",
+            },
+          },
+        },
+      ],
+    });
+    expect(result.content[0]?.text).toContain('"requestedDomain": "datapack"');
+    expect(result.content[0]?.text).toContain('"validatedFiles": 1');
   });
 
   it("calls get_pack_migration_plan", async () => {
