@@ -47,8 +47,8 @@ import {
   getSourceReport,
   getSourceTier,
   getSupportMatrix,
-  getVanillaInventory,
   getVanillaDatapackJson,
+  getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
@@ -75,8 +75,8 @@ import {
   searchPaperMembers,
   searchPaperTypes,
   searchResourcepackModelPaths,
-  searchVanillaPaths,
   searchVanillaDatapackJsonFiles,
+  searchVanillaPaths,
   suggestMinecraftLookups,
   validatePackFileContent,
   validatePackFilesContent,
@@ -137,7 +137,11 @@ function testJar(entries: Record<string, string>): Buffer {
   return Buffer.concat([...localParts, centralDirectory, end]);
 }
 
-function withCachedServerJar(version: string, entries: Record<string, string>, run: () => void): void {
+function withCachedServerJar(
+  version: string,
+  entries: Record<string, string>,
+  run: () => void,
+): void {
   const root = mkdtempSync(join(tmpdir(), "minecraft-skills-test-"));
   const previous = process.env.MINECRAFT_SKILLS_CACHE_DIR;
   process.env.MINECRAFT_SKILLS_CACHE_DIR = root;
