@@ -105,6 +105,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("list_source_tiers");
     expect(tools.map((tool) => tool.name)).toContain("get_source_tier");
     expect(tools.map((tool) => tool.name)).toContain("list_community_datasets");
+    expect(tools.map((tool) => tool.name)).toContain("search_community_datasets");
     expect(tools.map((tool) => tool.name)).toContain("get_community_dataset");
     expect(tools.map((tool) => tool.name)).toContain("get_rcon_config_status");
     expect(tools.map((tool) => tool.name)).toContain("create_rcon_config");
@@ -476,6 +477,13 @@ describe("MCP tools", () => {
 
     const datasets = await callMinecraftSkillsTool("list_community_datasets", {});
     expect(datasets.content[0]?.text).toContain('"id": "prismarinejs-minecraft-data"');
+
+    const search = await callMinecraftSkillsTool("search_community_datasets", {
+      query: "misode mcmeta datapack recipes",
+      domain: "datapack",
+    });
+    expect(search.content[0]?.text).toContain('"kind": "community-dataset"');
+    expect(search.content[0]?.text).toContain("misode-mcmeta");
 
     const tier = await callMinecraftSkillsTool("get_source_tier", {
       id: "human-only-background",

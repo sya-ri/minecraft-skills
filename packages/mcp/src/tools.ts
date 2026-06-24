@@ -542,6 +542,21 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "search_community_datasets",
+    description:
+      "Search recommended structured community datasets for corroborating Minecraft facts, including misode/mcmeta and PrismarineJS/minecraft-data.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
+        limit: { type: "number", default: 10 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_community_dataset",
     description: "Get one recommended structured community dataset by id.",
     inputSchema: {
@@ -1784,6 +1799,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "list_community_datasets") {
       return text(listCommunityDatasets());
+    }
+    if (name === "search_community_datasets") {
+      if (typeof args.query !== "string") {
+        throw new Error("search_community_datasets requires string query");
+      }
+      return text(
+        searchCatalog({
+          query: args.query,
+          kind: "community-dataset",
+          ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
     }
     if (name === "get_community_dataset") {
       if (typeof args.id !== "string") {
