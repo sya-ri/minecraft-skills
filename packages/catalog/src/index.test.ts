@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildPaperEventSearchUrl,
@@ -45,6 +48,7 @@ import {
   getSourceTier,
   getSupportMatrix,
   getVanillaInventory,
+  getVanillaDatapackJson,
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
@@ -72,10 +76,85 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  searchVanillaDatapackJsonFiles,
   suggestMinecraftLookups,
   validatePackFileContent,
   validatePackFilesContent,
 } from "./index.js";
+
+function testJar(entries: Record<string, string>): Buffer {
+  const localParts: Buffer[] = [];
+  const centralParts: Buffer[] = [];
+  let offset = 0;
+  for (const [name, content] of Object.entries(entries)) {
+    const nameBytes = Buffer.from(name);
+    const contentBytes = Buffer.from(content);
+    const local = Buffer.alloc(30 + nameBytes.length);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(0, 8);
+    local.writeUInt32LE(0, 10);
+    local.writeUInt32LE(0, 14);
+    local.writeUInt32LE(contentBytes.length, 18);
+    local.writeUInt32LE(contentBytes.length, 22);
+    local.writeUInt16LE(nameBytes.length, 26);
+    local.writeUInt16LE(0, 28);
+    nameBytes.copy(local, 30);
+    localParts.push(local, contentBytes);
+
+    const central = Buffer.alloc(46 + nameBytes.length);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt32LE(0, 12);
+    central.writeUInt32LE(0, 16);
+    central.writeUInt32LE(contentBytes.length, 20);
+    central.writeUInt32LE(contentBytes.length, 24);
+    central.writeUInt16LE(nameBytes.length, 28);
+    central.writeUInt16LE(0, 30);
+    central.writeUInt16LE(0, 32);
+    central.writeUInt16LE(0, 34);
+    central.writeUInt16LE(0, 36);
+    central.writeUInt32LE(0, 38);
+    central.writeUInt32LE(offset, 42);
+    nameBytes.copy(central, 46);
+    centralParts.push(central);
+    offset += local.length + contentBytes.length;
+  }
+  const centralDirectory = Buffer.concat(centralParts);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(0, 4);
+  end.writeUInt16LE(0, 6);
+  end.writeUInt16LE(centralParts.length, 8);
+  end.writeUInt16LE(centralParts.length, 10);
+  end.writeUInt32LE(centralDirectory.length, 12);
+  end.writeUInt32LE(offset, 16);
+  end.writeUInt16LE(0, 20);
+  return Buffer.concat([...localParts, centralDirectory, end]);
+}
+
+function withCachedServerJar(version: string, entries: Record<string, string>, run: () => void): void {
+  const root = mkdtempSync(join(tmpdir(), "minecraft-skills-test-"));
+  const previous = process.env.MINECRAFT_SKILLS_CACHE_DIR;
+  process.env.MINECRAFT_SKILLS_CACHE_DIR = root;
+  try {
+    const jarDir = join(root, "mojang-server-jars");
+    mkdirSync(jarDir, { recursive: true });
+    writeFileSync(join(jarDir, `${version}.jar`), testJar(entries));
+    run();
+  } finally {
+    if (previous === undefined) {
+      delete process.env.MINECRAFT_SKILLS_CACHE_DIR;
+    } else {
+      process.env.MINECRAFT_SKILLS_CACHE_DIR = previous;
+    }
+    rmSync(root, { recursive: true, force: true });
+  }
+}
 
 describe("catalog", () => {
   it("loads supported domains", () => {
@@ -93,6 +172,31 @@ describe("catalog", () => {
     expect(metadata.official.versionMetadataUrl).toContain("piston-meta.mojang.com");
     expect(metadata.packFormats.data).toBe(107);
     expect(metadata.provenance.tier).toBe("official");
+  });
+
+  it("searches and reads cached vanilla datapack JSON from a Mojang server jar", () => {
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/test.json": '{"type":"minecraft:crafting_shapeless"}',
+        "data/minecraft/loot_table/blocks/test.json": '{"type":"minecraft:block"}',
+      },
+      () => {
+        const search = searchVanillaDatapackJsonFiles({
+          version: "26.2",
+          kind: "recipe",
+          contains: "test",
+        });
+        expect(search.matchedFiles).toBe(1);
+        expect(search.files[0]?.path).toBe("data/minecraft/recipe/test.json");
+
+        const file = getVanillaDatapackJson({
+          version: "26.2",
+          path: "data/minecraft/recipe/test.json",
+        });
+        expect(file.json).toEqual({ type: "minecraft:crafting_shapeless" });
+      },
+    );
   });
 
   it("lists installable skill folders", () => {

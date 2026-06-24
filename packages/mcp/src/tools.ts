@@ -14,6 +14,7 @@ import {
   type DatapackSchemaSearchOptions,
   explainPackPath,
   fetchData,
+  fetchMojangServerJarForVersion,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
@@ -57,6 +58,7 @@ import {
   getSourceTier,
   getSupportMatrix,
   getVanillaInventory,
+  getVanillaDatapackJson,
   getVersionDetail,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
@@ -93,6 +95,7 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchVanillaPaths,
+  searchVanillaDatapackJsonFiles,
   suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
@@ -650,6 +653,20 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "fetch_mojang_server_jar",
+    description:
+      "Cache the official Mojang/Piston server jar for a bundled Java version so vanilla datapack JSON files can be read exactly.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        force: { type: "boolean", default: false },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "fetch_data",
     description:
       "Download manifest data entries into the local minecraft-skills cache by kind, version, or path.",
@@ -1155,6 +1172,39 @@ export const tools: ToolDefinition[] = [
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_vanilla_datapack_json_files",
+    description:
+      "Search exact vanilla data/**/*.json files inside a cached official Mojang server jar by kind, prefix, or substring. Fetch the jar first with fetch_mojang_server_jar.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        kind: { type: "string" },
+        prefix: { type: "string" },
+        contains: { type: "string" },
+        limit: { type: "number", default: 25 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_vanilla_datapack_json",
+    description:
+      "Read one exact vanilla datapack JSON file from a cached official Mojang server jar and return text plus parsed JSON.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        path: { type: "string" },
+        parse: { type: "boolean", default: true },
+      },
+      required: ["path"],
       additionalProperties: false,
     },
   },
@@ -1765,6 +1815,15 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         files: listCachedDataFiles(),
       });
     }
+    if (name === "fetch_mojang_server_jar") {
+      return text(
+        await fetchMojangServerJarForVersion({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          force: args.force === true,
+        }),
+      );
+    }
     if (name === "fetch_data") {
       return text(
         await fetchData({
@@ -2153,6 +2212,31 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_vanilla_inventory") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getVanillaInventory(edition, version));
+    }
+    if (name === "search_vanilla_datapack_json_files") {
+      return text(
+        searchVanillaDatapackJsonFiles({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          ...(typeof args.kind === "string" ? { kind: args.kind } : {}),
+          ...(typeof args.prefix === "string" ? { prefix: args.prefix } : {}),
+          ...(typeof args.contains === "string" ? { contains: args.contains } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "get_vanilla_datapack_json") {
+      if (typeof args.path !== "string") {
+        throw new Error("get_vanilla_datapack_json requires string path");
+      }
+      return text(
+        getVanillaDatapackJson({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          path: args.path,
+          parse: args.parse !== false,
+        }),
+      );
     }
     if (name === "search_vanilla_paths") {
       const pathOptions: VanillaPathSearchOptions = {

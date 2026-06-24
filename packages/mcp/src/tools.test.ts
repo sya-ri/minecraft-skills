@@ -1,9 +1,74 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { listDomains } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { callMinecraftSkillsTool, listMinecraftSkillsTools, tools } from "./tools.js";
+
+function testJar(entries: Record<string, string>): Buffer {
+  const localParts: Buffer[] = [];
+  const centralParts: Buffer[] = [];
+  let offset = 0;
+  for (const [name, content] of Object.entries(entries)) {
+    const nameBytes = Buffer.from(name);
+    const contentBytes = Buffer.from(content);
+    const local = Buffer.alloc(30 + nameBytes.length);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(0, 8);
+    local.writeUInt32LE(0, 10);
+    local.writeUInt32LE(0, 14);
+    local.writeUInt32LE(contentBytes.length, 18);
+    local.writeUInt32LE(contentBytes.length, 22);
+    local.writeUInt16LE(nameBytes.length, 26);
+    local.writeUInt16LE(0, 28);
+    nameBytes.copy(local, 30);
+    localParts.push(local, contentBytes);
+
+    const central = Buffer.alloc(46 + nameBytes.length);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt32LE(0, 12);
+    central.writeUInt32LE(0, 16);
+    central.writeUInt32LE(contentBytes.length, 20);
+    central.writeUInt32LE(contentBytes.length, 24);
+    central.writeUInt16LE(nameBytes.length, 28);
+    central.writeUInt16LE(0, 30);
+    central.writeUInt16LE(0, 32);
+    central.writeUInt16LE(0, 34);
+    central.writeUInt16LE(0, 36);
+    central.writeUInt32LE(0, 38);
+    central.writeUInt32LE(offset, 42);
+    nameBytes.copy(central, 46);
+    centralParts.push(central);
+    offset += local.length + contentBytes.length;
+  }
+  const centralDirectory = Buffer.concat(centralParts);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(0, 4);
+  end.writeUInt16LE(0, 6);
+  end.writeUInt16LE(centralParts.length, 8);
+  end.writeUInt16LE(centralParts.length, 10);
+  end.writeUInt32LE(centralDirectory.length, 12);
+  end.writeUInt32LE(offset, 16);
+  end.writeUInt16LE(0, 20);
+  return Buffer.concat([...localParts, centralDirectory, end]);
+}
+
+function cacheServerJar(version: string, entries: Record<string, string>): void {
+  const root = process.env.MINECRAFT_SKILLS_CACHE_DIR;
+  if (!root) {
+    throw new Error("MINECRAFT_SKILLS_CACHE_DIR must be set for cacheServerJar");
+  }
+  const jarDir = join(root, "mojang-server-jars");
+  mkdirSync(jarDir, { recursive: true });
+  writeFileSync(join(jarDir, `${version}.jar`), testJar(entries));
+}
 
 describe("MCP tools", () => {
   afterEach(() => {
@@ -53,6 +118,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_support_matrix");
     expect(tools.map((tool) => tool.name)).toContain("list_version_support");
     expect(tools.map((tool) => tool.name)).toContain("get_cache_status");
+    expect(tools.map((tool) => tool.name)).toContain("fetch_mojang_server_jar");
     expect(tools.map((tool) => tool.name)).toContain("fetch_data");
     expect(tools.map((tool) => tool.name)).toContain("clean_cache");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
@@ -83,6 +149,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("search_resourcepack_assets");
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_asset");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
+    expect(tools.map((tool) => tool.name)).toContain("search_vanilla_datapack_json_files");
+    expect(tools.map((tool) => tool.name)).toContain("get_vanilla_datapack_json");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("compare_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_api_reference");
@@ -542,6 +610,32 @@ describe("MCP tools", () => {
     const result = await callMinecraftSkillsTool("get_vanilla_inventory", {});
     expect(result.content[0]?.text).toContain('"version": "26.2"');
     expect(result.content[0]?.text).toContain('"assets/minecraft/models"');
+  });
+
+  it("searches and reads cached vanilla datapack JSON files", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-mcp-"));
+    vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", root);
+    try {
+      cacheServerJar("26.2", {
+        "data/minecraft/recipe/test.json": '{"type":"minecraft:crafting_shapeless"}',
+        "data/minecraft/loot_table/blocks/test.json": '{"type":"minecraft:block"}',
+      });
+      const search = await callMinecraftSkillsTool("search_vanilla_datapack_json_files", {
+        version: "26.2",
+        kind: "recipe",
+        contains: "test",
+      });
+      expect(search.content[0]?.text).toContain('"matchedFiles": 1');
+      expect(search.content[0]?.text).toContain("data/minecraft/recipe/test.json");
+
+      const file = await callMinecraftSkillsTool("get_vanilla_datapack_json", {
+        version: "26.2",
+        path: "data/minecraft/recipe/test.json",
+      });
+      expect(file.content[0]?.text).toContain('"type": "minecraft:crafting_shapeless"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("calls observed datapack schema tools", async () => {

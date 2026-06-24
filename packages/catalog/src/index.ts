@@ -12,6 +12,7 @@ import {
   type FetchMinecraftAssetsIndexOptions,
   type FetchMinecraftAssetsIndexResult,
   fetchData,
+  fetchMojangServerJar,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
@@ -19,13 +20,18 @@ import {
   getCacheRoot,
   getDataManifest,
   getMinecraftAssetsStatus,
+  getMojangServerJarStatus,
   hasBundledDataFile,
   hasCachedDataFile,
   hasCachedMinecraftAssetFile,
   hasDataFile,
+  listCachedMojangServerJarEntries,
   listCachedDataFiles,
   type MinecraftAssetsStatus,
+  type MojangServerJarEntry,
+  type MojangServerJarStatus,
   readCachedMinecraftAssetText,
+  readCachedMojangServerJarText,
   readDataJson,
   readDataText,
   type SearchMinecraftAssetsOptions,
@@ -146,6 +152,8 @@ export type {
   IntentLookupStepData,
   JavaReportsSummaryData,
   MinecraftAssetsStatus,
+  MojangServerJarEntry,
+  MojangServerJarStatus,
   ObservedDatapackSchemaSurfaceData,
   OutputRequirementData,
   OutputRequirementIndexData,
@@ -170,6 +178,7 @@ export type {
 export {
   cleanCachedData,
   fetchData,
+  fetchMojangServerJar,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
@@ -177,12 +186,15 @@ export {
   getCacheRoot,
   getDataManifest,
   getMinecraftAssetsStatus,
+  getMojangServerJarStatus,
   hasBundledDataFile,
   hasCachedDataFile,
   hasCachedMinecraftAssetFile,
   hasDataFile,
+  listCachedMojangServerJarEntries,
   listCachedDataFiles,
   readCachedMinecraftAssetText,
+  readCachedMojangServerJarText,
   searchMinecraftAssets,
 };
 
@@ -1072,6 +1084,52 @@ export type VanillaPathSearchResult = {
   matchedPaths: number;
   truncated: boolean;
   paths: string[];
+};
+
+export type VanillaDatapackJsonSearchOptions = {
+  edition?: string;
+  version?: string;
+  prefix?: string;
+  contains?: string;
+  kind?: string;
+  limit?: number;
+};
+
+export type VanillaDatapackJsonSearchResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  cache: MojangServerJarStatus;
+  totalJsonFiles: number;
+  matchedFiles: number;
+  truncated: boolean;
+  files: MojangServerJarEntry[];
+  notes: string[];
+};
+
+export type VanillaDatapackJsonOptions = {
+  edition?: string;
+  version?: string;
+  path: string;
+  parse?: boolean;
+};
+
+export type VanillaDatapackJsonResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  path: string;
+  cache: MojangServerJarStatus;
+  content: string;
+  json: unknown | null;
+  notes: string[];
+};
+
+export type FetchMojangServerJarForVersionOptions = {
+  edition?: string;
+  version?: string;
+  force?: boolean;
+  fetch?: typeof fetch;
 };
 
 export type VanillaPathComparisonOptions = {
@@ -2521,6 +2579,21 @@ function appendUnique(values: string[], ...added: string[]): string[] {
   return [...new Set([...values, ...added])];
 }
 
+function versionDownload(
+  detail: VersionDetailData,
+  id: string,
+): { url?: string; sha1?: string } | null {
+  const value = detail.downloads[id];
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const candidate = value as Record<string, unknown>;
+  return {
+    ...(typeof candidate.url === "string" ? { url: candidate.url } : {}),
+    ...(typeof candidate.sha1 === "string" ? { sha1: candidate.sha1 } : {}),
+  };
+}
+
 function withVanillaInventoryCoverage(detail: VersionDetailData): VersionDetailData {
   const inventoryPath = `java/vanilla-inventories/${detail.version}.json`;
   if (!hasDataFile(inventoryPath)) {
@@ -2641,6 +2714,8 @@ export function getMojangVersionMetadata(
   const editionId = Edition.assert(edition);
   const detail = getVersionDetail(editionId, requested);
   const metadataSource = detail.sources.find((source) => source.id === "mojang-version-json");
+  const client = versionDownload(detail, "client");
+  const server = versionDownload(detail, "server");
   return {
     schemaVersion: 1,
     edition: editionId,
@@ -2653,10 +2728,10 @@ export function getMojangVersionMetadata(
     packFormats: detail.packFormats,
     official: {
       versionMetadataUrl: metadataSource?.url ?? null,
-      clientJarUrl: detail.downloads.client?.url ?? null,
-      clientJarSha1: detail.downloads.client?.sha1 ?? null,
-      serverJarUrl: detail.downloads.server?.url ?? null,
-      serverJarSha1: detail.downloads.server?.sha1 ?? null,
+      clientJarUrl: client?.url ?? null,
+      clientJarSha1: client?.sha1 ?? null,
+      serverJarUrl: server?.url ?? null,
+      serverJarSha1: server?.sha1 ?? null,
       assetIndexUrl: detail.assetIndex?.url ?? null,
       assetIndexSha1: detail.assetIndex?.sha1 ?? null,
     },
@@ -4855,6 +4930,129 @@ export function searchVanillaPaths(
     matchedPaths: matched.length,
     truncated: matched.length > limit,
     paths: matched.slice(0, limit),
+  };
+}
+
+function vanillaDatapackJsonKind(path: string): string {
+  const parts = path.split("/");
+  if (parts[0] === "data" && parts[2] === "datapacks") {
+    const nestedDataIndex = parts.findIndex((part, index) => index > 2 && part === "data");
+    if (nestedDataIndex !== -1) {
+      return vanillaDatapackJsonKind(parts.slice(nestedDataIndex).join("/"));
+    }
+  }
+  if (parts[0] !== "data" || !parts[1] || !parts[2]) {
+    return "unknown";
+  }
+  if (parts[2] === "tags") {
+    return parts[3] ? `tag/${parts[3]}` : "tag";
+  }
+  if (parts[2] === "worldgen") {
+    return parts[3] ? `worldgen/${parts[3]}` : "worldgen";
+  }
+  return parts[2];
+}
+
+function assertVanillaDatapackJsonPath(path: string): string {
+  const normalized = normalizePackPath(path);
+  if (!normalized.startsWith("data/") || !normalized.endsWith(".json")) {
+    throw new Error(`Vanilla datapack JSON path must be a data/**/*.json path: ${path}`);
+  }
+  return normalized;
+}
+
+function mojangServerDownload(detail: VersionDetailData): { url: string; sha1: string | null } {
+  const server = versionDownload(detail, "server");
+  if (!server?.url) {
+    throw new Error(`No Mojang server jar download URL for ${detail.version}`);
+  }
+  return {
+    url: server.url,
+    sha1: server.sha1 ?? null,
+  };
+}
+
+export async function fetchMojangServerJarForVersion(
+  options: FetchMojangServerJarForVersionOptions = {},
+) {
+  const edition = Edition.assert(options.edition ?? "java");
+  const detail = getVersionDetail(edition, options.version ?? "latest");
+  const download = mojangServerDownload(detail);
+  return fetchMojangServerJar({
+    version: detail.version,
+    url: download.url,
+    sha1: download.sha1,
+    force: options.force === true,
+    ...(options.fetch ? { fetch: options.fetch } : {}),
+  });
+}
+
+export function searchVanillaDatapackJsonFiles(
+  options: VanillaDatapackJsonSearchOptions = {},
+): VanillaDatapackJsonSearchResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const version = resolveVersion(edition, options.version ?? "latest");
+  const limit = normalizeLimit(options.limit, 25, 200);
+  const prefix = options.prefix?.trim();
+  const contains = options.contains?.trim();
+  const kind = options.kind?.trim();
+  const files = listCachedMojangServerJarEntries(version).filter((entry) => {
+    if (!entry.path.startsWith("data/") || !entry.path.endsWith(".json")) {
+      return false;
+    }
+    if (prefix && !entry.path.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !entry.path.includes(contains)) {
+      return false;
+    }
+    if (kind && vanillaDatapackJsonKind(entry.path) !== kind) {
+      return false;
+    }
+    return true;
+  });
+  return {
+    schemaVersion: 1,
+    edition,
+    version,
+    cache: getMojangServerJarStatus(version),
+    totalJsonFiles: listCachedMojangServerJarEntries(version).filter(
+      (entry) => entry.path.startsWith("data/") && entry.path.endsWith(".json"),
+    ).length,
+    matchedFiles: files.length,
+    truncated: files.length > limit,
+    files: files.slice(0, limit),
+    notes: [
+      "Reads vanilla datapack JSON file paths from a cached official Mojang server jar.",
+      "If the jar is missing, fetch it first with fetch_mojang_server_jar.",
+    ],
+  };
+}
+
+export function getVanillaDatapackJson(
+  options: VanillaDatapackJsonOptions,
+): VanillaDatapackJsonResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const version = resolveVersion(edition, options.version ?? "latest");
+  const path = assertVanillaDatapackJsonPath(options.path);
+  const content = readCachedMojangServerJarText(version, path);
+  const parse = options.parse !== false;
+  let json: unknown | null = null;
+  if (parse) {
+    json = JSON.parse(content) as unknown;
+  }
+  return {
+    schemaVersion: 1,
+    edition,
+    version,
+    path,
+    cache: getMojangServerJarStatus(version),
+    content,
+    json,
+    notes: [
+      "Content was read from a cached official Mojang server jar.",
+      "Treat the file as vanilla evidence for the exact version, not as a complete custom pack schema.",
+    ],
   };
 }
 

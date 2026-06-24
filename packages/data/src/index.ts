@@ -12,6 +12,7 @@ import {
 import { homedir, platform, tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { listZipEntries, readZipEntry } from "./zip.js";
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const dataRoot = join(packageRoot, "data");
@@ -175,6 +176,38 @@ export type SearchMinecraftAssetsResult = {
   matches: string[];
 };
 
+export type MojangServerJarStatus = {
+  schemaVersion: 1;
+  version: string;
+  file: string;
+  cached: boolean;
+  bytes: number | null;
+};
+
+export type FetchMojangServerJarOptions = {
+  version: string;
+  url: string;
+  sha1?: string | null;
+  force?: boolean;
+  fetch?: typeof fetch;
+};
+
+export type FetchMojangServerJarResult = {
+  schemaVersion: 1;
+  version: string;
+  url: string;
+  sha1: string;
+  file: string;
+  bytes: number;
+  cached: boolean;
+};
+
+export type MojangServerJarEntry = {
+  path: string;
+  compressedSize: number;
+  uncompressedSize: number;
+};
+
 function assertSafeRelativePath(relativePath: string): void {
   if (
     relativePath.length === 0 ||
@@ -257,6 +290,15 @@ function minecraftAssetsIndexFile(version: string): string {
 
 function minecraftAssetsArchiveFile(version: string): string {
   return join(minecraftAssetsVersionRoot(version), "archive.zip");
+}
+
+function mojangServerJarsRoot(): string {
+  return join(cacheRootForPlatform(), "mojang-server-jars");
+}
+
+function mojangServerJarFile(version: string): string {
+  assertSafeMinecraftVersion(version);
+  return join(mojangServerJarsRoot(), `${version}.jar`);
 }
 
 function minecraftAssetsCachedFile(version: string, assetPath: string): string {
@@ -540,6 +582,10 @@ function sha256(buffer: Buffer): string {
   return createHash("sha256").update(buffer).digest("hex");
 }
 
+function sha1(buffer: Buffer): string {
+  return createHash("sha1").update(buffer).digest("hex");
+}
+
 export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDataResult> {
   const manifest = getDataManifest();
   const entries = matchingEntries(options);
@@ -578,6 +624,84 @@ export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDa
     fetched,
     skipped,
   };
+}
+
+export function getMojangServerJarStatus(version: string): MojangServerJarStatus {
+  const file = mojangServerJarFile(version);
+  return {
+    schemaVersion: 1,
+    version,
+    file,
+    cached: existsSync(file),
+    bytes: existsSync(file) ? statSync(file).size : null,
+  };
+}
+
+export async function fetchMojangServerJar(
+  options: FetchMojangServerJarOptions,
+): Promise<FetchMojangServerJarResult> {
+  assertSafeMinecraftVersion(options.version);
+  const output = mojangServerJarFile(options.version);
+  if (!options.force && existsSync(output)) {
+    const bytes = readFileSync(output);
+    return {
+      schemaVersion: 1,
+      version: options.version,
+      url: options.url,
+      sha1: sha1(bytes),
+      file: output,
+      bytes: bytes.length,
+      cached: true,
+    };
+  }
+  const bytes = await fetchBytes(options.url, options.fetch ?? fetch);
+  const actualSha1 = sha1(bytes);
+  if (options.sha1 && actualSha1 !== options.sha1) {
+    throw new Error(
+      `Integrity mismatch for Mojang server jar ${options.version}: expected ${options.sha1}, got ${actualSha1}`,
+    );
+  }
+  writeBytesAtomic(output, bytes);
+  return {
+    schemaVersion: 1,
+    version: options.version,
+    url: options.url,
+    sha1: actualSha1,
+    file: output,
+    bytes: bytes.length,
+    cached: false,
+  };
+}
+
+function readCachedMojangServerJar(version: string): Buffer {
+  const file = mojangServerJarFile(version);
+  if (!existsSync(file)) {
+    throw new Error(
+      [
+        `No cached Mojang server jar for ${version}.`,
+        `In MCP, call fetch_mojang_server_jar with {"version":"${version}"}, then retry.`,
+      ].join(" "),
+    );
+  }
+  return readFileSync(file);
+}
+
+export function listCachedMojangServerJarEntries(version: string): MojangServerJarEntry[] {
+  const jar = readCachedMojangServerJar(version);
+  return listZipEntries(jar)
+    .filter((entry) => !entry.directory)
+    .map((entry) => ({
+      path: entry.name,
+      compressedSize: entry.compressedSize,
+      uncompressedSize: entry.uncompressedSize,
+    }))
+    .sort((left, right) => left.path.localeCompare(right.path));
+}
+
+export function readCachedMojangServerJarText(version: string, path: string): string {
+  assertSafeRelativePath(path);
+  const jar = readCachedMojangServerJar(version);
+  return readZipEntry(jar, path).toString("utf8");
 }
 
 export async function fetchMinecraftAssetFile(
