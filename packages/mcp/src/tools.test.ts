@@ -56,6 +56,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("fetch_data");
     expect(tools.map((tool) => tool.name)).toContain("clean_cache");
     expect(tools.map((tool) => tool.name)).toContain("get_paper_plugin_data");
+    expect(tools.map((tool) => tool.name)).toContain("get_mojang_version_metadata");
     expect(tools.map((tool) => tool.name)).toContain("list_pack_formats");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_format");
     expect(tools.map((tool) => tool.name)).toContain("find_versions_by_pack_format");
@@ -166,6 +167,15 @@ describe("MCP tools", () => {
 
   it("calls latest_version", async () => {
     expect((await callMinecraftSkillsTool("latest_version", {})).content[0]?.text).toBe("26.2");
+  });
+
+  it("calls get_mojang_version_metadata", async () => {
+    const result = await callMinecraftSkillsTool("get_mojang_version_metadata", {
+      version: "26.2",
+    });
+    expect(result.content[0]?.text).toContain('"version": "26.2"');
+    expect(result.content[0]?.text).toContain("piston-data.mojang.com");
+    expect(result.content[0]?.text).toContain('"serverJarSha1"');
   });
 
   it("calls list_skills", async () => {

@@ -28,6 +28,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getMojangVersionMetadata,
   getOutputRequirement,
   getPackFileSchema,
   getPackFormat,
@@ -83,6 +84,15 @@ describe("catalog", () => {
       "resourcepack",
       "paper-plugin",
     ]);
+  });
+
+  it("returns Mojang/Piston official version metadata", () => {
+    const metadata = getMojangVersionMetadata("java", "26.2");
+    expect(metadata.version).toBe("26.2");
+    expect(metadata.official.serverJarUrl).toContain("piston-data.mojang.com");
+    expect(metadata.official.versionMetadataUrl).toContain("piston-meta.mojang.com");
+    expect(metadata.packFormats.data).toBe(107);
+    expect(metadata.provenance.tier).toBe("official");
   });
 
   it("lists installable skill folders", () => {

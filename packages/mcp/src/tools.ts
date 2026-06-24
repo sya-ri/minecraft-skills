@@ -40,6 +40,7 @@ import {
   getIntentLookup,
   getJavaReportsSummary,
   getMinecraftAssetsStatus,
+  getMojangVersionMetadata,
   getOutputRequirement,
   getPackFileSchema,
   getPackFormat,
@@ -691,6 +692,19 @@ export const tools: ToolDefinition[] = [
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_mojang_version_metadata",
+    description:
+      "Get Mojang/Piston official Java version metadata URLs, jar downloads, SHA-1s, pack formats, protocol/world versions, and provenance for a bundled Minecraft version.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
       },
       additionalProperties: false,
     },
@@ -1770,6 +1784,10 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "list_versions") {
       return text(listVersions(edition));
+    }
+    if (name === "get_mojang_version_metadata") {
+      const version = typeof args.version === "string" ? args.version : "latest";
+      return text(getMojangVersionMetadata(edition, version));
     }
     if (name === "get_version") {
       const version = typeof args.version === "string" ? args.version : "latest";

@@ -228,6 +228,32 @@ export type PackFormatVersionSearch = {
   matches: PackFormatVersionMatch[];
 };
 
+export type MojangVersionMetadata = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  type: string;
+  releaseTime: string;
+  protocolVersion: number | null;
+  worldVersion: number | null;
+  javaVersion: VersionDetailData["javaVersion"] | null;
+  packFormats: VersionDetailData["packFormats"];
+  official: {
+    versionMetadataUrl: string | null;
+    clientJarUrl: string | null;
+    clientJarSha1: string | null;
+    serverJarUrl: string | null;
+    serverJarSha1: string | null;
+    assetIndexUrl: string | null;
+    assetIndexSha1: string | null;
+  };
+  provenance: {
+    tier: "official" | "official-extracted";
+    sources: VersionDetailData["sources"];
+    note: string;
+  };
+};
+
 export type FactSurfaceQuery = {
   domain?: string;
 };
@@ -2606,6 +2632,40 @@ export function getVersionDetail(edition = "java", requested = "latest"): Versio
   );
   versionDetailCache.set(cacheKey, detail);
   return detail;
+}
+
+export function getMojangVersionMetadata(
+  edition = "java",
+  requested = "latest",
+): MojangVersionMetadata {
+  const editionId = Edition.assert(edition);
+  const detail = getVersionDetail(editionId, requested);
+  const metadataSource = detail.sources.find((source) => source.id === "mojang-version-json");
+  return {
+    schemaVersion: 1,
+    edition: editionId,
+    version: detail.version,
+    type: detail.type,
+    releaseTime: detail.releaseTime,
+    protocolVersion: detail.protocolVersion,
+    worldVersion: detail.worldVersion,
+    javaVersion: detail.javaVersion,
+    packFormats: detail.packFormats,
+    official: {
+      versionMetadataUrl: metadataSource?.url ?? null,
+      clientJarUrl: detail.downloads.client?.url ?? null,
+      clientJarSha1: detail.downloads.client?.sha1 ?? null,
+      serverJarUrl: detail.downloads.server?.url ?? null,
+      serverJarSha1: detail.downloads.server?.sha1 ?? null,
+      assetIndexUrl: detail.assetIndex?.url ?? null,
+      assetIndexSha1: detail.assetIndex?.sha1 ?? null,
+    },
+    provenance: {
+      tier: "official",
+      sources: detail.sources,
+      note: "Fields are copied from Mojang/Piston version metadata when present; pack formats may include values extracted from official jars for bundled versions.",
+    },
+  };
 }
 
 export function getSourcePolicy(): CatalogData["sourcePolicy"] {
