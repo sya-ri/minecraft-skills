@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-skills/maintainer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "private": true,
   "type": "module",
   "description": "Private maintainer tooling for ingesting, validating, and generating Minecraft Skills assets.",
@@ -24,8 +24,8 @@
     "validate": "node dist/cli.mjs validate"
   },
   "dependencies": {
-    "@minecraft-skills/catalog": "workspace:0.1.4",
-    "@minecraft-skills/data": "workspace:0.1.4"
+    "@minecraft-skills/catalog": "workspace:0.1.5",
+    "@minecraft-skills/data": "workspace:0.1.5"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

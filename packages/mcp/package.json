@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-skills/mcp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "description": "MCP server exposing Minecraft Skills catalog lookups to AI agents.",
   "license": "MIT",
@@ -48,8 +48,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@minecraft-skills/catalog": "workspace:0.1.4",
-    "@minecraft-skills/rcon": "workspace:0.1.4",
+    "@minecraft-skills/catalog": "workspace:0.1.5",
+    "@minecraft-skills/rcon": "workspace:0.1.5",
     "@modelcontextprotocol/sdk": "1.29.0"
   },
   "devDependencies": {

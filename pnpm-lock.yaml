@@ -33,7 +33,7 @@ importers:
   packages/catalog:
     dependencies:
       '@minecraft-skills/data':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../data
       ajv:
         specifier: 8.20.0
@@ -61,10 +61,10 @@ importers:
   packages/cli:
     dependencies:
       '@minecraft-skills/catalog':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../catalog
       '@minecraft-skills/rcon':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../rcon
     devDependencies:
       '@types/node':
@@ -104,10 +104,10 @@ importers:
   packages/maintainer:
     dependencies:
       '@minecraft-skills/catalog':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../catalog
       '@minecraft-skills/data':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../data
     devDependencies:
       '@types/node':
@@ -129,10 +129,10 @@ importers:
   packages/mcp:
     dependencies:
       '@minecraft-skills/catalog':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../catalog
       '@minecraft-skills/rcon':
-        specifier: workspace:0.1.4
+        specifier: workspace:0.1.5
         version: link:../rcon
       '@modelcontextprotocol/sdk':
         specifier: 1.29.0

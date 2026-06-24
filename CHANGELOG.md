@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here.
 
+## 0.1.5 - 2026-06-24
+
+### Added
+
+- MCP and catalog lookups for Mojang official version metadata, including client/server download
+  metadata, SHA-1s, Java runtime metadata, and version-specific pack format evidence.
+- Server jar fetch and vanilla datapack JSON lookup tools for inspecting official `data/...` files
+  from Mojang server jars.
+- `validate_datapack_json` MCP alias for validating datapack JSON entries directly.
+- Community dataset search tooling for discovering structured supplemental datasets such as
+  PrismarineJS data and assets mirrors.
+
+### Documentation
+
+- Documented Mojang Piston endpoints as the official delivery infrastructure behind Mojang version
+  metadata and client/server jar downloads.
+- Expanded MCP usage documentation for the new Mojang metadata, vanilla datapack JSON, validation,
+  and community dataset tools.
+
 ## 0.1.4 - 2026-06-24
 
 ### Added

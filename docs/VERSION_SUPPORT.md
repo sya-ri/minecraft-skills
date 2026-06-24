@@ -1,6 +1,6 @@
 # Version Support
 
-This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.4. It is
+This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.5. It is
 derived from the same catalog data used by the CLI, package API, and MCP server.
 
 Use this page to decide whether an AI agent can safely target a Minecraft version before generating
