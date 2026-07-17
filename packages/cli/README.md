@@ -81,7 +81,17 @@ minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --con
 minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
+minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
+minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
+minecraft-skills modrinth get project simple-voice-chat
 ```
+
+The Modrinth command uses the public v2 search API and supports `--category`, sorting with
+`--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.
+`modrinth versions` accepts a project ID or slug and optional `--featured` and
+`--include-changelog` boolean filters.
+`modrinth get` exposes the remaining common public read resources, including dependencies, version
+and file-hash metadata, users, tags, and statistics.
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data manifest`, `data cache-dir`, `data cache-list`, `data cache-clean`, and

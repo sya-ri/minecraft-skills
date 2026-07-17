@@ -45,6 +45,7 @@ import {
   getIntentLookup,
   getJavaReportsSummary,
   getMinecraftAssetsStatus,
+  getModrinthResource,
   getOutputRequirement,
   getPackFileSchema,
   getPackFormat,
@@ -73,6 +74,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listModrinthProjectVersions,
   listOutputRequirements,
   listPackFormats,
   listReferences,
@@ -91,6 +93,7 @@ import {
   searchCommands,
   searchDatapackSchema,
   searchMinecraftAssets,
+  searchModrinthProjects,
   searchPaperEvents,
   searchPaperMembers,
   searchPaperTypes,
@@ -130,6 +133,17 @@ function readOption(args: string[], name: string, fallback: string): string {
     return fallback;
   }
   return args[index + 1] ?? fallback;
+}
+
+function readBooleanOption(args: string[], name: string, fallback: boolean): boolean {
+  const value = readOption(args, name, String(fallback));
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  throw new Error(`${name} must be true or false`);
 }
 
 function positionalArgs(args: string[]): string[] {
@@ -308,6 +322,9 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft search-all": "search-all",
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
+    "modrinth search": "modrinth-search",
+    "modrinth versions": "modrinth-versions",
+    "modrinth get": "modrinth-get",
     "datapack server-reports": "server-reports",
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
@@ -723,6 +740,9 @@ Grouped commands:
   minecraft-skills plugin paper types [version] [--package package.name] [--contains text] [--limit 50]
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
+  minecraft-skills modrinth search <query...> [--version version] [--type type] [--loader loader] [--category category] [--index relevance|downloads|follows|newest|updated] [--offset 0] [--limit 10]
+  minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
+  minecraft-skills modrinth get <project|project-dependencies|version|version-file|user|categories|loaders|game-versions|project-types|side-types|donation-platforms|report-types|statistics> [identifier] [--algorithm sha1|sha512]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory
   minecraft-skills minecraft pack-format [version] [datapack|resourcepack]
   minecraft-skills minecraft versions-for-pack-format <datapack|resourcepack> <format> [minor]
@@ -1961,6 +1981,103 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           query,
           ...(domain ? { domain } : {}),
           limit: Number(readOption(args, "--limit", "20")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "modrinth-search") {
+      const query = positionalArgs(args).join(" ");
+      if (!query) {
+        throw new Error("modrinth search requires a query");
+      }
+      const index = readOption(args, "--index", "relevance");
+      if (
+        index !== "relevance" &&
+        index !== "downloads" &&
+        index !== "follows" &&
+        index !== "newest" &&
+        index !== "updated"
+      ) {
+        throw new Error(
+          "modrinth search --index must be relevance, downloads, follows, newest, or updated",
+        );
+      }
+      const version = args.includes("--version") ? readOption(args, "--version", "") : undefined;
+      const projectType = args.includes("--type") ? readOption(args, "--type", "") : undefined;
+      const loader = args.includes("--loader") ? readOption(args, "--loader", "") : undefined;
+      const category = args.includes("--category") ? readOption(args, "--category", "") : undefined;
+      printJson(
+        output,
+        await searchModrinthProjects({
+          query,
+          index,
+          offset: Number(readOption(args, "--offset", "0")),
+          limit: Number(readOption(args, "--limit", "10")),
+          ...(version ? { version } : {}),
+          ...(projectType ? { projectType } : {}),
+          ...(loader ? { loader } : {}),
+          ...(category ? { category } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "modrinth-versions") {
+      const project = positionalArgs(args)[0];
+      if (!project) {
+        throw new Error("modrinth versions requires a project ID or slug");
+      }
+      const gameVersion = args.includes("--game-version")
+        ? readOption(args, "--game-version", "")
+        : undefined;
+      const loader = args.includes("--loader") ? readOption(args, "--loader", "") : undefined;
+      const featured = args.includes("--featured")
+        ? readBooleanOption(args, "--featured", false)
+        : undefined;
+      printJson(
+        output,
+        await listModrinthProjectVersions({
+          project,
+          includeChangelog: readBooleanOption(args, "--include-changelog", false),
+          ...(gameVersion ? { gameVersions: [gameVersion] } : {}),
+          ...(loader ? { loaders: [loader] } : {}),
+          ...(featured !== undefined ? { featured } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "modrinth-get") {
+      const [resource, identifier] = positionalArgs(args);
+      const resources = [
+        "project",
+        "project-dependencies",
+        "version",
+        "version-file",
+        "user",
+        "categories",
+        "loaders",
+        "game-versions",
+        "project-types",
+        "side-types",
+        "donation-platforms",
+        "report-types",
+        "statistics",
+      ] as const;
+      if (!resource || !resources.includes(resource as (typeof resources)[number])) {
+        throw new Error(`modrinth get requires a supported resource: ${resources.join(", ")}`);
+      }
+      const algorithm = readOption(args, "--algorithm", "sha1");
+      if (algorithm !== "sha1" && algorithm !== "sha512") {
+        throw new Error("modrinth get --algorithm must be sha1 or sha512");
+      }
+      printJson(
+        output,
+        await getModrinthResource({
+          resource: resource as (typeof resources)[number],
+          ...(identifier ? { identifier } : {}),
+          ...(resource === "version-file" ? { algorithm } : {}),
         }),
       );
       return 0;

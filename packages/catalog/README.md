@@ -41,6 +41,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getModrinthResource,
   getMinecraftAssetsStatus,
   getPackFormat,
   getOutputRequirement,
@@ -66,6 +67,7 @@ import {
   listVersionSupport,
   listFactSurfaces,
   listIntentLookups,
+  listModrinthProjectVersions,
   listOutputRequirements,
   listResponsePatterns,
   findVersionsByPackFormat,
@@ -74,6 +76,7 @@ import {
   searchCommands,
   searchDatapackSchema,
   searchMinecraftAssets,
+  searchModrinthProjects,
   searchPaperMembers,
   searchPaperTypes,
   searchResourcepackModelPaths,
@@ -131,6 +134,21 @@ const assetFile = await fetchMinecraftAssetFile({
   path: "assets/minecraft/models/item/diamond_sword.json",
 });
 const anyMinecraftMatches = searchAll({ version: "26.2", query: "bundle item model" });
+const modrinthProjects = await searchModrinthProjects({
+  query: "voice chat",
+  version: "1.21.11",
+  projectType: "mod",
+  loader: "fabric",
+});
+const modrinthVersions = await listModrinthProjectVersions({
+  project: "simple-voice-chat",
+  gameVersions: ["1.21.11"],
+  loaders: ["fabric"],
+});
+const modrinthProject = await getModrinthResource({
+  resource: "project",
+  identifier: "simple-voice-chat",
+});
 const datapackEntries = findDatapackEntries({ version: "26.2", query: "execute" });
 const resourcepackAssets = findResourcepackAssets({
   version: "26.2",

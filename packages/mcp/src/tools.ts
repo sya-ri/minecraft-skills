@@ -41,6 +41,7 @@ import {
   getIntentLookup,
   getJavaReportsSummary,
   getMinecraftAssetsStatus,
+  getModrinthResource,
   getMojangVersionMetadata,
   getOutputRequirement,
   getPackFileSchema,
@@ -71,6 +72,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listModrinthProjectVersions,
   listOutputRequirements,
   listPackFormats,
   listReferences,
@@ -79,6 +81,7 @@ import {
   listSourceTiers,
   listVersionSupport,
   listVersions,
+  type ModrinthResourceKind,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type ResourcepackModelPathSearchOptions,
@@ -90,6 +93,7 @@ import {
   searchCommands,
   searchDatapackSchema,
   searchMinecraftAssets,
+  searchModrinthProjects,
   searchPaperEvents,
   searchPaperMembers,
   searchPaperTypes,
@@ -986,6 +990,79 @@ export const tools: ToolDefinition[] = [
         limit: { type: "number", default: 20 },
       },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_modrinth_projects",
+    description:
+      "Search public Modrinth projects by text with optional Minecraft version, project type, loader, category, sorting, and pagination filters.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        version: { type: "string" },
+        projectType: { type: "string" },
+        loader: { type: "string" },
+        category: { type: "string" },
+        index: {
+          type: "string",
+          enum: ["relevance", "downloads", "follows", "newest", "updated"],
+          default: "relevance",
+        },
+        offset: { type: "number", default: 0 },
+        limit: { type: "number", default: 10 },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_modrinth_project_versions",
+    description:
+      "List versions published for a Modrinth project ID or slug, optionally filtered by Minecraft versions, loaders, or featured status.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: { type: "string" },
+        gameVersions: { type: "array", items: { type: "string" } },
+        loaders: { type: "array", items: { type: "string" } },
+        featured: { type: "boolean" },
+        includeChangelog: { type: "boolean", default: false },
+      },
+      required: ["project"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_modrinth_resource",
+    description:
+      "Get a public Modrinth project, dependency graph, version, version by file hash, user, tag list, or instance statistics.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resource: {
+          type: "string",
+          enum: [
+            "project",
+            "project-dependencies",
+            "version",
+            "version-file",
+            "user",
+            "categories",
+            "loaders",
+            "game-versions",
+            "project-types",
+            "side-types",
+            "donation-platforms",
+            "report-types",
+            "statistics",
+          ],
+        },
+        identifier: { type: "string" },
+        algorithm: { type: "string", enum: ["sha1", "sha512"] },
+      },
+      required: ["resource"],
       additionalProperties: false,
     },
   },
@@ -2099,6 +2176,111 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           query: args.query,
           ...(domain ? { domain } : {}),
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "search_modrinth_projects") {
+      if (typeof args.query !== "string") {
+        throw new Error("search_modrinth_projects requires string query");
+      }
+      if (
+        args.index !== undefined &&
+        args.index !== "relevance" &&
+        args.index !== "downloads" &&
+        args.index !== "follows" &&
+        args.index !== "newest" &&
+        args.index !== "updated"
+      ) {
+        throw new Error(
+          "search_modrinth_projects index must be relevance, downloads, follows, newest, or updated",
+        );
+      }
+      const index =
+        args.index === "downloads" ||
+        args.index === "follows" ||
+        args.index === "newest" ||
+        args.index === "updated"
+          ? args.index
+          : "relevance";
+      return text(
+        await searchModrinthProjects({
+          query: args.query,
+          index,
+          ...(typeof args.version === "string" ? { version: args.version } : {}),
+          ...(typeof args.projectType === "string" ? { projectType: args.projectType } : {}),
+          ...(typeof args.loader === "string" ? { loader: args.loader } : {}),
+          ...(typeof args.category === "string" ? { category: args.category } : {}),
+          ...(typeof args.offset === "number" ? { offset: args.offset } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "list_modrinth_project_versions") {
+      if (typeof args.project !== "string") {
+        throw new Error("list_modrinth_project_versions requires string project");
+      }
+      if (
+        args.gameVersions !== undefined &&
+        (!Array.isArray(args.gameVersions) ||
+          !args.gameVersions.every((version) => typeof version === "string"))
+      ) {
+        throw new Error("list_modrinth_project_versions gameVersions must be string[]");
+      }
+      if (
+        args.loaders !== undefined &&
+        (!Array.isArray(args.loaders) ||
+          !args.loaders.every((loader) => typeof loader === "string"))
+      ) {
+        throw new Error("list_modrinth_project_versions loaders must be string[]");
+      }
+      return text(
+        await listModrinthProjectVersions({
+          project: args.project,
+          ...(Array.isArray(args.gameVersions) ? { gameVersions: args.gameVersions } : {}),
+          ...(Array.isArray(args.loaders) ? { loaders: args.loaders } : {}),
+          ...(typeof args.featured === "boolean" ? { featured: args.featured } : {}),
+          ...(typeof args.includeChangelog === "boolean"
+            ? { includeChangelog: args.includeChangelog }
+            : {}),
+        }),
+      );
+    }
+    if (name === "get_modrinth_resource") {
+      const resources = new Set<ModrinthResourceKind>([
+        "project",
+        "project-dependencies",
+        "version",
+        "version-file",
+        "user",
+        "categories",
+        "loaders",
+        "game-versions",
+        "project-types",
+        "side-types",
+        "donation-platforms",
+        "report-types",
+        "statistics",
+      ]);
+      if (
+        typeof args.resource !== "string" ||
+        !resources.has(args.resource as ModrinthResourceKind)
+      ) {
+        throw new Error("get_modrinth_resource requires a supported resource");
+      }
+      if (
+        args.algorithm !== undefined &&
+        args.algorithm !== "sha1" &&
+        args.algorithm !== "sha512"
+      ) {
+        throw new Error("get_modrinth_resource algorithm must be sha1 or sha512");
+      }
+      return text(
+        await getModrinthResource({
+          resource: args.resource as ModrinthResourceKind,
+          ...(typeof args.identifier === "string" ? { identifier: args.identifier } : {}),
+          ...(args.algorithm === "sha1" || args.algorithm === "sha512"
+            ? { algorithm: args.algorithm }
+            : {}),
         }),
       );
     }

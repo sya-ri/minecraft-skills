@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+
+- Public Modrinth v2 project search integration across the catalog API, CLI, and MCP server, with
+  version, project type, loader, category, sorting, and pagination filters.
+- Modrinth project version listing by project ID or slug, with Minecraft version, loader, featured,
+  and changelog filters.
+- Typed access to common public Modrinth project, dependency, version, file-hash, user, tag, and
+  statistics resources.
+
 ## 0.1.5 - 2026-06-24
 
 ### Added

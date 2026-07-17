@@ -61,6 +61,9 @@ minecraft-skills source report paper-plugin 26.2
 minecraft-skills source datasets
 minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
+minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
+minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
+minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -152,6 +155,19 @@ minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
 ```
+
+`modrinth search` queries Modrinth's public v2 search API without authentication. Optional filters
+include `--version`, `--type`, `--loader`, and `--category`; `--index` accepts `relevance`,
+`downloads`, `follows`, `newest`, or `updated`. Use `--offset` and `--limit` (maximum 100) for
+pagination.
+
+`modrinth versions <project-id-or-slug>` lists the versions published for one project. Filter with
+`--game-version`, `--loader`, or `--featured true|false`. Changelogs are omitted by default to keep
+responses small; pass `--include-changelog true` when they are needed.
+
+`modrinth get` covers the other common public read APIs: project details and dependencies, version
+details and file-hash lookup, users, categories, loaders, game versions, project/side types,
+donation/report types, and instance statistics. Run the CLI help to see the accepted resource names.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and

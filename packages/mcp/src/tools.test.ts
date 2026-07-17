@@ -140,6 +140,9 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_json");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
+    expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
+    expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
+    expect(tools.map((tool) => tool.name)).toContain("get_modrinth_resource");
     expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
     expect(tools.map((tool) => tool.name)).toContain("find_resourcepack_assets");
     expect(tools.map((tool) => tool.name)).toContain("explain_pack_path");
@@ -944,5 +947,68 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("PlayerJoinEvent");
     expect(fetchMock.mock.calls[0]?.[0] ?? "").toContain("version=1.21.11");
+  });
+
+  it("calls search_modrinth_projects", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ hits: [{ slug: "sodium" }] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("search_modrinth_projects", {
+      query: "sodium",
+      version: "1.21.11",
+      projectType: "mod",
+      loader: "fabric",
+      limit: 5,
+    });
+    expect(result.content[0]?.text).toContain("sodium");
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toContain("versions%3A1.21.11");
+    expect(url).toContain("categories%3Afabric");
+    expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
+  });
+
+  it("calls list_modrinth_project_versions", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => [{ id: "version-id", version_number: "1.0.0" }],
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("list_modrinth_project_versions", {
+      project: "sodium",
+      gameVersions: ["1.21.11"],
+      loaders: ["fabric"],
+      featured: true,
+    });
+    expect(result.content[0]?.text).toContain("version-id");
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toContain("/v2/project/sodium/version");
+    expect(url).toContain("game_versions=%5B%221.21.11%22%5D");
+    expect(url).toContain("loaders=%5B%22fabric%22%5D");
+    expect(url).toContain("include_changelog=false");
+    expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
+  });
+
+  it("calls get_modrinth_resource", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ projects: 123 }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("get_modrinth_resource", {
+      resource: "statistics",
+    });
+    expect(result.content[0]?.text).toContain('"projects": 123');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.modrinth.com/v2/statistics");
   });
 });

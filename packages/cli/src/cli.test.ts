@@ -449,6 +449,88 @@ describe("minecraft-skills CLI", () => {
     );
   });
 
+  it("searches Modrinth projects with filters", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ hits: [{ slug: "simple-voice-chat" }] }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await capture([
+      "modrinth",
+      "search",
+      "voice chat",
+      "--version",
+      "1.21.11",
+      "--type",
+      "mod",
+      "--loader",
+      "fabric",
+      "--index",
+      "downloads",
+      "--limit",
+      "5",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain("simple-voice-chat");
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toContain("api.modrinth.com/v2/search");
+    expect(url).toContain("query=voice+chat");
+    expect(url).toContain("versions%3A1.21.11");
+    expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
+  });
+
+  it("lists versions for a Modrinth project", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => [{ id: "abc123", version_number: "2.5.0" }],
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await capture([
+      "modrinth",
+      "versions",
+      "simple-voice-chat",
+      "--game-version",
+      "1.21.11",
+      "--loader",
+      "fabric",
+      "--featured",
+      "true",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"version_number": "2.5.0"');
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toContain("/v2/project/simple-voice-chat/version");
+    expect(url).toContain("game_versions=%5B%221.21.11%22%5D");
+    expect(url).toContain("loaders=%5B%22fabric%22%5D");
+    expect(url).toContain("featured=true");
+    expect(url).toContain("include_changelog=false");
+    expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
+  });
+
+  it("gets Modrinth public resources", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ slug: "sodium" }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const project = await capture(["modrinth", "get", "project", "sodium"]);
+    expect(project.code).toBe(0);
+    expect(project.stdout.join("\n")).toContain('"slug": "sodium"');
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.modrinth.com/v2/project/sodium");
+
+    await capture(["modrinth", "get", "game-versions"]);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe("https://api.modrinth.com/v2/tag/game_version");
+  });
+
   it("prints Paper API references", async () => {
     const result = await capture(["plugin", "paper", "api", "1.21.11"]);
     expect(result.code).toBe(0);
