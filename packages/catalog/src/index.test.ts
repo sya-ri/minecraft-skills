@@ -3,6 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  buildModrinthProjectSearchUrl,
+  buildModrinthProjectVersionsUrl,
+  buildModrinthResourceUrl,
   buildPaperEventSearchUrl,
   classifyPackFiles,
   compareCommands,
@@ -31,6 +34,7 @@ import {
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
+  getModrinthResource,
   getMojangVersionMetadata,
   getOutputRequirement,
   getPackFileSchema,
@@ -60,6 +64,7 @@ import {
   listDomains,
   listFactSurfaces,
   listIntentLookups,
+  listModrinthProjectVersions,
   listOutputRequirements,
   listPackFormats,
   listResponsePatterns,
@@ -72,6 +77,7 @@ import {
   searchCatalog,
   searchCommands,
   searchDatapackSchema,
+  searchModrinthProjects,
   searchPaperMembers,
   searchPaperTypes,
   searchResourcepackModelPaths,
@@ -1175,6 +1181,109 @@ describe("catalog", () => {
     expect(url).toContain("version=1.21.11");
     expect(url).toContain("source=paper");
     expect(url).toContain("limit=5");
+  });
+
+  it("builds Modrinth project search URLs with facets", () => {
+    const url = new URL(
+      buildModrinthProjectSearchUrl({
+        query: "voice chat",
+        version: "1.21.11",
+        projectType: "mod",
+        loader: "fabric",
+        category: "technology",
+        index: "downloads",
+        offset: 20,
+        limit: 25,
+      }),
+    );
+    expect(url.origin + url.pathname).toBe("https://api.modrinth.com/v2/search");
+    expect(url.searchParams.get("query")).toBe("voice chat");
+    expect(url.searchParams.get("index")).toBe("downloads");
+    expect(url.searchParams.get("offset")).toBe("20");
+    expect(url.searchParams.get("limit")).toBe("25");
+    expect(JSON.parse(url.searchParams.get("facets") ?? "[]")).toEqual([
+      ["versions:1.21.11"],
+      ["all_project_types:mod"],
+      ["categories:fabric"],
+      ["categories:technology"],
+    ]);
+  });
+
+  it("searches Modrinth with an identifying user agent", async () => {
+    let requestUrl = "";
+    let requestInit: RequestInit | undefined;
+    const result = await searchModrinthProjects({ query: "sodium" }, async (url, init) => {
+      requestUrl = url;
+      requestInit = init;
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({ hits: [{ slug: "sodium" }] }),
+      };
+    });
+    expect(requestUrl).toContain("query=sodium");
+    expect(new Headers(requestInit?.headers).get("User-Agent")).toContain("minecraft-skills");
+    expect(result).toEqual({ hits: [{ slug: "sodium" }] });
+  });
+
+  it("builds filtered Modrinth project version URLs", () => {
+    const url = new URL(
+      buildModrinthProjectVersionsUrl({
+        project: "simple-voice-chat",
+        gameVersions: ["1.21.11"],
+        loaders: ["fabric", "neoforge"],
+        featured: true,
+      }),
+    );
+    expect(url.origin + url.pathname).toBe(
+      "https://api.modrinth.com/v2/project/simple-voice-chat/version",
+    );
+    expect(JSON.parse(url.searchParams.get("game_versions") ?? "[]")).toEqual(["1.21.11"]);
+    expect(JSON.parse(url.searchParams.get("loaders") ?? "[]")).toEqual(["fabric", "neoforge"]);
+    expect(url.searchParams.get("featured")).toBe("true");
+    expect(url.searchParams.get("include_changelog")).toBe("false");
+  });
+
+  it("lists Modrinth project versions with an identifying user agent", async () => {
+    let requestInit: RequestInit | undefined;
+    const result = await listModrinthProjectVersions({ project: "sodium" }, async (_url, init) => {
+      requestInit = init;
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => [{ id: "version-id", version_number: "1.0.0" }],
+      };
+    });
+    expect(new Headers(requestInit?.headers).get("User-Agent")).toContain("minecraft-skills");
+    expect(result).toEqual([{ id: "version-id", version_number: "1.0.0" }]);
+  });
+
+  it("builds Modrinth public resource URLs", () => {
+    expect(buildModrinthResourceUrl({ resource: "project", identifier: "sodium" })).toBe(
+      "https://api.modrinth.com/v2/project/sodium",
+    );
+    expect(
+      buildModrinthResourceUrl({
+        resource: "version-file",
+        identifier: "abc123",
+        algorithm: "sha512",
+      }),
+    ).toContain("version_file/abc123?algorithm=sha512");
+    expect(buildModrinthResourceUrl({ resource: "game-versions" })).toBe(
+      "https://api.modrinth.com/v2/tag/game_version",
+    );
+  });
+
+  it("gets a Modrinth public resource", async () => {
+    const result = await getModrinthResource({ resource: "statistics" }, async (url, init) => ({
+      ok: url.endsWith("/statistics") && new Headers(init?.headers).has("User-Agent"),
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ projects: 123 }),
+    }));
+    expect(result).toEqual({ projects: 123 });
   });
 
   it("builds Paper API references for supported versions", () => {

@@ -586,6 +586,48 @@ export type PaperEventSearchOptions = {
   limit?: number;
 };
 
+export type ModrinthSearchIndex = "relevance" | "downloads" | "follows" | "newest" | "updated";
+
+export type ModrinthProjectSearchOptions = {
+  query: string;
+  version?: string;
+  projectType?: string;
+  loader?: string;
+  category?: string;
+  index?: ModrinthSearchIndex;
+  offset?: number;
+  limit?: number;
+};
+
+export type ModrinthProjectVersionsOptions = {
+  project: string;
+  gameVersions?: string[];
+  loaders?: string[];
+  featured?: boolean;
+  includeChangelog?: boolean;
+};
+
+export type ModrinthResourceKind =
+  | "project"
+  | "project-dependencies"
+  | "version"
+  | "version-file"
+  | "user"
+  | "categories"
+  | "loaders"
+  | "game-versions"
+  | "project-types"
+  | "side-types"
+  | "donation-platforms"
+  | "report-types"
+  | "statistics";
+
+export type ModrinthResourceOptions = {
+  resource: ModrinthResourceKind;
+  identifier?: string;
+  algorithm?: "sha1" | "sha512";
+};
+
 export type PaperApiReference = {
   requestedVersion: string;
   supported: boolean;
@@ -1264,7 +1306,10 @@ export type ResourcepackModelPathSearchResult = {
   paths: string[];
 };
 
-export type FetchJson = (url: string) => Promise<{
+export type FetchJson = (
+  url: string,
+  init?: RequestInit,
+) => Promise<{
   ok: boolean;
   status: number;
   statusText: string;
@@ -5827,6 +5872,146 @@ export async function searchPaperEvents(
   const response = await fetchJson(url);
   if (!response.ok) {
     throw new Error(`Paper event search failed: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
+const modrinthApiBaseUrl = "https://api.modrinth.com/v2/search";
+const modrinthUserAgent = "sya-ri/minecraft-skills/0.1.5 (github.com/sya-ri/minecraft-skills)";
+
+export function buildModrinthProjectSearchUrl(options: ModrinthProjectSearchOptions): string {
+  const query = options.query.trim();
+  if (!query) {
+    throw new Error("Modrinth project search requires a query");
+  }
+  const limit = normalizeLimit(options.limit, 10, 100);
+  const offset = options.offset ?? 0;
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error("Offset must be a non-negative integer");
+  }
+
+  const url = new URL(modrinthApiBaseUrl);
+  url.searchParams.set("query", query);
+  url.searchParams.set("index", options.index ?? "relevance");
+  url.searchParams.set("offset", String(offset));
+  url.searchParams.set("limit", String(limit));
+
+  const facets: string[][] = [];
+  if (options.version) {
+    facets.push([`versions:${options.version}`]);
+  }
+  if (options.projectType) {
+    facets.push([`all_project_types:${options.projectType}`]);
+  }
+  if (options.loader) {
+    facets.push([`categories:${options.loader}`]);
+  }
+  if (options.category) {
+    facets.push([`categories:${options.category}`]);
+  }
+  if (facets.length > 0) {
+    url.searchParams.set("facets", JSON.stringify(facets));
+  }
+  return url.toString();
+}
+
+export async function searchModrinthProjects(
+  options: ModrinthProjectSearchOptions,
+  fetchJson: FetchJson = fetch,
+): Promise<unknown> {
+  const url = buildModrinthProjectSearchUrl(options);
+  const response = await fetchJson(url, {
+    headers: { "User-Agent": modrinthUserAgent },
+  });
+  if (!response.ok) {
+    throw new Error(`Modrinth project search failed: ${response.status} ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export function buildModrinthProjectVersionsUrl(options: ModrinthProjectVersionsOptions): string {
+  const project = options.project.trim();
+  if (!project) {
+    throw new Error("Modrinth project versions lookup requires a project ID or slug");
+  }
+  const url = new URL(`https://api.modrinth.com/v2/project/${encodeURIComponent(project)}/version`);
+  if (options.gameVersions && options.gameVersions.length > 0) {
+    url.searchParams.set("game_versions", JSON.stringify(options.gameVersions));
+  }
+  if (options.loaders && options.loaders.length > 0) {
+    url.searchParams.set("loaders", JSON.stringify(options.loaders));
+  }
+  if (options.featured !== undefined) {
+    url.searchParams.set("featured", String(options.featured));
+  }
+  url.searchParams.set("include_changelog", String(options.includeChangelog ?? false));
+  return url.toString();
+}
+
+export async function listModrinthProjectVersions(
+  options: ModrinthProjectVersionsOptions,
+  fetchJson: FetchJson = fetch,
+): Promise<unknown> {
+  const url = buildModrinthProjectVersionsUrl(options);
+  const response = await fetchJson(url, {
+    headers: { "User-Agent": modrinthUserAgent },
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Modrinth project versions lookup failed: ${response.status} ${response.statusText}`,
+    );
+  }
+  return response.json();
+}
+
+const modrinthStaticResourcePaths: Partial<Record<ModrinthResourceKind, string>> = {
+  categories: "tag/category",
+  loaders: "tag/loader",
+  "game-versions": "tag/game_version",
+  "project-types": "tag/project_type",
+  "side-types": "tag/side_type",
+  "donation-platforms": "tag/donation_platform",
+  "report-types": "tag/report_type",
+  statistics: "statistics",
+};
+
+export function buildModrinthResourceUrl(options: ModrinthResourceOptions): string {
+  const staticPath = modrinthStaticResourcePaths[options.resource];
+  if (staticPath) {
+    return `https://api.modrinth.com/v2/${staticPath}`;
+  }
+  const identifier = options.identifier?.trim();
+  if (!identifier) {
+    throw new Error(`Modrinth ${options.resource} lookup requires an identifier`);
+  }
+  const encoded = encodeURIComponent(identifier);
+  const paths: Partial<Record<ModrinthResourceKind, string>> = {
+    project: `project/${encoded}`,
+    "project-dependencies": `project/${encoded}/dependencies`,
+    version: `version/${encoded}`,
+    "version-file": `version_file/${encoded}`,
+    user: `user/${encoded}`,
+  };
+  const path = paths[options.resource];
+  if (!path) {
+    throw new Error(`Unsupported Modrinth resource: ${options.resource}`);
+  }
+  const url = new URL(`https://api.modrinth.com/v2/${path}`);
+  if (options.resource === "version-file" && options.algorithm) {
+    url.searchParams.set("algorithm", options.algorithm);
+  }
+  return url.toString();
+}
+
+export async function getModrinthResource(
+  options: ModrinthResourceOptions,
+  fetchJson: FetchJson = fetch,
+): Promise<unknown> {
+  const response = await fetchJson(buildModrinthResourceUrl(options), {
+    headers: { "User-Agent": modrinthUserAgent },
+  });
+  if (!response.ok) {
+    throw new Error(`Modrinth resource lookup failed: ${response.status} ${response.statusText}`);
   }
   return response.json();
 }

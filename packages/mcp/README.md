@@ -98,6 +98,9 @@ assumption and ask the user to confirm it.
 - `find_versions_by_pack_format`
 - `compare_versions`
 - `search_all`
+- `search_modrinth_projects`
+- `list_modrinth_project_versions`
+- `get_modrinth_resource`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `explain_pack_path`
