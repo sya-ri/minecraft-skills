@@ -123,7 +123,304 @@
   },
   "datapack": {
     "otherTypes": [],
-    "registries": []
+    "registries": [
+      {
+        "id": "minecraft:activity",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 10,
+        "protocolId": 36
+      },
+      {
+        "id": "minecraft:biome",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 75,
+        "protocolId": 12
+      },
+      {
+        "id": "minecraft:biome_source_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 4,
+        "protocolId": 14
+      },
+      {
+        "id": "minecraft:block",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 676,
+        "protocolId": 3
+      },
+      {
+        "id": "minecraft:block_entity_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 32,
+        "protocolId": 15
+      },
+      {
+        "id": "minecraft:carver",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 8
+      },
+      {
+        "id": "minecraft:chunk_generator_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 16
+      },
+      {
+        "id": "minecraft:chunk_status",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 13,
+        "protocolId": 20
+      },
+      {
+        "id": "minecraft:custom_stat",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 69,
+        "protocolId": 19
+      },
+      {
+        "id": "minecraft:decorator",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 38,
+        "protocolId": 11
+      },
+      {
+        "id": "minecraft:dimension_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 3,
+        "protocolId": 17
+      },
+      {
+        "id": "minecraft:enchantment",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 37,
+        "protocolId": 4
+      },
+      {
+        "id": "minecraft:entity_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 102,
+        "protocolId": 5
+      },
+      {
+        "id": "minecraft:feature",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 92,
+        "protocolId": 10
+      },
+      {
+        "id": "minecraft:fluid",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 1
+      },
+      {
+        "id": "minecraft:item",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 877,
+        "protocolId": 6
+      },
+      {
+        "id": "minecraft:memory_module_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 27,
+        "protocolId": 33
+      },
+      {
+        "id": "minecraft:menu",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 23,
+        "protocolId": 26
+      },
+      {
+        "id": "minecraft:mob_effect",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 32,
+        "protocolId": 2
+      },
+      {
+        "id": "minecraft:motive",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 26,
+        "protocolId": 18
+      },
+      {
+        "id": "minecraft:particle_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 58,
+        "protocolId": 13
+      },
+      {
+        "id": "minecraft:point_of_interest_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 17,
+        "protocolId": 32
+      },
+      {
+        "id": "minecraft:potion",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 43,
+        "protocolId": 7
+      },
+      {
+        "id": "minecraft:recipe_serializer",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 20,
+        "protocolId": 28
+      },
+      {
+        "id": "minecraft:recipe_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 6,
+        "protocolId": 27
+      },
+      {
+        "id": "minecraft:rule_test",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 6,
+        "protocolId": 23
+      },
+      {
+        "id": "minecraft:schedule",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 4,
+        "protocolId": 35
+      },
+      {
+        "id": "minecraft:sensor_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 10,
+        "protocolId": 34
+      },
+      {
+        "id": "minecraft:sound_event",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 795,
+        "protocolId": 0
+      },
+      {
+        "id": "minecraft:stat_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 9,
+        "protocolId": 29
+      },
+      {
+        "id": "minecraft:structure_feature",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 15,
+        "protocolId": 21
+      },
+      {
+        "id": "minecraft:structure_piece",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 55,
+        "protocolId": 22
+      },
+      {
+        "id": "minecraft:structure_pool_element",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 4,
+        "protocolId": 25
+      },
+      {
+        "id": "minecraft:structure_processor",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 6,
+        "protocolId": 24
+      },
+      {
+        "id": "minecraft:surface_builder",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 12,
+        "protocolId": 9
+      },
+      {
+        "id": "minecraft:villager_profession",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 15,
+        "protocolId": 31
+      },
+      {
+        "id": "minecraft:villager_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 7,
+        "protocolId": 30
+      }
+    ]
   },
   "reports": [
     {

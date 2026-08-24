@@ -136,6 +136,17 @@ node packages/maintainer/dist/cli.mjs ingest-java-reports \
   --retrieved-at 2026-06-22T00:00:00+09:00
 ```
 
+To generate every missing report summary and repair summaries that list
+`reports/registries.json` but contain no registries, use the all-version command. It downloads and
+deletes one official server jar at a time, preserves an existing summary's source timestamp during
+a repair, and skips complete summaries unless `--force` is supplied:
+
+```sh
+node packages/maintainer/dist/cli.mjs audit-java-reports
+node packages/maintainer/dist/cli.mjs ingest-java-reports-all \
+  --retrieved-at 2026-06-22T00:00:00+09:00
+```
+
 Regenerate Paper plugin support data:
 
 ```sh
