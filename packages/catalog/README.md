@@ -84,6 +84,7 @@ import {
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchRegistryEntries,
+  searchVanillaDatapackJsonContent,
   searchVanillaPaths,
   suggestMinecraftLookups,
   validateResourcepackProject,
@@ -238,6 +239,12 @@ const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",
   contains: "recipe",
+});
+const vanillaRecipeMatches = searchVanillaDatapackJsonContent({
+  version: "26.2",
+  query: "minecraft:diamond",
+  kind: "recipe",
+  scope: "values",
 });
 const pathDiff = compareVanillaPaths({
   from: "1.20.6",

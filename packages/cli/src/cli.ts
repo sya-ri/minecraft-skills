@@ -19,6 +19,7 @@ import {
   type CommandSearchOptions,
   classifyPackFiles,
   cleanCachedData,
+  cleanMojangServerJar,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -34,6 +35,7 @@ import {
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
+  fetchMojangServerJarForVersion,
   findDatapackEntries,
   findResourcepackAssets,
   findVersionsByPackFormat,
@@ -60,6 +62,7 @@ import {
   getJavaReportsSummary,
   getMinecraftAssetsStatus,
   getModrinthResource,
+  getMojangServerJarStatus,
   getOutputRequirement,
   getPackFileSchema,
   getPackFormat,
@@ -75,6 +78,7 @@ import {
   getSourceReport,
   getSourceTier,
   getSupportMatrix,
+  getVanillaDatapackJson,
   getVanillaInventory,
   getVersionDetail,
   listAuthoringChecklists,
@@ -116,6 +120,8 @@ import {
   searchPaperTypes,
   searchRegistryEntries,
   searchResourcepackModelPaths,
+  searchVanillaDatapackJsonContent,
+  searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
   suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
@@ -271,6 +277,42 @@ function positionalArgs(args: string[]): string[] {
     }
     positional.push(arg);
   }
+  return positional;
+}
+
+function positionalArgsWithOptions(
+  args: string[],
+  options: {
+    flags?: readonly string[];
+    values?: readonly string[];
+  } = {},
+): string[] {
+  const flags = new Set(options.flags ?? []);
+  const values = new Set(["--edition", ...(options.values ?? [])]);
+  const positional: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) {
+      continue;
+    }
+    if (flags.has(arg)) {
+      continue;
+    }
+    if (values.has(arg)) {
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error(`${arg} requires a value`);
+      }
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("--")) {
+      throw new Error(`Unknown option: ${arg}`);
+    }
+    positional.push(arg);
+  }
+
   return positional;
 }
 
@@ -521,6 +563,19 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
   if (groupedCommand === "datapack migration-plan") {
     return ["migration-plan", ...withDefaultDomain(rest, "datapack")];
+  }
+  if (group === "datapack" && subcommand === "vanilla-json") {
+    const [jsonSubcommand, ...jsonRest] = rest;
+    const jsonAliases: Record<string, string> = {
+      status: "vanilla-datapack-json-status",
+      fetch: "vanilla-datapack-json-fetch",
+      clean: "vanilla-datapack-json-clean",
+      files: "vanilla-datapack-json-files",
+      get: "vanilla-datapack-json-get",
+      search: "vanilla-datapack-json-search",
+    };
+    const command = jsonAliases[jsonSubcommand ?? ""];
+    return command ? [command, ...jsonRest] : argv;
   }
   if (group === "datapack") {
     const command = normalizeDomainAuthoringSubcommand("datapack", subcommand, rest);
@@ -873,6 +928,12 @@ Grouped commands:
   minecraft-skills datapack find <query...> [--version latest] [--limit 25]
   minecraft-skills datapack server-reports [version] [--edition java]
   minecraft-skills datapack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
+  minecraft-skills datapack vanilla-json status [version]
+  minecraft-skills datapack vanilla-json fetch [version] [--force]
+  minecraft-skills datapack vanilla-json clean [version]
+  minecraft-skills datapack vanilla-json files [version] [--kind kind] [--prefix path] [--contains text] [--limit 25]
+  minecraft-skills datapack vanilla-json get <version> <data/path.json> [--parse true|false]
+  minecraft-skills datapack vanilla-json search <query...> [--version latest] [--kind kind] [--prefix path] [--scope keys|values|all] [--case-sensitive true|false] [--limit 25] [--matches-per-file 3]
   minecraft-skills resourcepack vanilla-paths [version] [--prefix path] [--contains text] [--extension json] [--limit 50]
   minecraft-skills resourcepack models [version] [--edition java]
   minecraft-skills resourcepack classify-files <path...>
@@ -1993,6 +2054,103 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           path: assetPath,
           ref: readOption(args, "--ref", version),
           force: args.includes("--force"),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "vanilla-datapack-json-status") {
+      const requested = positionalArgsWithOptions(args)[0] ?? "latest";
+      printJson(output, getMojangServerJarStatus(resolveVersion(edition, requested)));
+      return 0;
+    }
+
+    if (command === "vanilla-datapack-json-fetch") {
+      const requested = positionalArgsWithOptions(args, { flags: ["--force"] })[0] ?? "latest";
+      printJson(
+        output,
+        await fetchMojangServerJarForVersion({
+          edition,
+          version: requested,
+          force: args.includes("--force"),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "vanilla-datapack-json-clean") {
+      const requested = positionalArgsWithOptions(args)[0] ?? "latest";
+      printJson(output, cleanMojangServerJar(resolveVersion(edition, requested)));
+      return 0;
+    }
+
+    if (command === "vanilla-datapack-json-files") {
+      const requested =
+        positionalArgsWithOptions(args, {
+          values: ["--kind", "--prefix", "--contains", "--limit"],
+        })[0] ?? "latest";
+      printJson(
+        output,
+        searchVanillaDatapackJsonFiles({
+          edition,
+          version: requested,
+          ...(args.includes("--kind") ? { kind: readOption(args, "--kind", "") } : {}),
+          ...(args.includes("--prefix") ? { prefix: readOption(args, "--prefix", "") } : {}),
+          ...(args.includes("--contains") ? { contains: readOption(args, "--contains", "") } : {}),
+          limit: Number(readOption(args, "--limit", "25")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "vanilla-datapack-json-get") {
+      const [requested, path] = positionalArgsWithOptions(args, { values: ["--parse"] });
+      if (!requested || !path) {
+        throw new Error("datapack vanilla-json get requires <version> and <data/path.json>");
+      }
+      printJson(
+        output,
+        getVanillaDatapackJson({
+          edition,
+          version: requested,
+          path,
+          parse: readBooleanOption(args, "--parse", true),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "vanilla-datapack-json-search") {
+      const query = positionalArgsWithOptions(args, {
+        values: [
+          "--version",
+          "--kind",
+          "--prefix",
+          "--scope",
+          "--case-sensitive",
+          "--limit",
+          "--matches-per-file",
+        ],
+      }).join(" ");
+      if (!query) {
+        throw new Error("datapack vanilla-json search requires a query");
+      }
+      const scope = readOption(args, "--scope", "all");
+      if (scope !== "keys" && scope !== "values" && scope !== "all") {
+        throw new Error("datapack vanilla-json search --scope must be keys, values, or all");
+      }
+      printJson(
+        output,
+        searchVanillaDatapackJsonContent({
+          edition,
+          version: readOption(args, "--version", "latest"),
+          query,
+          scope,
+          caseSensitive: readBooleanOption(args, "--case-sensitive", false),
+          ...(args.includes("--kind") ? { kind: readOption(args, "--kind", "") } : {}),
+          ...(args.includes("--prefix") ? { prefix: readOption(args, "--prefix", "") } : {}),
+          limit: Number(readOption(args, "--limit", "25")),
+          matchesPerFile: Number(readOption(args, "--matches-per-file", "3")),
         }),
       );
       return 0;

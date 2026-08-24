@@ -1,6 +1,8 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { getVersionDetail } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 
@@ -1092,6 +1094,125 @@ describe("minecraft-skills CLI", () => {
     ]);
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain("assets/minecraft/models/block/acacia_button.json");
+  });
+
+  it("inspects and searches cached vanilla datapack JSON content", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-cli-vanilla-json-"));
+    vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", root);
+    let restoreServerMetadata = () => undefined;
+    try {
+      const jarDir = join(root, "mojang-server-jars");
+      mkdirSync(jarDir, { recursive: true });
+      const jar = createStoredZip({
+        "data/minecraft/recipe/widget.json": JSON.stringify({
+          type: "minecraft:crafting_shapeless",
+          ingredients: [{ item: "minecraft:diamond" }],
+        }),
+      });
+      writeFileSync(join(jarDir, "26.2.jar"), jar);
+      const server = getVersionDetail("java", "26.2").downloads.server as {
+        sha1?: string;
+        size?: number;
+      };
+      const previousSha1 = server.sha1;
+      const previousSize = server.size;
+      server.sha1 = createHash("sha1").update(jar).digest("hex");
+      server.size = jar.length;
+      restoreServerMetadata = () => {
+        if (previousSha1 === undefined) delete server.sha1;
+        else server.sha1 = previousSha1;
+        if (previousSize === undefined) delete server.size;
+        else server.size = previousSize;
+      };
+
+      const status = await capture(["datapack", "vanilla-json", "status", "26.2"]);
+      expect(status.code).toBe(0);
+      expect(status.stdout.join("\n")).toContain('"cached": true');
+
+      const files = await capture([
+        "datapack",
+        "vanilla-json",
+        "files",
+        "26.2",
+        "--kind",
+        "recipe",
+      ]);
+      expect(files.code).toBe(0);
+      expect(files.stdout.join("\n")).toContain("data/minecraft/recipe/widget.json");
+
+      const get = await capture([
+        "datapack",
+        "vanilla-json",
+        "get",
+        "26.2",
+        "data/minecraft/recipe/widget.json",
+      ]);
+      expect(get.code).toBe(0);
+      expect(get.stdout.join("\n")).toContain('"minecraft:crafting_shapeless"');
+
+      const search = await capture([
+        "datapack",
+        "vanilla-json",
+        "search",
+        "minecraft:diamond",
+        "--version",
+        "26.2",
+        "--scope",
+        "values",
+      ]);
+      expect(search.code).toBe(0);
+      expect(search.stdout.join("\n")).toContain('"pointer": "/ingredients/0/item"');
+
+      const clean = await capture(["datapack", "vanilla-json", "clean", "26.2"]);
+      expect(clean.code).toBe(0);
+      expect(clean.stdout.join("\n")).toContain('"removed": true');
+      expect(existsSync(join(jarDir, "26.2.jar"))).toBe(false);
+    } finally {
+      restoreServerMetadata();
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps a vanilla datapack JSON version after the --force flag", async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new Error("fetch should not run for an unsupported version");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await capture([
+      "datapack",
+      "vanilla-json",
+      "fetch",
+      "--force",
+      "unsupported-parser-probe",
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr.join("\n")).toContain("unsupported-parser-probe");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing vanilla datapack JSON boolean option values", async () => {
+    const get = await capture([
+      "datapack",
+      "vanilla-json",
+      "get",
+      "26.2",
+      "data/minecraft/recipe/widget.json",
+      "--parse",
+    ]);
+    expect(get.code).toBe(1);
+    expect(get.stderr).toEqual(["--parse requires a value"]);
+
+    const search = await capture([
+      "datapack",
+      "vanilla-json",
+      "search",
+      "minecraft:diamond",
+      "--case-sensitive",
+    ]);
+    expect(search.code).toBe(1);
+    expect(search.stderr).toEqual(["--case-sensitive requires a value"]);
   });
 
   it("compares vanilla paths", async () => {

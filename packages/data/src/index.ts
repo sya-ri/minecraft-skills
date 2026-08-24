@@ -1,9 +1,14 @@
 import { createHash } from "node:crypto";
 import {
+  closeSync,
+  constants,
   existsSync,
+  fstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
+  readSync,
   renameSync,
   rmSync,
   statSync,
@@ -12,7 +17,7 @@ import {
 import { homedir, platform, tmpdir } from "node:os";
 import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { listZipEntries, readZipEntry } from "./zip.js";
+import { openZipArchive, type ZipArchive } from "./zip.js";
 
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const dataRoot = join(packageRoot, "data");
@@ -21,6 +26,15 @@ const minecraftAssetsRepository = "InventivetalentDev/minecraft-assets";
 const minecraftAssetsRawBase = `https://raw.githubusercontent.com/${minecraftAssetsRepository}`;
 const minecraftAssetsApiBase = `https://api.github.com/repos/${minecraftAssetsRepository}`;
 const minecraftAssetsArchiveBase = `https://github.com/${minecraftAssetsRepository}/archive`;
+const maxMojangServerJarBytes = 256 * 1024 * 1024;
+const maxBundledServerJarBytes = 128 * 1024 * 1024;
+const maxBundlerVersionsListBytes = 1024 * 1024;
+const maxMojangServerJarTextBytes = 2 * 1024 * 1024;
+const maxMojangServerJarFetchTimeoutMs = 120_000;
+const defaultMojangServerJarFetchTimeoutMs = 30_000;
+const maxBundlerVersionLineCharacters = 8_192;
+const maxBundlerVersionIdCharacters = 128;
+const maxBundlerRelativePathCharacters = 4_000;
 
 export type DataManifestEntry = {
   path: string;
@@ -188,7 +202,9 @@ export type FetchMojangServerJarOptions = {
   version: string;
   url: string;
   sha1?: string | null;
+  size?: number | null;
   force?: boolean;
+  timeoutMs?: number;
   fetch?: typeof fetch;
 };
 
@@ -202,32 +218,74 @@ export type FetchMojangServerJarResult = {
   cached: boolean;
 };
 
+export type CleanMojangServerJarResult = {
+  schemaVersion: 1;
+  version: string;
+  file: string;
+  removed: boolean;
+  bytesFreed: number;
+};
+
 export type MojangServerJarEntry = {
   path: string;
   compressedSize: number;
   uncompressedSize: number;
 };
 
+export type MojangServerJarVerification = {
+  sha1?: string | null;
+  size?: number | null;
+};
+
+export type MojangServerJarTextEntry = MojangServerJarEntry & {
+  content: string;
+};
+
+export type ScanCachedMojangServerJarTextOptions = {
+  include?: (entry: MojangServerJarEntry) => boolean;
+  maxEntries?: number;
+  maxEntryBytes?: number;
+  maxTotalBytes?: number;
+  sha1?: string | null;
+  size?: number | null;
+};
+
+export type ScanCachedMojangServerJarTextResult = {
+  entries: MojangServerJarEntry[];
+  selectedEntries: number;
+  scannedEntries: number;
+  scannedBytes: number;
+  skippedOversizedEntries: number;
+  skippedBudgetEntries: number;
+  skippedPaths: string[];
+  truncated: boolean;
+  texts: MojangServerJarTextEntry[];
+};
+
 function assertSafeRelativePath(relativePath: string): void {
   if (
     relativePath.length === 0 ||
+    relativePath.length > 4_096 ||
     relativePath.includes("\0") ||
     isAbsolute(relativePath) ||
     relativePath.split(/[\\/]/).includes("..")
   ) {
-    throw new Error(`Data path must be a safe relative path: ${relativePath}`);
+    throw new Error("Data path must be a safe relative path containing 1 to 4096 characters");
   }
 }
 
 function assertSafeMinecraftVersion(version: string): void {
   if (
     version.length === 0 ||
+    version.length > 128 ||
     version.includes("\0") ||
     version.includes("/") ||
     version.includes("\\") ||
     version.split(".").includes("..")
   ) {
-    throw new Error(`Minecraft asset version must be a safe ref-like value: ${version}`);
+    throw new Error(
+      "Minecraft asset version must be a safe ref-like value of at most 128 characters",
+    );
   }
 }
 
@@ -548,12 +606,113 @@ function entryUrl(entry: DataManifestEntry, options: FetchDataOptions): string {
   return `${options.baseUrl.replace(/\/$/, "")}/${entry.path}`;
 }
 
-async function fetchBytes(url: string, fetchImpl: typeof fetch): Promise<Buffer> {
-  const response = await fetchImpl(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+async function fetchBytes(
+  url: string,
+  fetchImpl: typeof fetch,
+  maxBytes?: number,
+  timeoutMs?: number,
+): Promise<Buffer> {
+  const controller = timeoutMs === undefined ? undefined : new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout =
+    timeoutMs === undefined
+      ? undefined
+      : new Promise<never>((_resolve, reject) => {
+          timer = setTimeout(() => {
+            reject(new Error(`Fetch timed out after ${timeoutMs} ms`));
+            controller?.abort();
+          }, timeoutMs);
+        });
+  const withinDeadline = <T>(operation: Promise<T>): Promise<T> =>
+    timeout ? Promise.race([operation, timeout]) : operation;
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  try {
+    const response = await withinDeadline(
+      fetchImpl(url, controller ? { signal: controller.signal } : undefined),
+    );
+    if (!response.ok) {
+      await withinDeadline(response.body?.cancel() ?? Promise.resolve());
+      throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+    }
+    if (maxBytes === undefined) {
+      return Buffer.from(await withinDeadline(response.arrayBuffer()));
+    }
+    const contentLength = response.headers.get("content-length");
+    if (contentLength && /^\d+$/.test(contentLength) && Number(contentLength) > maxBytes) {
+      await withinDeadline(response.body?.cancel() ?? Promise.resolve());
+      throw new Error(`Refusing to fetch ${url}: response exceeds ${maxBytes} bytes`);
+    }
+    if (!response.body) {
+      const bytes = Buffer.from(await withinDeadline(response.arrayBuffer()));
+      if (bytes.length > maxBytes) {
+        throw new Error(`Refusing to fetch ${url}: response exceeds ${maxBytes} bytes`);
+      }
+      return bytes;
+    }
+    reader = response.body.getReader();
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    while (true) {
+      const chunk = await withinDeadline(reader.read());
+      if (chunk.done) {
+        break;
+      }
+      totalBytes += chunk.value.byteLength;
+      if (totalBytes > maxBytes) {
+        await withinDeadline(reader.cancel());
+        throw new Error(`Refusing to fetch ${url}: response exceeds ${maxBytes} bytes`);
+      }
+      chunks.push(Buffer.from(chunk.value));
+    }
+    return Buffer.concat(chunks, totalBytes);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    if (controller?.signal.aborted && reader) {
+      void reader.cancel().catch(() => undefined);
+    } else {
+      reader?.releaseLock();
+    }
   }
-  return Buffer.from(await response.arrayBuffer());
+}
+
+function readBoundedRegularFile(
+  file: string,
+  maxBytes: number,
+  expectedSize: number | null | undefined,
+  label: string,
+): Buffer {
+  const descriptor = openSync(file, constants.O_RDONLY | constants.O_NONBLOCK);
+  try {
+    const before = fstatSync(descriptor);
+    if (!before.isFile()) {
+      throw new Error(`${label} is not a regular file`);
+    }
+    if (before.size > maxBytes || (expectedSize != null && before.size !== expectedSize)) {
+      throw new Error(`${label} has an unexpected size`);
+    }
+    const bytes = Buffer.allocUnsafe(before.size);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const read = readSync(descriptor, bytes, offset, bytes.length - offset, offset);
+      if (read === 0) {
+        throw new Error(`${label} changed while being read`);
+      }
+      offset += read;
+    }
+    const after = fstatSync(descriptor);
+    if (
+      after.size !== before.size ||
+      after.mtimeMs !== before.mtimeMs ||
+      after.ctimeMs !== before.ctimeMs
+    ) {
+      throw new Error(`${label} changed while being read`);
+    }
+    return bytes;
+  } finally {
+    closeSync(descriptor);
+  }
 }
 
 async function fetchJson<T>(url: string, fetchImpl: typeof fetch): Promise<T> {
@@ -584,6 +743,10 @@ function sha256(buffer: Buffer): string {
 
 function sha1(buffer: Buffer): string {
   return createHash("sha1").update(buffer).digest("hex");
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDataResult> {
@@ -637,24 +800,86 @@ export function getMojangServerJarStatus(version: string): MojangServerJarStatus
   };
 }
 
+export function cleanMojangServerJar(version: string): CleanMojangServerJarResult {
+  assertSafeMinecraftVersion(version);
+  const file = mojangServerJarFile(version);
+  const removed = existsSync(file);
+  const bytesFreed = removed ? statSync(file).size : 0;
+  rmSync(file, { force: true });
+  return {
+    schemaVersion: 1,
+    version,
+    file,
+    removed,
+    bytesFreed,
+  };
+}
+
 export async function fetchMojangServerJar(
   options: FetchMojangServerJarOptions,
 ): Promise<FetchMojangServerJarResult> {
   assertSafeMinecraftVersion(options.version);
+  if (options.sha1 != null && !/^[0-9a-f]{40}$/.test(options.sha1)) {
+    throw new Error("Mojang server jar SHA-1 must contain 40 lowercase hexadecimal characters");
+  }
+  if (
+    options.size != null &&
+    (!Number.isSafeInteger(options.size) ||
+      options.size < 0 ||
+      options.size > maxMojangServerJarBytes)
+  ) {
+    throw new Error(`Mojang server jar size must be between 0 and ${maxMojangServerJarBytes}`);
+  }
+  const timeoutMs = options.timeoutMs ?? defaultMojangServerJarFetchTimeoutMs;
+  if (
+    !Number.isSafeInteger(timeoutMs) ||
+    timeoutMs < 1 ||
+    timeoutMs > maxMojangServerJarFetchTimeoutMs
+  ) {
+    throw new Error(
+      `Mojang server jar fetch timeout must be between 1 and ${maxMojangServerJarFetchTimeoutMs} ms`,
+    );
+  }
   const output = mojangServerJarFile(options.version);
   if (!options.force && existsSync(output)) {
-    const bytes = readFileSync(output);
+    let bytes: Buffer;
+    try {
+      bytes = readBoundedRegularFile(
+        output,
+        maxMojangServerJarBytes,
+        options.size,
+        `Cached Mojang server jar ${options.version}`,
+      );
+    } catch (error) {
+      throw new Error(`${errorMessage(error)}; refetch it with force enabled`);
+    }
+    const actualSha1 = sha1(bytes);
+    if (options.sha1 && actualSha1 !== options.sha1) {
+      throw new Error(
+        `Cached Mojang server jar ${options.version} failed SHA-1 verification; refetch it with force enabled`,
+      );
+    }
     return {
       schemaVersion: 1,
       version: options.version,
       url: options.url,
-      sha1: sha1(bytes),
+      sha1: actualSha1,
       file: output,
       bytes: bytes.length,
       cached: true,
     };
   }
-  const bytes = await fetchBytes(options.url, options.fetch ?? fetch);
+  const bytes = await fetchBytes(
+    options.url,
+    options.fetch ?? fetch,
+    options.size ?? maxMojangServerJarBytes,
+    timeoutMs,
+  );
+  if (options.size != null && bytes.length !== options.size) {
+    throw new Error(
+      `Size mismatch for Mojang server jar ${options.version}: expected ${options.size}, got ${bytes.length}`,
+    );
+  }
   const actualSha1 = sha1(bytes);
   if (options.sha1 && actualSha1 !== options.sha1) {
     throw new Error(
@@ -673,22 +898,140 @@ export async function fetchMojangServerJar(
   };
 }
 
-function readCachedMojangServerJar(version: string): Buffer {
+function readCachedMojangServerJar(
+  version: string,
+  verification: MojangServerJarVerification = {},
+): Buffer {
   const file = mojangServerJarFile(version);
   if (!existsSync(file)) {
     throw new Error(
       [
         `No cached Mojang server jar for ${version}.`,
+        `In the CLI, run minecraft-skills datapack vanilla-json fetch ${version}, then retry.`,
         `In MCP, call fetch_mojang_server_jar with {"version":"${version}"}, then retry.`,
       ].join(" "),
     );
   }
-  return readFileSync(file);
+  if (verification.sha1 != null && !/^[0-9a-f]{40}$/.test(verification.sha1)) {
+    throw new Error("Mojang server jar SHA-1 must contain 40 lowercase hexadecimal characters");
+  }
+  let jar: Buffer;
+  try {
+    jar = readBoundedRegularFile(
+      file,
+      maxMojangServerJarBytes,
+      verification.size,
+      `Cached Mojang server jar ${version}`,
+    );
+  } catch (error) {
+    throw new Error(`${errorMessage(error)}; remove or refetch it`);
+  }
+  if (verification.sha1 && sha1(jar) !== verification.sha1) {
+    throw new Error(`Cached Mojang server jar ${version} failed SHA-1 verification; refetch it`);
+  }
+  return jar;
 }
 
-export function listCachedMojangServerJarEntries(version: string): MojangServerJarEntry[] {
-  const jar = readCachedMojangServerJar(version);
-  return listZipEntries(jar)
+function resolveMojangServerJarPayload(version: string, outerJar: Buffer): ZipArchive {
+  const outerArchive = openZipArchive(outerJar);
+  const outerEntries = outerArchive.entries;
+  const versionsListPath = "META-INF/versions.list";
+  const versionsListEntry = outerEntries.find(
+    (entry) => entry.name === versionsListPath && !entry.directory,
+  );
+  if (!versionsListEntry) {
+    if (outerEntries.some((entry) => entry.name.startsWith("data/") && !entry.directory)) {
+      return outerArchive;
+    }
+    throw new Error(
+      `Cached Mojang server jar ${version} contains neither datapack data nor bundler metadata`,
+    );
+  }
+  if (versionsListEntry.uncompressedSize > maxBundlerVersionsListBytes) {
+    throw new Error(`Mojang bundler versions list exceeds ${maxBundlerVersionsListBytes} bytes`);
+  }
+  let versionsList: string;
+  try {
+    versionsList = new TextDecoder("utf-8", { fatal: true }).decode(
+      outerArchive.readEntry(versionsListPath),
+    );
+  } catch (error) {
+    throw new Error(`Invalid Mojang bundler versions list: ${errorMessage(error)}`);
+  }
+  const lines = versionsList.split(/\r?\n/).filter((line) => line.length > 0);
+  if (lines.length < 1 || lines.length > 1_024) {
+    throw new Error("Invalid Mojang bundler versions list: expected 1 to 1024 entries");
+  }
+  const versions = lines.map((line) => {
+    if (line.length > maxBundlerVersionLineCharacters) {
+      throw new Error(
+        `Invalid Mojang bundler versions list entry: line exceeds ${maxBundlerVersionLineCharacters} characters`,
+      );
+    }
+    const fields = line.split("\t");
+    if (fields.length !== 3) {
+      throw new Error("Invalid Mojang bundler versions list entry");
+    }
+    const [expectedSha256, id, relativePath] = fields as [string, string, string];
+    if (
+      id.length < 1 ||
+      id.length > maxBundlerVersionIdCharacters ||
+      relativePath.length < 1 ||
+      relativePath.length > maxBundlerRelativePathCharacters
+    ) {
+      throw new Error(
+        "Invalid Mojang bundler versions list entry: id or path length is out of bounds",
+      );
+    }
+    if (!/^[0-9a-f]{64}$/.test(expectedSha256)) {
+      throw new Error("Invalid Mojang bundler SHA-256");
+    }
+    assertSafeMinecraftVersion(id);
+    assertSafeRelativePath(relativePath);
+    if (!/^[A-Za-z0-9._/-]+$/.test(relativePath) || relativePath.includes("//")) {
+      throw new Error("Invalid Mojang bundler relative path");
+    }
+    return { expectedSha256, id, path: `META-INF/versions/${relativePath}` };
+  });
+  const matchingVersions = versions.filter((entry) => entry.id === version);
+  if (matchingVersions.length !== 1) {
+    throw new Error(
+      `Invalid Mojang bundler versions list: expected exactly one entry for ${version}`,
+    );
+  }
+  const bundledPath = matchingVersions[0]?.path;
+  const expectedSha256 = matchingVersions[0]?.expectedSha256;
+  if (!bundledPath || !expectedSha256) {
+    throw new Error(`Invalid Mojang bundler versions list entry for ${version}`);
+  }
+  const bundledEntries = outerEntries.filter(
+    (entry) => entry.name === bundledPath && !entry.directory,
+  );
+  const bundledEntry = bundledEntries[0];
+  if (bundledEntries.length !== 1 || !bundledEntry) {
+    throw new Error(`Invalid Mojang bundler archive: expected exactly one ${bundledPath}`);
+  }
+  if (bundledEntry.uncompressedSize > maxBundledServerJarBytes) {
+    throw new Error(
+      `Bundled Mojang server jar ${bundledPath} exceeds ${maxBundledServerJarBytes} bytes`,
+    );
+  }
+  const payload = outerArchive.readEntry(bundledPath);
+  const actualSha256 = sha256(payload);
+  if (actualSha256 !== expectedSha256) {
+    throw new Error(
+      `Mojang bundled server jar ${bundledPath} failed SHA-256 verification: expected ${expectedSha256}, got ${actualSha256}`,
+    );
+  }
+  const payloadArchive = openZipArchive(payload);
+  if (!payloadArchive.entries.some((entry) => entry.name.startsWith("data/") && !entry.directory)) {
+    throw new Error(`Mojang bundled server jar ${bundledPath} contains no datapack data`);
+  }
+  return payloadArchive;
+}
+
+function mojangServerJarEntries(archive: ZipArchive): MojangServerJarEntry[] {
+  const entries = archive.entries
     .filter((entry) => !entry.directory)
     .map((entry) => ({
       path: entry.name,
@@ -696,12 +1039,142 @@ export function listCachedMojangServerJarEntries(version: string): MojangServerJ
       uncompressedSize: entry.uncompressedSize,
     }))
     .sort((left, right) => left.path.localeCompare(right.path));
+  for (let index = 1; index < entries.length; index += 1) {
+    if (entries[index - 1]?.path === entries[index]?.path) {
+      throw new Error(`Invalid Mojang server jar: duplicate entry ${entries[index]?.path}`);
+    }
+  }
+  return entries;
 }
 
-export function readCachedMojangServerJarText(version: string, path: string): string {
+export function listCachedMojangServerJarEntries(
+  version: string,
+  verification: MojangServerJarVerification = {},
+): MojangServerJarEntry[] {
+  const archive = resolveMojangServerJarPayload(
+    version,
+    readCachedMojangServerJar(version, verification),
+  );
+  return mojangServerJarEntries(archive);
+}
+
+export function readCachedMojangServerJarText(
+  version: string,
+  path: string,
+  verification: MojangServerJarVerification = {},
+): string {
   assertSafeRelativePath(path);
-  const jar = readCachedMojangServerJar(version);
-  return readZipEntry(jar, path).toString("utf8");
+  const archive = resolveMojangServerJarPayload(
+    version,
+    readCachedMojangServerJar(version, verification),
+  );
+  const entry = mojangServerJarEntries(archive).find((candidate) => candidate.path === path);
+  if (!entry) {
+    throw new Error(`Zip entry not found: ${path}`);
+  }
+  if (entry.uncompressedSize > maxMojangServerJarTextBytes) {
+    throw new Error(
+      `Mojang server jar text entry ${path} exceeds ${maxMojangServerJarTextBytes} bytes`,
+    );
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(archive.readEntry(path));
+  } catch (error) {
+    throw new Error(`Mojang server jar text entry ${path} is invalid: ${errorMessage(error)}`);
+  }
+}
+
+function boundedPositiveInteger(
+  value: number | undefined,
+  fallback: number,
+  maximum: number,
+  label: string,
+): number {
+  const resolved = value ?? fallback;
+  if (!Number.isSafeInteger(resolved) || resolved < 1 || resolved > maximum) {
+    throw new Error(`${label} must be an integer between 1 and ${maximum}`);
+  }
+  return resolved;
+}
+
+export function scanCachedMojangServerJarText(
+  version: string,
+  options: ScanCachedMojangServerJarTextOptions = {},
+): ScanCachedMojangServerJarTextResult {
+  assertSafeMinecraftVersion(version);
+  const maxEntries = boundedPositiveInteger(options.maxEntries, 10_000, 20_000, "maxEntries");
+  const maxEntryBytes = boundedPositiveInteger(
+    options.maxEntryBytes,
+    2 * 1024 * 1024,
+    8 * 1024 * 1024,
+    "maxEntryBytes",
+  );
+  const maxTotalBytes = boundedPositiveInteger(
+    options.maxTotalBytes,
+    64 * 1024 * 1024,
+    128 * 1024 * 1024,
+    "maxTotalBytes",
+  );
+  const archive = resolveMojangServerJarPayload(
+    version,
+    readCachedMojangServerJar(version, {
+      ...(options.sha1 !== undefined ? { sha1: options.sha1 } : {}),
+      ...(options.size !== undefined ? { size: options.size } : {}),
+    }),
+  );
+  const entries = mojangServerJarEntries(archive);
+  const selected = options.include ? entries.filter(options.include) : entries;
+  const paths: string[] = [];
+  let scannedBytes = 0;
+  let skippedOversizedEntries = 0;
+  let skippedBudgetEntries = 0;
+  const skippedPaths: string[] = [];
+  const recordSkipped = (path: string) => {
+    if (skippedPaths.length < 20) {
+      skippedPaths.push(path);
+    }
+  };
+
+  for (const entry of selected) {
+    if (entry.uncompressedSize > maxEntryBytes) {
+      skippedOversizedEntries += 1;
+      recordSkipped(entry.path);
+      continue;
+    }
+    if (paths.length >= maxEntries || scannedBytes + entry.uncompressedSize > maxTotalBytes) {
+      skippedBudgetEntries += 1;
+      recordSkipped(entry.path);
+      continue;
+    }
+    paths.push(entry.path);
+    scannedBytes += entry.uncompressedSize;
+  }
+
+  const contents = archive.readEntries(paths);
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const byPath = new Map(entries.map((entry) => [entry.path, entry]));
+  const texts = paths.map((path) => {
+    const entry = byPath.get(path);
+    const content = contents.get(path);
+    if (!entry || !content) {
+      throw new Error(`Cached Mojang server jar scan lost selected entry: ${path}`);
+    }
+    return {
+      ...entry,
+      content: decoder.decode(content),
+    };
+  });
+  return {
+    entries,
+    selectedEntries: selected.length,
+    scannedEntries: texts.length,
+    scannedBytes,
+    skippedOversizedEntries,
+    skippedBudgetEntries,
+    skippedPaths,
+    truncated: skippedOversizedEntries > 0 || skippedBudgetEntries > 0,
+    texts,
+  };
 }
 
 export async function fetchMinecraftAssetFile(

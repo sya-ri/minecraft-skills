@@ -8,6 +8,7 @@ import {
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
   fetchMinecraftAssetsIndex,
+  fetchMojangServerJar,
   getCacheDataRoot,
   getCachedDataPath,
   getCachedMinecraftAssetPath,
@@ -15,6 +16,7 @@ import {
   getDataManifest,
   getDataRoot,
   getMinecraftAssetsStatus,
+  getMojangServerJarStatus,
   hasBundledDataFile,
   hasCachedDataFile,
   hasCachedMinecraftAssetFile,
@@ -241,6 +243,114 @@ describe("@minecraft-skills/data", () => {
       ).rejects.toThrow("Integrity mismatch");
 
       expect(hasCachedDataFile("java/datapack-schema-surfaces/26.2.json")).toBe(false);
+    });
+  });
+
+  it("rejects a Mojang server jar response whose declared length exceeds the cache bound", async () => {
+    await withCacheDir(async () => {
+      const fetchMock: typeof fetch = async () =>
+        new Response("x", {
+          headers: { "content-length": String(256 * 1024 * 1024 + 1) },
+        });
+
+      await expect(
+        fetchMojangServerJar({
+          version: "26.2",
+          url: "https://piston-data.mojang.com/example/server.jar",
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("response exceeds 268435456 bytes");
+      expect(getMojangServerJarStatus("26.2").cached).toBe(false);
+    });
+  });
+
+  it("uses official expected size as the streaming response bound", async () => {
+    await withCacheDir(async () => {
+      const fetchMock: typeof fetch = async () => new Response("12345");
+      await expect(
+        fetchMojangServerJar({
+          version: "26.2",
+          url: "https://piston-data.mojang.com/example/server.jar",
+          size: 4,
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("response exceeds 4 bytes");
+    });
+  });
+
+  it("aborts a Mojang server jar fetch at its bounded deadline", async () => {
+    await withCacheDir(async () => {
+      const fetchMock: typeof fetch = async (_input, init) =>
+        await new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")), {
+            once: true,
+          });
+        });
+      await expect(
+        fetchMojangServerJar({
+          version: "26.2",
+          url: "https://piston-data.mojang.com/example/server.jar",
+          timeoutMs: 5,
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("Fetch timed out after 5 ms");
+    });
+  });
+
+  it("bounds cancellation of an oversized Mojang server jar response", async () => {
+    await withCacheDir(async () => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array([1, 2]));
+        },
+        cancel: () => new Promise<void>(() => undefined),
+      });
+      const fetchMock: typeof fetch = async () => new Response(body);
+      await expect(
+        fetchMojangServerJar({
+          version: "26.2",
+          url: "https://piston-data.mojang.com/example/server.jar",
+          size: 1,
+          timeoutMs: 20,
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("Fetch timed out after 20 ms");
+    });
+  });
+
+  it("refuses to reuse a non-regular Mojang server jar cache path", async () => {
+    await withCacheDir(async (cacheDir) => {
+      const jarPath = join(cacheDir, "mojang-server-jars", "26.2.jar");
+      mkdirSync(jarPath, { recursive: true });
+      await expect(
+        fetchMojangServerJar({
+          version: "26.2",
+          url: "https://piston-data.mojang.com/example/server.jar",
+        }),
+      ).rejects.toThrow("is not a regular file");
+    });
+  });
+
+  it("rechecks an expected SHA-1 before reusing a cached Mojang server jar", async () => {
+    await withCacheDir(async (cacheDir) => {
+      const jarDirectory = join(cacheDir, "mojang-server-jars");
+      mkdirSync(jarDirectory, { recursive: true });
+      writeFileSync(join(jarDirectory, "26.2.jar"), "corrupt cache");
+      let fetchCalls = 0;
+      const fetchMock: typeof fetch = async () => {
+        fetchCalls += 1;
+        throw new Error("network should not be used");
+      };
+
+      await expect(
+        fetchMojangServerJar({
+          version: "26.2",
+          url: "https://piston-data.mojang.com/example/server.jar",
+          sha1: "0".repeat(40),
+          fetch: fetchMock,
+        }),
+      ).rejects.toThrow("failed SHA-1 verification");
+      expect(fetchCalls).toBe(0);
     });
   });
 
