@@ -72,6 +72,10 @@ minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "chunked upload request correlation"
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
+minecraft-skills plugin paper recipe paper-player-session-lifecycle
+minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
+minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
+minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -349,6 +353,15 @@ stable identity separate from mutable account names and presentation labels, ver
 Player, OfflinePlayer, profile, and display APIs used, and requires rename, offline, cache, and
 cross-server tests. The workflow also makes online-mode, offline-mode, and trusted proxy identity
 assumptions explicit before treating a UUID as authoritative.
+
+For Paper connection-scoped state, resolve
+`plugin paper plan paper-player-session-lifecycle-review <version>`. The plan separates durable
+player records from one connection generation, requires target-version type/member evidence before
+naming lifecycle APIs, and routes quit, kick, relevant transfer, connection close, failed partial
+initialization, plugin stop, repeated signals, and reconciliation through one idempotent teardown.
+It also requires stale-callback publication fences, revisioned persistence, a bounded shutdown
+barrier, leak observability, and race tests. Item or inventory contents and ownership settlement are
+explicitly outside this guidance.
 
 ## Source Policy
 

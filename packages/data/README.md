@@ -10,6 +10,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Machine-readable authoring scenarios for realistic task evaluation and self-review.
 - Machine-readable authoring guardrails for output safety.
 - Machine-readable authoring diagnostics for pre-finalization pass/fail checks.
+- Paper player-session lifecycle guidance for connection generations, idempotent teardown,
+  stale-callback fences, bounded durable flushes, reconciliation, and leak observability.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor

@@ -527,6 +527,71 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("only persistent player key");
   });
 
+  it("prints and routes Paper player-session lifecycle safety guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-player-session-lifecycle"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("reject-stale-asynchronous-publication");
+    expect(recipe.stdout.join("\n")).toContain("bound-durable-flush-and-shutdown");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-player-session-lifecycle-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-player-session-lifecycle-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "player session rapid reconnect stale callback teardown",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-player-session-lifecycle-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-player-session-lifecycle-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("session instance or generation");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-player-session-lifecycle-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("fire-and-forget persistence");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "session generation teardown reconnect",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
+  });
+
   it("prints claim policies", async () => {
     const list = await capture(["plugin", "paper", "claim-policies"]);
     expect(list.code).toBe(0);

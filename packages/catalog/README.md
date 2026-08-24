@@ -111,6 +111,10 @@ const playerIdentityPlan = getAuthoringPlan({
   scenario: "paper-player-identity-and-display-review",
   version: "1.21.11",
 });
+const sessionPlan = getAuthoringPlan({
+  scenario: "paper-player-session-lifecycle-review",
+  version: "1.21.11",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -119,6 +123,7 @@ const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const inventoryRecipe = getAuthoringRecipe("paper-inventory-gui-interactions");
 const adminCommandRecipe = getAuthoringRecipe("paper-administrative-command-operability");
+const sessionRecipe = getAuthoringRecipe("paper-player-session-lifecycle");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -133,9 +138,11 @@ const playerIdentityScenario = getAuthoringScenario(
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
+const sessionGuardrail = getAuthoringGuardrail("paper-player-session-lifecycle-safety");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
+const sessionDiagnostic = getAuthoringDiagnostic("paper-player-session-lifecycle-unsafe");
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",
 );

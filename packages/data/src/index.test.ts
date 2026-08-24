@@ -212,6 +212,56 @@ describe("@minecraft-skills/data", () => {
     );
   });
 
+  it("loads Paper player-session lifecycle safety guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{ id: string; steps: Array<{ id: string }>; finalChecks: string[] }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-player-session-lifecycle");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "separate-durable-data-from-session-state",
+        "reject-stale-asynchronous-publication",
+        "bound-durable-flush-and-shutdown",
+      ]),
+    );
+    expect(recipe?.finalChecks).toContain("paper-player-session-lifecycle-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-player-session-lifecycle-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-player-session-lifecycle"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-player-session-lifecycle-unsafe",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("inventory contents");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    expect(
+      guardrails.guardrails.find((entry) => entry.id === "paper-player-session-lifecycle-safety")
+        ?.rules,
+    ).toEqual(expect.arrayContaining([expect.stringContaining("session instance or generation")]));
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-player-session-lifecycle-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf).toEqual(
+      expect.arrayContaining([expect.stringContaining("fire-and-forget persistence")]),
+    );
+  });
+
   it("loads bundled claim policy JSON", () => {
     const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

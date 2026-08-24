@@ -657,6 +657,48 @@ describe("MCP tools", () => {
     expect(diagnostic.content[0]?.text).toContain("only persistent player key");
   });
 
+  it("calls Paper player-session lifecycle safety guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-player-session-lifecycle",
+    });
+    expect(recipe.content[0]?.text).toContain("reject-stale-asynchronous-publication");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-player-session-lifecycle-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-player-session-lifecycle-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper player session rapid reconnect stale callback teardown shutdown",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-player-session-lifecycle-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-player-session-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-player-session-lifecycle-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-player-session-lifecycle-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("session instance or generation");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-player-session-lifecycle-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("fire-and-forget persistence");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "session generation teardown reconnect",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
+  });
+
   it("calls claim policy tools", async () => {
     const list = await callMinecraftSkillsTool("list_claim_policies", {
       domain: "paper-plugin",
