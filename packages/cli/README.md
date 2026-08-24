@@ -72,6 +72,7 @@ minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --exte
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models latest
 minecraft-skills resourcepack search-models latest --kind item-definition --contains bundle
+minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -88,6 +89,11 @@ minecraft-skills modrinth get project simple-voice-chat
 
 The Modrinth command uses the public v2 search API and supports `--category`, sorting with
 `--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.
+
+`resourcepack validate-project` recursively checks item-definition and legacy override model targets,
+model parents, textures, and inherited texture variables against the project and target-version
+vanilla assets. Special item-model base references are included. PNG and OGG files contribute paths
+to the graph without being decoded as text. Invalid graphs are printed as JSON and return exit code 1.
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.
 `modrinth get` exposes the remaining common public read resources, including dependencies, version

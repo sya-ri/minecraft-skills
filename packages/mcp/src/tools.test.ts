@@ -138,6 +138,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
     expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_json");
+    expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
@@ -732,6 +733,31 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"requestedDomain": "datapack"');
     expect(result.content[0]?.text).toContain('"validatedFiles": 1');
+  });
+
+  it("calls validate_resourcepack_project", async () => {
+    const result = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/items/widget.json",
+          content: {
+            model: { type: "minecraft:model", model: "example:item/widget" },
+          },
+        },
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            parent: "minecraft:item/generated",
+            textures: { layer0: "example:item/widget" },
+          },
+        },
+        { path: "assets/example/textures/item/widget.png" },
+      ],
+    });
+    expect(result.content[0]?.text).toContain('"valid": true');
+    expect(result.content[0]?.text).toContain('"checkedReferences": 3');
+    expect(result.content[0]?.text).toContain('"binaryFiles": 1');
   });
 
   it("calls get_pack_migration_plan", async () => {

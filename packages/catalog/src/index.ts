@@ -41,6 +41,14 @@ import {
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import {
+  type ResourcepackProjectDiagnostic,
+  type ResourcepackProjectDiagnosticSeverity,
+  type ResourcepackProjectFile,
+  type ResourcepackProjectValidationOptions,
+  type ResourcepackProjectValidationResult,
+  validateResourcepackReferenceGraph,
+} from "./resourcepackProject.js";
+import {
   AuthoringChecklist,
   type AuthoringChecklistData,
   AuthoringChecklistIndex,
@@ -165,6 +173,11 @@ export type {
   PaperPluginDataData,
   ReferenceData,
   ResourcepackModelSummaryData,
+  ResourcepackProjectDiagnostic,
+  ResourcepackProjectDiagnosticSeverity,
+  ResourcepackProjectFile,
+  ResourcepackProjectValidationOptions,
+  ResourcepackProjectValidationResult,
   ResponsePatternData,
   ResponsePatternIndexData,
   SearchMinecraftAssetsOptions,
@@ -4885,6 +4898,20 @@ export function validatePackFilesContent(
     invalidFiles: files.filter((file) => !file.valid).length,
     files,
   };
+}
+
+export function validateResourcepackProject(
+  options: ResourcepackProjectValidationOptions,
+): ResourcepackProjectValidationResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const version = resolveVersion(edition, options.version ?? "latest");
+  const limit = normalizeLimit(options.limit, 100, 1_000);
+  return validateResourcepackReferenceGraph({
+    files: options.files,
+    version,
+    vanillaPaths: readVanillaPathList(edition, version, "resourcepack"),
+    limit,
+  });
 }
 
 export function explainPackPath(options: PackPathExplanationOptions): PackPathExplanation {

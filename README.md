@@ -69,6 +69,7 @@ minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains models/item --fetch
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
+minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric

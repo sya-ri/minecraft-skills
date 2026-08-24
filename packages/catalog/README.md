@@ -82,6 +82,7 @@ import {
   searchResourcepackModelPaths,
   searchVanillaPaths,
   suggestMinecraftLookups,
+  validateResourcepackProject,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
@@ -179,6 +180,19 @@ const bundles = searchResourcepackModelPaths({
   version: "26.2",
   kind: "item-definition",
   contains: "bundle",
+});
+const resourcepackProject = validateResourcepackProject({
+  version: "26.2",
+  files: [
+    {
+      path: "assets/example/items/widget.json",
+      content: { model: { type: "minecraft:model", model: "example:item/widget" } },
+    },
+    {
+      path: "assets/example/models/item/widget.json",
+      content: { parent: "minecraft:item/generated" },
+    },
+  ],
 });
 const paths = searchVanillaPaths({
   version: "26.2",

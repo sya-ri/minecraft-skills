@@ -6,6 +6,11 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
+  including modern and legacy item models, model parents, inherited textures, safe asset paths, and
+  parent/texture-variable cycles.
+- Binary-safe resource-pack directory scanning that indexes PNG/OGG paths without decoding their
+  contents as UTF-8.
 - Public Modrinth v2 project search integration across the catalog API, CLI, and MCP server, with
   version, project type, loader, category, sorting, and pagination filters.
 - Modrinth project version listing by project ID or slug, with Minecraft version, loader, featured,

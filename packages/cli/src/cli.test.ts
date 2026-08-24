@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -690,6 +690,57 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"validFiles": 1');
     expect(result.stdout.join("\n")).toContain('"path": "pack.mcmeta"');
     rmSync(root, { recursive: true, force: true });
+  });
+
+  it("validates a resource-pack directory reference graph without reading binary files as text", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-resourcepack-"));
+    const itemDirectory = join(root, "assets", "example", "items");
+    const modelDirectory = join(root, "assets", "example", "models", "item");
+    const textureDirectory = join(root, "assets", "example", "textures", "item");
+    mkdirSync(itemDirectory, { recursive: true });
+    mkdirSync(modelDirectory, { recursive: true });
+    mkdirSync(textureDirectory, { recursive: true });
+    writeFileSync(
+      join(itemDirectory, "widget.json"),
+      JSON.stringify({ model: { type: "minecraft:model", model: "example:item/widget" } }),
+    );
+    writeFileSync(
+      join(modelDirectory, "widget.json"),
+      JSON.stringify({
+        parent: "minecraft:item/generated",
+        textures: { layer0: "example:item/widget" },
+      }),
+    );
+    writeFileSync(join(textureDirectory, "widget.png"), Buffer.from([0xff, 0xfe, 0xfd]));
+
+    try {
+      const result = await capture(["resourcepack", "validate-project", "26.2", root]);
+      expect(result.code).toBe(0);
+      expect(result.stdout.join("\n")).toContain('"valid": true');
+      expect(result.stdout.join("\n")).toContain('"binaryFiles": 1');
+      expect(result.stdout.join("\n")).toContain("were not decoded as text");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns a failing status for an invalid resource-pack reference graph", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-invalid-resourcepack-"));
+    const itemDirectory = join(root, "assets", "example", "items");
+    mkdirSync(itemDirectory, { recursive: true });
+    writeFileSync(
+      join(itemDirectory, "widget.json"),
+      JSON.stringify({ model: { type: "minecraft:model", model: "example:item/missing" } }),
+    );
+
+    try {
+      const result = await capture(["resourcepack", "validate-project", "26.2", root]);
+      expect(result.code).toBe(1);
+      expect(result.stdout.join("\n")).toContain('"valid": false');
+      expect(result.stdout.join("\n")).toContain('"code": "missing-item-model"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("prints pack migration plans", async () => {
