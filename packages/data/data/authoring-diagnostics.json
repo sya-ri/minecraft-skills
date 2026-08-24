@@ -441,6 +441,74 @@
         "Add full-inventory and retry tests before presenting the delivery path as loss-safe."
       ],
       "failureMode": "Ignored or double-processed leftovers can silently destroy rewards or duplicate items during partial insertion and retry."
+    },
+    {
+      "id": "paper-inventory-gui-interaction-unbounded",
+      "domains": ["paper-plugin"],
+      "title": "Custom inventory GUI leaves alternate interaction paths unbounded",
+      "severity": "error",
+      "detectWhen": [
+        "custom Paper or Bukkit inventory GUI code handles InventoryClickEvent or InventoryDragEvent",
+        "the listener cancels only clicks whose clicked inventory is the top inventory",
+        "the code has editable slots, button slots, manual cursor changes, or close and reopen behavior",
+        "the review does not cover shift-click, number-key or offhand swap, double-click collection, drag footprints, outside clicks, close settlement, or repeated lifecycle callbacks"
+      ],
+      "requiredChecks": [
+        "identify the owned view from a stable top-inventory holder or session identity before changing event state",
+        "verify both InventoryClickEvent and InventoryDragEvent are cancelled by default for the entire owned view",
+        "classify top, bottom, and outside clicks plus every allowed slot-and-action pair",
+        "verify shift transfer, hotbar and offhand swap, double-click collect-to-cursor, and unknown or unclassified actions remain denied",
+        "verify every drag raw slot must be allowed, rather than accepting a drag with any one allowed slot",
+        "reject deprecated InventoryClickEvent.setCursor and verify every supported manual cursor mutation against target-version behavior documentation",
+        "define per-session or shared ownership for editable top slots, then settle their owned stacks exactly once across commit, close, replacement view, disconnect, death, and plugin shutdown",
+        "define an explicit overflow outcome that accounts once for inserted and uninserted stacks when settled items cannot all return to the player inventory",
+        "defer close, open, and reopen operations from click, drag, and close handlers and revalidate the current view or GUI session before the deferred task acts"
+      ],
+      "evidence": [
+        "InventoryClickEvent, InventoryDragEvent, InventoryCloseEvent, close-reason, cursor, settlement, insertion, and fallback type/member results for the target Paper API",
+        "Paper event behavior documentation for cancellation, raw-slot sets, deprecated cursor mutation, affected-slot mutations, and restricted in-handler view transitions",
+        "an explicit interaction allowlist, session ownership and terminal-state model, settlement and overflow outcomes, and tests for top, bottom, outside, cross-inventory, cursor-wide, multi-slot, repeated-close, disconnect, and shutdown paths"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "an owned view returns before cancellation because the click is in the bottom inventory, outside the window, or not a primary mouse click",
+        "InventoryDragEvent is absent or allows a drag when any raw slot is protected or unclassified",
+        "shift-click, MOVE_TO_OTHER_INVENTORY, NUMBER_KEY, hotbar swap, SWAP_OFFHAND, DOUBLE_CLICK, or COLLECT_TO_CURSOR can bypass the allowed-slot policy",
+        "a button click is uncancelled even though the handler manually applies its GUI action",
+        "deprecated InventoryClickEvent.setCursor is used for a manual cursor mutation",
+        "editable top slots have no per-session or shared ownership rule, terminal settlement state, or full-inventory overflow outcome",
+        "commit, close, replacement-view, disconnect, death, shutdown, or repeated callbacks can return, persist, drop, or consume the same editable stack more than once",
+        "closeInventory, openInventory, inventory close, or view close is called directly inside click, drag, or InventoryCloseEvent handling",
+        "a deferred reopen does not verify that the player and GUI session are still current"
+      ],
+      "safeResponse": [
+        "Cancel both interaction events immediately after confirming the owned top inventory, then explicitly authorize only modeled slots and actions.",
+        "Use clicked-inventory identity and raw slots to separate top, bottom, and outside regions while keeping cross-inventory and cursor-wide actions denied.",
+        "Require the complete drag raw-slot set to be a subset of allowed slots.",
+        "Reject deprecated click-event cursor mutation and verify a supported target-version mutation path.",
+        "Give editable sessions explicit ownership, one atomic terminal transition, and an overflow-aware settlement outcome so repeated callbacks cannot duplicate or lose stacks.",
+        "Cancel before manual mutation and schedule guarded close, open, or reopen work from click, drag, and close handlers for the next supported scheduler turn."
+      ],
+      "failureMode": "Alternate inventory gestures, deprecated cursor mutation, incomplete settlement, repeated lifecycle callbacks, or stale view transitions can bypass the visible button handler and move, duplicate, delete, or expose protected GUI items."
     }
   ]
 }

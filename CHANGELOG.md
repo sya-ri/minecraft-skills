@@ -9,6 +9,10 @@ All notable changes to this project are documented here.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.
+- Paper custom inventory GUI interaction safety guidance across recipes, scenarios, guardrails,
+  diagnostics, CLI, Catalog, and MCP surfaces, including default-deny click and drag handling,
+  deferred close-handler transitions, supported cursor mutation, per-session ownership, and
+  exactly-once editable-slot settlement with explicit overflow outcomes.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

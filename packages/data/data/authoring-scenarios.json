@@ -217,6 +217,61 @@
         "dropping overflow without an explicit recipient pickup or ownership and notification policy"
       ],
       "failureMode": "A reward path can silently destroy overflow items or duplicate the portion already inserted when fallback and retry handling are incomplete."
+    },
+    {
+      "id": "paper-inventory-gui-interaction-review",
+      "domains": ["paper-plugin"],
+      "title": "Review or generate safe Paper custom inventory GUI interactions",
+      "userPrompt": "Create or review a custom Paper inventory GUI that protects its items from clicks, drags, swaps, transfers, collection, and stale close or reopen behavior.",
+      "useWhen": [
+        "the request creates a custom inventory GUI, chest menu, selector, shop, or other virtual inventory view",
+        "the request handles InventoryClickEvent or InventoryDragEvent",
+        "the request mentions shift-click, hotbar or number-key swap, offhand swap, double-click, collect-to-cursor, drag, top inventory, bottom inventory, allowed slots, cancellation, close, or reopen",
+        "the request asks whether GUI items can be moved, duplicated, deleted, collected, or stolen through alternate inventory gestures"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-inventory-gui-interactions"],
+        "intents": [
+          "prepare-generation",
+          "discover-paper-event-candidates",
+          "verify-paper-type-or-member"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-threading-assumption",
+          "paper-inventory-gui-interaction-unbounded"
+        ],
+        "claimPolicies": [
+          "paper-type-or-member-exists",
+          "paper-event-candidate",
+          "folia-or-thread-safety"
+        ],
+        "factSurfaces": ["paper-builds", "paper-api-surface", "paper-event-search"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the owned view is identified independently of mutable title text and both click and drag events are cancelled before policy branches",
+        "top, bottom, and outside clicks are classified while shift transfer, hotbar and offhand swap, and double-click collection remain denied unless explicitly modeled",
+        "an allowed drag requires every raw slot in its footprint to be allowed",
+        "GUI buttons stay cancelled while their actions are applied manually and deprecated InventoryClickEvent.setCursor is never used",
+        "every editable top slot has per-session or deliberately shared ownership plus one atomic settlement transition with an explicit full-inventory overflow outcome",
+        "commit, close, replacement view, disconnect, death, shutdown, and repeated callbacks settle each owned stack exactly once",
+        "close, open, and reopen work from click, drag, and InventoryCloseEvent handlers is deferred and guarded against stale players, views, GUI sessions, or settled state"
+      ],
+      "mustAvoid": [
+        "cancelling only when clickedInventory equals the top inventory",
+        "handling InventoryClickEvent while omitting InventoryDragEvent",
+        "allowing bottom inventory clicks without separately denying actions that target or scan the top inventory",
+        "accepting a drag because at least one affected raw slot is allowed",
+        "uncancelling a GUI button click before manually applying its action",
+        "using deprecated InventoryClickEvent.setCursor for manual cursor changes",
+        "allowing editable top slots without an ownership, terminal settlement, and overflow policy",
+        "returning, persisting, dropping, or consuming the same editable stack from more than one lifecycle callback or queued task",
+        "closing, opening, or reopening a view directly inside an InventoryClickEvent, InventoryDragEvent, or InventoryCloseEvent callback"
+      ],
+      "failureMode": "A custom GUI can leak or corrupt items when alternate click, drag, cursor collection, cross-inventory transfer, deprecated cursor mutation, editable-slot ownership, settlement, overflow, or lifecycle paths are not part of the allowlist."
     }
   ]
 }

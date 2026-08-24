@@ -32,10 +32,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails/paper-inventory-gui-interaction-safety.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics/paper-inventory-gui-interaction-unbounded.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-recipes.json",
@@ -44,10 +50,16 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/paper-event-listener.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes/paper-inventory-gui-interactions.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios/paper-inventory-gui-interaction-review.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/claim-policies.json",
@@ -136,6 +148,9 @@ describe("MCP resources", () => {
     );
     expect(guardrails.contents[0]?.text).toContain('"id": "paper-api-surface-limits"');
     expect(guardrails.contents[0]?.text).toContain('"id": "paper-inventory-delivery-outcomes"');
+    expect(guardrails.contents[0]?.text).toContain(
+      '"id": "paper-inventory-gui-interaction-safety"',
+    );
 
     const guardrail = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
@@ -147,11 +162,20 @@ describe("MCP resources", () => {
     );
     expect(itemDeliveryGuardrail.contents[0]?.text).toContain("uninserted stacks");
 
+    const inventoryGuardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-inventory-gui-interaction-safety.json",
+    );
+    expect(inventoryGuardrail.contents[0]?.text).toContain("InventoryCloseEvent handlers");
+    expect(inventoryGuardrail.contents[0]?.text).toContain("exactly once");
+
     const diagnostics = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-diagnostics.json",
     );
     expect(diagnostics.contents[0]?.text).toContain('"id": "paper-api-member-unverified"');
     expect(diagnostics.contents[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
+    expect(diagnostics.contents[0]?.text).toContain(
+      '"id": "paper-inventory-gui-interaction-unbounded"',
+    );
 
     const diagnostic = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json",
@@ -163,9 +187,18 @@ describe("MCP resources", () => {
     );
     expect(itemDeliveryDiagnostic.contents[0]?.text).toContain("original requested stack");
 
+    const inventoryDiagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-inventory-gui-interaction-unbounded.json",
+    );
+    expect(inventoryDiagnostic.contents[0]?.text).toContain(
+      "deprecated InventoryClickEvent.setCursor",
+    );
+    expect(inventoryDiagnostic.contents[0]?.text).toContain("repeated callbacks");
+
     const recipes = readMinecraftSkillsResource("minecraft-skills://data/authoring-recipes.json");
     expect(recipes.contents[0]?.text).toContain('"id": "paper-event-listener"');
     expect(recipes.contents[0]?.text).toContain('"id": "paper-safe-item-delivery"');
+    expect(recipes.contents[0]?.text).toContain('"id": "paper-inventory-gui-interactions"');
 
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/datapack-function-command.json",
@@ -177,11 +210,18 @@ describe("MCP resources", () => {
     );
     expect(itemDeliveryRecipe.contents[0]?.text).toContain("define-delivery-and-overflow-outcomes");
 
+    const inventoryRecipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-inventory-gui-interactions.json",
+    );
+    expect(inventoryRecipe.contents[0]?.text).toContain("settle-editable-session-exactly-once");
+    expect(inventoryRecipe.contents[0]?.text).toContain("InventoryCloseEvent handling");
+
     const scenarios = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-scenarios.json",
     );
     expect(scenarios.contents[0]?.text).toContain('"id": "paper-event-listener-review"');
     expect(scenarios.contents[0]?.text).toContain('"id": "paper-item-delivery-review"');
+    expect(scenarios.contents[0]?.text).toContain('"id": "paper-inventory-gui-interaction-review"');
 
     const scenario = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json",
@@ -192,6 +232,14 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-scenarios/paper-item-delivery-review.json",
     );
     expect(itemDeliveryScenario.contents[0]?.text).toContain("paper-inventory-leftovers-unhandled");
+
+    const inventoryScenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-inventory-gui-interaction-review.json",
+    );
+    expect(inventoryScenario.contents[0]?.text).toContain("atomic settlement transition");
+    expect(inventoryScenario.contents[0]?.text).toContain(
+      "deprecated InventoryClickEvent.setCursor",
+    );
 
     const claimPolicies = readMinecraftSkillsResource(
       "minecraft-skills://data/claim-policies.json",

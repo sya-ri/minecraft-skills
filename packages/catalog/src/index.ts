@@ -1867,6 +1867,30 @@ function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
   return hasDeliveryAction && hasItemContext && hasRecipientContext;
 }
 
+function isPaperInventoryGuiDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasPaperContext =
+    /\b(paper|bukkit|spigot|plugin|inventoryclickevent|inventorydragevent)\b/.test(normalized);
+  const hasExplicitPackContext =
+    /\b(resource ?pack|data ?pack|asset|blockstate|font|model|texture|translation|mcfunction|worldgen)\b/.test(
+      normalized,
+    );
+  if (hasExplicitPackContext && !hasPaperContext) {
+    return false;
+  }
+  const hasInventoryContext =
+    /\b(inventory|inventories|inventoryview|inventoryclickevent|inventorydragevent|gui|menu|shop|selector|chest interface|virtual inventory)\b/.test(
+      normalized,
+    );
+  const hasInteractionContext =
+    /\b(click|shift click|drag|hotbar|number key|offhand|double click|collect to cursor|swap|transfer|allowed slot|cancel|close|reopen)\b/.test(
+      normalized,
+    );
+  const hasCustomContext =
+    hasPaperContext || /\b(custom|gui|menu|shop|selector|virtual|protected)\b/.test(normalized);
+  return hasInventoryContext && hasInteractionContext && hasCustomContext;
+}
+
 function scoreDiscoveryMatch(query: string, actual: string[], semantic: string[] = []): number {
   const actualText = normalizeSearchText(actual.join(" "));
   const semanticText = normalizeSearchText(semantic.join(" "));
@@ -2013,10 +2037,16 @@ export function searchAuthoringScenarios(
   const limit = normalizeLimit(options.limit, 10, 100);
   const domain = options.domain ? DomainId.assert(options.domain) : undefined;
   const tokens = tokenizeScenarioSearch(query);
+  const paperItemDeliveryQuery = isPaperItemDeliveryDiscoveryQuery(query);
+  const paperInventoryGuiQuery = isPaperInventoryGuiDiscoveryQuery(query);
   const scenarios = listAuthoringScenarios(domain ? { domain } : {});
   const scored = scenarios
     .map((scenario) => {
-      let score = 0;
+      let score =
+        (paperItemDeliveryQuery && scenario.id === "paper-item-delivery-review") ||
+        (paperInventoryGuiQuery && scenario.id === "paper-inventory-gui-interaction-review")
+          ? 1_000
+          : 0;
       const matches: AuthoringScenarioSearchMatch[] = [];
       for (const text of collectScenarioSearchTexts(scenario)) {
         const result = scoreScenarioSearchText(text, tokens);
@@ -2207,6 +2237,7 @@ const catalogSearchKinds = new Set<CatalogSearchKind>([
   "community-dataset",
   "version-support",
 ]);
+const catalogSearchTokenScale = 10;
 
 type CatalogSearchCandidate = {
   kind: CatalogSearchKind;
@@ -2573,7 +2604,7 @@ export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResul
         !domain || candidate.domains.length === 0 || candidate.domains.includes(domain),
     )
     .map((candidate) => {
-      let score = 0;
+      const tokenWeights = new Map<string, number>();
       const matches: CatalogSearchMatch[] = [];
       for (const field of candidate.fields) {
         const haystack = field.text.toLowerCase();
@@ -2581,9 +2612,14 @@ export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResul
         if (matchedTokens.length === 0) {
           continue;
         }
-        score += matchedTokens.length * field.weight;
+        for (const token of matchedTokens) {
+          tokenWeights.set(token, Math.max(tokenWeights.get(token) ?? 0, field.weight));
+        }
         matches.push({ field: field.field, text: field.text, matchedTokens });
       }
+      const score =
+        [...tokenWeights.values()].reduce((total, weight) => total + weight, 0) *
+        catalogSearchTokenScale;
       return { candidate, score, matches };
     })
     .filter((result) => result.score > 0)
@@ -5341,11 +5377,13 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   const version = resolveVersion(edition, options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 8, 50);
   const lower = task.toLowerCase();
+  const normalizedTask = normalizeSearchText(task);
   const paperItemDeliveryTask = isPaperItemDeliveryDiscoveryQuery(task);
+  const paperInventoryGuiTask = isPaperInventoryGuiDiscoveryQuery(task);
+  const explicitDatapackTask =
+    /\b(data ?pack|mcfunction|advancement|loot table|predicate|worldgen)\b/.test(normalizedTask);
   const explicitResourcepackTask =
-    /\b(resource ?pack|asset|blockstate|font|model|sound|texture|translation)\b/.test(
-      normalizeSearchText(task),
-    );
+    /\b(resource ?pack|asset|blockstate|font|model|texture|translation)\b/.test(normalizedTask);
   const suggestedTools: LookupSuggestionResult["suggestedTools"] = [];
   const add = (tool: string, reason: string) => {
     if (!suggestedTools.some((entry) => entry.tool === tool)) {
@@ -5361,7 +5399,8 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     if (
       /(command|execute|function|advancement|loot|recipe|predicate|tag|datapack|data pack)/.test(
         lower,
-      )
+      ) &&
+      (options.domain === "datapack" || explicitDatapackTask || !paperInventoryGuiTask)
     ) {
       add(
         `datapack find ${JSON.stringify(task)} --version ${version}`,
@@ -5393,7 +5432,9 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   if (!options.domain || options.domain === "resourcepack") {
     if (
       /(resource|asset|model|texture|item|blockstate|sound|font|lang|resource pack)/.test(lower) &&
-      (options.domain === "resourcepack" || explicitResourcepackTask || !paperItemDeliveryTask)
+      (options.domain === "resourcepack" ||
+        explicitResourcepackTask ||
+        (!paperItemDeliveryTask && !paperInventoryGuiTask))
     ) {
       add(
         `resourcepack assets find ${JSON.stringify(task)} --version ${version}`,
@@ -5407,7 +5448,9 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   }
   if (!options.domain || options.domain === "paper-plugin") {
     if (
+      options.domain === "paper-plugin" ||
       paperItemDeliveryTask ||
+      paperInventoryGuiTask ||
       /(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(lower)
     ) {
       add(
@@ -5430,7 +5473,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Look up official live Fabric Loader, Intermediary, and Yarn candidates for the target game version.",
     );
   }
-  if (/(migrat|upgrade|port|from|to|version)/.test(lower)) {
+  const migrationTask =
+    /\b(migrat(?:e|es|ed|ing|ion)?|upgrad(?:e|es|ed|ing)|port(?:s|ed|ing)?|version)\b/.test(
+      lower,
+    ) ||
+    (/\bfrom\b/.test(lower) && /\bto\b/.test(lower));
+  if (migrationTask && !paperInventoryGuiTask) {
     add(`minecraft pack-format ${version} datapack`, "Check target data pack format.");
     add(`minecraft pack-format ${version} resourcepack`, "Check target resource pack format.");
   }

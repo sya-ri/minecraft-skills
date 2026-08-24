@@ -934,6 +934,131 @@ describe("catalog", () => {
     );
   });
 
+  it("routes default-deny custom inventory GUI interaction safety", () => {
+    const recipe = getAuthoringRecipe("paper-inventory-gui-interactions");
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "scope-and-default-deny-the-view",
+      "classify-click-source-and-action",
+      "validate-the-complete-drag-footprint",
+      "settle-editable-session-exactly-once",
+      "defer-view-transitions-and-revalidate",
+    ]);
+    expect(recipe.finalChecks).toContain("paper-inventory-gui-interaction-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-inventory-gui-interaction-safety");
+    const rules = guardrail.rules.join("\n");
+    for (const interaction of [
+      "InventoryClickEvent",
+      "InventoryDragEvent",
+      "MOVE_TO_OTHER_INVENTORY",
+      "NUMBER_KEY",
+      "SWAP_OFFHAND",
+      "DOUBLE_CLICK",
+      "COLLECT_TO_CURSOR",
+      "top inventory",
+      "bottom player inventory",
+      "every raw slot",
+      "InventoryCloseEvent",
+      "InventoryClickEvent.setCursor",
+      "exactly once",
+      "overflow outcome",
+      "per-session",
+      "close, open, or reopen",
+    ]) {
+      expect(rules).toContain(interaction);
+    }
+
+    const diagnostic = getAuthoringDiagnostic("paper-inventory-gui-interaction-unbounded");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("hotbar swap");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("every drag raw slot");
+    expect(diagnostic.failIf.join("\n")).toContain("reopen");
+    expect(diagnostic.failIf.join("\n")).toContain("deprecated InventoryClickEvent.setCursor");
+    expect(diagnostic.failIf.join("\n")).toContain("repeated callbacks");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("inserted and uninserted stacks");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("click, drag, and close handlers");
+
+    const scenario = getAuthoringScenario("paper-inventory-gui-interaction-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-inventory-gui-interactions"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-inventory-gui-interaction-unbounded",
+    );
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "custom inventory GUI shift-click drag hotbar offhand double-click",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-inventory-gui-interaction-review");
+
+    const guardrailSearch = searchCatalog({
+      query: "InventoryDragEvent raw slots collect-to-cursor",
+      domain: "paper-plugin",
+      kind: "authoring-guardrail",
+    });
+    expect(guardrailSearch.results[0]?.id).toBe("paper-inventory-gui-interaction-safety");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-inventory-gui-interaction-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-inventory-gui-interactions"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-inventory-gui-interaction-unbounded",
+    );
+
+    const scenarioCriteria = scenario.successCriteria.join("\n");
+    expect(scenarioCriteria).toContain("atomic settlement transition");
+    expect(scenarioCriteria).toContain("exactly once");
+    expect(scenarioCriteria).toContain("InventoryCloseEvent handlers");
+    expect(scenario.mustAvoid.join("\n")).toContain("deprecated InventoryClickEvent.setCursor");
+  });
+
+  it("routes natural inventory GUI interaction tasks without pack false positives", () => {
+    for (const task of [
+      "inventory GUI shift-click drag",
+      "custom chest menu hotbar swap",
+      "protect a virtual inventory from double-click collect to cursor",
+      "custom inventory GUI command click",
+      "custom inventory GUI click sound",
+    ]) {
+      const suggestions = suggestMinecraftLookups({
+        version: "1.21.11",
+        task,
+      });
+      const tools = suggestions.suggestedTools.map((entry) => entry.tool);
+      expect(tools.some((tool) => tool.startsWith("plugin paper search"))).toBe(true);
+      expect(tools.some((tool) => tool.startsWith("resourcepack assets"))).toBe(false);
+      expect(tools.some((tool) => tool.startsWith("datapack find"))).toBe(false);
+      expect(tools.some((tool) => tool.startsWith("minecraft pack-format"))).toBe(false);
+      expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+        "paper-inventory-gui-interaction-review",
+      );
+    }
+
+    const scoped = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "inventory GUI shift-click drag",
+      domain: "paper-plugin",
+    });
+    expect(
+      scoped.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(true);
+
+    for (const task of [
+      "search vanilla inventory paths",
+      "design a resource pack inventory GUI texture",
+      "list items in the vanilla inventory",
+    ]) {
+      const suggestions = suggestMinecraftLookups({
+        version: "1.21.11",
+        task,
+      });
+      expect(
+        suggestions.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+      ).toBe(false);
+    }
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

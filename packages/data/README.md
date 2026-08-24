@@ -12,6 +12,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Machine-readable authoring diagnostics for pre-finalization pass/fail checks.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
+- Paper custom inventory GUI safety entries for default-deny interactions, supported cursor
+  mutation, close-handler deferral, session ownership, and exactly-once editable-slot settlement.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

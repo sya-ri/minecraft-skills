@@ -90,6 +90,34 @@
         "tests for complete insertion, partial insertion, full inventory, retry behavior, and selected fallback failure when applicable"
       ],
       "failureMode": "A partially successful delivery can silently destroy leftover items or duplicate the portion already inserted when fallback or retry logic reuses the original input."
+    },
+    {
+      "id": "paper-inventory-gui-interaction-safety",
+      "domains": ["paper-plugin"],
+      "title": "Default-deny every interaction path in custom inventory GUIs",
+      "rules": [
+        "Scope an owned GUI from the top inventory's stable holder or session identity; do not identify it only by mutable or shared title text.",
+        "For an owned view, cancel InventoryClickEvent and InventoryDragEvent before branching, then keep everything denied except an explicit slot-and-action allowlist.",
+        "Distinguish the top inventory, bottom player inventory, and outside clicks with the view, clicked inventory, and view-unique raw slots; a bottom-origin click can still modify the top inventory.",
+        "Deny shift-click and MOVE_TO_OTHER_INVENTORY by default because transfer starts in one inventory and targets the other.",
+        "Deny NUMBER_KEY, HOTBAR_SWAP, legacy HOTBAR_MOVE_AND_READD where present, and SWAP_OFFHAND unless the exact source and destination slots are deliberately modeled.",
+        "Deny DOUBLE_CLICK and COLLECT_TO_CURSOR by default because collection can inspect and remove matching items across the open view.",
+        "For InventoryDragEvent, allow a drag only when every raw slot in the complete footprint belongs to the allowed set; cancel the whole drag when any protected or unclassified slot is present.",
+        "Keep button clicks cancelled and apply GUI state changes manually; when changing event-affected slots, cancel first so the vanilla result cannot overwrite the change.",
+        "Do not use deprecated InventoryClickEvent.setCursor for manual cursor changes; verify a supported target-version mutation path and defer it when the event result can overwrite or desynchronize the cursor.",
+        "Choose whether every editable top inventory is per-session or deliberately shared, and define which player or transaction owns each editable stack before allowing insertion.",
+        "Settle editable top-inventory stacks exactly once when a session commits, closes, is replaced, disconnects, dies, or the plugin shuts down: atomically claim the open session, capture and clear or persist its owned stacks, and make repeated callbacks and queued tasks no-ops.",
+        "Choose an explicit overflow outcome when settled stacks cannot be returned to the player inventory; account for inserted and uninserted stacks exactly once instead of retrying or dropping the original amount.",
+        "Defer close, open, or reopen operations from InventoryClickEvent, InventoryDragEvent, and InventoryCloseEvent handlers to the next target-compatible scheduler turn, then revalidate the player, current view, and GUI session before acting.",
+        "Do not force unconditional reopen loops after InventoryCloseEvent, and do not perform even a conditional reopen directly in that handler; handle close reason, disconnect, plugin shutdown, deliberate close, and replacement-view cases explicitly."
+      ],
+      "requiredEvidence": [
+        "target-version Paper API type/member matches for InventoryClickEvent, InventoryDragEvent, InventoryCloseEvent, InventoryView, ClickType, InventoryAction, close reason, and every cursor, settlement, insertion, or fallback member used by the handler",
+        "Paper event behavior documentation for cancellation, raw slots, deprecated cursor mutation, event-affected mutations, and close/open restrictions in click, drag, and close handlers",
+        "a project-specific matrix of owned views, per-session or shared ownership, top/bottom/outside regions, allowed slots, allowed click/action pairs, settlement outcomes, overflow policy, and deferred transition conditions",
+        "tests that exercise ordinary clicks, shift transfer, number-key and offhand swaps, double-click collection, cross-boundary drag, outside clicks, direct close-handler reopen rejection, deprecated cursor mutation rejection, editable-slot commit and return, full-inventory overflow, repeated close callbacks, disconnect, shutdown, and close/reopen races"
+      ],
+      "failureMode": "A handler that cancels only obvious top-inventory clicks can be bypassed from the player inventory, cursor-wide collection, hotbar/offhand swaps, multi-slot drags, deprecated cursor mutation, duplicate settlement, unowned shared slots, or stale reopen tasks."
     }
   ]
 }

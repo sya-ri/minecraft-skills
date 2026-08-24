@@ -66,6 +66,9 @@ describe("@minecraft-skills/data", () => {
     const recipes = readDataJson<{ recipes: Array<{ id: string }> }>("authoring-recipes.json");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-safe-item-delivery");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-inventory-gui-interactions",
+    );
   });
 
   it("loads bundled authoring scenario JSON", () => {
@@ -75,9 +78,9 @@ describe("@minecraft-skills/data", () => {
     expect(scenarios.scenarios.map((scenario) => scenario.id)).toContain(
       "paper-event-listener-review",
     );
-    expect(scenarios.scenarios.map((scenario) => scenario.id)).toContain(
-      "paper-item-delivery-review",
-    );
+    const scenarioIds = scenarios.scenarios.map((scenario) => scenario.id);
+    expect(scenarioIds).toContain("paper-item-delivery-review");
+    expect(scenarioIds).toContain("paper-inventory-gui-interaction-review");
   });
 
   it("loads bundled intent lookup JSON", () => {
@@ -92,9 +95,9 @@ describe("@minecraft-skills/data", () => {
     expect(guardrails.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
     );
-    expect(guardrails.guardrails.map((guardrail) => guardrail.id)).toContain(
-      "paper-inventory-delivery-outcomes",
-    );
+    const guardrailIds = guardrails.guardrails.map((guardrail) => guardrail.id);
+    expect(guardrailIds).toContain("paper-inventory-delivery-outcomes");
+    expect(guardrailIds).toContain("paper-inventory-gui-interaction-safety");
   });
 
   it("loads bundled authoring diagnostic JSON", () => {
@@ -104,9 +107,55 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
       "paper-api-member-unverified",
     );
-    expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
-      "paper-inventory-leftovers-unhandled",
+    const diagnosticIds = diagnostics.diagnostics.map((diagnostic) => diagnostic.id);
+    expect(diagnosticIds).toContain("paper-inventory-leftovers-unhandled");
+    expect(diagnosticIds).toContain("paper-inventory-gui-interaction-unbounded");
+  });
+
+  it("bundles complete Paper inventory GUI lifecycle safety guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; stopIfMissing: string }>;
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-inventory-gui-interactions");
+    expect(recipe?.steps.map((step) => step.id)).toContain("settle-editable-session-exactly-once");
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "InventoryCloseEvent handlers",
     );
+    expect(recipe?.steps.map((step) => step.stopIfMissing).join("\n")).toContain(
+      "deprecated InventoryClickEvent.setCursor",
+    );
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-inventory-gui-interaction-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("exactly once");
+    expect(guardrail?.rules.join("\n")).toContain("explicit overflow outcome");
+    expect(guardrail?.requiredEvidence.join("\n")).toContain("repeated close callbacks");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; requiredChecks: string[]; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-inventory-gui-interaction-unbounded",
+    );
+    expect(diagnostic?.requiredChecks.join("\n")).toContain("inserted and uninserted stacks");
+    expect(diagnostic?.failIf.join("\n")).toContain("InventoryCloseEvent handling");
+    expect(diagnostic?.failIf.join("\n")).toContain("repeated callbacks");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{ id: string; successCriteria: string[]; mustAvoid: string[] }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-inventory-gui-interaction-review",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("exactly once");
+    expect(scenario?.mustAvoid.join("\n")).toContain("deprecated InventoryClickEvent.setCursor");
   });
 
   it("loads bundled claim policy JSON", () => {
