@@ -103,6 +103,7 @@ minecraft-skills plugin paper validate-jar ./build/libs/example.jar
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills player-profile lookup-name jeb_
 minecraft-skills player-profile textures 853c80ef-3c37-49fd-aa49-938b674adae6
+minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -331,6 +332,31 @@ serializers; unknown fork fields are warnings, and future serializer changes are
 This is canonical-output validation, not a loader-acceptance oracle: current loaders default some
 missing or malformed ban data and operator fields and clamp operator levels, so `valid: false` does
 not prove that the server will reject the file.
+
+Blockbench project inspection:
+
+```sh
+minecraft-skills blockbench inspect-project ./model.bbmodel \
+  --require-animation idle \
+  --require-animation walk \
+  --require-group body \
+  --require-group seat
+```
+
+The command accepts one stable regular UTF-8 `.bbmodel` file, refuses links, and bounds path,
+file, JSON, traversal, name, request, and diagnostic work. Names are exact and case-sensitive. Exit
+code 0 means the audited layout was completely inspected and every requested name was present;
+missing or unknown requirements and invalid/unsafe inputs return 1. Newer versions, `<lz>`
+compression, custom/plugin model formats, unsupported shapes, and exceeded limits are
+indeterminate rather than invalid. Output omits file paths, texture sources, embedded data, and
+editor state.
+
+This is deliberately a metadata/name inspector, not a complete `.bbmodel` validator. It does not
+check animation runtime/keyframes, textures, rendering, export, plugin semantics, or ModelEngine
+blueprint compatibility. A group named `seat` proves only that exact group name and no mounting or
+seating behavior. The boundary follows the official
+[Blockbench `.bbmodel` documentation](https://www.blockbench.net/wiki/docs/bbmodel/) and a pinned
+[Blockbench 5.1.6 format implementation](https://github.com/JannisX11/blockbench/blob/47e633e4a1338f957ee7baa0acbcf54da11e77df/js/formats/bbmodel.js).
 
 Paper plugin lookups:
 
@@ -671,6 +697,7 @@ Analysis and pack tools include:
 - `validate_datapack_project`
 - `validate_resourcepack_project`
 - `validate_server_access_list`
+- `inspect_blockbench_project`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
@@ -727,6 +754,7 @@ import {
   downloadJavaPlayerTexture,
   findVersionsByPackFormat,
   inspectResourcepackPngAlphaBounds,
+  inspectBlockbenchProject,
   searchAuthoringScenarios,
   searchCommands,
   searchMinecraftAssets,
@@ -834,6 +862,11 @@ const accessList = validateServerAccessList({
   kind: "whitelist",
   content: "[]",
   evaluatedAt: "2026-08-25T00:00:00.000Z",
+const blockbenchProject = inspectBlockbenchProject({
+  project:
+    '{"meta":{"format_version":"5.0","model_format":"free"},"groups":[{"name":"seat"}],"animations":[{"name":"idle"}]}',
+  requireAnimations: ["idle", "walk"],
+  requireGroups: ["body", "seat"],
 });
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are

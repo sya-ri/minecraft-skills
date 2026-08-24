@@ -62,6 +62,7 @@ import {
   getSourceReport,
   getSupportMatrix,
   getVersionDetail,
+  inspectBlockbenchProject,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -354,6 +355,11 @@ const serverProperties = validateServerProperties({
 const logAnalysis = analyzeMinecraftLog({
   text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
 Caused by: java.lang.IllegalStateException: root`,
+const blockbenchProject = inspectBlockbenchProject({
+  project:
+    '{"meta":{"format_version":"5.0","model_format":"free"},"groups":[{"name":"seat"}],"animations":[{"name":"idle"}]}',
+  requireAnimations: ["idle", "walk"],
+  requireGroups: ["body", "seat"],
 });
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
 // Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
@@ -500,6 +506,18 @@ check archive paths and referenced-file presence. `validateFabricModJar` adds bo
 the actual ZIP bytes and reports binary evidence. Neither API validates dependency predicates or
 satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR
 metadata, or icon pixels.
+`inspectBlockbenchProject` is a pure, bounded inspector for raw `.bbmodel` JSON text or a safe
+structured object. It reports format metadata and exact case-sensitive animation/group name
+evidence; raw text also reports duplicate-key evidence. Requested absence is `missing` only when
+the relevant collection in an audited core layout was completely scanned. Newer versions, `<lz>`
+compression, custom/plugin formats, unsupported shapes, and limit exhaustion return `unknown`
+instead of claiming invalidity or absence.
+
+The inspector follows the official
+[Blockbench `.bbmodel` documentation](https://www.blockbench.net/wiki/docs/bbmodel/) and a pinned
+[Blockbench 5.1.6 format implementation](https://github.com/JannisX11/blockbench/blob/47e633e4a1338f957ee7baa0acbcf54da11e77df/js/formats/bbmodel.js). It does not validate runtime
+animations/keyframes, textures, rendering/export, plugin semantics, or ModelEngine compatibility.
+A group named `seat` has no special meaning in this result.
 
 `lookupJavaPlayerProfileByName` and `getVerifiedJavaPlayerTextures` use only fixed Mojang service
 URLs and send the supplied name or UUID to those services. They accept an injected fetch function

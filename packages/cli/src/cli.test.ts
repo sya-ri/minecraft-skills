@@ -371,6 +371,129 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("paper-plugin");
   });
 
+  it("inspects exact Blockbench project animation and group names", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-blockbench-cli-"));
+    const filePath = join(root, "model.bbmodel");
+    try {
+      writeFileSync(
+        filePath,
+        JSON.stringify({
+          meta: { format_version: "5.0", model_format: "free" },
+          groups: [{ name: "body" }, { name: "seat" }],
+          animations: [{ name: "idle" }],
+          textures: [{ path: "C:/private/model.png", source: "data:image/png;base64,SECRET" }],
+        }),
+      );
+      const result = await capture([
+        "blockbench",
+        "inspect-project",
+        filePath,
+        "--require-animation",
+        "idle",
+        "--require-group",
+        "seat",
+      ]);
+      const output = result.stdout.join("\n");
+
+      expect(result.code).toBe(0);
+      expect(result.stderr).toEqual([]);
+      expect(output).toContain('"outcome": "inspected"');
+      expect(output).toContain('"name": "idle"');
+      expect(output).toContain('"name": "seat"');
+      expect(output).not.toContain('"status": "missing"');
+      expect(output).not.toContain(filePath);
+      expect(output).not.toContain("C:/private");
+      expect(output).not.toContain("SECRET");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns a nonzero status when a current Blockbench project misses a required name", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-blockbench-cli-"));
+    const filePath = join(root, "model.bbmodel");
+    try {
+      writeFileSync(
+        filePath,
+        JSON.stringify({
+          meta: { format_version: "5.0", model_format: "free" },
+          groups: [{ name: "seat" }],
+          animations: [{ name: "idle" }],
+        }),
+      );
+      const result = await capture([
+        "blockbench",
+        "inspect-project",
+        filePath,
+        "--require-animation",
+        "walk",
+        "--require-group",
+        "Seat",
+      ]);
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toEqual([]);
+      expect(result.stdout.join("\n")).toContain('"outcome": "inspected"');
+      expect(result.stdout.join("\n")).toContain('"status": "missing"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns a nonzero status for an indeterminate newer Blockbench project", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-blockbench-cli-"));
+    const filePath = join(root, "model.bbmodel");
+    try {
+      writeFileSync(
+        filePath,
+        JSON.stringify({
+          meta: { format_version: "6.0", model_format: "free" },
+          groups: [{ name: "seat" }],
+        }),
+      );
+      const result = await capture([
+        "blockbench",
+        "inspect-project",
+        filePath,
+        "--require-group",
+        "missing",
+      ]);
+      expect(result.code).toBe(1);
+      expect(result.stderr).toEqual([]);
+      expect(result.stdout.join("\n")).toContain('"outcome": "indeterminate"');
+      expect(result.stdout.join("\n")).toContain('"status": "unknown"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects unsafe Blockbench CLI argument shapes", async () => {
+    const missingFile = await capture(["blockbench", "inspect-project"]);
+    const unknownOption = await capture([
+      "blockbench",
+      "inspect-project",
+      "model.bbmodel",
+      "--unknown",
+      "value",
+    ]);
+    const repeatedLimit = await capture([
+      "blockbench",
+      "inspect-project",
+      "model.bbmodel",
+      "--limit",
+      "1",
+      "--limit",
+      "2",
+    ]);
+
+    expect(missingFile.code).toBe(1);
+    expect(missingFile.stderr[0]).toContain("exactly one local .bbmodel file");
+    expect(unknownOption.code).toBe(1);
+    expect(unknownOption.stderr[0]).toContain("unknown option");
+    expect(repeatedLimit.code).toBe(1);
+    expect(repeatedLimit.stderr[0]).toContain("must not be repeated");
+  });
+
   it("prints installable skills", async () => {
     const result = await capture(["skill", "list", "--domain", "paper-plugin"]);
     expect(result.code).toBe(0);

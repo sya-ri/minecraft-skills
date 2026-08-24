@@ -102,6 +102,7 @@ minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --ha
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills minecraft validate-access-list ./custom.json --kind banned-players
+minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -247,6 +248,16 @@ Pass canonical UTC `--evaluated-at 2026-08-25T00:00:00.000Z` to reproduce ban-ex
 classification; otherwise the returned `evaluatedAt` records the instant chosen by the validator.
 This checks canonical serializer output; because current loaders default some fields and clamp
 operator levels, a validation error does not prove that the server will reject the file.
+aggregate JSON-byte limits before loading project content. Invalid graphs or audio headers are
+printed as JSON and return exit code 1.
+
+`blockbench inspect-project` reads one stable regular UTF-8 `.bbmodel` file without following a
+link. Repeat `--require-animation` and `--require-group` for exact case-sensitive requirements. It
+returns exit code 0 only when the supported project layout was completely inspected and every
+requested name is present; missing, unknown, unsafe, or invalid input returns 1. Output contains
+bounded metadata/name evidence, not local paths, textures, embedded image data, or editor state.
+It is not a complete `.bbmodel`, runtime-animation, rendering/export, plugin-format, or ModelEngine
+validator. In particular, a group named `seat` proves only that exact group name.
 
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.

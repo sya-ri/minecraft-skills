@@ -93,6 +93,7 @@ minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills minecraft validate-access-list ./whitelist.json
+minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills fabric toolchain 1.21.11
@@ -220,6 +221,12 @@ sources are never copied into the result. The CLI verifies a stable regular-file
 UTF-8 before parsing. Ban-expiry classification returns its UTC `evaluatedAt` instant. This checks
 canonical serializer output, not every shape the server loader may accept through defaults or
 operator-level clamping; a validation error does not prove that loading will fail.
+
+`blockbench inspect-project` performs bounded, exact, case-sensitive animation and group name
+inspection on one stable UTF-8 `.bbmodel` file. A present name is metadata evidence only: the
+command does not validate animation playback, textures, rendering, exports, plugin formats,
+ModelEngine compatibility, or whether a group named `seat` enables seating. Newer, compressed, and
+unknown/custom formats remain explicitly indeterminate instead of being reported invalid.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

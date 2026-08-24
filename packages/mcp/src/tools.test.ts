@@ -256,6 +256,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_log");
     expect(tools.map((tool) => tool.name)).toContain("validate_server_access_list");
+    expect(tools.map((tool) => tool.name)).toContain("inspect_blockbench_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -345,6 +346,141 @@ describe("MCP tools", () => {
     expect(descriptor?.oneOf).toEqual([{ type: "string", maxLength: 262_144 }, { type: "object" }]);
     expect(archiveEntries?.maxItems).toBe(16_384);
     expect(tool?.description).toContain("does not accept binary JARs");
+  it("publishes bounded Blockbench project inspection arguments", () => {
+    const tool = tools.find((candidate) => candidate.name === "inspect_blockbench_project");
+
+    expect(tool).toMatchObject({
+      inputSchema: {
+        required: ["project"],
+        additionalProperties: false,
+        properties: {
+          requireAnimations: {
+            type: "array",
+            maxItems: 128,
+            items: { type: "string", maxLength: 512 },
+          },
+          requireGroups: {
+            type: "array",
+            maxItems: 128,
+            items: { type: "string", maxLength: 512 },
+          },
+          limit: { type: "integer", minimum: 1, maximum: 200, default: 200 },
+        },
+      },
+    });
+    expect(tool?.description).toContain("not a complete Blockbench");
+  });
+
+  it("inspects exact Blockbench names without exposing private project fields", async () => {
+    const result = await callMinecraftSkillsTool("inspect_blockbench_project", {
+      project: JSON.stringify({
+        meta: { format_version: "5.0", model_format: "free" },
+        groups: [{ name: "body" }, { name: "seat" }],
+        animations: [{ name: "idle" }],
+        textures: [
+          {
+            path: "C:/private/model.png",
+            source: "data:image/png;base64,SECRET",
+          },
+        ],
+        selected_elements: ["private-editor-state"],
+      }),
+      requireAnimations: ["idle", "walk", "idle"],
+      requireGroups: ["seat", "Seat"],
+    });
+    const output = result.content[0]?.text ?? "";
+    const inspection = JSON.parse(output) as {
+      outcome: string;
+      source: { duplicateKeys: string };
+      requested: {
+        animations: Array<{ name: string; status: string }>;
+        groups: Array<{ name: string; status: string }>;
+      };
+    };
+
+    expect(result.isError).toBeUndefined();
+    expect(inspection.outcome).toBe("inspected");
+    expect(inspection.source.duplicateKeys).toBe("checked-unique");
+    expect(inspection.requested.animations).toEqual([
+      { name: "idle", status: "present" },
+      { name: "walk", status: "missing" },
+    ]);
+    expect(inspection.requested.groups).toEqual([
+      { name: "Seat", status: "missing" },
+      { name: "seat", status: "present" },
+    ]);
+    expect(output).not.toContain("C:/private");
+    expect(output).not.toContain("SECRET");
+    expect(output).not.toContain("private-editor-state");
+  });
+
+  it("marks parsed, newer, compressed, and duplicate-key Blockbench evidence conservatively", async () => {
+    const parsedResult = await callMinecraftSkillsTool("inspect_blockbench_project", {
+      project: {
+        meta: { format_version: "5.0", model_format: "free" },
+        groups: [{ name: "seat" }],
+      },
+      requireGroups: ["seat"],
+    });
+    const newerResult = await callMinecraftSkillsTool("inspect_blockbench_project", {
+      project: JSON.stringify({
+        meta: { format_version: "6.0", model_format: "free" },
+        groups: [],
+      }),
+      requireGroups: ["seat"],
+    });
+    const compressedResult = await callMinecraftSkillsTool("inspect_blockbench_project", {
+      project: "<lz>compressed-data",
+      requireAnimations: ["idle"],
+    });
+    const duplicateResult = await callMinecraftSkillsTool("inspect_blockbench_project", {
+      project:
+        '{"meta":{"format_version":"5.0","model_format":"free"},"groups":[],"groups":[{"name":"seat"}]}',
+      requireGroups: ["seat"],
+    });
+
+    expect(parsedResult.content[0]?.text).toContain('"duplicateKeys": "unknown"');
+    expect(newerResult.content[0]?.text).toContain('"outcome": "indeterminate"');
+    expect(newerResult.content[0]?.text).toContain('"status": "unknown"');
+    expect(compressedResult.content[0]?.text).toContain('"outcome": "indeterminate"');
+    expect(compressedResult.content[0]?.text).toContain('"status": "unknown"');
+    expect(duplicateResult.content[0]?.text).toContain('"duplicateKeys": "observed"');
+    expect(duplicateResult.content[0]?.text).toContain('"status": "present"');
+    expect(newerResult.isError).toBeUndefined();
+    expect(compressedResult.isError).toBeUndefined();
+  });
+
+  it("preflights unsafe Blockbench MCP inputs without invoking accessors or leaking exceptions", async () => {
+    let getterCalls = 0;
+    const accessorInput = Object.create(null) as Record<string, unknown>;
+    Object.defineProperty(accessorInput, "project", {
+      enumerable: true,
+      get() {
+        getterCalls += 1;
+        throw new Error("must not run");
+      },
+    });
+    const revokedRoot = Proxy.revocable({}, {});
+    revokedRoot.revoke();
+    const revokedProject = Proxy.revocable({}, {});
+    revokedProject.revoke();
+
+    const [accessorResult, rootProxyResult, projectProxyResult, invalidJsonResult] =
+      await Promise.all([
+        callMinecraftSkillsTool("inspect_blockbench_project", accessorInput),
+        callMinecraftSkillsTool("inspect_blockbench_project", revokedRoot.proxy),
+        callMinecraftSkillsTool("inspect_blockbench_project", { project: revokedProject.proxy }),
+        callMinecraftSkillsTool("inspect_blockbench_project", { project: "{" }),
+      ]);
+
+    expect(getterCalls).toBe(0);
+    for (const result of [accessorResult, rootProxyResult, projectProxyResult, invalidJsonResult]) {
+      expect(result.isError).toBe(true);
+      expect(result.content[0]?.text).not.toContain("must not run");
+    }
+    expect(accessorResult.content[0]?.text).toContain('"outcome": "invalid-input"');
+    expect(projectProxyResult.content[0]?.text).toContain('"outcome": "invalid-input"');
+    expect(invalidJsonResult.content[0]?.text).toContain('"outcome": "invalid-input"');
   });
 
   it("resolves metadata-only Java profile results through fixed closed requests", async () => {
