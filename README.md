@@ -90,6 +90,12 @@ minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 ```
 
+For intent-based discovery, translate non-English user wording into concise English canonical
+Minecraft terms before calling search commands or MCP tools. Keep exact identifiers, namespace
+IDs, file paths, project titles, and content literals unchanged. Translation belongs in the caller;
+use the English terms only for the lookup and keep the user's requested response language.
+minecraft-skills does not expand language-specific aliases or reject Unicode query values.
+
 `resourcepack validate-project` also validates `sounds.json` file/event references and local event
 cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification
 page; it does not fully decode audio. Stereo produces a positional warning, channel counts above two

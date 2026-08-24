@@ -147,6 +147,9 @@ type ToolDefinition = {
   };
 };
 
+const semanticSearchGuidance =
+  "For intent-based discovery, use concise English canonical Minecraft terms; translate non-English user intent before calling. Use the English terms only for the lookup, and keep the user's requested response language. Keep exact identifiers, namespace IDs, file paths, project titles, and content literals unchanged.";
+
 export const tools: ToolDefinition[] = [
   {
     name: "list_domains",
@@ -230,12 +233,11 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_authoring_scenarios",
-    description:
-      "Search authoring scenarios by task wording using scenario, recipe, and intent text. Results include matched fields only; they are routing hints, not generated facts.",
+    description: `Search authoring scenarios by task wording using scenario, recipe, and intent text. Results include matched fields only; they are routing hints, not generated facts. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
         limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
       },
@@ -284,12 +286,11 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_catalog",
-    description:
-      "Search lightweight minecraft-skills catalog entries before listing everything. Use this to find relevant skills, references, fact surfaces, recipes, scenarios, guardrails, diagnostics, claim policies, output requirements, response patterns, intent lookups, source tiers, community datasets, and version-support entries.",
+    description: `Search lightweight minecraft-skills catalog entries before listing everything. Use this to find relevant skills, references, fact surfaces, recipes, scenarios, guardrails, diagnostics, claim policies, output requirements, response patterns, intent lookups, source tiers, community datasets, and version-support entries. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
         kind: {
           type: "string",
@@ -561,12 +562,11 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_community_datasets",
-    description:
-      "Search recommended structured community datasets for corroborating Minecraft facts, including misode/mcmeta and PrismarineJS/minecraft-data.",
+    description: `Search recommended structured community datasets for corroborating Minecraft facts, including misode/mcmeta and PrismarineJS/minecraft-data. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
         limit: { type: "number", default: 10 },
       },
@@ -1086,14 +1086,13 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_all",
-    description:
-      "Search across Minecraft catalog guidance, datapack command/schema/path indexes, resourcepack path/model/asset indexes, and Paper API indexes.",
+    description: `Search across Minecraft catalog guidance, datapack command/schema/path indexes, resourcepack path/model/asset indexes, and Paper API indexes. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
         limit: { type: "number", default: 20 },
       },
@@ -1170,12 +1169,11 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_modrinth_projects",
-    description:
-      "Search public Modrinth projects by text with optional Minecraft version, project type, loader, category, sorting, and pagination filters.",
+    description: `Search public Modrinth projects by text with optional Minecraft version, project type, loader, category, sorting, and pagination filters. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         version: { type: "string" },
         projectType: { type: "string" },
         loader: { type: "string" },
@@ -1266,13 +1264,13 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "find_datapack_entries",
-    description: "Search datapack commands, observed schema paths, and vanilla datapack paths.",
+    description: `Search datapack commands, observed schema paths, and vanilla datapack paths. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         limit: { type: "number", default: 25 },
       },
       required: ["query"],
@@ -1281,14 +1279,13 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "find_resourcepack_assets",
-    description:
-      "Search resourcepack vanilla paths, model/item summaries, and cached external asset indexes together.",
+    description: `Search resourcepack vanilla paths, model/item summaries, and cached external asset indexes together. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         kind: {
           type: "string",
           enum: [
@@ -1328,14 +1325,13 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "suggest_minecraft_lookups",
-    description:
-      "Suggest the next minecraft-skills tools to call for a natural-language Minecraft task.",
+    description: `Suggest the next minecraft-skills tools to call for a natural-language Minecraft task. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
-        task: { type: "string" },
+        task: { type: "string", description: semanticSearchGuidance },
         domain: { type: "string", enum: ["datapack", "resourcepack", "paper-plugin"] },
         limit: { type: "number", default: 8 },
       },
@@ -1707,11 +1703,11 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_paper_events",
-    description: "Search Paper/Bukkit events through the configured sya-ri/spigot-event-list API.",
+    description: `Search Paper/Bukkit events through the configured sya-ri/spigot-event-list API. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {
-        query: { type: "string" },
+        query: { type: "string", description: semanticSearchGuidance },
         version: { type: "string", default: "latest" },
         source: { type: "string" },
         limit: { type: "number", default: 20 },

@@ -16,9 +16,12 @@ version-specific facts.
 2. Read `references/versioning.md` before making compatibility claims.
 3. Use the `minecraft-skills` CLI for machine-verifiable facts. If the CLI is not available, use
    the bundled references in this skill and clearly state when strict data is not bundled.
-4. Use `minecraft-skills datapack search "<task>"` before broad list commands when you need to find
-   relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source tiers,
-   datasets, or version-support entries.
+4. Before task-wording searches, translate non-English user intent into concise English canonical
+   Minecraft terms. Use the English terms only for lookups, and keep the user's requested response
+   language. Keep exact identifiers, namespace IDs, file paths, and content literals unchanged.
+   Then use `minecraft-skills datapack search "<task>"` before broad list commands when you need to
+   find relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source
+   tiers, datasets, or version-support entries.
 5. Use `minecraft-skills datapack intents` to choose the exact lookup path for the user's intent.
 6. Use `minecraft-skills datapack recipes` to choose an ordered workflow for common tasks such as
    function commands, observed JSON, and migrations.

@@ -1932,6 +1932,11 @@ describe("minecraft-skills CLI", () => {
     expect(result.code).toBe(0);
     expect(output).toContain("Start here:");
     expect(output).toContain("Common workflows:");
+    expect(output).toMatch(
+      /translate non-English user intent into concise English\s+canonical Minecraft terms/,
+    );
+    expect(output).toMatch(/Keep exact identifiers, namespace IDs, file\s+paths, project titles/);
+    expect(output).toMatch(/keep the user's requested response language/);
     expect(output).toContain(
       'minecraft-skills plugin paper search-scenarios "Paper event listener"',
     );
@@ -1941,5 +1946,12 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");
     expect(output).toContain("docs/USAGE.md");
+  });
+
+  it("continues to accept Unicode literal search input", async () => {
+    const result = await capture(["minecraft", "search", "日本語プロジェクト"]);
+    expect(result.code).toBe(0);
+    expect(result.stderr).toEqual([]);
+    expect(result.stdout.join("\n")).toContain('"query": "日本語プロジェクト"');
   });
 });

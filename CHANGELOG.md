@@ -60,6 +60,10 @@ All notable changes to this project are documented here.
 
 ### Changed
 
+- Agent-facing CLI help, MCP prompts and input schemas, documentation, and bundled skills now direct
+  callers to translate non-English discovery intent into concise English canonical Minecraft terms
+  while preserving exact identifiers, paths, project titles, and content literals. Search runtimes
+  continue to accept Unicode input without language-specific alias expansion.
 - Discovery queries now match natural-language words across case, camelCase, and Minecraft
   identifier separators, so queries such as `Player Join Event`, `Diamond Sword`, and
   `bundle item model` find structured API and asset results without changing literal `contains`

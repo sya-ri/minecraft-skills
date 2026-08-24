@@ -16,8 +16,11 @@ version-specific facts.
 2. Read `references/versioning.md` before making pack format or asset schema claims.
 3. Use the `minecraft-skills` CLI for machine-verifiable facts. If the CLI is not available, use
    the bundled references in this skill and clearly state when strict data is not bundled.
-4. Use `minecraft-skills resourcepack search "<task>"` before broad list commands when you need to
-   find relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source
+4. Before task-wording searches, translate non-English user intent into concise English canonical
+   Minecraft terms. Use the English terms only for lookups, and keep the user's requested response
+   language. Keep exact identifiers, namespace IDs, file paths, and content literals unchanged.
+   Then use `minecraft-skills resourcepack search "<task>"` before broad list commands when you need
+   to find relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source
    tiers, datasets, or version-support entries.
 5. Use `minecraft-skills resourcepack intents` to choose the exact lookup path for the user's
    intent.

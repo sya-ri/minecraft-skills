@@ -253,6 +253,23 @@ describe("@minecraft-skills/data", () => {
     );
   });
 
+  it("guides skill callers to translate only non-English discovery intent", () => {
+    for (const skill of [
+      "minecraft-datapacks",
+      "minecraft-resourcepacks",
+      "minecraft-paper-plugins",
+    ]) {
+      const content = readDataText(`skills/${skill}/SKILL.md`);
+      expect(content).toMatch(
+        /translate non-English user intent into concise English canonical\s+Minecraft terms/,
+      );
+      expect(content).toMatch(
+        /Keep exact identifiers, namespace IDs, file paths, and content literals\s+unchanged/,
+      );
+      expect(content).toMatch(/keep the user's requested response\s+language/);
+    }
+  });
+
   it("loads data manifest and resolves cache directories", async () => {
     await withCacheDir((cacheDir) => {
       const manifest = getDataManifest();
