@@ -73,6 +73,7 @@ import {
   getSupportMatrix,
   getVanillaDatapackJson,
   getVanillaInventory,
+  getVerifiedJavaPlayerTextures,
   getVersionDetail,
   inspectResourcepackPngAlphaBounds,
   listAuthoringChecklists,
@@ -96,6 +97,7 @@ import {
   listVersionSupport,
   listVersions,
   type MinecraftLogAnalysisLimits,
+  lookupJavaPlayerProfileByName,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
   modrinthCompatibilityLimits,
@@ -257,6 +259,43 @@ const resourcepackProjectLimitNames = [
 ] as const satisfies readonly (keyof ResourcepackProjectValidationLimits)[];
 
 export const tools: ToolDefinition[] = [
+  {
+    name: "lookup_java_player_profile",
+    description:
+      "Resolve a bounded Java player name to canonical UUID and returned profile name through the fixed Mojang profile service. The supplied name is sent to Mojang; no disk cache or application log is used. The exact endpoint and schema are version-specific, undocumented Authlib 9.0.75 behavior.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          minLength: 1,
+          maxLength: 16,
+          pattern: "^[A-Za-z0-9_]{1,16}$",
+        },
+      },
+      required: ["name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_verified_java_player_textures",
+    description:
+      "Resolve metadata for a Java UUID through fixed Mojang session/key services and verify its signed textures property plus UUID/name binding. The supplied UUID is sent to Mojang; no disk cache or application log is used. Returns only canonical identity, texture hashes/HTTPS references, and model evidence—not PNG bytes, layout/crops, ownership, licensing, freshness, or proof that bytes match the 64-hex reference. The exact service API is version-specific, undocumented Authlib 9.0.75 behavior.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        uuid: {
+          type: "string",
+          minLength: 32,
+          maxLength: 36,
+          pattern:
+            "^(?:[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+        },
+      },
+      required: ["uuid"],
+      additionalProperties: false,
+    },
+  },
   {
     name: "list_domains",
     description: "List Minecraft authoring domains supported by minecraft-skills.",
@@ -2355,6 +2394,73 @@ export function listMinecraftSkillsTools(): ToolDefinition[] {
   return isRconConfigured() ? [...tools, runRconCommandTool] : tools;
 }
 
+type PlayerProfileToolInput =
+  | { ok: true; value: string }
+  | {
+      ok: false;
+      outcome: {
+        status: "invalid-input";
+        field: "name" | "uuid";
+        code: "unsupported-format" | "unsupported-structure";
+      };
+    };
+
+const javaPlayerNamePattern = /^[A-Za-z0-9_]{1,16}$/;
+const javaPlayerUuidPattern =
+  /^(?:[0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
+
+function invalidPlayerProfileToolInput(
+  field: "name" | "uuid",
+  code: "unsupported-format" | "unsupported-structure",
+): PlayerProfileToolInput {
+  return { ok: false, outcome: { status: "invalid-input", field, code } };
+}
+
+function readPlayerProfileToolInput(
+  input: unknown,
+  field: "name" | "uuid",
+): PlayerProfileToolInput {
+  if (
+    typeof input !== "object" ||
+    input === null ||
+    nodeTypes.isProxy(input) ||
+    Array.isArray(input)
+  ) {
+    return invalidPlayerProfileToolInput(field, "unsupported-structure");
+  }
+
+  try {
+    const prototype = Object.getPrototypeOf(input);
+    if (prototype !== Object.prototype && prototype !== null) {
+      return invalidPlayerProfileToolInput(field, "unsupported-structure");
+    }
+    if (Object.getOwnPropertySymbols(input).length !== 0) {
+      return invalidPlayerProfileToolInput(field, "unsupported-structure");
+    }
+    const descriptors = Object.getOwnPropertyDescriptors(input);
+    const names = Object.keys(descriptors);
+    if (names.length !== 1 || names[0] !== field) {
+      return invalidPlayerProfileToolInput(field, "unsupported-structure");
+    }
+    const descriptor = descriptors[field];
+    if (
+      descriptor === undefined ||
+      !("value" in descriptor) ||
+      !descriptor.enumerable ||
+      typeof descriptor.value !== "string"
+    ) {
+      return invalidPlayerProfileToolInput(field, "unsupported-structure");
+    }
+    const pattern = field === "name" ? javaPlayerNamePattern : javaPlayerUuidPattern;
+    if (!pattern.test(descriptor.value)) {
+      return invalidPlayerProfileToolInput(field, "unsupported-format");
+    }
+    return { ok: true, value: descriptor.value };
+  } catch {
+    return invalidPlayerProfileToolInput(field, "unsupported-structure");
+  }
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
@@ -2974,6 +3080,14 @@ function inspectResourcepackPngAlphaBoundsTool(input: unknown): ToolResult {
 export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
   if (name === "inspect_resourcepack_png_alpha_bounds") {
     return inspectResourcepackPngAlphaBoundsTool(input);
+  }
+  if (name === "lookup_java_player_profile") {
+    const parsed = readPlayerProfileToolInput(input, "name");
+    return text(parsed.ok ? await lookupJavaPlayerProfileByName(parsed.value) : parsed.outcome);
+  }
+  if (name === "get_verified_java_player_textures") {
+    const parsed = readPlayerProfileToolInput(input, "uuid");
+    return text(parsed.ok ? await getVerifiedJavaPlayerTextures(parsed.value) : parsed.outcome);
   }
   try {
     if (name === "validate_velocity_plugin_jar") {

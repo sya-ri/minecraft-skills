@@ -178,6 +178,8 @@ export {
   javaPlayerTextureDownloadLimits,
   javaPlayerTextureSourceEvidence,
 } from "./javaPlayerTexture.js";
+export * from "./javaPlayerProfile.js";
+export * from "./javaPlayerProfileNetwork.js";
 export * from "./minecraftLog.js";
 export {
   type ModrinthCompatibilityFetch,

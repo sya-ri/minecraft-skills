@@ -162,6 +162,19 @@ aliases or reject Unicode query values.
 - `list_domains`
 - `list_references`
 - `get_source_policy`
+- `lookup_java_player_profile`
+- `get_verified_java_player_textures`
+
+The profile tools send the supplied Java name or UUID only to fixed Mojang profile, session, and
+public-key services. They accept no caller URL, headers, body, or cache path and write no disk cache
+or application log. Their exact endpoints and response shapes are version-specific, undocumented
+behavior pinned to the official Minecraft 26.2 Authlib 9.0.75 artifact.
+
+`get_verified_java_player_textures` returns metadata only. `verified` establishes the signed
+textures-property signature and UUID/name binding; it does not download a PNG or prove that PNG
+bytes match a content digest represented by the 64-hex reference. It also does not establish
+current skin selection, account ownership, or licensing. Image download, skin layout inspection,
+and face cropping are outside this tool.
 
 `validate_resourcepack_png` accepts canonical padded Base64 for one complete PNG, rejects malformed
 or oversized input before decoding, and returns bounded structural and CRC diagnostics. It does not

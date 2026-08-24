@@ -77,6 +77,7 @@ import {
   getSupportMatrix,
   getVanillaDatapackJson,
   getVanillaInventory,
+  getVerifiedJavaPlayerTextures,
   getVersionDetail,
   inferServerAccessListKind,
   inspectResourcepackPngAlphaBounds,
@@ -102,6 +103,7 @@ import {
   listVersionSupport,
   listVersions,
   type MinecraftLogAnalysisLimits,
+  lookupJavaPlayerProfileByName,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type PlayerSkinSourceRectangleInput,
@@ -849,6 +851,8 @@ function normalizeSubcommands(argv: string[]): string[] {
     "rcon status": "rcon-status",
     "rcon init": "rcon-init",
     "rcon run": "rcon-run",
+    "player-profile lookup-name": "player-profile-lookup-name",
+    "player-profile textures": "player-profile-textures",
   };
 
   if (groupedCommand === "datapack vanilla-paths") {
@@ -1072,6 +1076,8 @@ const flatCommandSuggestions: Record<string, string> = {
   "rcon-status": "rcon status",
   "rcon-init": "rcon init",
   "rcon-run": "rcon run",
+  "player-profile-lookup-name": "player-profile lookup-name",
+  "player-profile-textures": "player-profile textures",
 };
 
 const commandGroups = new Set([
@@ -1086,6 +1092,7 @@ const commandGroups = new Set([
   "velocity",
   "server",
   "rcon",
+  "player-profile",
   "skill",
   "reference",
   "domain",
@@ -1187,6 +1194,9 @@ Start here:
   minecraft-skills server validate-properties [server.properties] [--version version]
       Conservatively validate bounded Java Properties syntax, stable value types, duplicates, and
       file-local RCON/resource-pack correlations without returning property values.
+  minecraft-skills player-profile lookup-name <name>
+  minecraft-skills player-profile textures <uuid>
+      Resolve a Java profile or verified signed texture metadata through fixed Mojang services.
   minecraft-skills source tiers
   minecraft-skills source datasets
       Inspect source tiers and recommended structured community datasets such as PrismarineJS and
@@ -1230,6 +1240,10 @@ Common workflows:
   Structure a Minecraft Java log or crash report before diagnosing it:
     minecraft-skills minecraft analyze-log ./logs/latest.log
 
+  Resolve Java profile identity and signed texture metadata:
+    minecraft-skills player-profile lookup-name jeb_
+    minecraft-skills player-profile textures 853c80ef-3c37-49fd-aa49-938b674adae6
+
 Safety notes:
   - Command paths prove parser shape, not gameplay success, permissions, or runtime behavior.
   - Vanilla path matches prove bundled vanilla file presence, not custom content validity.
@@ -1259,6 +1273,8 @@ Grouped commands:
   minecraft-skills datapack context|preflight|evidence [version] [--edition java]
   minecraft-skills resourcepack context|preflight|evidence [version] [--edition java]
   minecraft-skills plugin paper context|preflight|evidence [version] [--edition java]
+  minecraft-skills player-profile lookup-name <name>
+  minecraft-skills player-profile textures <uuid>
   minecraft-skills datapack|resourcepack search-scenarios <query> [--limit 10]
   minecraft-skills plugin paper search-scenarios <query> [--limit 10]
   minecraft-skills datapack|resourcepack search <query> [--kind kind] [--limit 10]
@@ -1543,6 +1559,24 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (!command || command === "help" || command === "--help" || command === "-h") {
       printHelp(output);
       return 0;
+    }
+
+    if (command === "player-profile-lookup-name") {
+      if (args.length !== 1 || args[0]?.startsWith("-")) {
+        throw new Error("player-profile lookup-name requires exactly one Java player name");
+      }
+      const result = await lookupJavaPlayerProfileByName(args[0]);
+      printJson(output, result);
+      return result.status === "found" ? 0 : 1;
+    }
+
+    if (command === "player-profile-textures") {
+      if (args.length !== 1 || args[0]?.startsWith("-")) {
+        throw new Error("player-profile textures requires exactly one Java player UUID");
+      }
+      const result = await getVerifiedJavaPlayerTextures(args[0]);
+      printJson(output, result);
+      return result.status === "verified" ? 0 : 1;
     }
 
     if (command === "domains") {

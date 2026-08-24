@@ -101,6 +101,8 @@ minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104
 minecraft-skills server validate-properties ./server.properties --version 1.21.11
 minecraft-skills plugin paper validate-jar ./build/libs/example.jar
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
+minecraft-skills player-profile lookup-name jeb_
+minecraft-skills player-profile textures 853c80ef-3c37-49fd-aa49-938b674adae6
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -520,6 +522,21 @@ compatibility, authenticity, Modrinth origin, or runtime startup; or download, u
 files. They are factual local comparisons, not compatibility or launch guarantees. There is no
 Catalog or MCP equivalent because neither surface accepts or traverses local filesystem paths.
 
+`player-profile lookup-name <name>` resolves bounded Java profile identity, while `player-profile
+textures <uuid>` returns verified signed texture metadata. The MCP equivalents are
+`lookup_java_player_profile` and `get_verified_java_player_textures`; the Catalog equivalents are
+`lookupJavaPlayerProfileByName` and `getVerifiedJavaPlayerTextures`. The supplied name or UUID is
+sent only to fixed Mojang services. These surfaces accept no caller endpoint, headers, request body,
+or cache path and write no disk cache or application log.
+
+The exact endpoints and response shapes are derived from the official Minecraft 26.2
+[Authlib 9.0.75 artifact](https://libraries.minecraft.net/com/mojang/authlib/9.0.75/authlib-9.0.75.jar)
+(SHA-1 `d61056a234d5e4b272e09d59b0713f80d6c0b6af`) and are version-specific,
+undocumented service behavior. `verified` establishes only the textures-property signature and
+session/payload UUID-name binding. A canonical HTTPS URL and 64-hex reference are signed metadata;
+the resolver does not fetch PNG bytes or establish a content digest, current skin selection,
+ownership, or licensing. PNG download, skin layout inspection, and face cropping are out of scope.
+
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and
 `member-search-index.js` files when present. Older Javadocs that do not expose those files are
@@ -670,6 +687,8 @@ Analysis and pack tools include:
 - `find_resourcepack_assets`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
+- `lookup_java_player_profile`
+- `get_verified_java_player_textures`
 
 `inspect_resourcepack_png_alpha_bounds` accepts only canonical padded Base64 for one complete PNG,
 not a local path, URL, or pixel array. Request-object descriptors are preflighted without invoking
