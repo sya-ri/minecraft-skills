@@ -14,6 +14,9 @@ Redistributable canonical data for Minecraft Skills consumers.
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor
   mutation, close-handler deferral, session ownership, and exactly-once editable-slot settlement.
+- Generic Paper administrative-command guidance for operation coverage, sender and target models,
+  permissions, protected secret input, justified safe out-of-band alternatives, bulk scope,
+  atomic reload rollback, observability, recovery, and failure tests.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

@@ -677,6 +677,164 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "A custom inventory GUI can leak, duplicate, steal, or move protected items when alternate click paths, multi-slot drags, deprecated cursor mutation, repeated settlement, shared ownership, or stale close/reopen tasks bypass a top-slot-only handler."
+    },
+    {
+      "id": "paper-administrative-command-operability",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review an operable Paper administrative command",
+      "when": [
+        "the request adds or reviews an administrator, moderator, operator, configuration, or maintenance command",
+        "the feature needs state mutation plus list, show, status, reload, retry, repair, reset, grant, revoke, or remove operations",
+        "sender context, explicit targets, offline handling, permissions, failure feedback, or bulk scope are unclear"
+      ],
+      "steps": [
+        {
+          "id": "map-the-operational-surface",
+          "action": "Write an operation matrix before choosing syntax. Classify required create or change, remove, list, show, status, reload, retry, repair, reset, unlock, and recovery actions, and record the intentional alternative for any required action that is not a command. Keep secrets in a dedicated secret, environment, or protected configuration path rather than command input.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper search-scenarios",
+              "plugin paper guardrails",
+              "plugin paper diagnostics"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "search_catalog",
+              "list_authoring_guardrails",
+              "list_authoring_diagnostics"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "searchCatalog",
+              "listAuthoringGuardrails",
+              "listAuthoringDiagnostics"
+            ]
+          },
+          "evidence": [
+            "An operation matrix with syntax, mutating or read-only classification, sender contexts, target kind, permission, outcome categories, and verification path",
+            "An explicit decision for configuration reload, effective-state inspection, failure recovery, and safe retry",
+            "For each non-command alternative, its safety reason, authorization, validation, verification, and recovery procedure",
+            "A secret-input decision that keeps raw secret values out of command arguments, suggestions, histories, logs, results, status output, and audit records"
+          ],
+          "stopIfMissing": "Do not leave a required action dependent on an undocumented out-of-band procedure. A deliberate file, secret-management, startup-only, or restart procedure must explain why a command or hot reload is unsafe and document authorization, validation, verification, and recovery."
+        },
+        {
+          "id": "model-sender-target-and-scope",
+          "action": "Choose sender support from actual input and trust needs. Permit console when no player-local input is required; enumerate the target-version dispatchable CommandSender subtypes, including player, local console, remote console, command block, command minecart, proxied, and custom senders, explicitly allow or reject each with feedback, and reject unknown or future subtype fallthrough by default. Require an explicit target for privileged subject operations, distinguish online-only live-state targets from offline-capable persistent targets, resolve names to stable known identities without treating an OfflinePlayer value as proof of prior registration, and make bulk scope deliberate.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper fact-surfaces"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_fact_surfaces"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listFactSurfaces"
+            ]
+          },
+          "evidence": [
+            "Target-version matches for every CommandSender subtype, Player, OfflinePlayer, selector, identity, and lookup API used",
+            "A sender and target matrix covering local console, remote console, player, command block, command minecart, proxied and custom senders, unknown-subtype fallback, explicit rejection feedback, self, other subject, online, supported offline, missing, and bulk targets",
+            "A stable-identity policy that distinguishes a known offline subject from unknown or never-registered input",
+            "A preview or confirmation policy for destructive or all-target mutations"
+          ],
+          "stopIfMissing": "Do not make an operation player-only without player-local input, silently accept or reject non-player sender kinds, let an unknown sender subtype fall through a generic executor, use the invoker as an implicit administrative target, or require an online Player for a persistence-only change."
+        },
+        {
+          "id": "enforce-permissions-and-bounded-input",
+          "action": "Assign and enforce an explicit least-privilege permission policy for every privileged branch. Parse targets, identifiers, counts, amounts, ranges, modes, and optional values with typed bounded arguments; treat suggestions and command visibility as usability only. Route secret-bearing values through a protected non-command mechanism and never echo raw secrets into feedback or diagnostics.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "A permission node or equivalent policy, documented default, and denial test for every privileged branch",
+            "Typed argument bounds, optional defaults, target suggestions, explicit bulk scope, and proof that secret values do not enter the command surface",
+            "Execution-time authorization independent of suggestion filtering or command discovery"
+          ],
+          "stopIfMissing": "Do not rely on operator status, hidden syntax, tab-completion filtering, or an unchecked parent command as the only protection for a privileged branch, and do not accept raw secrets as command arguments."
+        },
+        {
+          "id": "make-mutation-and-reload-atomic",
+          "action": "Represent expected outcomes explicitly. For reload, parse and validate a complete candidate before one atomic publication, preserve the last valid state on failure, and serialize or version concurrent reload and mutation work. Keep file, database, and network I/O off the main server thread, publish Bukkit-facing state in a target-compatible execution context, and make retry idempotent or expose duplicate and partial results.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper claim-policies",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "list_claim_policies",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "listClaimPolicies",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A typed result model for success, missing target, invalid input or state, denial, partial completion, conflict, and I/O failure",
+            "A last-known-good reload test that proves invalid input cannot replace effective state",
+            "A concurrency and scheduler decision for I/O, Bukkit state changes, reload publication, and retry"
+          ],
+          "stopIfMissing": "Do not clear or partially replace effective state before full validation, and do not report a partial mutation as unconditional success."
+        },
+        {
+          "id": "expose-results-and-effective-state",
+          "action": "Return a bounded result to the invoker for every path, independently decide whether to notify the affected target, and provide list, show, or status output for the effective state. Record security-sensitive changes without secret inputs or values and test every supported and rejected sender, target, denial, failure, retry, and bulk boundary.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "Success and failure messages addressed to the actual invoker, including console and administrators acting on another subject",
+            "A separate target-notification policy and a bounded non-secret audit record for sensitive mutation",
+            "List, show, or status output proving the effective post-change state",
+            "Tests for local and remote console, player, command block, command minecart, proxied and custom senders, unknown-subtype fallback, explicit sender rejection, self, other target, online, offline, missing, denied, invalid, I/O failure, rollback, retry, partial completion, confirmation, and secret redaction"
+          ],
+          "stopIfMissing": "Do not leave the invoker to infer completion from target notification, logs, or a later restart, and do not expose secret input or values in arguments, suggestions, histories, results, status output, logs, or audit context."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-administrative-command-operability",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Administrative code can compile while remaining unusable or unsafe in production because its command surface omits sender, target, permission, inspection, atomic reload, recovery, or observable-result contracts."
     }
   ]
 }

@@ -29,6 +29,7 @@ minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
 minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
 minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 1.21.11
+minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
@@ -181,6 +182,12 @@ an agent should inspect before answering.
 `data/**/*.json` files from the cached official Mojang server jar. `search` matches parsed JSON keys
 or primitive values and reports incomplete scans instead of silently treating resource limits as no
 matches. `clean [version]` removes a stale cached server jar.
+
+`plugin paper plan paper-administrative-command-operability-review [version]` resolves generic
+administrative-command checks for operational coverage, explicit support or rejection for every
+applicable sender kind, explicit targets, permissions, protected secret input, justified safe
+out-of-band alternatives, bulk confirmation, atomic reload rollback, effective-state inspection,
+and observable success or failure results.
 
 ## Data Sources
 

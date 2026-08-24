@@ -35,6 +35,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-inventory-gui-interaction-safety.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails/paper-administrative-command-operability.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -42,6 +45,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-inventory-gui-interaction-unbounded.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics/paper-administrative-command-incomplete.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-recipes.json",
@@ -53,6 +59,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/paper-inventory-gui-interactions.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes/paper-administrative-command-operability.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -60,6 +69,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-inventory-gui-interaction-review.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios/paper-administrative-command-operability-review.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/claim-policies.json",
@@ -296,6 +308,28 @@ describe("MCP resources", () => {
       "minecraft-skills://data/java/paper-api-surfaces/1.21.11.json",
     );
     expect(paperSurface.contents[0]?.text).toContain('"coverage": "javadocs-search-index"');
+  });
+
+  it("reads administrative command operability resources", () => {
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-administrative-command-operability.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("model-sender-target-and-scope");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-administrative-command-operability-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-administrative-command-incomplete");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-administrative-command-operability.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("Allow console execution");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-administrative-command-incomplete.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain('"severity": "error"');
   });
 
   it("rejects unknown resources", () => {

@@ -460,6 +460,34 @@ describe("MCP tools", () => {
     );
   });
 
+  it("calls administrative command operability guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-administrative-command-operability",
+    });
+    expect(recipe.content[0]?.text).toContain("model-sender-target-and-scope");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-administrative-command-operability-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-administrative-command-incomplete");
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-administrative-command-operability-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-administrative-command-operability"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-administrative-command-operability",
+    });
+    expect(guardrail.content[0]?.text).toContain("Allow console execution");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-administrative-command-incomplete",
+    });
+    expect(diagnostic.content[0]?.text).toContain('"severity": "error"');
+  });
+
   it("calls catalog search tool", async () => {
     const result = await callMinecraftSkillsTool("search_catalog", {
       query: "Paper event listener",

@@ -60,6 +60,7 @@ minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
 minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
 minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 26.2
+minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -310,6 +311,15 @@ uninserted stack exactly once. It also requires an explicit reject, defer, persi
 fallback policy before delivery is reported complete. `Player.give` and similar convenience APIs
 must be verified in the target-version member surface and behavior documentation instead of being
 recommended for every Paper version.
+
+For Paper administrator, moderator, configuration, and maintenance commands, use scenario
+`paper-administrative-command-operability-review`. Its plan checks the complete mutation,
+inspection, reload, recovery, and retry surface; explicit support or rejection for player, local
+and remote console, command block, command minecart, proxied, custom, and unknown senders; online
+or offline targets;
+permissions; protected secret input; justified safe out-of-band alternatives; bounded bulk scope;
+atomic last-known-good reload; invoker/target feedback; effective-state status; and failure-path
+tests.
 
 ## Source Policy
 

@@ -118,6 +118,33 @@
         "tests that exercise ordinary clicks, shift transfer, number-key and offhand swaps, double-click collection, cross-boundary drag, outside clicks, direct close-handler reopen rejection, deprecated cursor mutation rejection, editable-slot commit and return, full-inventory overflow, repeated close callbacks, disconnect, shutdown, and close/reopen races"
       ],
       "failureMode": "A handler that cancels only obvious top-inventory clicks can be bypassed from the player inventory, cursor-wide collection, hotbar/offhand swaps, multi-slot drags, deprecated cursor mutation, duplicate settlement, unowned shared slots, or stale reopen tasks."
+    },
+    {
+      "id": "paper-administrative-command-operability",
+      "domains": ["paper-plugin"],
+      "title": "Make administrative command surfaces operable and observable",
+      "rules": [
+        "Inventory every operator action the feature needs: create or change, remove, inspect, reload, retry, repair, reset, unlock, or recover; provide a command path or document the intentional alternative for each required action.",
+        "Allow console execution whenever an operation does not require player-local input such as location, view, cursor, held item, or line of sight; provide explicit arguments alongside any player-context shortcut.",
+        "Enumerate dispatchable CommandSender subtypes available on the target Paper version, including player, local console, remote console, command block, command minecart, proxied, and custom senders; explicitly allow or reject each applicable kind, return feedback for rejection, and reject unknown or future subtype fallthrough by default.",
+        "Require an explicit target for privileged actions on a subject instead of silently treating the invoker as the target; decide online-only versus offline-capable resolution from the real state dependency.",
+        "Resolve an operator-facing player identifier to a stable stored identity, distinguish a known offline subject from unknown input, and do not treat an OfflinePlayer value by itself as proof that the subject is registered or has joined.",
+        "Attach an explicit least-privilege permission policy to every privileged branch and enforce it at execution; command visibility and filtered suggestions are not authorization.",
+        "Use typed, bounded arguments and explicit scope for bulk operations; require a preview, confirmation, or other deliberate acknowledgement before destructive or all-target mutation.",
+        "Do not accept raw secrets through command arguments or suggestions; use a protected secret, environment, or configuration path and keep values out of histories, logs, feedback, status output, and audit records.",
+        "For reload, parse and validate the complete candidate before atomically replacing effective state, preserve the last valid state on failure, and serialize or version concurrent reload and mutation work; keep file, database, and network I/O off the main server thread and publish Bukkit-facing state in a target-compatible execution context.",
+        "Return typed outcomes for success, missing target, invalid input or state, denial, partial completion, and I/O failure; do not hide expected operational results in exceptions or logs alone.",
+        "Report the result to the invoker, including console or an administrator acting on someone else, and treat notification of the affected target as a separate policy decision.",
+        "Provide list, show, or status output that reflects the effective post-change state without exposing secrets, and record security-sensitive changes with actor, target, action, result, and bounded non-secret context.",
+        "Test every supported and rejected sender kind, self and other targets, online and supported offline targets, permission denial, reload rollback, retry or idempotency, partial failure, bulk confirmation, and secret redaction."
+      ],
+      "requiredEvidence": [
+        "an operation matrix mapping every required mutation, inspection, reload, recovery, and retry path to syntax or a justified safe alternative, sender kinds, permission, target kind, and outcomes",
+        "target-version Paper API type/member matches for command sender, player, offline-player, identity, permission, scheduler, and messaging APIs actually referenced",
+        "a state-transition design showing validation, atomic publication, last-known-good rollback, and concurrent reload or mutation handling",
+        "tests proving sender acceptance and rejection, target, permission, failure, observability, reload rollback, bulk-scope behavior, and secret redaction"
+      ],
+      "failureMode": "An incomplete administrative command can force operators to edit files, restart servers, impersonate targets, or infer success from logs while unsafe sender, scope, permission, and reload paths remain untested."
     }
   ]
 }

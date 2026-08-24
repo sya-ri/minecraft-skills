@@ -5447,11 +5447,26 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     }
   }
   if (!options.domain || options.domain === "paper-plugin") {
+    const paperApiTask = /(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(
+      lower,
+    );
+    const commandTask = /\b(command|subcommand)\b/.test(lower);
+    const administrativeRoleTask =
+      /\b(admin|administrator|administrative|moderator|operator|maintenance|configuration)\b/.test(
+        lower,
+      );
+    const administrativeOperationTask =
+      /\b(permission|console|sender|reload|status|repair|reset|remove|ban|grant|revoke|recovery)\b/.test(
+        lower,
+      );
+    const administrativeCommandTask =
+      (options.domain === "paper-plugin" && (commandTask || administrativeOperationTask)) ||
+      (!options.domain && commandTask && administrativeRoleTask);
     if (
-      options.domain === "paper-plugin" ||
       paperItemDeliveryTask ||
       paperInventoryGuiTask ||
-      /(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(lower)
+      paperApiTask ||
+      administrativeCommandTask
     ) {
       add(
         `plugin paper search ${JSON.stringify(task)}`,

@@ -13,6 +13,13 @@ All notable changes to this project are documented here.
   diagnostics, CLI, Catalog, and MCP surfaces, including default-deny click and drag handling,
   deferred close-handler transitions, supported cursor mutation, per-session ownership, and
   exactly-once editable-slot settlement with explicit overflow outcomes.
+- Generic Paper administrative-command operability guidance across recipes, scenarios, guardrails,
+  diagnostics, Catalog, CLI, MCP tools/resources, and natural-language discovery. It covers
+  operation matrices, explicit support or rejection for every applicable command-sender subtype
+  including command minecarts and an unknown-subtype fallback,
+  online/offline targets, permissions, protected secret input, bounded bulk scope, justified safe
+  out-of-band alternatives, atomic last-known-good reload, effective-state inspection,
+  invoker/target feedback, recovery, retry, partial failure, and failure-path tests.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.
