@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -81,6 +82,7 @@ import {
   searchPaperMembers,
   searchPaperTypes,
   searchResourcepackModelPaths,
+  searchVanillaDatapackJsonContent,
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
   suggestMinecraftLookups,
@@ -102,14 +104,14 @@ function crc32(value: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function testJar(entries: Record<string, string>): Buffer {
+function testJar(entries: Record<string, string | Buffer>): Buffer {
   const localParts: Buffer[] = [];
   const centralParts: Buffer[] = [];
   let offset = 0;
   for (const [name, content] of Object.entries(entries)) {
     const nameBytes = Buffer.from(name);
-    const contentBytes = Buffer.from(content);
-    const checksum = crc32(contentBytes);
+    const contentBytes = Buffer.isBuffer(content) ? content : Buffer.from(content);
+    const checksum = crc32(contentBytes) >>> 0;
     const local = Buffer.alloc(30 + nameBytes.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
@@ -194,8 +196,8 @@ function validModrinthIndex(): Record<string, unknown> {
 
 function withCachedServerJar(
   version: string,
-  entries: Record<string, string>,
-  run: () => void,
+  entries: Record<string, string | Buffer>,
+  run: (jarFile: string) => void,
 ): void {
   const root = mkdtempSync(join(tmpdir(), "minecraft-skills-test-"));
   const previous = process.env.MINECRAFT_SKILLS_CACHE_DIR;
@@ -203,8 +205,26 @@ function withCachedServerJar(
   try {
     const jarDir = join(root, "mojang-server-jars");
     mkdirSync(jarDir, { recursive: true });
-    writeFileSync(join(jarDir, `${version}.jar`), testJar(entries));
-    run();
+    const jar = testJar(entries);
+    const jarFile = join(jarDir, `${version}.jar`);
+    writeFileSync(jarFile, jar);
+    const detail = getVersionDetail("java", version);
+    const server = detail.downloads.server as { sha1?: string; size?: number } | undefined;
+    if (!server) {
+      throw new Error(`Test version ${version} has no server download metadata`);
+    }
+    const previousSha1 = server.sha1;
+    const previousSize = server.size;
+    server.sha1 = createHash("sha1").update(jar).digest("hex");
+    server.size = jar.length;
+    try {
+      run(jarFile);
+    } finally {
+      if (previousSha1 === undefined) delete server.sha1;
+      else server.sha1 = previousSha1;
+      if (previousSize === undefined) delete server.size;
+      else server.size = previousSize;
+    }
   } finally {
     if (previous === undefined) {
       delete process.env.MINECRAFT_SKILLS_CACHE_DIR;
@@ -255,6 +275,381 @@ describe("catalog", () => {
         });
         expect(file.json).toEqual({ type: "minecraft:crafting_shapeless" });
       },
+    );
+  });
+
+  it("supports parent kind filters for tag and worldgen JSON", () => {
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/tags/block/mineable.json": "{}",
+        "data/minecraft/worldgen/biome/plains.json": "{}",
+      },
+      () => {
+        expect(searchVanillaDatapackJsonFiles({ version: "26.2", kind: "tag" }).matchedFiles).toBe(
+          1,
+        );
+        expect(
+          searchVanillaDatapackJsonFiles({ version: "26.2", kind: "worldgen" }).matchedFiles,
+        ).toBe(1);
+      },
+    );
+  });
+
+  it("searches parsed values and keys across cached vanilla datapack JSON", () => {
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/diamond_widget.json": JSON.stringify({
+          type: "minecraft:crafting_shapeless",
+          ingredients: [{ item: "minecraft:diamond" }],
+          result: { id: "minecraft:diamond_widget" },
+        }),
+        "data/minecraft/recipe/stone_widget.json": JSON.stringify({
+          type: "minecraft:crafting_shaped",
+          result: { id: "minecraft:stone_widget" },
+        }),
+        "data/minecraft/loot_table/blocks/diamond_widget.json": JSON.stringify({
+          type: "minecraft:block",
+          pools: [{ entries: [{ name: "minecraft:diamond" }] }],
+        }),
+        "data/minecraft/recipe/invalid.json": "{",
+        "assets/minecraft/lang/en_us.json": JSON.stringify({ diamond: "Diamond" }),
+      },
+      () => {
+        const values = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "MINECRAFT:DIAMOND",
+          scope: "values",
+          kind: "recipe",
+        });
+        expect(values.totalJsonFiles).toBe(4);
+        expect(values.candidateFiles).toBe(3);
+        expect(values.scannedFiles).toBe(3);
+        expect(values.matchedFiles).toBe(1);
+        expect(values.invalidJsonFiles).toBe(1);
+        expect(values.scanComplete).toBe(false);
+        expect(values.files[0]).toEqual(
+          expect.objectContaining({
+            path: "data/minecraft/recipe/diamond_widget.json",
+            kind: "recipe",
+            matches: expect.arrayContaining([
+              {
+                pointer: "/ingredients/0/item",
+                matchedIn: "value",
+                preview: "minecraft:diamond",
+              },
+            ]),
+          }),
+        );
+
+        const keys = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "ingredients",
+          scope: "keys",
+          prefix: "data/minecraft/recipe/",
+        });
+        expect(keys.matchedFiles).toBe(1);
+        expect(keys.files[0]?.matches[0]).toEqual({
+          pointer: "/ingredients",
+          matchedIn: "key",
+          preview: "ingredients",
+        });
+      },
+    );
+  });
+
+  it("searches the nested server payload in modern Mojang bundler jars", () => {
+    const nested = testJar({
+      "data/minecraft/recipe/bundled.json": JSON.stringify({
+        type: "minecraft:crafting_shapeless",
+        ingredient: "minecraft:diamond",
+      }),
+    });
+    const nestedSha256 = createHash("sha256").update(nested).digest("hex");
+    withCachedServerJar(
+      "26.2",
+      {
+        "META-INF/versions.list": `${nestedSha256}\t26.2\t26.2/server-26.2.jar`,
+        "META-INF/versions/26.2/server-26.2.jar": nested,
+        "META-INF/libraries/example.jar": "not a server payload",
+        "data/minecraft/recipe/decoy.json": "{}",
+      },
+      () => {
+        const files = searchVanillaDatapackJsonFiles({ version: "26.2", kind: "recipe" });
+        expect(files.matchedFiles).toBe(1);
+        expect(files.files[0]?.path).toBe("data/minecraft/recipe/bundled.json");
+
+        const search = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "minecraft:diamond",
+          kind: "recipe",
+        });
+        expect(search.matchedFiles).toBe(1);
+        expect(search.files[0]?.path).toBe("data/minecraft/recipe/bundled.json");
+
+        const file = getVanillaDatapackJson({
+          version: "26.2",
+          path: "data/minecraft/recipe/bundled.json",
+        });
+        expect(file.json).toEqual({
+          type: "minecraft:crafting_shapeless",
+          ingredient: "minecraft:diamond",
+        });
+      },
+    );
+  });
+
+  it("rejects cached jars whose datapack payload cannot be identified", () => {
+    withCachedServerJar("26.2", { "META-INF/main-class": "net.minecraft.bundler.Main" }, () => {
+      expect(() => searchVanillaDatapackJsonFiles({ version: "26.2" })).toThrow(
+        "contains neither datapack data nor bundler metadata",
+      );
+    });
+  });
+
+  it("verifies the nested Mojang bundler payload checksum", () => {
+    const nested = testJar({
+      "data/minecraft/recipe/bundled.json": JSON.stringify({ type: "minecraft:crafting_shaped" }),
+    });
+    withCachedServerJar(
+      "26.2",
+      {
+        "META-INF/versions.list": `${"0".repeat(64)}\t26.2\t26.2/server-26.2.jar`,
+        "META-INF/versions/26.2/server-26.2.jar": nested,
+      },
+      () => {
+        expect(() => searchVanillaDatapackJsonFiles({ version: "26.2" })).toThrow(
+          "failed SHA-256 verification",
+        );
+      },
+    );
+  });
+
+  it("rechecks official SHA-1 metadata on every cached JSON operation", () => {
+    withCachedServerJar(
+      "26.2",
+      { "data/minecraft/recipe/entry.json": JSON.stringify({ value: "original" }) },
+      (jarFile) => {
+        writeFileSync(
+          jarFile,
+          testJar({ "data/minecraft/recipe/entry.json": JSON.stringify({ value: "tampered" }) }),
+        );
+        expect(() => searchVanillaDatapackJsonFiles({ version: "26.2" })).toThrow(
+          "failed SHA-1 verification",
+        );
+        expect(() =>
+          searchVanillaDatapackJsonContent({ version: "26.2", query: "tampered" }),
+        ).toThrow("failed SHA-1 verification");
+        expect(() =>
+          getVanillaDatapackJson({
+            version: "26.2",
+            path: "data/minecraft/recipe/entry.json",
+          }),
+        ).toThrow("failed SHA-1 verification");
+      },
+    );
+  });
+
+  it("bounds Mojang bundler metadata fields before parsing them", () => {
+    withCachedServerJar(
+      "26.2",
+      { "META-INF/versions.list": `${"a".repeat(8_193)}\t26.2\tserver.jar` },
+      () => {
+        expect(() => searchVanillaDatapackJsonFiles({ version: "26.2" })).toThrow(
+          "line exceeds 8192 characters",
+        );
+      },
+    );
+  });
+
+  it("bounds exact vanilla datapack JSON reads", () => {
+    withCachedServerJar(
+      "26.2",
+      { "data/minecraft/recipe/large.json": "x".repeat(2 * 1024 * 1024 + 1) },
+      () => {
+        expect(() =>
+          getVanillaDatapackJson({
+            version: "26.2",
+            path: "data/minecraft/recipe/large.json",
+          }),
+        ).toThrow("exceeds 2097152 bytes");
+      },
+    );
+  });
+
+  it("rejects non-UTF-8 vanilla datapack JSON text", () => {
+    withCachedServerJar(
+      "26.2",
+      { "data/minecraft/recipe/invalid-utf8.json": Buffer.from([0xc3, 0x28]) },
+      () => {
+        expect(() =>
+          getVanillaDatapackJson({
+            version: "26.2",
+            path: "data/minecraft/recipe/invalid-utf8.json",
+          }),
+        ).toThrow("is invalid");
+      },
+    );
+  });
+
+  it("reports oversized JSON files skipped by content search", () => {
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/oversized.json": JSON.stringify({
+          value: "x".repeat(2 * 1024 * 1024),
+        }),
+      },
+      () => {
+        const result = searchVanillaDatapackJsonContent({ version: "26.2", query: "needle" });
+        expect(result.skippedOversizedFiles).toBe(1);
+        expect(result.scannedFiles).toBe(0);
+        expect(result.scanComplete).toBe(false);
+      },
+    );
+  });
+
+  it("bounds vanilla datapack JSON content search output", () => {
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/a.json": JSON.stringify({ first: "needle", second: "needle" }),
+        "data/minecraft/recipe/b.json": JSON.stringify({ value: "needle" }),
+      },
+      () => {
+        const result = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "needle",
+          limit: 1,
+          matchesPerFile: 1,
+        });
+        expect(result.matchedFiles).toBe(2);
+        expect(result.returnedFiles).toBe(1);
+        expect(result.files[0]?.matches).toHaveLength(1);
+        expect(result.files[0]?.matchesTruncated).toBe(true);
+        expect(result.truncated).toBe(true);
+      },
+    );
+  });
+
+  it("searches complete scalar values while bounding their previews", () => {
+    const longValue = `${"x".repeat(300)}needle`;
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/long.json": JSON.stringify({ value: longValue }),
+      },
+      () => {
+        const result = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "needle",
+          scope: "values",
+        });
+        expect(result.matchedFiles).toBe(1);
+        expect(result.files[0]?.matches[0]).toEqual({
+          pointer: "/value",
+          matchedIn: "value",
+          preview: `${"x".repeat(197)}...`,
+        });
+      },
+    );
+  });
+
+  it("bounds JSON pointers and key previews", () => {
+    const key = `${"x".repeat(2_000)}needle`;
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/large-key.json": JSON.stringify({ [key]: true }),
+      },
+      () => {
+        const result = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "needle",
+          scope: "keys",
+        });
+        expect(result.files[0]?.matches[0]).toEqual({
+          pointer: null,
+          pointerTruncated: true,
+          matchedIn: "key",
+          preview: `${"x".repeat(197)}...`,
+        });
+      },
+    );
+  });
+
+  it("limits pending JSON traversal nodes before expanding broad arrays", () => {
+    const values = Array.from({ length: 100_001 }, (_, index) =>
+      index === 100_000 ? "needle" : null,
+    );
+    withCachedServerJar(
+      "26.2",
+      {
+        "data/minecraft/recipe/broad.json": JSON.stringify({ values }),
+      },
+      () => {
+        const result = searchVanillaDatapackJsonContent({
+          version: "26.2",
+          query: "needle",
+        });
+        expect(result.matchedFiles).toBe(0);
+        expect(result.traversalLimitedFiles).toBe(1);
+        expect(result.scanComplete).toBe(false);
+        expect(result.truncated).toBe(true);
+      },
+    );
+  });
+
+  it("limits JSON traversal depth", () => {
+    let nested: unknown = "needle";
+    for (let depth = 0; depth < 129; depth += 1) {
+      nested = { child: nested };
+    }
+    withCachedServerJar(
+      "26.2",
+      { "data/minecraft/recipe/deep.json": JSON.stringify(nested) },
+      () => {
+        const result = searchVanillaDatapackJsonContent({ version: "26.2", query: "needle" });
+        expect(result.matchedFiles).toBe(0);
+        expect(result.traversalLimitedFiles).toBe(1);
+        expect(result.scanComplete).toBe(false);
+      },
+    );
+  });
+
+  it("enforces one JSON traversal budget across all files", () => {
+    const entries = Object.fromEntries(
+      Array.from({ length: 11 }, (_, index) => [
+        `data/minecraft/recipe/broad-${index}.json`,
+        JSON.stringify(Array.from({ length: 100_001 }, () => null)),
+      ]),
+    );
+    withCachedServerJar("26.2", entries, () => {
+      const result = searchVanillaDatapackJsonContent({ version: "26.2", query: "needle" });
+      expect(result.traversedNodes).toBe(1_000_000);
+      expect(result.traversalNodeLimit).toBe(1_000_000);
+      expect(result.traversalLimitedFiles).toBe(10);
+      expect(result.skippedTraversalFiles).toBe(1);
+      expect(result.traversalLimitedPaths).toHaveLength(10);
+      expect(result.traversalSkippedPaths).toEqual(["data/minecraft/recipe/broad-9.json"]);
+      expect(result.scanComplete).toBe(false);
+      expect(result.truncated).toBe(true);
+    });
+  });
+
+  it("rejects oversized vanilla JSON search inputs before reading the cache", () => {
+    expect(() =>
+      searchVanillaDatapackJsonContent({ version: "26.2", query: ` ${"x".repeat(256)}` }),
+    ).toThrow("1 to 256 characters");
+    expect(() =>
+      searchVanillaDatapackJsonFiles({ version: "26.2", prefix: "x".repeat(4_097) }),
+    ).toThrow("prefix must be a string of at most 4096 characters");
+    expect(() =>
+      searchVanillaDatapackJsonFiles({ version: "26.2", contains: "x".repeat(257) }),
+    ).toThrow("contains must be a string of at most 256 characters");
+    expect(() => getVanillaDatapackJson({ version: "26.2", path: "x".repeat(4_097) })).toThrow(
+      "path must contain 1 to 4096 characters",
     );
   });
 
@@ -2701,5 +3096,36 @@ describe("catalog", () => {
       });
       expect(scopedSearch.results.some((entry) => entry.surface === "modrinth-tools")).toBe(false);
     }
+  });
+
+  it("routes exact vanilla datapack content questions to cached JSON search", () => {
+    const result = suggestMinecraftLookups({
+      version: "26.2",
+      task: "Which vanilla recipes reference minecraft:diamond?",
+      domain: "datapack",
+    });
+    expect(result.suggestedTools.map((entry) => entry.tool)).toContain(
+      'datapack vanilla-json search "minecraft:diamond" --version 26.2 --kind recipe',
+    );
+  });
+
+  it("uses kind-specific vanilla JSON file discovery when no concrete term remains", () => {
+    const recipes = suggestMinecraftLookups({
+      version: "26.2",
+      task: "Show vanilla recipes",
+      domain: "datapack",
+    });
+    expect(recipes.suggestedTools.map((entry) => entry.tool)).toContain(
+      "datapack vanilla-json files 26.2 --kind recipe",
+    );
+
+    const loot = suggestMinecraftLookups({
+      version: "26.2",
+      task: "Inspect official loot table JSON",
+      domain: "datapack",
+    });
+    expect(loot.suggestedTools.map((entry) => entry.tool)).toContain(
+      "datapack vanilla-json files 26.2 --kind loot_table",
+    );
   });
 });

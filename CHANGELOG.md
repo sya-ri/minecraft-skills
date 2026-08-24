@@ -18,6 +18,9 @@ All notable changes to this project are documented here.
   and MCP. Comparisons exclude registries not indexed in both versions and report their coverage
   statuses instead of inferring false additions or removals; protocol changes require numeric IDs
   on both sides.
+- Bounded parsed-key and primitive-value search across vanilla datapack JSON in cached official
+  Mojang server jars, exposed through the catalog API, CLI, and MCP server.
+- CLI status, fetch, file listing, and exact-read commands for the vanilla datapack JSON cache.
 - Public Modrinth v2 project search integration across the catalog API, CLI, and MCP server, with
   version, project type, loader, category, sorting, and pagination filters.
 - Modrinth project version listing by project ID or slug, with Minecraft version, loader, featured,
@@ -38,13 +41,15 @@ All notable changes to this project are documented here.
   identifier separators, so queries such as `Player Join Event`, `Diamond Sword`, and
   `bundle item model` find structured API and asset results without changing literal `contains`
   filters.
-- Vanilla datapack JSON searches now scan cached Mojang server jar entries once per request while
-  preserving total and filtered result counts.
+- Vanilla datapack JSON searches now read cached Mojang server jars once per request and batch
+  selected entry extraction while preserving total and filtered result counts.
 - Paper API searches now reuse up to two parsed and validated version surfaces in the same process
   while public surface results remain independent mutable values.
 
 ### Fixed
 
+- Vanilla datapack JSON readers now resolve the nested server payload inside modern Mojang bundler
+  jars instead of reporting an empty `data/**` inventory from the outer launcher jar.
 - Java server report ingestion now retains registries from `reports/registries.json` when
   `datapack.json` is unavailable and merges registry IDs from both reports when both are present.
 - Java report refreshes now detect and repair incomplete registry summaries, download one official

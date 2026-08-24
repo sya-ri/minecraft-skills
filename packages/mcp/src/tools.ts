@@ -107,6 +107,7 @@ import {
   searchPaperTypes,
   searchRegistryEntries,
   searchResourcepackModelPaths,
+  searchVanillaDatapackJsonContent,
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
   suggestMinecraftLookups,
@@ -1467,26 +1468,52 @@ export const tools: ToolDefinition[] = [
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", default: "latest" },
-        kind: { type: "string" },
-        prefix: { type: "string" },
-        contains: { type: "string" },
-        limit: { type: "number", default: 25 },
+        version: { type: "string", minLength: 1, maxLength: 128, default: "latest" },
+        kind: { type: "string", maxLength: 128 },
+        prefix: { type: "string", maxLength: 4096 },
+        contains: { type: "string", maxLength: 256 },
+        limit: { type: "number", minimum: 1, maximum: 200, default: 25 },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_vanilla_datapack_json_content",
+    description:
+      "Search parsed keys and primitive values across exact vanilla data/**/*.json files in one cached official Mojang server jar read. Fetch the jar first with fetch_mojang_server_jar.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", minLength: 1, maxLength: 128, default: "latest" },
+        query: { type: "string", minLength: 1, maxLength: 256 },
+        kind: { type: "string", maxLength: 128 },
+        prefix: { type: "string", maxLength: 4096 },
+        scope: { type: "string", enum: ["keys", "values", "all"], default: "all" },
+        caseSensitive: { type: "boolean", default: false },
+        limit: { type: "number", minimum: 1, maximum: 100, default: 25 },
+        matchesPerFile: { type: "number", minimum: 1, maximum: 10, default: 3 },
+      },
+      required: ["query"],
       additionalProperties: false,
     },
   },
   {
     name: "get_vanilla_datapack_json",
     description:
-      "Read one exact vanilla datapack JSON file from a cached official Mojang server jar and return text plus parsed JSON.",
+      "Read one exact vanilla datapack JSON file from a cached official Mojang server jar. Returns either parsed JSON or raw text, never both, with a bounded serialized response.",
     inputSchema: {
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", default: "latest" },
-        path: { type: "string" },
-        parse: { type: "boolean", default: true },
+        version: { type: "string", minLength: 1, maxLength: 128, default: "latest" },
+        path: { type: "string", minLength: 1, maxLength: 4096 },
+        output: {
+          type: "string",
+          enum: ["parsed", "text"],
+          default: "parsed",
+          description: "Select parsed JSON or exact raw text output.",
+        },
       },
       required: ["path"],
       additionalProperties: false,
@@ -1711,6 +1738,188 @@ function text(value: unknown): ToolResult {
       },
     ],
   };
+}
+
+const vanillaDatapackJsonOutputMaxBytes = 200_000;
+
+function serializedText(value: unknown): string {
+  return typeof value === "string" ? value : JSON.stringify(value, null, 2);
+}
+
+function serializedToolResult(value: unknown): ToolResult {
+  return {
+    content: [{ type: "text", text: serializedText(value) }],
+  };
+}
+
+function hasOwnArg(args: Record<string, unknown>, name: string): boolean {
+  return Object.hasOwn(args, name);
+}
+
+function assertToolArgs(
+  input: unknown,
+  args: Record<string, unknown>,
+  tool: string,
+  allowed: readonly string[],
+): void {
+  if (input !== undefined && (!input || typeof input !== "object" || Array.isArray(input))) {
+    throw new Error(`${tool} input must be an object`);
+  }
+  const allowedArgs = new Set(allowed);
+  if (Object.keys(args).some((name) => !allowedArgs.has(name))) {
+    throw new Error(`${tool} received an unknown argument`);
+  }
+}
+
+function optionalStringArg(
+  args: Record<string, unknown>,
+  tool: string,
+  name: string,
+  options: { maxLength?: number; minLength?: number } = {},
+): string | undefined {
+  if (!hasOwnArg(args, name)) {
+    return undefined;
+  }
+  const value = args[name];
+  if (typeof value !== "string") {
+    throw new Error(`${tool} ${name} must be a string`);
+  }
+  if (options.minLength !== undefined && value.length < options.minLength) {
+    throw new Error(`${tool} ${name} must not be empty`);
+  }
+  if (options.maxLength !== undefined && value.length > options.maxLength) {
+    throw new Error(`${tool} ${name} must be at most ${options.maxLength} characters`);
+  }
+  return value;
+}
+
+function requiredStringArg(
+  args: Record<string, unknown>,
+  tool: string,
+  name: string,
+  options: { maxLength?: number; minLength?: number } = {},
+): string {
+  const value = optionalStringArg(args, tool, name, options);
+  if (value === undefined) {
+    throw new Error(`${tool} requires string ${name}`);
+  }
+  return value;
+}
+
+function optionalBooleanArg(
+  args: Record<string, unknown>,
+  tool: string,
+  name: string,
+): boolean | undefined {
+  if (!hasOwnArg(args, name)) {
+    return undefined;
+  }
+  const value = args[name];
+  if (typeof value !== "boolean") {
+    throw new Error(`${tool} ${name} must be a boolean`);
+  }
+  return value;
+}
+
+function optionalIntegerArg(
+  args: Record<string, unknown>,
+  tool: string,
+  name: string,
+  minimum: number,
+  maximum: number,
+): number | undefined {
+  if (!hasOwnArg(args, name)) {
+    return undefined;
+  }
+  const value = args[name];
+  if (typeof value !== "number" || !Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`${tool} ${name} must be an integer from ${minimum} to ${maximum}`);
+  }
+  return value;
+}
+
+function vanillaDatapackJsonEditionArg(args: Record<string, unknown>, tool: string): "java" {
+  const edition = optionalStringArg(args, tool, "edition") ?? "java";
+  if (edition !== "java") {
+    throw new Error(`${tool} edition must be java`);
+  }
+  return edition;
+}
+
+function vanillaDatapackJsonOutputMode(args: Record<string, unknown>): "parsed" | "text" {
+  const tool = "get_vanilla_datapack_json";
+  const output = optionalStringArg(args, tool, "output");
+  if (output !== undefined && output !== "parsed" && output !== "text") {
+    throw new Error(`${tool} output must be parsed or text`);
+  }
+  return output ?? "parsed";
+}
+
+function boundedVanillaDatapackJsonResult(
+  result: ReturnType<typeof getVanillaDatapackJson>,
+  mode: "parsed" | "text",
+): ToolResult {
+  const { content, json, ...metadata } = result;
+  const source = mode === "parsed" ? JSON.stringify(json) : content;
+  const originalBytes = Buffer.byteLength(source);
+  const complete = {
+    ...metadata,
+    output: {
+      mode,
+      truncated: false,
+      originalBytes,
+      maxSerializedBytes: vanillaDatapackJsonOutputMaxBytes,
+      ...(mode === "parsed" ? { json } : { content }),
+    },
+  };
+  const completeText = serializedText(complete);
+  if (Buffer.byteLength(completeText) <= vanillaDatapackJsonOutputMaxBytes) {
+    return serializedToolResult(completeText);
+  }
+
+  const truncated = (length: number) => {
+    const preview = source.slice(0, length);
+    return {
+      ...metadata,
+      output: {
+        mode,
+        truncated: true,
+        originalBytes,
+        returnedBytes: Buffer.byteLength(preview),
+        maxSerializedBytes: vanillaDatapackJsonOutputMaxBytes,
+        ...(mode === "parsed"
+          ? {
+              jsonPreview: preview,
+              previewFormat: "serialized-json-prefix",
+            }
+          : { content: preview }),
+      },
+    };
+  };
+
+  let minimum = 0;
+  let maximum = source.length;
+  while (minimum < maximum) {
+    const candidate = Math.ceil((minimum + maximum) / 2);
+    if (
+      Buffer.byteLength(serializedText(truncated(candidate))) <= vanillaDatapackJsonOutputMaxBytes
+    ) {
+      minimum = candidate;
+    } else {
+      maximum = candidate - 1;
+    }
+  }
+  if (minimum > 0) {
+    const finalCodeUnit = source.charCodeAt(minimum - 1);
+    if (finalCodeUnit >= 0xd800 && finalCodeUnit <= 0xdbff) {
+      minimum -= 1;
+    }
+  }
+  const boundedText = serializedText(truncated(minimum));
+  if (Buffer.byteLength(boundedText) > vanillaDatapackJsonOutputMaxBytes) {
+    throw new Error("get_vanilla_datapack_json response metadata exceeds its output limit");
+  }
+  return serializedToolResult(boundedText);
 }
 
 function packFormatDomainArg(value: unknown): "datapack" | "resourcepack" {
@@ -2880,28 +3089,92 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       return text(getVanillaInventory(edition, version));
     }
     if (name === "search_vanilla_datapack_json_files") {
+      assertToolArgs(input, args, name, [
+        "edition",
+        "version",
+        "kind",
+        "prefix",
+        "contains",
+        "limit",
+      ]);
+      const toolEdition = vanillaDatapackJsonEditionArg(args, name);
+      const version =
+        optionalStringArg(args, name, "version", { minLength: 1, maxLength: 128 }) ?? "latest";
+      const kind = optionalStringArg(args, name, "kind", { maxLength: 128 });
+      const prefix = optionalStringArg(args, name, "prefix", { maxLength: 4096 });
+      const contains = optionalStringArg(args, name, "contains", { maxLength: 256 });
+      const limit = optionalIntegerArg(args, name, "limit", 1, 200);
       return text(
         searchVanillaDatapackJsonFiles({
-          edition,
-          version: typeof args.version === "string" ? args.version : "latest",
-          ...(typeof args.kind === "string" ? { kind: args.kind } : {}),
-          ...(typeof args.prefix === "string" ? { prefix: args.prefix } : {}),
-          ...(typeof args.contains === "string" ? { contains: args.contains } : {}),
-          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+          edition: toolEdition,
+          version,
+          ...(kind !== undefined ? { kind } : {}),
+          ...(prefix !== undefined ? { prefix } : {}),
+          ...(contains !== undefined ? { contains } : {}),
+          ...(limit !== undefined ? { limit } : {}),
+        }),
+      );
+    }
+    if (name === "search_vanilla_datapack_json_content") {
+      assertToolArgs(input, args, name, [
+        "edition",
+        "version",
+        "query",
+        "kind",
+        "prefix",
+        "scope",
+        "caseSensitive",
+        "limit",
+        "matchesPerFile",
+      ]);
+      const toolEdition = vanillaDatapackJsonEditionArg(args, name);
+      const version =
+        optionalStringArg(args, name, "version", { minLength: 1, maxLength: 128 }) ?? "latest";
+      const query = requiredStringArg(args, name, "query", { minLength: 1, maxLength: 256 });
+      const kind = optionalStringArg(args, name, "kind", { maxLength: 128 });
+      const prefix = optionalStringArg(args, name, "prefix", { maxLength: 4096 });
+      const requestedScope = optionalStringArg(args, name, "scope");
+      if (
+        requestedScope !== undefined &&
+        requestedScope !== "keys" &&
+        requestedScope !== "values" &&
+        requestedScope !== "all"
+      ) {
+        throw new Error(`${name} scope must be keys, values, or all`);
+      }
+      const scope = requestedScope ?? "all";
+      const caseSensitive = optionalBooleanArg(args, name, "caseSensitive") ?? false;
+      const limit = optionalIntegerArg(args, name, "limit", 1, 100);
+      const matchesPerFile = optionalIntegerArg(args, name, "matchesPerFile", 1, 10);
+      return text(
+        searchVanillaDatapackJsonContent({
+          edition: toolEdition,
+          version,
+          query,
+          scope,
+          caseSensitive,
+          ...(kind !== undefined ? { kind } : {}),
+          ...(prefix !== undefined ? { prefix } : {}),
+          ...(limit !== undefined ? { limit } : {}),
+          ...(matchesPerFile !== undefined ? { matchesPerFile } : {}),
         }),
       );
     }
     if (name === "get_vanilla_datapack_json") {
-      if (typeof args.path !== "string") {
-        throw new Error("get_vanilla_datapack_json requires string path");
-      }
-      return text(
+      assertToolArgs(input, args, name, ["edition", "version", "path", "output"]);
+      const toolEdition = vanillaDatapackJsonEditionArg(args, name);
+      const version =
+        optionalStringArg(args, name, "version", { minLength: 1, maxLength: 128 }) ?? "latest";
+      const path = requiredStringArg(args, name, "path", { minLength: 1, maxLength: 4096 });
+      const outputMode = vanillaDatapackJsonOutputMode(args);
+      return boundedVanillaDatapackJsonResult(
         getVanillaDatapackJson({
-          edition,
-          version: typeof args.version === "string" ? args.version : "latest",
-          path: args.path,
-          parse: args.parse !== false,
+          edition: toolEdition,
+          version,
+          path,
+          parse: outputMode === "parsed",
         }),
+        outputMode,
       );
     }
     if (name === "search_vanilla_paths") {

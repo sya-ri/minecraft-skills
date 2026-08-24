@@ -65,6 +65,9 @@ minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
 minecraft-skills minecraft registry-entries 26.2 --registry minecraft:item --exact minecraft:stone
 minecraft-skills minecraft compare-registry-entries 26.1.2 26.2 --registry minecraft:attribute --prefix minecraft:armor
 minecraft-skills datapack vanilla-paths latest --contains recipe
+minecraft-skills datapack vanilla-json fetch 26.2
+minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe --scope values
+minecraft-skills datapack vanilla-json clean 26.2
 minecraft-skills resourcepack vanilla-paths latest --contains models/block
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack assets status 26.2
@@ -162,6 +165,11 @@ prohibited automation, structured community datasets, and optional domain/versio
 misode/mcmeta.
 `datapack intents`, `resourcepack intents`, or `plugin paper intents` maps authoring intents to the exact CLI commands and evidence surfaces
 an agent should inspect before answering.
+
+`datapack vanilla-json status|fetch|files|get|search|clean` manages and searches exact vanilla
+`data/**/*.json` files from the cached official Mojang server jar. `search` matches parsed JSON keys
+or primitive values and reports incomplete scans instead of silently treating resource limits as no
+matches. `clean [version]` removes a stale cached server jar.
 
 ## Data Sources
 

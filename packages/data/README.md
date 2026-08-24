@@ -42,10 +42,12 @@ registries, and versions where an official registry report was unavailable.
 
 ```ts
 import {
+  cleanMojangServerJar,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsIndex,
   getDataManifest,
+  scanCachedMojangServerJarText,
   searchMinecraftAssets,
   readDataJson,
   readDataText,
@@ -73,12 +75,21 @@ await fetchMinecraftAssetFile({
   version: "26.2",
   path: "assets/minecraft/models/item/diamond_sword.json",
 });
+const vanillaJson = scanCachedMojangServerJarText("26.2", {
+  include: (entry) => entry.path.startsWith("data/") && entry.path.endsWith(".json"),
+});
+const cleaned = cleanMojangServerJar("26.2");
 ```
 
 Downloaded data is cached under the platform cache directory for the manifest data version. Set
 `MINECRAFT_SKILLS_CACHE_DIR` to override that location.
 External resource pack asset references are cached under `minecraft-assets/<version>` in the same
 cache root.
+`scanCachedMojangServerJarText` reads a cached server jar from disk once, validates ZIP metadata and
+entry checksums, extracts selected text entries in one bounded batch, and applies entry-count,
+per-entry, and total-byte limits. For modern Mojang bundler jars, `META-INF/versions.list` selects the
+exact versioned nested server payload and its declared SHA-256 is verified before entries are listed
+or read. Exact text reads are limited to 2 MiB. `cleanMojangServerJar` removes one stale cache entry.
 
 Minecraft Wiki prose is not redistributed in this package, and Wiki pages are not AI-fetchable
 sources for minecraft-skills workflows.

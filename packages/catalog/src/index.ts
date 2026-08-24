@@ -1,6 +1,8 @@
 import {
   type CachedDataFile,
+  type CleanMojangServerJarResult,
   cleanCachedData,
+  cleanMojangServerJar,
   type DataManifest,
   type DataManifestEntry,
   type FetchDataOptions,
@@ -37,6 +39,7 @@ import {
   readMinecraftAssetsIndex,
   type SearchMinecraftAssetsOptions,
   type SearchMinecraftAssetsResult,
+  scanCachedMojangServerJarText,
   searchMinecraftAssets,
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
@@ -159,6 +162,7 @@ export type {
   CatalogData,
   ClaimPolicyData,
   ClaimPolicyIndexData,
+  CleanMojangServerJarResult,
   DataManifest,
   DataManifestEntry,
   DomainData,
@@ -209,6 +213,7 @@ export type {
 
 export {
   cleanCachedData,
+  cleanMojangServerJar,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
@@ -1260,6 +1265,62 @@ export type VanillaDatapackJsonSearchResult = {
   notes: string[];
 };
 
+export type VanillaDatapackJsonContentSearchOptions = {
+  edition?: string;
+  version?: string;
+  query: string;
+  prefix?: string;
+  kind?: string;
+  scope?: "keys" | "values" | "all";
+  caseSensitive?: boolean;
+  limit?: number;
+  matchesPerFile?: number;
+};
+
+export type VanillaDatapackJsonContentMatch = {
+  pointer: string | null;
+  pointerTruncated?: true;
+  matchedIn: "key" | "value";
+  preview: string;
+};
+
+export type VanillaDatapackJsonContentSearchResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  query: string;
+  scope: "keys" | "values" | "all";
+  caseSensitive: boolean;
+  cache: MojangServerJarStatus;
+  totalJsonFiles: number;
+  candidateFiles: number;
+  scannedFiles: number;
+  scannedBytes: number;
+  matchedFiles: number;
+  returnedFiles: number;
+  invalidJsonFiles: number;
+  traversalLimitedFiles: number;
+  skippedTraversalFiles: number;
+  traversalLimitedPaths: string[];
+  traversalSkippedPaths: string[];
+  traversedNodes: number;
+  traversalNodeLimit: number;
+  skippedOversizedFiles: number;
+  skippedBudgetFiles: number;
+  scanComplete: boolean;
+  truncated: boolean;
+  files: Array<{
+    path: string;
+    kind: string;
+    compressedSize: number;
+    uncompressedSize: number;
+    matches: VanillaDatapackJsonContentMatch[];
+    matchesTruncated: boolean;
+  }>;
+  skippedPaths: string[];
+  notes: string[];
+};
+
 export type VanillaDatapackJsonOptions = {
   edition?: string;
   version?: string;
@@ -1708,6 +1769,54 @@ function primaryDiscoveryTerm(query: string): string {
     (longest, token) => (token.length > longest.length ? token : longest),
     searchableTokens[0] ?? "",
   );
+}
+
+const vanillaJsonDiscoveryFillerTokens = new Set([
+  "advancement",
+  "advancements",
+  "built",
+  "builtin",
+  "official",
+  "json",
+  "inspect",
+  "loot",
+  "contain",
+  "contains",
+  "content",
+  "file",
+  "files",
+  "predicate",
+  "predicates",
+  "recipe",
+  "recipes",
+  "reference",
+  "references",
+  "table",
+  "tables",
+  "tag",
+  "tags",
+  "vanilla",
+  "worldgen",
+]);
+
+function vanillaJsonDiscoveryTerm(query: string): string {
+  const tokens = tokenizeDiscoveryQuery(query).filter(
+    (token) => !discoveryFillerTokens.has(token) && !vanillaJsonDiscoveryFillerTokens.has(token),
+  );
+  return tokens.reduce(
+    (longest, token) => (token.length > longest.length ? token : longest),
+    tokens[0] ?? "",
+  );
+}
+
+function vanillaJsonDiscoveryKind(query: string): string | undefined {
+  if (/\badvancements?\b/.test(query)) return "advancement";
+  if (/\bloot(?:[ -]+tables?)?\b/.test(query)) return "loot_table";
+  if (/\brecipes?\b/.test(query)) return "recipe";
+  if (/\bpredicates?\b/.test(query)) return "predicate";
+  if (/\btags?\b/.test(query)) return "tag";
+  if (/\bworldgen\b/.test(query)) return "worldgen";
+  return undefined;
 }
 
 function discoveryContainsOption(term: string): string {
@@ -2957,7 +3066,7 @@ function appendUnique(values: string[], ...added: string[]): string[] {
 function versionDownload(
   detail: VersionDetailData,
   id: string,
-): { url?: string; sha1?: string } | null {
+): { url?: string; sha1?: string; size?: number } | null {
   const value = detail.downloads[id];
   if (!value || typeof value !== "object") {
     return null;
@@ -2966,6 +3075,11 @@ function versionDownload(
   return {
     ...(typeof candidate.url === "string" ? { url: candidate.url } : {}),
     ...(typeof candidate.sha1 === "string" ? { sha1: candidate.sha1 } : {}),
+    ...(typeof candidate.size === "number" &&
+    Number.isSafeInteger(candidate.size) &&
+    candidate.size >= 0
+      ? { size: candidate.size }
+      : {}),
   };
 }
 
@@ -5219,6 +5333,26 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       );
       add(`datapack context ${version}`, "Load datapack authoring guidance and evidence rules.");
     }
+    if (
+      /(vanilla|official|built[ -]?in)/.test(lower) &&
+      /(advancement|loot|recipe|predicate|tag|worldgen|json)/.test(lower)
+    ) {
+      const resourceId = task.match(/\b[a-z0-9_.-]+:[a-z0-9_./-]+\b/i)?.[0];
+      const kind = vanillaJsonDiscoveryKind(lower);
+      const kindOption = kind ? ` --kind ${kind}` : "";
+      const contentQuery = resourceId ?? vanillaJsonDiscoveryTerm(task);
+      if (contentQuery) {
+        add(
+          `datapack vanilla-json search ${JSON.stringify(contentQuery)} --version ${version}${kindOption}`,
+          "Search parsed vanilla datapack JSON keys and values in the cached official server jar.",
+        );
+      } else {
+        add(
+          `datapack vanilla-json files ${version}${kindOption}`,
+          "List exact vanilla datapack JSON files in the cached official server jar.",
+        );
+      }
+    }
   }
   if (!options.domain || options.domain === "resourcepack") {
     if (
@@ -5394,15 +5528,27 @@ function vanillaDatapackJsonKind(path: string): string {
   return parts[2];
 }
 
+function matchesVanillaDatapackJsonKind(path: string, expected: string): boolean {
+  const actual = vanillaDatapackJsonKind(path);
+  return actual === expected || actual.startsWith(`${expected}/`);
+}
+
 function assertVanillaDatapackJsonPath(path: string): string {
+  if (typeof path !== "string" || path.length < 1 || path.length > 4_096) {
+    throw new Error("Vanilla datapack JSON path must contain 1 to 4096 characters");
+  }
   const normalized = normalizePackPath(path);
   if (!normalized.startsWith("data/") || !normalized.endsWith(".json")) {
-    throw new Error(`Vanilla datapack JSON path must be a data/**/*.json path: ${path}`);
+    throw new Error("Vanilla datapack JSON path must be a data/**/*.json path");
   }
   return normalized;
 }
 
-function mojangServerDownload(detail: VersionDetailData): { url: string; sha1: string | null } {
+function mojangServerDownload(detail: VersionDetailData): {
+  url: string;
+  sha1: string | null;
+  size: number | null;
+} {
   const server = versionDownload(detail, "server");
   if (!server?.url) {
     throw new Error(`No Mojang server jar download URL for ${detail.version}`);
@@ -5410,7 +5556,35 @@ function mojangServerDownload(detail: VersionDetailData): { url: string; sha1: s
   return {
     url: server.url,
     sha1: server.sha1 ?? null,
+    size: server.size ?? null,
   };
+}
+
+function mojangServerJarSelection(
+  edition: EditionData,
+  requested: string,
+): {
+  version: string;
+  verification: { sha1: string | null; size: number | null };
+} {
+  const detail = getVersionDetail(edition, requested);
+  const download = mojangServerDownload(detail);
+  return {
+    version: detail.version,
+    verification: { sha1: download.sha1, size: download.size },
+  };
+}
+
+function boundedOptionalVanillaJsonText(
+  value: string | undefined,
+  maximum: number,
+  label: string,
+): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || value.length > maximum) {
+    throw new Error(`${label} must be a string of at most ${maximum} characters`);
+  }
+  return value.trim();
 }
 
 export async function fetchMojangServerJarForVersion(
@@ -5423,6 +5597,7 @@ export async function fetchMojangServerJarForVersion(
     version: detail.version,
     url: download.url,
     sha1: download.sha1,
+    size: download.size,
     force: options.force === true,
     ...(options.fetch ? { fetch: options.fetch } : {}),
   });
@@ -5432,12 +5607,12 @@ export function searchVanillaDatapackJsonFiles(
   options: VanillaDatapackJsonSearchOptions = {},
 ): VanillaDatapackJsonSearchResult {
   const edition = Edition.assert(options.edition ?? "java");
-  const version = resolveVersion(edition, options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 25, 200);
-  const prefix = options.prefix?.trim();
-  const contains = options.contains?.trim();
-  const kind = options.kind?.trim();
-  const entries = listCachedMojangServerJarEntries(version);
+  const prefix = boundedOptionalVanillaJsonText(options.prefix, 4_096, "prefix");
+  const contains = boundedOptionalVanillaJsonText(options.contains, 256, "contains");
+  const kind = boundedOptionalVanillaJsonText(options.kind, 128, "kind");
+  const { version, verification } = mojangServerJarSelection(edition, options.version ?? "latest");
+  const entries = listCachedMojangServerJarEntries(version, verification);
   const jsonFiles = entries.filter(
     (entry) => entry.path.startsWith("data/") && entry.path.endsWith(".json"),
   );
@@ -5448,7 +5623,7 @@ export function searchVanillaDatapackJsonFiles(
     if (contains && !entry.path.includes(contains)) {
       return false;
     }
-    if (kind && vanillaDatapackJsonKind(entry.path) !== kind) {
+    if (kind && !matchesVanillaDatapackJsonKind(entry.path, kind)) {
       return false;
     }
     return true;
@@ -5469,13 +5644,284 @@ export function searchVanillaDatapackJsonFiles(
   };
 }
 
+function jsonPointerSegment(value: string): string {
+  return value.replaceAll("~", "~0").replaceAll("/", "~1");
+}
+
+function appendBoundedJsonPointer(
+  pointer: string | null,
+  segment: string,
+): { pointer: string | null; truncated: boolean } {
+  if (pointer === null) {
+    return { pointer: null, truncated: true };
+  }
+  const next = `${pointer}/${jsonPointerSegment(segment)}`;
+  return next.length <= 1_024
+    ? { pointer: next, truncated: false }
+    : { pointer: null, truncated: true };
+}
+
+function jsonSearchPreview(value: unknown): string {
+  const text = typeof value === "string" ? value : JSON.stringify(value);
+  if (text === undefined) {
+    return String(value);
+  }
+  return text.length <= 200 ? text : `${text.slice(0, 197)}...`;
+}
+
+function findVanillaDatapackJsonContentMatches(options: {
+  value: unknown;
+  query: string;
+  scope: "keys" | "values" | "all";
+  caseSensitive: boolean;
+  limit: number;
+  maxNodes: number;
+}): {
+  matches: VanillaDatapackJsonContentMatch[];
+  truncated: boolean;
+  traversalLimited: boolean;
+  visitedNodes: number;
+} {
+  const normalize = options.caseSensitive
+    ? (value: string) => value
+    : (value: string) => value.toLowerCase();
+  const needle = normalize(options.query);
+  const matches: VanillaDatapackJsonContentMatch[] = [];
+  const stack: Array<{
+    value: unknown;
+    pointer: string | null;
+    pointerTruncated: boolean;
+    key: string | null;
+    depth: number;
+  }> = [{ value: options.value, pointer: "", pointerTruncated: false, key: null, depth: 0 }];
+  let visited = 0;
+  let traversalLimited = false;
+
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node) {
+      break;
+    }
+    if (visited >= options.maxNodes) {
+      traversalLimited = true;
+      break;
+    }
+    visited += 1;
+    if (node.key !== null && options.scope !== "values" && normalize(node.key).includes(needle)) {
+      matches.push({
+        pointer: node.pointer,
+        ...(node.pointerTruncated ? { pointerTruncated: true as const } : {}),
+        matchedIn: "key",
+        preview: jsonSearchPreview(node.key),
+      });
+    }
+    const scalar =
+      node.value === null ||
+      typeof node.value === "string" ||
+      typeof node.value === "number" ||
+      typeof node.value === "boolean";
+    if (scalar && options.scope !== "keys") {
+      const preview = jsonSearchPreview(node.value);
+      const searchable = typeof node.value === "string" ? node.value : String(node.value);
+      if (normalize(searchable).includes(needle)) {
+        matches.push({
+          pointer: node.pointer,
+          ...(node.pointerTruncated ? { pointerTruncated: true as const } : {}),
+          matchedIn: "value",
+          preview,
+        });
+      }
+    }
+    if (matches.length > options.limit) {
+      return {
+        matches: matches.slice(0, options.limit),
+        truncated: true,
+        traversalLimited,
+        visitedNodes: visited,
+      };
+    }
+    if (Array.isArray(node.value)) {
+      if (node.depth >= 128 && node.value.length > 0) {
+        traversalLimited = true;
+        continue;
+      }
+      const available = Math.max(0, options.maxNodes - visited - stack.length);
+      const childCount = Math.min(node.value.length, available);
+      traversalLimited ||= childCount < node.value.length;
+      for (let index = childCount - 1; index >= 0; index -= 1) {
+        const childPointer = appendBoundedJsonPointer(node.pointer, String(index));
+        stack.push({
+          value: node.value[index],
+          pointer: childPointer.pointer,
+          pointerTruncated: node.pointerTruncated || childPointer.truncated,
+          key: null,
+          depth: node.depth + 1,
+        });
+      }
+    } else if (node.value !== null && typeof node.value === "object") {
+      const object = node.value as Record<string, unknown>;
+      const keys = Object.keys(object);
+      if (node.depth >= 128 && keys.length > 0) {
+        traversalLimited = true;
+        continue;
+      }
+      const available = Math.max(0, options.maxNodes - visited - stack.length);
+      const childCount = Math.min(keys.length, available);
+      traversalLimited ||= childCount < keys.length;
+      for (let index = childCount - 1; index >= 0; index -= 1) {
+        const key = keys[index];
+        if (key === undefined) continue;
+        const childPointer = appendBoundedJsonPointer(node.pointer, key);
+        stack.push({
+          value: object[key],
+          pointer: childPointer.pointer,
+          pointerTruncated: node.pointerTruncated || childPointer.truncated,
+          key,
+          depth: node.depth + 1,
+        });
+      }
+    }
+  }
+  return { matches, truncated: traversalLimited, traversalLimited, visitedNodes: visited };
+}
+
+export function searchVanillaDatapackJsonContent(
+  options: VanillaDatapackJsonContentSearchOptions,
+): VanillaDatapackJsonContentSearchResult {
+  if (typeof options.query !== "string" || options.query.length > 256) {
+    throw new Error("searchVanillaDatapackJsonContent query must contain 1 to 256 characters");
+  }
+  const query = options.query.trim();
+  if (!query) {
+    throw new Error("searchVanillaDatapackJsonContent query must contain 1 to 256 characters");
+  }
+  const edition = Edition.assert(options.edition ?? "java");
+  const limit = normalizeLimit(options.limit, 25, 100);
+  const matchesPerFile = normalizeLimit(options.matchesPerFile, 3, 10);
+  const scope = options.scope ?? "all";
+  if (scope !== "keys" && scope !== "values" && scope !== "all") {
+    throw new Error("searchVanillaDatapackJsonContent scope must be keys, values, or all");
+  }
+  const prefix = boundedOptionalVanillaJsonText(options.prefix, 4_096, "prefix");
+  const kind = boundedOptionalVanillaJsonText(options.kind, 128, "kind");
+  const { version, verification } = mojangServerJarSelection(edition, options.version ?? "latest");
+  const scan = scanCachedMojangServerJarText(version, {
+    include: (entry) =>
+      entry.path.startsWith("data/") &&
+      entry.path.endsWith(".json") &&
+      (!prefix || entry.path.startsWith(prefix)) &&
+      (!kind || matchesVanillaDatapackJsonKind(entry.path, kind)),
+    maxEntries: 10_000,
+    maxEntryBytes: 2 * 1024 * 1024,
+    maxTotalBytes: 64 * 1024 * 1024,
+    ...verification,
+  });
+  const totalJsonFiles = scan.entries.filter(
+    (entry) => entry.path.startsWith("data/") && entry.path.endsWith(".json"),
+  ).length;
+  const files: VanillaDatapackJsonContentSearchResult["files"] = [];
+  let matchedFiles = 0;
+  let invalidJsonFiles = 0;
+  let traversalLimitedFiles = 0;
+  let skippedTraversalFiles = 0;
+  const traversalLimitedPaths: string[] = [];
+  const traversalSkippedPaths: string[] = [];
+  let traversedNodes = 0;
+  const traversalNodeLimit = 1_000_000;
+  let matchDetailsTruncated = false;
+  for (const entry of scan.texts) {
+    const remainingTraversalNodes = traversalNodeLimit - traversedNodes;
+    if (remainingTraversalNodes <= 0) {
+      skippedTraversalFiles += 1;
+      if (traversalSkippedPaths.length < 20) traversalSkippedPaths.push(entry.path);
+      continue;
+    }
+    let value: unknown;
+    try {
+      value = JSON.parse(entry.content) as unknown;
+    } catch {
+      invalidJsonFiles += 1;
+      continue;
+    }
+    const found = findVanillaDatapackJsonContentMatches({
+      value,
+      query,
+      scope,
+      caseSensitive: options.caseSensitive === true,
+      limit: matchesPerFile,
+      maxNodes: Math.min(100_000, remainingTraversalNodes),
+    });
+    traversedNodes += found.visitedNodes;
+    if (found.traversalLimited) {
+      traversalLimitedFiles += 1;
+      if (traversalLimitedPaths.length < 20) traversalLimitedPaths.push(entry.path);
+    }
+    if (found.matches.length === 0) {
+      continue;
+    }
+    matchedFiles += 1;
+    matchDetailsTruncated ||= found.truncated;
+    if (files.length < limit) {
+      files.push({
+        path: entry.path,
+        kind: vanillaDatapackJsonKind(entry.path),
+        compressedSize: entry.compressedSize,
+        uncompressedSize: entry.uncompressedSize,
+        matches: found.matches,
+        matchesTruncated: found.truncated,
+      });
+    }
+  }
+  const scanComplete =
+    !scan.truncated &&
+    invalidJsonFiles === 0 &&
+    traversalLimitedFiles === 0 &&
+    skippedTraversalFiles === 0;
+  return {
+    schemaVersion: 1,
+    edition,
+    version,
+    query,
+    scope,
+    caseSensitive: options.caseSensitive === true,
+    cache: getMojangServerJarStatus(version),
+    totalJsonFiles,
+    candidateFiles: scan.selectedEntries,
+    scannedFiles: scan.scannedEntries,
+    scannedBytes: scan.scannedBytes,
+    matchedFiles,
+    returnedFiles: files.length,
+    invalidJsonFiles,
+    traversalLimitedFiles,
+    skippedTraversalFiles,
+    traversalLimitedPaths,
+    traversalSkippedPaths,
+    traversedNodes,
+    traversalNodeLimit,
+    skippedOversizedFiles: scan.skippedOversizedEntries,
+    skippedBudgetFiles: scan.skippedBudgetEntries,
+    scanComplete,
+    truncated: !scanComplete || matchedFiles > files.length || matchDetailsTruncated,
+    files,
+    skippedPaths: scan.skippedPaths,
+    notes: [
+      "Searches parsed vanilla data/**/*.json keys and primitive values from one cached official Mojang server jar read.",
+      "Matches are literal substrings; use kind or prefix to narrow broad queries.",
+      "JSON pointers are omitted when they exceed 1024 characters; previews are limited to 200 characters.",
+      "Traversal is limited to 100000 nodes per file and 1000000 nodes per request; incomplete files are reported.",
+      "A result proves observed vanilla content only for this exact version, not custom pack validity or runtime behavior.",
+      "Fetch the jar first with fetch_mojang_server_jar when the cache is missing.",
+    ],
+  };
+}
+
 export function getVanillaDatapackJson(
   options: VanillaDatapackJsonOptions,
 ): VanillaDatapackJsonResult {
-  const edition = Edition.assert(options.edition ?? "java");
-  const version = resolveVersion(edition, options.version ?? "latest");
   const path = assertVanillaDatapackJsonPath(options.path);
-  const content = readCachedMojangServerJarText(version, path);
+  const edition = Edition.assert(options.edition ?? "java");
+  const { version, verification } = mojangServerJarSelection(edition, options.version ?? "latest");
+  const content = readCachedMojangServerJarText(version, path, verification);
   const parse = options.parse !== false;
   let json: unknown | null = null;
   if (parse) {

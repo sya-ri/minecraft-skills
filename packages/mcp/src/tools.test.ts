@@ -1,9 +1,21 @@
+import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { listDomains } from "@minecraft-skills/catalog";
+import { getVersionDetail, listDomains } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { callMinecraftSkillsTool, listMinecraftSkillsTools, tools } from "./tools.js";
+
+function crc32(value: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of value) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
 
 function testJar(entries: Record<string, string>): Buffer {
   const localParts: Buffer[] = [];
@@ -12,13 +24,14 @@ function testJar(entries: Record<string, string>): Buffer {
   for (const [name, content] of Object.entries(entries)) {
     const nameBytes = Buffer.from(name);
     const contentBytes = Buffer.from(content);
+    const checksum = crc32(contentBytes) >>> 0;
     const local = Buffer.alloc(30 + nameBytes.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
     local.writeUInt16LE(0, 6);
     local.writeUInt16LE(0, 8);
     local.writeUInt32LE(0, 10);
-    local.writeUInt32LE(0, 14);
+    local.writeUInt32LE(checksum, 14);
     local.writeUInt32LE(contentBytes.length, 18);
     local.writeUInt32LE(contentBytes.length, 22);
     local.writeUInt16LE(nameBytes.length, 26);
@@ -33,7 +46,7 @@ function testJar(entries: Record<string, string>): Buffer {
     central.writeUInt16LE(0, 8);
     central.writeUInt16LE(0, 10);
     central.writeUInt32LE(0, 12);
-    central.writeUInt32LE(0, 16);
+    central.writeUInt32LE(checksum, 16);
     central.writeUInt32LE(contentBytes.length, 20);
     central.writeUInt32LE(contentBytes.length, 24);
     central.writeUInt16LE(nameBytes.length, 28);
@@ -60,6 +73,8 @@ function testJar(entries: Record<string, string>): Buffer {
   return Buffer.concat([...localParts, centralDirectory, end]);
 }
 
+const serverMetadataRestorers: Array<() => void> = [];
+
 function cacheServerJar(version: string, entries: Record<string, string>): void {
   const root = process.env.MINECRAFT_SKILLS_CACHE_DIR;
   if (!root) {
@@ -67,11 +82,31 @@ function cacheServerJar(version: string, entries: Record<string, string>): void 
   }
   const jarDir = join(root, "mojang-server-jars");
   mkdirSync(jarDir, { recursive: true });
-  writeFileSync(join(jarDir, `${version}.jar`), testJar(entries));
+  const jar = testJar(entries);
+  writeFileSync(join(jarDir, `${version}.jar`), jar);
+
+  const detail = getVersionDetail("java", version);
+  const server = detail.downloads.server as { sha1?: string; size?: number } | undefined;
+  if (!server) {
+    throw new Error(`Test version ${version} has no server download metadata`);
+  }
+  const previousSha1 = server.sha1;
+  const previousSize = server.size;
+  server.sha1 = createHash("sha1").update(jar).digest("hex");
+  server.size = jar.length;
+  serverMetadataRestorers.push(() => {
+    if (previousSha1 === undefined) delete server.sha1;
+    else server.sha1 = previousSha1;
+    if (previousSize === undefined) delete server.size;
+    else server.size = previousSize;
+  });
 }
 
 describe("MCP tools", () => {
   afterEach(() => {
+    for (const restore of serverMetadataRestorers.splice(0).reverse()) {
+      restore();
+    }
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
   });
@@ -161,6 +196,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_resourcepack_asset");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_inventory");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_datapack_json_files");
+    expect(tools.map((tool) => tool.name)).toContain("search_vanilla_datapack_json_content");
     expect(tools.map((tool) => tool.name)).toContain("get_vanilla_datapack_json");
     expect(tools.map((tool) => tool.name)).toContain("search_vanilla_paths");
     expect(tools.map((tool) => tool.name)).toContain("compare_vanilla_paths");
@@ -632,12 +668,37 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"assets/minecraft/models"');
   });
 
+  it("publishes bounded vanilla datapack JSON input schemas", () => {
+    const files = tools.find((tool) => tool.name === "search_vanilla_datapack_json_files");
+    expect(files?.inputSchema.properties).toMatchObject({
+      version: { maxLength: 128 },
+      kind: { maxLength: 128 },
+      prefix: { maxLength: 4096 },
+      contains: { maxLength: 256 },
+      limit: { minimum: 1, maximum: 200 },
+    });
+
+    const search = tools.find((tool) => tool.name === "search_vanilla_datapack_json_content");
+    expect(search?.inputSchema.properties).toMatchObject({
+      query: { maxLength: 256 },
+      kind: { maxLength: 128 },
+      prefix: { maxLength: 4096 },
+    });
+
+    const get = tools.find((tool) => tool.name === "get_vanilla_datapack_json");
+    expect(get?.inputSchema.properties).toMatchObject({
+      path: { maxLength: 4096 },
+      output: { enum: ["parsed", "text"] },
+    });
+  });
+
   it("searches and reads cached vanilla datapack JSON files", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-mcp-"));
     vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", root);
     try {
       cacheServerJar("26.2", {
-        "data/minecraft/recipe/test.json": '{"type":"minecraft:crafting_shapeless"}',
+        "data/minecraft/recipe/test.json":
+          '{"type":"minecraft:crafting_shapeless","ingredients":[{"item":"minecraft:diamond"}]}',
         "data/minecraft/loot_table/blocks/test.json": '{"type":"minecraft:block"}',
       });
       const search = await callMinecraftSkillsTool("search_vanilla_datapack_json_files", {
@@ -648,11 +709,230 @@ describe("MCP tools", () => {
       expect(search.content[0]?.text).toContain('"matchedFiles": 1');
       expect(search.content[0]?.text).toContain("data/minecraft/recipe/test.json");
 
+      const contentSearch = await callMinecraftSkillsTool("search_vanilla_datapack_json_content", {
+        version: "26.2",
+        query: "minecraft:diamond",
+        kind: "recipe",
+        scope: "values",
+      });
+      expect(contentSearch.content[0]?.text).toContain('"matchedFiles": 1');
+      expect(contentSearch.content[0]?.text).toContain('"pointer": "/ingredients/0/item"');
+
       const file = await callMinecraftSkillsTool("get_vanilla_datapack_json", {
         version: "26.2",
         path: "data/minecraft/recipe/test.json",
       });
       expect(file.content[0]?.text).toContain('"type": "minecraft:crafting_shapeless"');
+      const parsedFile = JSON.parse(file.content[0]?.text ?? "") as {
+        content?: unknown;
+        json?: unknown;
+        output: { mode: string; content?: unknown; json?: unknown };
+      };
+      expect(parsedFile.content).toBeUndefined();
+      expect(parsedFile.json).toBeUndefined();
+      expect(parsedFile.output.mode).toBe("parsed");
+      expect(parsedFile.output.content).toBeUndefined();
+      expect(parsedFile.output.json).toBeDefined();
+
+      const textFile = await callMinecraftSkillsTool("get_vanilla_datapack_json", {
+        version: "26.2",
+        path: "data/minecraft/recipe/test.json",
+        output: "text",
+      });
+      const rawFile = JSON.parse(textFile.content[0]?.text ?? "") as {
+        output: { mode: string; content?: unknown; json?: unknown };
+      };
+      expect(rawFile.output.mode).toBe("text");
+      expect(rawFile.output.content).toBeTypeOf("string");
+      expect(rawFile.output.json).toBeUndefined();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("strictly validates vanilla datapack JSON tool arguments", async () => {
+    const omittedOptionalInput = await callMinecraftSkillsTool(
+      "search_vanilla_datapack_json_files",
+      undefined,
+    );
+    expect(omittedOptionalInput.content[0]?.text).not.toContain("input must be an object");
+
+    const cases: Array<{
+      name: string;
+      input: Record<string, unknown>;
+      error: string;
+    }> = [
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { edition: 1 },
+        error: "edition must be a string",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { edition: "bedrock" },
+        error: "edition must be java",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { version: 26.2 },
+        error: "version must be a string",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { unexpected: true },
+        error: "received an unknown argument",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { kind: 1 },
+        error: "kind must be a string",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { prefix: 1 },
+        error: "prefix must be a string",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { contains: 1 },
+        error: "contains must be a string",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { limit: 1.5 },
+        error: "limit must be an integer from 1 to 200",
+      },
+      {
+        name: "search_vanilla_datapack_json_content",
+        input: { query: 1 },
+        error: "query must be a string",
+      },
+      {
+        name: "search_vanilla_datapack_json_content",
+        input: { query: "diamond", scope: "value" },
+        error: "scope must be keys, values, or all",
+      },
+      {
+        name: "search_vanilla_datapack_json_content",
+        input: { query: "diamond", caseSensitive: "false" },
+        error: "caseSensitive must be a boolean",
+      },
+      {
+        name: "search_vanilla_datapack_json_content",
+        input: { query: "diamond", matchesPerFile: 0 },
+        error: "matchesPerFile must be an integer from 1 to 10",
+      },
+      {
+        name: "get_vanilla_datapack_json",
+        input: { path: 1 },
+        error: "path must be a string",
+      },
+      {
+        name: "get_vanilla_datapack_json",
+        input: { path: "data/minecraft/recipe/test.json", parse: "true" },
+        error: "received an unknown argument",
+      },
+      {
+        name: "get_vanilla_datapack_json",
+        input: { path: "data/minecraft/recipe/test.json", output: "both" },
+        error: "output must be parsed or text",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const result = await callMinecraftSkillsTool(testCase.name, testCase.input);
+      expect(result.isError, testCase.name).toBe(true);
+      expect(result.content[0]?.text, testCase.name).toContain(testCase.error);
+    }
+  });
+
+  it("rejects overlong vanilla datapack JSON tool arguments", async () => {
+    const cases: Array<{ name: string; input: Record<string, unknown>; error: string }> = [
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { version: "v".repeat(129) },
+        error: "version must be at most 128 characters",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { kind: "k".repeat(129) },
+        error: "kind must be at most 128 characters",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { prefix: "p".repeat(4097) },
+        error: "prefix must be at most 4096 characters",
+      },
+      {
+        name: "search_vanilla_datapack_json_files",
+        input: { contains: "c".repeat(257) },
+        error: "contains must be at most 256 characters",
+      },
+      {
+        name: "search_vanilla_datapack_json_content",
+        input: { query: "q".repeat(257) },
+        error: "query must be at most 256 characters",
+      },
+      {
+        name: "get_vanilla_datapack_json",
+        input: { path: "p".repeat(4097) },
+        error: "path must be at most 4096 characters",
+      },
+    ];
+
+    for (const testCase of cases) {
+      const result = await callMinecraftSkillsTool(testCase.name, testCase.input);
+      expect(result.isError, testCase.name).toBe(true);
+      expect(result.content[0]?.text, testCase.name).toContain(testCase.error);
+      expect((result.content[0]?.text ?? "").length, testCase.name).toBeLessThan(200);
+    }
+  });
+
+  it("caps serialized vanilla datapack JSON output with truncation metadata", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-mcp-bounded-json-"));
+    vi.stubEnv("MINECRAFT_SKILLS_CACHE_DIR", root);
+    try {
+      cacheServerJar("26.2", {
+        "data/minecraft/recipe/large.json": JSON.stringify({ value: "x".repeat(350_000) }),
+      });
+
+      for (const output of ["parsed", "text"] as const) {
+        const result = await callMinecraftSkillsTool("get_vanilla_datapack_json", {
+          version: "26.2",
+          path: "data/minecraft/recipe/large.json",
+          output,
+        });
+        const serialized = result.content[0]?.text ?? "";
+        const payload = JSON.parse(serialized) as {
+          content?: unknown;
+          json?: unknown;
+          output: {
+            mode: string;
+            truncated: boolean;
+            maxSerializedBytes: number;
+            content?: unknown;
+            json?: unknown;
+            jsonPreview?: unknown;
+          };
+        };
+
+        expect(result.isError).toBeUndefined();
+        expect(Buffer.byteLength(serialized)).toBeLessThanOrEqual(200_000);
+        expect(payload.content).toBeUndefined();
+        expect(payload.json).toBeUndefined();
+        expect(payload.output.mode).toBe(output);
+        expect(payload.output.truncated).toBe(true);
+        expect(payload.output.maxSerializedBytes).toBe(200_000);
+        if (output === "parsed") {
+          expect(payload.output.content).toBeUndefined();
+          expect(payload.output.json).toBeUndefined();
+          expect(payload.output.jsonPreview).toBeTypeOf("string");
+        } else {
+          expect(payload.output.content).toBeTypeOf("string");
+          expect(payload.output.json).toBeUndefined();
+          expect(payload.output.jsonPreview).toBeUndefined();
+        }
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

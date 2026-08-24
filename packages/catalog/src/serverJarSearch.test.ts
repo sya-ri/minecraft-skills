@@ -1,8 +1,11 @@
-import type { MojangServerJarEntry } from "@minecraft-skills/data";
+import type { MojangServerJarEntry, MojangServerJarVerification } from "@minecraft-skills/data";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const dataMocks = vi.hoisted(() => ({
-  listCachedMojangServerJarEntries: vi.fn<(version: string) => MojangServerJarEntry[]>(),
+  listCachedMojangServerJarEntries:
+    vi.fn<
+      (version: string, verification?: MojangServerJarVerification) => MojangServerJarEntry[]
+    >(),
 }));
 
 vi.mock("@minecraft-skills/data", async (importOriginal) => {
@@ -52,7 +55,10 @@ describe("cached Mojang server jar search", () => {
     });
 
     expect(dataMocks.listCachedMojangServerJarEntries).toHaveBeenCalledOnce();
-    expect(dataMocks.listCachedMojangServerJarEntries).toHaveBeenCalledWith("26.2");
+    expect(dataMocks.listCachedMojangServerJarEntries).toHaveBeenCalledWith("26.2", {
+      sha1: "823e2250d24b3ddac457a60c92a6a941943fcd6a",
+      size: 60_894_273,
+    });
     expect(result.totalJsonFiles).toBe(3);
     expect(result.matchedFiles).toBe(2);
     expect(result.truncated).toBe(true);

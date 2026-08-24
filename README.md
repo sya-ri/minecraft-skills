@@ -67,6 +67,9 @@ minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills minecraft registry-entries 26.2 --registry minecraft:item --exact minecraft:stone
 minecraft-skills minecraft compare-registry-entries 26.1.2 26.2 --registry minecraft:block
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
+minecraft-skills datapack vanilla-json fetch 26.2
+minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe
+minecraft-skills datapack vanilla-json clean 26.2
 minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains models/item --fetch
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json

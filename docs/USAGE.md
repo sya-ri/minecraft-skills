@@ -115,6 +115,12 @@ minecraft-skills datapack classify-files data/example/advancement/root.json data
 minecraft-skills datapack file-schema 26.2 data/example/advancement/root.json
 minecraft-skills datapack migration-plan 1.20.6 1.21 data/example/advancement/root.json
 minecraft-skills datapack vanilla-paths 26.2 --contains recipe
+minecraft-skills datapack vanilla-json status 26.2
+minecraft-skills datapack vanilla-json fetch 26.2
+minecraft-skills datapack vanilla-json files 26.2 --kind recipe --contains diamond
+minecraft-skills datapack vanilla-json get 26.2 data/minecraft/recipe/diamond_block.json
+minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe --scope values
+minecraft-skills datapack vanilla-json clean 26.2
 ```
 
 Registry comparisons emit entry and protocol ID changes only for registries indexed in both
@@ -335,6 +341,7 @@ Pack analysis tools include:
 - `get_mojang_version_metadata`
 - `fetch_mojang_server_jar`
 - `search_vanilla_datapack_json_files`
+- `search_vanilla_datapack_json_content`
 - `get_vanilla_datapack_json`
 - `search_community_datasets`
 - `get_resourcepack_assets_status`
@@ -430,9 +437,22 @@ const playerMembers = searchPaperMembers({
 Piston is Mojang's official metadata/download infrastructure, not a third-party dataset. Use
 `get_mojang_version_metadata` when an agent needs the official version metadata URL, client/server
 jar URLs, SHA-1s, protocol/world versions, Java runtime metadata, or pack format evidence. Use
-`fetch_mojang_server_jar` before `search_vanilla_datapack_json_files` or
-`get_vanilla_datapack_json` when exact vanilla `data/**/*.json` content is needed from the official
-server jar.
+`fetch_mojang_server_jar` before `search_vanilla_datapack_json_files`,
+`search_vanilla_datapack_json_content`, or `get_vanilla_datapack_json` when exact vanilla
+`data/**/*.json` content is needed from the official server jar. Content search reads the cached jar
+from disk once per request, validates ZIP metadata and entry checksums, extracts selected files in a
+bounded batch, and searches complete parsed keys or primitive values. It reports when byte, file,
+traversal, or output limits make the scan incomplete. A content search considers at most 10,000
+files, 2 MiB per file, 64 MiB of decoded JSON, 100,000 JSON nodes per file, and 1,000,000 JSON nodes
+for the whole request. It returns at most 100 files and 10 match details per file. Exact reads are
+limited to 2 MiB. Server-jar downloads are capped by the official declared size (or 256 MiB when
+unavailable), use a 30-second deadline, and are rechecked against the official size and SHA-1 on
+every read. The MCP exact-read tool returns one representation at a time: `output: "parsed"`
+(default) or `output: "text"`. Its serialized response is capped at 200,000 bytes and reports
+`truncated`, original, and returned byte counts when only a prefix can be returned. Modern
+bundler-format server downloads are resolved through `META-INF/versions.list`, verified against the
+declared nested SHA-256, and inspected only after the nested payload is confirmed to contain
+datapack data. Use `datapack vanilla-json clean [version]` to remove a stale cached server jar.
 
 Use `@minecraft-skills/data` only when direct access to bundled JSON/text files is needed.
 
@@ -457,6 +477,10 @@ includes datapack schema surfaces, Paper API type/member surfaces, and resourcep
 External resource pack asset references from `InventivetalentDev/minecraft-assets` use a separate
 `minecraft-assets/<version>` cache. `resourcepack assets get` caches one file, while
 `resourcepack assets fetch` caches the searchable path index and archive for a version.
+Official server jars used by `datapack vanilla-json` are stored under
+`mojang-server-jars/<version>.jar`. Inspect them with `datapack vanilla-json status [version]`, replace
+a stale or failed-integrity entry with `datapack vanilla-json fetch --force [version]`, and remove it
+with `datapack vanilla-json clean [version]`.
 Cache defaults:
 
 - macOS: `~/Library/Caches/minecraft-skills`

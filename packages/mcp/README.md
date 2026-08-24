@@ -118,6 +118,11 @@ assumption and ask the user to confirm it.
 - `search_commands`
 - `compare_commands`
 - `get_vanilla_inventory`
+- `get_mojang_version_metadata`
+- `fetch_mojang_server_jar`
+- `search_vanilla_datapack_json_files`
+- `search_vanilla_datapack_json_content`
+- `get_vanilla_datapack_json`
 - `search_vanilla_paths`
 - `compare_vanilla_paths`
 - `get_resourcepack_model_summary`
