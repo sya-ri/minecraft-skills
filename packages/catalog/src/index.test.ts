@@ -1320,6 +1320,10 @@ describe("catalog", () => {
 
   it("loads and searches Paper API type/member surfaces", () => {
     const surface = getPaperApiSurface("1.21.11");
+    const freshSurface = getPaperApiSurface("1.21.11");
+    expect(freshSurface).not.toBe(surface);
+    surface.types.pop();
+    expect(freshSurface.types).toHaveLength(freshSurface.typeCount);
     expect(surface.coverage).toBe("javadocs-search-index");
     expect(surface.typeCount).toBeGreaterThan(1_000);
     expect(surface.memberCount).toBeGreaterThan(20_000);
