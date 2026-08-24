@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
+import { constants, mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { waveAudioInspectionLimits } from "@minecraft-skills/catalog";
@@ -37,7 +37,7 @@ function stableOperations(bytes = Buffer.from([1, 2, 3, 4])) {
   const status = fileStatus({ size: BigInt(bytes.length) });
   return {
     lstat: vi.fn(() => status),
-    open: vi.fn(() => 7),
+    open: vi.fn((_path: string, _flags: number) => 7),
     fstat: vi.fn(() => status),
     read: vi.fn(
       (_file: number, target: Buffer, offset: number, length: number, position: number) => {
@@ -61,6 +61,37 @@ describe("readStableWaveAudioFile", () => {
     expect(operations.lstat).toHaveBeenCalledTimes(2);
     expect(operations.fstat).toHaveBeenCalledTimes(2);
     expect(operations.read).toHaveBeenLastCalledWith(7, expect.any(Buffer), 0, 1, 4);
+    expect(operations.close).toHaveBeenCalledWith(7);
+  });
+
+  it("requests nonblocking and no-follow open flags when the host exposes them", () => {
+    const operations = stableOperations();
+    readStableWaveAudioFile("sound.wav", operations);
+
+    const flags = operations.open.mock.calls[0]?.[1];
+    const expectedFlags =
+      constants.O_RDONLY |
+      (typeof constants.O_NONBLOCK === "number" ? constants.O_NONBLOCK : 0) |
+      (typeof constants.O_NOFOLLOW === "number" ? constants.O_NOFOLLOW : 0);
+    expect(flags).toBe(expectedFlags);
+    if (typeof constants.O_NONBLOCK === "number") {
+      expect((flags ?? 0) & constants.O_NONBLOCK).toBe(constants.O_NONBLOCK);
+    }
+    if (typeof constants.O_NOFOLLOW === "number") {
+      expect((flags ?? 0) & constants.O_NOFOLLOW).toBe(constants.O_NOFOLLOW);
+    }
+  });
+
+  it("rejects a special entry substituted between lstat and nonblocking open", () => {
+    const operations = stableOperations();
+    operations.fstat.mockReturnValue(fileStatus({ file: false }));
+
+    expect(() => readStableWaveAudioFile("sound.wav", operations)).toThrow(
+      "regular, non-symbolic-link local .wav file",
+    );
+    expect(operations.open).toHaveBeenCalledOnce();
+    expect(operations.fstat).toHaveBeenCalledOnce();
+    expect(operations.read).not.toHaveBeenCalled();
     expect(operations.close).toHaveBeenCalledWith(7);
   });
 
@@ -173,6 +204,25 @@ describe("readStableWaveAudioFile", () => {
     } catch (error) {
       expect(String(error)).not.toContain("secret-root");
       expect(String(error)).not.toContain("ENOENT");
+    }
+  });
+
+  it("sanitizes no-follow or nonblocking open failures", () => {
+    const operations = stableOperations();
+    operations.open.mockImplementation(() => {
+      throw new Error("ELOOP: secret-root/private/source.wav");
+    });
+
+    expect(() => readStableWaveAudioFile("secret-root/private/source.wav", operations)).toThrow(
+      "could not safely access the local .wav file",
+    );
+    expect(operations.fstat).not.toHaveBeenCalled();
+    expect(operations.close).not.toHaveBeenCalled();
+    try {
+      readStableWaveAudioFile("secret-root/private/source.wav", operations);
+    } catch (error) {
+      expect(String(error)).not.toContain("secret-root");
+      expect(String(error)).not.toContain("ELOOP");
     }
   });
 

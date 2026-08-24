@@ -100,7 +100,7 @@ const riffSpecificationUrl =
 const waveFormatExSpecificationUrl =
   "https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatex";
 const waveFormatExtensibleSpecificationUrl =
-  "https://learn.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-waveformatextensible";
+  "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible";
 
 const waveInspectionNotes = Object.freeze([
   "This inspects a pre-conversion WAVE source. Minecraft Java resource-pack sound assets remain Ogg Vorbis and are checked by resourcepack project validation.",
@@ -363,6 +363,15 @@ function parseWaveFormat(
         chunk.headerOffset,
         "fmt ",
         `${chunk.size - 18 - extensionSize} fmt chunk byte(s) remain outside the declared extension.`,
+      );
+    }
+    if (formatTag === 0x0003 && extensionSize !== 0) {
+      collector.add(
+        "error",
+        "wave.invalid-ieee-float-extension-size",
+        chunk.headerOffset,
+        "fmt ",
+        "WAVE_FORMAT_IEEE_FLOAT WAVEFORMATEX must set cbSize to zero.",
       );
     }
   } else if (formatTag === 0x0003) {
@@ -736,11 +745,11 @@ function inspectWaveSamples(
     };
   }
 
-  const rms = squareScale * Math.sqrt(scaledSquareSum / sampleCount);
+  // Stay in the log domain so finite subnormal samples do not underflow while reconstructing RMS.
   return {
     state: "signal",
     peakDbfs: 20 * Math.log10(peak),
-    rmsDbfs: 20 * Math.log10(rms),
+    rmsDbfs: 20 * Math.log10(squareScale) + 10 * Math.log10(scaledSquareSum / sampleCount),
     atOrBeyondFullScaleSampleCount,
   };
 }

@@ -1,4 +1,12 @@
-import { type BigIntStats, closeSync, fstatSync, lstatSync, openSync, readSync } from "node:fs";
+import {
+  type BigIntStats,
+  closeSync,
+  constants,
+  fstatSync,
+  lstatSync,
+  openSync,
+  readSync,
+} from "node:fs";
 import { extname } from "node:path";
 import { waveAudioInspectionLimits } from "@minecraft-skills/catalog";
 
@@ -18,15 +26,20 @@ type StableFileStatus = Pick<
 
 type WaveAudioFileOperations = {
   lstat: (path: string) => StableFileStatus;
-  open: (path: string) => number;
+  open: (path: string, flags: number) => number;
   fstat: (file: number) => StableFileStatus;
   read: (file: number, target: Buffer, offset: number, length: number, position: number) => number;
   close: (file: number) => void;
 };
 
+const stableReadOpenFlags =
+  constants.O_RDONLY |
+  (typeof constants.O_NONBLOCK === "number" ? constants.O_NONBLOCK : 0) |
+  (typeof constants.O_NOFOLLOW === "number" ? constants.O_NOFOLLOW : 0);
+
 const defaultOperations: WaveAudioFileOperations = {
   lstat: (path) => lstatSync(path, { bigint: true }),
-  open: (path) => openSync(path, "r"),
+  open: (path, flags) => openSync(path, flags),
   fstat: (file) => fstatSync(file, { bigint: true }),
   read: readSync,
   close: closeSync,
@@ -82,7 +95,7 @@ export function readStableWaveAudioFile(
     const pathBefore = operations.lstat(filePath);
     requireRegularFinalEntry(pathBefore);
 
-    file = operations.open(filePath);
+    file = operations.open(filePath, stableReadOpenFlags);
     const handleBefore = operations.fstat(file);
     requireRegularFinalEntry(handleBefore);
     if (!sameSnapshotMetadata(pathBefore, handleBefore)) {

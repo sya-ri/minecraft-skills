@@ -232,6 +232,51 @@ describe("inspectWaveAudio", () => {
     expect(result.atOrBeyondFullScaleSampleCount).toBe(fullScaleCount);
   });
 
+  it("keeps float64 subnormal RMS dBFS finite and JSON-safe", () => {
+    const values = [Number.MIN_VALUE, 0, 0, 0];
+    const result = inspectWaveAudio(
+      wave(classicFormat({ tag: 3, bits: 64 }), floatSamples(64, values)),
+    );
+    const expectedPeakDbfs = 20 * Math.log10(Number.MIN_VALUE);
+    const expectedRmsDbfs = expectedPeakDbfs + 10 * Math.log10(1 / values.length);
+
+    expect(result.valid).toBe(true);
+    expect(result.signalState).toBe("signal");
+    expect(result.peakDbfs).toBeCloseTo(expectedPeakDbfs, 10);
+    expect(result.rmsDbfs).toBeCloseTo(expectedRmsDbfs, 10);
+    expect(Number.isFinite(result.rmsDbfs)).toBe(true);
+    expect(JSON.parse(JSON.stringify(result))).toEqual(result);
+  });
+
+  it("requires zero cbSize for IEEE-float WAVEFORMATEX while retaining the legacy warning", () => {
+    const standard = inspectWaveAudio(
+      wave(concatenate(classicFormat({ tag: 3, bits: 32 }), uint16(0)), floatSamples(32, [0.5])),
+    );
+    const extra = inspectWaveAudio(
+      wave(
+        concatenate(classicFormat({ tag: 3, bits: 32 }), uint16(2), Uint8Array.of(0, 0)),
+        floatSamples(32, [0.5]),
+      ),
+    );
+    const legacy = inspectWaveAudio(
+      wave(classicFormat({ tag: 3, bits: 32 }), floatSamples(32, [0.5])),
+    );
+
+    expect(standard.valid).toBe(true);
+    expect(standard.diagnostics).toEqual([]);
+    expect(extra.valid).toBe(false);
+    expect(extra.inspectionComplete).toBe(true);
+    expect(extra.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "wave.invalid-ieee-float-extension-size" }),
+      ]),
+    );
+    expect(legacy.valid).toBe(true);
+    expect(legacy.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
+      "wave.legacy-float-format",
+    );
+  });
+
   it("supports left-aligned WAVE_FORMAT_EXTENSIBLE PCM valid bits", () => {
     const minimum = -0x80_000;
     const maximum = 0x7f_fff;
