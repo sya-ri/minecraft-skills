@@ -13,6 +13,13 @@ All notable changes to this project are documented here.
 - Typed access to common public Modrinth project, dependency, version, file-hash, user, tag, and
   statistics resources.
 
+### Changed
+
+- Discovery queries now match natural-language words across case, camelCase, and Minecraft
+  identifier separators, so queries such as `Player Join Event`, `Diamond Sword`, and
+  `bundle item model` find structured API and asset results without changing literal `contains`
+  filters.
+
 ## 0.1.5 - 2026-06-24
 
 ### Added
