@@ -64,6 +64,7 @@ minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
+minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
@@ -183,6 +184,22 @@ pagination.
 `modrinth versions <project-id-or-slug>` lists the versions published for one project. Filter with
 `--game-version`, `--loader`, or `--featured true|false`. Changelogs are omitted by default to keep
 responses small; pass `--include-changelog true` when they are needed.
+
+`modrinth compatibility <project-id-or-slug...>` compares 2-10 projects using their public
+[Modrinth version metadata](https://docs.modrinth.com/api/operations/getprojectversions). It returns
+bounded common game-version/loader pairs, the latest `date_published` concrete version for each
+project in every returned pair, and independent game-version and loader intersections for
+diagnostics. IDs and slugs are first resolved with Modrinth's
+[project check endpoint](https://docs.modrinth.com/api/operations/checkprojectvalidity), so aliases
+are deduplicated even when filters return no versions. Optional `--game-version`, `--loader`, and
+`--featured true|false` filters are applied before comparison. `--limit` bounds each project's
+general candidate list; requests use bounded concurrency, response sizes, and `--timeout-ms`. A
+slug beginning with `--` must follow the `--` option terminator. Common pairs are ordered by the
+least-recent latest candidate across all projects before bounded output is applied. A common
+metadata pair is not proof that the projects interoperate at runtime; a failed canonical
+lookup makes the outcome indeterminate instead of guessing. `requestsComplete` reports whether all
+lookups completed and validated; `outcome` separately reports `compatible`, `no-common-pair`, or
+`indeterminate`.
 
 `modrinth get` covers the other common public read APIs: project details and dependencies, version
 details and file-hash lookup, users, categories, loaders, game versions, project/side types,

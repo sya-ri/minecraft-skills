@@ -2641,4 +2641,65 @@ describe("catalog", () => {
     );
     expect(result.catalog.results.length).toBeGreaterThan(0);
   });
+
+  it("discovers the Modrinth compatibility resolver from natural language", () => {
+    const suggestions = suggestMinecraftLookups({
+      version: "26.2",
+      task: "Find compatible Modrinth mod versions that work together",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      "modrinth compatibility <project-id-or-slug> <project-id-or-slug> [more projects]",
+    );
+
+    const search = searchAll({
+      version: "26.2",
+      query: "Find compatible Modrinth mods",
+      limit: 20,
+    });
+    expect(search.results).toContainEqual(
+      expect.objectContaining({
+        surface: "modrinth-tools",
+        kind: "compatibility-resolver",
+      }),
+    );
+
+    const generalLoaderQuestion = searchAll({
+      version: "26.2",
+      query: "Which loaders work with Minecraft?",
+    });
+    expect(generalLoaderQuestion.results.some((entry) => entry.surface === "modrinth-tools")).toBe(
+      false,
+    );
+
+    const pluralModpackQuestion = suggestMinecraftLookups({
+      version: "26.2",
+      task: "Find compatible Modpacks",
+    });
+    expect(
+      pluralModpackQuestion.suggestedTools.some((entry) =>
+        entry.tool.startsWith("modrinth compatibility"),
+      ),
+    ).toBe(true);
+
+    for (const domain of ["datapack", "resourcepack", "paper-plugin"] as const) {
+      const scopedSuggestions = suggestMinecraftLookups({
+        version: "26.2",
+        task: "Find compatible Modrinth mods",
+        domain,
+      });
+      expect(
+        scopedSuggestions.suggestedTools.some((entry) =>
+          entry.tool.startsWith("modrinth compatibility"),
+        ),
+      ).toBe(false);
+
+      const scopedSearch = searchAll({
+        version: "26.2",
+        query: "Find compatible Modrinth mods",
+        domain,
+        limit: 20,
+      });
+      expect(scopedSearch.results.some((entry) => entry.surface === "modrinth-tools")).toBe(false);
+    }
+  });
 });

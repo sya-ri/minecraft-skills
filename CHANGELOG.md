@@ -22,6 +22,9 @@ All notable changes to this project are documented here.
   version, project type, loader, category, sorting, and pagination filters.
 - Modrinth project version listing by project ID or slug, with Minecraft version, loader, featured,
   and changelog filters.
+- Bounded compatibility resolution for 2-10 Modrinth projects, including common Minecraft
+  version/loader metadata pairs, canonical alias deduplication, and pair-specific latest published
+  project versions.
 - Typed access to common public Modrinth project, dependency, version, file-hash, user, tag, and
   statistics resources.
 - Offline `.mrpack` and `modrinth.index.json` validation across the catalog API, CLI, and MCP,

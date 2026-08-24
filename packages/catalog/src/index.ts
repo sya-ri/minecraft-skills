@@ -127,6 +127,20 @@ import {
 } from "./schemas.js";
 
 export * from "./fabricMeta.js";
+export {
+  type ModrinthCompatibilityFetch,
+  type ModrinthCompatibilityFetchResponse,
+  type ModrinthCompatibilityOptions,
+  type ModrinthCompatibilityPair,
+  type ModrinthCompatibilityPairSet,
+  type ModrinthCompatibilityPairVersion,
+  type ModrinthCompatibilityProjectResult,
+  type ModrinthCompatibilityResult,
+  type ModrinthCompatibilityValueSet,
+  type ModrinthCompatibilityVersion,
+  modrinthCompatibilityLimits,
+  resolveModrinthCompatibility,
+} from "./modrinthCompatibility.js";
 
 export type {
   AuthoringChecklistData,
@@ -1723,6 +1737,16 @@ function scoreDiscoveryMatch(query: string, actual: string[], semantic: string[]
     if (semanticText.includes(token)) return score + 25;
     return score;
   }, 0);
+}
+
+function isModrinthCompatibilityTask(value: string): boolean {
+  const normalized = normalizeSearchText(value);
+  const hasModrinthContext = /\b(modrinth|mods?|modpacks?)\b/.test(normalized);
+  const hasCompatibilityIntent =
+    /\b(compatibility|compatible|common versions?|same versions?|together|work with)\b/.test(
+      normalized,
+    ) || /互換|共通.*バージョン|一緒に使/.test(value);
+  return hasModrinthContext && hasCompatibilityIntent;
 }
 
 function resourcepackDiscoveryTerms(path: string): string {
@@ -5236,6 +5260,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     add(`minecraft pack-format ${version} datapack`, "Check target data pack format.");
     add(`minecraft pack-format ${version} resourcepack`, "Check target resource pack format.");
   }
+  if (!options.domain && isModrinthCompatibilityTask(task)) {
+    add(
+      "modrinth compatibility <project-id-or-slug> <project-id-or-slug> [more projects]",
+      "Resolve common game-version/loader metadata pairs and concrete project version candidates.",
+    );
+  }
 
   const catalog = searchCatalog({
     query: task,
@@ -5498,6 +5528,18 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   const discoveryTerm = primaryDiscoveryTerm(query);
   const include = (domain: DomainIdData | "minecraft") =>
     !options.domain || domain === options.domain || domain === "minecraft";
+
+  if (!options.domain && isModrinthCompatibilityTask(query)) {
+    addCrossResult(results, {
+      surface: "modrinth-tools",
+      domain: "minecraft",
+      kind: "compatibility-resolver",
+      title: "Resolve common Modrinth project version metadata",
+      score: 100,
+      matches: ["Modrinth project compatibility", "common game-version and loader pairs"],
+      lookup: "modrinth compatibility <project-id-or-slug> <project-id-or-slug> [more projects]",
+    });
+  }
 
   const catalog = searchCatalog({
     query,

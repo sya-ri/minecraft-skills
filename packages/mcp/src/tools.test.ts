@@ -146,6 +146,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
     expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
+    expect(tools.map((tool) => tool.name)).toContain("resolve_modrinth_compatibility");
     expect(tools.map((tool) => tool.name)).toContain("get_modrinth_resource");
     expect(tools.map((tool) => tool.name)).toContain("validate_modrinth_pack");
     expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
@@ -1234,6 +1235,65 @@ describe("MCP tools", () => {
     expect(url).toContain("loaders=%5B%22fabric%22%5D");
     expect(url).toContain("include_changelog=false");
     expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
+  });
+
+  it("calls resolve_modrinth_compatibility", async () => {
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      const projectId = url.includes("sodium") ? "sodium-id" : "iris-id";
+      return new Response(
+        JSON.stringify(
+          url.includes("/check")
+            ? { id: projectId }
+            : [
+                {
+                  id: projectId === "sodium-id" ? "sodium-version" : "iris-version",
+                  project_id: projectId,
+                  version_number: "1.0.0",
+                  version_type: "release",
+                  featured: false,
+                  date_published: "2026-01-01T00:00:00Z",
+                  game_versions: ["1.21.11"],
+                  loaders: ["fabric"],
+                },
+              ],
+        ),
+        { status: 200 },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("resolve_modrinth_compatibility", {
+      projects: ["sodium", "iris"],
+      gameVersion: "1.21.11",
+      loader: "fabric",
+      limit: 1,
+    });
+
+    expect(result.content[0]?.text).toContain('"outcome": "compatible"');
+    expect(result.content[0]?.text).toContain('"sodium-version"');
+    expect(result.content[0]?.text).toContain('"iris-version"');
+    expect(result.content[0]?.text).toContain('"commonPairs"');
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+
+    const invalid = await callMinecraftSkillsTool("resolve_modrinth_compatibility", {
+      projects: ["sodium", "iris"],
+      limit: "1",
+    });
+    expect(invalid.isError).toBe(true);
+    expect(invalid.content[0]?.text).toContain("limit must be a number");
+  });
+
+  it("rejects oversized compatibility project arrays before reading their elements", async () => {
+    const projects = new Array<string>(11);
+    Object.defineProperty(projects, 0, {
+      get() {
+        throw new Error("project element should not be read");
+      },
+    });
+
+    const result = await callMinecraftSkillsTool("resolve_modrinth_compatibility", { projects });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("between 2 and 10 projects");
   });
 
   it("calls get_modrinth_resource", async () => {

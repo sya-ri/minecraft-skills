@@ -87,6 +87,7 @@ minecraft-skills plugin paper events "player join" --version 26.2
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
+minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
@@ -108,6 +109,12 @@ vanilla assets. Special item-model base references are included. PNG and OGG fil
 to the graph without being decoded as text. Invalid graphs are printed as JSON and return exit code 1.
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.
+`modrinth compatibility` accepts 2-10 project IDs or slugs and reports bounded common
+game-version/loader metadata pairs plus the latest published concrete version for each project in
+each pair. IDs and slugs are canonicalized before version filters, so aliases remain deduplicated
+when no versions match. When a slug begins with `--`, place the option terminator `--` before it.
+Common pairs are ordered by the least-recent latest candidate across all projects before bounded
+output is applied. This is metadata compatibility, not proof of runtime interoperability.
 `modrinth get` exposes the remaining common public read resources, including dependencies, version
 and file-hash metadata, users, tags, and statistics.
 `modrinth validate-pack` requires the `.mrpack` extension and a regular file. It bounds reads from

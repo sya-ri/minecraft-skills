@@ -86,12 +86,14 @@ import {
   listVersions,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
+  modrinthCompatibilityLimits,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
   readCachedMinecraftAssetText,
+  resolveModrinthCompatibility,
   resolveVersion,
   searchAll,
   searchAuthoringScenarios,
@@ -1172,6 +1174,29 @@ export const tools: ToolDefinition[] = [
         includeChangelog: { type: "boolean", default: false },
       },
       required: ["project"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "resolve_modrinth_compatibility",
+    description:
+      "Resolve bounded common Minecraft-version/loader metadata pairs and pair-specific latest published concrete versions for 2-10 public Modrinth projects. This reports Modrinth version metadata, not runtime interoperability.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        projects: {
+          type: "array",
+          items: { type: "string", minLength: 1, maxLength: 96 },
+          minItems: 2,
+          maxItems: 10,
+        },
+        gameVersion: { type: "string", minLength: 1, maxLength: 64 },
+        loader: { type: "string", minLength: 1, maxLength: 64 },
+        featured: { type: "boolean" },
+        limit: { type: "integer", minimum: 1, maximum: 10, default: 3 },
+        timeoutMs: { type: "integer", minimum: 1, maximum: 30000, default: 10000 },
+      },
+      required: ["projects"],
       additionalProperties: false,
     },
   },
@@ -2578,6 +2603,47 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.includeChangelog === "boolean"
             ? { includeChangelog: args.includeChangelog }
             : {}),
+        }),
+      );
+    }
+    if (name === "resolve_modrinth_compatibility") {
+      if (!Array.isArray(args.projects)) {
+        throw new Error("resolve_modrinth_compatibility requires string[] projects");
+      }
+      if (
+        args.projects.length < modrinthCompatibilityLimits.minProjects ||
+        args.projects.length > modrinthCompatibilityLimits.maxProjects
+      ) {
+        throw new Error(
+          `resolve_modrinth_compatibility requires between ${modrinthCompatibilityLimits.minProjects} and ${modrinthCompatibilityLimits.maxProjects} projects`,
+        );
+      }
+      if (!args.projects.every((project) => typeof project === "string")) {
+        throw new Error("resolve_modrinth_compatibility requires string[] projects");
+      }
+      if (args.gameVersion !== undefined && typeof args.gameVersion !== "string") {
+        throw new Error("resolve_modrinth_compatibility gameVersion must be a string");
+      }
+      if (args.loader !== undefined && typeof args.loader !== "string") {
+        throw new Error("resolve_modrinth_compatibility loader must be a string");
+      }
+      if (args.featured !== undefined && typeof args.featured !== "boolean") {
+        throw new Error("resolve_modrinth_compatibility featured must be boolean");
+      }
+      if (args.limit !== undefined && typeof args.limit !== "number") {
+        throw new Error("resolve_modrinth_compatibility limit must be a number");
+      }
+      if (args.timeoutMs !== undefined && typeof args.timeoutMs !== "number") {
+        throw new Error("resolve_modrinth_compatibility timeoutMs must be a number");
+      }
+      return text(
+        await resolveModrinthCompatibility({
+          projects: args.projects,
+          ...(typeof args.gameVersion === "string" ? { gameVersion: args.gameVersion } : {}),
+          ...(typeof args.loader === "string" ? { loader: args.loader } : {}),
+          ...(typeof args.featured === "boolean" ? { featured: args.featured } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+          ...(typeof args.timeoutMs === "number" ? { timeoutMs: args.timeoutMs } : {}),
         }),
       );
     }

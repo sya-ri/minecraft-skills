@@ -102,6 +102,7 @@ import {
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
+  resolveModrinthCompatibility,
   resolveVersion,
   searchAll,
   searchAuthoringScenarios,
@@ -186,7 +187,10 @@ function readOption(args: string[], name: string, fallback: string): string {
 }
 
 function readBooleanOption(args: string[], name: string, fallback: boolean): boolean {
-  const value = readOption(args, name, String(fallback));
+  return readBooleanValue(readOption(args, name, String(fallback)), name);
+}
+
+function readBooleanValue(value: string, name: string): boolean {
   if (value === "true") {
     return true;
   }
@@ -210,6 +214,48 @@ function readRepeatedOption(args: string[], name: string): string[] {
     index += 1;
   }
   return values;
+}
+
+const modrinthCompatibilityValueOptions = new Set([
+  "--game-version",
+  "--loader",
+  "--featured",
+  "--limit",
+  "--timeout-ms",
+]);
+
+function parseModrinthCompatibilityArgs(args: string[]): {
+  projects: string[];
+  options: Map<string, string>;
+} {
+  const projects: string[] = [];
+  const options = new Map<string, string>();
+  let projectsOnly = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    if (!projectsOnly && arg === "--") {
+      projectsOnly = true;
+      continue;
+    }
+    if (projectsOnly || !arg.startsWith("--")) {
+      projects.push(arg);
+      continue;
+    }
+    if (!modrinthCompatibilityValueOptions.has(arg)) {
+      throw new Error(`modrinth compatibility received unknown option: ${arg}`);
+    }
+    if (options.has(arg)) {
+      throw new Error(`modrinth compatibility option must not be repeated: ${arg}`);
+    }
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`modrinth compatibility ${arg} requires a value`);
+    }
+    options.set(arg, value);
+    index += 1;
+  }
+  return { projects, options };
 }
 
 function positionalArgs(args: string[]): string[] {
@@ -419,6 +465,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "fabric toolchain": "fabric-toolchain",
     "modrinth search": "modrinth-search",
     "modrinth versions": "modrinth-versions",
+    "modrinth compatibility": "modrinth-compatibility",
     "modrinth get": "modrinth-get",
     "modrinth validate-pack": "modrinth-validate-pack",
     "datapack server-reports": "server-reports",
@@ -848,6 +895,7 @@ Grouped commands:
   minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
   minecraft-skills modrinth search <query...> [--version version] [--type type] [--loader loader] [--category category] [--index relevance|downloads|follows|newest|updated] [--offset 0] [--limit 10]
   minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
+  minecraft-skills modrinth compatibility <project-id-or-slug...> [--game-version version] [--loader loader] [--featured true|false] [--limit 3] [--timeout-ms 10000] [-- <option-like-slug...>]
   minecraft-skills modrinth get <project|project-dependencies|version|version-file|user|categories|loaders|game-versions|project-types|side-types|donation-platforms|report-types|statistics> [identifier] [--algorithm sha1|sha512]
   minecraft-skills modrinth validate-pack <file.mrpack> [--allow-download-host host]... [--max-archive-bytes bytes]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory|registry-entries|compare-registry-entries
@@ -2232,6 +2280,26 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           includeChangelog: readBooleanOption(args, "--include-changelog", false),
           ...(gameVersion ? { gameVersions: [gameVersion] } : {}),
           ...(loader ? { loaders: [loader] } : {}),
+          ...(featured !== undefined ? { featured } : {}),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "modrinth-compatibility") {
+      const parsed = parseModrinthCompatibilityArgs(args);
+      const gameVersion = parsed.options.get("--game-version");
+      const loader = parsed.options.get("--loader");
+      const featuredValue = parsed.options.get("--featured");
+      const featured = featuredValue ? readBooleanValue(featuredValue, "--featured") : undefined;
+      printJson(
+        output,
+        await resolveModrinthCompatibility({
+          projects: parsed.projects,
+          limit: Number(parsed.options.get("--limit") ?? "3"),
+          timeoutMs: Number(parsed.options.get("--timeout-ms") ?? "10000"),
+          ...(gameVersion ? { gameVersion } : {}),
+          ...(loader ? { loader } : {}),
           ...(featured !== undefined ? { featured } : {}),
         }),
       );

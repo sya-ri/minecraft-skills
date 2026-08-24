@@ -76,6 +76,7 @@ minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --con
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
+minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 ```
