@@ -106,6 +106,7 @@ aliases or reject Unicode query values.
 - `compare_versions`
 - `search_all`
 - `get_fabric_toolchain`
+- `resolve_velocity_toolchain`
 - `search_modrinth_projects`
 - `list_modrinth_project_versions`
 - `resolve_modrinth_compatibility`
@@ -167,6 +168,10 @@ and Unix modes for stronger metadata checks. The result therefore reports `valid
 `none` or `metadata`, never `binary`. Downloads use Modrinth's official four-host allowlist by
 default. `additionalDownloadHosts` explicitly extends it and produces non-official-host warnings;
 `limits` bounds entries, sizes, ratios, and retained diagnostics.
+
+`resolve_velocity_toolchain` performs the same bounded official PaperMC Maven/docs lookup as the
+CLI. Its provenance distinguishes retrieved, unavailable, and malformed sources, and its result
+explicitly declines to infer Minecraft compatibility from Velocity versions.
 
 `compare_registry_entries` emits entry and protocol ID changes only for registries indexed in both
 versions. Its `outcome` and bounded `excludedRegistries` fields expose incomplete coverage without

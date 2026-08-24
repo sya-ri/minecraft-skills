@@ -95,6 +95,7 @@ import {
   type ResourcepackModelPathSearchOptions,
   readCachedMinecraftAssetText,
   resolveModrinthCompatibility,
+  resolveVelocityToolchain,
   resolveVersion,
   searchAll,
   searchAuthoringScenarios,
@@ -1164,6 +1165,19 @@ export const tools: ToolDefinition[] = [
         timeoutMs: { type: "number", minimum: 100, maximum: 30000, default: 5000 },
       },
       required: ["gameVersion"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "resolve_velocity_toolchain",
+    description:
+      "Resolve the current velocity-api Maven coordinate, official PaperMC repository and documentation links, and applicable documented Java requirement from bounded live official sources. Velocity versions are not treated as Minecraft game-version compatibility evidence.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", minimum: 1, maximum: 50, default: 10 },
+        timeoutMs: { type: "integer", minimum: 100, maximum: 30000, default: 5000 },
+      },
       additionalProperties: false,
     },
   },
@@ -2694,6 +2708,14 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       return text(
         await getFabricToolchainCompatibility({
           gameVersion: args.gameVersion,
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+          ...(typeof args.timeoutMs === "number" ? { timeoutMs: args.timeoutMs } : {}),
+        }),
+      );
+    }
+    if (name === "resolve_velocity_toolchain") {
+      return text(
+        await resolveVelocityToolchain({
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
           ...(typeof args.timeoutMs === "number" ? { timeoutMs: args.timeoutMs } : {}),
         }),

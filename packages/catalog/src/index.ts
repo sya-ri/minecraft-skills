@@ -150,6 +150,7 @@ export {
   resolveModrinthCompatibility,
 } from "./modrinthCompatibility.js";
 export { vorbisIdentificationPageBytes } from "./resourcepackSound.js";
+export * from "./velocityMeta.js";
 export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
@@ -1889,6 +1890,23 @@ function isPaperInventoryGuiDiscoveryQuery(query: string): boolean {
   const hasCustomContext =
     hasPaperContext || /\b(custom|gui|menu|shop|selector|virtual|protected)\b/.test(normalized);
   return hasInventoryContext && hasInteractionContext && hasCustomContext;
+}
+
+function isVelocityToolchainDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const describesMotion =
+    /\b(?:entity|player) velocity\b|\bvelocity (?:vector|vectors)\b|\b(?:get|set) velocity\b|\b(?:getvelocity|setvelocity|knockback|motion|movement|physics|speed)\b/.test(
+      normalized,
+    );
+  if (describesMotion) {
+    return false;
+  }
+  return (
+    /\bvelocity\b/.test(normalized) &&
+    /\b(artifact|coordinate|dependencies|dependency|gradle|java|jdk|latest|maven|release|snapshot|toolchain|versions?)\b/.test(
+      normalized,
+    )
+  );
 }
 
 function scoreDiscoveryMatch(query: string, actual: string[], semantic: string[] = []): number {
@@ -5511,6 +5529,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Look up official live Fabric Loader, Intermediary, and Yarn candidates for the target game version.",
     );
   }
+  if (!searchDomain && isVelocityToolchainDiscoveryQuery(task)) {
+    add(
+      "velocity toolchain",
+      "Resolve the current official velocity-api coordinate, repository, documentation, and applicable Java requirement.",
+    );
+  }
   const migrationTask =
     /\b(migrat(?:e|es|ed|ing|ion)?|upgrad(?:e|es|ed|ing)|port(?:s|ed|ing)?|version)\b/.test(
       lower,
@@ -6166,6 +6190,18 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       score: 100,
       matches: ["Fabric Loader", "Intermediary", "Yarn", "official Fabric Meta v2"],
       lookup: `fabric toolchain ${JSON.stringify(version)}`,
+    });
+  }
+
+  if (!options.domain && isVelocityToolchainDiscoveryQuery(query)) {
+    addCrossResult(results, {
+      surface: "velocity-toolchain",
+      domain: "minecraft",
+      kind: "live-toolchain-resolution",
+      title: "Velocity API dependency and Java requirement",
+      score: 250,
+      matches: ["velocity-api", "PaperMC Maven", "Velocity development docs", "Java requirement"],
+      lookup: "velocity toolchain",
     });
   }
 

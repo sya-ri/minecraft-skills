@@ -4036,6 +4036,47 @@ describe("catalog", () => {
     }
   });
 
+  it("routes Velocity dependency and Java queries to the official live resolver", () => {
+    const search = searchAll({
+      version: "1.21.11",
+      query: "Which Velocity API Maven coordinate and Java version should I use?",
+    });
+    expect(search.results[0]).toMatchObject({
+      surface: "velocity-toolchain",
+      lookup: "velocity toolchain",
+    });
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "set up a Velocity plugin dependency",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain("velocity toolchain");
+
+    for (const task of [
+      "Which Velocity API version should I use?",
+      "What Java does Velocity require?",
+    ]) {
+      const result = suggestMinecraftLookups({ version: "1.21.11", task });
+      expect(result.suggestedTools.map((entry) => entry.tool)).toContain("velocity toolchain");
+    }
+  });
+
+  it("does not route unrelated uses of velocity to the toolchain resolver", () => {
+    for (const query of [
+      "measure player velocity in a Fabric mod",
+      "use the player velocity API in a Paper plugin",
+      "call setVelocity from Java after knockback",
+    ]) {
+      const search = searchAll({ version: "1.21.11", query });
+      expect(search.results.some((entry) => entry.surface === "velocity-toolchain")).toBe(false);
+
+      const suggestions = suggestMinecraftLookups({ version: "1.21.11", task: query });
+      expect(suggestions.suggestedTools.some((entry) => entry.tool === "velocity toolchain")).toBe(
+        false,
+      );
+    }
+  });
+
   it("finds resourcepack assets from all available indexes", () => {
     const result = findResourcepackAssets({
       version: "26.2",

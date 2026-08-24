@@ -79,6 +79,7 @@ minecraft-skills source datasets
 minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills fabric toolchain 1.21.11
+minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
@@ -278,6 +279,16 @@ for the same game version; Fabric Meta does not publish those Cartesian combinat
 guarantee. Output is bounded with `--limit` (maximum 50), requests default to a 5000 ms timeout, and
 versions without Yarn mappings return an explicit incomplete result instead of inventing a tuple.
 
+`velocity toolchain` resolves the current `com.velocitypowered:velocity-api` coordinate from the
+official PaperMC Maven repository, then cross-checks the official Velocity development guide and
+Java FAQ. Maven XML and documentation reads have response-size, schema/parser, and timeout bounds;
+`--limit` (maximum 50) bounds the deterministic candidate list and `--timeout-ms` defaults to 5000.
+The result includes retrieval time, source statuses, repository and Javadocs links, and the Java
+minimum only when the official FAQ range applies to the resolved API major. Documentation drift is
+reported without silently replacing Maven's `latest` value. Velocity API and server versions do
+not prove Minecraft protocol, client, or backend-server compatibility, so no game-version mapping
+is inferred.
+
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and
 `member-search-index.js` files when present. Older Javadocs that do not expose those files are
@@ -443,9 +454,11 @@ import {
   searchPaperMembers,
   searchVanillaPaths,
   validateResourcepackProject,
+  resolveVelocityToolchain,
 } from "@minecraft-skills/catalog";
 
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
+const velocity = await resolveVelocityToolchain({ limit: 5, timeoutMs: 5000 });
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const scenario = getAuthoringScenario("paper-event-listener-review");

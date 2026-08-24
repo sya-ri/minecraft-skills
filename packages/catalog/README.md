@@ -53,6 +53,7 @@ import {
   getPaperPluginData,
   getResourcepackModelSummary,
   getResponsePattern,
+  resolveVelocityToolchain,
   getSkillPayload,
   getSourceReport,
   getSupportMatrix,
@@ -177,6 +178,7 @@ const fabricToolchain = await getFabricToolchainCompatibility({
   gameVersion: "1.21.11",
   limit: 10,
 });
+const velocityToolchain = await resolveVelocityToolchain({ limit: 10, timeoutMs: 5000 });
 const modrinthProjects = await searchModrinthProjects({
   query: "voice chat",
   version: "1.21.11",
