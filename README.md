@@ -58,6 +58,7 @@ minecraft-skills plugin paper search-scenarios "full inventory reward leftovers"
 minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
 minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 1.21.11
+minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack

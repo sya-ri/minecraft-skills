@@ -1059,6 +1059,79 @@ describe("catalog", () => {
     }
   });
 
+  it("routes operable Paper administrative command guidance", () => {
+    const recipe = getAuthoringRecipe("paper-administrative-command-operability");
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "map-the-operational-surface",
+      "model-sender-target-and-scope",
+      "enforce-permissions-and-bounded-input",
+      "make-mutation-and-reload-atomic",
+      "expose-results-and-effective-state",
+    ]);
+    expect(recipe.finalChecks).toContain("paper-administrative-command-operability");
+    const operationalStep = recipe.steps.find((step) => step.id === "map-the-operational-surface");
+    expect(operationalStep?.stopIfMissing).toContain("undocumented out-of-band procedure");
+    expect(operationalStep?.stopIfMissing).toContain("restart procedure");
+    expect(operationalStep?.evidence.join("\n")).toContain("non-command alternative");
+
+    const guardrail = getAuthoringGuardrail("paper-administrative-command-operability");
+    const rules = guardrail.rules.join("\n");
+    for (const requirement of [
+      "console execution",
+      "remote console",
+      "command block",
+      "command minecart",
+      "unknown or future subtype",
+      "feedback for rejection",
+      "explicit target",
+      "stable stored identity",
+      "least-privilege permission",
+      "preview, confirmation",
+      "raw secrets",
+      "atomically replacing effective state",
+      "last valid state",
+      "main server thread",
+      "typed outcomes",
+      "result to the invoker",
+      "list, show, or status",
+    ]) {
+      expect(rules).toContain(requirement);
+    }
+
+    const diagnostic = getAuthoringDiagnostic("paper-administrative-command-incomplete");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("unnecessarily requires an online Player");
+    expect(diagnostic.failIf.join("\n")).toContain("last valid state");
+    expect(diagnostic.failIf.join("\n")).toContain("invoker");
+    expect(diagnostic.failIf.join("\n")).toContain("custom sender");
+    expect(diagnostic.failIf.join("\n")).toContain("command minecart");
+    expect(diagnostic.failIf.join("\n")).toContain("raw secret");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("bulk-confirmation");
+
+    const scenario = getAuthoringScenario("paper-administrative-command-operability-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-administrative-command-operability"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-administrative-command-incomplete",
+    );
+
+    const search = searchAuthoringScenarios({
+      query: "admin command console permission reload status offline target",
+      domain: "paper-plugin",
+    });
+    expect(search.results[0]?.scenario.id).toBe("paper-administrative-command-operability-review");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-administrative-command-operability-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual([
+      "paper-administrative-command-operability",
+    ]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-administrative-command-incomplete",
+    );
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
@@ -4078,6 +4151,35 @@ describe("catalog", () => {
       expect(
         result.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
       ).toBe(false);
+    }
+  });
+
+  it("routes administrative command wording to Paper guidance without broad false positives", () => {
+    for (const request of [
+      {
+        task: "reload configuration from console and report status",
+        domain: "paper-plugin" as const,
+      },
+      { task: "add a configuration command", domain: "paper-plugin" as const },
+      { task: "create a ban command", domain: "paper-plugin" as const },
+      { task: "Paper admin command permission and offline target" },
+      { task: "admin command with explicit target and status" },
+    ]) {
+      const result = suggestMinecraftLookups({ version: "1.21.11", ...request });
+      expect(result.suggestedTools.map((entry) => entry.tool)).toContain(
+        `plugin paper search ${JSON.stringify(request.task)}`,
+      );
+    }
+
+    for (const request of [
+      { task: "render a custom item texture", domain: "paper-plugin" as const },
+      { task: "grant an advancement with a command" },
+      { task: "reset a datapack scoreboard objective command" },
+    ]) {
+      const unrelated = suggestMinecraftLookups({ version: "1.21.11", ...request });
+      expect(unrelated.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper "))).toBe(
+        false,
+      );
     }
   });
 });

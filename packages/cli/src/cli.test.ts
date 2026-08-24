@@ -338,6 +338,54 @@ describe("minecraft-skills CLI", () => {
     expect(itemDelivery.stdout.join("\n")).toContain('"id": "paper-inventory-leftovers-unhandled"');
   });
 
+  it("prints administrative command operability guidance", async () => {
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-administrative-command-operability",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("model-sender-target-and-scope");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-administrative-command-operability-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-administrative-command-incomplete");
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-administrative-command-operability-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain("paper-administrative-command-operability");
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-administrative-command-operability",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("Allow console execution");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-administrative-command-incomplete",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain('"severity": "error"');
+  });
+
   it("prints authoring guardrails", async () => {
     const list = await capture(["plugin", "paper", "guardrails"]);
     expect(list.code).toBe(0);

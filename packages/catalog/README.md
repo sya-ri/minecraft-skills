@@ -102,6 +102,10 @@ const inventoryPlan = getAuthoringPlan({
   scenario: "paper-inventory-gui-interaction-review",
   version: "26.2",
 });
+const adminCommandPlan = getAuthoringPlan({
+  scenario: "paper-administrative-command-operability-review",
+  version: "26.2",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -109,6 +113,7 @@ const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const inventoryRecipe = getAuthoringRecipe("paper-inventory-gui-interactions");
+const adminCommandRecipe = getAuthoringRecipe("paper-administrative-command-operability");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -123,6 +128,15 @@ const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-ou
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
+const adminCommandScenario = getAuthoringScenario(
+  "paper-administrative-command-operability-review",
+);
+const adminCommandGuardrail = getAuthoringGuardrail(
+  "paper-administrative-command-operability",
+);
+const adminCommandDiagnostic = getAuthoringDiagnostic(
+  "paper-administrative-command-incomplete",
+);
 const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
 const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirements = listOutputRequirements({ domain: "paper-plugin" });

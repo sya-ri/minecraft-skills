@@ -199,6 +199,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-inventory-gui-interaction-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-inventory-gui-interaction-safety.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-inventory-gui-interaction-unbounded.json`
+- `minecraft-skills://data/authoring-recipes/paper-administrative-command-operability.json`
+- `minecraft-skills://data/authoring-scenarios/paper-administrative-command-operability-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-administrative-command-operability.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-administrative-command-incomplete.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
 - `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/response-patterns/paper-api-answer.json`

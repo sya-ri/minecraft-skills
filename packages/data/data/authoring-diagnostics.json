@@ -509,6 +509,83 @@
         "Cancel before manual mutation and schedule guarded close, open, or reopen work from click, drag, and close handlers for the next supported scheduler turn."
       ],
       "failureMode": "Alternate inventory gestures, deprecated cursor mutation, incomplete settlement, repeated lifecycle callbacks, or stale view transitions can bypass the visible button handler and move, duplicate, delete, or expose protected GUI items."
+    },
+    {
+      "id": "paper-administrative-command-incomplete",
+      "domains": ["paper-plugin"],
+      "title": "Administrative command surface is incomplete or cannot be operated safely",
+      "severity": "error",
+      "detectWhen": [
+        "Paper plugin code creates an administrator, moderator, operator, configuration, maintenance, or recovery command",
+        "a command mutates persistent or runtime state, reloads configuration, repairs state, resets data, grants or revokes access, or targets another subject",
+        "the feature has configuration or mutable state but no list, show, status, reload, retry, or recovery decision",
+        "sender context, target resolution, permission, result feedback, bulk scope, or reload rollback is implicit"
+      ],
+      "requiredChecks": [
+        "map required mutation, inspection, reload, retry, repair, reset, and recovery operations to syntax or an explicitly documented alternative",
+        "verify console availability whenever no player-local input is required, classify every applicable CommandSender subtype as allowed or explicitly rejected, and provide explicit arguments alongside any player-context shortcut",
+        "require an explicit target for privileged subject operations and justify online-only versus offline-capable resolution",
+        "resolve player-facing input to a stable known identity and distinguish offline subjects from unknown or never-registered input",
+        "enforce an explicit least-privilege permission policy for every privileged branch at execution time",
+        "use typed bounded arguments, route secrets through a protected non-command mechanism, and require deliberate preview or confirmation for destructive or all-target scope",
+        "validate a complete reload candidate before atomic publication, retain the last valid state on failure, keep I/O off the main server thread, and define concurrency and Bukkit publication behavior",
+        "return typed outcomes to the invoker and separately define target notification, effective-state inspection, and bounded non-secret auditing",
+        "test supported and rejected sender kinds, self, other, online, supported offline, missing, denied, invalid, I/O failure, rollback, retry, partial, bulk-confirmation, and secret-redaction paths"
+      ],
+      "evidence": [
+        "an operation matrix covering syntax, mutation, sender, target, permission, outcomes, and post-change verification",
+        "target-version Paper API type/member evidence for command sender, target, permission, scheduler, and messaging APIs used",
+        "state-transition and reload tests proving atomic publication and last-known-good preservation",
+        "command tests covering sender, target, denial, failure, observability, recovery, retry, and bulk boundaries"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "an operation is player-only even though it requires no player-local input and has no explicit console-capable form",
+        "remote console, command block, command minecart, proxied sender, custom sender, or unknown sender behavior is silently inherited from a generic CommandSender executor",
+        "a privileged subject operation silently uses the invoker as its target",
+        "a database-only or configuration-only change unnecessarily requires an online Player",
+        "an OfflinePlayer value is treated as proof of a known or previously joined subject without an identity policy",
+        "a privileged branch has no explicit execution-time permission policy or relies on visibility and suggestions for authorization",
+        "a destructive or all-target mutation has an implicit scope or no deliberate preview or confirmation",
+        "a raw secret can enter command arguments, suggestions, histories, logs, feedback, status output, or audit records",
+        "reload mutates effective state before complete validation, loses the last valid state, or races with another reload or mutation",
+        "file, database, or network I/O blocks the main server thread or Bukkit-facing publication uses an unverified execution context",
+        "expected missing, invalid, denied, conflict, partial, or I/O outcomes are silent, logged only, or reported as unconditional success",
+        "only the affected target is notified while a different player invoker or the console receives no result",
+        "no list, show, or status path can verify the effective state after a change",
+        "a retry can duplicate a completed mutation without an idempotency or duplicate-result policy"
+      ],
+      "safeResponse": [
+        "Define the complete operation matrix before generating command branches.",
+        "Use console-capable execution and explicit targets unless the operation truly depends on player-local state, and explicitly handle other sender kinds.",
+        "Keep secret values in a protected non-command input path and redact them from all observable command surfaces.",
+        "Authorize every privileged branch independently of discovery and suggestions.",
+        "Publish reload state only after full validation and preserve the last known good snapshot on failure.",
+        "Return a typed result to the invoker, expose effective state, and test denial, rollback, retry, partial, and bulk boundaries."
+      ],
+      "failureMode": "Operators may be unable to inspect or recover a feature, while implicit sender, target, permission, scope, and reload behavior can apply privileged mutations to the wrong state or hide failures."
     }
   ]
 }

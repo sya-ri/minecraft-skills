@@ -272,6 +272,55 @@
         "closing, opening, or reopening a view directly inside an InventoryClickEvent, InventoryDragEvent, or InventoryCloseEvent callback"
       ],
       "failureMode": "A custom GUI can leak or corrupt items when alternate click, drag, cursor collection, cross-inventory transfer, deprecated cursor mutation, editable-slot ownership, settlement, overflow, or lifecycle paths are not part of the allowlist."
+    },
+    {
+      "id": "paper-administrative-command-operability-review",
+      "domains": ["paper-plugin"],
+      "title": "Review or generate an operable Paper administrative command",
+      "userPrompt": "Create or review a Paper administrative command that operators can authorize, invoke from the right sender contexts, inspect, reload, and recover safely.",
+      "useWhen": [
+        "the request creates or reviews an administrator, moderator, operator, maintenance, or configuration command",
+        "the command changes persistent or runtime state and needs list, show, status, reload, retry, repair, reset, grant, revoke, or remove operations",
+        "the implementation assumes the sender is the target, is player-only without player-local input, or cannot be run from the server console",
+        "the request needs permission checks, explicit target selection, offline-player handling, failure feedback, bulk-operation confirmation, or reload recovery"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-administrative-command-operability"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-administrative-command-incomplete"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the operational surface explicitly covers required mutation, inspection, reload, recovery, and retry paths, or documents why a path is intentionally unavailable",
+        "target-version player, local console, remote console, command block, command minecart, proxied, and custom sender kinds are explicitly supported or rejected from actual input and trust requirements, unknown subtype fallthrough is rejected, and privileged actions on another subject use an explicit target",
+        "online-only and offline-capable targets match whether live Bukkit state is truly required, and offline lookup distinguishes a stable known identity from unknown input",
+        "every privileged branch has an explicit permission policy and bulk or destructive scope requires deliberate confirmation or preview",
+        "reload validates a complete candidate before atomically replacing the effective state, preserves the last valid state on failure, and does not block the main server thread with I/O",
+        "typed outcomes report success, no target, invalid input or state, permission denial, partial completion, and I/O failure to the invoker",
+        "list, show, or status exposes the effective post-change state, and target notification is separate from invoker feedback",
+        "tests cover every supported and rejected sender kind, self, other target, online, offline, missing target, denied permission, reload failure, retry, bulk confirmation, and secret redaction"
+      ],
+      "mustAvoid": [
+        "making a command player-only when it needs no location, view, cursor, held item, or other player-local input",
+        "silently accepting or rejecting remote console, command block, command minecart, proxied, or custom CommandSender kinds, or letting an unknown subtype fall through",
+        "using the administrative sender as an implicit target for an operation that should name its subject",
+        "requiring an online Player for a database-only or configuration-only operation",
+        "treating an OfflinePlayer value as proof that an unknown target is registered or has joined",
+        "shipping a state-changing command without inspection, recovery, permission, or failure-result paths",
+        "replacing the active configuration before the entire reload candidate is valid",
+        "treating tab-completion filtering or command visibility as authorization",
+        "performing all-player or destructive mutations through an ambiguous default scope",
+        "notifying only the affected player while leaving a different invoker or the console without a result",
+        "accepting raw secrets as command arguments or exposing them through suggestions, histories, logs, results, status output, or audit records"
+      ],
+      "failureMode": "A feature can exist in code yet remain unsafe or impossible to operate when its command surface omits console access, explicit targets, permissions, inspection, atomic reload, recovery, or observable outcomes."
     }
   ]
 }
