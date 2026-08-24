@@ -1032,6 +1032,52 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain("execute");
   });
 
+  it("searches and compares official registry entry indexes", async () => {
+    const search = await capture([
+      "minecraft",
+      "registry-entries",
+      "26.2",
+      "--registry",
+      "minecraft:item",
+      "--exact",
+      "minecraft:stone",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"registryStatus": "indexed"');
+    expect(search.stdout.join("\n")).toContain('"entryId": "minecraft:stone"');
+    expect(search.stdout.join("\n")).toContain('"protocolId": 1');
+
+    const comparison = await capture([
+      "minecraft",
+      "compare-registry-entries",
+      "26.1.2",
+      "26.2",
+      "--registry",
+      "minecraft:block",
+      "--exact",
+      "minecraft:cinnabar",
+    ]);
+    expect(comparison.code).toBe(0);
+    expect(comparison.stdout.join("\n")).toContain('"addedTotal": 1');
+    expect(comparison.stdout.join("\n")).toContain('"entryId": "minecraft:cinnabar"');
+
+    const protocolComparison = await capture([
+      "minecraft",
+      "compare-registry-entries",
+      "26.1.2",
+      "26.2",
+      "--registry",
+      "minecraft:attribute",
+      "--exact",
+      "minecraft:armor",
+    ]);
+    expect(protocolComparison.code).toBe(0);
+    expect(protocolComparison.stdout.join("\n")).toContain('"outcome": "compared"');
+    expect(protocolComparison.stdout.join("\n")).toContain('"changedProtocolIdsTotal": 1');
+    expect(protocolComparison.stdout.join("\n")).toContain('"from": 0');
+    expect(protocolComparison.stdout.join("\n")).toContain('"to": 1');
+  });
+
   it("searches lightweight catalog entries by domain", async () => {
     const result = await capture([
       "plugin",

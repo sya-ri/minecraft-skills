@@ -105,6 +105,8 @@ minecraft-skills minecraft versions-for-pack-format datapack 107 --minor 1
 minecraft-skills datapack find execute
 minecraft-skills datapack commands 26.2 --prefix execute --contains run
 minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
+minecraft-skills minecraft registry-entries 26.2 --registry minecraft:item --exact minecraft:stone
+minecraft-skills minecraft compare-registry-entries 26.1.2 26.2 --registry minecraft:attribute --prefix minecraft:armor
 minecraft-skills datapack schema 26.2
 minecraft-skills datapack search-schema 26.2 --kind advancement --contains criteria
 minecraft-skills datapack compare-schema 26.2 26.2 --kind advancement
@@ -113,6 +115,11 @@ minecraft-skills datapack file-schema 26.2 data/example/advancement/root.json
 minecraft-skills datapack migration-plan 1.20.6 1.21 data/example/advancement/root.json
 minecraft-skills datapack vanilla-paths 26.2 --contains recipe
 ```
+
+Registry comparisons emit entry and protocol ID changes only for registries indexed in both
+versions. Check `outcome` and the bounded `excludedRegistries` statuses before treating a partial
+comparison as complete. Protocol changes require numeric IDs in both versions; null-to-number and
+number-to-null observations are not classified as changes.
 
 Resource pack lookups:
 
@@ -318,6 +325,8 @@ Pack analysis tools include:
 - `search_resourcepack_assets`
 - `get_resourcepack_asset`
 - `search_all`
+- `search_registry_entries`
+- `compare_registry_entries`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `explain_pack_path`

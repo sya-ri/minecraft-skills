@@ -129,6 +129,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("find_versions_by_pack_format");
     expect(tools.map((tool) => tool.name)).toContain("compare_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_server_reports");
+    expect(tools.map((tool) => tool.name)).toContain("search_registry_entries");
+    expect(tools.map((tool) => tool.name)).toContain("compare_registry_entries");
     expect(tools.map((tool) => tool.name)).toContain("search_commands");
     expect(tools.map((tool) => tool.name)).toContain("compare_commands");
     expect(tools.map((tool) => tool.name)).toContain("get_datapack_schema_surface");
@@ -220,6 +222,8 @@ describe("MCP tools", () => {
         "get_fact_surface",
         "get_source_policy",
         "get_server_reports",
+        "search_registry_entries",
+        "compare_registry_entries",
         "get_datapack_schema_surface",
         "search_datapack_schema",
         "search_commands",
@@ -821,6 +825,36 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"matchedPaths"');
     expect(result.content[0]?.text).toContain("execute");
+  });
+
+  it("calls registry entry search and comparison tools", async () => {
+    const search = await callMinecraftSkillsTool("search_registry_entries", {
+      version: "26.2",
+      registry: "minecraft:item",
+      exact: "minecraft:stone",
+    });
+    expect(search.content[0]?.text).toContain('"registryStatus": "indexed"');
+    expect(search.content[0]?.text).toContain('"entryId": "minecraft:stone"');
+
+    const comparison = await callMinecraftSkillsTool("compare_registry_entries", {
+      from: "26.1.2",
+      to: "26.2",
+      registry: "minecraft:block",
+      exact: "minecraft:cinnabar",
+    });
+    expect(comparison.content[0]?.text).toContain('"addedTotal": 1');
+    expect(comparison.content[0]?.text).toContain('"entryId": "minecraft:cinnabar"');
+
+    const protocolComparison = await callMinecraftSkillsTool("compare_registry_entries", {
+      from: "26.1.2",
+      to: "26.2",
+      registry: "minecraft:attribute",
+      exact: "minecraft:armor",
+    });
+    expect(protocolComparison.content[0]?.text).toContain('"outcome": "compared"');
+    expect(protocolComparison.content[0]?.text).toContain('"changedProtocolIdsTotal": 1');
+    expect(protocolComparison.content[0]?.text).toContain('"from": 0');
+    expect(protocolComparison.content[0]?.text).toContain('"to": 1');
   });
 
   it("calls compare_commands", async () => {

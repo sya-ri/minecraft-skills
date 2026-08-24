@@ -109,6 +109,8 @@ assumption and ask the user to confirm it.
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`
+- `search_registry_entries`
+- `compare_registry_entries`
 - `get_datapack_schema_surface`
 - `search_datapack_schema`
 - `compare_datapack_schema`
@@ -142,6 +144,11 @@ and Unix modes for stronger metadata checks. The result therefore reports `valid
 `none` or `metadata`, never `binary`. Downloads use Modrinth's official four-host allowlist by
 default. `additionalDownloadHosts` explicitly extends it and produces non-official-host warnings;
 `limits` bounds entries, sizes, ratios, and retained diagnostics.
+
+`compare_registry_entries` emits entry and protocol ID changes only for registries indexed in both
+versions. Its `outcome` and bounded `excludedRegistries` fields expose incomplete coverage without
+turning missing report data into false additions or removals. Protocol changes require numeric IDs
+in both versions; null-to-number and number-to-null observations are not classified as changes.
 
 ## Resources
 

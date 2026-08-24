@@ -13,6 +13,11 @@ All notable changes to this project are documented here.
   contents as UTF-8.
 - Official live Fabric Meta v2 toolchain lookup across the catalog API, CLI, MCP server, and
   natural-language discovery, with bounded Loader, Intermediary, Yarn, and tuple candidates.
+- Version-specific official server report registry entry indexes, with exact, prefix, contains,
+  registry, added/removed/protocol-ID comparison, and bounded-result filters across Catalog, CLI,
+  and MCP. Comparisons exclude registries not indexed in both versions and report their coverage
+  statuses instead of inferring false additions or removals; protocol changes require numeric IDs
+  on both sides.
 - Public Modrinth v2 project search integration across the catalog API, CLI, and MCP server, with
   version, project type, loader, category, sorting, and pagination filters.
 - Modrinth project version listing by project ID or slug, with Minecraft version, loader, featured,

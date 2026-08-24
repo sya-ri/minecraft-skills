@@ -1265,6 +1265,7 @@ export function validateRepository(): ValidationResult {
     requireDataFile(root, `java/version-details/${version.id}.json`, messages);
     requireDataFile(root, `java/reports/${version.id}.json`, messages);
     requireDataFile(root, `java/command-paths/${version.id}.txt`, messages);
+    requireDataFile(root, `java/registry-entries/${version.id}.tsv`, messages);
     requireDataFile(root, `java/vanilla-inventories/${version.id}.json`, messages);
     requireDataFile(root, `java/vanilla-paths/${version.id}.datapack.txt`, messages);
     requireDataFile(root, `java/vanilla-paths/${version.id}.resourcepack.txt`, messages);
@@ -1295,6 +1296,10 @@ export function validateRepository(): ValidationResult {
     ) {
       messages.push(`${prefix} resourcepack coverage must include models with no unknowns`);
     }
+  }
+
+  for (const version of listPendingJavaReportVersions(root)) {
+    messages.push(`java ${version} report summary or companion index needs repair`);
   }
 
   requireDataFile(root, `java/datapack-schema-surfaces/${catalog.latest.java}.json`, messages);
@@ -1391,10 +1396,10 @@ Commands:
                         Download and generate missing detail JSON for all indexed Java releases.
   generate-java-reports
                         Run Mojang data generator reports from a server jar.
-  ingest-java-reports   Generate compact report summary and command path index from server reports.
+  ingest-java-reports   Generate compact report summary, command paths, and registry entry index from server reports.
   ingest-java-reports-all
-                        Download server jars and generate missing or incomplete report summaries.
-  audit-java-reports    Report versions whose server report summaries need generation or repair.
+                        Download server jars and generate missing or incomplete reports and indexes.
+  audit-java-reports    Report versions whose server report summaries or indexes need repair.
   ingest-paper-project
                         Generate Paper plugin support and event search data from PaperMC API JSON.
   ingest-paper-builds  Download latest build summaries for all bundled Paper-supported versions.
@@ -1506,7 +1511,7 @@ function ingestJavaReports(args: string[]): void {
     version: detail.version,
     ...summary,
   });
-  console.log(`wrote Java ${detail.version} reports summary and command paths`);
+  console.log(`wrote Java ${detail.version} reports summary, command paths, and registry entries`);
 }
 
 async function ingestAllJavaReports(args: string[]): Promise<void> {
@@ -1518,7 +1523,7 @@ async function ingestAllJavaReports(args: string[]): Promise<void> {
     force: args.includes("--force"),
     log: (message) => console.log(message),
   });
-  console.log(`wrote ${written} Java reports summary files`);
+  console.log(`wrote ${written} Java report summaries and companion indexes`);
 }
 
 function generateReports(args: string[]): void {

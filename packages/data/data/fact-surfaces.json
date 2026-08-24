@@ -79,6 +79,27 @@
       "packageApis": ["searchCommands", "compareCommands"]
     },
     {
+      "id": "registry-entries",
+      "domains": ["datapack"],
+      "title": "Registry entry IDs",
+      "dataKind": "derived-registry-entry-index",
+      "coverage": "Java Edition 1.13+ bundled releases where official server reports expose registry entries",
+      "provenance": "registry dumps and datapack structure generated from official Mojang server jars",
+      "guarantees": [
+        "search results preserve registry IDs, entry IDs, and reported entry protocol IDs for the exact version",
+        "version comparisons report added and removed entry IDs plus reported protocol IDs that changed only for registries indexed in both versions",
+        "missing official registry reports, unindexed known registries, and unknown registry IDs are represented separately"
+      ],
+      "nonGuarantees": [
+        "does not infer entries omitted by official generated reports",
+        "protocol IDs are exposed only when the report records them and should not be treated as stable across versions",
+        "does not include modded or runtime-added registry entries"
+      ],
+      "cli": ["minecraft registry-entries", "minecraft compare-registry-entries"],
+      "mcp": ["search_registry_entries", "compare_registry_entries"],
+      "packageApis": ["searchRegistryEntries", "compareRegistryEntries"]
+    },
+    {
       "id": "vanilla-inventory",
       "domains": ["datapack", "resourcepack"],
       "title": "Vanilla asset and data inventories",

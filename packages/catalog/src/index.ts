@@ -41,6 +41,7 @@ import {
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import { inspectModrinthArchive } from "./modrinthZip.js";
+import { compareObservedProtocolIds } from "./registryEntryComparison.js";
 import {
   type ResourcepackProjectDiagnostic,
   type ResourcepackProjectDiagnosticSeverity,
@@ -1025,6 +1026,7 @@ export type CoverageSummary = {
     datapack: {
       serverReports: number;
       commandPathIndexes: number;
+      registryEntryIndexes: number;
       vanillaInventories: number;
       vanillaPathIndexes: number;
       observedSchemaSurfaces: number;
@@ -1381,6 +1383,97 @@ export type CommandComparisonResult = {
   truncated: boolean;
   added: string[];
   removed: string[];
+};
+
+export type RegistryEntry = {
+  registryId: string;
+  entryId: string;
+  protocolId: number | null;
+};
+
+export type RegistryEntryProtocolIdChange = {
+  registryId: string;
+  entryId: string;
+  from: number;
+  to: number;
+};
+
+export type RegistryEntryFilter = {
+  exact?: string;
+  contains?: string;
+  prefix?: string;
+  registry?: string;
+};
+
+export type RegistryEntrySearchOptions = RegistryEntryFilter & {
+  edition?: string;
+  version?: string;
+  limit?: number;
+};
+
+export type RegistryEntryStatus =
+  | "all"
+  | "indexed"
+  | "unindexed"
+  | "unknown"
+  | "official-report-unavailable";
+
+export type RegistryEntryComparisonOutcome = "compared" | "partially-compared" | "not-comparable";
+
+export type RegistryEntryComparisonExclusion = {
+  registryId: string;
+  from: RegistryEntryStatus;
+  to: RegistryEntryStatus;
+};
+
+export type RegistryEntrySearchResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  version: string;
+  indexCoverage: JavaReportsSummaryData["datapack"]["registryEntries"];
+  registryFilter: string | null;
+  registryStatus: RegistryEntryStatus;
+  totalEntries: number;
+  matchedEntries: number;
+  truncated: boolean;
+  entries: RegistryEntry[];
+};
+
+export type RegistryEntryComparisonOptions = RegistryEntryFilter & {
+  edition?: string;
+  from: string;
+  to: string;
+  limit?: number;
+};
+
+export type RegistryEntryComparisonResult = {
+  schemaVersion: 1;
+  edition: EditionData;
+  registryFilter: string | null;
+  from: {
+    version: string;
+    registryStatus: RegistryEntryStatus;
+    indexCoverage: JavaReportsSummaryData["datapack"]["registryEntries"];
+    totalEntries: number;
+  };
+  to: {
+    version: string;
+    registryStatus: RegistryEntryStatus;
+    indexCoverage: JavaReportsSummaryData["datapack"]["registryEntries"];
+    totalEntries: number;
+  };
+  outcome: RegistryEntryComparisonOutcome;
+  comparedRegistryCount: number;
+  excludedRegistriesTotal: number;
+  addedTotal: number;
+  removedTotal: number;
+  changedProtocolIdsTotal: number;
+  truncated: boolean;
+  excludedRegistries: RegistryEntryComparisonExclusion[];
+  added: RegistryEntry[];
+  removed: RegistryEntry[];
+  changedProtocolIds: RegistryEntryProtocolIdChange[];
+  notes: string[];
 };
 
 export type ResourcepackModelPathSearchOptions = {
@@ -2520,6 +2613,7 @@ function evidenceDataFilePaths(domain: DomainIdData, edition: EditionData, versi
       ...common,
       { kind: "server-reports", path: `${edition}/reports/${version}.json` },
       { kind: "command-paths", path: `${edition}/command-paths/${version}.txt` },
+      { kind: "registry-entries", path: `${edition}/registry-entries/${version}.tsv` },
       { kind: "vanilla-paths", path: `${edition}/vanilla-paths/${version}.datapack.txt` },
       {
         kind: "datapack-schema-surface",
@@ -3081,6 +3175,7 @@ export function getCoverageSummary(): CoverageSummary {
       `java/version-details/${version.id}.json`,
       `java/reports/${version.id}.json`,
       `java/command-paths/${version.id}.txt`,
+      `java/registry-entries/${version.id}.tsv`,
       `java/vanilla-inventories/${version.id}.json`,
       `java/vanilla-paths/${version.id}.datapack.txt`,
       `java/vanilla-paths/${version.id}.resourcepack.txt`,
@@ -3148,6 +3243,9 @@ export function getCoverageSummary(): CoverageSummary {
         serverReports: countExisting(versions.map((version) => `java/reports/${version.id}.json`)),
         commandPathIndexes: countExisting(
           versions.map((version) => `java/command-paths/${version.id}.txt`),
+        ),
+        registryEntryIndexes: countExisting(
+          versions.map((version) => `java/registry-entries/${version.id}.tsv`),
         ),
         vanillaInventories: countExisting(
           versions.map((version) => `java/vanilla-inventories/${version.id}.json`),
@@ -5375,6 +5473,17 @@ function addCrossResult(
   results.push({ ...entry, score: entry.score ?? entry.matches.length });
 }
 
+const genericRegistryDiscoveryTerms = new Set(["entries", "entry", "registries", "registry"]);
+
+function matchesRegistryDiscoveryPrefilter(entry: RegistryEntry, term: string): boolean {
+  if (!term || genericRegistryDiscoveryTerms.has(term)) {
+    return true;
+  }
+  return (
+    entry.registryId.toLowerCase().includes(term) || entry.entryId.toLowerCase().includes(term)
+  );
+}
+
 export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   const query = options.query.trim();
   if (!query) {
@@ -5435,6 +5544,37 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
         score: scoreDiscoveryMatch(query, [path], ["datapack data pack command path"]),
         matches: [path],
         lookup: `datapack commands ${version} --contains ${JSON.stringify(path)} --limit 1`,
+      });
+    }
+    const registryEntries = registryEntryState(edition, version, {}).entries.filter(
+      (candidate) =>
+        matchesRegistryDiscoveryPrefilter(candidate, discoveryTerm) &&
+        matchesDiscoveryQuery(
+          query,
+          candidate.entryId,
+          candidate.registryId,
+          "minecraft registry registries entry entries identifier",
+        ),
+    );
+    for (const entry of registryEntries) {
+      addCrossResult(results, {
+        surface: "registry-entries",
+        domain: "datapack",
+        kind: entry.registryId,
+        title: entry.entryId,
+        score: scoreDiscoveryMatch(
+          query,
+          [entry.entryId, entry.registryId],
+          ["minecraft registry registries entry entries identifier"],
+        ),
+        matches: [
+          entry.registryId,
+          entry.entryId,
+          ...(entry.protocolId === null ? [] : [`protocol_id=${entry.protocolId}`]),
+        ],
+        lookup: `minecraft registry-entries ${version} --registry ${JSON.stringify(
+          entry.registryId,
+        )} --exact ${JSON.stringify(entry.entryId)} --limit 1`,
       });
     }
     const schema = flattenDatapackFields(getDatapackSchemaSurface(edition, version)).filter(
@@ -5836,6 +5976,255 @@ export function compareVanillaPaths(
     fromTotalPaths: fromPaths.length,
     toTotalPaths: toPaths.length,
     ...comparison,
+  };
+}
+
+const registryEntryIndexHeader = "registry_id\tentry_id\tentry_protocol_id";
+const registryEntryListCache = new Map<string, RegistryEntry[]>();
+
+function readRegistryEntryList(
+  edition: EditionData,
+  reports: JavaReportsSummaryData,
+): RegistryEntry[] {
+  const path = reports.datapack.registryEntries.path;
+  const cached = registryEntryListCache.get(path);
+  if (cached) {
+    return cached;
+  }
+  if (!hasDataFile(path)) {
+    throw new Error(`No bundled registry entry index for ${edition} ${reports.version}`);
+  }
+  const normalized = readDataText(path).replaceAll("\r\n", "\n");
+  const lines = normalized.endsWith("\n")
+    ? normalized.slice(0, -1).split("\n")
+    : normalized.split("\n");
+  if (lines.shift() !== registryEntryIndexHeader) {
+    throw new Error(`Invalid registry entry index header for ${edition} ${reports.version}`);
+  }
+
+  const entries: RegistryEntry[] = [];
+  let previousKey: string | undefined;
+  for (const line of lines) {
+    if (!line) {
+      throw new Error(
+        `Invalid blank row in registry entry index for ${edition} ${reports.version}`,
+      );
+    }
+    const columns = line.split("\t");
+    if (columns.length !== 3) {
+      throw new Error(`Invalid registry entry index row for ${edition} ${reports.version}`);
+    }
+    const [registryId, entryId, protocolText] = columns as [string, string, string];
+    const protocolId = protocolText === "" ? null : Number(protocolText);
+    if (
+      !registryId ||
+      !entryId ||
+      (protocolId !== null && (!Number.isSafeInteger(protocolId) || protocolId < 0))
+    ) {
+      throw new Error(`Invalid registry entry index value for ${edition} ${reports.version}`);
+    }
+    const key = `${registryId}\t${entryId}`;
+    if (previousKey !== undefined && previousKey >= key) {
+      throw new Error(`Unsorted registry entry index for ${edition} ${reports.version}`);
+    }
+    previousKey = key;
+    entries.push({ registryId, entryId, protocolId });
+  }
+  if (entries.length !== reports.datapack.registryEntries.entryCount) {
+    throw new Error(`Registry entry index count mismatch for ${edition} ${reports.version}`);
+  }
+  registryEntryListCache.set(path, entries);
+  return entries;
+}
+
+function registryEntryStatus(
+  reports: JavaReportsSummaryData,
+  registry: string | undefined,
+): RegistryEntryStatus {
+  if (!registry) {
+    return "all";
+  }
+  const known = reports.datapack.registries.find((candidate) => candidate.id === registry);
+  if (known) {
+    return known.entryIndexStatus;
+  }
+  return reports.datapack.registryEntries.coverage === "official-report-unavailable"
+    ? "official-report-unavailable"
+    : "unknown";
+}
+
+function filterRegistryEntries(
+  entries: RegistryEntry[],
+  options: RegistryEntryFilter,
+): RegistryEntry[] {
+  const registry = options.registry?.trim();
+  const exact = options.exact?.trim();
+  const contains = options.contains?.trim();
+  const prefix = options.prefix?.trim();
+  return entries.filter((entry) => {
+    if (registry && entry.registryId !== registry) {
+      return false;
+    }
+    if (exact && entry.entryId !== exact) {
+      return false;
+    }
+    if (prefix && !entry.entryId.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !entry.entryId.includes(contains)) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function registryEntryState(
+  edition: EditionData,
+  requested: string,
+  filter: RegistryEntryFilter,
+): {
+  reports: JavaReportsSummaryData;
+  registry: string | undefined;
+  status: RegistryEntryStatus;
+  scopedEntries: RegistryEntry[];
+  entries: RegistryEntry[];
+} {
+  const reports = getJavaReportsSummary(edition, requested);
+  const registry = filter.registry?.trim() || undefined;
+  const status = registryEntryStatus(reports, registry);
+  const allEntries = readRegistryEntryList(edition, reports);
+  const scopedEntries = registry
+    ? allEntries.filter((entry) => entry.registryId === registry)
+    : allEntries;
+  const { registry: _registry, ...entryFilters } = filter;
+  return {
+    reports,
+    registry,
+    status,
+    scopedEntries,
+    entries: filterRegistryEntries(scopedEntries, entryFilters),
+  };
+}
+
+export function searchRegistryEntries(
+  options: RegistryEntrySearchOptions = {},
+): RegistryEntrySearchResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const state = registryEntryState(edition, options.version ?? "latest", options);
+  return {
+    schemaVersion: 1,
+    edition,
+    version: state.reports.version,
+    indexCoverage: state.reports.datapack.registryEntries,
+    registryFilter: state.registry ?? null,
+    registryStatus: state.status,
+    totalEntries: state.scopedEntries.length,
+    matchedEntries: state.entries.length,
+    truncated: state.entries.length > limit,
+    entries: state.entries.slice(0, limit),
+  };
+}
+
+function registryEntryKey(entry: RegistryEntry): string {
+  return `${entry.registryId}\t${entry.entryId}`;
+}
+
+export function compareRegistryEntries(
+  options: RegistryEntryComparisonOptions,
+): RegistryEntryComparisonResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const limit = normalizeLimit(options.limit, 50, 500);
+  const from = registryEntryState(edition, options.from, options);
+  const to = registryEntryState(edition, options.to, options);
+  const registryFilter = from.registry ?? to.registry;
+  const registryIds = registryFilter
+    ? [registryFilter]
+    : [
+        ...new Set([
+          ...from.reports.datapack.registries.map((registry) => registry.id),
+          ...to.reports.datapack.registries.map((registry) => registry.id),
+        ]),
+      ].sort();
+  const comparableRegistryIds = new Set<string>();
+  const excludedRegistries: RegistryEntryComparisonExclusion[] = [];
+  for (const registryId of registryIds) {
+    const fromStatus = registryEntryStatus(from.reports, registryId);
+    const toStatus = registryEntryStatus(to.reports, registryId);
+    if (fromStatus === "indexed" && toStatus === "indexed") {
+      comparableRegistryIds.add(registryId);
+    } else {
+      excludedRegistries.push({ registryId, from: fromStatus, to: toStatus });
+    }
+  }
+
+  const comparableFromEntries = from.entries.filter((entry) =>
+    comparableRegistryIds.has(entry.registryId),
+  );
+  const comparableToEntries = to.entries.filter((entry) =>
+    comparableRegistryIds.has(entry.registryId),
+  );
+  const fromByKey = new Map(comparableFromEntries.map((entry) => [registryEntryKey(entry), entry]));
+  const toByKey = new Map(comparableToEntries.map((entry) => [registryEntryKey(entry), entry]));
+  const added = comparableToEntries.filter((entry) => !fromByKey.has(registryEntryKey(entry)));
+  const removed = comparableFromEntries.filter((entry) => !toByKey.has(registryEntryKey(entry)));
+  const changedProtocolIds = comparableToEntries.flatMap((entry) => {
+    const previous = fromByKey.get(registryEntryKey(entry));
+    if (!previous) {
+      return [];
+    }
+    const change = compareObservedProtocolIds(previous.protocolId, entry.protocolId);
+    if (!change) {
+      return [];
+    }
+    return [
+      {
+        registryId: entry.registryId,
+        entryId: entry.entryId,
+        ...change,
+      },
+    ];
+  });
+  const outcome: RegistryEntryComparisonOutcome =
+    comparableRegistryIds.size === 0
+      ? "not-comparable"
+      : excludedRegistries.length === 0
+        ? "compared"
+        : "partially-compared";
+  return {
+    schemaVersion: 1,
+    edition,
+    registryFilter: registryFilter ?? null,
+    from: {
+      version: from.reports.version,
+      registryStatus: from.status,
+      indexCoverage: from.reports.datapack.registryEntries,
+      totalEntries: from.entries.length,
+    },
+    to: {
+      version: to.reports.version,
+      registryStatus: to.status,
+      indexCoverage: to.reports.datapack.registryEntries,
+      totalEntries: to.entries.length,
+    },
+    outcome,
+    comparedRegistryCount: comparableRegistryIds.size,
+    excludedRegistriesTotal: excludedRegistries.length,
+    addedTotal: added.length,
+    removedTotal: removed.length,
+    changedProtocolIdsTotal: changedProtocolIds.length,
+    truncated:
+      excludedRegistries.length > limit ||
+      added.length > limit ||
+      removed.length > limit ||
+      changedProtocolIds.length > limit,
+    excludedRegistries: excludedRegistries.slice(0, limit),
+    added: added.slice(0, limit),
+    removed: removed.slice(0, limit),
+    changedProtocolIds: changedProtocolIds.slice(0, limit),
+    notes: [
+      "Protocol ID changes are reported only when both versions expose numeric protocol IDs; null-to-number and number-to-null observations are not classified as changes.",
+    ],
   };
 }
 

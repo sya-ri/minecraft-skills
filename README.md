@@ -12,8 +12,8 @@ Java data packs, Java resource packs, and Paper plugins.
 The project helps AI check real versioned data before it writes code or pack files. It provides:
 
 - Skill folders for datapack, resourcepack, and Paper plugin authoring.
-- CLI/API/MCP lookups for versions, pack formats, commands, vanilla paths, JSON/model shapes, Paper
-  API indexes, and Paper events.
+- CLI/API/MCP lookups for versions, pack formats, commands, registry entries, vanilla paths,
+  JSON/model shapes, Paper API indexes, and Paper events.
 - Authoring guidance for what to verify, what evidence is required, and how to phrase unknowns.
 - Bundled Java 1.13+ data, with cache downloads for heavier generated surfaces.
 
@@ -64,6 +64,8 @@ minecraft-skills datapack migration-plan 1.20.6 1.21 data/example/advancement/ro
 minecraft-skills minecraft pack-format 26.2 datapack
 minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills datapack commands 26.2 --prefix execute
+minecraft-skills minecraft registry-entries 26.2 --registry minecraft:item --exact minecraft:stone
+minecraft-skills minecraft compare-registry-entries 26.1.2 26.2 --registry minecraft:block
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
 minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains models/item --fetch
@@ -77,6 +79,11 @@ minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --lo
 minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 ```
+
+Registry comparisons report entry and protocol ID changes only where both versions have an official
+entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
+`excludedRegistries` fields expose partial coverage, while null-to-number observations are not
+classified as protocol changes.
 
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see
 [docs/USAGE.md](docs/USAGE.md). Version-by-version coverage is summarized in
