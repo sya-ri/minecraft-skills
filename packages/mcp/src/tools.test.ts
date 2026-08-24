@@ -2,7 +2,11 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { getVersionDetail, listDomains } from "@minecraft-skills/catalog";
+import {
+  defaultResourcepackProjectValidationLimits,
+  getVersionDetail,
+  listDomains,
+} from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { callMinecraftSkillsTool, listMinecraftSkillsTools, tools } from "./tools.js";
 
@@ -15,6 +19,13 @@ function crc32(value: Uint8Array): number {
     }
   }
   return (crc ^ 0xffffffff) >>> 0;
+}
+
+function validVorbisIdentificationPage(): Buffer {
+  return Buffer.from(
+    "4f676753000200000000000000000100000000000000a7b4565b011e01766f72626973000000000180bb00000000000000000000000000008601",
+    "hex",
+  );
 }
 
 function testJar(entries: Record<string, string>): Buffer {
@@ -1040,11 +1051,118 @@ describe("MCP tools", () => {
           },
         },
         { path: "assets/example/textures/item/widget.png" },
+        {
+          path: "assets/example/sounds.json",
+          content: { widget: { sounds: ["example:widget"] } },
+        },
+        {
+          path: "assets/example/sounds/widget.ogg",
+          contentBase64: validVorbisIdentificationPage().toString("base64"),
+        },
       ],
     });
     expect(result.content[0]?.text).toContain('"valid": true');
-    expect(result.content[0]?.text).toContain('"checkedReferences": 3');
-    expect(result.content[0]?.text).toContain('"binaryFiles": 1');
+    expect(result.content[0]?.text).toContain('"checkedReferences": 4');
+    expect(result.content[0]?.text).toContain('"binaryFiles": 2');
+    expect(result.content[0]?.text).toContain('"inspectedSoundFiles": 1');
+    expect(result.content[0]?.text).toContain('"validationComplete": true');
+  });
+
+  it("publishes bounded resource-pack request schema limits", () => {
+    const tool = tools.find((candidate) => candidate.name === "validate_resourcepack_project");
+    const files = tool?.inputSchema.properties.files as
+      | {
+          maxItems?: number;
+          items?: {
+            not?: { allOf?: unknown[] };
+            properties?: Record<string, { maxLength?: number }>;
+          };
+        }
+      | undefined;
+    expect(files?.maxItems).toBe(defaultResourcepackProjectValidationLimits.maxFiles);
+    expect(files?.items?.properties?.path?.maxLength).toBe(
+      defaultResourcepackProjectValidationLimits.maxPathLength,
+    );
+    expect(files?.items?.not?.allOf).toHaveLength(2);
+  });
+
+  it("rejects malformed or oversized resource-pack sound header base64", async () => {
+    const malformed = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [{ path: "assets/example/sounds/test.ogg", contentBase64: "not base64" }],
+    });
+    expect(malformed.isError).toBe(true);
+    expect(malformed.content[0]?.text).toContain("canonical base64");
+
+    const oversized = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [
+        {
+          path: "assets/example/sounds/test.ogg",
+          contentBase64: Buffer.alloc(59).toString("base64"),
+        },
+      ],
+    });
+    expect(oversized.isError).toBe(true);
+    expect(oversized.content[0]?.text).toContain("at most 58 bytes");
+
+    const conflicting = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [
+        {
+          path: "assets/example/sounds/test.ogg",
+          content: "ignored",
+          contentBase64: validVorbisIdentificationPage().toString("base64"),
+        },
+      ],
+    });
+    expect(conflicting.isError).toBe(true);
+    expect(conflicting.content[0]?.text).toContain("must not include both");
+
+    const arbitraryOggContent = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [
+        {
+          path: "assets/example/sounds/test.ogg",
+          content: "x".repeat(1_024 * 1_024),
+        },
+      ],
+    });
+    expect(arbitraryOggContent.isError).toBe(true);
+    expect(arbitraryOggContent.content[0]?.text).toContain("bounded contentBase64");
+  });
+
+  it("enforces resource-pack request bounds before unbounded processing", async () => {
+    const tooManyFiles = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: Array.from(
+        { length: defaultResourcepackProjectValidationLimits.maxFiles + 1 },
+        (_, index) => ({ path: `pack/${index}` }),
+      ),
+    });
+    expect(tooManyFiles.isError).toBe(true);
+    expect(tooManyFiles.content[0]?.text).toContain("accepts at most");
+
+    const overlongPath = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [
+        {
+          path: "x".repeat(defaultResourcepackProjectValidationLimits.maxPathLength + 1),
+        },
+      ],
+    });
+    expect(overlongPath.isError).toBe(true);
+    expect(overlongPath.content[0]?.text).toContain("file paths must contain at most");
+
+    const sparseContent = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            event: {
+              sounds: new Array(defaultResourcepackProjectValidationLimits.maxContentNodes),
+            },
+          },
+        },
+      ],
+    });
+    expect(sparseContent.isError).toBeUndefined();
+    expect(sparseContent.content[0]?.text).toContain('"processedFiles": 0');
+    expect(sparseContent.content[0]?.text).toContain('"maxContentNodes"');
   });
 
   it("calls get_pack_migration_plan", async () => {

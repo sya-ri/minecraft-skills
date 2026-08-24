@@ -104,6 +104,30 @@ function crc32(value: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
+function writeOggCrc(page: Buffer): void {
+  page.fill(0, 22, 26);
+  let crc = 0;
+  for (const byte of page) {
+    let value = ((crc >>> 24) ^ byte) & 0xff;
+    value <<= 24;
+    for (let bit = 0; bit < 8; bit += 1) {
+      value = value & 0x8000_0000 ? (value << 1) ^ 0x04c1_1db7 : value << 1;
+    }
+    crc = ((crc << 8) ^ value) >>> 0;
+  }
+  page.writeUInt32LE(crc, 22);
+}
+
+function validVorbisIdentificationPage(channels = 1): Buffer {
+  const page = Buffer.from(
+    "4f67675300020000000000000000010000000000000000000000011e01766f72626973000000000180bb00000000000000000000000000008601",
+    "hex",
+  );
+  page[39] = channels;
+  writeOggCrc(page);
+  return page;
+}
+
 function testJar(entries: Record<string, string | Buffer>): Buffer {
   const localParts: Buffer[] = [];
   const centralParts: Buffer[] = [];
@@ -1537,7 +1561,7 @@ describe("catalog", () => {
     });
   });
 
-  it("validates a resource-pack reference graph without decoding binary assets", () => {
+  it("validates resource-pack model and sound reference graphs with bounded binary checks", () => {
     const result = validateResourcepackProject({
       version: "26.2",
       files: [
@@ -1574,8 +1598,28 @@ describe("catalog", () => {
           content: Buffer.from([0xff, 0xfe, 0xfd]),
         },
         {
+          path: "assets/example/sounds.json",
+          content: {
+            "widget.base": { sounds: ["example:widget"] },
+            "widget.alias": {
+              sounds: [
+                {
+                  name: "example:widget.base",
+                  type: "event",
+                  volume: 1,
+                  pitch: 1,
+                  weight: 2,
+                  stream: false,
+                  attenuation_distance: 16,
+                  preload: true,
+                },
+              ],
+            },
+          },
+        },
+        {
           path: "assets/example/sounds/widget.ogg",
-          content: Buffer.from([0x4f, 0x67, 0x67, 0x53, 0xff]),
+          content: validVorbisIdentificationPage(),
         },
       ],
     });
@@ -1584,13 +1628,673 @@ describe("catalog", () => {
       valid: true,
       modelFiles: 2,
       itemDefinitionFiles: 1,
+      soundDefinitionFiles: 1,
+      soundEvents: 2,
+      soundFileReferences: 1,
+      soundEventReferences: 1,
+      soundFiles: 1,
+      inspectedSoundFiles: 1,
+      soundValidationComplete: true,
+      soundValidationIncompleteReasons: [],
+      validationComplete: true,
+      processedFiles: 6,
       binaryFiles: 2,
-      parsedJsonFiles: 3,
+      parsedJsonFiles: 4,
       errorCount: 0,
       diagnostics: [],
     });
-    expect(result.checkedReferences).toBe(7);
-    expect(result.notes.join("\n")).toContain("were not decoded as text");
+    expect(result.checkedReferences).toBe(9);
+    expect(result.notes.join("\n")).toContain("bounded 58-byte");
+  });
+
+  it("reports missing, unqualified, and cyclic local sound references deterministically", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            a: { sounds: [{ name: "example:b", type: "event" }] },
+            b: { sounds: [{ name: "example:a", type: "event" }] },
+            missing_file: { sounds: ["example:missing"] },
+            missing_event: { sounds: [{ name: "example:nope", type: "event" }] },
+            unqualified: { sounds: ["local"] },
+            external: { sounds: ["minecraft:block/note_block/harp"] },
+          },
+        },
+        {
+          path: "assets/example/sounds/local.ogg",
+          content: validVorbisIdentificationPage(),
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.soundValidationComplete).toBe(false);
+    expect(result.soundValidationIncompleteReasons).toContain("reference-unverified");
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "missing-sound-file",
+          reference: "example:missing",
+        }),
+        expect.objectContaining({
+          code: "missing-sound-event",
+          reference: "example:nope",
+        }),
+        expect.objectContaining({
+          code: "unqualified-local-sound-reference",
+          reference: "local",
+        }),
+        expect.objectContaining({
+          code: "sound-event-cycle",
+          reference: "example:a -> example:b -> example:a",
+        }),
+        expect.objectContaining({
+          severity: "warning",
+          code: "unverified-external-sound-reference",
+          reference: "minecraft:block/note_block/harp",
+        }),
+      ]),
+    );
+  });
+
+  it("validates sounds.json entry shapes and numeric bounds", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            "Bad:event": { sounds: [] },
+            invalid_definition: [],
+            invalid_entries: {
+              replace: "yes",
+              subtitle: 1,
+              sounds: [
+                {},
+                { name: "example:test", type: "stream" },
+                {
+                  name: "example:test",
+                  volume: 0,
+                  pitch: -1,
+                  weight: 0,
+                  stream: "yes",
+                  attenuation_distance: 1.5,
+                  preload: "yes",
+                },
+                7,
+                "example:test.ogg",
+              ],
+            },
+          },
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "invalid-sound-event-id", reference: "Bad:event" }),
+        expect.objectContaining({
+          code: "invalid-sound-definition",
+          reference: "example:invalid_definition",
+        }),
+        expect.objectContaining({ code: "invalid-sound-type" }),
+        expect.objectContaining({ code: "invalid-sound-entry" }),
+        expect.objectContaining({
+          code: "invalid-sound-reference",
+          reference: "example:test.ogg",
+        }),
+      ]),
+    );
+
+    const schemaResult = validatePackFileContent({
+      version: "26.2",
+      domain: "resourcepack",
+      path: "assets/example/sounds.json",
+      content: {
+        invalid: {
+          sounds: [{ type: "event", volume: 0, pitch: 0, weight: 0 }],
+        },
+      },
+    });
+    expect(schemaResult.valid).toBe(false);
+  });
+
+  it("strictly checks the complete 58-byte Ogg/Vorbis identification page", () => {
+    const cases: Array<{
+      name: string;
+      code: string;
+      rewriteCrc: boolean;
+      mutate: (page: Buffer) => void;
+    }> = [
+      {
+        name: "capture",
+        code: "invalid-ogg-container",
+        rewriteCrc: false,
+        mutate: (page) => (page[0] = 0),
+      },
+      {
+        name: "version",
+        code: "invalid-ogg-container",
+        rewriteCrc: true,
+        mutate: (page) => (page[4] = 1),
+      },
+      {
+        name: "flags",
+        code: "invalid-ogg-container",
+        rewriteCrc: true,
+        mutate: (page) => (page[5] = 0),
+      },
+      {
+        name: "granule",
+        code: "invalid-ogg-container",
+        rewriteCrc: true,
+        mutate: (page) => (page[6] = 1),
+      },
+      {
+        name: "sequence",
+        code: "invalid-ogg-container",
+        rewriteCrc: true,
+        mutate: (page) => (page[18] = 1),
+      },
+      {
+        name: "segments",
+        code: "invalid-ogg-container",
+        rewriteCrc: true,
+        mutate: (page) => (page[26] = 2),
+      },
+      {
+        name: "lacing",
+        code: "invalid-ogg-container",
+        rewriteCrc: true,
+        mutate: (page) => (page[27] = 29),
+      },
+      {
+        name: "codec",
+        code: "unsupported-sound-codec",
+        rewriteCrc: true,
+        mutate: (page) => (page[29] = 0),
+      },
+      {
+        name: "Vorbis version",
+        code: "invalid-vorbis-identification",
+        rewriteCrc: true,
+        mutate: (page) => (page[35] = 1),
+      },
+      {
+        name: "channels",
+        code: "invalid-vorbis-identification",
+        rewriteCrc: true,
+        mutate: (page) => (page[39] = 0),
+      },
+      {
+        name: "sample rate",
+        code: "invalid-vorbis-identification",
+        rewriteCrc: true,
+        mutate: (page) => page.fill(0, 40, 44),
+      },
+      {
+        name: "block size",
+        code: "invalid-vorbis-identification",
+        rewriteCrc: true,
+        mutate: (page) => (page[56] = 0x56),
+      },
+      {
+        name: "framing",
+        code: "invalid-vorbis-identification",
+        rewriteCrc: true,
+        mutate: (page) => (page[57] = 0),
+      },
+      {
+        name: "checksum",
+        code: "invalid-ogg-container",
+        rewriteCrc: false,
+        mutate: (page) => (page[22] = (page[22] ?? 0) ^ 1),
+      },
+    ];
+
+    for (const testCase of cases) {
+      const page = validVorbisIdentificationPage();
+      testCase.mutate(page);
+      if (testCase.rewriteCrc) {
+        writeOggCrc(page);
+      }
+      const result = validateResourcepackProject({
+        version: "26.2",
+        files: [
+          {
+            path: `assets/example/sounds/${testCase.name.toLowerCase().replaceAll(" ", "_")}.ogg`,
+            content: page,
+          },
+        ],
+      });
+      expect(result.diagnostics, testCase.name).toContainEqual(
+        expect.objectContaining({ code: testCase.code }),
+      );
+    }
+  });
+
+  it("rejects WAV, Opus, truncated OGG, and channel counts above two", () => {
+    const opus = Buffer.alloc(58);
+    opus.write("OggS", 0, "ascii");
+    opus.write("OpusHead", 28, "ascii");
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        { path: "assets/example/sounds/wave.ogg", content: Buffer.from("RIFF/WAVE") },
+        { path: "assets/example/sounds/opus.ogg", content: opus },
+        { path: "assets/example/sounds/truncated.ogg", content: Buffer.from("OggS") },
+        { path: "assets/example/sounds/unavailable.ogg" },
+        { path: "assets/example/sounds/stereo.ogg", content: validVorbisIdentificationPage(2) },
+        { path: "assets/example/sounds/surround.ogg", content: validVorbisIdentificationPage(3) },
+      ],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.soundFiles).toBe(6);
+    expect(result.inspectedSoundFiles).toBe(5);
+    expect(result.soundValidationComplete).toBe(false);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "unsupported-sound-codec",
+          path: expect.stringContaining("wave.ogg"),
+        }),
+        expect.objectContaining({
+          code: "unsupported-sound-codec",
+          path: expect.stringContaining("opus.ogg"),
+        }),
+        expect.objectContaining({
+          code: "invalid-ogg-container",
+          path: expect.stringContaining("truncated.ogg"),
+        }),
+        expect.objectContaining({ severity: "warning", code: "sound-header-unavailable" }),
+        expect.objectContaining({
+          severity: "error",
+          code: "unsupported-sound-channel-count",
+          reference: "3",
+        }),
+        expect.objectContaining({
+          severity: "warning",
+          code: "multichannel-sound-no-attenuation",
+          reference: "2",
+        }),
+      ]),
+    );
+  });
+
+  it("applies the shared diagnostic limit after sound validation", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      limit: 1,
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            invalid: { sounds: ["example:missing", "example:other_missing"] },
+          },
+        },
+      ],
+    });
+
+    expect(result.truncated).toBe(true);
+    expect(result.diagnosticTotal).toBe(2);
+    expect(result.retainedDiagnosticCount).toBe(1);
+    expect(result.omittedDiagnosticCount).toBe(1);
+    expect(result.diagnostics).toHaveLength(1);
+
+    const mixedSeverity = validateResourcepackProject({
+      version: "26.2",
+      limit: 1,
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            a_warning: { sounds: ["minecraft:unverified"] },
+            z_error: { sounds: ["example:missing"] },
+          },
+        },
+      ],
+    });
+    expect(mixedSeverity).toMatchObject({
+      valid: false,
+      errorCount: 1,
+      warningCount: 1,
+      diagnosticTotal: 2,
+      retainedDiagnosticCount: 1,
+      omittedDiagnosticCount: 1,
+    });
+    expect(mixedSeverity.diagnostics[0]?.severity).toBe("error");
+
+    const sortedPage = validateResourcepackProject({
+      version: "26.2",
+      limit: 1,
+      files: [
+        {
+          path: "assets/z/models/item/test.json",
+          content: { parent: "z:item/missing" },
+        },
+        {
+          path: "assets/a/sounds.json",
+          content: { invalid: { sounds: [7] } },
+        },
+      ],
+    });
+    expect(sortedPage.diagnostics[0]?.path).toBe("assets/a/sounds.json");
+  });
+
+  it("preserves distinct sound-reference diagnostics and reports incomplete external checks", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            file_one: { sounds: ["minecraft:missing"] },
+            file_two: { sounds: ["minecraft:missing"] },
+            event_one: { sounds: [{ name: "minecraft:missing", type: "event" }] },
+          },
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.soundValidationComplete).toBe(false);
+    expect(result.validationComplete).toBe(false);
+    expect(result.soundValidationIncompleteReasons).toEqual(["reference-unverified"]);
+    expect(
+      result.diagnostics
+        .filter((diagnostic) => diagnostic.code === "unverified-external-sound-reference")
+        .map((diagnostic) => diagnostic.source),
+    ).toEqual([
+      "example:event_one.sounds[0]",
+      "example:file_one.sounds[0]",
+      "example:file_two.sounds[0]",
+    ]);
+    expect(result.diagnosticTotal).toBe(3);
+  });
+
+  it("bounds repeated diagnostics before interpolating a long sound-event identifier", () => {
+    const entryCount = 64;
+    const longEventPath = `event/${"a".repeat(64 * 1_024)}`;
+    const result = validateResourcepackProject({
+      version: "26.2",
+      limit: entryCount,
+      limits: { maxDiagnosticTextLength: 96 },
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: {
+            [longEventPath]: {
+              sounds: Array.from({ length: entryCount }, () => ({
+                name: "example:test",
+                type: "invalid",
+              })),
+            },
+          },
+        },
+      ],
+    });
+
+    expect(result.diagnosticTotal).toBe(entryCount);
+    expect(result.retainedDiagnosticCount).toBe(entryCount);
+    expect(new Set(result.diagnostics.map((diagnostic) => diagnostic.reference)).size).toBe(
+      entryCount,
+    );
+    for (const diagnostic of result.diagnostics) {
+      expect(diagnostic.reference?.length).toBeLessThanOrEqual(96);
+      expect(diagnostic.message.length).toBeLessThanOrEqual(96);
+    }
+  });
+
+  it("keeps exact diagnostic counts independent of display-text truncation", () => {
+    const fileCount = 17;
+    const result = validateResourcepackProject({
+      version: "26.2",
+      limit: 100,
+      limits: { maxDiagnosticTextLength: 1 },
+      files: Array.from({ length: fileCount }, (_, index) => ({
+        path: `assets/example/sounds/invalid_${index}.ogg`,
+        content: Uint8Array.of(index),
+      })),
+    });
+
+    expect(result.errorCount).toBe(fileCount);
+    expect(result.diagnosticTotal).toBe(fileCount);
+    expect(result.retainedDiagnosticCount).toBe(fileCount);
+    expect(result.omittedDiagnosticCount).toBe(0);
+    expect(new Set(result.diagnostics.map((diagnostic) => diagnostic.path)).size).toBeLessThan(
+      fileCount,
+    );
+  });
+
+  it("walks a deep sound-event graph without recursive stack growth", () => {
+    const eventCount = 12_000;
+    const definitions: Record<string, unknown> = {};
+    for (let index = 0; index < eventCount; index += 1) {
+      const event = `chain/${String(index).padStart(5, "0")}`;
+      const next = `chain/${String(index + 1).padStart(5, "0")}`;
+      definitions[event] = {
+        sounds: index + 1 < eventCount ? [{ name: `example:${next}`, type: "event" }] : [],
+      };
+    }
+
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [{ path: "assets/example/sounds.json", content: definitions }],
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.soundEvents).toBe(eventCount);
+    expect(result.soundEventReferences).toBe(eventCount - 1);
+    expect(result.soundValidationComplete).toBe(true);
+
+    for (let index = 1; index < eventCount; index += 1) {
+      const event = `chain/${String(index).padStart(5, "0")}`;
+      const next = `chain/${String(index + 1).padStart(5, "0")}`;
+      definitions[event] = {
+        sounds: [
+          { name: "example:chain/00000", type: "event" },
+          ...(index + 1 < eventCount ? [{ name: `example:${next}`, type: "event" }] : []),
+        ],
+      };
+    }
+    const cyclic = validateResourcepackProject({
+      version: "26.2",
+      files: [{ path: "assets/example/sounds.json", content: definitions }],
+    });
+    const cycleDiagnostics = cyclic.diagnostics.filter(
+      (diagnostic) => diagnostic.code === "sound-event-cycle",
+    );
+    expect(cycleDiagnostics).toHaveLength(1);
+    expect(cycleDiagnostics[0]?.reference?.length).toBeLessThanOrEqual(
+      cyclic.appliedLimits.maxDiagnosticTextLength,
+    );
+  });
+
+  it("bounds a reused long resolved texture value before repeated diagnostics", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxDiagnosticTextLength: 96 },
+      files: [
+        {
+          path: "assets/example/models/item/long-texture.json",
+          content: {
+            textures: { layer0: `INVALID-${"x".repeat(64 * 1_024)}` },
+            elements: Array.from({ length: 64 }, () => ({
+              faces: { north: { texture: "#layer0" } },
+            })),
+          },
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "invalid-texture-reference" }),
+    );
+    for (const diagnostic of result.diagnostics) {
+      expect(diagnostic.reference?.length ?? 0).toBeLessThanOrEqual(96);
+      expect(diagnostic.message.length).toBeLessThanOrEqual(96);
+    }
+  });
+
+  it("bounds sound-event and entry processing with explicit completeness metadata", () => {
+    const eventLimited = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxSoundEvents: 2 },
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: { a: {}, b: {}, c: {} },
+        },
+      ],
+    });
+    expect(eventLimited).toMatchObject({
+      valid: false,
+      soundEvents: 2,
+      soundValidationComplete: false,
+      validationComplete: false,
+      exceededLimits: ["maxSoundEvents"],
+      soundValidationIncompleteReasons: ["limit-exceeded"],
+    });
+    expect(eventLimited.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "resourcepack-validation-limit-exceeded",
+        reference: "maxSoundEvents",
+      }),
+    );
+
+    const entryLimited = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxSoundEntries: 2 },
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: { a: { sounds: [7, 8, 9] } },
+        },
+      ],
+    });
+    expect(entryLimited.exceededLimits).toEqual(["maxSoundEntries"]);
+    expect(entryLimited.diagnosticTotal).toBe(3);
+    expect(entryLimited.soundValidationComplete).toBe(false);
+  });
+
+  it("bounds repeated model-context work and walks deep parent cycles iteratively", () => {
+    const workLimited = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxModelGraphOperations: 1 },
+      files: [
+        {
+          path: "assets/example/models/item/base.json",
+          content: { parent: "minecraft:item/generated" },
+        },
+        {
+          path: "assets/example/models/item/child.json",
+          content: { parent: "example:item/base" },
+        },
+      ],
+    });
+    expect(workLimited).toMatchObject({
+      valid: false,
+      validationComplete: false,
+      exceededLimits: ["maxModelGraphOperations"],
+    });
+
+    const texturePrecomputationLimited = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxModelGraphOperations: 1 },
+      files: [
+        {
+          path: "assets/example/models/item/self.json",
+          content: {
+            parent: "example:item/self",
+            textures: { first: "example:first", second: "example:second" },
+          },
+        },
+      ],
+    });
+    expect(texturePrecomputationLimited).toMatchObject({
+      valid: false,
+      validationComplete: false,
+      exceededLimits: ["maxModelGraphOperations"],
+    });
+
+    const modelCount = 12_000;
+    const files = Array.from({ length: modelCount }, (_, index) => {
+      const id = String(index).padStart(5, "0");
+      const parent = String((index + 1) % modelCount).padStart(5, "0");
+      return {
+        path: `assets/example/models/cycle/${id}.json`,
+        content: { parent: `example:cycle/${parent}` },
+      };
+    });
+    const cyclic = validateResourcepackProject({ version: "26.2", files });
+    const cycles = cyclic.diagnostics.filter(
+      (diagnostic) => diagnostic.code === "model-parent-cycle",
+    );
+    expect(cycles).toHaveLength(1);
+    expect(cycles[0]?.reference?.length).toBeLessThanOrEqual(
+      cyclic.appliedLimits.maxDiagnosticTextLength,
+    );
+  });
+
+  it("stops before allocations when project request limits are exceeded", () => {
+    const tooManyFiles = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxFiles: 1 },
+      files: [{ path: "pack.mcmeta" }, { path: "pack.png" }],
+    });
+    expect(tooManyFiles).toMatchObject({
+      valid: false,
+      totalFiles: 2,
+      processedFiles: 0,
+      validationComplete: false,
+      exceededLimits: ["maxFiles"],
+      appliedLimits: expect.objectContaining({ maxFiles: 1, maxDiagnostics: 100 }),
+      omittedDiagnosticCount: 0,
+    });
+
+    const oversizedHeader = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/sounds/too_large.ogg",
+          content: Buffer.alloc(59),
+        },
+      ],
+    });
+    expect(oversizedHeader.exceededLimits).toEqual(["maxSoundHeaderBytes"]);
+    expect(oversizedHeader.processedFiles).toBe(0);
+
+    const oversizedParsedJson = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxContentNodes: 5 },
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: JSON.stringify({ a: { sounds: [1, 2, 3] } }),
+        },
+      ],
+    });
+    expect(oversizedParsedJson.exceededLimits).toEqual(["maxContentNodes"]);
+    expect(oversizedParsedJson.processedFiles).toBe(0);
+
+    const sparseSounds = new Array(1_000);
+    const oversizedSparseArray = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxContentNodes: 10 },
+      files: [
+        {
+          path: "assets/example/sounds.json",
+          content: { a: { sounds: sparseSounds } },
+        },
+      ],
+    });
+    expect(oversizedSparseArray.exceededLimits).toEqual(["maxContentNodes"]);
+    expect(oversizedSparseArray.processedFiles).toBe(0);
   });
 
   it("reports missing resource-pack model, parent, texture, and texture-variable references", () => {
@@ -1875,13 +2579,28 @@ describe("catalog", () => {
           path: "assets/Example/models/item/Widget.json",
           content: { parent: "minecraft:item/generated" },
         },
+        {
+          path: "assets/Example/sounds.json",
+          content: {},
+        },
+        {
+          path: "assets/example/Sounds/Bad.ogg",
+          content: validVorbisIdentificationPage(),
+        },
       ],
     });
 
     expect(result.diagnostics).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ code: "invalid-project-path" }),
-        expect.objectContaining({ code: "invalid-resource-path" }),
+        expect.objectContaining({
+          code: "invalid-resource-path",
+          path: "assets/Example/sounds.json",
+        }),
+        expect.objectContaining({
+          code: "invalid-resource-path",
+          path: "assets/example/Sounds/Bad.ogg",
+        }),
         expect.objectContaining({
           code: "invalid-model-reference",
           reference: "example:item/../item/widget",

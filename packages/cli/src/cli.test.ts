@@ -1,10 +1,23 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getVersionDetail } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
+import { readFilePrefix } from "./filePrefix.js";
+import {
+  classifyResourcepackProjectEntry,
+  readResourcepackProjectFiles,
+} from "./resourcepackProjectFiles.js";
 
 function crc32(value: Uint8Array): number {
   let crc = 0xffffffff;
@@ -15,6 +28,13 @@ function crc32(value: Uint8Array): number {
     }
   }
   return (crc ^ 0xffffffff) >>> 0;
+}
+
+function validVorbisIdentificationPage(): Buffer {
+  return Buffer.from(
+    "4f676753000200000000000000000100000000000000a7b4565b011e01766f72626973000000000180bb00000000000000000000000000008601",
+    "hex",
+  );
 }
 
 async function capture(argv: string[]) {
@@ -999,13 +1019,15 @@ describe("minecraft-skills CLI", () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  it("validates a resource-pack directory reference graph without reading binary files as text", async () => {
+  it("validates a resource-pack directory with bounded Ogg/Vorbis header reads", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-resourcepack-"));
     const itemDirectory = join(root, "assets", "example", "items");
     const modelDirectory = join(root, "assets", "example", "models", "item");
+    const soundDirectory = join(root, "assets", "example", "sounds");
     const textureDirectory = join(root, "assets", "example", "textures", "item");
     mkdirSync(itemDirectory, { recursive: true });
     mkdirSync(modelDirectory, { recursive: true });
+    mkdirSync(soundDirectory, { recursive: true });
     mkdirSync(textureDirectory, { recursive: true });
     writeFileSync(
       join(itemDirectory, "widget.json"),
@@ -1018,14 +1040,127 @@ describe("minecraft-skills CLI", () => {
         textures: { layer0: "example:item/widget" },
       }),
     );
+    writeFileSync(
+      join(root, "assets", "example", "sounds.json"),
+      JSON.stringify({ widget: { sounds: ["example:widget"] } }),
+    );
+    writeFileSync(
+      join(soundDirectory, "widget.ogg"),
+      Buffer.concat([validVorbisIdentificationPage(), Buffer.alloc(256, 0xff)]),
+    );
     writeFileSync(join(textureDirectory, "widget.png"), Buffer.from([0xff, 0xfe, 0xfd]));
 
     try {
       const result = await capture(["resourcepack", "validate-project", "26.2", root]);
       expect(result.code).toBe(0);
       expect(result.stdout.join("\n")).toContain('"valid": true');
-      expect(result.stdout.join("\n")).toContain('"binaryFiles": 1');
-      expect(result.stdout.join("\n")).toContain("were not decoded as text");
+      expect(result.stdout.join("\n")).toContain('"binaryFiles": 2');
+      expect(result.stdout.join("\n")).toContain('"inspectedSoundFiles": 1');
+      expect(result.stdout.join("\n")).toContain("bounded 58-byte");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("fills a bounded sound prefix across short reads and rejects non-regular handles", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-prefix-read-"));
+    const file = join(root, "sound.ogg");
+    const contents = Buffer.concat([validVorbisIdentificationPage(), Buffer.alloc(20, 0xff)]);
+    writeFileSync(file, contents);
+    let calls = 0;
+
+    try {
+      const prefix = readFilePrefix(file, 58, (handle, target, offset, length, position) => {
+        calls += 1;
+        return readSync(handle, target, offset, Math.min(7, length), position);
+      });
+      expect(prefix).toEqual(contents.subarray(0, 58));
+      expect(calls).toBeGreaterThan(1);
+      expect(() => readFilePrefix(file, 58, undefined, () => false)).toThrow(
+        "requires regular local OGG files",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("bounds resource-pack directory traversal and JSON reads before catalog validation", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-project-scan-"));
+    writeFileSync(join(root, "first.json"), "{}");
+    writeFileSync(join(root, "second.json"), "{}");
+
+    try {
+      expect(() =>
+        readResourcepackProjectFiles(root, {
+          maxContentDepth: 4,
+          maxFiles: 1,
+          maxPathLength: 100,
+          maxTextContentCharacters: 100,
+        }),
+      ).toThrow("more than 1 files");
+      expect(() =>
+        readResourcepackProjectFiles(root, {
+          maxContentDepth: 4,
+          maxFiles: 10,
+          maxPathLength: 100,
+          maxTextContentCharacters: 2,
+        }),
+      ).toThrow("remaining 0-byte project budget");
+
+      const nested = join(root, "one", "two");
+      mkdirSync(nested, { recursive: true });
+      expect(() =>
+        readResourcepackProjectFiles(root, {
+          maxContentDepth: 1,
+          maxFiles: 10,
+          maxPathLength: 100,
+          maxTextContentCharacters: 100,
+        }),
+      ).toThrow("directory depth above 1");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("stats directory entries whose filesystem type is unknown", () => {
+    const unknownEntry = {
+      isBlockDevice: () => false,
+      isCharacterDevice: () => false,
+      isDirectory: () => false,
+      isFIFO: () => false,
+      isFile: () => false,
+      isSocket: () => false,
+      isSymbolicLink: () => false,
+    };
+    const status = (kind: "directory" | "file" | "link") => () => ({
+      isDirectory: () => kind === "directory",
+      isFile: () => kind === "file",
+      isSymbolicLink: () => kind === "link",
+    });
+
+    expect(classifyResourcepackProjectEntry(unknownEntry, "unknown", status("directory"))).toBe(
+      "directory",
+    );
+    expect(classifyResourcepackProjectEntry(unknownEntry, "unknown", status("file"))).toBe("file");
+    expect(classifyResourcepackProjectEntry(unknownEntry, "unknown", status("link"))).toBe(
+      "unsupported",
+    );
+  });
+
+  it("returns a failing status for an unsupported resource-pack sound codec", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-invalid-sound-"));
+    const soundDirectory = join(root, "assets", "example", "sounds");
+    mkdirSync(soundDirectory, { recursive: true });
+    writeFileSync(
+      join(root, "assets", "example", "sounds.json"),
+      JSON.stringify({ bad: { sounds: ["example:bad"] } }),
+    );
+    writeFileSync(join(soundDirectory, "bad.ogg"), Buffer.from("RIFF/WAVE"));
+
+    try {
+      const result = await capture(["resourcepack", "validate-project", "26.2", root]);
+      expect(result.code).toBe(1);
+      expect(result.stdout.join("\n")).toContain('"code": "unsupported-sound-codec"');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

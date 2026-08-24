@@ -125,6 +125,7 @@ assumption and ask the user to confirm it.
 - `get_vanilla_datapack_json`
 - `search_vanilla_paths`
 - `compare_vanilla_paths`
+
 - `get_resourcepack_model_summary`
 - `search_resourcepack_models`
 - `get_resourcepack_assets_status`
@@ -143,6 +144,15 @@ assumption and ask the user to confirm it.
 - `list_domains`
 - `list_references`
 - `get_source_policy`
+
+`validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
+OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects
+larger payloads and rejects arbitrary OGG `content`, then validates only the Ogg/Vorbis
+identification page. Omit PNG binary content. The request schema and runtime both cap file count and
+path length, while the catalog layer additionally bounds total content, JSON nodes/depth, sound
+events/entries, model-graph work, and retained diagnostics. Result metadata reports applied/exceeded limits,
+processed files, completeness (including unverified external sound references), and omitted
+diagnostic counts.
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,

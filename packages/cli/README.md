@@ -107,9 +107,15 @@ The Modrinth command uses the public v2 search API and supports `--category`, so
 `--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.
 
 `resourcepack validate-project` recursively checks item-definition and legacy override model targets,
-model parents, textures, and inherited texture variables against the project and target-version
-vanilla assets. Special item-model base references are included. PNG and OGG files contribute paths
-to the graph without being decoded as text. Invalid graphs are printed as JSON and return exit code 1.
+model parents, textures, inherited texture variables, `sounds.json` file/event references, and local
+model and sound-event cycles. Special item-model base references are included. PNG files contribute
+paths without being decoded, while OGG files are read only through their strict 58-byte Ogg/Vorbis
+identification page using exact bounded prefix reads from regular files. Full audio decoding is out
+of scope. Stereo is accepted with a positional-attenuation warning; more than two channels is an
+error. Unverified external sound references keep a warning-only project valid but set validation
+completeness false. Directory traversal is iterative and applies file, directory-depth, path, and
+aggregate JSON-byte limits before loading project content. Invalid graphs or audio headers are
+printed as JSON and return exit code 1.
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.
 `modrinth compatibility` accepts 2-10 project IDs or slugs and reports bounded common

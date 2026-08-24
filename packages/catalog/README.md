@@ -235,6 +235,13 @@ const resourcepackProject = validateResourcepackProject({
     },
   ],
 });
+// Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
+// Supply at most the first 58 bytes needed for the Ogg/Vorbis identification page. Larger binary
+// inputs are rejected before project processing. `limits` may lower (but never raise) the published
+// file, path, content-node, content-size, model-graph-work, sound-event, and sound-entry ceilings.
+// Results distinguish input `totalFiles` from `processedFiles`, expose `validationComplete` and
+// sound-specific incomplete reasons, echo `appliedLimits`, and report exact retained/omitted
+// diagnostic counts without retaining an unbounded diagnostic array.
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",

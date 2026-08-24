@@ -14,6 +14,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultModrinthPackValidationLimits,
+  defaultResourcepackProjectValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -116,6 +117,7 @@ import {
   validateModrinthPack,
   validatePackFilesContent,
   validateResourcepackProject,
+  vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -1011,7 +1013,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "validate_resourcepack_project",
     description:
-      "Validate item-definition and legacy override model references, model parents, inherited texture references, and local model-parent cycles across a resource-pack project for a target Java version. Omit content for binary PNG/OGG files; their paths are indexed without text decoding.",
+      "Validate model, texture, and sounds.json reference graphs plus bounded Ogg/Vorbis identification headers across a resource-pack project for a target Java version. For OGG files, pass contentBase64 containing at most the first 58 bytes; PNG content may be omitted.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1019,14 +1021,43 @@ export const tools: ToolDefinition[] = [
         version: { type: "string", default: "latest" },
         files: {
           type: "array",
+          maxItems: defaultResourcepackProjectValidationLimits.maxFiles,
           items: {
             type: "object",
             properties: {
-              path: { type: "string" },
-              content: {},
+              path: {
+                type: "string",
+                maxLength: defaultResourcepackProjectValidationLimits.maxPathLength,
+              },
+              content: {
+                oneOf: [
+                  {
+                    type: "string",
+                    maxLength: defaultResourcepackProjectValidationLimits.maxTextContentCharacters,
+                  },
+                  { type: "object" },
+                ],
+                description:
+                  "JSON text or object content. OGG files must use contentBase64 instead.",
+              },
+              contentBase64: {
+                type: "string",
+                minLength: 1,
+                maxLength: Math.ceil(vorbisIdentificationPageBytes / 3) * 4,
+                description: `Canonical base64 for at most the first ${vorbisIdentificationPageBytes} bytes of an OGG file. Do not send the full audio file.`,
+              },
             },
             required: ["path"],
             additionalProperties: false,
+            not: {
+              allOf: [
+                {
+                  properties: { path: { pattern: "\\.[oO][gG][gG]$" } },
+                  required: ["path"],
+                },
+                { required: ["content"] },
+              ],
+            },
           },
         },
         limit: { type: "integer", minimum: 1, maximum: 1_000, default: 100 },
@@ -1996,6 +2027,28 @@ function isTextLikeAsset(path: string): boolean {
   return /\.(json|mcmeta|txt|lang|properties|fsh|vsh|glsl)$/i.test(path);
 }
 
+const maxEncodedSoundHeaderLength = Math.ceil(vorbisIdentificationPageBytes / 3) * 4;
+
+function decodeSoundHeaderBase64(value: unknown, path: string): Uint8Array {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    value.length > maxEncodedSoundHeaderLength ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)
+  ) {
+    throw new Error(
+      `validate_resourcepack_project contentBase64 for '${path}' must be canonical base64 containing at most ${vorbisIdentificationPageBytes} bytes`,
+    );
+  }
+  const decoded = Buffer.from(value, "base64");
+  if (decoded.byteLength > vorbisIdentificationPageBytes || decoded.toString("base64") !== value) {
+    throw new Error(
+      `validate_resourcepack_project contentBase64 for '${path}' must be canonical base64 containing at most ${vorbisIdentificationPageBytes} bytes`,
+    );
+  }
+  return decoded;
+}
+
 export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
   const args = asRecord(input);
   const edition = typeof args.edition === "string" ? args.edition : "java";
@@ -2548,6 +2601,11 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       if (!Array.isArray(args.files)) {
         throw new Error("validate_resourcepack_project requires files array");
       }
+      if (args.files.length > defaultResourcepackProjectValidationLimits.maxFiles) {
+        throw new Error(
+          `validate_resourcepack_project accepts at most ${defaultResourcepackProjectValidationLimits.maxFiles} files`,
+        );
+      }
       const files = args.files.map((file) => {
         if (
           typeof file !== "object" ||
@@ -2557,9 +2615,33 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         ) {
           throw new Error("validate_resourcepack_project files must include string path");
         }
+        if (file.path.length > defaultResourcepackProjectValidationLimits.maxPathLength) {
+          throw new Error(
+            `validate_resourcepack_project file paths must contain at most ${defaultResourcepackProjectValidationLimits.maxPathLength} characters`,
+          );
+        }
+        if ("content" in file && "contentBase64" in file) {
+          throw new Error(
+            "validate_resourcepack_project files must not include both content and contentBase64",
+          );
+        }
+        if ("contentBase64" in file && !file.path.toLowerCase().endsWith(".ogg")) {
+          throw new Error(
+            "validate_resourcepack_project contentBase64 is only accepted for OGG files",
+          );
+        }
+        if ("content" in file && file.path.toLowerCase().endsWith(".ogg")) {
+          throw new Error(
+            "validate_resourcepack_project OGG files must use bounded contentBase64 instead of content",
+          );
+        }
         return {
           path: file.path,
-          ...("content" in file ? { content: file.content } : {}),
+          ...("content" in file
+            ? { content: file.content }
+            : "contentBase64" in file
+              ? { content: decodeSoundHeaderBase64(file.contentBase64, file.path) }
+              : {}),
         };
       });
       return text(
