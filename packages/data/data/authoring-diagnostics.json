@@ -382,6 +382,65 @@
         "Avoid safety guarantees when only API surface data was checked."
       ],
       "failureMode": "Generated plugins can compile but be unsafe for threading, scheduling, or Folia contexts."
+    },
+    {
+      "id": "paper-inventory-leftovers-unhandled",
+      "domains": ["paper-plugin"],
+      "title": "Paper inventory delivery can leave items unaccounted for",
+      "severity": "error",
+      "detectWhen": [
+        "plugin code grants, rewards, restores, or otherwise inserts items into a player inventory",
+        "the insertion can be partial because inventory slots or stack capacity may be exhausted",
+        "delivery code drops, persists, retries, or reports items after attempting inventory insertion"
+      ],
+      "requiredChecks": [
+        "verify the target-version type and member names for the insertion API and every selected fallback",
+        "trace each requested stack into an inserted or uninserted outcome exactly once",
+        "define when delivery is complete, partial with recovered fallback, deferred or rejected without mutation, or failed with undelivered stacks preserved",
+        "test complete insertion, partial insertion, full inventory, retry paths, and selected fallback failure when applicable"
+      ],
+      "evidence": [
+        "Paper API surface matches and behavior documentation for the target-version insertion and fallback members",
+        "a code path that consumes every returned uninserted stack without recreating the original input",
+        "tests that compare requested, inserted, deferred, and dropped or otherwise recovered amounts"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrails"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "list_authoring_guardrails"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "listAuthoringGuardrails"
+        ]
+      },
+      "failIf": [
+        "an insertion return value that may contain uninserted stacks is ignored",
+        "a fallback receives the original requested stack after part of it may already have been inserted",
+        "delivery is marked successful before every uninserted stack reaches the selected overflow policy",
+        "Player.give or another convenience API is assumed to exist or handle overflow identically across Paper versions",
+        "full-inventory or fallback-failure behavior has no observable outcome or regression test"
+      ],
+      "safeResponse": [
+        "Capture the insertion result and send only its uninserted stacks through one explicit fallback.",
+        "If a selected convenience or fallback member is unavailable or its behavior was not inspected for the target version, report that gap and choose a verified alternative.",
+        "Return or record an outcome that distinguishes complete delivery, partial delivery with recovered fallback, deferral or rejection without mutation, and failure with undelivered stacks preserved.",
+        "Add full-inventory and retry tests before presenting the delivery path as loss-safe."
+      ],
+      "failureMode": "Ignored or double-processed leftovers can silently destroy rewards or duplicate items during partial insertion and retry."
     }
   ]
 }

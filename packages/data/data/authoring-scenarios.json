@@ -181,6 +181,42 @@
         "hiding scheduler or Folia assumptions when code touches sensitive state"
       ],
       "failureMode": "Generated Paper plugin code can compile against invented APIs or hide unsafe threading assumptions."
+    },
+    {
+      "id": "paper-item-delivery-review",
+      "domains": ["paper-plugin"],
+      "title": "Review or generate loss-safe Paper item delivery",
+      "userPrompt": "Give a player a reward without losing or duplicating items when the inventory is full.",
+      "useWhen": [
+        "the request inserts rewards, refunds, restored items, or other stacks into a player inventory",
+        "the request mentions a full inventory, partial insertion, uninserted leftovers, or an overflow drop",
+        "the implementation retries or persists an item delivery after insertion or fallback failure"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-safe-item-delivery"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-inventory-leftovers-unhandled"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the target Paper version and every selected insertion or fallback member are verified",
+        "every requested stack reaches an inserted, recovered fallback, deferred or rejected, or preserved-for-caller failure outcome exactly once",
+        "the implementation reports completion only after all uninserted stacks follow the selected overflow policy",
+        "complete, partial, full-inventory, and retry paths plus selected fallback failure when applicable are covered by tests"
+      ],
+      "mustAvoid": [
+        "ignoring uninserted stacks returned by a partial inventory insertion",
+        "sending the original requested stack to a fallback after part of it may already be inserted",
+        "assuming Player.give exists or has the same overflow behavior on every Paper version",
+        "dropping overflow without an explicit recipient pickup or ownership and notification policy"
+      ],
+      "failureMode": "A reward path can silently destroy overflow items or duplicate the portion already inserted when fallback and retry handling are incomplete."
     }
   ]
 }

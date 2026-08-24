@@ -52,9 +52,11 @@ minecraft-skills plugin paper recipes
 minecraft-skills plugin paper recipe paper-event-listener
 minecraft-skills plugin paper search "event listener" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "Paper event listener"
+minecraft-skills plugin paper search-scenarios "full inventory reward leftovers"
 minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
+minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -291,6 +293,12 @@ Use these together before writing or reviewing generated output:
   tiers, prohibited automation, structured community datasets, and optional domain/version
   provenance.
 
+The Paper item-delivery scenario requires partial inventory insertion to account for every
+uninserted stack exactly once. It also requires an explicit reject, defer, persist, or verified
+fallback policy before delivery is reported complete. `Player.give` and similar convenience APIs
+must be verified in the target-version member surface and behavior documentation instead of being
+recommended for every Paper version.
+
 ## Source Policy
 
 Bundled facts come from Mojang version metadata and downloads served through Piston endpoints,
@@ -401,6 +409,9 @@ const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" })
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const scenario = getAuthoringScenario("paper-event-listener-review");
+const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
+const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
+const itemDeliveryScenario = getAuthoringScenario("paper-item-delivery-review");
 const matchingScenarios = searchAuthoringScenarios({
   query: "Paper event listener",
   domain: "paper-plugin",

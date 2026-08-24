@@ -357,12 +357,19 @@ describe("MCP tools", () => {
     });
     expect(list.content[0]?.text).toContain('"id": "paper-event-listener"');
     expect(list.content[0]?.text).toContain('"id": "paper-api-or-scheduler-code"');
+    expect(list.content[0]?.text).toContain('"id": "paper-safe-item-delivery"');
 
     const single = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "datapack-function-command",
     });
     expect(single.content[0]?.text).toContain("verify-command-path");
     expect(single.content[0]?.text).toContain("search_commands");
+
+    const itemDelivery = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-safe-item-delivery",
+    });
+    expect(itemDelivery.content[0]?.text).toContain("define-delivery-and-overflow-outcomes");
+    expect(itemDelivery.content[0]?.text).toContain("Player.give");
   });
 
   it("calls authoring scenario tools", async () => {
@@ -371,12 +378,19 @@ describe("MCP tools", () => {
     });
     expect(list.content[0]?.text).toContain('"id": "paper-event-listener-review"');
     expect(list.content[0]?.text).toContain('"id": "paper-api-scheduler-review"');
+    expect(list.content[0]?.text).toContain('"id": "paper-item-delivery-review"');
 
     const single = await callMinecraftSkillsTool("get_authoring_scenario", {
       id: "paper-event-listener-review",
     });
     expect(single.content[0]?.text).toContain('"paper-event-listener"');
     expect(single.content[0]?.text).toContain("paper-event-candidate-unverified");
+
+    const itemDelivery = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-item-delivery-review",
+    });
+    expect(itemDelivery.content[0]?.text).toContain('"paper-safe-item-delivery"');
+    expect(itemDelivery.content[0]?.text).toContain("paper-inventory-leftovers-unhandled");
   });
 
   it("calls authoring scenario search tool", async () => {
@@ -387,6 +401,12 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"query": "Paper event listener"');
     expect(result.content[0]?.text).toContain('"id": "paper-event-listener-review"');
     expect(result.content[0]?.text).toContain('"matchedTokens"');
+
+    const itemDelivery = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "full inventory reward leftovers",
+      domain: "paper-plugin",
+    });
+    expect(itemDelivery.content[0]?.text).toContain('"id": "paper-item-delivery-review"');
   });
 
   it("calls authoring plan tool", async () => {
@@ -402,6 +422,13 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"id": "paper-event-candidate-unverified"');
     expect(result.content[0]?.text).toContain('"preflight"');
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
+
+    const itemDelivery = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-item-delivery-review",
+      version: "1.21.11",
+    });
+    expect(itemDelivery.content[0]?.text).toContain('"id": "paper-safe-item-delivery"');
+    expect(itemDelivery.content[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
   });
 
   it("calls catalog search tool", async () => {
@@ -421,11 +448,18 @@ describe("MCP tools", () => {
     });
     expect(list.content[0]?.text).toContain('"id": "paper-api-surface-limits"');
     expect(list.content[0]?.text).toContain("unsupported Paper versions");
+    expect(list.content[0]?.text).toContain('"id": "paper-inventory-delivery-outcomes"');
 
     const single = await callMinecraftSkillsTool("get_authoring_guardrail", {
       id: "paper-api-surface-limits",
     });
     expect(single.content[0]?.text).toContain("Javadocs package, type, and member indexes");
+
+    const itemDelivery = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-inventory-delivery-outcomes",
+    });
+    expect(itemDelivery.content[0]?.text).toContain("uninserted stacks");
+    expect(itemDelivery.content[0]?.text).toContain("Player.give");
   });
 
   it("calls authoring diagnostic tools", async () => {
@@ -434,12 +468,19 @@ describe("MCP tools", () => {
     });
     expect(list.content[0]?.text).toContain('"id": "paper-api-member-unverified"');
     expect(list.content[0]?.text).toContain('"id": "paper-threading-assumption"');
+    expect(list.content[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
 
     const single = await callMinecraftSkillsTool("get_authoring_diagnostic", {
       id: "paper-api-member-unverified",
     });
     expect(single.content[0]?.text).toContain('"severity": "error"');
     expect(single.content[0]?.text).toContain("searchPaperMembers");
+
+    const itemDelivery = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-inventory-leftovers-unhandled",
+    });
+    expect(itemDelivery.content[0]?.text).toContain('"severity": "error"');
+    expect(itemDelivery.content[0]?.text).toContain("original requested stack");
   });
 
   it("calls claim policy tools", async () => {
@@ -1317,6 +1358,26 @@ describe("MCP tools", () => {
       task: "migrate resource pack item model",
     });
     expect(suggestions.content[0]?.text).toContain("resourcepack assets find");
+
+    const itemDelivery = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "1.21.11",
+      task: "handle full inventory reward leftovers",
+    });
+    expect(itemDelivery.content[0]?.text).toContain("plugin paper search");
+    expect(itemDelivery.content[0]?.text).toContain('"id": "paper-item-delivery-review"');
+    expect(itemDelivery.content[0]?.text).not.toContain("resourcepack assets find");
+
+    const itemModel = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "1.21.11",
+      task: "give an item model a custom texture",
+    });
+    expect(itemModel.content[0]?.text).not.toContain("plugin paper search");
+
+    const experienceReward = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "1.21.11",
+      task: "reward a player with experience points",
+    });
+    expect(experienceReward.content[0]?.text).not.toContain("plugin paper search");
   });
 
   it("calls external resourcepack asset cache tools", async () => {

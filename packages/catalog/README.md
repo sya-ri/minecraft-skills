@@ -103,16 +103,20 @@ const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
 const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
+const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
   domain: "paper-plugin",
 });
 const listenerScenario = getAuthoringScenario("paper-event-listener-review");
+const itemDeliveryScenario = getAuthoringScenario("paper-item-delivery-review");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
+const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
+const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
 const claimPolicies = listClaimPolicies({ domain: "paper-plugin" });
 const memberClaimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirements = listOutputRequirements({ domain: "paper-plugin" });

@@ -243,11 +243,17 @@ describe("minecraft-skills CLI", () => {
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-or-scheduler-code"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-safe-item-delivery"');
 
     const single = await capture(["datapack", "recipe", "datapack-function-command"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("verify-command-path");
     expect(single.stdout.join("\n")).toContain("search_commands");
+
+    const itemDelivery = await capture(["plugin", "paper", "recipe", "paper-safe-item-delivery"]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain("define-delivery-and-overflow-outcomes");
+    expect(itemDelivery.stdout.join("\n")).toContain("Player.give");
   });
 
   it("prints authoring scenarios", async () => {
@@ -255,11 +261,22 @@ describe("minecraft-skills CLI", () => {
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-scheduler-review"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-item-delivery-review"');
 
     const single = await capture(["plugin", "paper", "scenario", "paper-event-listener-review"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain('"paper-event-listener"');
     expect(single.stdout.join("\n")).toContain("paper-event-candidate-unverified");
+
+    const itemDelivery = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-item-delivery-review",
+    ]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain('"paper-safe-item-delivery"');
+    expect(itemDelivery.stdout.join("\n")).toContain("paper-inventory-leftovers-unhandled");
   });
 
   it("searches authoring scenarios", async () => {
@@ -268,6 +285,15 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"query": "Paper event listener"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
     expect(result.stdout.join("\n")).toContain('"matchedTokens"');
+
+    const itemDelivery = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "full inventory reward leftovers",
+    ]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain('"id": "paper-item-delivery-review"');
   });
 
   it("prints authoring plans", async () => {
@@ -288,6 +314,17 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"preflight"');
     expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');
+
+    const itemDelivery = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-item-delivery-review",
+      "1.21.11",
+    ]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain('"id": "paper-safe-item-delivery"');
+    expect(itemDelivery.stdout.join("\n")).toContain('"id": "paper-inventory-leftovers-unhandled"');
   });
 
   it("prints authoring guardrails", async () => {
@@ -295,11 +332,22 @@ describe("minecraft-skills CLI", () => {
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "global-source-provenance"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-delivery-outcomes"');
 
     const single = await capture(["plugin", "paper", "guardrail", "paper-api-surface-limits"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain("Javadocs package, type, and member indexes");
     expect(single.stdout.join("\n")).toContain("nonexistent APIs");
+
+    const itemDelivery = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-inventory-delivery-outcomes",
+    ]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain("uninserted stacks");
+    expect(itemDelivery.stdout.join("\n")).toContain("Player.give");
   });
 
   it("prints authoring diagnostics", async () => {
@@ -307,11 +355,22 @@ describe("minecraft-skills CLI", () => {
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-member-unverified"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-threading-assumption"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-leftovers-unhandled"');
 
     const single = await capture(["plugin", "paper", "diagnostic", "paper-api-member-unverified"]);
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain('"severity": "error"');
     expect(single.stdout.join("\n")).toContain("searchPaperMembers");
+
+    const itemDelivery = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-inventory-leftovers-unhandled",
+    ]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain('"severity": "error"');
+    expect(itemDelivery.stdout.join("\n")).toContain("original requested stack");
   });
 
   it("prints claim policies", async () => {
@@ -1545,6 +1604,38 @@ describe("minecraft-skills CLI", () => {
     ]);
     expect(suggestions.code).toBe(0);
     expect(suggestions.stdout.join("\n")).toContain("resourcepack assets find");
+
+    const itemDelivery = await capture([
+      "minecraft",
+      "suggest-lookups",
+      "handle full inventory reward leftovers",
+      "--version",
+      "1.21.11",
+    ]);
+    expect(itemDelivery.code).toBe(0);
+    expect(itemDelivery.stdout.join("\n")).toContain("plugin paper search");
+    expect(itemDelivery.stdout.join("\n")).toContain('"id": "paper-item-delivery-review"');
+    expect(itemDelivery.stdout.join("\n")).not.toContain("resourcepack assets find");
+
+    const itemModel = await capture([
+      "minecraft",
+      "suggest-lookups",
+      "give an item model a custom texture",
+      "--version",
+      "1.21.11",
+    ]);
+    expect(itemModel.code).toBe(0);
+    expect(itemModel.stdout.join("\n")).not.toContain("plugin paper search");
+
+    const experienceReward = await capture([
+      "minecraft",
+      "suggest-lookups",
+      "reward a player with experience points",
+      "--version",
+      "1.21.11",
+    ]);
+    expect(experienceReward.code).toBe(0);
+    expect(experienceReward.stdout.join("\n")).not.toContain("plugin paper search");
   });
 
   it("caches and searches external resourcepack assets", async () => {

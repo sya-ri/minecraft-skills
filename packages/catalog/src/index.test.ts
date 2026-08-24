@@ -750,6 +750,15 @@ describe("catalog", () => {
     expect(paper.steps.map((step) => step.id)).toContain("discover-event-candidates");
     expect(paper.finalChecks).toContain("paper-event-candidate");
 
+    const itemDelivery = getAuthoringRecipe("paper-safe-item-delivery");
+    expect(itemDelivery.steps.map((step) => step.id)).toContain(
+      "define-delivery-and-overflow-outcomes",
+    );
+    expect(itemDelivery.finalChecks).toContain("paper-inventory-delivery-outcomes");
+    expect(itemDelivery.steps.flatMap((step) => step.stopIfMissing).join("\n")).toContain(
+      "Player.give",
+    );
+
     expect(() => getAuthoringRecipe("missing")).toThrow("Unknown authoring recipe: missing");
   });
 
@@ -757,6 +766,7 @@ describe("catalog", () => {
     const paperScenarios = listAuthoringScenarios({ domain: "paper-plugin" });
     expect(paperScenarios.map((scenario) => scenario.id)).toContain("paper-event-listener-review");
     expect(paperScenarios.map((scenario) => scenario.id)).toContain("paper-api-scheduler-review");
+    expect(paperScenarios.map((scenario) => scenario.id)).toContain("paper-item-delivery-review");
 
     const scenario = getAuthoringScenario("paper-event-listener-review");
     expect(scenario.requiredLookups.recipes).toContain("paper-event-listener");
@@ -764,6 +774,13 @@ describe("catalog", () => {
     expect(scenario.mustAvoid).toContain(
       "generating listener code for an event candidate that was not API-verified",
     );
+
+    const itemDelivery = getAuthoringScenario("paper-item-delivery-review");
+    expect(itemDelivery.requiredLookups.recipes).toContain("paper-safe-item-delivery");
+    expect(itemDelivery.requiredLookups.diagnostics).toContain(
+      "paper-inventory-leftovers-unhandled",
+    );
+    expect(itemDelivery.mustAvoid.join("\n")).toContain("Player.give");
 
     expect(() => getAuthoringScenario("missing")).toThrow("Unknown authoring scenario: missing");
   });
@@ -779,6 +796,18 @@ describe("catalog", () => {
     expect(result.results[0]?.matches.some((match) => match.source === "recipe")).toBe(true);
     expect(result.results[0]?.matches.flatMap((match) => match.matchedTokens)).toContain("event");
     expect(result.results.every((entry) => entry.score > 0)).toBe(true);
+  });
+
+  it("finds the loss-safe item delivery scenario from overflow wording", () => {
+    const result = searchAuthoringScenarios({
+      query: "full inventory reward leftovers",
+      domain: "paper-plugin",
+    });
+
+    expect(result.results[0]?.scenario.id).toBe("paper-item-delivery-review");
+    expect(result.results[0]?.matches.flatMap((match) => match.matchedTokens)).toEqual(
+      expect.arrayContaining(["inventory", "reward", "leftovers"]),
+    );
   });
 
   it("searches lightweight catalog entries by text, kind, and domain", () => {
@@ -805,6 +834,18 @@ describe("catalog", () => {
     expect(sourceResult.results.map((entry) => entry.id)).toContain(
       "prismarinejs-minecraft-assets",
     );
+
+    const itemDelivery = searchCatalog({
+      query: "inventory delivery leftovers",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(itemDelivery.results[0]).toEqual(
+      expect.objectContaining({
+        kind: "authoring-recipe",
+        id: "paper-safe-item-delivery",
+      }),
+    );
   });
 
   it("builds authoring plans with scenario lookups resolved", () => {
@@ -829,16 +870,37 @@ describe("catalog", () => {
     expect(plan.evidence?.links.map((link) => link.id)).toContain("paper-javadocs");
   });
 
+  it("builds a version-aware item delivery safety plan", () => {
+    const plan = getAuthoringPlan({
+      scenario: "paper-item-delivery-review",
+      version: "1.21.11",
+    });
+
+    expect(plan.recipes.map((recipe) => recipe.id)).toContain("paper-safe-item-delivery");
+    expect(plan.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-inventory-leftovers-unhandled",
+    );
+    expect(plan.claimPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
+    expect(plan.preflight?.resolvedVersion).toBe("1.21.11");
+  });
+
   it("lists authoring guardrails for output safety", () => {
     const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
     expect(guardrails.map((guardrail) => guardrail.id)).toContain("global-source-provenance");
     expect(guardrails.map((guardrail) => guardrail.id)).toContain("paper-api-surface-limits");
+    expect(guardrails.map((guardrail) => guardrail.id)).toContain(
+      "paper-inventory-delivery-outcomes",
+    );
 
     const paper = getAuthoringGuardrail("paper-api-surface-limits");
     expect(paper.rules).toContain(
       "Javadocs package, type, and member indexes prove names and labels only.",
     );
     expect(paper.failureMode).toContain("nonexistent APIs");
+
+    const itemDelivery = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
+    expect(itemDelivery.rules.join("\n")).toContain("uninserted stacks");
+    expect(itemDelivery.rules.join("\n")).toContain("Player.give");
 
     expect(() => getAuthoringGuardrail("missing")).toThrow("Unknown authoring guardrail: missing");
   });
@@ -851,6 +913,9 @@ describe("catalog", () => {
     expect(paperDiagnostics.map((diagnostic) => diagnostic.id)).toContain(
       "paper-threading-assumption",
     );
+    expect(paperDiagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-inventory-leftovers-unhandled",
+    );
 
     const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
     expect(diagnostic.severity).toBe("error");
@@ -858,6 +923,11 @@ describe("catalog", () => {
       "plugin code references an API type or member that was not found or explicitly marked unverified",
     );
     expect(diagnostic.tools.packageApis).toContain("searchPaperMembers");
+
+    const itemDelivery = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
+    expect(itemDelivery.severity).toBe("error");
+    expect(itemDelivery.failIf.join("\n")).toContain("original requested stack");
+    expect(itemDelivery.tools.packageApis).toContain("getPaperApiReference");
 
     expect(() => getAuthoringDiagnostic("missing")).toThrow(
       "Unknown authoring diagnostic: missing",
@@ -946,14 +1016,24 @@ describe("catalog", () => {
     });
     expect(context.preflight.checklist.domain).toBe("paper-plugin");
     expect(context.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
+    expect(context.recipes.map((recipe) => recipe.id)).toContain("paper-safe-item-delivery");
     expect(context.scenarios.map((scenario) => scenario.id)).toContain(
       "paper-event-listener-review",
+    );
+    expect(context.scenarios.map((scenario) => scenario.id)).toContain(
+      "paper-item-delivery-review",
     );
     expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
     );
+    expect(context.guardrails.map((guardrail) => guardrail.id)).toContain(
+      "paper-inventory-delivery-outcomes",
+    );
     expect(context.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
       "paper-api-member-unverified",
+    );
+    expect(context.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-inventory-leftovers-unhandled",
     );
     expect(context.claimPolicies.map((policy) => policy.id)).toContain(
       "paper-type-or-member-exists",
@@ -3846,5 +3926,33 @@ describe("catalog", () => {
     expect(loot.suggestedTools.map((entry) => entry.tool)).toContain(
       "datapack vanilla-json files 26.2 --kind loot_table",
     );
+  });
+  it("routes full-inventory item delivery tasks to Paper authoring guidance", () => {
+    const result = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "handle full inventory reward leftovers",
+    });
+
+    expect(
+      result.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(true);
+    expect(
+      result.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack assets find")),
+    ).toBe(false);
+    expect(result.scenarios.results[0]?.scenario.id).toBe("paper-item-delivery-review");
+  });
+
+  it("does not route item-model or datapack-command wording to Paper delivery guidance", () => {
+    for (const task of [
+      "give an item model a custom texture",
+      "design a player reward item model",
+      "write a datapack give command",
+      "reward a player with experience points",
+    ]) {
+      const result = suggestMinecraftLookups({ version: "1.21.11", task });
+      expect(
+        result.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+      ).toBe(false);
+    }
   });
 });

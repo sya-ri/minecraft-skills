@@ -1847,6 +1847,26 @@ function isFabricToolchainDiscoveryQuery(query: string): boolean {
   return hasMinecraftOrFabricContext && /\b(yarn|toolchain)\b/.test(normalized);
 }
 
+function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasItemContext = /\b(inventory|item|items|itemstack|stack|stacks)\b/.test(normalized);
+  const hasOverflowContext =
+    /\b(full inventory|inventory (?:is )?full|overflow|leftover|leftovers|uninserted|did not fit|does not fit|cannot fit|item loss|lost item|lost items)\b/.test(
+      normalized,
+    );
+  if (hasItemContext && hasOverflowContext) {
+    return true;
+  }
+  if (
+    /\b(resource ?pack|asset|blockstate|font|model|sound|texture|translation)\b/.test(normalized)
+  ) {
+    return false;
+  }
+  const hasDeliveryAction = /\b(award|deliver|give|grant|refund|restore|reward)\b/.test(normalized);
+  const hasRecipientContext = /\b(inventory|player|recipient)\b/.test(normalized);
+  return hasDeliveryAction && hasItemContext && hasRecipientContext;
+}
+
 function scoreDiscoveryMatch(query: string, actual: string[], semantic: string[] = []): number {
   const actualText = normalizeSearchText(actual.join(" "));
   const semanticText = normalizeSearchText(semantic.join(" "));
@@ -5321,6 +5341,11 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   const version = resolveVersion(edition, options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 8, 50);
   const lower = task.toLowerCase();
+  const paperItemDeliveryTask = isPaperItemDeliveryDiscoveryQuery(task);
+  const explicitResourcepackTask =
+    /\b(resource ?pack|asset|blockstate|font|model|sound|texture|translation)\b/.test(
+      normalizeSearchText(task),
+    );
   const suggestedTools: LookupSuggestionResult["suggestedTools"] = [];
   const add = (tool: string, reason: string) => {
     if (!suggestedTools.some((entry) => entry.tool === tool)) {
@@ -5367,7 +5392,8 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   }
   if (!options.domain || options.domain === "resourcepack") {
     if (
-      /(resource|asset|model|texture|item|blockstate|sound|font|lang|resource pack)/.test(lower)
+      /(resource|asset|model|texture|item|blockstate|sound|font|lang|resource pack)/.test(lower) &&
+      (options.domain === "resourcepack" || explicitResourcepackTask || !paperItemDeliveryTask)
     ) {
       add(
         `resourcepack assets find ${JSON.stringify(task)} --version ${version}`,
@@ -5380,7 +5406,10 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     }
   }
   if (!options.domain || options.domain === "paper-plugin") {
-    if (/(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(lower)) {
+    if (
+      paperItemDeliveryTask ||
+      /(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(lower)
+    ) {
       add(
         `plugin paper search ${JSON.stringify(task)}`,
         "Search Paper plugin recipes, diagnostics, and source guidance.",

@@ -424,6 +424,104 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "Generated plugin code can compile against invented API names or hide behavior and threading assumptions."
+    },
+    {
+      "id": "paper-safe-item-delivery",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review loss-safe Paper item delivery",
+      "when": [
+        "the request grants, rewards, restores, refunds, or otherwise delivers items to a player inventory",
+        "the implementation calls Inventory.addItem or another API that can leave items uninserted",
+        "the request asks what should happen when an inventory is full or only part of a stack fits",
+        "the implementation drops, persists, retries, or reports overflow items"
+      ],
+      "steps": [
+        {
+          "id": "resolve-paper-support-and-members",
+          "action": "Resolve target Paper support, then verify every inventory insertion, fallback, ownership, and convenience member used by the delivery path.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper info",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_plugin_data",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperPluginData",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Paper support metadata and API reference for the target version",
+            "target-version type/member matches for the selected insertion and fallback APIs",
+            "behavior documentation for partial insertion and the chosen overflow fallback"
+          ],
+          "stopIfMissing": "Do not invent an insertion or fallback member, and do not assume Player.give exists or handles overflow the same way on every Paper version."
+        },
+        {
+          "id": "define-delivery-and-overflow-outcomes",
+          "action": "Choose explicit complete, partial-with-recovered-fallback, deferred or rejected without mutation, and failed-with-undelivered-stacks outcomes before mutating the inventory.",
+          "tools": {
+            "cli": [
+              "plugin paper guardrails",
+              "plugin paper diagnostic",
+              "plugin paper api",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "list_authoring_guardrails",
+              "get_authoring_diagnostic",
+              "get_paper_api_reference",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "listAuthoringGuardrails",
+              "getAuthoringDiagnostic",
+              "getPaperApiReference",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "one documented overflow policy for every uninserted stack",
+            "an explicit result contract that preserves uninserted stacks until one delivery outcome is complete",
+            "a pickup or ownership policy when overflow is dropped into the world"
+          ],
+          "stopIfMissing": "Do not start a partial inventory mutation until every possible uninserted stack has one loss-safe outcome."
+        },
+        {
+          "id": "account-once-and-test-boundaries",
+          "action": "Trace each requested stack into exactly one outcome, route only returned uninserted stacks to the fallback, and test capacity and retry boundaries.",
+          "tools": {
+            "cli": ["plugin paper diagnostic", "plugin paper guardrail", "plugin paper members"],
+            "mcp": ["get_authoring_diagnostic", "get_authoring_guardrail", "search_paper_members"],
+            "packageApis": ["getAuthoringDiagnostic", "getAuthoringGuardrail", "searchPaperMembers"]
+          },
+          "evidence": [
+            "complete-insertion, partial-insertion, and full-inventory tests",
+            "retry tests and selected fallback-failure tests that prove the original input is not processed twice",
+            "requested, inserted, deferred, and dropped or otherwise recovered item counts"
+          ],
+          "stopIfMissing": "Treat the delivery path as unsafe until full-inventory and retry tests account for every requested item without loss or duplication."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-inventory-delivery-outcomes"
+      ],
+      "failureMode": "A delivery can report success while silently losing overflow items, or duplicate already inserted items when fallback and retry logic reuse the original input."
     }
   ]
 }
