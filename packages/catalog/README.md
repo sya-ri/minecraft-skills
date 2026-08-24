@@ -39,6 +39,7 @@ import {
   getDatapackSchemaSurface,
   getEvidenceBundle,
   getFactSurface,
+  getFabricToolchainCompatibility,
   getIntentLookup,
   getJavaReportsSummary,
   getModrinthResource,
@@ -137,6 +138,10 @@ const assetFile = await fetchMinecraftAssetFile({
   path: "assets/minecraft/models/item/diamond_sword.json",
 });
 const anyMinecraftMatches = searchAll({ version: "26.2", query: "bundle item model" });
+const fabricToolchain = await getFabricToolchainCompatibility({
+  gameVersion: "1.21.11",
+  limit: 10,
+});
 const modrinthProjects = await searchModrinthProjects({
   query: "voice chat",
   version: "1.21.11",

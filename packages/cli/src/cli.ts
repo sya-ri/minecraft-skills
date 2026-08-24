@@ -53,6 +53,7 @@ import {
   getDatapackSchemaSurface,
   getDomain,
   getEvidenceBundle,
+  getFabricToolchainCompatibility,
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
@@ -409,6 +410,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft search-all": "search-all",
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
+    "fabric toolchain": "fabric-toolchain",
     "modrinth search": "modrinth-search",
     "modrinth versions": "modrinth-versions",
     "modrinth get": "modrinth-get",
@@ -620,6 +622,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "paper-members": "plugin paper members",
   "compare-paper-api-surface": "plugin paper compare-api-surface",
   "paper-events": "plugin paper events",
+  "fabric-toolchain": "fabric toolchain",
   paper:
     "plugin paper info, plugin paper api, plugin paper types, plugin paper members, or plugin paper events",
   references: "reference list",
@@ -641,6 +644,7 @@ const commandGroups = new Set([
   "datapack",
   "resourcepack",
   "plugin",
+  "fabric",
   "rcon",
   "skill",
   "reference",
@@ -831,6 +835,7 @@ Grouped commands:
   minecraft-skills plugin paper types [version] [--package package.name] [--contains text] [--limit 50]
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
+  minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
   minecraft-skills modrinth search <query...> [--version version] [--type type] [--loader loader] [--category category] [--index relevance|downloads|follows|newest|updated] [--offset 0] [--limit 10]
   minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
   minecraft-skills modrinth get <project|project-dependencies|version|version-file|user|categories|loaders|game-versions|project-types|side-types|donation-platforms|report-types|statistics> [identifier] [--algorithm sha1|sha512]
@@ -894,6 +899,8 @@ Command reference:
                  Inspect vanilla assets, model summaries, item/model paths, file schemas, file kinds, and file content validation.
   plugin paper info|api|api-index|compare-api|api-surface|types|members|compare-api-surface|events
                  Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
+  fabric toolchain
+                 Look up bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta.
   reference list Print generated skill references.
   domain show    Print canonical JSON for an authoring domain.
   source policy  Print source and license policy JSON.
@@ -2088,6 +2095,22 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           query,
           ...(domain ? { domain } : {}),
           limit: Number(readOption(args, "--limit", "20")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "fabric-toolchain") {
+      const gameVersion = positionalArgs(args)[0];
+      if (!gameVersion) {
+        throw new Error("fabric toolchain requires a Minecraft game version");
+      }
+      printJson(
+        output,
+        await getFabricToolchainCompatibility({
+          gameVersion,
+          limit: Number(readOption(args, "--limit", "10")),
+          timeoutMs: Number(readOption(args, "--timeout-ms", "5000")),
         }),
       );
       return 0;

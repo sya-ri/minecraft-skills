@@ -517,6 +517,64 @@ describe("minecraft-skills CLI", () => {
     );
   });
 
+  it("looks up a bounded Fabric toolchain tuple", async () => {
+    const intermediary = {
+      maven: "net.fabricmc:intermediary:1.21.11",
+      version: "1.21.11",
+      stable: true,
+    };
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      const body = url.includes("/loader/")
+        ? [
+            {
+              loader: {
+                separator: "+build.",
+                build: 1,
+                maven: "net.fabricmc:fabric-loader:0.17.0",
+                version: "0.17.0",
+                stable: true,
+              },
+              intermediary,
+            },
+          ]
+        : url.includes("/yarn/")
+          ? [
+              {
+                gameVersion: "1.21.11",
+                separator: "+build.",
+                build: 6,
+                maven: "net.fabricmc:yarn:1.21.11+build.6",
+                version: "1.21.11+build.6",
+                stable: true,
+              },
+            ]
+          : [intermediary];
+      return new Response(JSON.stringify(body));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await capture([
+      "fabric",
+      "toolchain",
+      "1.21.11",
+      "--limit",
+      "1",
+      "--timeout-ms",
+      "1000",
+    ]);
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"version": "0.17.0"');
+    expect(result.stdout.join("\n")).toContain('"version": "1.21.11+build.6"');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(
+      expect.arrayContaining([
+        "https://meta.fabricmc.net/v2/versions/loader/1.21.11",
+        "https://meta.fabricmc.net/v2/versions/yarn/1.21.11",
+        "https://meta.fabricmc.net/v2/versions/intermediary/1.21.11",
+      ]),
+    );
+  });
+
   it("searches Modrinth projects with filters", async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
       ok: true,

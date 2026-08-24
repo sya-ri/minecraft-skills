@@ -11,6 +11,8 @@ All notable changes to this project are documented here.
   parent/texture-variable cycles.
 - Binary-safe resource-pack directory scanning that indexes PNG/OGG paths without decoding their
   contents as UTF-8.
+- Official live Fabric Meta v2 toolchain lookup across the catalog API, CLI, MCP server, and
+  natural-language discovery, with bounded Loader, Intermediary, Yarn, and tuple candidates.
 - Public Modrinth v2 project search integration across the catalog API, CLI, and MCP server, with
   version, project type, loader, category, sorting, and pagination filters.
 - Modrinth project version listing by project ID or slug, with Minecraft version, loader, featured,

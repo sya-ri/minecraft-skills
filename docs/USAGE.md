@@ -61,6 +61,7 @@ minecraft-skills source report paper-plugin 26.2
 minecraft-skills source datasets
 minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
+minecraft-skills fabric toolchain 1.21.11
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
@@ -201,6 +202,15 @@ warning-only result exits 0. Results distinguish `none`, `metadata`, and `binary
 in `validationStrength`. The Catalog equivalent is
 `validateModrinthPack({ index, archiveEntries, additionalDownloadHosts, limits })`; MCP clients can
 use `validate_modrinth_pack` with JSON and entry metadata without sending archive binaries.
+
+`fabric toolchain <game-version>` queries the official live Fabric Meta v2 Loader, Intermediary,
+and Yarn endpoints in parallel. Results preserve Fabric Meta's newest-first candidate order and
+recommend the first entries marked `stable`, falling back to the first entries when no stable entry
+is listed. The flag remains upstream selection metadata: it does not prove that a mod, Fabric API
+build, or complete project dependency set is compatible. Candidate tuples combine entries listed
+for the same game version; Fabric Meta does not publish those Cartesian combinations as a separate
+guarantee. Output is bounded with `--limit` (maximum 50), requests default to a 5000 ms timeout, and
+versions without Yarn mappings return an explicit incomplete result instead of inventing a tuple.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and
