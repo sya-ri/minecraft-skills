@@ -835,6 +835,153 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "Administrative code can compile while remaining unusable or unsafe in production because its command surface omits sender, target, permission, inspection, atomic reload, recovery, or observable-result contracts."
+    },
+    {
+      "id": "paper-player-identity-and-display",
+      "domains": ["paper-plugin"],
+      "title": "Model stable player identity and intentional display names in Paper",
+      "when": [
+        "the request stores, resolves, searches, or displays a Minecraft player",
+        "Paper code uses UUID, Player, OfflinePlayer, PlayerProfile, account names, nicknames, or displayName components",
+        "a player rename, disconnect, cache miss, or cross-server update could make identity or presentation stale",
+        "a player-facing message, inventory, dialog, tab list, scoreboard, title, or notification may expose an internal identifier or unintended name source"
+      ],
+      "steps": [
+        {
+          "id": "classify-identity-input-and-presentation",
+          "action": "Inventory every player-related value and surface before choosing APIs. Separate stable identity used for ownership and persistence, mutable operator input used for lookup, current account name, optional plugin-defined display label, and the final Component or text shown on each human-facing surface.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper search-scenarios",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "search_authoring_scenarios",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "searchAuthoringScenarios",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "A value-flow table from command or event input through lookup, storage, cache, and output",
+            "A presentation matrix for chat, inventory, dialog, tab, scoreboard, title, logs, audit, and external transports that are in scope",
+            "An explicit label for each value as stable identity, lookup input, account name, display label, or rendered output"
+          ],
+          "stopIfMissing": "Do not use a generic name or displayName field when its identity and presentation semantics are not defined."
+        },
+        {
+          "id": "persist-and-resolve-stable-identity",
+          "action": "Choose a stable player identifier from the authenticated identity boundary for keys, ownership, references, and joins. Treat account names and display labels as mutable attributes. An authenticated online-mode profile or correctly configured trusted proxy may provide rename-continuous identity; a direct offline-mode server does not authenticate an account boundary, so require an independently authenticated account link or state that rename continuity cannot be guaranteed and never auto-remap ownership from a name alone. Resolve human input to a known identity through an explicit exact-match policy, distinguish online, known offline, unknown, invalid, and lookup-unavailable outcomes, and do not treat an OfflinePlayer object alone as proof that a player is known.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper fact-surfaces"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_fact_surfaces"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listFactSurfaces"
+            ]
+          },
+          "evidence": [
+            "Target-version matches for Player, OfflinePlayer, PlayerProfile, and the member signatures that carry UUID, profile, and lookup values",
+            "A storage schema whose primary player relationships survive account-name changes",
+            "An authentication and proxy-forwarding decision that identifies which UUID source is authoritative, whether rename continuity is actually guaranteed, and how offline-mode or identity-mode changes are migrated",
+            "For direct offline mode, an independently authenticated account-link design or an explicit no-rename-continuity limitation that forbids automatic ownership remapping",
+            "A typed resolution result covering online, known offline, unknown, invalid, ambiguous when applicable, and unavailable",
+            "A decision for exact matching, normalization, name history, and stale aliases"
+          ],
+          "stopIfMissing": "Do not persist a mutable account or display name as the only player key, and do not silently create state for unresolved input."
+        },
+        {
+          "id": "make-each-display-source-explicit",
+          "action": "Choose the intended label independently for every human-facing surface: current account name, plugin-defined display label, a disambiguated combination, or name-free wording. Keep rich Component values distinct from plain lookup strings and treat untrusted names and labels as text instead of markup. For each transport, define encoding, escaping, mention behavior, newline and control-character handling, plain-text serialization, and which Component click or hover events may survive. Define null and unavailable fallbacks, and expose raw UUIDs only where an explicit machine-integration, diagnostic, audit, or operator contract needs them.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "A documented source and fallback for every displayed player label",
+            "Tests proving that Component styling is preserved on rich-text transports, untrusted labels are not parsed as markup, external mentions or Markdown or HTML are escaped by policy, unsafe control characters and Component events are handled, and presentation is not reused as a lookup or persistence key",
+            "A deliberate decision for duplicate or visually identical labels and whether a secondary account name is shown",
+            "An audience and privacy decision for UUIDs, historical names, machine integrations, and operator-only diagnostics"
+          ],
+          "stopIfMissing": "Do not pass Player.name, OfflinePlayer.name, displayName, UUID, or a fallback chain into user-facing output without an explicit presentation contract."
+        },
+        {
+          "id": "bound-refresh-and-cross-server-consistency",
+          "action": "Define the authoritative source for each stable-identity mapping, account-name attribute, and optional display label. Perform external profile, database, or network lookup off the main server thread with timeouts and bounded caches, publish results in a target-compatible context, and define refresh or invalidation on join, rename discovery, profile change, reconnect, and cross-server update.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper claim-policies",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "list_claim_policies",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "listClaimPolicies",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "A source-of-truth and revision or invalidation policy for multi-server or cached identity data",
+            "Timeout, negative-cache, retry, and stale-data behavior for external or remote lookup",
+            "A scheduler decision separating blocking lookup from Bukkit-facing publication",
+            "A convergence test for reconnect or updates observed on another server"
+          ],
+          "stopIfMissing": "Do not block the main thread on profile lookup or allow independent caches to overwrite newer identity or display data without an ordering rule."
+        },
+        {
+          "id": "test-renames-offline-state-and-output",
+          "action": "Test identity and display behavior as state transitions rather than a single online happy path. Cover account rename, direct offline-mode limitations, known offline player, never-seen input, null or unavailable name, duplicate, markup-like, mention-like, newline, control-character, and event-bearing display labels, stale cache, cross-server update, reconnect, lookup timeout, and every output transport in scope.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Tests proving that a rename retains ownership and references where authenticated identity or an independent account link supports continuity, or proving the declared direct-offline limitation otherwise",
+            "Tests proving unknown input cannot masquerade as a known offline player",
+            "Snapshot or structural assertions for each user-facing transport and its fallback",
+            "Tests proving stale or failed lookup has a bounded, observable result"
+          ],
+          "stopIfMissing": "Do not approve a player identity or display change using only a currently-online, unchanged-name example."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-player-identity-and-display",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Player data can attach to the wrong subject, disappear after a rename, leak raw identifiers, or show inconsistent labels when stable identity, lookup input, and presentation are treated as one interchangeable name."
     }
   ]
 }

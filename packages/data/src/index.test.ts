@@ -164,6 +164,50 @@ describe("@minecraft-skills/data", () => {
     expect(scenario?.mustAvoid.join("\n")).toContain("deprecated InventoryClickEvent.setCursor");
   });
 
+  it("loads Paper player identity and display guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{ id: string; steps: Array<{ id: string }>; finalChecks: string[] }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "paper-player-identity-and-display",
+    );
+    expect(recipe?.steps.map((step) => step.id)).toContain("persist-and-resolve-stable-identity");
+    expect(recipe?.finalChecks).toContain("paper-player-identity-and-display");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-player-identity-and-display-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-player-identity-and-display"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-player-identity-display-confusion",
+    );
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    expect(
+      guardrails.guardrails.find((entry) => entry.id === "paper-player-identity-and-display")
+        ?.rules,
+    ).toEqual(expect.arrayContaining([expect.stringContaining("stable player identifier")]));
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-player-identity-display-confusion",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf).toEqual(
+      expect.arrayContaining([expect.stringContaining("only persistent player key")]),
+    );
+  });
+
   it("loads bundled claim policy JSON", () => {
     const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

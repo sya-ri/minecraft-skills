@@ -20,6 +20,10 @@ All notable changes to this project are documented here.
   online/offline targets, permissions, protected secret input, bounded bulk scope, justified safe
   out-of-band alternatives, atomic last-known-good reload, effective-state inspection,
   invoker/target feedback, recovery, retry, partial failure, and failure-path tests.
+- Paper player identity and display authoring guidance across data, Catalog, CLI, and MCP, covering
+  stable persistence, exact offline resolution, intentional per-transport labels, bounded profile
+  lookup, authentication and proxy identity assumptions, rename continuity, and cross-server cache
+  convergence.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

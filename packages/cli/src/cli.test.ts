@@ -434,6 +434,65 @@ describe("minecraft-skills CLI", () => {
     expect(itemDelivery.stdout.join("\n")).toContain("original requested stack");
   });
 
+  it("prints Paper player identity and display guidance", async () => {
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-player-identity-and-display",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("persist-and-resolve-stable-identity");
+    expect(recipe.stdout.join("\n")).toContain("make-each-display-source-explicit");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-player-identity-and-display-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-player-identity-display-confusion");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "UUID player display name OfflinePlayer rename",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-player-identity-and-display-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-player-identity-and-display-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-player-identity-and-display"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-player-identity-display-confusion"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-player-identity-and-display",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("stable player identifier");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-player-identity-display-confusion",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("only persistent player key");
+  });
+
   it("prints claim policies", async () => {
     const list = await capture(["plugin", "paper", "claim-policies"]);
     expect(list.code).toBe(0);
@@ -1696,7 +1755,12 @@ describe("minecraft-skills CLI", () => {
       "1.21.11",
     ]);
     expect(experienceReward.code).toBe(0);
-    expect(experienceReward.stdout.join("\n")).not.toContain("plugin paper search");
+    const experienceRewardOutput = JSON.parse(experienceReward.stdout.join("\n")) as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      experienceRewardOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper ")),
+    ).toBe(false);
   });
 
   it("routes inventory GUI lookup suggestions to Paper without migration false positives", async () => {

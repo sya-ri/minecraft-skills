@@ -321,6 +321,53 @@
         "accepting raw secrets as command arguments or exposing them through suggestions, histories, logs, results, status output, or audit records"
       ],
       "failureMode": "A feature can exist in code yet remain unsafe or impossible to operate when its command surface omits console access, explicit targets, permissions, inspection, atomic reload, recovery, or observable outcomes."
+    },
+    {
+      "id": "paper-player-identity-and-display-review",
+      "domains": ["paper-plugin"],
+      "title": "Review stable player identity and intentional display output",
+      "userPrompt": "Create or review Paper code that resolves, stores, synchronizes, and displays players without confusing stable identity, account names, and presentation labels.",
+      "useWhen": [
+        "the request stores a player by UUID, account name, Player, OfflinePlayer, or profile",
+        "a command accepts a player name or must support a known offline player",
+        "messages, inventories, dialogs, tab lists, scoreboards, titles, notifications, logs, or external output display a player",
+        "renames, reconnects, cache invalidation, or cross-server propagation affect player data"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-player-identity-and-display"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-player-identity-display-confusion"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "stable player identity is distinct from mutable lookup input, current account name, optional display label, and rendered output",
+        "persistence and ownership use an identity authoritative for the documented online or trusted proxy mode and survive account-name changes only when authenticated identity or an independent account link supports it; direct offline mode otherwise states the limitation and never auto-remaps ownership, while unknown input cannot create or impersonate a known identity",
+        "online, known offline, unknown, invalid, ambiguous when applicable, and unavailable lookup outcomes are explicit",
+        "every human-facing surface names its intended label source, rich-text form, trust and markup policy, transport encoding and escaping, mention and control-character handling, Component event policy, null fallback, and disambiguation policy",
+        "external or remote lookup is bounded and off the main thread, with an explicit cache and refresh policy",
+        "cross-server updates converge under the declared authoritative sources and ordering rule",
+        "tests cover rename, offline and unknown state, duplicate labels, stale caches, lookup failure, reconnect, and each output transport"
+      ],
+      "mustAvoid": [
+        "using an account name, nickname, display component, or unauthenticated forwarded identifier as the only persistent player key",
+        "assuming UUID authority is unchanged across online-mode, offline-mode, or proxy-forwarding configuration changes",
+        "claiming rename continuity on direct offline mode without an independently authenticated account link, or automatically remapping ownership from a name",
+        "treating an OfflinePlayer instance as proof that the input identifies a known player",
+        "silently selecting Player.name, OfflinePlayer.name, displayName, or UUID for user-facing output",
+        "using a Component or decorated display label as a command lookup key",
+        "parsing an untrusted account name or display label as MiniMessage or other markup, allowing unintended external mentions or markup, retaining unsafe control characters, or forwarding unapproved Component click or hover events",
+        "blocking the main server thread on profile, database, or network resolution",
+        "letting stale server-local caches overwrite a newer account name or display label",
+        "testing only an online player whose account name never changes"
+      ],
+      "failureMode": "Identity confusion can misattribute ownership and permissions, while implicit display choices expose raw identifiers or produce stale and inconsistent player labels."
     }
   ]
 }

@@ -1132,6 +1132,54 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper player identity and display guidance", () => {
+    const recipe = getAuthoringRecipe("paper-player-identity-and-display");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "persist-and-resolve-stable-identity",
+        "make-each-display-source-explicit",
+        "bound-refresh-and-cross-server-consistency",
+      ]),
+    );
+    expect(recipe.finalChecks).toContain("paper-player-identity-and-display");
+
+    const guardrail = getAuthoringGuardrail("paper-player-identity-and-display");
+    expect(guardrail.rules.join("\n")).toContain("stable player identifier");
+    expect(guardrail.rules.join("\n")).toContain("OfflinePlayer object alone");
+    expect(guardrail.rules.join("\n")).toContain("trusted proxy forwarding");
+    expect(guardrail.rules.join("\n")).toContain("Direct offline mode");
+    expect(guardrail.rules.join("\n")).toContain("untrusted names and labels as text");
+    expect(guardrail.rules.join("\n")).toContain("mention handling");
+
+    const diagnostic = getAuthoringDiagnostic("paper-player-identity-display-confusion");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("only persistent player key");
+    expect(diagnostic.failIf.join("\n")).toContain("main server thread");
+    expect(diagnostic.failIf.join("\n")).toContain("online-mode, offline-mode");
+    expect(diagnostic.failIf.join("\n")).toContain("unintended external mention");
+
+    const scenario = getAuthoringScenario("paper-player-identity-and-display-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-player-identity-and-display"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-player-identity-display-confusion",
+    );
+
+    const search = searchAuthoringScenarios({
+      query: "Paper UUID player identity display name OfflinePlayer rename cache",
+      domain: "paper-plugin",
+    });
+    expect(search.results[0]?.scenario.id).toBe("paper-player-identity-and-display-review");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-player-identity-and-display-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-player-identity-and-display");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-player-identity-display-confusion",
+    );
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");
@@ -4180,6 +4228,98 @@ describe("catalog", () => {
       expect(unrelated.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper "))).toBe(
         false,
       );
+    }
+  });
+
+  it("routes Paper player identity wording without claiming unrelated player rendering tasks", () => {
+    for (const request of [
+      {
+        task: "persist UUID identity but show a readable player display name after rename",
+        domain: "paper-plugin" as const,
+      },
+      { task: "Paper OfflinePlayer profile lookup and name cache" },
+    ]) {
+      const result = suggestMinecraftLookups({ version: "1.21.11", ...request });
+      expect(result.suggestedTools.map((entry) => entry.tool)).toContain(
+        `plugin paper search ${JSON.stringify(request.task)}`,
+      );
+    }
+
+    const inferredPaper = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "Paper OfflinePlayer profile lookup and name cache",
+    });
+    expect(inferredPaper.catalog.domain).toBe("paper-plugin");
+    expect(inferredPaper.scenarios.domain).toBe("paper-plugin");
+    expect(inferredPaper.domain).toBe("paper-plugin");
+
+    const inferredDatapack = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "data-pack function command",
+    });
+    expect(inferredDatapack.catalog.domain).toBe("datapack");
+    expect(inferredDatapack.scenarios.domain).toBe("datapack");
+    expect(inferredDatapack.domain).toBe("datapack");
+
+    const fabricResult = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "render a Fabric player nameplate",
+    });
+    expect(
+      fabricResult.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper ")),
+    ).toBe(false);
+    expect(
+      fabricResult.catalog.results.some(
+        (entry) =>
+          entry.domains.length > 0 && entry.domains.every((domain) => domain === "paper-plugin"),
+      ),
+    ).toBe(false);
+    expect(
+      fabricResult.scenarios.results.some((entry) =>
+        entry.scenario.domains.every((domain) => domain === "paper-plugin"),
+      ),
+    ).toBe(false);
+
+    const resourcepackResult = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "resource pack player head texture",
+    });
+    expect(
+      resourcepackResult.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper ")),
+    ).toBe(false);
+    expect(resourcepackResult.catalog.domain).toBe("resourcepack");
+    expect(resourcepackResult.scenarios.domain).toBe("resourcepack");
+    expect(resourcepackResult.domain).toBe("resourcepack");
+    expect(resourcepackResult.catalog.results.length).toBeGreaterThan(0);
+    expect(resourcepackResult.scenarios.results.length).toBeGreaterThan(0);
+    expect(
+      resourcepackResult.catalog.results.every((entry) => entry.domains.includes("resourcepack")),
+    ).toBe(true);
+    expect(
+      resourcepackResult.scenarios.results.every((entry) =>
+        entry.scenario.domains.includes("resourcepack"),
+      ),
+    ).toBe(true);
+
+    for (const [task, expectedDomain] of [
+      ["resource pack model for the minecraft:paper item", "resourcepack"],
+      ["data pack recipe using the minecraft:paper item", "datapack"],
+    ] as const) {
+      const result = suggestMinecraftLookups({ version: "1.21.11", task });
+      expect(result.domain).toBe(expectedDomain);
+      expect(result.catalog.results.length).toBeGreaterThan(0);
+      expect(result.scenarios.results.length).toBeGreaterThan(0);
+      expect(result.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper "))).toBe(
+        false,
+      );
+      expect(
+        result.catalog.results.every(
+          (entry) => entry.domains.length === 0 || entry.domains.includes(expectedDomain),
+        ),
+      ).toBe(true);
+      expect(
+        result.scenarios.results.every((entry) => entry.scenario.domains.includes(expectedDomain)),
+      ).toBe(true);
     }
   });
 });
