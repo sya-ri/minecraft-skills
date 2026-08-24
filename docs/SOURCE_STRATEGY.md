@@ -84,6 +84,14 @@ and hat source rectangles, and slim/wide metadata behavior. It does not establis
 alpha results, skin ownership or signatures, network retrieval, or later GUI scaling, filtering,
 blending, clipping, or scissor state.
 
+The Java player-texture downloader additionally audits Authlib 9.0.75 artifact SHA-1
+`d61056a234d5e4b272e09d59b0713f80d6c0b6af`, including `TextureUrlChecker` and
+`MinecraftTexturesPayload`. It narrows the observed canonical texture service to one internally
+constructed HTTPS host/path and treats all live responses as untrusted. The pinned classes do not
+establish that the path reference equals a downloaded SHA-256, nor do they prove profile
+signatures, provenance, account identity or ownership, freshness, licensing, pixel appearance, or
+cape/elytra layout.
+
 ## Importer Policy
 
 Future importers should follow this shape:

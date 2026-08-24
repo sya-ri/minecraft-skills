@@ -11,6 +11,10 @@ All notable changes to this project are documented here.
   zero-based half-open content bounds, four-side transparent margins, optional nonempty/minimum-
   margin policy, exact filtered-byte bounds, and consumed/trailing zlib evidence without returning
   paths, pixels, or RGB samples or modifying source files.
+- Fixed-host, bounded Minecraft Java player-texture download and inspection across Catalog and CLI,
+  with strict lowercase reference hashes, skin/cape/elytra kinds, PNG and skin-layout evidence,
+  five-second fetch/body timeout, redirect and response limits, separate downloaded SHA-256
+  evidence, and exclusive identity-verified creation of new `.png` output files.
 - Minecraft Java player-skin layout validation across Catalog, CLI, and MCP, including current
   64x64 and legacy 64x32 dimensions, canonical base-face and hat source rectangles, bounded
   structured inputs, pinned 26.2 client evidence, and explicit PNG/pixel/rendering claim boundaries.

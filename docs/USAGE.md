@@ -179,6 +179,7 @@ minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/w
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
+minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 ```
 
@@ -255,6 +256,17 @@ player-skin dimensions and face UVs. It accepts current 64x64 and legacy 64x32 s
 one-pixel right or bottom omission. Any PNG error keeps layout not checked and returns exit code 1.
 Pixels, alpha, legacy conversion output, GUI scaling, texture filtering, blending, clipping, and
 scissor state are not checked.
+
+`player-texture download` accepts only a strict lowercase 64-hex reference, a
+`skin|cape|elytra` kind, and a new exact-`.png` output path. It never accepts a caller URL, player
+name, port, query, request body, or headers. The fixed texture host request has a five-second
+fetch/body timeout, manual redirect rejection, status/content-type/identity-encoding checks, a
+one-MiB byte cap, and a 4,096 response-chunk cap. Output creation is exclusive and verifies regular
+file and parent identities before and after writing; existing, linked/reparse, special, raced, or
+partially written targets never count as success. Exit code 0 means download validation and save
+both succeeded. JSON omits the path and byte array. The requested reference and downloaded SHA-256
+are separate evidence, not authenticity, profile signature, provenance, identity, ownership,
+freshness, or licensing claims.
 
 Paper plugin lookups:
 
@@ -517,6 +529,7 @@ import {
   getOutputRequirement,
   getPackFormat,
   getResponsePattern,
+  downloadJavaPlayerTexture,
   findVersionsByPackFormat,
   inspectResourcepackPngAlphaBounds,
   searchAuthoringScenarios,
@@ -526,6 +539,7 @@ import {
   searchVanillaPaths,
   validateResourcepackPng,
   validatePlayerSkinLayout,
+  inspectJavaPlayerTextureBytes,
   validateResourcepackProject,
   resolveVelocityToolchain,
 } from "@minecraft-skills/catalog";
@@ -586,6 +600,15 @@ const playerSkinLayout = validatePlayerSkinLayout({
   height: 64,
   sourceRects: { base: { x: 8, y: 8, width: 8, height: 8 } },
 });
+const inspectedPlayerTexture = inspectJavaPlayerTextureBytes(
+  "0123456789abcdef".repeat(4),
+  "skin",
+  readFileSync("./skin.png"),
+);
+const downloadedPlayerTexture = await downloadJavaPlayerTexture(
+  "0123456789abcdef".repeat(4),
+  "skin",
+);
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
 // needed; callers should avoid reading a complete audio file solely for validation.
