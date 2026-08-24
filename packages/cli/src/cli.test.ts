@@ -1,8 +1,11 @@
 import { createHash } from "node:crypto";
 import {
+  type BigIntStats,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   readSync,
   rmSync,
@@ -10,11 +13,12 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { deflateSync } from "node:zlib";
 import { getVersionDetail } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
+import { classifyDatapackProjectEntry, readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { readFilePrefix } from "./filePrefix.js";
 import {
   classifyResourcepackProjectEntry,
@@ -96,6 +100,12 @@ function testAlphaPng(alphaRows: readonly (readonly number[])[]): Buffer {
     pngChunk("IDAT", deflateSync(filtered)),
     pngChunk("IEND"),
   ]);
+}
+
+function withDifferentIdentity(status: BigIntStats): BigIntStats {
+  return Object.assign(Object.create(Object.getPrototypeOf(status)), status, {
+    ino: status.ino + 1n,
+  }) as BigIntStats;
 }
 
 async function capture(argv: string[]) {
@@ -1445,6 +1455,158 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"validFiles": 1');
     expect(result.stdout.join("\n")).toContain('"path": "pack.mcmeta"');
     rmSync(root, { recursive: true, force: true });
+  });
+
+  it("validates a complete datapack directory and its reference graph", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-datapack-"));
+    const functionDirectory = join(root, "data", "example", "function");
+    const tagDirectory = join(root, "data", "example", "tags", "function");
+    mkdirSync(functionDirectory, { recursive: true });
+    mkdirSync(tagDirectory, { recursive: true });
+    writeFileSync(
+      join(root, "pack.mcmeta"),
+      JSON.stringify({ pack: { pack_format: 48, description: "CLI fixture" } }),
+    );
+    writeFileSync(join(functionDirectory, "root.mcfunction"), "function #example:load\n");
+    writeFileSync(join(functionDirectory, "child.mcfunction"), "say child\n");
+    writeFileSync(join(tagDirectory, "load.json"), JSON.stringify({ values: ["example:child"] }));
+
+    try {
+      const result = await capture(["datapack", "validate-project", "1.21", root]);
+      expect(result.code).toBe(0);
+      expect(result.stdout.join("\n")).toContain('"valid": true');
+      expect(result.stdout.join("\n")).toContain('"validationComplete": true');
+      expect(result.stdout.join("\n")).toContain('"checkedReferences": 2');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns a failing status for a missing datapack function reference", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-invalid-datapack-"));
+    const functionDirectory = join(root, "data", "example", "function");
+    mkdirSync(functionDirectory, { recursive: true });
+    writeFileSync(
+      join(root, "pack.mcmeta"),
+      JSON.stringify({ pack: { pack_format: 48, description: "CLI fixture" } }),
+    );
+    writeFileSync(join(functionDirectory, "root.mcfunction"), "function example:missing\n");
+
+    try {
+      const result = await capture(["datapack", "validate-project", "1.21", root]);
+      expect(result.code).toBe(1);
+      expect(result.stdout.join("\n")).toContain('"code": "missing-datapack-reference"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("allows merged namespace dependencies only when explicitly requested", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-merged-datapack-"));
+    const functionDirectory = join(root, "data", "example", "function");
+    mkdirSync(functionDirectory, { recursive: true });
+    writeFileSync(
+      join(root, "pack.mcmeta"),
+      JSON.stringify({ pack: { pack_format: 48, description: "CLI dependency fixture" } }),
+    );
+    writeFileSync(join(functionDirectory, "root.mcfunction"), "function example:dependency\n");
+
+    try {
+      const result = await capture([
+        "datapack",
+        "validate-project",
+        "1.21",
+        "--allow-merged-namespace-dependencies",
+        "--limit",
+        "100",
+        root,
+      ]);
+      expect(result.code).toBe(0);
+      expect(result.stdout.join("\n")).toContain('"validationComplete": false');
+      expect(result.stdout.join("\n")).toContain('"external-reference"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("bounds datapack traversal and rejects special directory entries", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-datapack-scan-"));
+    writeFileSync(join(root, "first.json"), "{}");
+    writeFileSync(join(root, "second.json"), "{}");
+
+    try {
+      expect(() =>
+        readDatapackProjectFiles(root, {
+          maxContentDepth: 4,
+          maxFiles: 1,
+          maxPathLength: 100,
+          maxTextContentCharacters: 100,
+        }),
+      ).toThrow("more than 1 files");
+      expect(() =>
+        readDatapackProjectFiles(root, {
+          maxContentDepth: 4,
+          maxFiles: 10,
+          maxPathLength: 100,
+          maxTextContentCharacters: 2,
+        }),
+      ).toThrow("remaining 0-byte project budget");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+
+    const specialEntry = {
+      isBlockDevice: () => false,
+      isCharacterDevice: () => false,
+      isDirectory: () => false,
+      isFIFO: () => false,
+      isFile: () => false,
+      isSocket: () => false,
+      isSymbolicLink: () => true,
+    };
+    expect(classifyDatapackProjectEntry(specialEntry, "link")).toBe("unsupported");
+  });
+
+  it("rejects a text handle whose identity differs from the classified project file", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-datapack-file-swap-"));
+    const projectFile = join(root, "pack.mcmeta");
+    const outsideFile = join(root, "outside.txt");
+    writeFileSync(projectFile, "{}");
+    writeFileSync(outsideFile, '{"outside":true}');
+    try {
+      expect(() =>
+        readDatapackProjectFiles(root, undefined, {
+          open: (path) =>
+            openSync(resolve(path) === resolve(projectFile) ? outsideFile : path, "r"),
+        }),
+      ).toThrow("input identity changed");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a queued directory whose captured identity changes before traversal", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-datapack-dir-swap-"));
+    const child = join(root, "data");
+    mkdirSync(child);
+    writeFileSync(join(child, "ignored.json"), "{}");
+    let childChecks = 0;
+    try {
+      expect(() =>
+        readDatapackProjectFiles(root, undefined, {
+          lstat: (path) => {
+            const status = lstatSync(path, { bigint: true, throwIfNoEntry: false });
+            if (status && resolve(path) === resolve(child)) {
+              childChecks += 1;
+              return childChecks > 1 ? withDifferentIdentity(status) : status;
+            }
+            return status;
+          },
+        }),
+      ).toThrow("directory identity changed");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("validates a resource-pack directory with bounded Ogg/Vorbis header reads", async () => {

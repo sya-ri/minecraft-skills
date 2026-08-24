@@ -43,6 +43,19 @@ import {
   searchMinecraftAssets,
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
+import {
+  type DatapackProjectDiagnostic,
+  type DatapackProjectDiagnosticSeverity,
+  type DatapackProjectFile,
+  type DatapackProjectValidationIncompleteReason,
+  type DatapackProjectValidationLimitName,
+  type DatapackProjectValidationLimits,
+  type DatapackProjectValidationOptions,
+  type DatapackProjectValidationResult,
+  defaultDatapackProjectValidationLimits,
+  resolveDatapackProjectValidationLimits,
+  validateDatapackReferenceGraph,
+} from "./datapackProject.js";
 import { inspectModrinthArchive } from "./modrinthZip.js";
 import { compareObservedProtocolIds } from "./registryEntryComparison.js";
 import {
@@ -227,6 +240,14 @@ export type {
   CleanMojangServerJarResult,
   DataManifest,
   DataManifestEntry,
+  DatapackProjectDiagnostic,
+  DatapackProjectDiagnosticSeverity,
+  DatapackProjectFile,
+  DatapackProjectValidationIncompleteReason,
+  DatapackProjectValidationLimitName,
+  DatapackProjectValidationLimits,
+  DatapackProjectValidationOptions,
+  DatapackProjectValidationResult,
   DomainData,
   DomainIdData,
   EditionData,
@@ -284,6 +305,7 @@ export type {
 export {
   cleanCachedData,
   cleanMojangServerJar,
+  defaultDatapackProjectValidationLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   fetchData,
@@ -304,6 +326,7 @@ export {
   listCachedMojangServerJarEntries,
   readCachedMinecraftAssetText,
   readCachedMojangServerJarText,
+  resolveDatapackProjectValidationLimits,
   resolveResourcepackPngValidationLimits,
   resolveResourcepackProjectValidationLimits,
   searchMinecraftAssets,
@@ -5375,6 +5398,55 @@ export function validatePackFilesContent(
   };
 }
 
+export function validateDatapackProject(
+  options: DatapackProjectValidationOptions,
+): DatapackProjectValidationResult {
+  const edition = Edition.assert(options.edition ?? "java");
+  const version = resolveVersion(edition, options.version ?? "latest");
+  const limit = normalizeLimit(options.limit, 100, 1_000);
+  const limits = resolveDatapackProjectValidationLimits(options.limits);
+  const detail = getVersionDetail(edition, version);
+  const reports = getJavaReportsSummary(edition, version);
+  const registryEntryIndexAvailable = hasDataFile(reports.datapack.registryEntries.path);
+  const registryEntries = registryEntryIndexAvailable
+    ? readRegistryEntryList(edition, reports)
+    : [];
+  return validateDatapackReferenceGraph({
+    files: options.files,
+    version,
+    directoryLayout: (detail.packFormats.data ?? 0) >= 48 ? "singular" : "legacy-plural",
+    assumeLocalNamespacesComplete: options.assumeLocalNamespacesComplete ?? true,
+    commandRoots: new Set(
+      readCommandPathList(edition, version).map((path) => path.split(" ", 1)[0] ?? ""),
+    ),
+    vanillaPaths: readVanillaPathList(edition, version, "datapack"),
+    registryEntries,
+    registryEntryIndexAvailable,
+    registries: reports.datapack.registries,
+    validateContent(file) {
+      const result = validatePackFileContent({
+        edition,
+        version,
+        domain: "datapack",
+        path: file.path,
+        content: file.content,
+      });
+      return {
+        path: file.path,
+        validated: result.validated,
+        valid: result.valid,
+        issues: result.issues.map((issue) => ({
+          message: issue.message,
+          keyword: issue.keyword,
+          source: issue.path,
+        })),
+      };
+    },
+    limit,
+    limits,
+  });
+}
+
 export function validateResourcepackProject(
   options: ResourcepackProjectValidationOptions,
 ): ResourcepackProjectValidationResult {
@@ -5496,6 +5568,17 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     "Start with a cross-domain search.",
   );
   if (!searchDomain || searchDomain === "datapack") {
+    const datapackProjectValidationTask =
+      /(validat|verif|check|audit|lint|diagnos|broken|missing|reference|cycle)/.test(lower) &&
+      /(data[-_\s]*pack|pack\.mcmeta|function[-_\s]+tag|advancement[-_\s]+parent|mcfunction)/.test(
+        lower,
+      );
+    if (datapackProjectValidationTask) {
+      add(
+        `datapack validate-project ${version} <directory>`,
+        "Validate a complete datapack directory, including local and vanilla references.",
+      );
+    }
     if (
       /(command|execute|function|advancement|loot|recipe|predicate|tag|datapack|data pack)/.test(
         lower,

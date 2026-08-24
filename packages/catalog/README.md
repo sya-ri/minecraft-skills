@@ -92,6 +92,7 @@ import {
   searchVanillaPaths,
   suggestMinecraftLookups,
   inspectResourcepackPngAlphaBounds,
+  validateDatapackProject,
   validateResourcepackProject,
   validateResourcepackPng,
   validatePlayerSkinLayout,
@@ -296,6 +297,26 @@ const resourcepackProject = validateResourcepackProject({
     },
   ],
 });
+const datapackProject = validateDatapackProject({
+  version: "26.2",
+  files: [
+    {
+      path: "pack.mcmeta",
+      content: { pack: { pack_format: 107, description: "Example" } },
+    },
+    {
+      path: "data/example/function/main.mcfunction",
+      content: "function #example:load",
+    },
+    {
+      path: "data/example/tags/function/load.json",
+      content: { values: ["example:main"] },
+    },
+  ],
+});
+// Submitted namespaces are closed by default. Set assumeLocalNamespacesComplete: false only when
+// another pack or mod may merge dependencies into the same namespace; unresolved targets then
+// remain explicit completeness warnings instead of hard missing-reference errors.
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
 // Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
 // PNG files may also be supplied as Uint8Array content for bounded structural validation.

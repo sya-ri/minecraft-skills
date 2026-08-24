@@ -164,7 +164,22 @@ minecraft-skills datapack vanilla-json files 26.2 --kind recipe --contains diamo
 minecraft-skills datapack vanilla-json get 26.2 data/minecraft/recipe/diamond_block.json
 minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe --scope values
 minecraft-skills datapack vanilla-json clean 26.2
+minecraft-skills datapack validate-project 26.2 ./my-data-pack
 ```
+
+`datapack validate-project` scans a stable regular-file directory, rejects observed links and
+special entries, identity-binds opened text files, and aborts detected ancestor/entry changes. Since
+Node does not expose openat-style relative directory traversal, quiesce trees that a malicious local
+writer could mutate concurrently. The validator checks portable paths and collisions, root
+`pack.mcmeta`, version-correct directories and file content, command-position function calls,
+function and registry tags, advancement parents, and local tag/advancement cycles. Submitted
+references are compared with local files, versioned vanilla datapack paths, and official registry
+entry indexes where coverage exists. Submitted namespaces are closed by default; pass
+`--allow-merged-namespace-dependencies` when another pack or mod can contribute to the same
+namespace. Optional missing tag entries remain valid. External dependencies, JSON without
+version-compatible schema coverage, dynamic macros, pack overlays, unindexed registries, and
+unsupported graph kinds are reported through completeness metadata. Files, depth, paths, UTF-8 text,
+parsed nodes, function lines, graph work, and retained diagnostics all have fixed ceilings.
 
 Registry comparisons emit entry and protocol ID changes only for registries indexed in both
 versions. Check `outcome` and the bounded `excludedRegistries` statuses before treating a partial
@@ -490,6 +505,7 @@ Pack analysis tools include:
 - `inspect_resourcepack_png_alpha_bounds`
 - `validate_player_skin_layout`
 - `validate_resourcepack_png`
+- `validate_datapack_project`
 - `validate_resourcepack_project`
 - `get_pack_migration_plan`
 - `get_pack_format`
@@ -552,6 +568,7 @@ import {
   validateResourcepackPng,
   validatePlayerSkinLayout,
   inspectJavaPlayerTextureBytes,
+  validateDatapackProject,
   validateResourcepackProject,
   resolveVelocityToolchain,
 } from "@minecraft-skills/catalog";
@@ -621,6 +638,26 @@ const downloadedPlayerTexture = await downloadJavaPlayerTexture(
   "0123456789abcdef".repeat(4),
   "skin",
 );
+
+const datapackProject = validateDatapackProject({
+  version: "26.2",
+  files: [
+    {
+      path: "pack.mcmeta",
+      content: { pack: { pack_format: 107, description: "Example" } },
+    },
+    {
+      path: "data/example/function/main.mcfunction",
+      content: "function #example:load",
+    },
+    {
+      path: "data/example/tags/function/load.json",
+      content: { values: ["example:main"] },
+    },
+  ],
+});
+// Set assumeLocalNamespacesComplete: false when another pack or mod may merge dependencies into
+// the same namespace. The default closed-project mode reports missing submitted-namespace targets.
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
 // needed; callers should avoid reading a complete audio file solely for validation.

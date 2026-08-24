@@ -117,6 +117,7 @@ aliases or reject Unicode query values.
 - `inspect_resourcepack_png_alpha_bounds`
 - `validate_player_skin_layout`
 - `validate_resourcepack_png`
+- `validate_datapack_project`
 - `validate_resourcepack_project`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
@@ -173,6 +174,15 @@ published ceiling are tool-input errors.
 current 64x64 or legacy 64x32 layout status without receiving image bytes, filesystem paths, URLs,
 or player identity. It does not infer slim/wide from pixels or claim decoded alpha, conversion, or
 GUI-rendering validity.
+
+`validate_datapack_project` accepts a bounded list of project-relative paths with optional JSON,
+mcmeta, or mcfunction content. It checks safe and version-correct paths, `pack.mcmeta`,
+command-position function calls, function/registry tags, advancement parents, local cycles, and
+bundled vanilla evidence. Omit NBT payloads; structure contents are indexed by path only. Submitted
+namespaces are assumed complete by default. Set `assumeLocalNamespacesComplete` to false when
+another pack or mod may merge resources into the same namespace. Those unresolved dependencies,
+JSON without version-compatible schema coverage, dynamic macro commands, pack overlays, and
+unsupported graph kinds are returned as explicit completeness gaps.
 
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects

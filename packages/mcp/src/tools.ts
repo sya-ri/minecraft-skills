@@ -14,6 +14,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultDatapackProjectValidationLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
@@ -127,6 +128,7 @@ import {
   suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
+  validateDatapackProject,
   validateModrinthPack,
   validatePackFilesContent,
   validatePlayerSkinLayout,
@@ -1189,6 +1191,53 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["contentBase64"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_datapack_project",
+    description:
+      "Validate a complete datapack project's safe and version-correct paths, pack.mcmeta, command-position function calls, function and registry tags, advancement parents, local cycles, and bounded reference evidence. Optional merged-namespace dependencies, pack overlays, schema-unavailable JSON, macro commands, and unsupported graph kinds are reported as incomplete instead of guessed.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        assumeLocalNamespacesComplete: {
+          type: "boolean",
+          default: true,
+          description:
+            "Treat unresolved references in submitted namespaces and unresolved minecraft references as hard missing errors. Set false when another pack or mod may merge resources into those namespaces.",
+        },
+        files: {
+          type: "array",
+          maxItems: defaultDatapackProjectValidationLimits.maxFiles,
+          items: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                maxLength: defaultDatapackProjectValidationLimits.maxPathLength,
+              },
+              content: {
+                oneOf: [
+                  {
+                    type: "string",
+                    maxLength: defaultDatapackProjectValidationLimits.maxTextContentCharacters,
+                  },
+                  { type: "object" },
+                ],
+                description:
+                  "UTF-8 JSON/mcmeta/mcfunction text, or a parsed JSON object. Binary NBT content should be omitted; its path is indexed but payload semantics are not inspected.",
+              },
+            },
+            required: ["path"],
+            additionalProperties: false,
+          },
+        },
+        limit: { type: "integer", minimum: 1, maximum: 1_000, default: 100 },
+      },
+      required: ["files"],
       additionalProperties: false,
     },
   },
@@ -3083,6 +3132,72 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       const inspected = inspectCanonicalBase64(args.contentBase64, limits.maxInputBytes, label);
       const bytes = decodeCanonicalBase64(inspected, label);
       return text(validateResourcepackPng(bytes, { limits }));
+    }
+    if (name === "validate_datapack_project") {
+      if (!Array.isArray(args.files)) {
+        throw new Error("validate_datapack_project requires files array");
+      }
+      if (args.files.length > defaultDatapackProjectValidationLimits.maxFiles) {
+        throw new Error(
+          `validate_datapack_project accepts at most ${defaultDatapackProjectValidationLimits.maxFiles} files`,
+        );
+      }
+      if (
+        args.assumeLocalNamespacesComplete !== undefined &&
+        typeof args.assumeLocalNamespacesComplete !== "boolean"
+      ) {
+        throw new Error("validate_datapack_project assumeLocalNamespacesComplete must be boolean");
+      }
+      let textCharacters = 0;
+      const files = args.files.map((file) => {
+        if (
+          typeof file !== "object" ||
+          file === null ||
+          !("path" in file) ||
+          typeof file.path !== "string"
+        ) {
+          throw new Error("validate_datapack_project files must include string path");
+        }
+        if (file.path.length > defaultDatapackProjectValidationLimits.maxPathLength) {
+          throw new Error(
+            `validate_datapack_project file paths must contain at most ${defaultDatapackProjectValidationLimits.maxPathLength} characters`,
+          );
+        }
+        if ("content" in file) {
+          const content = file.content;
+          if (
+            typeof content !== "string" &&
+            (typeof content !== "object" || content === null || Array.isArray(content))
+          ) {
+            throw new Error(
+              "validate_datapack_project content must be text or a parsed JSON object",
+            );
+          }
+          if (typeof content === "string") {
+            textCharacters += content.length;
+            if (textCharacters > defaultDatapackProjectValidationLimits.maxTextContentCharacters) {
+              throw new Error(
+                `validate_datapack_project text content must total at most ${defaultDatapackProjectValidationLimits.maxTextContentCharacters} characters`,
+              );
+            }
+          }
+        }
+        return {
+          path: file.path,
+          ...("content" in file ? { content: file.content } : {}),
+        };
+      });
+      return text(
+        validateDatapackProject({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          files,
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+          ...(typeof args.assumeLocalNamespacesComplete === "boolean"
+            ? { assumeLocalNamespacesComplete: args.assumeLocalNamespacesComplete }
+            : {}),
+        }),
+      );
     }
     if (name === "validate_resourcepack_project") {
       if (!Array.isArray(args.files)) {
