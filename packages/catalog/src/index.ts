@@ -246,6 +246,7 @@ export * from "./serverAccessList.js";
 export * from "./serverProperties.js";
 export * from "./velocityMeta.js";
 export * from "./velocityPluginJar.js";
+export * from "./waveAudio.js";
 export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,

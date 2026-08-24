@@ -107,6 +107,7 @@ minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills minecraft validate-access-list ./custom.json --kind banned-players
 minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
 minecraft-skills resourcepack validate-translations 26.2 ./my-resource-pack/assets/example/lang/en_us.json ./my-resource-pack/assets/example/lang/ja_jp.json --pack-root ./my-resource-pack --required-locale ja_jp
+minecraft-skills resourcepack sound inspect ./source.wav
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -268,6 +269,12 @@ symlink files, pack-root escapes, unstable file snapshots, malformed UTF-8, and 
 bounds before Catalog analysis. Raw JSON duplicate-key evidence is preserved, while output omits
 translation values and local paths. Repeat `--required-locale` to select comparisons; no discovered
 locale is compared implicitly.
+
+`resourcepack sound inspect` accepts exactly one lower-case `.wav` final regular file entry and
+performs a bounded, identity-stable read. It prints RIFF/WAVE PCM or IEEE-float metadata, SHA-256,
+duration, sample peak dBFS, unweighted sample RMS dBFS, and a factual full-scale sample count without
+including the input path or bytes. It does not convert or normalize audio, measure LUFS, or prove
+clipping or decoder compatibility. Invalid or incomplete inspections return exit code 1.
 
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.

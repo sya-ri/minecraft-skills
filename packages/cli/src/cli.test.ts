@@ -133,6 +133,28 @@ function withDifferentIdentity(status: BigIntStats): BigIntStats {
   }) as BigIntStats;
 }
 
+function pcm16Wave(samples: number[]): Buffer {
+  const dataBytes = samples.length * 2;
+  const bytes = Buffer.alloc(44 + dataBytes);
+  bytes.write("RIFF", 0, "ascii");
+  bytes.writeUInt32LE(36 + dataBytes, 4);
+  bytes.write("WAVE", 8, "ascii");
+  bytes.write("fmt ", 12, "ascii");
+  bytes.writeUInt32LE(16, 16);
+  bytes.writeUInt16LE(1, 20);
+  bytes.writeUInt16LE(1, 22);
+  bytes.writeUInt32LE(48_000, 24);
+  bytes.writeUInt32LE(96_000, 28);
+  bytes.writeUInt16LE(2, 32);
+  bytes.writeUInt16LE(16, 34);
+  bytes.write("data", 36, "ascii");
+  bytes.writeUInt32LE(dataBytes, 40);
+  samples.forEach((sample, index) => {
+    bytes.writeInt16LE(sample, 44 + index * 2);
+  });
+  return bytes;
+}
+
 async function capture(argv: string[]) {
   const stdout: string[] = [];
   const stderr: string[] = [];
@@ -409,6 +431,31 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("inspects one local WAVE source without exposing its path or bytes", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-wave-inspect-"));
+    const file = join(root, "private-source.wav");
+    const source = pcm16Wave([-0x8000, 0, 0x7fff]);
+    try {
+      writeFileSync(file, source);
+      const result = await capture(["resourcepack", "sound", "inspect", file]);
+      const json = JSON.parse(result.stdout.join("\n")) as Record<string, unknown>;
+      const serialized = result.stdout.join("\n");
+
+      expect(result.code).toBe(0);
+      expect(result.stderr).toEqual([]);
+      expect(json.valid).toBe(true);
+      expect(json.inspectionComplete).toBe(true);
+      expect(json.contentSha256).toBe(createHash("sha256").update(source).digest("hex"));
+      expect(json.atOrBeyondFullScaleSampleCount).toBe(2);
+      expect(json).not.toHaveProperty("path");
+      expect(json).not.toHaveProperty("bytes");
+      expect(serialized).not.toContain(file);
+      expect(serialized).not.toContain(source.toString("base64"));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("returns a nonzero status when a current Blockbench project misses a required name", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-blockbench-cli-"));
     const filePath = join(root, "model.bbmodel");
@@ -435,6 +482,23 @@ describe("minecraft-skills CLI", () => {
       expect(result.stderr).toEqual([]);
       expect(result.stdout.join("\n")).toContain('"outcome": "inspected"');
       expect(result.stdout.join("\n")).toContain('"status": "missing"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns exit code 1 for invalid or incomplete WAVE inspection", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-wave-invalid-"));
+    const file = join(root, "invalid.wav");
+    try {
+      writeFileSync(file, "RIFF");
+      const result = await capture(["resourcepack", "sound", "inspect", file]);
+      const json = JSON.parse(result.stdout.join("\n")) as Record<string, unknown>;
+
+      expect(result.code).toBe(1);
+      expect(result.stderr).toEqual([]);
+      expect(json.valid).toBe(false);
+      expect(json.inspectionComplete).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -467,6 +531,47 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("rejects unknown options, extra arguments, non-exact extensions, and non-files", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-wave-cli-errors-"));
+    const file = join(root, "source.wav");
+    const upper = join(root, "source.WAV");
+    const directory = join(root, "folder.wav");
+    try {
+      writeFileSync(file, pcm16Wave([0]));
+      writeFileSync(upper, pcm16Wave([0]));
+      mkdirSync(directory);
+
+      const unknown = await capture(["resourcepack", "sound", "inspect", file, "--unknown"]);
+      const edition = await capture([
+        "resourcepack",
+        "sound",
+        "inspect",
+        file,
+        "--edition",
+        "java",
+      ]);
+      const extra = await capture(["resourcepack", "sound", "inspect", file, file]);
+      const nonExact = await capture(["resourcepack", "sound", "inspect", upper]);
+      const nonFile = await capture(["resourcepack", "sound", "inspect", directory]);
+
+      expect(unknown.code).toBe(1);
+      expect(unknown.stderr.join("\n")).toContain("unknown option: --unknown");
+      expect(edition.code).toBe(1);
+      expect(edition.stderr.join("\n")).toContain("unknown option: --edition");
+      expect(extra.code).toBe(1);
+      expect(extra.stderr.join("\n")).toContain("requires exactly one <file.wav>");
+      expect(nonExact.code).toBe(1);
+      expect(nonExact.stderr.join("\n")).toContain("exact .wav extension");
+      expect(nonFile.code).toBe(1);
+      expect(nonFile.stderr.join("\n")).toContain("regular, non-symbolic-link local .wav file");
+      for (const result of [unknown, edition, extra, nonExact, nonFile]) {
+        expect(result.stderr.join("\n")).not.toContain(root);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("rejects unsafe Blockbench CLI argument shapes", async () => {
     const missingFile = await capture(["blockbench", "inspect-project"]);
     const unknownOption = await capture([
@@ -492,6 +597,17 @@ describe("minecraft-skills CLI", () => {
     expect(unknownOption.stderr[0]).toContain("unknown option");
     expect(repeatedLimit.code).toBe(1);
     expect(repeatedLimit.stderr[0]).toContain("must not be repeated");
+  });
+
+  it("sanitizes missing-file OS errors", async () => {
+    const secret = join(tmpdir(), "private-missing", "secret.wav");
+    const result = await capture(["resourcepack", "sound", "inspect", secret]);
+
+    expect(result.code).toBe(1);
+    expect(result.stdout).toEqual([]);
+    expect(result.stderr.join("\n")).toContain("could not safely access the local .wav file");
+    expect(result.stderr.join("\n")).not.toContain(secret);
+    expect(result.stderr.join("\n")).not.toContain("ENOENT");
   });
 
   it("prints installable skills", async () => {

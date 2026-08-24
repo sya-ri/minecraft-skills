@@ -232,6 +232,7 @@ minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills resourcepack validate-translations 26.2 ./my-resource-pack/assets/example/lang/en_us.json ./my-resource-pack/assets/example/lang/ja_jp.json --pack-root ./my-resource-pack --required-locale ja_jp
+minecraft-skills resourcepack sound inspect ./source.wav
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills minecraft validate-access-list ./custom.json --kind banned-ips
@@ -367,6 +368,14 @@ preserves raw JSON duplicate-key evidence. Catalog analysis merges exact keys gl
 then compares only `--required-locale` selections against `--reference-locale` (default `en_us`).
 Missing/extra keys, placeholder reference mismatches, and unknown cross-file override order are
 warnings, not loader-invalid claims. Output never includes translation values or local paths.
+
+`resourcepack sound inspect` accepts exactly one lower-case `.wav` final regular file entry. It
+rejects final symbolic-link or junction entries and special files, verifies file identity and size
+around a bounded positional read, and emits no path or source bytes in JSON. The result reports
+RIFF/WAVE PCM or IEEE-float structure,
+duration, SHA-256, sample peak/RMS dBFS, and factual at-or-beyond-full-scale sample count. It does
+not convert, normalize, measure LUFS/SPL/perceived loudness, or repeat Ogg/Vorbis validation. Invalid
+or incomplete results return exit code 1.
 
 Paper plugin lookups:
 

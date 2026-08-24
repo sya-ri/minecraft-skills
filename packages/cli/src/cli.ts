@@ -86,6 +86,7 @@ import {
   inspectBlockbenchProject,
   inspectResourcepackPngAlphaBounds,
   type JavaPlayerTextureKind,
+  inspectWaveAudio,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -181,6 +182,7 @@ import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 import { readResourcepackTranslationFiles } from "./resourcepackTranslationFiles.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
+import { readStableWaveAudioFile } from "./waveAudioFile.js";
 
 type Output = {
   write: (value: string) => void;
@@ -702,6 +704,18 @@ function parseBlockbenchInspectionArgs(args: string[]): {
   };
 }
 
+function readSingleOptionlessArgument(args: string[], command: string): string {
+  for (const arg of args) {
+    if (arg.startsWith("-")) {
+      throw new Error(`${command} received unknown option: ${arg}`);
+    }
+  }
+  if (args.length !== 1 || !args[0]) {
+    throw new Error(`${command} requires exactly one <file.wav>`);
+  }
+  return args[0];
+}
+
 function readPackFormatDomain(value: string): "datapack" | "resourcepack" {
   if (value === "datapack" || value === "resourcepack") {
     return value;
@@ -987,6 +1001,10 @@ function normalizeSubcommands(argv: string[]): string[] {
   if (groupedCommand === "resourcepack migration-plan") {
     return ["migration-plan", ...withDefaultDomain(rest, "resourcepack")];
   }
+  if (group === "resourcepack" && subcommand === "sound") {
+    const [soundSubcommand, ...soundRest] = rest;
+    return soundSubcommand === "inspect" ? ["inspect-wave-audio", ...soundRest] : argv;
+  }
   if (group === "resourcepack" && subcommand === "assets") {
     const [assetSubcommand, ...assetRest] = rest;
     const assetAliases: Record<string, string> = {
@@ -1119,6 +1137,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "download-player-texture": "player-texture download",
   "analyze-minecraft-log": "minecraft analyze-log",
   "validate-resourcepack-translations": "resourcepack validate-translations",
+  "inspect-wave-audio": "resourcepack sound inspect",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
@@ -1412,6 +1431,7 @@ Grouped commands:
   minecraft-skills player-texture download <64-lowercase-hex> --kind skin|cape|elytra --output <new.png>
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack validate-translations <version> <file...> --pack-root dir [--reference-locale en_us] [--required-locale locale]... [--limit 100]
+  minecraft-skills resourcepack sound inspect <file.wav>
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills resourcepack assets status [version]
@@ -1499,6 +1519,8 @@ Command reference:
                  Search or compare bundled vanilla datapack paths.
   resourcepack vanilla-paths|compare-vanilla-paths|models|search-models|assets
                  Inspect vanilla assets, model summaries, item/model paths, file schemas, file kinds, and file content validation.
+  resourcepack sound inspect
+                 Inspect one bounded local PCM/IEEE-float WAVE source without converting or modifying it.
   plugin paper info|api|api-index|compare-api|api-surface|types|members|compare-api-surface|events
                  Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
   fabric toolchain
@@ -2564,6 +2586,13 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       });
       printJson(output, result);
       return result.valid ? 0 : 1;
+    }
+
+    if (command === "inspect-wave-audio") {
+      const filePath = readSingleOptionlessArgument(args, "resourcepack sound inspect");
+      const result = inspectWaveAudio(readStableWaveAudioFile(filePath));
+      printJson(output, result);
+      return result.valid && result.inspectionComplete ? 0 : 1;
     }
 
     if (command === "migration-plan") {

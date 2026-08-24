@@ -64,6 +64,9 @@ All notable changes to this project are documented here.
   duplicate-key evidence, exact global locale-key comparison, source-accurate Mojang placeholder
   normalization, caller-selected locale parity, unknown override-order reporting, stable-file CLI
   reads, and value-private output.
+- Bounded, non-mutating RIFF/WAVE PCM and IEEE-float source inspection through the Catalog API and
+  `resourcepack sound inspect` CLI command, including stable regular-file reads, structural and
+  sample diagnostics, SHA-256, duration, sample peak and RMS dBFS, and factual full-scale counts.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

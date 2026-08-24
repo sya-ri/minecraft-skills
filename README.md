@@ -97,6 +97,7 @@ minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456
 minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
 minecraft-skills resourcepack validate-translations 26.2 ./my-resource-pack/assets/example/lang/en_us.json ./my-resource-pack/assets/example/lang/ja_jp.json --pack-root ./my-resource-pack --required-locale ja_jp
+minecraft-skills resourcepack sound inspect ./source.wav
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills fabric toolchain 1.21.11
@@ -246,6 +247,11 @@ references across only the caller-selected reference and required locales. Missi
 placeholder, and unknown pack-order findings are warnings rather than loader-invalid claims.
 Translation values and local file paths are never returned.
 
+`resourcepack sound inspect` reads one final regular `.wav` entry into a bounded, identity-stable
+snapshot and reports PCM/IEEE-float metadata plus sample peak and RMS dBFS. It does not expose the
+input path or bytes, convert or normalize audio, measure LUFS, or replace the Ogg/Vorbis project
+validator. Invalid or incomplete inspection returns exit code 1.
+
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
 `excludedRegistries` fields expose partial coverage, while null-to-number observations are not
@@ -260,6 +266,8 @@ raw-versus-parsed duplicate-key evidence, bounds, and explicit non-goals.
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see
 [docs/USAGE.md](docs/USAGE.md). Version-by-version coverage is summarized in
 [docs/VERSION_SUPPORT.md](docs/VERSION_SUPPORT.md).
+The WAVE parser and signal-metric boundary is documented in
+[docs/WAVE_AUDIO_INSPECTION.md](docs/WAVE_AUDIO_INSPECTION.md).
 RCON setup and permission presets are documented in [docs/RCON.md](docs/RCON.md).
 
 Release notes are tracked in [CHANGELOG.md](CHANGELOG.md).
