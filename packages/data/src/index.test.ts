@@ -72,6 +72,7 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-administrative-command-operability",
     );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-protocol-safety");
   });
 
   it("loads bundled authoring scenario JSON", () => {
@@ -85,6 +86,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-item-delivery-review");
     expect(scenarioIds).toContain("paper-inventory-gui-interaction-review");
     expect(scenarioIds).toContain("paper-administrative-command-operability-review");
+    expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
   });
 
   it("loads bundled intent lookup JSON", () => {
@@ -103,6 +105,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-inventory-delivery-outcomes");
     expect(guardrailIds).toContain("paper-inventory-gui-interaction-safety");
     expect(guardrailIds).toContain("paper-administrative-command-operability");
+    expect(guardrailIds).toContain("paper-plugin-protocol-safety");
   });
 
   it("loads bundled authoring diagnostic JSON", () => {
@@ -116,6 +119,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-inventory-leftovers-unhandled");
     expect(diagnosticIds).toContain("paper-inventory-gui-interaction-unbounded");
     expect(diagnosticIds).toContain("paper-administrative-command-incomplete");
+    expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
   });
 
   it("bundles complete Paper inventory GUI lifecycle safety guidance", () => {

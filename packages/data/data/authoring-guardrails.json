@@ -171,6 +171,33 @@
         "cache, threading, and cross-server convergence tests"
       ],
       "failureMode": "Treating every player-related value as a name can attach data to the wrong identity, break after renames, expose internal identifiers, or render inconsistent labels across transports and servers."
+    },
+    {
+      "id": "paper-plugin-protocol-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper plugin-message and RPC protocol boundaries authenticated, bounded, and lifecycle-safe",
+      "rules": [
+        "Use namespaced channels, register incoming and outgoing channels with explicit plugin lifecycle ownership, and unregister or release protocol state on disable.",
+        "Define a versioned envelope with explicit message kinds; reject unsupported versions, unknown kinds, malformed or truncated fields, trailing bytes, and non-canonical encodings.",
+        "Validate frame bytes, strings, collections, maps, nesting, declared decompressed sizes, derived totals, and every attacker-controlled allocation before allocating; cap and abort actual output while decompressing.",
+        "Handle the verified listener connection type and stage explicitly; a configuration-stage connection is not automatically an authenticated joined player.",
+        "Take the acting player and authorization context from the authenticated connection or an explicitly trusted proxy boundary, never from identity or permissions claimed by the payload.",
+        "Scope request IDs, duplicate detection, cancellation, and terminal-response state to one connection/session; define idempotency and emit at most one terminal response.",
+        "Clean pending requests, uploads, chunks, futures, and queued responses on timeout, cancellation, reconnect, connection close, and plugin disable.",
+        "Treat an eligible live connection or player as a required carrier; plugin messaging is not a durable standalone server transport, so closed or unavailable transport must have an explicit outcome.",
+        "Bound concurrent requests, chunks, uploads, queued bytes, decompressed bytes, and work; require chunk order, checksum, declared total size, completion, expiry, and backpressure.",
+        "Retry only operations explicitly declared idempotent, and keep transport decode/timeout/cancellation errors distinct from valid business outcomes.",
+        "Move blocking I/O and heavy decoding away from the server thread, then publish Bukkit state only from an execution context verified safe for the target API and scheduler model.",
+        "Verify target-version Messenger.MAX_CHANNEL_SIZE and Messenger.MAX_MESSAGE_SIZE when using them as transport ceilings, and apply explicit lower application budgets where needed.",
+        "StandardMessenger transport validation and documentation examples are necessary evidence where applicable but do not establish a complete safe application codec."
+      ],
+      "requiredEvidence": [
+        "target-version Paper API type/member results and official documentation for channel registration, listener connection identity, byte-array sending, StandardMessenger validation, and Messenger size constants",
+        "protocol envelope, compatibility, authorization, idempotency, error, timeout, cancellation, retry, and lifecycle contracts",
+        "configured per-message, decoded, decompressed, collection, nesting, request, chunk, upload, queue, and concurrency budgets",
+        "hostile and boundary tests for decoding, spoofed identity, duplicates, stale sessions, timeouts, cleanup, chunk ordering/checksum/expiry, and backpressure"
+      ],
+      "failureMode": "Untrusted payloads can cross authorization boundaries, exhaust memory or work budgets, replay side effects, leak per-connection state, or publish unsafe Bukkit mutations."
     }
   ]
 }

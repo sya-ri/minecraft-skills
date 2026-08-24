@@ -368,6 +368,51 @@
         "testing only an online player whose account name never changes"
       ],
       "failureMode": "Identity confusion can misattribute ownership and permissions, while implicit display choices expose raw identifiers or produce stale and inconsistent player labels."
+    },
+    {
+      "id": "paper-plugin-protocol-safety-review",
+      "domains": ["paper-plugin"],
+      "title": "Review a Paper plugin message, custom payload, RPC, or chunked upload protocol",
+      "userPrompt": "Review this Paper plugin-message RPC codec and chunked upload flow for malformed payloads, spoofed player identity, request correlation, retries, timeouts, duplicate delivery, and lifecycle cleanup.",
+      "useWhen": [
+        "the request creates or reviews Paper plugin messaging or a custom payload channel",
+        "the request implements RPC, a binary message codec, request correlation, or terminal responses",
+        "the request sends chunked uploads or retains request state across asynchronous work"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-plugin-protocol-safety"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-plugin-protocol-unsafe",
+          "paper-threading-assumption"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "channels are namespaced, registered, and unregistered with the plugin lifecycle using target-version verified API members",
+        "the versioned envelope has explicit message kinds and the decoder rejects malformed, trailing, unknown, oversized, over-nested, or over-decompressed data before allocation or before a bounded decompressor exceeds its output cap",
+        "authorization uses the authenticated connection or trusted proxy boundary rather than claimed payload identity",
+        "request IDs are session-scoped, duplicates are idempotent or rejected, and each accepted request receives at most one terminal response",
+        "timeouts, cancellation, reconnect, close, and disable clean request and upload state",
+        "an unavailable or closed player/connection carrier is handled explicitly rather than treating plugin messaging as durable standalone transport",
+        "concurrent requests and chunked uploads have ordering, checksum, total-size, expiry, queue, and backpressure bounds",
+        "retries are limited to declared idempotent operations, transport failures remain distinct from business outcomes, and Bukkit publication uses a safe execution context",
+        "hostile and exact-boundary tests exercise every decoder, allocation, lifecycle, duplicate, and concurrency rule"
+      ],
+      "mustAvoid": [
+        "hardcoding transport limits without target-version API constants or explicit evidence",
+        "treating Paper documentation examples as proof of a safe application codec",
+        "authorizing a player or proxy action from a UUID, name, permission, or role claimed inside the payload",
+        "allocating arrays, strings, collections, maps, nested objects, or decompressed buffers before validating their bounds, or decompressing without an enforced actual-output cap",
+        "letting request IDs, chunks, uploads, futures, or response state survive their connection/session or plugin lifecycle",
+        "retrying non-idempotent operations, merging transport errors into business outcomes, or issuing multiple terminal responses",
+        "performing blocking I/O or unsafe Bukkit state publication in a plugin-message callback"
+      ],
+      "failureMode": "A plausible codec can still permit identity spoofing, memory or decompression denial of service, duplicate side effects, stale-session responses, unbounded uploads, or unsafe server-thread work."
     }
   ]
 }

@@ -459,6 +459,42 @@ describe("MCP tools", () => {
     expect(inventory.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-review"');
   });
 
+  it("routes Paper plugin protocol tasks through authoring tools", async () => {
+    const scenarioSearch = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "custom payload request correlation",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.content[0]?.text).toContain(
+      '"id": "paper-plugin-protocol-safety-review"',
+    );
+
+    const catalogSearch = await callMinecraftSkillsTool("search_catalog", {
+      query: "chunked upload codec",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.content[0]?.text).toContain('"id": "paper-plugin-protocol-safety"');
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-plugin-protocol-safety",
+    });
+    expect(recipe.content[0]?.text).toContain("exact input consumption");
+    expect(recipe.content[0]?.text).toContain("at most one terminal response");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-plugin-protocol-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("authenticated connection");
+    expect(diagnostic.content[0]?.text).toContain("Messenger.MAX_MESSAGE_SIZE");
+
+    const suggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      task: "custom payload request correlation",
+      version: "1.21.11",
+    });
+    expect(suggestions.content[0]?.text).toContain("plugin paper search");
+    expect(suggestions.content[0]?.text).toContain('"id": "paper-plugin-protocol-safety-review"');
+  });
+
   it("calls authoring plan tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_plan", {
       scenario: "paper-event-listener-review",

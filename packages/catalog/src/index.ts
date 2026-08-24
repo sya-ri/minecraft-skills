@@ -5396,6 +5396,10 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   ].filter((domain): domain is NonNullable<LookupSuggestionOptions["domain"]> => Boolean(domain));
   const inferredDomain = inferredDomains.length === 1 ? inferredDomains[0] : undefined;
   const searchDomain = options.domain ?? inferredDomain;
+  const isPaperProtocolTask =
+    /\b(?:plugin[-\s]+messag(?:e|ing)|custom[-\s]+payload|rpc|codec|request[-\s]+correlation|chunked[-\s]+upload)\b/.test(
+      lower,
+    );
   const suggestedTools: LookupSuggestionResult["suggestedTools"] = [];
   const add = (tool: string, reason: string) => {
     if (!suggestedTools.some((entry) => entry.tool === tool)) {
@@ -5484,7 +5488,8 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       paperInventoryGuiTask ||
       paperApiTask ||
       administrativeCommandTask ||
-      playerIdentityTask
+      playerIdentityTask ||
+      isPaperProtocolTask
     ) {
       add(
         `plugin paper search ${JSON.stringify(task)}`,

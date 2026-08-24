@@ -371,4 +371,36 @@ describe("MCP resources", () => {
     );
     expect(diagnostic.contents[0]?.text).toContain("only persistent player key");
   });
+
+  it("reads Paper plugin protocol safety resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-plugin-protocol-safety.json",
+        "minecraft-skills://data/authoring-scenarios/paper-plugin-protocol-safety-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-plugin-protocol-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-plugin-protocol-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-plugin-protocol-safety.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("make-decoding-strict-and-bounded");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-plugin-protocol-safety-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-plugin-protocol-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-plugin-protocol-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("authenticated connection");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-plugin-protocol-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("Messenger.MAX_MESSAGE_SIZE");
+  });
 });
