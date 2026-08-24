@@ -65,6 +65,7 @@ describe("@minecraft-skills/data", () => {
   it("loads bundled authoring recipe JSON", () => {
     const recipes = readDataJson<{ recipes: Array<{ id: string }> }>("authoring-recipes.json");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-event-listener");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-safe-item-delivery");
   });
 
   it("loads bundled authoring scenario JSON", () => {
@@ -73,6 +74,9 @@ describe("@minecraft-skills/data", () => {
     );
     expect(scenarios.scenarios.map((scenario) => scenario.id)).toContain(
       "paper-event-listener-review",
+    );
+    expect(scenarios.scenarios.map((scenario) => scenario.id)).toContain(
+      "paper-item-delivery-review",
     );
   });
 
@@ -88,6 +92,9 @@ describe("@minecraft-skills/data", () => {
     expect(guardrails.guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-api-surface-limits",
     );
+    expect(guardrails.guardrails.map((guardrail) => guardrail.id)).toContain(
+      "paper-inventory-delivery-outcomes",
+    );
   });
 
   it("loads bundled authoring diagnostic JSON", () => {
@@ -96,6 +103,9 @@ describe("@minecraft-skills/data", () => {
     );
     expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
       "paper-api-member-unverified",
+    );
+    expect(diagnostics.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-inventory-leftovers-unhandled",
     );
   });
 

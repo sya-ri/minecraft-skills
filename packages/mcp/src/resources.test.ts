@@ -135,39 +135,63 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails.json",
     );
     expect(guardrails.contents[0]?.text).toContain('"id": "paper-api-surface-limits"');
+    expect(guardrails.contents[0]?.text).toContain('"id": "paper-inventory-delivery-outcomes"');
 
     const guardrail = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(guardrail.contents[0]?.text).toContain("Javadocs package, type, and member indexes");
 
+    const itemDeliveryGuardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-inventory-delivery-outcomes.json",
+    );
+    expect(itemDeliveryGuardrail.contents[0]?.text).toContain("uninserted stacks");
+
     const diagnostics = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-diagnostics.json",
     );
     expect(diagnostics.contents[0]?.text).toContain('"id": "paper-api-member-unverified"');
+    expect(diagnostics.contents[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
 
     const diagnostic = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json",
     );
     expect(diagnostic.contents[0]?.text).toContain("searchPaperMembers");
 
+    const itemDeliveryDiagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-inventory-leftovers-unhandled.json",
+    );
+    expect(itemDeliveryDiagnostic.contents[0]?.text).toContain("original requested stack");
+
     const recipes = readMinecraftSkillsResource("minecraft-skills://data/authoring-recipes.json");
     expect(recipes.contents[0]?.text).toContain('"id": "paper-event-listener"');
+    expect(recipes.contents[0]?.text).toContain('"id": "paper-safe-item-delivery"');
 
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/datapack-function-command.json",
     );
     expect(recipe.contents[0]?.text).toContain("verify-command-path");
 
+    const itemDeliveryRecipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-safe-item-delivery.json",
+    );
+    expect(itemDeliveryRecipe.contents[0]?.text).toContain("define-delivery-and-overflow-outcomes");
+
     const scenarios = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-scenarios.json",
     );
     expect(scenarios.contents[0]?.text).toContain('"id": "paper-event-listener-review"');
+    expect(scenarios.contents[0]?.text).toContain('"id": "paper-item-delivery-review"');
 
     const scenario = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json",
     );
     expect(scenario.contents[0]?.text).toContain("paper-event-candidate-unverified");
+
+    const itemDeliveryScenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-item-delivery-review.json",
+    );
+    expect(itemDeliveryScenario.contents[0]?.text).toContain("paper-inventory-leftovers-unhandled");
 
     const claimPolicies = readMinecraftSkillsResource(
       "minecraft-skills://data/claim-policies.json",

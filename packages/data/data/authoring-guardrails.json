@@ -71,6 +71,25 @@
         "Paper scheduler and Folia documentation links when code touches scheduling, worlds, entities, chunks, or async work"
       ],
       "failureMode": "Generated plugins can compile against nonexistent APIs, target unsupported Paper versions, or hide unsafe threading assumptions."
+    },
+    {
+      "id": "paper-inventory-delivery-outcomes",
+      "domains": ["paper-plugin"],
+      "title": "Preserve every item across partial inventory delivery",
+      "rules": [
+        "Choose an explicit overflow policy before mutating a player's inventory: reject or defer the delivery, persist it for retry, or apply one verified fallback to the uninserted stacks.",
+        "When an inventory insertion API can return uninserted stacks, consume that result instead of treating the requested amount as fully delivered.",
+        "Account for inserted and uninserted stacks exactly once; never pass the original input to a fallback after a partial insertion.",
+        "If overflow is dropped, spawn only the uninserted stacks at the recipient's current world and location, and make the pickup or ownership policy explicit.",
+        "Verify every insertion, drop, ownership, or convenience member against the target Paper API and inspect behavior documentation before relying on its result contract.",
+        "Do not recommend Player.give or another convenience API for every Paper version; use it only when the target-version member and its overflow behavior are verified."
+      ],
+      "requiredEvidence": [
+        "target-version Paper API type/member matches for every inventory insertion and selected fallback member",
+        "an explicit delivery result and overflow policy that accounts for every requested stack once",
+        "tests for complete insertion, partial insertion, full inventory, retry behavior, and selected fallback failure when applicable"
+      ],
+      "failureMode": "A partially successful delivery can silently destroy leftover items or duplicate the portion already inserted when fallback or retry logic reuses the original input."
     }
   ]
 }

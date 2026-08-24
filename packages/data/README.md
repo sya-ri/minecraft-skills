@@ -10,6 +10,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Machine-readable authoring scenarios for realistic task evaluation and self-review.
 - Machine-readable authoring guardrails for output safety.
 - Machine-readable authoring diagnostics for pre-finalization pass/fail checks.
+- Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
+  target-version API verification.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

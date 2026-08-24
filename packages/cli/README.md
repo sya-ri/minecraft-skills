@@ -21,9 +21,11 @@ minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper recipes
 minecraft-skills plugin paper recipe paper-event-listener
 minecraft-skills plugin paper search-scenarios "Paper event listener"
+minecraft-skills plugin paper search-scenarios "full inventory reward leftovers"
 minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
+minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
