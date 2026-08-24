@@ -1,0 +1,22 @@
+{
+  "others": {
+    "function": {
+      "elements": true,
+      "format": "mcfunction",
+      "stable": true,
+      "tags": true
+    }
+  },
+  "registries": {
+    "minecraft:damage_type": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    },
+    "minecraft:worldgen/density_function": {
+      "elements": true,
+      "stable": true,
+      "tags": false
+    }
+  }
+}

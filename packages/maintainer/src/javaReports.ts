@@ -128,22 +128,17 @@ function readCommands(reportsDir: string): {
   };
 }
 
-function readDatapack(reportsDir: string): {
+function readDatapackReports(reportsDir: string): {
   otherTypes: JavaReportsSummary["datapack"]["otherTypes"];
   registries: JavaReportsSummary["datapack"]["registries"];
 } {
   const datapackPath = join(reportsDir, "datapack.json");
-  if (!existsSync(datapackPath)) {
-    return {
-      otherTypes: [],
-      registries: [],
-    };
-  }
-  const datapack = asObject(readJson(join(reportsDir, "datapack.json")));
+  const datapack = existsSync(datapackPath) ? asObject(readJson(datapackPath)) : {};
   const registryDumpPath = join(reportsDir, "registries.json");
   const registryDump = existsSync(registryDumpPath) ? asObject(readJson(registryDumpPath)) : {};
   const others = asObject(datapack.others);
-  const registries = asObject(datapack.registries);
+  const datapackRegistries = asObject(datapack.registries);
+  const registryIds = new Set([...Object.keys(datapackRegistries), ...Object.keys(registryDump)]);
 
   return {
     otherTypes: Object.entries(others)
@@ -158,16 +153,16 @@ function readDatapack(reportsDir: string): {
           tags: typeof entry.tags === "boolean" ? entry.tags : null,
         };
       }),
-    registries: Object.entries(registries)
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([id, value]) => {
-        const entry = value as DatapackEntry;
+    registries: [...registryIds]
+      .sort((left, right) => left.localeCompare(right))
+      .map((id) => {
+        const entry = datapackRegistries[id] as DatapackEntry | undefined;
         const report = registryDump[id] as RegistryReport | undefined;
         return {
           id,
-          elements: typeof entry.elements === "boolean" ? entry.elements : null,
-          stable: typeof entry.stable === "boolean" ? entry.stable : null,
-          tags: typeof entry.tags === "boolean" ? entry.tags : null,
+          elements: typeof entry?.elements === "boolean" ? entry.elements : null,
+          stable: typeof entry?.stable === "boolean" ? entry.stable : null,
+          tags: typeof entry?.tags === "boolean" ? entry.tags : null,
           entryCount: report?.entries ? Object.keys(report.entries).length : null,
           protocolId: typeof report?.protocol_id === "number" ? report.protocol_id : null,
         };
@@ -256,7 +251,7 @@ export function buildJavaReportsSummary(options: {
   retrievedAt: string;
 }): { summary: JavaReportsSummary; commandPaths: string[] } {
   const commands = readCommands(options.reportsDir);
-  const datapack = readDatapack(options.reportsDir);
+  const datapack = readDatapackReports(options.reportsDir);
   return {
     summary: {
       schemaVersion: 1,

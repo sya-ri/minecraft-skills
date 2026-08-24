@@ -1,0 +1,9 @@
+{
+  "minecraft:biome": {
+    "protocol_id": 1,
+    "entries": {
+      "minecraft:plains": {},
+      "minecraft:the_void": {}
+    }
+  }
+}

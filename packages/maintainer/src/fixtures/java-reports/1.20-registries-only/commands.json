@@ -1,0 +1,15 @@
+{
+  "type": "root",
+  "children": {
+    "say": {
+      "type": "literal",
+      "children": {
+        "message": {
+          "type": "argument",
+          "parser": "minecraft:message",
+          "executable": true
+        }
+      }
+    }
+  }
+}
