@@ -175,6 +175,7 @@ minecraft-skills resourcepack models 26.2
 minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
 minecraft-skills resourcepack classify-files assets/example/items/widget.json assets/example/textures/item/widget.png
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
+minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/widget.png --require-nonempty --minimum-transparent-margin-pixels 1
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
@@ -197,6 +198,19 @@ invalid.
 checks its PNG signature, chunk framing, IHDR fields, method values, ordering, and scanned CRCs.
 Symlinks and special files are rejected.
 
+`resourcepack inspect-png-alpha` uses the same stable regular-file reader and CRC-verified structure
+walk before decoding. Content is exactly a static-image pixel whose decoded alpha sample is not
+zero. The result reports alpha counts, zero-based half-open content bounds, transparent margins on
+all four sides, exact expected/actual filtered bytes, and compressed-byte consumption evidence. It
+does not crop, rewrite, render, or return local paths, pixels, or RGB samples. The default limits can
+only be lowered, including `--max-inflated-bytes`. If the checked expected filtered byte count is
+above that ceiling, the PNG can remain structurally valid while pixel inspection is indeterminate.
+
+`--require-nonempty` and `--minimum-transparent-margin-pixels <n>` are optional caller policies.
+Without a policy, a completely transparent image is a valid completed fact with null bounds and
+margins. Exit code 0 requires complete pixel inspection and policy status `met` or `not-requested`.
+Invalid or indeterminate pixels and `not-met` or `not-checked` policy return exit code 1.
+
 `resourcepack validate-project` scans a complete directory and verifies item-definition model and
 special base references, legacy `overrides[].model` targets, model parents, texture paths, inherited
 texture variables, local model-parent cycles, `sounds.json` file/event targets, and local sound-event
@@ -215,11 +229,23 @@ results echo applied/exceeded limits, processed-file and completeness metadata, 
 omitted-diagnostic counts. The CLI applies matching file, directory-depth, path, aggregate JSON-byte,
 and aggregate binary-byte bounds while scanning, before it allocates the catalog request.
 
-The validator follows the [W3C PNG specification](https://www.w3.org/TR/png-3/) but does not
-decompress IDAT, validate pixels or rendering, or interpret APNG and animation `.mcmeta` semantics.
-It intentionally does not require square or power-of-two dimensions or a fixed `pack.png` size.
-Incomplete reads and safety-limit stops are explicit in the result. Project errors return exit code
-1; variables that can only be resolved inside an unbundled vanilla parent remain warnings.
+The structural validator and alpha inspector follow the
+[W3C PNG Third Edition](https://www.w3.org/TR/png-3/). Structural validation alone does not
+decompress IDAT. Alpha inspection concatenates IDAT payloads as one zlib input and uses Node's
+documented [`info` result and `bytesWritten` evidence](https://nodejs.org/api/zlib.html) together
+with an exact expected filtered byte count. The package supports its declared minimum Node 22.12;
+the trailing-input behavior and consumed-byte accounting are covered on Node 22 as well as the
+development runtime. It does not depend on the newer `rejectGarbageAfterEnd` option, which is not
+available at the minimum runtime.
+
+PNG recommends that decoders ignore unused bytes after a complete zlib stream. When Node reports a
+trustworthy consumed count, the inspector reports both consumed and trailing compressed bytes and
+warns about any ignored suffix; it does not claim that suffix belonged to or was semantically
+validated as part of the zlib stream. If consumed-byte evidence is unavailable, inspection stays
+indeterminate. Neither validator interprets APNG frames or animation `.mcmeta`, proves Minecraft
+rendering, or requires square, power-of-two, or fixed-size `pack.png` dimensions. Incomplete reads
+and safety-limit stops are explicit in the result. Project errors return exit code 1; variables that
+can only be resolved inside an unbundled vanilla parent remain warnings.
 
 Paper plugin lookups:
 
@@ -428,6 +454,7 @@ Pack analysis tools include:
 - `classify_pack_files`
 - `get_pack_file_schema`
 - `validate_datapack_json`
+- `inspect_resourcepack_png_alpha_bounds`
 - `validate_resourcepack_png`
 - `validate_resourcepack_project`
 - `get_pack_migration_plan`
@@ -450,6 +477,12 @@ Pack analysis tools include:
 - `find_resourcepack_assets`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
+
+`inspect_resourcepack_png_alpha_bounds` accepts only canonical padded Base64 for one complete PNG,
+not a local path, URL, or pixel array. Request-object descriptors are preflighted without invoking
+accessors or Proxy traps, and decoded length is checked before Base64 allocation. Malformed PNG or
+zlib bytes and inspection safety stops are returned as bounded Catalog validation results; invalid
+MCP request shape or encoding remains a tool-input error.
 
 Skill and data resources are exposed under:
 
@@ -475,6 +508,7 @@ import {
   getPackFormat,
   getResponsePattern,
   findVersionsByPackFormat,
+  inspectResourcepackPngAlphaBounds,
   searchAuthoringScenarios,
   searchCommands,
   searchMinecraftAssets,
@@ -529,6 +563,13 @@ const resourcepackProject = validateResourcepackProject({
 const pngValidation = validateResourcepackPng(readFileSync("./pack.png"), {
   limits: { maxInputBytes: 4 * 1024 * 1024 },
 });
+const pngAlphaBounds = inspectResourcepackPngAlphaBounds(
+  readFileSync("./assets/example/textures/item/widget.png"),
+  {
+    requirements: { nonEmpty: true, minimumTransparentMarginPixels: 1 },
+    limits: { maxInflatedBytes: 16 * 1024 * 1024 },
+  },
+);
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
 // needed; callers should avoid reading a complete audio file solely for validation.
@@ -545,6 +586,14 @@ const playerMembers = searchPaperMembers({
   contains: "sendMessage",
 });
 ```
+
+`inspectResourcepackPngAlphaBounds` snapshots a direct `Uint8Array` or `Buffer` before inspection,
+reuses `validateResourcepackPng`'s CRC-verified chunk walk, and returns bounded static-alpha facts.
+It supports every legal PNG color-type/bit-depth combination, filters 0-4, and Adam7, including
+16-bit alpha and sub-byte samples. PLTE/tRNS order, length, palette bounds, masked low-bit color
+keys, and exact 16-bit keys are validated before alpha facts are complete. Option, limit, and
+requirement objects are descriptor-preflighted; invalid public input becomes a diagnostic result
+instead of invoking accessors or throwing.
 
 Piston is Mojang's official metadata/download infrastructure, not a third-party dataset. Use
 `get_mojang_version_metadata` when an agent needs the official version metadata URL, client/server

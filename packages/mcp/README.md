@@ -114,6 +114,7 @@ aliases or reject Unicode query values.
 - `validate_modrinth_pack`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
+- `inspect_resourcepack_png_alpha_bounds`
 - `validate_resourcepack_png`
 - `validate_resourcepack_project`
 - `explain_pack_path`
@@ -157,6 +158,14 @@ aliases or reject Unicode query values.
 `validate_resourcepack_png` accepts canonical padded Base64 for one complete PNG, rejects malformed
 or oversized input before decoding, and returns bounded structural and CRC diagnostics. It does not
 decompress IDAT or claim the texture can be rendered.
+
+`inspect_resourcepack_png_alpha_bounds` also accepts only canonical padded Base64, with no file
+path or URL input. It returns the Catalog's bounded static-alpha facts and optional nonempty or
+minimum-transparent-margin policy result. Content means alpha is nonzero; bounds are zero-based and
+half-open. The tool does not crop, rewrite, render, or return paths, pixels, or RGB samples.
+Malformed PNG/zlib data and inspection safety stops remain normal validation results rather than
+MCP transport errors. Invalid request objects, noncanonical Base64, and limits that try to raise a
+published ceiling are tool-input errors.
 
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects

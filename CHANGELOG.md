@@ -6,6 +6,11 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Bounded static PNG alpha inspection across the Catalog API, CLI, and MCP, including every legal
+  color-type/bit-depth combination, filters 0-4, Adam7, PLTE/tRNS semantics, nonzero-alpha counts,
+  zero-based half-open content bounds, four-side transparent margins, optional nonempty/minimum-
+  margin policy, exact filtered-byte bounds, and consumed/trailing zlib evidence without returning
+  paths, pixels, or RGB samples or modifying source files.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

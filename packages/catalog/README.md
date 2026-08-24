@@ -89,6 +89,7 @@ import {
   searchVanillaDatapackJsonContent,
   searchVanillaPaths,
   suggestMinecraftLookups,
+  inspectResourcepackPngAlphaBounds,
   validateResourcepackProject,
   validateResourcepackPng,
   validateModrinthPack,
@@ -294,6 +295,13 @@ const resourcepackProject = validateResourcepackProject({
 const resourcepackPng = validateResourcepackPng(readFileSync("./pack.png"), {
   limits: { maxInputBytes: 4 * 1024 * 1024, maxPixels: 16_777_216 },
 });
+const textureAlpha = inspectResourcepackPngAlphaBounds(
+  readFileSync("./assets/example/textures/item/widget.png"),
+  {
+    requirements: { nonEmpty: true, minimumTransparentMarginPixels: 1 },
+    limits: { maxInflatedBytes: 16 * 1024 * 1024 },
+  },
+);
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",
@@ -335,6 +343,14 @@ APNG or animation `.mcmeta` semantics, or require square, power-of-two, or fixed
 dimensions. `validationComplete` and `exceededLimits` distinguish a completed structural result
 from an input or scan that stopped at a safety boundary. Project validation applies the same checks
 when a `.png` file supplies complete `Uint8Array` content and reports omitted content explicitly.
+
+`inspectResourcepackPngAlphaBounds` reuses that CRC-verified structure walk, then boundedly inflates
+and unfilters the static image for every legal PNG color-type/bit-depth combination and Adam7. It
+defines content only as alpha other than zero and returns counts, zero-based half-open content
+bounds, transparent margins, and caller policy. It does not crop, rewrite, render, or return paths,
+pixels, or RGB samples. Empty images are valid facts unless the caller requests `nonEmpty`; an
+expected filtered byte count above `maxInflatedBytes` leaves structural validation intact and makes
+pixel inspection explicitly indeterminate.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function

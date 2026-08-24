@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { deflateSync } from "node:zlib";
 import { getVersionDetail } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
@@ -58,6 +59,41 @@ function testPng(width = 1, height = 1): Buffer {
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     pngChunk("IHDR", header),
     pngChunk("IDAT"),
+    pngChunk("IEND"),
+  ]);
+}
+
+function testAlphaPng(alphaRows: readonly (readonly number[])[]): Buffer {
+  const height = alphaRows.length;
+  const width = alphaRows[0]?.length ?? 0;
+  if (
+    width === 0 ||
+    height === 0 ||
+    alphaRows.some((row) => row.length !== width || row.some((alpha) => alpha < 0 || 255 < alpha))
+  ) {
+    throw new Error("testAlphaPng requires a non-empty rectangular 8-bit alpha grid");
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  const filtered = Buffer.alloc(height * (1 + width * 4));
+  for (let y = 0; y < height; y += 1) {
+    const rowOffset = y * (1 + width * 4);
+    filtered[rowOffset] = 0;
+    for (let x = 0; x < width; x += 1) {
+      const pixelOffset = rowOffset + 1 + x * 4;
+      filtered[pixelOffset] = 0x12;
+      filtered[pixelOffset + 1] = 0x34;
+      filtered[pixelOffset + 2] = 0x56;
+      filtered[pixelOffset + 3] = alphaRows[y]?.[x] ?? 0;
+    }
+  }
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT", deflateSync(filtered)),
     pngChunk("IEND"),
   ]);
 }
@@ -1442,6 +1478,134 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("inspects alpha content bounds and evaluates only requested CLI policies", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-png-alpha-"));
+    const centeredFile = join(root, "centered.bin");
+    const emptyFile = join(root, "empty.png");
+    writeFileSync(
+      centeredFile,
+      testAlphaPng([
+        [0, 0, 0],
+        [0, 255, 0],
+        [0, 0, 0],
+      ]),
+    );
+    writeFileSync(
+      emptyFile,
+      testAlphaPng([
+        [0, 0],
+        [0, 0],
+      ]),
+    );
+
+    try {
+      const centered = await capture(["resourcepack", "inspect-png-alpha", centeredFile]);
+      expect(centered.code).toBe(0);
+      expect(centered.stderr).toEqual([]);
+      expect(centered.stdout.join("\n")).toContain('"pixelInspectionStatus": "complete"');
+      expect(centered.stdout.join("\n")).toContain('"content": "nonempty"');
+      expect(centered.stdout.join("\n")).toContain('"xEndExclusive": 2');
+      expect(centered.stdout.join("\n")).toContain('"minimum": 1');
+      expect(centered.stdout.join("\n")).toContain('"status": "not-requested"');
+
+      const marginMet = await capture([
+        "resourcepack",
+        "inspect-png-alpha",
+        centeredFile,
+        "--require-nonempty",
+        "--minimum-transparent-margin-pixels",
+        "1",
+      ]);
+      expect(marginMet.code).toBe(0);
+      expect(marginMet.stdout.join("\n")).toContain('"status": "met"');
+
+      const marginNotMet = await capture([
+        "resourcepack",
+        "inspect-png-alpha",
+        centeredFile,
+        "--minimum-transparent-margin-pixels",
+        "2",
+      ]);
+      expect(marginNotMet.code).toBe(1);
+      expect(marginNotMet.stdout.join("\n")).toContain('"minimum-transparent-margin"');
+
+      const emptyFact = await capture(["resourcepack", "inspect-png-alpha", emptyFile]);
+      expect(emptyFact.code).toBe(0);
+      expect(emptyFact.stdout.join("\n")).toContain('"content": "empty"');
+      expect(emptyFact.stdout.join("\n")).toContain('"contentBounds": null');
+
+      const emptyRequired = await capture([
+        "resourcepack",
+        "inspect-png-alpha",
+        emptyFile,
+        "--require-nonempty",
+      ]);
+      expect(emptyRequired.code).toBe(1);
+      expect(emptyRequired.stdout.join("\n")).toContain('"content-empty"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns failure for bounded or invalid PNG alpha inspection", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-png-alpha-boundary-"));
+    const validFile = join(root, "valid.png");
+    const structuralOnlyFile = join(root, "structural-only.png");
+    writeFileSync(
+      validFile,
+      testAlphaPng([
+        [0, 0, 0],
+        [0, 255, 0],
+        [0, 0, 0],
+      ]),
+    );
+    writeFileSync(structuralOnlyFile, testPng());
+
+    try {
+      const bounded = await capture([
+        "resourcepack",
+        "inspect-png-alpha",
+        validFile,
+        "--max-inflated-bytes",
+        "38",
+      ]);
+      expect(bounded.code).toBe(1);
+      expect(bounded.stdout.join("\n")).toContain(
+        '"pixelInspectionReason": "inflated-byte-limit-exceeded"',
+      );
+      expect(bounded.stdout.join("\n")).toContain('"valid": true');
+
+      const invalid = await capture(["resourcepack", "inspect-png-alpha", structuralOnlyFile]);
+      expect(invalid.code).toBe(1);
+      expect(invalid.stdout.join("\n")).toContain(
+        '"pixelInspectionReason": "zlib-decompression-failed"',
+      );
+
+      const invalidMargin = await capture([
+        "resourcepack",
+        "inspect-png-alpha",
+        validFile,
+        "--minimum-transparent-margin-pixels",
+        "16385",
+      ]);
+      expect(invalidMargin.code).toBe(1);
+      expect(invalidMargin.stderr.join("\n")).toContain(
+        "--minimum-transparent-margin-pixels must be between 0 and 16384",
+      );
+
+      const unknown = await capture([
+        "resourcepack",
+        "inspect-png-alpha",
+        validFile,
+        "--return-pixels",
+      ]);
+      expect(unknown.code).toBe(1);
+      expect(unknown.stderr.join("\n")).toContain("Unknown option: --return-pixels");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("bounds resource-pack directory traversal and JSON reads before catalog validation", () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-project-scan-"));
     writeFileSync(join(root, "first.json"), "{}");
@@ -1590,6 +1754,10 @@ describe("minecraft-skills CLI", () => {
       expect(directory.code).toBe(1);
       expect(directory.stderr.join("\n")).toContain("regular local PNG files");
 
+      const alphaDirectory = await capture(["resourcepack", "inspect-png-alpha", root]);
+      expect(alphaDirectory.code).toBe(1);
+      expect(alphaDirectory.stderr.join("\n")).toContain("regular local PNG files");
+
       const targetDirectory = join(root, "target");
       const linkedPath = join(root, "linked.png");
       mkdirSync(targetDirectory);
@@ -1597,6 +1765,10 @@ describe("minecraft-skills CLI", () => {
       const symlink = await capture(["resourcepack", "validate-png", linkedPath]);
       expect(symlink.code).toBe(1);
       expect(symlink.stderr.join("\n")).toContain("refuses symbolic links");
+
+      const alphaSymlink = await capture(["resourcepack", "inspect-png-alpha", linkedPath]);
+      expect(alphaSymlink.code).toBe(1);
+      expect(alphaSymlink.stderr.join("\n")).toContain("refuses symbolic links");
 
       const invalidLimit = await capture([
         "resourcepack",

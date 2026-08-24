@@ -311,6 +311,90 @@ describe("validateResourcepackPng", () => {
     );
   });
 
+  it("validates tRNS length, multiplicity, ordering, and color-type rules", () => {
+    expect(
+      validateResourcepackPng(
+        png(
+          ihdr({ colorType: 0, bitDepth: 4 }),
+          chunk("tRNS", Buffer.from([0xf0, 0x03])),
+          chunk("IDAT"),
+          chunk("IEND"),
+        ),
+      ).valid,
+    ).toBe(true);
+    expect(
+      validateResourcepackPng(
+        png(ihdr({ colorType: 2 }), chunk("tRNS", Buffer.alloc(6)), chunk("IDAT"), chunk("IEND")),
+      ).valid,
+    ).toBe(true);
+    expect(
+      validateResourcepackPng(
+        png(
+          ihdr({ colorType: 3, bitDepth: 1 }),
+          chunk("PLTE", Buffer.alloc(6)),
+          chunk("tRNS", Buffer.from([0])),
+          chunk("IDAT"),
+          chunk("IEND"),
+        ),
+      ).valid,
+    ).toBe(true);
+    expect(
+      validateResourcepackPng(
+        png(
+          ihdr({ colorType: 3, bitDepth: 1 }),
+          chunk("PLTE", Buffer.alloc(3)),
+          chunk("tRNS"),
+          chunk("IDAT"),
+          chunk("IEND"),
+        ),
+      ).valid,
+    ).toBe(true);
+
+    expect(
+      codes(
+        png(
+          ihdr({ colorType: 0 }),
+          chunk("tRNS", Buffer.from([0])),
+          chunk("tRNS", Buffer.alloc(2)),
+          chunk("IDAT"),
+          chunk("IEND"),
+        ),
+      ),
+    ).toEqual(expect.arrayContaining(["png.invalid-trns-length", "png.duplicate-trns"]));
+    expect(
+      codes(
+        png(ihdr({ colorType: 2 }), chunk("tRNS", Buffer.alloc(2)), chunk("IDAT"), chunk("IEND")),
+      ),
+    ).toContain("png.invalid-trns-length");
+    expect(
+      codes(
+        png(ihdr({ colorType: 6 }), chunk("tRNS", Buffer.alloc(6)), chunk("IDAT"), chunk("IEND")),
+      ),
+    ).toContain("png.trns-forbidden");
+
+    const indexedOrdering = codes(
+      png(
+        ihdr({ colorType: 3 }),
+        chunk("tRNS", Buffer.from([0, 255])),
+        chunk("PLTE", Buffer.alloc(3)),
+        chunk("IDAT"),
+        chunk("IEND"),
+      ),
+    );
+    expect(indexedOrdering).toEqual(
+      expect.arrayContaining([
+        "png.trns-before-plte",
+        "png.plte-after-trns",
+        "png.trns-too-many-entries",
+      ]),
+    );
+    expect(
+      codes(
+        png(ihdr({ colorType: 0 }), chunk("IDAT"), chunk("tRNS", Buffer.alloc(2)), chunk("IEND")),
+      ),
+    ).toContain("png.trns-after-idat");
+  });
+
   it("distinguishes unknown critical, unknown ancillary, and invalid reserved-bit chunks", () => {
     const unknownCritical = codes(png(ihdr(), chunk("ABCD"), chunk("IDAT"), chunk("IEND")));
     expect(unknownCritical).toContain("png.unknown-critical-chunk");

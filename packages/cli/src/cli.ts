@@ -29,6 +29,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultModrinthPackValidationLimits,
+  defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   explainPackPath,
@@ -82,6 +83,7 @@ import {
   getVanillaDatapackJson,
   getVanillaInventory,
   getVersionDetail,
+  inspectResourcepackPngAlphaBounds,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -107,8 +109,10 @@ import {
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
+  type ResourcepackPngAlphaBoundsLimits,
   type ResourcepackPngValidationLimits,
   resolveModrinthCompatibility,
+  resolveResourcepackPngAlphaBoundsLimits,
   resolveResourcepackPngValidationLimits,
   resolveVelocityToolchain,
   resolveVersion,
@@ -208,6 +212,17 @@ const resourcepackPngValueOptions = [
   "--max-diagnostics",
 ] as const;
 
+const resourcepackPngAlphaValueOptions = [
+  ...resourcepackPngValueOptions,
+  "--max-inflated-bytes",
+  "--minimum-transparent-margin-pixels",
+] as const;
+
+const maximumMinimumTransparentMarginPixels = Math.max(
+  defaultResourcepackPngAlphaBoundsLimits.maxWidth,
+  defaultResourcepackPngAlphaBoundsLimits.maxHeight,
+);
+
 function readResourcepackPngLimit(
   args: string[],
   option: string,
@@ -270,6 +285,37 @@ function readResourcepackPngLimits(
       command,
     ),
   });
+}
+
+function readResourcepackPngAlphaLimits(args: string[]): ResourcepackPngAlphaBoundsLimits {
+  const command = "resourcepack inspect-png-alpha";
+  return resolveResourcepackPngAlphaBoundsLimits({
+    ...readResourcepackPngLimits(args, command),
+    maxInflatedBytes: readResourcepackPngLimit(
+      args,
+      "--max-inflated-bytes",
+      defaultResourcepackPngAlphaBoundsLimits.maxInflatedBytes,
+      command,
+    ),
+  });
+}
+
+function readMinimumTransparentMarginPixels(args: string[]): number | undefined {
+  const option = "--minimum-transparent-margin-pixels";
+  if (!args.includes(option)) {
+    return undefined;
+  }
+  const value = readOption(args, option, "");
+  if (!/^\d+$/.test(value)) {
+    throw new Error(`resourcepack inspect-png-alpha ${option} must be a non-negative integer`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || maximumMinimumTransparentMarginPixels < parsed) {
+    throw new Error(
+      `resourcepack inspect-png-alpha ${option} must be between 0 and ${maximumMinimumTransparentMarginPixels}`,
+    );
+  }
+  return parsed;
 }
 
 function readBooleanOption(args: string[], name: string, fallback: boolean): boolean {
@@ -580,6 +626,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "resourcepack classify-files": "classify-files",
     "resourcepack file-schema": "file-schema",
     "resourcepack validate-files": "validate-files",
+    "resourcepack inspect-png-alpha": "inspect-resourcepack-png-alpha",
     "resourcepack validate-png": "validate-resourcepack-png",
     "resourcepack validate-project": "validate-resourcepack-project",
     "resourcepack migration-plan": "migration-plan",
@@ -771,6 +818,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "classify-files": "datapack classify-files or resourcepack classify-files",
   "file-schema": "datapack file-schema or resourcepack file-schema",
   "validate-files": "datapack validate-files or resourcepack validate-files",
+  "inspect-resourcepack-png-alpha": "resourcepack inspect-png-alpha",
   "validate-resourcepack-png": "resourcepack validate-png",
   "validate-resourcepack-project": "resourcepack validate-project",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
@@ -1002,6 +1050,7 @@ Grouped commands:
   minecraft-skills resourcepack classify-files <path...>
   minecraft-skills resourcepack file-schema [version] <path>
   minecraft-skills resourcepack validate-files <version> <file...> [--pack-root dir]
+  minecraft-skills resourcepack inspect-png-alpha <file> [--require-nonempty] [--minimum-transparent-margin-pixels n] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n] [--max-inflated-bytes n]
   minecraft-skills resourcepack validate-png <file> [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
@@ -1113,6 +1162,11 @@ Options:
   --max-pixels <n>       Lower the PNG total-pixel cap for resource-pack PNG validation.
   --max-chunks <n>       Lower the PNG chunk-count cap for resource-pack PNG validation.
   --max-diagnostics <n>  Lower retained diagnostics for standalone PNG validation.
+  --max-inflated-bytes <n>
+                         Lower filtered-image bytes decoded by PNG alpha inspection.
+  --require-nonempty     Require at least one PNG pixel whose decoded alpha is nonzero.
+  --minimum-transparent-margin-pixels <n>
+                         Require this many transparent pixels on every content-box side.
   --force                Overwrite or refetch where supported.
 
 Cache:
@@ -1904,6 +1958,34 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       });
       printJson(output, result);
       return result.valid ? 0 : 1;
+    }
+
+    if (command === "inspect-resourcepack-png-alpha") {
+      const [filePath, ...extraPaths] = positionalArgsWithOptions(args, {
+        flags: ["--require-nonempty"],
+        values: resourcepackPngAlphaValueOptions,
+      });
+      if (!filePath || extraPaths.length > 0) {
+        throw new Error("resourcepack inspect-png-alpha requires exactly one <file>");
+      }
+      const limits = readResourcepackPngAlphaLimits(args);
+      const minimumTransparentMarginPixels = readMinimumTransparentMarginPixels(args);
+      const requirements = {
+        ...(args.includes("--require-nonempty") ? { nonEmpty: true } : {}),
+        ...(minimumTransparentMarginPixels === undefined ? {} : { minimumTransparentMarginPixels }),
+      };
+      const result = inspectResourcepackPngAlphaBounds(
+        readBoundedPngFile(filePath, limits.maxInputBytes, "resourcepack inspect-png-alpha"),
+        {
+          limits,
+          ...(Object.keys(requirements).length === 0 ? {} : { requirements }),
+        },
+      );
+      printJson(output, result);
+      return result.pixelInspectionComplete &&
+        (result.requirements.status === "met" || result.requirements.status === "not-requested")
+        ? 0
+        : 1;
     }
 
     if (command === "validate-resourcepack-project") {

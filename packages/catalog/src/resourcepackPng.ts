@@ -25,6 +25,15 @@ export type ResourcepackPngValidationOptions = {
 
 type ResourcepackPngInspectionOptions = ResourcepackPngValidationOptions & {
   onDiagnostic?: (diagnostic: ResourcepackPngDiagnostic) => void;
+  onChunk?: (chunk: ResourcepackPngChunkObservation) => void;
+};
+
+/** CRC-verified chunk view emitted by the shared bounded PNG walk. */
+export type ResourcepackPngChunkObservation = {
+  type: string;
+  offset: number;
+  dataOffset: number;
+  data: Uint8Array;
 };
 
 export type ResourcepackPngDiagnostic = {
@@ -233,10 +242,14 @@ export function inspectResourcepackPng(
   let ihdrCount = 0;
   let iendCount = 0;
   let plteCount = 0;
+  let plteEntryCount: number | null = null;
+  let trnsCount = 0;
+  let indexedTrnsEntryCount: number | null = null;
   let scannedBytes = 0;
   let signatureValidated = false;
   let trustworthyChunkWalk = false;
   let idatSequenceEnded = false;
+  let chunkCallback = options.onChunk;
   const exceededLimits = new Set<keyof ResourcepackPngValidationLimits>();
 
   if (limits.maxInputBytes < bytes.byteLength) {
@@ -368,6 +381,19 @@ export function inspectResourcepackPng(
         );
         trustworthyChunkWalk = false;
         break;
+      }
+
+      if (chunkCallback) {
+        try {
+          chunkCallback({
+            type: chunkType.name,
+            offset,
+            dataOffset,
+            data: bytes.subarray(dataOffset, crcOffset),
+          });
+        } catch {
+          chunkCallback = undefined;
+        }
       }
 
       if (!chunkType.valid) {
@@ -525,6 +551,14 @@ export function inspectResourcepackPng(
             "PLTE must appear before the first IDAT chunk.",
           );
         }
+        if (0 < trnsCount) {
+          add(
+            "png.plte-after-trns",
+            offset,
+            "PLTE",
+            "PLTE must appear before tRNS when both chunks are present.",
+          );
+        }
         if (chunkLength === 0 || 768 < chunkLength || chunkLength % 3 !== 0) {
           add(
             "png.invalid-plte-length",
@@ -532,6 +566,16 @@ export function inspectResourcepackPng(
             "PLTE",
             "PLTE must contain between 1 and 256 three-byte palette entries.",
           );
+        } else if (plteCount === 1) {
+          plteEntryCount = chunkLength / 3;
+          if (indexedTrnsEntryCount !== null && plteEntryCount < indexedTrnsEntryCount) {
+            add(
+              "png.trns-too-many-entries",
+              offset,
+              "PLTE",
+              "Indexed-color tRNS must not contain more alpha values than PLTE has entries.",
+            );
+          }
         }
         if (colorType === 0 || colorType === 4) {
           add(
@@ -552,6 +596,72 @@ export function inspectResourcepackPng(
             offset,
             "PLTE",
             `PLTE has more entries than indexed color bit depth ${bitDepth} can address.`,
+          );
+        }
+      } else if (chunkType.name === "tRNS") {
+        trnsCount += 1;
+        if (1 < trnsCount) {
+          add("png.duplicate-trns", offset, "tRNS", "PNG input contains more than one tRNS chunk.");
+        }
+        if (0 < idatChunkCount) {
+          add(
+            "png.trns-after-idat",
+            offset,
+            "tRNS",
+            "tRNS must appear before the first IDAT chunk.",
+          );
+        }
+        if (colorType === 0) {
+          if (chunkLength !== 2) {
+            add(
+              "png.invalid-trns-length",
+              offset,
+              "tRNS",
+              "tRNS for greyscale PNG input must contain exactly one two-byte sample key.",
+            );
+          }
+        } else if (colorType === 2) {
+          if (chunkLength !== 6) {
+            add(
+              "png.invalid-trns-length",
+              offset,
+              "tRNS",
+              "tRNS for truecolor PNG input must contain exactly three two-byte sample keys.",
+            );
+          }
+        } else if (colorType === 3) {
+          if (trnsCount === 1) {
+            indexedTrnsEntryCount = chunkLength;
+          }
+          if (plteCount === 0) {
+            add(
+              "png.trns-before-plte",
+              offset,
+              "tRNS",
+              "tRNS for indexed-color PNG input must appear after PLTE.",
+            );
+          }
+          if (plteEntryCount !== null && plteEntryCount < chunkLength) {
+            add(
+              "png.trns-too-many-entries",
+              offset,
+              "tRNS",
+              "Indexed-color tRNS must not contain more alpha values than PLTE has entries.",
+            );
+          }
+        } else if (colorType === 4 || colorType === 6) {
+          add(
+            "png.trns-forbidden",
+            offset,
+            "tRNS",
+            `tRNS is not allowed for PNG color type ${colorType}, which already contains an alpha channel.`,
+          );
+        } else {
+          add(
+            "png.trns-without-supported-color-type",
+            offset,
+            "tRNS",
+            "tRNS cannot be interpreted without a supported IHDR color type.",
           );
         }
       } else if (chunkType.name === "IDAT") {
@@ -629,7 +739,7 @@ export function inspectResourcepackPng(
     exceededLimits: [...exceededLimits].sort(),
     diagnostics: summary.diagnostics,
     notes: [
-      "Validation covers the PNG signature, bounded chunk framing, scanned chunk CRCs, critical chunk structure, and IHDR fields.",
+      "Validation covers the PNG signature, bounded chunk framing, scanned chunk CRCs, critical chunk structure, IHDR fields, and PLTE/tRNS placement and lengths.",
       "IDAT payloads are not decompressed; pixel data, rendered texture appearance, APNG ancillary-chunk semantics, and animation .mcmeta frame semantics are not validated.",
       "The valid field means no error was detected within this structural scope and its applied safety limits; it is not a full decoder result.",
       "PNG validity does not require square or power-of-two dimensions, and this validator does not impose a fixed pack.png size.",
