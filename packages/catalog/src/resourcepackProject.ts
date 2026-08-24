@@ -1,3 +1,8 @@
+import {
+  defaultResourcepackPngValidationLimits,
+  inspectResourcepackPng,
+  type ResourcepackPngValidationLimits,
+} from "./resourcepackPng.js";
 import { validateResourcepackSounds, vorbisIdentificationPageBytes } from "./resourcepackSound.js";
 
 export type ResourcepackProjectFile = {
@@ -6,6 +11,18 @@ export type ResourcepackProjectFile = {
 };
 
 export type ResourcepackProjectDiagnosticSeverity = "error" | "warning";
+
+export type ResourcepackPngValidationIncompleteReason =
+  | "content-unavailable"
+  | "input-limit-exceeded"
+  | "chunk-limit-exceeded"
+  | "structural-scan-stopped"
+  | "project-limit-exceeded";
+
+export type ResourcepackProjectPngValidationLimitName = Exclude<
+  keyof ResourcepackPngValidationLimits,
+  "maxDiagnostics"
+>;
 
 export type ResourcepackProjectDiagnostic = {
   severity: ResourcepackProjectDiagnosticSeverity;
@@ -45,7 +62,7 @@ export const defaultResourcepackProjectValidationLimits: Readonly<ResourcepackPr
     maxTextContentCharacters: 16 * 1_024 * 1_024,
     maxContentNodes: 250_000,
     maxContentDepth: 128,
-    maxBinaryContentBytes: 25_000 * vorbisIdentificationPageBytes,
+    maxBinaryContentBytes: 4 * defaultResourcepackPngValidationLimits.maxInputBytes,
     maxSoundHeaderBytes: vorbisIdentificationPageBytes,
     maxSoundEvents: 50_000,
     maxSoundEntries: 100_000,
@@ -59,6 +76,7 @@ export type ResourcepackProjectValidationOptions = {
   version?: string;
   limit?: number;
   limits?: Partial<ResourcepackProjectValidationLimits>;
+  pngLimits?: Partial<Omit<ResourcepackPngValidationLimits, "maxDiagnostics">>;
 };
 
 export type ResourcepackProjectValidationResult = {
@@ -81,6 +99,11 @@ export type ResourcepackProjectValidationResult = {
   inspectedSoundFiles: number;
   soundValidationComplete: boolean;
   soundValidationIncompleteReasons: ResourcepackSoundValidationIncompleteReason[];
+  pngFiles: number;
+  inspectedPngFiles: number;
+  pngValidationComplete: boolean;
+  pngValidationIncompleteReasons: ResourcepackPngValidationIncompleteReason[];
+  pngExceededLimits: ResourcepackProjectPngValidationLimitName[];
   binaryFiles: number;
   parsedJsonFiles: number;
   checkedReferences: number;
@@ -100,6 +123,7 @@ type ResolvedValidationOptions = {
   vanillaPaths: readonly string[];
   limit: number;
   limits: ResourcepackProjectValidationLimits;
+  pngLimits: ResourcepackPngValidationLimits;
 };
 
 type ProjectFile = ResourcepackProjectFile & {
@@ -452,7 +476,8 @@ function inspectRequestLimits(
 function resourcepackValidationNotes(version: string): string[] {
   return [
     `Processed vanilla model and texture references were checked against the bundled Java ${version} resource-pack path index; sounds.json event and file references outside the submitted project are not bundled and remain unverified.`,
-    "PNG files were indexed by path without decoding; OGG files were inspected only through their bounded 58-byte Ogg/Vorbis identification page.",
+    "PNG files with complete byte content were checked by the bounded structural and CRC validator; missing PNG content is reported as incomplete validation. OGG files were inspected only through their bounded 58-byte Ogg/Vorbis identification page.",
+    "PNG IDAT payloads were not decompressed; rendered pixels, APNG ancillary-chunk semantics, and animation .mcmeta semantics were not validated.",
     "Full audio decoding, duration, loudness, and Vorbis comment, setup, and audio packet validation are outside this validation surface.",
     "Stereo audio is accepted with a positional-attenuation warning; channel counts above two are rejected because Minecraft's OpenAL upload path supports only mono and stereo buffers.",
     "Texture variables inherited only from a vanilla parent produce warnings because vanilla model contents are not bundled in this validation surface.",
@@ -553,6 +578,10 @@ function itemDefinitionPath(path: string): boolean {
 
 function binaryAssetPath(path: string): boolean {
   return /\.(?:png|ogg)$/i.test(path);
+}
+
+function pngAssetPath(path: string): boolean {
+  return path.toLowerCase().endsWith(".png");
 }
 
 function parseProjectJson(
@@ -882,6 +911,12 @@ export function validateResourcepackReferenceGraph(
       inspectedSoundFiles: 0,
       soundValidationComplete: false,
       soundValidationIncompleteReasons: ["limit-exceeded"],
+      pngFiles: options.files.filter((file) => pngAssetPath(normalizeProjectPath(file.path)))
+        .length,
+      inspectedPngFiles: 0,
+      pngValidationComplete: false,
+      pngValidationIncompleteReasons: ["project-limit-exceeded"],
+      pngExceededLimits: [],
       binaryFiles: 0,
       parsedJsonFiles: 0,
       checkedReferences: 0,
@@ -939,6 +974,65 @@ export function validateResourcepackReferenceGraph(
     }
     return false;
   };
+
+  let inspectedPngFiles = 0;
+  let pngValidationComplete = true;
+  const pngValidationIncompleteReasons = new Set<ResourcepackPngValidationIncompleteReason>();
+  const pngExceededLimits = new Set<ResourcepackProjectPngValidationLimitName>();
+
+  const pngFiles = projectFiles.filter(
+    (file) => file.validPath && file.validAssetPath && pngAssetPath(file.normalizedPath),
+  );
+  for (const [pngIndex, file] of pngFiles.entries()) {
+    const dedupeIdentity = `png-file:${pngIndex}`;
+    if (!(file.content instanceof Uint8Array)) {
+      pngValidationComplete = false;
+      pngValidationIncompleteReasons.add("content-unavailable");
+      addDiagnostic({
+        severity: "warning",
+        code: "png-content-unavailable",
+        path: file.normalizedPath,
+        reference: null,
+        source: "png",
+        dedupeIdentity: `${dedupeIdentity}:content`,
+        message: "Complete PNG bytes are required for bounded structural and CRC validation.",
+      });
+      continue;
+    }
+    inspectedPngFiles += 1;
+    const result = inspectResourcepackPng(file.content, {
+      limits: options.pngLimits,
+      onDiagnostic: (diagnostic) => {
+        addDiagnostic({
+          severity: diagnostic.severity,
+          code: diagnostic.code,
+          path: file.normalizedPath,
+          reference: diagnostic.chunkType
+            ? `${diagnostic.chunkType}@${diagnostic.offset}`
+            : `byte:${diagnostic.offset}`,
+          source: "png",
+          dedupeIdentity: `${dedupeIdentity}:${diagnostic.code}:${diagnostic.offset}:${diagnostic.chunkType ?? ""}`,
+          message: diagnostic.message,
+        });
+      },
+    });
+    pngValidationComplete &&= result.validationComplete;
+    for (const name of result.exceededLimits) {
+      if (name !== "maxDiagnostics") {
+        pngExceededLimits.add(name);
+      }
+    }
+    if (!result.validationComplete) {
+      if (result.exceededLimits.includes("maxInputBytes")) {
+        pngValidationIncompleteReasons.add("input-limit-exceeded");
+      } else if (result.exceededLimits.includes("maxChunks")) {
+        pngValidationIncompleteReasons.add("chunk-limit-exceeded");
+      } else {
+        pngValidationIncompleteReasons.add("structural-scan-stopped");
+      }
+    }
+  }
+  validationComplete &&= pngValidationComplete;
 
   const duplicatePaths = new Set<string>();
   for (const file of projectFiles) {
@@ -1380,6 +1474,11 @@ export function validateResourcepackReferenceGraph(
     inspectedSoundFiles: soundValidation.inspectedSoundFiles,
     soundValidationComplete: soundValidation.soundValidationComplete,
     soundValidationIncompleteReasons: soundValidation.incompleteReasons,
+    pngFiles: pngFiles.length,
+    inspectedPngFiles,
+    pngValidationComplete,
+    pngValidationIncompleteReasons: [...pngValidationIncompleteReasons].sort(),
+    pngExceededLimits: [...pngExceededLimits].sort(),
     binaryFiles: projectFiles.filter((file) => binaryAssetPath(file.normalizedPath)).length,
     parsedJsonFiles,
     checkedReferences,

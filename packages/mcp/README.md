@@ -114,6 +114,7 @@ aliases or reject Unicode query values.
 - `validate_modrinth_pack`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
+- `validate_resourcepack_png`
 - `validate_resourcepack_project`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
@@ -153,14 +154,22 @@ aliases or reject Unicode query values.
 - `list_references`
 - `get_source_policy`
 
+`validate_resourcepack_png` accepts canonical padded Base64 for one complete PNG, rejects malformed
+or oversized input before decoding, and returns bounded structural and CRC diagnostics. It does not
+decompress IDAT or claim the texture can be rendered.
+
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects
 larger payloads and rejects arbitrary OGG `content`, then validates only the Ogg/Vorbis
-identification page. Omit PNG binary content. The request schema and runtime both cap file count and
-path length, while the catalog layer additionally bounds total content, JSON nodes/depth, sound
-events/entries, model-graph work, and retained diagnostics. Result metadata reports applied/exceeded limits,
-processed files, completeness (including unverified external sound references), and omitted
-diagnostic counts.
+identification page. For a PNG file, send canonical `contentBase64` for the complete file; arbitrary
+PNG `content` is also rejected, and omitted PNG content remains an explicit incomplete-validation
+condition. The request schema and runtime cap file count, path length, per-file binary input, and
+aggregate binary input before decoding. The catalog layer additionally bounds total content, JSON
+nodes/depth, sound events/entries, model-graph work, and retained diagnostics. Result metadata
+reports applied/exceeded limits, processed files, completeness (including unverified external sound
+references), and omitted diagnostic counts. `limits.maxBinaryContentBytes` may lower the project
+aggregate before any Base64 payload is decoded, while `pngLimits` lowers PNG-specific byte,
+dimension, pixel, and chunk caps; neither can raise the conservative defaults.
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,

@@ -66,6 +66,14 @@ response bytes and entry counts are bounded, required fields and numeric ranges 
 the Loader-provided Intermediary pairing is cross-checked when the Intermediary endpoint returns a
 candidate.
 
+## Stable Format Specifications
+
+Container validators may use the format publisher's stable specification for format-level facts.
+The resource-pack PNG validator uses the [W3C PNG specification](https://www.w3.org/TR/png-3/) for
+signature, chunk, IHDR, ordering, and CRC rules. That evidence establishes only the documented PNG
+structural surface; it does not establish target-version Minecraft behavior, rendered appearance,
+or animation semantics.
+
 ## Importer Policy
 
 Future importers should follow this shape:

@@ -1,4 +1,4 @@
-import { closeSync, fstatSync, openSync, readSync } from "node:fs";
+import { closeSync, fstatSync, lstatSync, openSync, readSync } from "node:fs";
 
 type PrefixReader = (
   file: number,
@@ -33,6 +33,69 @@ export function readFilePrefix(
       offset += bytesRead;
     }
     return contents.subarray(0, offset);
+  } finally {
+    closeSync(file);
+  }
+}
+
+export function readBoundedPngFile(
+  filePath: string,
+  maxBytes: number,
+  command = "resourcepack validate-png",
+): Buffer {
+  const pathStatus = lstatSync(filePath);
+  if (pathStatus.isSymbolicLink()) {
+    throw new Error(`${command} refuses symbolic links`);
+  }
+  if (!pathStatus.isFile()) {
+    throw new Error(`${command} requires regular local PNG files`);
+  }
+
+  const file = openSync(filePath, "r");
+  try {
+    const before = fstatSync(file);
+    const openedPathStatus = lstatSync(filePath);
+    if (!before.isFile()) {
+      throw new Error(`${command} requires regular local PNG files`);
+    }
+    if (
+      openedPathStatus.isSymbolicLink() ||
+      pathStatus.dev !== before.dev ||
+      pathStatus.ino !== before.ino ||
+      openedPathStatus.dev !== before.dev ||
+      openedPathStatus.ino !== before.ino
+    ) {
+      throw new Error(`${command} PNG file identity changed before it was read`);
+    }
+    if (!Number.isSafeInteger(before.size) || before.size < 0) {
+      throw new Error(`${command} could not determine a safe PNG file size`);
+    }
+
+    const readLength = Math.min(before.size, maxBytes + 1);
+    const contents = Buffer.allocUnsafe(readLength);
+    let offset = 0;
+    while (offset < contents.byteLength) {
+      const bytesRead = readSync(file, contents, offset, contents.byteLength - offset, null);
+      if (bytesRead === 0) {
+        break;
+      }
+      offset += bytesRead;
+    }
+
+    const after = fstatSync(file);
+    const finalPathStatus = lstatSync(filePath);
+    if (
+      offset !== readLength ||
+      after.size !== before.size ||
+      after.dev !== before.dev ||
+      after.ino !== before.ino ||
+      finalPathStatus.isSymbolicLink() ||
+      finalPathStatus.dev !== before.dev ||
+      finalPathStatus.ino !== before.ino
+    ) {
+      throw new Error(`${command} PNG file changed while it was being read`);
+    }
+    return contents;
   } finally {
     closeSync(file);
   }

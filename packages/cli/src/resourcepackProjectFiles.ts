@@ -1,15 +1,21 @@
 import { type Dirent, lstatSync, opendirSync, type Stats } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import {
+  defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
+  type ResourcepackPngValidationLimits,
   type ResourcepackProjectValidationLimits,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
-import { readBoundedUtf8File, readFilePrefix } from "./filePrefix.js";
+import { readBoundedPngFile, readBoundedUtf8File, readFilePrefix } from "./filePrefix.js";
 
 type ProjectScanLimits = Pick<
   ResourcepackProjectValidationLimits,
-  "maxContentDepth" | "maxFiles" | "maxPathLength" | "maxTextContentCharacters"
+  | "maxBinaryContentBytes"
+  | "maxContentDepth"
+  | "maxFiles"
+  | "maxPathLength"
+  | "maxTextContentCharacters"
 >;
 
 type DirectoryEntryKind = "directory" | "file" | "unsupported";
@@ -61,6 +67,10 @@ export function classifyResourcepackProjectEntry(
 export function readResourcepackProjectFiles(
   root: string,
   limits: ProjectScanLimits = defaultResourcepackProjectValidationLimits,
+  pngLimits: Pick<
+    ResourcepackPngValidationLimits,
+    "maxInputBytes"
+  > = defaultResourcepackPngValidationLimits,
 ): Array<{ path: string; content?: string | Uint8Array }> {
   const resolvedRoot = resolve(root);
   const files: Array<{ path: string; content?: string | Uint8Array }> = [];
@@ -70,6 +80,7 @@ export function readResourcepackProjectFiles(
   let directoryCount = 1;
   let entryCount = 0;
   let textBytes = 0;
+  let binaryBytes = 0;
 
   while (pendingDirectories.length > 0) {
     const directory = pendingDirectories.pop();
@@ -136,7 +147,30 @@ export function readResourcepackProjectFiles(
         textBytes += read.bytes;
         content = read.content;
       } else if (path.toLowerCase().endsWith(".ogg")) {
+        const remainingBinaryBytes = limits.maxBinaryContentBytes - binaryBytes;
+        if (remainingBinaryBytes < vorbisIdentificationPageBytes) {
+          throw new Error(
+            `resourcepack validate-project refuses binary content larger than the remaining ${remainingBinaryBytes}-byte project budget`,
+          );
+        }
         content = readFilePrefix(fullPath, vorbisIdentificationPageBytes);
+        binaryBytes += content.byteLength;
+      } else if (path.toLowerCase().endsWith(".png")) {
+        const remainingBinaryBytes = limits.maxBinaryContentBytes - binaryBytes;
+        if (remainingBinaryBytes < 1) {
+          throw new Error(
+            "resourcepack validate-project refuses PNG content because the project binary-content budget is exhausted",
+          );
+        }
+        const readLimit = Math.min(pngLimits.maxInputBytes, remainingBinaryBytes);
+        const pngContent = readBoundedPngFile(fullPath, readLimit, "resourcepack validate-project");
+        if (pngContent.byteLength > remainingBinaryBytes) {
+          throw new Error(
+            `resourcepack validate-project refuses PNG content larger than the remaining ${remainingBinaryBytes}-byte project budget`,
+          );
+        }
+        binaryBytes += pngContent.byteLength;
+        content = pngContent;
       }
       files.push({ path, ...(content === undefined ? {} : { content }) });
     }

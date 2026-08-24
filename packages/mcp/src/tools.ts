@@ -14,6 +14,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultModrinthPackValidationLimits,
+  defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   explainPackPath,
   fetchData,
@@ -93,8 +94,12 @@ import {
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
+  type ResourcepackPngValidationLimits,
+  type ResourcepackProjectValidationLimits,
   readCachedMinecraftAssetText,
   resolveModrinthCompatibility,
+  resolveResourcepackPngValidationLimits,
+  resolveResourcepackProjectValidationLimits,
   resolveVelocityToolchain,
   resolveVersion,
   searchAll,
@@ -117,6 +122,7 @@ import {
   type VanillaPathSearchOptions,
   validateModrinthPack,
   validatePackFilesContent,
+  validateResourcepackPng,
   validateResourcepackProject,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
@@ -150,6 +156,38 @@ type ToolDefinition = {
 
 const semanticSearchGuidance =
   "For intent-based discovery, use concise English canonical Minecraft terms; translate non-English user intent before calling. Use the English terms only for the lookup, and keep the user's requested response language. Keep exact identifiers, namespace IDs, file paths, project titles, and content literals unchanged.";
+
+const resourcepackPngLimitNames = [
+  "maxInputBytes",
+  "maxWidth",
+  "maxHeight",
+  "maxPixels",
+  "maxChunks",
+  "maxDiagnostics",
+] as const satisfies readonly (keyof ResourcepackPngValidationLimits)[];
+
+const resourcepackProjectPngLimitNames = resourcepackPngLimitNames.filter(
+  (name) => name !== "maxDiagnostics",
+);
+
+const resourcepackPngLimitSchemaProperties = Object.fromEntries(
+  resourcepackPngLimitNames.map((name) => [
+    name,
+    {
+      type: "integer",
+      minimum: 1,
+      maximum: defaultResourcepackPngValidationLimits[name],
+      default: defaultResourcepackPngValidationLimits[name],
+    },
+  ]),
+);
+
+const maximumResourcepackPngBase64Characters =
+  Math.ceil(defaultResourcepackPngValidationLimits.maxInputBytes / 3) * 4;
+
+const resourcepackProjectLimitNames = [
+  "maxBinaryContentBytes",
+] as const satisfies readonly (keyof ResourcepackProjectValidationLimits)[];
 
 export const tools: ToolDefinition[] = [
   {
@@ -1012,9 +1050,32 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "validate_resourcepack_png",
+    description:
+      "Validate complete PNG bytes for a resource pack using bounded PNG signature, chunk, IHDR, method, and CRC checks. This structural validator does not decompress IDAT data or claim rendered-texture validity.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        contentBase64: {
+          type: "string",
+          minLength: 1,
+          maxLength: maximumResourcepackPngBase64Characters,
+          description: "Canonical padded Base64 for one complete PNG datastream.",
+        },
+        limits: {
+          type: "object",
+          properties: resourcepackPngLimitSchemaProperties,
+          additionalProperties: false,
+        },
+      },
+      required: ["contentBase64"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "validate_resourcepack_project",
     description:
-      "Validate model, texture, and sounds.json reference graphs plus bounded Ogg/Vorbis identification headers across a resource-pack project for a target Java version. For OGG files, pass contentBase64 containing at most the first 58 bytes; PNG content may be omitted.",
+      "Validate item-definition and legacy override model references, model parents, inherited texture references, local model-parent cycles, sounds.json graphs, bounded Ogg/Vorbis identification headers, and complete PNG bytes across a resource-pack project. For OGG files, pass at most the first 58 bytes as contentBase64; omitted PNG bytes are reported as incomplete validation.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1039,29 +1100,64 @@ export const tools: ToolDefinition[] = [
                   { type: "object" },
                 ],
                 description:
-                  "JSON text or object content. OGG files must use contentBase64 instead.",
+                  "JSON text or object content. OGG and PNG files must use contentBase64 instead.",
               },
               contentBase64: {
                 type: "string",
                 minLength: 1,
-                maxLength: Math.ceil(vorbisIdentificationPageBytes / 3) * 4,
-                description: `Canonical base64 for at most the first ${vorbisIdentificationPageBytes} bytes of an OGG file. Do not send the full audio file.`,
+                maxLength: maximumResourcepackPngBase64Characters,
+                description: `Canonical padded Base64 for one complete PNG datastream, or at most the first ${vorbisIdentificationPageBytes} bytes of an OGG file. Do not send a full audio file.`,
               },
             },
             required: ["path"],
             additionalProperties: false,
             not: {
-              allOf: [
+              anyOf: [
                 {
-                  properties: { path: { pattern: "\\.[oO][gG][gG]$" } },
-                  required: ["path"],
+                  allOf: [
+                    {
+                      properties: { path: { pattern: "\\.[oO][gG][gG]$" } },
+                      required: ["path"],
+                    },
+                    { required: ["content"] },
+                  ],
                 },
-                { required: ["content"] },
+                {
+                  allOf: [
+                    {
+                      properties: { path: { pattern: "\\.[pP][nN][gG]$" } },
+                      required: ["path"],
+                    },
+                    { required: ["content"] },
+                  ],
+                },
               ],
             },
           },
         },
         limit: { type: "integer", minimum: 1, maximum: 1_000, default: 100 },
+        limits: {
+          type: "object",
+          properties: {
+            maxBinaryContentBytes: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultResourcepackProjectValidationLimits.maxBinaryContentBytes,
+              default: defaultResourcepackProjectValidationLimits.maxBinaryContentBytes,
+            },
+          },
+          additionalProperties: false,
+        },
+        pngLimits: {
+          type: "object",
+          properties: Object.fromEntries(
+            resourcepackProjectPngLimitNames.map((name) => [
+              name,
+              resourcepackPngLimitSchemaProperties[name],
+            ]),
+          ),
+          additionalProperties: false,
+        },
       },
       required: ["files"],
       additionalProperties: false,
@@ -2037,24 +2133,125 @@ function isTextLikeAsset(path: string): boolean {
   return /\.(json|mcmeta|txt|lang|properties|fsh|vsh|glsl)$/i.test(path);
 }
 
-const maxEncodedSoundHeaderLength = Math.ceil(vorbisIdentificationPageBytes / 3) * 4;
+function resourcepackPngLimitsArg(
+  value: unknown,
+  allowedNames: readonly (keyof ResourcepackPngValidationLimits)[],
+  label: string,
+): Partial<ResourcepackPngValidationLimits> {
+  if (value === undefined) {
+    return {};
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`${label} must be an object`);
+  }
+  const values = value as Record<string, unknown>;
+  const allowed = new Set<string>(allowedNames);
+  for (const name of Object.keys(values)) {
+    if (!allowed.has(name)) {
+      throw new Error(`${label} contains unsupported limit: ${name}`);
+    }
+  }
+  const limits: Partial<ResourcepackPngValidationLimits> = {};
+  for (const name of allowedNames) {
+    const requested = values[name];
+    if (requested === undefined) {
+      continue;
+    }
+    if (
+      typeof requested !== "number" ||
+      !Number.isSafeInteger(requested) ||
+      requested < 1 ||
+      defaultResourcepackPngValidationLimits[name] < requested
+    ) {
+      throw new Error(
+        `${label}.${name} must be an integer from 1 through ${defaultResourcepackPngValidationLimits[name]}`,
+      );
+    }
+    limits[name] = requested;
+  }
+  return limits;
+}
 
-function decodeSoundHeaderBase64(value: unknown, path: string): Uint8Array {
+function resourcepackProjectLimitsArg(
+  value: unknown,
+): Partial<ResourcepackProjectValidationLimits> {
+  if (value === undefined) {
+    return {};
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("validate_resourcepack_project limits must be an object");
+  }
+  const values = value as Record<string, unknown>;
+  const allowed = new Set<string>(resourcepackProjectLimitNames);
+  for (const name of Object.keys(values)) {
+    if (!allowed.has(name)) {
+      throw new Error(`validate_resourcepack_project limits contains unsupported limit: ${name}`);
+    }
+  }
+  const requested = values.maxBinaryContentBytes;
+  if (requested === undefined) {
+    return {};
+  }
   if (
-    typeof value !== "string" ||
-    value.length === 0 ||
-    value.length > maxEncodedSoundHeaderLength ||
-    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)
+    typeof requested !== "number" ||
+    !Number.isSafeInteger(requested) ||
+    requested < 1 ||
+    defaultResourcepackProjectValidationLimits.maxBinaryContentBytes < requested
   ) {
     throw new Error(
-      `validate_resourcepack_project contentBase64 for '${path}' must be canonical base64 containing at most ${vorbisIdentificationPageBytes} bytes`,
+      `validate_resourcepack_project limits.maxBinaryContentBytes must be an integer from 1 through ${defaultResourcepackProjectValidationLimits.maxBinaryContentBytes}`,
     );
   }
-  const decoded = Buffer.from(value, "base64");
-  if (decoded.byteLength > vorbisIdentificationPageBytes || decoded.toString("base64") !== value) {
+  return { maxBinaryContentBytes: requested };
+}
+
+type InspectedCanonicalBase64 = {
+  decodedLength: number;
+  value: string;
+};
+
+const base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+function inspectCanonicalBase64(
+  value: unknown,
+  maxDecodedBytes: number,
+  label: string,
+): InspectedCanonicalBase64 {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`${label} must be a non-empty canonical Base64 string`);
+  }
+  const maximumEncodedCharacters = Math.ceil(maxDecodedBytes / 3) * 4;
+  if (maximumEncodedCharacters < value.length) {
     throw new Error(
-      `validate_resourcepack_project contentBase64 for '${path}' must be canonical base64 containing at most ${vorbisIdentificationPageBytes} bytes`,
+      `${label} exceeds the encoded-length limit for ${maxDecodedBytes} decoded bytes`,
     );
+  }
+  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
+    throw new Error(`${label} must be canonical padded Base64 without whitespace`);
+  }
+  const lastDataCharacter = value[value.length - (value.endsWith("==") ? 3 : 2)] ?? "";
+  const lastDataValue = base64Alphabet.indexOf(lastDataCharacter);
+  if (
+    (value.endsWith("==") && (lastDataValue & 0x0f) !== 0) ||
+    (value.endsWith("=") && !value.endsWith("==") && (lastDataValue & 0x03) !== 0)
+  ) {
+    throw new Error(`${label} must use canonical Base64 padding and pad bits`);
+  }
+  const paddingBytes = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
+  const decodedLength = (value.length / 4) * 3 - paddingBytes;
+  if (maxDecodedBytes < decodedLength) {
+    throw new Error(`${label} decodes to more than the ${maxDecodedBytes}-byte limit`);
+  }
+  return { decodedLength, value };
+}
+
+function decodeCanonicalBase64(inspected: InspectedCanonicalBase64, label: string): Uint8Array {
+  const decoded = Buffer.from(inspected.value, "base64");
+  if (
+    decoded.byteLength !== inspected.decodedLength ||
+    decoded.toString("base64") !== inspected.value
+  ) {
+    throw new Error(`${label} must use canonical Base64 padding and pad bits`);
   }
   return decoded;
 }
@@ -2607,6 +2804,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         }),
       );
     }
+    if (name === "validate_resourcepack_png") {
+      const requestedLimits = resourcepackPngLimitsArg(
+        args.limits,
+        resourcepackPngLimitNames,
+        "validate_resourcepack_png limits",
+      );
+      const limits = resolveResourcepackPngValidationLimits(requestedLimits);
+      const label = "validate_resourcepack_png contentBase64";
+      const inspected = inspectCanonicalBase64(args.contentBase64, limits.maxInputBytes, label);
+      const bytes = decodeCanonicalBase64(inspected, label);
+      return text(validateResourcepackPng(bytes, { limits }));
+    }
     if (name === "validate_resourcepack_project") {
       if (!Array.isArray(args.files)) {
         throw new Error("validate_resourcepack_project requires files array");
@@ -2616,7 +2825,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           `validate_resourcepack_project accepts at most ${defaultResourcepackProjectValidationLimits.maxFiles} files`,
         );
       }
-      const files = args.files.map((file) => {
+      const projectLimits = resolveResourcepackProjectValidationLimits(
+        resourcepackProjectLimitsArg(args.limits),
+      );
+      const pngLimits = resolveResourcepackPngValidationLimits(
+        resourcepackPngLimitsArg(
+          args.pngLimits,
+          resourcepackProjectPngLimitNames,
+          "validate_resourcepack_project pngLimits",
+        ),
+      );
+      let binaryBytes = 0;
+      const inspectedFiles = args.files.map((file) => {
         if (
           typeof file !== "object" ||
           file === null ||
@@ -2625,9 +2845,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         ) {
           throw new Error("validate_resourcepack_project files must include string path");
         }
-        if (file.path.length > defaultResourcepackProjectValidationLimits.maxPathLength) {
+        if (file.path.length > projectLimits.maxPathLength) {
           throw new Error(
-            `validate_resourcepack_project file paths must contain at most ${defaultResourcepackProjectValidationLimits.maxPathLength} characters`,
+            `validate_resourcepack_project file paths must contain at most ${projectLimits.maxPathLength} characters`,
           );
         }
         if ("content" in file && "contentBase64" in file) {
@@ -2635,31 +2855,67 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
             "validate_resourcepack_project files must not include both content and contentBase64",
           );
         }
-        if ("contentBase64" in file && !file.path.toLowerCase().endsWith(".ogg")) {
-          throw new Error(
-            "validate_resourcepack_project contentBase64 is only accepted for OGG files",
-          );
+        const lowerPath = file.path.toLowerCase();
+        const soundPath = lowerPath.endsWith(".ogg");
+        const pngPath = lowerPath.endsWith(".png");
+        if ("contentBase64" in file) {
+          if (!soundPath && !pngPath) {
+            throw new Error(
+              "validate_resourcepack_project contentBase64 is accepted only for OGG and PNG files",
+            );
+          }
+          const maxDecodedBytes = soundPath
+            ? vorbisIdentificationPageBytes
+            : pngLimits.maxInputBytes;
+          const label = soundPath
+            ? `validate_resourcepack_project contentBase64 for '${file.path}'`
+            : `validate_resourcepack_project ${file.path} contentBase64`;
+          const inspected = inspectCanonicalBase64(file.contentBase64, maxDecodedBytes, label);
+          const remainingBinaryBytes = projectLimits.maxBinaryContentBytes - binaryBytes;
+          if (inspected.decodedLength > remainingBinaryBytes) {
+            throw new Error(
+              `validate_resourcepack_project binary content exceeds the applied aggregate limit of ${projectLimits.maxBinaryContentBytes} bytes before Base64 decoding`,
+            );
+          }
+          binaryBytes += inspected.decodedLength;
+          return {
+            kind: "binary" as const,
+            path: file.path,
+            inspected,
+            label,
+          };
         }
-        if ("content" in file && file.path.toLowerCase().endsWith(".ogg")) {
+        if ("content" in file && (soundPath || pngPath)) {
           throw new Error(
-            "validate_resourcepack_project OGG files must use bounded contentBase64 instead of content",
+            "validate_resourcepack_project OGG and PNG files must use bounded contentBase64 instead of content",
           );
         }
         return {
+          kind: "content" as const,
           path: file.path,
-          ...("content" in file
-            ? { content: file.content }
-            : "contentBase64" in file
-              ? { content: decodeSoundHeaderBase64(file.contentBase64, file.path) }
-              : {}),
+          hasContent: "content" in file,
+          content: "content" in file ? file.content : undefined,
         };
       });
+      const files = inspectedFiles.map((file) =>
+        file.kind === "binary"
+          ? {
+              path: file.path,
+              content: decodeCanonicalBase64(file.inspected, file.label),
+            }
+          : {
+              path: file.path,
+              ...(file.hasContent ? { content: file.content } : {}),
+            },
+      );
       return text(
         validateResourcepackProject({
           edition,
           version: typeof args.version === "string" ? args.version : "latest",
           files,
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+          limits: projectLimits,
+          pngLimits,
         }),
       );
     }

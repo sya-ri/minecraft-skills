@@ -15,6 +15,8 @@ import {
   comparePaperApiSurface,
   compareVanillaPaths,
   compareVersions,
+  defaultResourcepackPngValidationLimits,
+  defaultResourcepackProjectValidationLimits,
   explainPackPath,
   findDatapackEntries,
   findResourcepackAssets,
@@ -91,6 +93,7 @@ import {
   validatePackFileContent,
   validatePackFilesContent,
   validateResourcepackProject,
+  vorbisIdentificationPageBytes,
 } from "./index.js";
 
 function crc32(value: Uint8Array): number {
@@ -126,6 +129,30 @@ function validVorbisIdentificationPage(channels = 1): Buffer {
   page[39] = channels;
   writeOggCrc(page);
   return page;
+}
+
+function pngChunk(type: string, data: Uint8Array = new Uint8Array()): Buffer {
+  const typeBytes = Buffer.from(type, "ascii");
+  const result = Buffer.alloc(12 + data.byteLength);
+  result.writeUInt32BE(data.byteLength, 0);
+  typeBytes.copy(result, 4);
+  Buffer.from(data).copy(result, 8);
+  result.writeUInt32BE(crc32(Buffer.concat([typeBytes, Buffer.from(data)])), 8 + data.byteLength);
+  return result;
+}
+
+function testPng(): Buffer {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(1, 0);
+  header.writeUInt32BE(1, 4);
+  header[8] = 8;
+  header[9] = 6;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT"),
+    pngChunk("IEND"),
+  ]);
 }
 
 function testJar(entries: Record<string, string | Buffer>): Buffer {
@@ -1887,7 +1914,14 @@ describe("catalog", () => {
     });
   });
 
-  it("validates resource-pack model and sound reference graphs with bounded binary checks", () => {
+  it("keeps one 16 MiB PNG inside the shared 64 MiB project binary budget", () => {
+    expect(defaultResourcepackPngValidationLimits.maxInputBytes).toBe(16 * 1_024 * 1_024);
+    expect(defaultResourcepackProjectValidationLimits.maxBinaryContentBytes).toBe(
+      4 * defaultResourcepackPngValidationLimits.maxInputBytes,
+    );
+  });
+
+  it("validates resource-pack model, PNG, and sound references with bounded binary checks", () => {
     const result = validateResourcepackProject({
       version: "26.2",
       files: [
@@ -1921,7 +1955,7 @@ describe("catalog", () => {
         },
         {
           path: "assets/example/textures/item/widget.png",
-          content: Buffer.from([0xff, 0xfe, 0xfd]),
+          content: testPng(),
         },
         {
           path: "assets/example/sounds.json",
@@ -1964,6 +1998,9 @@ describe("catalog", () => {
       soundValidationIncompleteReasons: [],
       validationComplete: true,
       processedFiles: 6,
+      pngFiles: 1,
+      inspectedPngFiles: 1,
+      pngValidationComplete: true,
       binaryFiles: 2,
       parsedJsonFiles: 4,
       errorCount: 0,
@@ -1971,6 +2008,7 @@ describe("catalog", () => {
     });
     expect(result.checkedReferences).toBe(9);
     expect(result.notes.join("\n")).toContain("bounded 58-byte");
+    expect(result.notes.join("\n")).toContain("IDAT payloads were not decompressed");
   });
 
   it("reports missing, unqualified, and cyclic local sound references deterministically", () => {
@@ -2595,6 +2633,31 @@ describe("catalog", () => {
     expect(oversizedHeader.exceededLimits).toEqual(["maxSoundHeaderBytes"]);
     expect(oversizedHeader.processedFiles).toBe(0);
 
+    const png = testPng();
+    const aggregateExceeded = validateResourcepackProject({
+      version: "26.2",
+      limits: { maxBinaryContentBytes: png.byteLength + vorbisIdentificationPageBytes - 1 },
+      files: [
+        { path: "pack.png", content: png },
+        {
+          path: "assets/example/sounds/test.ogg",
+          content: validVorbisIdentificationPage(),
+        },
+      ],
+    });
+    expect(aggregateExceeded).toMatchObject({
+      valid: false,
+      processedFiles: 0,
+      validationComplete: false,
+      exceededLimits: ["maxBinaryContentBytes"],
+      soundValidationComplete: false,
+      soundValidationIncompleteReasons: ["limit-exceeded"],
+      pngFiles: 1,
+      inspectedPngFiles: 0,
+      pngValidationComplete: false,
+      pngValidationIncompleteReasons: ["project-limit-exceeded"],
+    });
+
     const oversizedParsedJson = validateResourcepackProject({
       version: "26.2",
       limits: { maxContentNodes: 5 },
@@ -2621,6 +2684,47 @@ describe("catalog", () => {
     });
     expect(oversizedSparseArray.exceededLimits).toEqual(["maxContentNodes"]);
     expect(oversizedSparseArray.processedFiles).toBe(0);
+  });
+
+  it("integrates complete and unavailable PNG content, including pack.png", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        { path: "pack.png", content: Buffer.from("not a png") },
+        { path: "assets/example/textures/item/unavailable.png" },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      valid: false,
+      pngFiles: 2,
+      inspectedPngFiles: 1,
+      pngValidationComplete: false,
+    });
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "png.invalid-signature", path: "pack.png" }),
+        expect.objectContaining({
+          severity: "warning",
+          code: "png-content-unavailable",
+          path: "assets/example/textures/item/unavailable.png",
+        }),
+      ]),
+    );
+  });
+
+  it("retains PNG diagnostics for each duplicate file occurrence", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        { path: "pack.png", content: Buffer.from("not a png") },
+        { path: "pack.png", content: Buffer.from("not a png") },
+      ],
+    });
+
+    expect(
+      result.diagnostics.filter((diagnostic) => diagnostic.code === "png.invalid-signature"),
+    ).toHaveLength(2);
   });
 
   it("reports missing resource-pack model, parent, texture, and texture-variable references", () => {
@@ -2788,7 +2892,7 @@ describe("catalog", () => {
         },
         {
           path: "assets/example/textures/item/widget.png",
-          content: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+          content: testPng(),
         },
       ],
     });
@@ -2828,7 +2932,7 @@ describe("catalog", () => {
         },
         {
           path: "assets/example/textures/item/widget.png",
-          content: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+          content: testPng(),
         },
       ],
     });

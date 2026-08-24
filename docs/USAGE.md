@@ -175,6 +175,7 @@ minecraft-skills resourcepack models 26.2
 minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
 minecraft-skills resourcepack classify-files assets/example/items/widget.json assets/example/textures/item/widget.png
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
+minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 ```
@@ -192,22 +193,33 @@ before their target-version support are reported as invalid. Missing minecraft-s
 custom resource pack folders are reported as unvalidated gaps rather than proof that the file is
 invalid.
 
+`resourcepack validate-png` safely reads one regular local file up to the configured byte cap and
+checks its PNG signature, chunk framing, IHDR fields, method values, ordering, and scanned CRCs.
+Symlinks and special files are rejected.
+
 `resourcepack validate-project` scans a complete directory and verifies item-definition model and
 special base references, legacy `overrides[].model` targets, model parents, texture paths, inherited
 texture variables, local model-parent cycles, `sounds.json` file/event targets, and local sound-event
 cycles. Model and texture references are checked against both project files and the target version's
-vanilla asset path index. PNG paths are indexed without decoding; each OGG file is read only through
-its strict 58-byte Ogg/Vorbis identification page. WAV, Opus, truncated or corrupt headers, and
-invalid Vorbis identification fields are errors. Stereo produces a positional-attenuation warning;
-more than two channels is an error because Minecraft's OpenAL upload path supports mono and stereo.
-Unavailable headers and external sound file/event references are warnings that also make validation
-completeness false. The command does not decode complete audio, duration, loudness, or later Vorbis
-packets, and returns exit code 1 when errors make the graph invalid. Variables that can only be
-resolved inside an unbundled vanilla parent are reported individually as warnings. Project requests,
-sound graphs, and retained diagnostics use published hard ceilings; results echo applied/exceeded
-limits, processed-file and completeness metadata, and exact omitted-diagnostic counts.
-The CLI applies matching file, directory-depth, path, and aggregate JSON-byte bounds while scanning,
-before it allocates the catalog request.
+vanilla asset path index. PNG files receive the same bounded structural validation, while each OGG
+file is read only through its strict 58-byte Ogg/Vorbis identification page. WAV, Opus, truncated or
+corrupt headers, and invalid Vorbis identification fields are errors. Stereo produces a
+positional-attenuation warning; more than two channels is an error because Minecraft's OpenAL upload
+path supports mono and stereo. Unavailable headers and external sound file/event references are
+warnings that also make validation completeness false. The command does not decode complete audio,
+duration, loudness, or later Vorbis packets. Variables that can only be resolved inside an unbundled
+vanilla parent are reported individually as warnings.
+
+Project requests, sound graphs, binary input, and retained diagnostics use published hard ceilings;
+results echo applied/exceeded limits, processed-file and completeness metadata, and exact
+omitted-diagnostic counts. The CLI applies matching file, directory-depth, path, aggregate JSON-byte,
+and aggregate binary-byte bounds while scanning, before it allocates the catalog request.
+
+The validator follows the [W3C PNG specification](https://www.w3.org/TR/png-3/) but does not
+decompress IDAT, validate pixels or rendering, or interpret APNG and animation `.mcmeta` semantics.
+It intentionally does not require square or power-of-two dimensions or a fixed `pack.png` size.
+Incomplete reads and safety-limit stops are explicit in the result. Project errors return exit code
+1; variables that can only be resolved inside an unbundled vanilla parent remain warnings.
 
 Paper plugin lookups:
 
@@ -416,6 +428,7 @@ Pack analysis tools include:
 - `classify_pack_files`
 - `get_pack_file_schema`
 - `validate_datapack_json`
+- `validate_resourcepack_png`
 - `validate_resourcepack_project`
 - `get_pack_migration_plan`
 - `get_pack_format`
@@ -448,6 +461,7 @@ Skill and data resources are exposed under:
 Use `@minecraft-skills/catalog` for validated data access:
 
 ```ts
+import { readFileSync } from "node:fs";
 import {
   getAuthoringContext,
   getAuthoringDiagnostic,
@@ -466,6 +480,7 @@ import {
   searchMinecraftAssets,
   searchPaperMembers,
   searchVanillaPaths,
+  validateResourcepackPng,
   validateResourcepackProject,
   resolveVelocityToolchain,
 } from "@minecraft-skills/catalog";
@@ -510,6 +525,9 @@ const resourcepackProject = validateResourcepackProject({
       content: { parent: "minecraft:item/generated" },
     },
   ],
+});
+const pngValidation = validateResourcepackPng(readFileSync("./pack.png"), {
+  limits: { maxInputBytes: 4 * 1024 * 1024 },
 });
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
