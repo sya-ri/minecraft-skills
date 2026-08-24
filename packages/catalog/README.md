@@ -98,12 +98,17 @@ const paperSkill = getSkillPayload("minecraft-paper-plugins");
 const checklist = getAuthoringChecklist("paper-plugin");
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
 const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "26.2" });
+const inventoryPlan = getAuthoringPlan({
+  scenario: "paper-inventory-gui-interaction-review",
+  version: "26.2",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
 const recipes = listAuthoringRecipes({ domain: "paper-plugin" });
 const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
+const inventoryRecipe = getAuthoringRecipe("paper-inventory-gui-interactions");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -111,6 +116,7 @@ const scenarioMatches = searchAuthoringScenarios({
 });
 const listenerScenario = getAuthoringScenario("paper-event-listener-review");
 const itemDeliveryScenario = getAuthoringScenario("paper-item-delivery-review");
+const inventoryScenario = getAuthoringScenario("paper-inventory-gui-interaction-review");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
@@ -198,6 +204,11 @@ const lookupSuggestions = suggestMinecraftLookups({
   version: "26.2",
   task: "migrate resource pack item model",
   domain: "resourcepack",
+});
+const inventoryLookupSuggestions = suggestMinecraftLookups({
+  version: "1.21.11",
+  task: "inventory GUI shift-click drag",
+  domain: "paper-plugin",
 });
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });

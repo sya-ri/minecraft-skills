@@ -358,6 +358,7 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain('"id": "paper-event-listener"');
     expect(list.content[0]?.text).toContain('"id": "paper-api-or-scheduler-code"');
     expect(list.content[0]?.text).toContain('"id": "paper-safe-item-delivery"');
+    expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interactions"');
 
     const single = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "datapack-function-command",
@@ -370,6 +371,12 @@ describe("MCP tools", () => {
     });
     expect(itemDelivery.content[0]?.text).toContain("define-delivery-and-overflow-outcomes");
     expect(itemDelivery.content[0]?.text).toContain("Player.give");
+
+    const inventory = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-inventory-gui-interactions",
+    });
+    expect(inventory.content[0]?.text).toContain("settle-editable-session-exactly-once");
+    expect(inventory.content[0]?.text).toContain("InventoryCloseEvent handling");
   });
 
   it("calls authoring scenario tools", async () => {
@@ -379,6 +386,7 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain('"id": "paper-event-listener-review"');
     expect(list.content[0]?.text).toContain('"id": "paper-api-scheduler-review"');
     expect(list.content[0]?.text).toContain('"id": "paper-item-delivery-review"');
+    expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-review"');
 
     const single = await callMinecraftSkillsTool("get_authoring_scenario", {
       id: "paper-event-listener-review",
@@ -391,6 +399,12 @@ describe("MCP tools", () => {
     });
     expect(itemDelivery.content[0]?.text).toContain('"paper-safe-item-delivery"');
     expect(itemDelivery.content[0]?.text).toContain("paper-inventory-leftovers-unhandled");
+
+    const inventory = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-inventory-gui-interaction-review",
+    });
+    expect(inventory.content[0]?.text).toContain('"paper-inventory-gui-interactions"');
+    expect(inventory.content[0]?.text).toContain("atomic settlement transition");
   });
 
   it("calls authoring scenario search tool", async () => {
@@ -407,6 +421,12 @@ describe("MCP tools", () => {
       domain: "paper-plugin",
     });
     expect(itemDelivery.content[0]?.text).toContain('"id": "paper-item-delivery-review"');
+
+    const inventory = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "inventory GUI shift-click drag",
+      domain: "paper-plugin",
+    });
+    expect(inventory.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-review"');
   });
 
   it("calls authoring plan tool", async () => {
@@ -429,6 +449,15 @@ describe("MCP tools", () => {
     });
     expect(itemDelivery.content[0]?.text).toContain('"id": "paper-safe-item-delivery"');
     expect(itemDelivery.content[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
+
+    const inventory = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-inventory-gui-interaction-review",
+      version: "1.21.11",
+    });
+    expect(inventory.content[0]?.text).toContain('"id": "paper-inventory-gui-interactions"');
+    expect(inventory.content[0]?.text).toContain(
+      '"id": "paper-inventory-gui-interaction-unbounded"',
+    );
   });
 
   it("calls catalog search tool", async () => {
@@ -449,6 +478,7 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain('"id": "paper-api-surface-limits"');
     expect(list.content[0]?.text).toContain("unsupported Paper versions");
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-delivery-outcomes"');
+    expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-safety"');
 
     const single = await callMinecraftSkillsTool("get_authoring_guardrail", {
       id: "paper-api-surface-limits",
@@ -460,6 +490,12 @@ describe("MCP tools", () => {
     });
     expect(itemDelivery.content[0]?.text).toContain("uninserted stacks");
     expect(itemDelivery.content[0]?.text).toContain("Player.give");
+
+    const inventory = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-inventory-gui-interaction-safety",
+    });
+    expect(inventory.content[0]?.text).toContain("InventoryCloseEvent handlers");
+    expect(inventory.content[0]?.text).toContain("exactly once");
   });
 
   it("calls authoring diagnostic tools", async () => {
@@ -469,6 +505,7 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain('"id": "paper-api-member-unverified"');
     expect(list.content[0]?.text).toContain('"id": "paper-threading-assumption"');
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
+    expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-unbounded"');
 
     const single = await callMinecraftSkillsTool("get_authoring_diagnostic", {
       id: "paper-api-member-unverified",
@@ -481,6 +518,13 @@ describe("MCP tools", () => {
     });
     expect(itemDelivery.content[0]?.text).toContain('"severity": "error"');
     expect(itemDelivery.content[0]?.text).toContain("original requested stack");
+
+    const inventory = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-inventory-gui-interaction-unbounded",
+    });
+    expect(inventory.content[0]?.text).toContain('"severity": "error"');
+    expect(inventory.content[0]?.text).toContain("deprecated InventoryClickEvent.setCursor");
+    expect(inventory.content[0]?.text).toContain("repeated callbacks");
   });
 
   it("calls claim policy tools", async () => {
@@ -1378,6 +1422,45 @@ describe("MCP tools", () => {
       task: "reward a player with experience points",
     });
     expect(experienceReward.content[0]?.text).not.toContain("plugin paper search");
+
+    const inventorySuggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "1.21.11",
+      domain: "paper-plugin",
+      task: "inventory GUI shift-click drag",
+    });
+    const inventoryOutput = JSON.parse(inventorySuggestions.content[0]?.text ?? "{}") as {
+      suggestedTools: Array<{ tool: string }>;
+      scenarios: { results: Array<{ scenario: { id: string } }> };
+    };
+    expect(
+      inventoryOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(true);
+    expect(
+      inventoryOutput.suggestedTools.some((entry) =>
+        entry.tool.startsWith("minecraft pack-format"),
+      ),
+    ).toBe(false);
+    expect(inventoryOutput.scenarios.results[0]?.scenario.id).toBe(
+      "paper-inventory-gui-interaction-review",
+    );
+
+    const resourcepackSuggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "1.21.11",
+      task: "design a resource pack inventory GUI texture",
+    });
+    const resourcepackOutput = JSON.parse(resourcepackSuggestions.content[0]?.text ?? "{}") as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      resourcepackOutput.suggestedTools.some((entry) =>
+        entry.tool.startsWith("resourcepack assets"),
+      ),
+    ).toBe(true);
+    expect(
+      resourcepackOutput.suggestedTools.some((entry) =>
+        entry.tool.startsWith("plugin paper search"),
+      ),
+    ).toBe(false);
   });
 
   it("calls external resourcepack asset cache tools", async () => {

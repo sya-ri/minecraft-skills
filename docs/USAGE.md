@@ -57,6 +57,9 @@ minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
+minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
+minecraft-skills plugin paper recipe paper-inventory-gui-interactions
+minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 26.2
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -86,6 +89,15 @@ minecraft-skills rcon init --config ./.minecraft-skills/rcon.json --preset reado
 minecraft-skills rcon status --config ./.minecraft-skills/rcon.json
 minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
+
+The `paper-inventory-gui-interaction-review` scenario routes custom inventory menus through a
+default-deny click-and-drag policy. Its recipe and guardrail explicitly cover top, bottom, and
+outside slots; shift transfer; number-key, hotbar, and offhand swaps; double-click collection;
+complete drag raw-slot sets; allowed-slot matrices; and guarded close or reopen scheduling from
+click, drag, and close handlers. Editable sessions must choose per-session or deliberately shared
+ownership, settle their stacks exactly once across close, replacement, disconnect, death, and
+shutdown, and define an explicit overflow outcome. The diagnostic also rejects deprecated
+`InventoryClickEvent.setCursor` mutation and direct conditional reopen from `InventoryCloseEvent`.
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
 support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).

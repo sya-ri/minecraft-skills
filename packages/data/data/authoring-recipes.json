@@ -522,6 +522,161 @@
         "paper-inventory-delivery-outcomes"
       ],
       "failureMode": "A delivery can report success while silently losing overflow items, or duplicate already inserted items when fallback and retry logic reuse the original input."
+    },
+    {
+      "id": "paper-inventory-gui-interactions",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review safe Paper custom inventory GUI interactions",
+      "when": [
+        "the request creates or reviews a custom Paper or Bukkit inventory GUI, menu, or chest interface",
+        "the request handles InventoryClickEvent, InventoryDragEvent, shift-click, number-key, hotbar, offhand, or double-click input",
+        "the request asks how to prevent protected GUI items from being moved, collected, swapped, or dragged"
+      ],
+      "steps": [
+        {
+          "id": "scope-and-default-deny-the-view",
+          "action": "Identify the owned custom view from its top-inventory holder or another stable identity, then cancel every InventoryClickEvent and InventoryDragEvent for that view before branching into allowed behavior.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version API matches for InventoryClickEvent, InventoryDragEvent, InventoryView, and the chosen holder identity",
+            "A listener branch that scopes the entire open view and applies cancellation before any top, bottom, outside, slot, or click-type return"
+          ],
+          "stopIfMissing": "Do not protect a GUI by title text or by top-inventory clicks alone; first define a stable owned-view identity and a default-deny policy for both events."
+        },
+        {
+          "id": "classify-click-source-and-action",
+          "action": "Distinguish top, bottom, and outside clicks with the view, clicked inventory, and raw slot; keep GUI controls cancelled and allow only an explicit slot-and-action matrix. Deny cross-view or global mechanics by default, including shift transfer, number-key or hotbar swap, offhand swap, and double-click collect-to-cursor. Reject deprecated InventoryClickEvent.setCursor and verify any supported manual cursor mutation against target-version behavior documentation.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper api-surface",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "get_paper_api_surface",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "getPaperApiSurface",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version matches for clickedInventory, rawSlot, hotbarButton, ClickType, InventoryAction, and every supported cursor member used by the policy",
+            "An explicit decision for MOVE_TO_OTHER_INVENTORY, NUMBER_KEY, HOTBAR_SWAP, SWAP_OFFHAND, DOUBLE_CLICK, COLLECT_TO_CURSOR, outside clicks, every intentionally editable slot, and deprecated InventoryClickEvent.setCursor"
+          ],
+          "stopIfMissing": "If any click source, click type, action, slot, or cursor mutation is not classified, leave it cancelled; never treat a bottom-inventory click as harmless merely because the clicked slot is outside the top inventory, and never use deprecated InventoryClickEvent.setCursor."
+        },
+        {
+          "id": "validate-the-complete-drag-footprint",
+          "action": "Keep InventoryDragEvent cancelled unless every raw slot in the drag footprint is explicitly allowed; reject the entire drag when any raw slot is protected, outside policy, or spans a disallowed top/bottom boundary.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Target-version matches for InventoryDragEvent raw-slot and cancellation members",
+            "A subset check that requires all affected raw slots to be allowed rather than accepting a drag when only one slot matches"
+          ],
+          "stopIfMissing": "If the complete raw-slot set cannot be proven safe, cancel the whole drag; do not partially accept a multi-slot drag."
+        },
+        {
+          "id": "settle-editable-session-exactly-once",
+          "action": "Before allowing editable top slots, choose per-session or deliberately shared ownership and define one atomic terminal transition for commit, close, replacement view, disconnect, death, or plugin shutdown. Capture and clear or persist each owned stack once, then return, commit, defer, or reject it with an explicit overflow outcome; repeated events and queued tasks must observe the settled state and do nothing.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrails",
+              "plugin paper diagnostics"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_authoring_guardrails",
+              "list_authoring_diagnostics"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listAuthoringGuardrails",
+              "listAuthoringDiagnostics"
+            ]
+          },
+          "evidence": [
+            "A per-session or shared ownership model and an open-to-settling-to-settled transition that can succeed only once",
+            "Target-version matches and behavior documentation for InventoryCloseEvent, close reason, inventory reads and clears, player insertion, and every selected overflow fallback",
+            "Tests proving commit, close, replacement view, disconnect, death, shutdown, and repeated callbacks neither lose nor settle the same owned stack twice"
+          ],
+          "stopIfMissing": "Do not allow player-owned items into an editable top slot until the session has one owner, one terminal settlement transition, and an overflow-aware outcome for every captured stack."
+        },
+        {
+          "id": "defer-view-transitions-and-revalidate",
+          "action": "Cancel before manually changing slots that the event would modify, and defer close, open, or reopen transitions from InventoryClickEvent, InventoryDragEvent, and InventoryCloseEvent handlers until the next supported scheduler turn. Revalidate the player, owned view, GUI session, and terminal settlement state before a deferred transition so stale tasks cannot reopen, mutate, or settle a replaced view.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper guardrails",
+              "plugin paper claim-policies"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "list_authoring_guardrails",
+              "list_claim_policies"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "listAuthoringGuardrails",
+              "listClaimPolicies"
+            ]
+          },
+          "evidence": [
+            "Paper event behavior documentation for in-handler inventory mutations and view transitions from InventoryClickEvent, InventoryDragEvent, and InventoryCloseEvent",
+            "A target-compatible next-turn scheduler choice and stale-view, session, and terminal-state guards before deferred close, open, or reopen work"
+          ],
+          "stopIfMissing": "Do not call closeInventory, openInventory, inventory close, or view close directly inside click, drag, or InventoryCloseEvent handling, and do not queue a reopen that can race with settlement, disconnect, plugin shutdown, or another view."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-event-candidate",
+        "paper-inventory-gui-interaction-safety",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A custom inventory GUI can leak, duplicate, steal, or move protected items when alternate click paths, multi-slot drags, deprecated cursor mutation, repeated settlement, shared ownership, or stale close/reopen tasks bypass a top-slot-only handler."
     }
   ]
 }

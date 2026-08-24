@@ -26,6 +26,9 @@ minecraft-skills plugin paper scenarios
 minecraft-skills plugin paper scenario paper-event-listener-review
 minecraft-skills plugin paper plan paper-event-listener-review 26.2
 minecraft-skills plugin paper plan paper-item-delivery-review 1.21.11
+minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
+minecraft-skills plugin paper recipe paper-inventory-gui-interactions
+minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
