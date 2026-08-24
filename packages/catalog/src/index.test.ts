@@ -1509,6 +1509,11 @@ describe("catalog", () => {
     );
   });
 
+  it("loads registries from a historical registries-only server report", () => {
+    const reports = getJavaReportsSummary("java", "1.20");
+    expect(reports.datapack.registries.map((registry) => registry.id)).toContain("minecraft:item");
+  });
+
   it("compares version metadata and vanilla inventory summaries", () => {
     const comparison = compareVersions("java", "1.20.6", "1.21");
     expect(comparison.from).toBe("1.20.6");

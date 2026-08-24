@@ -43,7 +43,9 @@ jobs:
       - name: Audit current sources
         id: audit
         continue-on-error: true
-        run: node packages/maintainer/dist/cli.mjs audit-current-sources
+        run: |
+          node packages/maintainer/dist/cli.mjs audit-current-sources
+          node packages/maintainer/dist/cli.mjs audit-java-reports
 
       - name: Refresh generated data
         if: ${{ steps.audit.outcome == 'failure' || (github.event_name == 'workflow_dispatch' && inputs.force) }}
@@ -58,6 +60,8 @@ jobs:
             --input /tmp/minecraft-version-manifest-v2.json \
             --retrieved-at "$RETRIEVED_AT"
           node packages/maintainer/dist/cli.mjs ingest-java-version-details \
+            --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs ingest-java-reports-all \
             --retrieved-at "$RETRIEVED_AT"
 
           curl -fsSL -o /tmp/papermc-paper-project.json \

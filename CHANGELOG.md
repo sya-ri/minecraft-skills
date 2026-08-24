@@ -28,6 +28,8 @@ All notable changes to this project are documented here.
 
 - Java server report ingestion now retains registries from `reports/registries.json` when
   `datapack.json` is unavailable and merges registry IDs from both reports when both are present.
+- Java report refreshes now detect and repair incomplete registry summaries, download one official
+  server jar at a time, and run correctly with platform-native classpaths.
 
 ## 0.1.5 - 2026-06-24
 

@@ -8,7 +8,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { basename, delimiter, join } from "node:path";
 import { listZipEntries } from "./zip.js";
 
 type CommandNode = {
@@ -197,7 +197,7 @@ function listJarFiles(root: string): string[] {
 
 function findBundledServerJar(workDir: string): string {
   const versionJars = listJarFiles(join(workDir, "versions"));
-  const serverJar = versionJars.find((path) => path.includes("/server-"));
+  const serverJar = versionJars.find((path) => basename(path).startsWith("server-"));
   if (!serverJar) {
     throw new Error(`Could not find unpacked bundled server jar under ${workDir}/versions`);
   }
@@ -226,7 +226,7 @@ export function generateJavaReports(options: {
       options.javaBin,
       [
         "-cp",
-        [mainJar, ...libraries].join(":"),
+        [mainJar, ...libraries].join(delimiter),
         "net.minecraft.data.Main",
         "--reports",
         "--output",
