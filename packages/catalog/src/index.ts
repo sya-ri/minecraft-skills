@@ -161,6 +161,17 @@ export {
   resolveModrinthCompatibility,
 } from "./modrinthCompatibility.js";
 export {
+  type PlayerSkinCanonicalRectangle,
+  type PlayerSkinLayoutDiagnostic,
+  type PlayerSkinLayoutValidationInput,
+  type PlayerSkinLayoutValidationLimits,
+  type PlayerSkinLayoutValidationResult,
+  type PlayerSkinRequestedSourceRectangles,
+  type PlayerSkinSourceRectangleInput,
+  playerSkinLayoutValidationLimits,
+  validatePlayerSkinLayout,
+} from "./playerSkinLayout.js";
+export {
   defaultResourcepackPngAlphaBoundsLimits,
   inspectResourcepackPngAlphaBounds,
   type ResourcepackPngAlphaBoundsDiagnostic,

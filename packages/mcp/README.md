@@ -115,6 +115,7 @@ aliases or reject Unicode query values.
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `inspect_resourcepack_png_alpha_bounds`
+- `validate_player_skin_layout`
 - `validate_resourcepack_png`
 - `validate_resourcepack_project`
 - `explain_pack_path`
@@ -166,6 +167,12 @@ half-open. The tool does not crop, rewrite, render, or return paths, pixels, or 
 Malformed PNG/zlib data and inspection safety stops remain normal validation results rather than
 MCP transport errors. Invalid request objects, noncanonical Base64, and limits that try to raise a
 published ceiling are tool-input errors.
+
+`validate_player_skin_layout` accepts only bounded structured `width`, `height`, and optional
+`sourceRects.base` / `sourceRects.hat` objects. It returns canonical Java face UV rectangles and
+current 64x64 or legacy 64x32 layout status without receiving image bytes, filesystem paths, URLs,
+or player identity. It does not infer slim/wide from pixels or claim decoded alpha, conversion, or
+GUI-rendering validity.
 
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects

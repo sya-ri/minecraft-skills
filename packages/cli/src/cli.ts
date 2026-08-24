@@ -106,6 +106,8 @@ import {
   listVersions,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
+  type PlayerSkinSourceRectangleInput,
+  playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
@@ -136,6 +138,7 @@ import {
   type VanillaPathSearchOptions,
   validateModrinthPackArchive,
   validatePackFilesContent,
+  validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
 } from "@minecraft-skills/catalog";
@@ -222,6 +225,12 @@ const maximumMinimumTransparentMarginPixels = Math.max(
   defaultResourcepackPngAlphaBoundsLimits.maxWidth,
   defaultResourcepackPngAlphaBoundsLimits.maxHeight,
 );
+
+const playerSkinRectangleValueOptions = ["--base-rect", "--hat-rect"] as const;
+const playerSkinLayoutValueOptions = [
+  ...resourcepackPngValueOptions,
+  ...playerSkinRectangleValueOptions,
+] as const;
 
 function readResourcepackPngLimit(
   args: string[],
@@ -316,6 +325,38 @@ function readMinimumTransparentMarginPixels(args: string[]): number | undefined 
     );
   }
   return parsed;
+}
+
+function readPlayerSkinRectangleOption(
+  args: string[],
+  option: (typeof playerSkinRectangleValueOptions)[number],
+): PlayerSkinSourceRectangleInput | undefined {
+  const indexes = args.flatMap((value, index) => (value === option ? [index] : []));
+  if (indexes.length === 0) return undefined;
+  if (indexes.length > 1) {
+    throw new Error(`player-skin validate-layout option must not be repeated: ${option}`);
+  }
+  const value = args[(indexes[0] ?? 0) + 1];
+  if (!value || !/^\d+,\d+,\d+,\d+$/.test(value)) {
+    throw new Error(`${option} must be x,y,width,height using non-negative integers`);
+  }
+  const [x, y, width, height] = value.split(",").map(Number) as [number, number, number, number];
+  const rectangle = { x, y, width, height };
+  if (
+    !Object.values(rectangle).every(Number.isSafeInteger) ||
+    x < 0 ||
+    y < 0 ||
+    width < 1 ||
+    height < 1 ||
+    Object.values(rectangle).some(
+      (coordinate) => playerSkinLayoutValidationLimits.maxCoordinate < coordinate,
+    )
+  ) {
+    throw new Error(
+      `${option} coordinates must be within 0..${playerSkinLayoutValidationLimits.maxCoordinate}, with positive width and height`,
+    );
+  }
+  return { x, y, width, height };
 }
 
 function readBooleanOption(args: string[], name: string, fallback: boolean): boolean {
@@ -631,6 +672,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "resourcepack validate-project": "validate-resourcepack-project",
     "resourcepack migration-plan": "migration-plan",
     "resourcepack search-models": "search-models",
+    "player-skin validate-layout": "validate-player-skin-layout",
     "skill list": "skills",
     "skill show": "skill",
     "skill write": "write-skill",
@@ -821,6 +863,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "inspect-resourcepack-png-alpha": "resourcepack inspect-png-alpha",
   "validate-resourcepack-png": "resourcepack validate-png",
   "validate-resourcepack-project": "resourcepack validate-project",
+  "validate-player-skin-layout": "player-skin validate-layout",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
@@ -859,6 +902,7 @@ const commandGroups = new Set([
   "minecraft",
   "datapack",
   "resourcepack",
+  "player-skin",
   "plugin",
   "fabric",
   "velocity",
@@ -974,6 +1018,10 @@ Domains:
   plugin paper    Paper-first plugins: Paper support, Javadocs indexes/surfaces, API names,
                   event candidates, and Folia/threading caveats. Domain id: paper-plugin.
 
+Utilities:
+  player-skin     Java player skins: bounded PNG structure, accepted dimensions, and canonical
+                  face/hat source rectangles.
+
 Common workflows:
   Pick a safe workflow for a task:
     minecraft-skills plugin paper search-scenarios "Paper event listener"
@@ -1052,6 +1100,7 @@ Grouped commands:
   minecraft-skills resourcepack validate-files <version> <file...> [--pack-root dir]
   minecraft-skills resourcepack inspect-png-alpha <file> [--require-nonempty] [--minimum-transparent-margin-pixels n] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n] [--max-inflated-bytes n]
   minecraft-skills resourcepack validate-png <file> [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
+  minecraft-skills player-skin validate-layout <file> [--base-rect x,y,width,height] [--hat-rect x,y,width,height] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
@@ -1986,6 +2035,41 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         (result.requirements.status === "met" || result.requirements.status === "not-requested")
         ? 0
         : 1;
+    }
+
+    if (command === "validate-player-skin-layout") {
+      const [filePath, ...extraPaths] = positionalArgsWithOptions(args, {
+        values: playerSkinLayoutValueOptions,
+      });
+      if (!filePath || extraPaths.length > 0) {
+        throw new Error("player-skin validate-layout requires exactly one <file>");
+      }
+      const base = readPlayerSkinRectangleOption(args, "--base-rect");
+      const hat = readPlayerSkinRectangleOption(args, "--hat-rect");
+      const limits = readResourcepackPngLimits(args, "player-skin validate-layout");
+      const png = validateResourcepackPng(
+        readBoundedPngFile(filePath, limits.maxInputBytes, "player-skin validate-layout"),
+        { limits },
+      );
+      const sourceRects = base || hat ? { ...(base ? { base } : {}), ...(hat ? { hat } : {}) } : {};
+      const layout =
+        png.valid && png.width !== null && png.height !== null
+          ? validatePlayerSkinLayout({ width: png.width, height: png.height, sourceRects })
+          : null;
+      const result = {
+        schemaVersion: 1,
+        validationStrength: "png-structure-and-player-skin-layout",
+        valid: png.valid && layout?.valid === true,
+        png,
+        layoutValidationStatus: layout ? "checked-from-valid-png-ihdr" : "not-checked",
+        layout,
+        notes: [
+          "Player-skin layout is checked only when the bounded PNG validator accepts the complete container and IHDR; an invalid CRC, critical chunk, limit, or truncation keeps layout status not-checked.",
+          "The PNG validator does not decompress IDAT. Pixel colors, alpha, legacy pixel conversion results, display scaling, filtering, blending, GUI clipping, and scissor state remain not checked.",
+        ],
+      };
+      printJson(output, result);
+      return result.valid ? 0 : 1;
     }
 
     if (command === "validate-resourcepack-project") {

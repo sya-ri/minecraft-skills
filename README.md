@@ -86,6 +86,7 @@ minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
 minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/widget.png --require-nonempty --minimum-transparent-margin-pixels 1
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
+minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills velocity toolchain
@@ -115,6 +116,12 @@ omitted diagnostic counts.
 alpha pixel counts, zero-based half-open content bounds, and transparent margins. It never crops or
 rewrites the file and does not return paths, pixels, or RGB samples. Empty content is a valid fact;
 it fails only when `--require-nonempty` or another requested policy is not met.
+
+`player-skin validate-layout` composes that bounded PNG structural result with audited Minecraft
+Java player-skin layout rules. It accepts current 64x64 and legacy 64x32 sources and checks optional
+zero-based half-open face `(8,8,8,8)` and hat `(40,8,8,8)` rectangles. Layout remains explicitly
+not checked whenever PNG structure is invalid. Pixel/alpha decoding, legacy conversion output, and
+GUI scaling, filtering, blending, clipping, or scissor behavior remain outside its claims.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

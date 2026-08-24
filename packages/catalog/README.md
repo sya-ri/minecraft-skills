@@ -92,6 +92,7 @@ import {
   inspectResourcepackPngAlphaBounds,
   validateResourcepackProject,
   validateResourcepackPng,
+  validatePlayerSkinLayout,
   validateModrinthPack,
   validateModrinthPackArchive,
 } from "@minecraft-skills/catalog";
@@ -302,6 +303,14 @@ const textureAlpha = inspectResourcepackPngAlphaBounds(
     limits: { maxInflatedBytes: 16 * 1024 * 1024 },
   },
 );
+const playerSkinLayout = validatePlayerSkinLayout({
+  width: 64,
+  height: 64,
+  sourceRects: {
+    base: { x: 8, y: 8, width: 8, height: 8 },
+    hat: { x: 40, y: 8, width: 8, height: 8 },
+  },
+});
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",
@@ -351,6 +360,13 @@ bounds, transparent margins, and caller policy. It does not crop, rewrite, rende
 pixels, or RGB samples. Empty images are valid facts unless the caller requests `nonEmpty`; an
 expected filtered byte count above `maxInflatedBytes` leaves structural validation intact and makes
 pixel inspection explicitly indeterminate.
+
+`validatePlayerSkinLayout` accepts only structured dimensions and optional source rectangles. It
+recognizes current 64x64 and legacy 64x32 Java skins, returns normalized 64x64 layout evidence, and
+checks canonical zero-based half-open base-face `(8,8,8,8)` and hat `(40,8,8,8)` rectangles. It
+does not accept image bytes or identity data and does not infer slim/wide from pixels. PNG structure,
+IDAT, pixels, alpha/conversion results, display scaling, filtering, blending, clipping, and scissor
+state are not checked by this API.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function

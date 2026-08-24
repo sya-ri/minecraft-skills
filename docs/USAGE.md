@@ -178,6 +178,7 @@ minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
 minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/widget.png --require-nonempty --minimum-transparent-margin-pixels 1
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
+minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 ```
 
@@ -246,6 +247,14 @@ indeterminate. Neither validator interprets APNG frames or animation `.mcmeta`, 
 rendering, or requires square, power-of-two, or fixed-size `pack.png` dimensions. Incomplete reads
 and safety-limit stops are explicit in the result. Project errors return exit code 1; variables that
 can only be resolved inside an unbundled vanilla parent remain warnings.
+
+`player-skin validate-layout` composes bounded complete-PNG structure validation with Java
+player-skin dimensions and face UVs. It accepts current 64x64 and legacy 64x32 sources. Optional
+`--base-rect` and `--hat-rect` values use `x,y,width,height`; canonical values are `8,8,8,8` and
+`40,8,8,8`. These are zero-based half-open source rectangles, so a width or height of 7 detects a
+one-pixel right or bottom omission. Any PNG error keeps layout not checked and returns exit code 1.
+Pixels, alpha, legacy conversion output, GUI scaling, texture filtering, blending, clipping, and
+scissor state are not checked.
 
 Paper plugin lookups:
 
@@ -455,6 +464,7 @@ Pack analysis tools include:
 - `get_pack_file_schema`
 - `validate_datapack_json`
 - `inspect_resourcepack_png_alpha_bounds`
+- `validate_player_skin_layout`
 - `validate_resourcepack_png`
 - `validate_resourcepack_project`
 - `get_pack_migration_plan`
@@ -515,6 +525,7 @@ import {
   searchPaperMembers,
   searchVanillaPaths,
   validateResourcepackPng,
+  validatePlayerSkinLayout,
   validateResourcepackProject,
   resolveVelocityToolchain,
 } from "@minecraft-skills/catalog";
@@ -570,6 +581,11 @@ const pngAlphaBounds = inspectResourcepackPngAlphaBounds(
     limits: { maxInflatedBytes: 16 * 1024 * 1024 },
   },
 );
+const playerSkinLayout = validatePlayerSkinLayout({
+  width: 64,
+  height: 64,
+  sourceRects: { base: { x: 8, y: 8, width: 8, height: 8 } },
+});
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
 // needed; callers should avoid reading a complete audio file solely for validation.

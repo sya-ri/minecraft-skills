@@ -94,6 +94,7 @@ import {
   modrinthCompatibilityLimits,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
+  playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
@@ -128,6 +129,7 @@ import {
   type VanillaPathSearchOptions,
   validateModrinthPack,
   validatePackFilesContent,
+  validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
   vorbisIdentificationPageBytes,
@@ -212,6 +214,26 @@ const maximumMinimumTransparentMarginPixels = Math.max(
 
 const maximumResourcepackPngBase64Characters =
   Math.ceil(defaultResourcepackPngValidationLimits.maxInputBytes / 3) * 4;
+
+const playerSkinRectangleSchema = {
+  type: "object",
+  properties: {
+    x: { type: "integer", minimum: 0, maximum: playerSkinLayoutValidationLimits.maxCoordinate },
+    y: { type: "integer", minimum: 0, maximum: playerSkinLayoutValidationLimits.maxCoordinate },
+    width: {
+      type: "integer",
+      minimum: 1,
+      maximum: playerSkinLayoutValidationLimits.maxCoordinate,
+    },
+    height: {
+      type: "integer",
+      minimum: 1,
+      maximum: playerSkinLayoutValidationLimits.maxCoordinate,
+    },
+  },
+  required: ["x", "y", "width", "height"],
+  additionalProperties: false,
+} as const;
 
 const resourcepackProjectLimitNames = [
   "maxBinaryContentBytes",
@@ -1114,6 +1136,36 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["contentBase64"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_player_skin_layout",
+    description:
+      "Validate Minecraft Java player-skin dimensions and optional canonical base-face and hat source rectangles. Returns audited 64x64/current and 64x32/legacy layout evidence; it accepts no image bytes or player identity and does not validate pixels, alpha, conversion output, or GUI rendering.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        width: {
+          type: "integer",
+          minimum: 1,
+          maximum: playerSkinLayoutValidationLimits.maxCoordinate,
+        },
+        height: {
+          type: "integer",
+          minimum: 1,
+          maximum: playerSkinLayoutValidationLimits.maxCoordinate,
+        },
+        sourceRects: {
+          type: "object",
+          properties: {
+            base: playerSkinRectangleSchema,
+            hat: playerSkinRectangleSchema,
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["width", "height"],
       additionalProperties: false,
     },
   },
@@ -2470,10 +2522,13 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
   if (name === "inspect_resourcepack_png_alpha_bounds") {
     return inspectResourcepackPngAlphaBoundsTool(input);
   }
-  const args = asRecord(input);
-  const edition = typeof args.edition === "string" ? args.edition : "java";
-
   try {
+    if (name === "validate_player_skin_layout") {
+      return text(validatePlayerSkinLayout(input));
+    }
+    const args = asRecord(input);
+    const edition = typeof args.edition === "string" ? args.edition : "java";
+
     if (name === "list_domains") {
       return text(listDomains());
     }

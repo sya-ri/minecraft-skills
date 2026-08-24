@@ -1606,6 +1606,159 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("validates current and legacy player-skin dimensions from structurally valid PNGs", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-player-skin-"));
+    const currentFile = join(root, "current.png");
+    const legacyFile = join(root, "legacy.png");
+    writeFileSync(currentFile, testPng(64, 64));
+    writeFileSync(legacyFile, testPng(64, 32));
+
+    try {
+      const current = await capture([
+        "player-skin",
+        "validate-layout",
+        currentFile,
+        "--base-rect",
+        "8,8,8,8",
+        "--hat-rect",
+        "40,8,8,8",
+      ]);
+      expect(current.code).toBe(0);
+      const currentOutput = JSON.parse(current.stdout.join("\n")) as {
+        valid: boolean;
+        layoutValidationStatus: string;
+        layout: { layoutStatus: string; requestedSourceRectChecks: unknown };
+      };
+      expect(currentOutput).toMatchObject({
+        valid: true,
+        layoutValidationStatus: "checked-from-valid-png-ihdr",
+        layout: {
+          layoutStatus: "current",
+          requestedSourceRectChecks: { base: "matches", hat: "matches" },
+        },
+      });
+      expect(current.stdout.join("\n")).not.toContain(currentFile);
+
+      const legacy = await capture(["player-skin", "validate-layout", legacyFile]);
+      expect(legacy.code).toBe(0);
+      expect(legacy.stdout.join("\n")).toContain('"layoutStatus": "legacy"');
+      expect(legacy.stdout.join("\n")).toContain(
+        '"normalization": "client-converts-legacy-to-64x64"',
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("detects one-pixel right and bottom omissions in requested player-face rectangles", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-player-face-rect-"));
+    const file = join(root, "skin.png");
+    writeFileSync(file, testPng(64, 64));
+
+    try {
+      const result = await capture([
+        "player-skin",
+        "validate-layout",
+        file,
+        "--base-rect",
+        "8,8,7,8",
+        "--hat-rect",
+        "40,8,8,7",
+      ]);
+      expect(result.code).toBe(1);
+      const output = JSON.parse(result.stdout.join("\n")) as {
+        valid: boolean;
+        png: { valid: boolean };
+        layout: {
+          valid: boolean;
+          requestedSourceRectChecks: { base: string; hat: string };
+          diagnostics: Array<{ code: string }>;
+        };
+      };
+      expect(output.valid).toBe(false);
+      expect(output.png.valid).toBe(true);
+      expect(output.layout.valid).toBe(false);
+      expect(output.layout.requestedSourceRectChecks).toEqual({
+        base: "mismatch",
+        hat: "mismatch",
+      });
+      expect(output.layout.diagnostics.map((item) => item.code)).toEqual([
+        "skin.face-base-rect-mismatch",
+        "skin.face-hat-rect-mismatch",
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects malformed, oversized, and repeated player-face rectangle options", async () => {
+    const missingFile = join(tmpdir(), "minecraft-skills-missing-player-skin.png");
+    const malformed = await capture([
+      "player-skin",
+      "validate-layout",
+      missingFile,
+      "--base-rect",
+      "8,8,8",
+    ]);
+    expect(malformed.code).toBe(1);
+    expect(malformed.stderr.join("\n")).toContain("must be x,y,width,height");
+
+    const oversized = await capture([
+      "player-skin",
+      "validate-layout",
+      missingFile,
+      "--hat-rect",
+      "16385,8,8,8",
+    ]);
+    expect(oversized.code).toBe(1);
+    expect(oversized.stderr.join("\n")).toContain("within 0..16384");
+
+    const repeated = await capture([
+      "player-skin",
+      "validate-layout",
+      missingFile,
+      "--base-rect",
+      "8,8,8,8",
+      "--base-rect",
+      "8,8,8,8",
+    ]);
+    expect(repeated.code).toBe(1);
+    expect(repeated.stderr.join("\n")).toContain("must not be repeated");
+  });
+
+  it("does not trust IHDR layout evidence after a CRC failure or truncated IHDR", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-untrusted-skin-png-"));
+    const crcFile = join(root, "crc.png");
+    const truncatedFile = join(root, "truncated.png");
+    const corrupted = testPng(64, 64);
+    corrupted[corrupted.length - 1] = (corrupted[corrupted.length - 1] ?? 0) ^ 0xff;
+    writeFileSync(crcFile, corrupted);
+    writeFileSync(truncatedFile, testPng(64, 64).subarray(0, 20));
+
+    try {
+      for (const [file, expectedCode] of [
+        [crcFile, "png.crc-mismatch"],
+        [truncatedFile, "png.truncated-chunk"],
+      ] as const) {
+        const result = await capture(["player-skin", "validate-layout", file]);
+        expect(result.code).toBe(1);
+        const output = JSON.parse(result.stdout.join("\n")) as {
+          valid: boolean;
+          png: { valid: boolean; diagnostics: Array<{ code: string }> };
+          layoutValidationStatus: string;
+          layout: unknown;
+        };
+        expect(output.valid).toBe(false);
+        expect(output.png.valid).toBe(false);
+        expect(output.png.diagnostics.map((diagnostic) => diagnostic.code)).toContain(expectedCode);
+        expect(output.layoutValidationStatus).toBe("not-checked");
+        expect(output.layout).toBeNull();
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("bounds resource-pack directory traversal and JSON reads before catalog validation", () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-project-scan-"));
     writeFileSync(join(root, "first.json"), "{}");

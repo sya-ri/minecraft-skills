@@ -92,6 +92,7 @@ import {
   validateModrinthPackArchive,
   validatePackFileContent,
   validatePackFilesContent,
+  validatePlayerSkinLayout,
   validateResourcepackProject,
   vorbisIdentificationPageBytes,
 } from "./index.js";
@@ -287,6 +288,13 @@ function withCachedServerJar(
 }
 
 describe("catalog", () => {
+  it("exports player-skin layout validation from the package entrypoint", () => {
+    expect(validatePlayerSkinLayout({ width: 64, height: 64 })).toMatchObject({
+      valid: true,
+      layoutStatus: "current",
+    });
+  });
+
   it("loads supported domains", () => {
     expect(listDomains().map((domain) => domain.id)).toEqual([
       "datapack",
