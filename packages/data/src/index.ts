@@ -19,6 +19,14 @@ import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openZipArchive, type ZipArchive } from "./zip.js";
 
+export type { ZipArchive, ZipEntry } from "./zip.js";
+export {
+  listZipEntries,
+  openZipArchive,
+  readZipEntries,
+  readZipEntry,
+} from "./zip.js";
+
 const packageRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const dataRoot = join(packageRoot, "data");
 const cacheEnvName = "MINECRAFT_SKILLS_CACHE_DIR";

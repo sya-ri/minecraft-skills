@@ -109,6 +109,8 @@ minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --con
 minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
+minecraft-skills plugin paper validate-jar ./build/libs/example.jar
+minecraft-skills plugin paper validate-jar ./build/libs/example.jar --max-archive-bytes 16777216
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
@@ -231,6 +233,17 @@ never raise, the 512 MiB default. It does not
 download or resolve referenced files. Downloads are restricted to Modrinth's documented four
 hosts unless an exact host is repeated with `--allow-download-host`. An explicitly allowed
 non-official host produces a warning. Invalid packs return exit code 1; warning-only packs return 0.
+
+`plugin paper validate-jar` requires a regular, non-symlink `.jar` file and performs no network
+requests. It opens the file with no-follow and nonblocking flags where the platform exposes them,
+identity-checks the path and handle before and after a bounded read under a 64 MiB ceiling (which
+`--max-archive-bytes` may only lower), and validates ZIP structure. It follows Paper's
+`paper-plugin.yml`-first probing, checks only the active descriptor's CRC and bounded alias-free
+YAML, and compares declared main/bootstrap/loader class paths with the complete JAR listing. An
+archive-local class absence is a warning because external classloaders may supply it. The output
+does not include descriptor values or class bytes. Errors return 1;
+warnings and explicitly incomplete/experimental coverage do not by themselves make the artifact
+invalid.
 
 `fabric toolchain` reads Loader, Intermediary, and Yarn candidates from the official live Fabric
 Meta v2 API. It prefers upstream `stable` entries without treating that flag as a complete project

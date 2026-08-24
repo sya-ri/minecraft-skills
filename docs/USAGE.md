@@ -99,6 +99,7 @@ minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 minecraft-skills server validate-properties ./server.properties --version 1.21.11
+minecraft-skills plugin paper validate-jar ./build/libs/example.jar
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -323,7 +324,22 @@ minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --con
 minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
+minecraft-skills plugin paper validate-jar ./build/libs/example.jar
 ```
+
+`plugin paper validate-jar <file.jar>` is an offline artifact preflight for root `plugin.yml` and
+`paper-plugin.yml`. It performs a no-follow/nonblocking open where supported and identity-checks the
+regular file path and handle around the bounded read, then validates ZIP structure. As Paper does,
+it selects `paper-plugin.yml` first and treats a coexisting `plugin.yml` as shadowed. It validates
+the active descriptor's CRC/UTF-8/YAML and checks declared class names against exact JAR entries
+without expanding bytecode. Missing archive-local classes remain warnings because libraries or
+dependencies may provide them. `paper-plugin.yml` remains experimental, and unknown keys, runtime
+parser parity, class resolution/interfaces, and actual server load are reported as incomplete
+rather than guessed. Syntactically valid `api-version` values that are not current known Paper
+releases also remain unknown. For MCP clients,
+`validate_paper_plugin_jar` accepts descriptor text plus `archiveEntries`; set
+`archiveEntriesComplete` true only for a complete central-directory listing because descriptor
+absence claims depend on a complete, fully normalized list. MCP cannot claim binary integrity.
 
 `modrinth search` queries Modrinth's public v2 search API without authentication. Optional filters
 include `--version`, `--type`, `--loader`, and `--category`; `--index` accepts `relevance`,

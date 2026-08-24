@@ -13,7 +13,8 @@ The project helps AI check real versioned data before it writes code or pack fil
 
 - Skill folders for datapack, resourcepack, and Paper plugin authoring.
 - CLI/API/MCP lookups for versions, pack formats, commands, registry entries, vanilla paths,
-  JSON/model shapes, server.properties validation, Paper API indexes, and Paper events.
+  JSON/model shapes, server.properties validation, Paper API indexes/events, and bounded offline
+  plugin JAR descriptor checks.
 - Authoring guidance for what to verify, what evidence is required, and how to phrase unknowns.
 - Bundled Java 1.13+ data, with cache downloads for heavier generated surfaces.
 

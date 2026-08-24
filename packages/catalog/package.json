@@ -46,7 +46,8 @@
   "dependencies": {
     "@minecraft-skills/data": "workspace:0.1.5",
     "ajv": "8.20.0",
-    "arktype": "2.2.1"
+    "arktype": "2.2.1",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@types/node": "26.0.0",

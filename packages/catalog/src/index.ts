@@ -160,6 +160,7 @@ import {
 
 export * from "./fabricMeta.js";
 export * from "./fabricMod.js";
+export * from "./javaClassArchive.js";
 export {
   downloadJavaPlayerTexture,
   inspectJavaPlayerTextureBytes,
@@ -192,6 +193,7 @@ export {
   modrinthCompatibilityLimits,
   resolveModrinthCompatibility,
 } from "./modrinthCompatibility.js";
+export * from "./paperPluginJar.js";
 export {
   type PlayerSkinCanonicalRectangle,
   type PlayerSkinLayoutDiagnostic,

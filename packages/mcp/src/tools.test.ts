@@ -263,6 +263,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("resolve_modrinth_compatibility");
     expect(tools.map((tool) => tool.name)).toContain("get_modrinth_resource");
     expect(tools.map((tool) => tool.name)).toContain("validate_modrinth_pack");
+    expect(tools.map((tool) => tool.name)).toContain("validate_paper_plugin_jar");
     expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
     expect(tools.map((tool) => tool.name)).toContain("find_resourcepack_assets");
     expect(tools.map((tool) => tool.name)).toContain("explain_pack_path");
@@ -2817,6 +2818,132 @@ describe("MCP tools", () => {
     expect(tooManyEntries.content[0]?.text).toContain("must not exceed 25000 entries");
     expect(tooManyHosts.isError).toBe(true);
     expect(tooManyHosts.content[0]?.text).toContain("must not exceed 64 entries");
+  });
+
+  it("validates Paper plugin descriptor text against complete JAR entry metadata", async () => {
+    const pluginYml = [
+      "name: ExamplePlugin",
+      "version: '1.0'",
+      "main: dev.example.ExamplePlugin",
+      "api-version: '1.21'",
+    ].join("\n");
+    const result = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [
+        { path: "plugin.yml", size: Buffer.byteLength(pluginYml), compressedSize: 80 },
+        { path: "dev/example/ExamplePlugin.class", size: 1, compressedSize: 1 },
+      ],
+      archiveEntriesComplete: true,
+      pluginYml,
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"valid": true');
+    expect(output).toContain('"validationStrength": "metadata"');
+    expect(output).toContain('"zipStructureValidated": false');
+    expect(output).toContain('"contentIntegrityValidated": false');
+    expect(output).toContain('"entryObserved": true');
+  });
+
+  it("keeps missing Paper JAR entries unknown when MCP metadata is incomplete", async () => {
+    const pluginYml = [
+      "name: ExamplePlugin",
+      "version: '1.0'",
+      "main: dev.example.ExamplePlugin",
+      "api-version: '1.21'",
+    ].join("\n");
+    const result = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [{ path: "plugin.yml", size: Buffer.byteLength(pluginYml) }],
+      archiveEntriesComplete: false,
+      pluginYml,
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"valid": true');
+    expect(output).toContain('"severity": "unknown"');
+    expect(output).toContain('"code": "descriptor.selection-unproven"');
+    expect(output).toContain('"role": "selection-unknown"');
+    expect(output).toContain('"validationComplete": false');
+  });
+
+  it("preflights bounded Paper plugin MCP metadata before catalog validation", async () => {
+    const tooManyEntries = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: Array.from({ length: 16_385 }, (_, index) => ({
+        path: `classes/C${index}.class`,
+        size: 0,
+      })),
+      archiveEntriesComplete: true,
+    });
+    const unknownEntryField = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [{ path: "plugin.yml", size: 1, token: "do-not-return" }],
+      archiveEntriesComplete: true,
+    });
+
+    expect(tooManyEntries.isError).toBe(true);
+    expect(tooManyEntries.content[0]?.text).toContain("must not exceed 16384 entries");
+    expect(unknownEntryField.isError).toBe(true);
+    expect(unknownEntryField.content[0]?.text).toContain("unknown field");
+    expect(unknownEntryField.content[0]?.text).not.toContain("do-not-return");
+  });
+
+  it("rejects unknown top-level Paper validator arguments", async () => {
+    const result = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [],
+      archiveEntriesComplete: false,
+      token: "do-not-return",
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("unknown argument");
+    expect(result.content[0]?.text).not.toContain("do-not-return");
+  });
+
+  it("rejects non-JSON archive entry shapes without invoking accessors", async () => {
+    let getterCalls = 0;
+    const accessorEntry = { size: 1 } as { path?: string; size: number };
+    Object.defineProperty(accessorEntry, "path", {
+      enumerable: true,
+      get() {
+        getterCalls += 1;
+        return "plugin.yml";
+      },
+    });
+    const symbolEntry = {
+      path: "plugin.yml",
+      size: 1,
+      [Symbol("token")]: "do-not-return",
+    };
+    const inheritedEntry = Object.assign(Object.create({ inherited: "do-not-return" }), {
+      path: "plugin.yml",
+      size: 1,
+    });
+
+    const accessorResult = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [accessorEntry],
+      archiveEntriesComplete: true,
+    });
+    const symbolResult = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [symbolEntry],
+      archiveEntriesComplete: true,
+    });
+    const inheritedResult = await callMinecraftSkillsTool("validate_paper_plugin_jar", {
+      archiveEntries: [inheritedEntry],
+      archiveEntriesComplete: true,
+    });
+
+    expect(getterCalls).toBe(0);
+    expect(accessorResult.isError).toBe(true);
+    expect(accessorResult.content[0]?.text).toContain("enumerable data fields");
+    expect(symbolResult.isError).toBe(true);
+    expect(symbolResult.content[0]?.text).toContain("symbol fields");
+    expect(inheritedResult.isError).toBe(true);
+    expect(inheritedResult.content[0]?.text).toContain("plain object");
+    expect(
+      [accessorResult, symbolResult, inheritedResult]
+        .map((result) => result.content[0]?.text)
+        .join("\n"),
+    ).not.toContain("do-not-return");
   });
 
   it("calls list_modrinth_project_versions", async () => {

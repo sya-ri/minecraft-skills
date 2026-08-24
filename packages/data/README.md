@@ -104,5 +104,12 @@ per-entry, and total-byte limits. For modern Mojang bundler jars, `META-INF/vers
 exact versioned nested server payload and its declared SHA-256 is verified before entries are listed
 or read. Exact text reads are limited to 2 MiB. `cleanMojangServerJar` removes one stale cache entry.
 
+`openZipArchive`, `listZipEntries`, `readZipEntry`, and `readZipEntries` expose the same bounded ZIP
+reader for higher-level artifact validators. It rejects ZIP64, encrypted or unsupported flags,
+duplicate names, inconsistent central/local metadata, overlapping records, malformed data
+descriptors, oversized names, unsupported compression, and CRC/expanded-size mismatches. Only
+requested entries are expanded; callers must apply concern-specific archive, entry-count, and
+expanded-byte ceilings before reading untrusted content.
+
 Minecraft Wiki prose is not redistributed in this package, and Wiki pages are not AI-fetchable
 sources for minecraft-skills workflows.
