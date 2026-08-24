@@ -125,6 +125,8 @@ import {
   type VersionSummaryData,
 } from "./schemas.js";
 
+export * from "./fabricMeta.js";
+
 export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
@@ -1609,6 +1611,15 @@ function matchesDiscoveryQuery(query: string, ...values: string[]): boolean {
   const tokens = tokenizeDiscoveryQuery(query);
   const haystack = normalizeSearchText(values.join(" "));
   return tokens.length > 0 && tokens.every((token) => haystack.includes(token));
+}
+
+function isFabricToolchainDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  if (/\b(loader|intermediary|mapping|mappings)\b/.test(normalized)) {
+    return true;
+  }
+  const hasMinecraftOrFabricContext = /\b(minecraft|fabric)\b/.test(normalized);
+  return hasMinecraftOrFabricContext && /\b(yarn|toolchain)\b/.test(normalized);
 }
 
 function scoreDiscoveryMatch(query: string, actual: string[], semantic: string[] = []): number {
@@ -5117,6 +5128,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       );
     }
   }
+  if (!options.domain && isFabricToolchainDiscoveryQuery(task)) {
+    add(
+      `fabric toolchain ${JSON.stringify(version)}`,
+      "Look up official live Fabric Loader, Intermediary, and Yarn candidates for the target game version.",
+    );
+  }
   if (/(migrat|upgrade|port|from|to|version)/.test(lower)) {
     add(`minecraft pack-format ${version} datapack`, "Check target data pack format.");
     add(`minecraft pack-format ${version} resourcepack`, "Check target resource pack format.");
@@ -5388,6 +5405,18 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       score: item.score,
       matches: item.matches.map((match) => `${match.field}: ${match.text}`),
       lookup: `minecraft search ${JSON.stringify(query)}`,
+    });
+  }
+
+  if (!options.domain && isFabricToolchainDiscoveryQuery(query)) {
+    addCrossResult(results, {
+      surface: "fabric-meta",
+      domain: "minecraft",
+      kind: "live-toolchain-lookup",
+      title: "Fabric Loader + Intermediary + Yarn candidates",
+      score: 100,
+      matches: ["Fabric Loader", "Intermediary", "Yarn", "official Fabric Meta v2"],
+      lookup: `fabric toolchain ${JSON.stringify(version)}`,
     });
   }
 

@@ -141,6 +141,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
+    expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
     expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_modrinth_resource");
@@ -974,6 +975,52 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("PlayerJoinEvent");
     expect(fetchMock.mock.calls[0]?.[0] ?? "").toContain("version=1.21.11");
+  });
+
+  it("calls get_fabric_toolchain", async () => {
+    const intermediary = {
+      maven: "net.fabricmc:intermediary:1.21.11",
+      version: "1.21.11",
+      stable: true,
+    };
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      const body = url.includes("/loader/")
+        ? [
+            {
+              loader: {
+                separator: "+build.",
+                build: 1,
+                maven: "net.fabricmc:fabric-loader:0.17.0",
+                version: "0.17.0",
+                stable: true,
+              },
+              intermediary,
+            },
+          ]
+        : url.includes("/yarn/")
+          ? [
+              {
+                gameVersion: "1.21.11",
+                separator: "+build.",
+                build: 6,
+                maven: "net.fabricmc:yarn:1.21.11+build.6",
+                version: "1.21.11+build.6",
+                stable: true,
+              },
+            ]
+          : [intermediary];
+      return new Response(JSON.stringify(body));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("get_fabric_toolchain", {
+      gameVersion: "1.21.11",
+      limit: 1,
+      timeoutMs: 1000,
+    });
+    expect(result.content[0]?.text).toContain("net.fabricmc:fabric-loader:0.17.0");
+    expect(result.content[0]?.text).toContain("net.fabricmc:yarn:1.21.11+build.6");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("calls search_modrinth_projects", async () => {

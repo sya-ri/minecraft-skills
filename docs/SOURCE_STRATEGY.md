@@ -18,8 +18,8 @@ Use `minecraft-skills source report`, `minecraft-skills source tiers`, or MCP
 `get_source_report`/`list_source_tiers` to inspect the machine-readable form of this policy.
 
 - `canonical-official`: Mojang version metadata and downloads served through Piston endpoints,
-  official jars, generated reports, PaperMC API, and Paper Javadocs. Use this for version-specific
-  facts that generated files or code depend on.
+  official jars, generated reports, PaperMC API, Paper Javadocs, and Fabric Meta version metadata.
+  Use this for version-specific facts that generated files or code depend on.
 - `derived-bundled`: minecraft-skills indexes generated from official or accepted structured data,
   such as command paths, vanilla paths, observed JSON surfaces, and Paper API surfaces.
 - `community-structured`: structured datasets that help fill search and migration workflows, but
@@ -51,6 +51,20 @@ Use Piston-backed Mojang data for release ids, release times, jar URLs, SHA-1 ha
 versions, Java runtime metadata, and pack format extraction inputs. Refer to it in user-facing docs
 as "Mojang official version metadata and downloads, served through Piston endpoints" so the
 infrastructure name does not look like a third-party source.
+
+## Fabric Meta v2
+
+[Fabric Meta](https://github.com/FabricMC/fabric-meta) is FabricMC's official live JSON API for
+game, Loader, Intermediary, and Yarn version metadata, hosted at
+`https://meta.fabricmc.net/`. The toolchain lookup uses only the game-version-specific v2 endpoints
+and preserves their documented newest-first ordering. An upstream `stable` field may guide
+selection, but it must not be restated as proof that a mod, Fabric API release, or full dependency
+graph is compatible.
+
+Live responses are treated as untrusted input despite the official source: requests are timed out,
+response bytes and entry counts are bounded, required fields and numeric ranges are validated, and
+the Loader-provided Intermediary pairing is cross-checked when the Intermediary endpoint returns a
+candidate.
 
 ## Importer Policy
 

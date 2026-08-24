@@ -38,6 +38,7 @@ import {
   getDataManifest,
   getDatapackSchemaSurface,
   getEvidenceBundle,
+  getFabricToolchainCompatibility,
   getFactSurface,
   getIntentLookup,
   getJavaReportsSummary,
@@ -1073,6 +1074,21 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["index"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_fabric_toolchain",
+    description:
+      "Look up bounded Fabric Loader, Intermediary, and Yarn candidate tuples for a Minecraft game version from the official live Fabric Meta v2 API. Stable flags are selection metadata, not a full compatibility guarantee.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        gameVersion: { type: "string", minLength: 1, maxLength: 128 },
+        limit: { type: "number", minimum: 1, maximum: 50, default: 10 },
+        timeoutMs: { type: "number", minimum: 100, maximum: 30000, default: 5000 },
+      },
+      required: ["gameVersion"],
       additionalProperties: false,
     },
   },
@@ -2286,6 +2302,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           query: args.query,
           ...(domain ? { domain } : {}),
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "get_fabric_toolchain") {
+      if (typeof args.gameVersion !== "string") {
+        throw new Error("get_fabric_toolchain requires string gameVersion");
+      }
+      return text(
+        await getFabricToolchainCompatibility({
+          gameVersion: args.gameVersion,
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+          ...(typeof args.timeoutMs === "number" ? { timeoutMs: args.timeoutMs } : {}),
         }),
       );
     }

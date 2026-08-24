@@ -2556,6 +2556,46 @@ describe("catalog", () => {
     expect(large.truncated).toBe(false);
   });
 
+  it("routes natural-language Fabric toolchain queries to the live lookup", () => {
+    const search = searchAll({
+      version: "1.21.11",
+      query: "Which Fabric Loader and Yarn versions should I use?",
+    });
+    expect(search.results[0]).toMatchObject({
+      surface: "fabric-meta",
+      lookup: 'fabric toolchain "1.21.11"',
+    });
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "set up Fabric Intermediary mappings",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      'fabric toolchain "1.21.11"',
+    );
+
+    const contextualYarn = searchAll({
+      version: "1.21.11",
+      query: "Which Yarn toolchain should this Minecraft project use?",
+    });
+    expect(contextualYarn.results.some((entry) => entry.surface === "fabric-meta")).toBe(true);
+  });
+
+  it("does not route Fabric API-only or general Yarn package-manager queries", () => {
+    for (const query of [
+      "Which Fabric API version should I use?",
+      "How do I install dependencies with Yarn?",
+    ]) {
+      const search = searchAll({ version: "1.21.11", query });
+      expect(search.results.some((entry) => entry.surface === "fabric-meta")).toBe(false);
+
+      const suggestions = suggestMinecraftLookups({ version: "1.21.11", task: query });
+      expect(
+        suggestions.suggestedTools.some((entry) => entry.tool.startsWith("fabric toolchain")),
+      ).toBe(false);
+    }
+  });
+
   it("finds resourcepack assets from all available indexes", () => {
     const result = findResourcepackAssets({
       version: "26.2",
