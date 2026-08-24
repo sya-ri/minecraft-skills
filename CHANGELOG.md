@@ -24,6 +24,11 @@ All notable changes to this project are documented here.
 - Paper API searches now reuse up to two parsed and validated version surfaces in the same process
   while public surface results remain independent mutable values.
 
+### Fixed
+
+- Java server report ingestion now retains registries from `reports/registries.json` when
+  `datapack.json` is unavailable and merges registry IDs from both reports when both are present.
+
 ## 0.1.5 - 2026-06-24
 
 ### Added

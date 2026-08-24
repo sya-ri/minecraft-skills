@@ -1,55 +1,16 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { buildJavaReportsSummary } from "./javaReports.js";
 
-function writeJson(path: string, value: unknown): void {
-  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+function reportsFixture(name: string): string {
+  return fileURLToPath(new URL(`./fixtures/java-reports/${name}/`, import.meta.url));
 }
 
 describe("buildJavaReportsSummary", () => {
-  it("summarizes command paths and datapack reports", () => {
-    const reportsDir = mkdtempSync(join(tmpdir(), "minecraft-skills-java-reports-"));
-    writeJson(join(reportsDir, "commands.json"), {
-      type: "root",
-      children: {
-        say: {
-          type: "literal",
-          children: {
-            message: {
-              type: "argument",
-              parser: "minecraft:message",
-              executable: true,
-            },
-          },
-        },
-      },
-    });
-    writeJson(join(reportsDir, "datapack.json"), {
-      others: {
-        function: { elements: true, format: "mcfunction", stable: true, tags: true },
-      },
-      registries: {
-        "minecraft:damage_type": { elements: true, stable: false, tags: true },
-      },
-    });
-    writeJson(join(reportsDir, "registries.json"), {
-      "minecraft:damage_type": {
-        protocol_id: 23,
-        entries: {
-          "minecraft:generic": {},
-          "minecraft:magic": {},
-        },
-      },
-    });
-    for (const name of ["blocks.json", "json-rpc-api-schema.json", "packets.json"]) {
-      writeJson(join(reportsDir, name), {});
-    }
-
+  it("summarizes registries.json without datapack.json for Java 1.20", () => {
     const result = buildJavaReportsSummary({
-      version: "26.2",
-      reportsDir,
+      version: "1.20",
+      reportsDir: reportsFixture("1.20-registries-only"),
       serverJarUrl: "https://example.test/server.jar",
       retrievedAt: "2026-06-22T00:00:00+09:00",
     });
@@ -57,13 +18,81 @@ describe("buildJavaReportsSummary", () => {
     expect(result.commandPaths).toEqual(["say <message:minecraft:message>"]);
     expect(result.summary.commands.rootLiterals).toEqual(["say"]);
     expect(result.summary.commands.argumentParsers).toEqual(["minecraft:message"]);
-    expect(result.summary.datapack.registries).toContainEqual({
-      id: "minecraft:damage_type",
-      elements: true,
-      stable: false,
-      tags: true,
-      entryCount: 2,
-      protocolId: 23,
+    expect(result.summary.datapack.otherTypes).toEqual([]);
+    expect(result.summary.datapack.registries).toEqual([
+      {
+        id: "minecraft:biome",
+        elements: null,
+        stable: null,
+        tags: null,
+        entryCount: 2,
+        protocolId: 1,
+      },
+    ]);
+  });
+
+  it("unions datapack.json and registries.json registry IDs for Java 1.21.4", () => {
+    const result = buildJavaReportsSummary({
+      version: "1.21.4",
+      reportsDir: reportsFixture("1.21.4-registry-union"),
+      serverJarUrl: "https://example.test/server.jar",
+      retrievedAt: "2026-06-22T00:00:00+09:00",
     });
+
+    expect(result.summary.datapack.otherTypes).toEqual([
+      {
+        id: "function",
+        elements: true,
+        format: "mcfunction",
+        stable: true,
+        tags: true,
+      },
+    ]);
+    expect(result.summary.datapack.registries).toEqual([
+      {
+        id: "minecraft:biome",
+        elements: null,
+        stable: null,
+        tags: null,
+        entryCount: 1,
+        protocolId: 1,
+      },
+      {
+        id: "minecraft:damage_type",
+        elements: true,
+        stable: false,
+        tags: true,
+        entryCount: 2,
+        protocolId: 23,
+      },
+      {
+        id: "minecraft:worldgen/density_function",
+        elements: true,
+        stable: true,
+        tags: false,
+        entryCount: null,
+        protocolId: null,
+      },
+    ]);
+  });
+
+  it("preserves datapack registry metadata without registries.json", () => {
+    const result = buildJavaReportsSummary({
+      version: "1.21.4",
+      reportsDir: reportsFixture("1.21.4-datapack-only"),
+      serverJarUrl: "https://example.test/server.jar",
+      retrievedAt: "2026-06-22T00:00:00+09:00",
+    });
+
+    expect(result.summary.datapack.registries).toEqual([
+      {
+        id: "minecraft:damage_type",
+        elements: true,
+        stable: false,
+        tags: true,
+        entryCount: null,
+        protocolId: null,
+      },
+    ]);
   });
 });
