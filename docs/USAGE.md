@@ -231,6 +231,7 @@ minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
+minecraft-skills resourcepack validate-translations 26.2 ./my-resource-pack/assets/example/lang/en_us.json ./my-resource-pack/assets/example/lang/ja_jp.json --pack-root ./my-resource-pack --required-locale ja_jp
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills minecraft validate-access-list ./custom.json --kind banned-ips
@@ -360,6 +361,12 @@ blueprint compatibility. A group named `seat` proves only that exact group name 
 seating behavior. The boundary follows the official
 [Blockbench `.bbmodel` documentation](https://www.blockbench.net/wiki/docs/bbmodel/) and a pinned
 [Blockbench 5.1.6 format implementation](https://github.com/JannisX11/blockbench/blob/47e633e4a1338f957ee7baa0acbcf54da11e77df/js/formats/bbmodel.js).
+
+`resourcepack validate-translations` reads explicit stable UTF-8 files under `--pack-root` and
+preserves raw JSON duplicate-key evidence. Catalog analysis merges exact keys globally per locale,
+then compares only `--required-locale` selections against `--reference-locale` (default `en_us`).
+Missing/extra keys, placeholder reference mismatches, and unknown cross-file override order are
+warnings, not loader-invalid claims. Output never includes translation values or local paths.
 
 Paper plugin lookups:
 
@@ -756,6 +763,7 @@ Analysis and pack tools include:
 - `inspect_blockbench_project`
 - `validate_mixin_config`
 - `analyze_minecraft_performance`
+- `validate_resourcepack_translations`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
@@ -826,6 +834,7 @@ import {
   validateResourcepackProject,
   resolveVelocityToolchain,
   validateServerAccessList,
+  validateResourcepackTranslations,
 } from "@minecraft-skills/catalog";
 
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
@@ -933,6 +942,23 @@ const blockbenchProject = inspectBlockbenchProject({
     '{"meta":{"format_version":"5.0","model_format":"free"},"groups":[{"name":"seat"}],"animations":[{"name":"idle"}]}',
   requireAnimations: ["idle", "walk"],
   requireGroups: ["body", "seat"],
+});
+
+const translationParity = validateResourcepackTranslations({
+  version: "26.2",
+  referenceLocale: "en_us",
+  requiredLocales: ["ja_jp"],
+  files: [
+    {
+      path: "assets/example/lang/en_us.json",
+      content: '{"example.greeting":"Hello %s"}',
+    },
+    {
+      path: "assets/example/lang/ja_jp.json",
+      content: '{"example.greeting":"%s さん、こんにちは"}',
+    },
+  ],
+  argumentCounts: { "example.greeting": 1 },
 });
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are

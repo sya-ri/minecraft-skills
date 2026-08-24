@@ -107,6 +107,7 @@ import {
   validateServerProperties,
   validateServerAccessList,
   validateMixinConfig,
+  validateResourcepackTranslations,
   validateModrinthPack,
   validateModrinthPackArchive,
   validatePaperPluginArchiveMetadata,
@@ -363,11 +364,28 @@ const serverProperties = validateServerProperties({
 const logAnalysis = analyzeMinecraftLog({
   text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
 Caused by: java.lang.IllegalStateException: root`,
+});
 const blockbenchProject = inspectBlockbenchProject({
   project:
     '{"meta":{"format_version":"5.0","model_format":"free"},"groups":[{"name":"seat"}],"animations":[{"name":"idle"}]}',
   requireAnimations: ["idle", "walk"],
   requireGroups: ["body", "seat"],
+});
+const translations = validateResourcepackTranslations({
+  version: "26.2",
+  referenceLocale: "en_us",
+  requiredLocales: ["ja_jp"],
+  files: [
+    {
+      path: "assets/example/lang/en_us.json",
+      content: '{"example.greeting":"Hello %s"}',
+    },
+    {
+      path: "assets/example/lang/ja_jp.json",
+      content: '{"example.greeting":"%s さん、こんにちは"}',
+    },
+  ],
+  argumentCounts: { "example.greeting": 1 },
 });
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
 // Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
@@ -415,6 +433,11 @@ const accessList = validateServerAccessList({
 // evaluatedAt field records the canonical UTC instant used for expiration classification.
 // It checks canonical serializer output, not every defaulted or clamped shape the server loader
 // may accept, so `valid: false` does not guarantee loader rejection.
+// Translation files are merged by exact locale key, not by namespace. Raw JSON proves duplicate
+// source keys; parsed object input explicitly leaves source-key uniqueness unknown. Results never
+// retain translation values, and requiredLocales is explicit-only. Placeholder normalization and
+// runtime fallback evidence are source-verified against the official Mojang 26.2 client; other
+// target versions keep that runtime claim incomplete instead of extrapolating it.
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",

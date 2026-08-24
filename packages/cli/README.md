@@ -106,6 +106,7 @@ minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456
 minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills minecraft validate-access-list ./custom.json --kind banned-players
 minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
+minecraft-skills resourcepack validate-translations 26.2 ./my-resource-pack/assets/example/lang/en_us.json ./my-resource-pack/assets/example/lang/ja_jp.json --pack-root ./my-resource-pack --required-locale ja_jp
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -261,6 +262,12 @@ requested name is present; missing, unknown, unsafe, or invalid input returns 1.
 bounded metadata/name evidence, not local paths, textures, embedded image data, or editor state.
 It is not a complete `.bbmodel`, runtime-animation, rendering/export, plugin-format, or ModelEngine
 validator. In particular, a group named `seat` proves only that exact group name.
+
+`resourcepack validate-translations` reads only explicitly listed regular UTF-8 files. It rejects
+symlink files, pack-root escapes, unstable file snapshots, malformed UTF-8, and aggregate input
+bounds before Catalog analysis. Raw JSON duplicate-key evidence is preserved, while output omits
+translation values and local paths. Repeat `--required-locale` to select comparisons; no discovered
+locale is compared implicitly.
 
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.

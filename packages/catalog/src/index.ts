@@ -83,6 +83,20 @@ import {
   validateResourcepackReferenceGraph,
 } from "./resourcepackProject.js";
 import {
+  defaultResourcepackTranslationValidationLimits,
+  type ResourcepackTranslationComparison,
+  type ResourcepackTranslationDiagnostic,
+  type ResourcepackTranslationFile,
+  type ResourcepackTranslationIncompleteReason,
+  type ResourcepackTranslationLocaleSummary,
+  type ResourcepackTranslationValidationLimitName,
+  type ResourcepackTranslationValidationLimits,
+  type ResourcepackTranslationValidationOptions,
+  type ResourcepackTranslationValidationResult,
+  resolveResourcepackTranslationValidationLimits,
+  validateResourcepackTranslationsInput,
+} from "./resourcepackTranslations.js";
+import {
   AuthoringChecklist,
   type AuthoringChecklistData,
   AuthoringChecklistIndex,
@@ -304,6 +318,15 @@ export type {
   ResourcepackProjectValidationOptions,
   ResourcepackProjectValidationResult,
   ResourcepackSoundValidationIncompleteReason,
+  ResourcepackTranslationComparison,
+  ResourcepackTranslationDiagnostic,
+  ResourcepackTranslationFile,
+  ResourcepackTranslationIncompleteReason,
+  ResourcepackTranslationLocaleSummary,
+  ResourcepackTranslationValidationLimitName,
+  ResourcepackTranslationValidationLimits,
+  ResourcepackTranslationValidationOptions,
+  ResourcepackTranslationValidationResult,
   ResponsePatternData,
   ResponsePatternIndexData,
   SearchMinecraftAssetsOptions,
@@ -320,6 +343,7 @@ export {
   defaultDatapackProjectValidationLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
+  defaultResourcepackTranslationValidationLimits,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
@@ -341,6 +365,7 @@ export {
   resolveDatapackProjectValidationLimits,
   resolveResourcepackPngValidationLimits,
   resolveResourcepackProjectValidationLimits,
+  resolveResourcepackTranslationValidationLimits,
   searchMinecraftAssets,
   validateResourcepackPng,
 };
@@ -5540,6 +5565,14 @@ export function validateResourcepackProject(
     limits: resolveResourcepackProjectValidationLimits(options.limits),
     pngLimits: resolveResourcepackPngValidationLimits(options.pngLimits),
   });
+}
+
+export function validateResourcepackTranslations(
+  options: ResourcepackTranslationValidationOptions,
+): ResourcepackTranslationValidationResult {
+  return validateResourcepackTranslationsInput(options, (edition, version) =>
+    resolveVersion(Edition.assert(edition), version),
+  );
 }
 
 export function explainPackPath(options: PackPathExplanationOptions): PackPathExplanation {

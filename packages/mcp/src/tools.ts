@@ -28,6 +28,7 @@ import {
   defaultResourcepackProjectValidationLimits,
   defaultServerAccessListValidationLimits,
   defaultServerPropertiesValidationLimits,
+  defaultResourcepackTranslationValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -158,6 +159,7 @@ import {
   validateServerProperties,
   validateVelocityPluginArchiveMetadata,
   velocityPluginJarValidationLimits,
+  validateResourcepackTranslations,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
 import {
@@ -1562,6 +1564,93 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "validate_resourcepack_translations",
+    description:
+      "Validate caller-supplied Java resource-pack locale files as one global translation-key map per locale. Reports bounded raw duplicate-key, selected-locale missing/extra, override-order, and Mojang placeholder-reference evidence without returning translation values.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", minLength: 1, maxLength: 64, default: "latest" },
+        files: {
+          type: "array",
+          minItems: 1,
+          maxItems: defaultResourcepackTranslationValidationLimits.maxFiles,
+          items: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                minLength: 1,
+                maxLength: defaultResourcepackTranslationValidationLimits.maxPathLength,
+              },
+              content: {
+                oneOf: [
+                  {
+                    type: "string",
+                    maxLength:
+                      defaultResourcepackTranslationValidationLimits.maxTextCharactersPerFile,
+                  },
+                  {
+                    type: "object",
+                    maxProperties: defaultResourcepackTranslationValidationLimits.maxEntriesPerFile,
+                    propertyNames: {
+                      maxLength: defaultResourcepackTranslationValidationLimits.maxKeyLength,
+                    },
+                    additionalProperties: {
+                      oneOf: [
+                        {
+                          type: "string",
+                          maxLength:
+                            defaultResourcepackTranslationValidationLimits.maxValueCharacters,
+                        },
+                        { type: "number" },
+                        { type: "boolean" },
+                        { type: "null" },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+            required: ["path", "content"],
+            additionalProperties: false,
+          },
+        },
+        referenceLocale: {
+          type: "string",
+          minLength: 1,
+          maxLength: defaultResourcepackTranslationValidationLimits.maxLocaleLength,
+          default: "en_us",
+        },
+        requiredLocales: {
+          type: "array",
+          maxItems: defaultResourcepackTranslationValidationLimits.maxRequiredLocales,
+          items: {
+            type: "string",
+            minLength: 1,
+            maxLength: defaultResourcepackTranslationValidationLimits.maxLocaleLength,
+          },
+        },
+        argumentCounts: {
+          type: "object",
+          maxProperties: defaultResourcepackTranslationValidationLimits.maxArgumentCountEntries,
+          propertyNames: {
+            maxLength: defaultResourcepackTranslationValidationLimits.maxKeyLength,
+          },
+          additionalProperties: {
+            type: "integer",
+            minimum: 0,
+            maximum: defaultResourcepackTranslationValidationLimits.maxArgumentCount,
+          },
+        },
+        limit: { type: "integer", minimum: 1, maximum: 1_000, default: 100 },
+      },
+      required: ["files"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_pack_migration_plan",
     description:
       "Build a datapack or resourcepack version migration plan from from/to versions and optional pack file paths. Includes pack format changes, file classification, observed schema lookups, path changes, and considerations.",
@@ -2753,6 +2842,273 @@ function plainDataRecord(
   return record;
 }
 
+function safeMcpDataProperties(
+  value: unknown,
+  label: string,
+  maxProperties: number,
+): Record<string, PropertyDescriptor> {
+  if (!value || typeof value !== "object" || nodeTypes.isProxy(value) || Array.isArray(value)) {
+    throw new Error(`${label} must be a plain data object`);
+  }
+  try {
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new Error(`${label} must be a plain data object`);
+    }
+    const keys = Reflect.ownKeys(value);
+    if (keys.length > maxProperties) {
+      throw new Error(`${label} exceeds its property bound`);
+    }
+    if (keys.some((key) => typeof key !== "string")) {
+      throw new Error(`${label} must not contain symbol properties`);
+    }
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    for (const key of keys) {
+      const descriptor = descriptors[key as string];
+      if (!descriptor || !("value" in descriptor) || descriptor.enumerable !== true) {
+        throw new Error(`${label} must contain only enumerable data properties`);
+      }
+    }
+    return descriptors;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith(label)) {
+      throw error;
+    }
+    throw new Error(`${label} could not be inspected safely`);
+  }
+}
+
+function safeMcpDataArray(value: unknown, label: string, maxItems: number): unknown[] {
+  if (!value || typeof value !== "object" || nodeTypes.isProxy(value) || !Array.isArray(value)) {
+    throw new Error(`${label} must be a dense data array`);
+  }
+  try {
+    if (Object.getPrototypeOf(value) !== Array.prototype) {
+      throw new Error(`${label} must be a dense data array`);
+    }
+    const length = value.length;
+    if (!Number.isSafeInteger(length) || length < 0 || length > maxItems) {
+      throw new Error(`${label} exceeds its item bound`);
+    }
+    const keys = Reflect.ownKeys(value);
+    if (
+      keys.length !== length + 1 ||
+      keys.some(
+        (key) => typeof key !== "string" || (key !== "length" && !/^(0|[1-9]\d*)$/.test(key)),
+      )
+    ) {
+      throw new Error(`${label} must be a dense data array without extra properties`);
+    }
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    const result: unknown[] = [];
+    for (let index = 0; index < length; index += 1) {
+      const descriptor = descriptors[String(index)];
+      if (!descriptor || !("value" in descriptor) || descriptor.enumerable !== true) {
+        throw new Error(`${label} must contain only enumerable data entries`);
+      }
+      result.push(descriptor.value);
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith(label)) {
+      throw error;
+    }
+    throw new Error(`${label} could not be inspected safely`);
+  }
+}
+
+function dataRecordFromDescriptors(
+  descriptors: Record<string, PropertyDescriptor>,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = Object.create(null);
+  for (const [key, descriptor] of Object.entries(descriptors)) {
+    Object.defineProperty(result, key, { enumerable: true, value: descriptor.value });
+  }
+  return result;
+}
+
+function validateResourcepackTranslationsTool(input: unknown): ToolResult {
+  const tool = "validate_resourcepack_translations";
+  const limits = defaultResourcepackTranslationValidationLimits;
+  const top = safeMcpDataProperties(input, `${tool} input`, 8);
+  const args = dataRecordFromDescriptors(top);
+  assertToolArgs(input, args, tool, [
+    "edition",
+    "version",
+    "files",
+    "referenceLocale",
+    "requiredLocales",
+    "argumentCounts",
+    "limit",
+  ]);
+
+  const edition = args.edition ?? "java";
+  const version = args.version ?? "latest";
+  const referenceLocale = args.referenceLocale ?? "en_us";
+  const limit = args.limit ?? 100;
+  if (edition !== "java") {
+    throw new Error(`${tool} edition must be java`);
+  }
+  if (typeof version !== "string" || version.length < 1 || version.length > 64) {
+    throw new Error(`${tool} version must contain 1..64 characters`);
+  }
+  if (
+    typeof referenceLocale !== "string" ||
+    referenceLocale.length < 1 ||
+    referenceLocale.length > limits.maxLocaleLength
+  ) {
+    throw new Error(`${tool} referenceLocale is outside its character bound`);
+  }
+  if (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit < 1 || limit > 1_000) {
+    throw new Error(`${tool} limit must be an integer from 1 through 1000`);
+  }
+
+  const requiredLocales =
+    args.requiredLocales === undefined
+      ? []
+      : safeMcpDataArray(
+          args.requiredLocales,
+          `${tool} requiredLocales`,
+          limits.maxRequiredLocales,
+        );
+  if (
+    !requiredLocales.every(
+      (locale) =>
+        typeof locale === "string" && locale.length >= 1 && locale.length <= limits.maxLocaleLength,
+    )
+  ) {
+    throw new Error(`${tool} requiredLocales contain an invalid locale identifier`);
+  }
+
+  let argumentCounts: Record<string, number> | undefined;
+  if (args.argumentCounts !== undefined) {
+    const descriptors = safeMcpDataProperties(
+      args.argumentCounts,
+      `${tool} argumentCounts`,
+      limits.maxArgumentCountEntries,
+    );
+    argumentCounts = Object.create(null) as Record<string, number>;
+    for (const [key, descriptor] of Object.entries(descriptors)) {
+      const value = descriptor.value;
+      if (
+        key.length > limits.maxKeyLength ||
+        typeof value !== "number" ||
+        !Number.isSafeInteger(value) ||
+        value < 0 ||
+        value > limits.maxArgumentCount
+      ) {
+        throw new Error(`${tool} argumentCounts contain an invalid key or count`);
+      }
+      Object.defineProperty(argumentCounts, key, { enumerable: true, value });
+    }
+  }
+
+  const fileInputs = safeMcpDataArray(args.files, `${tool} files`, limits.maxFiles);
+  if (fileInputs.length === 0) {
+    throw new Error(`${tool} requires at least one file`);
+  }
+  const files: Array<{ path: string; content: unknown }> = [];
+  let rawTextCharacters = 0;
+  let rawTextBytes = 0;
+  let structuredEntries = 0;
+  let structuredCharacters = 0;
+  let structuredBytes = 0;
+  for (let index = 0; index < fileInputs.length; index += 1) {
+    const file = safeMcpDataProperties(fileInputs[index], `${tool} file ${index + 1}`, 2);
+    if (
+      Object.keys(file).some((key) => key !== "path" && key !== "content") ||
+      !file.path ||
+      !("value" in file.path) ||
+      !file.content ||
+      !("value" in file.content)
+    ) {
+      throw new Error(`${tool} file ${index + 1} requires only path and content`);
+    }
+    const path = file.path.value;
+    const content = file.content.value;
+    if (typeof path !== "string" || path.length < 1 || path.length > limits.maxPathLength) {
+      throw new Error(`${tool} file ${index + 1} path is outside its character bound`);
+    }
+    if (typeof content === "string") {
+      if (content.length > limits.maxTextCharactersPerFile) {
+        throw new Error(`${tool} file ${index + 1} text exceeds its character bound`);
+      }
+      rawTextCharacters += content.length;
+      if (rawTextCharacters > limits.maxTextBytesTotal) {
+        throw new Error(`${tool} raw text exceeds its aggregate character bound`);
+      }
+      rawTextBytes += Buffer.byteLength(content, "utf8");
+      if (rawTextBytes > limits.maxTextBytesTotal) {
+        throw new Error(`${tool} raw text exceeds its aggregate UTF-8 byte bound`);
+      }
+      files.push({ path, content });
+      continue;
+    }
+    const contentProperties = safeMcpDataProperties(
+      content,
+      `${tool} file ${index + 1} content`,
+      limits.maxEntriesPerFile,
+    );
+    const entries = Object.entries(contentProperties);
+    structuredEntries += entries.length;
+    if (structuredEntries > limits.maxEntriesTotal) {
+      throw new Error(`${tool} parsed content exceeds its aggregate entry bound`);
+    }
+    const sanitized: Record<string, unknown> = Object.create(null);
+    for (const [key, descriptor] of entries) {
+      const value = descriptor.value;
+      if (key.length > limits.maxKeyLength) {
+        throw new Error(`${tool} parsed content contains an overlong key`);
+      }
+      if (
+        typeof value !== "string" &&
+        typeof value !== "number" &&
+        typeof value !== "boolean" &&
+        value !== null
+      ) {
+        throw new Error(`${tool} parsed content values must be JSON primitives`);
+      }
+      if (typeof value === "number" && !Number.isFinite(value)) {
+        throw new Error(`${tool} parsed content numbers must be finite`);
+      }
+      if (typeof value === "string" && value.length > limits.maxValueCharacters) {
+        throw new Error(`${tool} parsed content contains an overlong value`);
+      }
+      const valueText = value === null ? "null" : String(value);
+      structuredCharacters += key.length;
+      if (structuredCharacters > limits.maxContentCharactersTotal) {
+        throw new Error(`${tool} parsed content exceeds its aggregate character bound`);
+      }
+      structuredBytes += Buffer.byteLength(key, "utf8");
+      if (structuredBytes > limits.maxContentBytesTotal) {
+        throw new Error(`${tool} parsed content exceeds its aggregate UTF-8 byte bound`);
+      }
+      structuredCharacters += valueText.length;
+      if (structuredCharacters > limits.maxContentCharactersTotal) {
+        throw new Error(`${tool} parsed content exceeds its aggregate character bound`);
+      }
+      structuredBytes += Buffer.byteLength(valueText, "utf8");
+      if (structuredBytes > limits.maxContentBytesTotal) {
+        throw new Error(`${tool} parsed content exceeds its aggregate UTF-8 byte bound`);
+      }
+      Object.defineProperty(sanitized, key, { enumerable: true, value });
+    }
+    files.push({ path, content: sanitized });
+  }
+
+  return text(
+    validateResourcepackTranslations({
+      edition: "java",
+      version,
+      files,
+      referenceLocale,
+      requiredLocales: requiredLocales as string[],
+      ...(argumentCounts === undefined ? {} : { argumentCounts }),
+      limit,
+    }),
+  );
+}
+
 function optionalStringArg(
   args: Record<string, unknown>,
   tool: string,
@@ -3285,6 +3641,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "analyze_minecraft_performance") {
       return text(analyzeMinecraftPerformance(input));
+    }
+    if (name === "validate_resourcepack_translations") {
+      return validateResourcepackTranslationsTool(input);
     }
     const args = asRecord(input);
     const edition = typeof args.edition === "string" ? args.edition : "java";

@@ -128,6 +128,7 @@ aliases or reject Unicode query values.
 - `validate_server_access_list`
 - `inspect_blockbench_project`
 - `analyze_minecraft_performance`
+- `validate_resourcepack_translations`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`
@@ -267,6 +268,13 @@ descriptive candidate signals, never causal conclusions. Threshold violations re
 scoped spark capture following Paper's [profiling guidance](https://docs.papermc.io/paper/profiling/)
 while the issue is active. MCP receives an already-parsed object, so it cannot detect duplicate
 keys that may have existed in source JSON; use the file CLI when source-level uniqueness matters.
+
+`validate_resourcepack_translations` accepts bounded raw JSON text or parsed locale objects. Raw
+text can prove duplicate source keys; parsed objects report source-key uniqueness as unknown. The
+tool compares exact global keys and normalized placeholder reference multisets only for supplied,
+explicitly required locales. It never returns translation values, and its schema plus runtime
+preflight reject accessors, symbols, proxies, non-plain objects, sparse arrays, and aggregate work
+above the published limits.
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,
