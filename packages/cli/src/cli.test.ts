@@ -3474,6 +3474,21 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"id": "prismarinejs-minecraft-assets"');
   });
 
+  it("searches domain-neutral Fabric client UI scale and clipping guidance", async () => {
+    const result = await capture([
+      "minecraft",
+      "search",
+      "Fabric GUI scale clipping",
+      "--kind",
+      "authoring-recipe",
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"id": "fabric-client-ui-scale-clipping"');
+    expect(result.stdout.join("\n")).toContain('"domains": []');
+    expect(result.stdout.join("\n")).toContain("establish-one-scaled-coordinate-space");
+  });
+
   it("compares command paths", async () => {
     const result = await capture([
       "datapack",

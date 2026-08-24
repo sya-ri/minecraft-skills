@@ -536,6 +536,65 @@ describe("@minecraft-skills/data", () => {
     expect(requirement?.mustInclude.join("\n")).toContain("explicit complete-suite value");
   });
 
+  it("loads Fabric client UI scale and clipping guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        domains: string[];
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "fabric-client-ui-scale-clipping");
+    expect(recipe?.domains).toEqual([]);
+    expect(recipe?.steps.map((step) => step.id)).toEqual([
+      "establish-one-scaled-coordinate-space",
+      "compute-one-layout-result",
+      "validate-content-before-clipping",
+      "exercise-scale-language-viewport-and-state-matrix",
+      "verify-version-specific-client-apis",
+    ]);
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "Do not apply GUI scale again",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "normal, hover, pressed, and disabled states",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "https://docs.fabricmc.net/develop/rendering/gui/custom-screens",
+    );
+    expect(recipe?.finalChecks).toEqual(["fabric-client-ui-scale-clipping-safety"]);
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; domains: string[]; rules: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "fabric-client-ui-scale-clipping-safety",
+    );
+    expect(guardrail?.domains).toEqual([]);
+    expect(guardrail?.rules.join("\n")).toContain("one immutable layout result");
+    expect(guardrail?.rules.join("\n")).toContain("pre-clip bounds");
+    expect(guardrail?.rules.join("\n")).toContain("Screenshots are visual evidence");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{
+        id: string;
+        domains: string[];
+        severity: string;
+        requiredChecks: string[];
+        failIf: string[];
+      }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "fabric-client-ui-scale-clipping-unsafe",
+    );
+    expect(diagnostic?.domains).toEqual([]);
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.requiredChecks.join("\n")).toContain("especially Auto");
+    expect(diagnostic?.failIf.join("\n")).toContain("GUI scale applied a second time");
+    expect(diagnostic?.failIf.join("\n")).toContain("screenshots are the only proof");
+  });
+
   it("loads bundled claim policy JSON", () => {
     const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

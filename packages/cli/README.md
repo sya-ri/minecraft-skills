@@ -131,6 +131,7 @@ minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 10485
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills minecraft search "Fabric Client GameTest visual evidence" --kind authoring-recipe
+minecraft-skills minecraft search "Fabric GUI scale clipping" --kind authoring-recipe
 minecraft-skills velocity toolchain --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -350,6 +351,13 @@ guardrail, diagnostic, intent, claim policy, and output requirement by kind for 
 contract. The records distinguish non-render assertions, virtual-framebuffer client runs, and
 interactive clients; concrete test APIs still require current official Fabric documentation and
 target-version API or mappings.
+
+`minecraft search "Fabric GUI scale clipping"` returns domain-neutral Fabric client UI guidance
+without introducing a full Fabric authoring context. The recipe and guardrail prevent reapplying
+GUI scale to an already-scaled viewport, keep draw, clip, and hit-test rectangles in one layout
+result, and require pre-clip content bounds plus paired geometry and actual-render checks. Any
+concrete Screen, window, drawing, input, or scissor API still requires current official Fabric
+documentation and target-version mappings.
 
 `velocity toolchain` reads the current `com.velocitypowered:velocity-api` version from bounded
 official PaperMC Maven metadata and cross-checks the official development guide and Java FAQ. It

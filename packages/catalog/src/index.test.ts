@@ -910,6 +910,37 @@ describe("catalog", () => {
     );
   });
 
+  it("routes Fabric client UI scale and clipping through domain-neutral catalog guidance", () => {
+    const recipe = getAuthoringRecipe("fabric-client-ui-scale-clipping");
+    expect(recipe.domains).toEqual([]);
+    expect(recipe.steps.map((step) => step.id)).toContain("establish-one-scaled-coordinate-space");
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain("pre-clip content bounds");
+
+    const guardrail = getAuthoringGuardrail("fabric-client-ui-scale-clipping-safety");
+    expect(guardrail.domains).toEqual([]);
+    expect(guardrail.rules.join("\n")).toContain("do not multiply or divide");
+    expect(guardrail.rules.join("\n")).toContain("Auto under more than one window size");
+
+    const diagnostic = getAuthoringDiagnostic("fabric-client-ui-scale-clipping-unsafe");
+    expect(diagnostic.domains).toEqual([]);
+    expect(diagnostic.failIf.join("\n")).toContain("screenshots are the only proof");
+
+    const recipeSearch = searchCatalog({
+      query: "Fabric GUI scale clipping",
+      kind: "authoring-recipe",
+    });
+    expect(recipeSearch.results[0]?.id).toBe("fabric-client-ui-scale-clipping");
+    expect(recipeSearch.results[0]?.item).toEqual(recipe);
+
+    const diagnosticSearch = searchCatalog({
+      query: "Fabric screenshot pre-clip Auto hit test",
+      kind: "authoring-diagnostic",
+    });
+    expect(diagnosticSearch.results.map((entry) => entry.id)).toContain(
+      "fabric-client-ui-scale-clipping-unsafe",
+    );
+  });
+
   it("builds authoring plans with scenario lookups resolved", () => {
     const plan = getAuthoringPlan({
       scenario: "paper-event-listener-review",

@@ -6562,7 +6562,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "offline-artifact-validation",
       title: "Fabric mod metadata and JAR validation",
-      score: 100,
+      score: 250,
       matches: ["fabric.mod.json schemaVersion 1", "JAR paths", "referenced files"],
       lookup: "fabric validate-mod <file.jar>",
     });

@@ -313,6 +313,31 @@
         "A declared environment class, exact target/runtime metadata, current Fabric documentation evidence, and a bounded statement of what the run proves"
       ],
       "failureMode": "Unstable cases, early screenshots, partial reruns, self-updating baselines, stale files, and unlabeled display environments can produce a green visual suite whose images are neither attributable nor sufficient for its claim."
+    },
+    {
+      "id": "fabric-client-ui-scale-clipping-safety",
+      "domains": [],
+      "title": "Keep Fabric client UI geometry in one resolved scaled coordinate space",
+      "rules": [
+        "Resolve the current scaled viewport once from target-version client screen or window data, then keep layout, drawing, clipping, and hit testing in that coordinate space; do not multiply or divide those coordinates by GUI scale again.",
+        "Treat the configured GUI scale as an input to Minecraft's runtime resolution rather than as the layout coordinate system. For Auto, record the resolved scale together with current window, framebuffer, and scaled viewport dimensions instead of treating Auto as one fixed numeric case.",
+        "Compute one immutable layout result per viewport and UI state. Draw bounds, local clips, parent clips, effective clips, focus or pointer hit regions, and child placement must all consume that result instead of recomputing related rectangles independently.",
+        "Define the effective clip as the intersection of the component clip and every applicable ancestor clip, and keep clip push/pop ownership balanced on every render path.",
+        "Measure glyph and image bounds before clipping. Require those pre-clip bounds to fit the intended component, parent, and effective clip, or record an explicit overflow, wrapping, scrolling, ellipsis, or crop policy; a clean post-clip image alone does not prove that content was laid out correctly.",
+        "Use the same layout result for hit testing that rendering uses, including normal, hover, pressed, and disabled states; invisible or clipped pixels must not silently leave a larger or shifted interactive region.",
+        "Run deterministic geometry assertions for the minimum supported scaled viewport, long localized translations, multiple resolved scale factors, Auto under more than one window size, and normal, hover, pressed, and disabled states.",
+        "Pair geometry assertions with actual client rendering or screenshot checks over the same case matrix. Screenshots are visual evidence, not a replacement for numeric bounds, clip intersections, coordinate-space, and hit-test assertions.",
+        "Keep this as design and test guidance. Verify exact Screen, window, input, drawing, and scissor API names and behavior against current official Fabric documentation and target-version mappings before generating implementation code."
+      ],
+      "requiredEvidence": [
+        "A coordinate-space contract naming the runtime scaled viewport inputs and confirming that GUI scale is not applied again",
+        "One captured layout result containing component, content, parent, effective clip, and hit-test bounds for every rendered state",
+        "Pre-clip glyph and image measurements plus the declared wrap, scroll, ellipsis, crop, or overflow policy where content does not fit",
+        "Deterministic geometry tests covering long localized translations, the minimum supported viewport, multiple resolved scale factors, Auto with multiple window dimensions, and normal, hover, pressed, and disabled states",
+        "Actual-render or screenshot evidence for the same matrix, paired with numeric geometry assertions",
+        "Current official Fabric custom-screen and GUI-rendering documentation plus target-version mappings for every Minecraft client API named by the implementation"
+      ],
+      "failureMode": "Applying GUI scale twice or deriving render, clip, and input geometry separately can shrink, offset, clip, or misalign otherwise plausible client UI while screenshot-only checks hide the broken layout contract."
     }
   ]
 }

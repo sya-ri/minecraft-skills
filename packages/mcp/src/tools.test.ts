@@ -977,6 +977,33 @@ describe("MCP tools", () => {
     expect(suggestions.content[0]?.text).toContain('"id": "paper-plugin-protocol-safety-review"');
   });
 
+  it("serves domain-neutral Fabric client UI scale and clipping guidance", async () => {
+    const catalogSearch = await callMinecraftSkillsTool("search_catalog", {
+      query: "Fabric GUI scale clipping",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.content[0]?.text).toContain('"id": "fabric-client-ui-scale-clipping"');
+    expect(catalogSearch.content[0]?.text).toContain('"domains": []');
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "fabric-client-ui-scale-clipping",
+    });
+    expect(recipe.content[0]?.text).toContain("establish-one-scaled-coordinate-space");
+    expect(recipe.content[0]?.text).toContain("actual client renders or screenshots");
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "fabric-client-ui-scale-clipping-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("do not multiply or divide");
+    expect(guardrail.content[0]?.text).toContain("pre-clip bounds");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "fabric-client-ui-scale-clipping-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("screenshots are the only proof");
+    expect(diagnostic.content[0]?.text).toContain("normal, hover, pressed, and disabled states");
+  });
+
   it("calls authoring plan tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_plan", {
       scenario: "paper-event-listener-review",

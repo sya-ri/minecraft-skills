@@ -1034,6 +1034,56 @@
         "Verify concrete APIs for the target Fabric stack and otherwise keep the answer at the workflow-contract level."
       ],
       "failureMode": "A visual test can pass from the wrong frame, stale files, a partial selection, or a rewritten oracle while its report hides which client environment and failure phase were actually observed."
+    },
+    {
+      "id": "fabric-client-ui-scale-clipping-unsafe",
+      "domains": [],
+      "title": "Fabric client UI scale or clipping geometry is inconsistent",
+      "severity": "error",
+      "detectWhen": [
+        "Fabric client screen, overlay, widget, or custom UI code reads GUI scale, scaled dimensions, framebuffer dimensions, draw coordinates, clipping, or pointer coordinates",
+        "text, icons, images, controls, tooltips, or state layers are cut off, shifted, unexpectedly small, or clickable outside their visible bounds",
+        "the UI is accepted from screenshots without deterministic layout and hit-test assertions"
+      ],
+      "requiredChecks": [
+        "name the coordinate space of every viewport, draw, clip, glyph, image, and pointer value and verify that the runtime scaled viewport is resolved exactly once",
+        "capture configured GUI scale, resolved scale, window and framebuffer dimensions, and scaled viewport dimensions for every case, especially Auto",
+        "compute one layout result and verify that drawing, component and ancestor clip intersections, and hit testing consume its bounds",
+        "measure glyph and image bounds before clipping and compare them with component, parent, and effective clips under an explicit overflow policy",
+        "exercise long localized translations, the minimum supported scaled viewport, multiple resolved scales, Auto with multiple window sizes, and normal, hover, pressed, and disabled states",
+        "pair deterministic geometry assertions with actual-render or screenshot checks for the same matrix",
+        "verify every named Minecraft client API against current official Fabric documentation and target-version mappings"
+      ],
+      "evidence": [
+        "A coordinate-space and scale-resolution table",
+        "Serialized or asserted layout rectangles, clip intersections, pre-clip content bounds, and hit regions",
+        "A case matrix covering viewport, resolved scale, Auto, localized text length, and interaction state",
+        "Numeric test results paired with actual-render or screenshot artifacts",
+        "Official Fabric documentation and target-version mapping links for concrete API claims"
+      ],
+      "tools": {
+        "cli": ["minecraft search"],
+        "mcp": ["search_catalog", "get_authoring_recipe", "get_authoring_guardrail"],
+        "packageApis": ["searchCatalog", "getAuthoringRecipe", "getAuthoringGuardrail"]
+      },
+      "failIf": [
+        "already-scaled screen or viewport coordinates have GUI scale applied a second time",
+        "Auto is modeled as one fixed scale value without the resolved scale and current window dimensions",
+        "drawing, clipping, and hit testing recompute related rectangles instead of consuming one layout result",
+        "only post-clip pixels are checked while glyph or image pre-clip bounds exceed the intended component, parent, or effective clip without an explicit policy",
+        "the hit region differs from the rendered state geometry without a documented intentional reason",
+        "tests cover only the default language, one comfortable viewport, one resolved scale, or one interaction state",
+        "screenshots are the only proof and no deterministic geometry assertions cover bounds, clips, coordinate spaces, and hit tests",
+        "the implementation names version-specific Minecraft client APIs without current Fabric documentation or target-version mapping evidence"
+      ],
+      "safeResponse": [
+        "Capture the runtime scaled viewport tuple once and remove any second GUI-scale transform from UI geometry.",
+        "Return one layout result that owns content, clip, child, and hit-test rectangles, then consume it from every render and input path.",
+        "Assert pre-clip text and image bounds against the effective ancestor intersection and declare any intentional truncation policy.",
+        "Run the complete viewport, scale, Auto, translation, and interaction-state matrix with geometry assertions and paired actual renders.",
+        "Verify concrete client API names for the target version; otherwise keep the recommendation at the design-guidance level."
+      ],
+      "failureMode": "A UI can look acceptable in one screenshot while double scaling, stale clip geometry, or divergent hit bounds fail at another viewport, resolved scale, translation, or interaction state."
     }
   ]
 }

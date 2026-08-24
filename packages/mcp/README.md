@@ -94,6 +94,12 @@ aliases or reject Unicode query values.
 - `get_coverage_summary`
 - `get_data_manifest`
 - `get_support_matrix`
+
+Use `search_catalog` without a domain for `Fabric GUI scale clipping`, then read
+`fabric-client-ui-scale-clipping`, `fabric-client-ui-scale-clipping-safety`, or
+`fabric-client-ui-scale-clipping-unsafe` with the matching authoring getter. These records are
+domain-neutral guidance; they do not claim a complete Fabric authoring context or target-version
+client API surface.
 - `list_version_support`
 - `get_cache_status`
 - `fetch_data`
@@ -415,6 +421,9 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/intent-lookups/verify-fabric-client-visual-evidence.json`
 - `minecraft-skills://data/claim-policies/fabric-client-visual-evidence-claim.json`
 - `minecraft-skills://data/output-requirements/fabric-client-visual-evidence-report.json`
+- `minecraft-skills://data/authoring-recipes/fabric-client-ui-scale-clipping.json`
+- `minecraft-skills://data/authoring-guardrails/fabric-client-ui-scale-clipping-safety.json`
+- `minecraft-skills://data/authoring-diagnostics/fabric-client-ui-scale-clipping-unsafe.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
 - `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/response-patterns/paper-api-answer.json`

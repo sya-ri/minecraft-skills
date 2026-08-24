@@ -572,6 +572,20 @@ function requireAuthoringChecklists(
   }
 }
 
+function requireAuthoringDomains(
+  prefix: string,
+  recordDomains: readonly string[],
+  catalogDomains: ReadonlySet<string>,
+  messages: string[],
+): void {
+  // An empty list marks catalog-only, domain-neutral guidance rather than an authoring context.
+  for (const domain of recordDomains) {
+    if (!catalogDomains.has(domain)) {
+      messages.push(`${prefix} references unknown domain: ${domain}`);
+    }
+  }
+}
+
 function requireAuthoringGuardrails(root: string, messages: string[]): void {
   requireDataFile(root, "authoring-guardrails.json", messages);
   const domains = new Set(listDomains().map((domain) => domain.id));
@@ -582,14 +596,7 @@ function requireAuthoringGuardrails(root: string, messages: string[]): void {
       messages.push(`${prefix} must not be duplicated`);
     }
     ids.add(guardrail.id);
-    if (guardrail.domains.length === 0) {
-      messages.push(`${prefix} must list at least one domain`);
-    }
-    for (const domain of guardrail.domains) {
-      if (!domains.has(domain)) {
-        messages.push(`${prefix} references unknown domain: ${domain}`);
-      }
-    }
+    requireAuthoringDomains(prefix, guardrail.domains, domains, messages);
     if (guardrail.rules.length === 0) {
       messages.push(`${prefix} must list at least one rule`);
     }
@@ -616,14 +623,7 @@ function requireAuthoringDiagnostics(
       messages.push(`${prefix} must not be duplicated`);
     }
     ids.add(diagnostic.id);
-    if (diagnostic.domains.length === 0) {
-      messages.push(`${prefix} must list at least one domain`);
-    }
-    for (const domain of diagnostic.domains) {
-      if (!domains.has(domain)) {
-        messages.push(`${prefix} references unknown domain: ${domain}`);
-      }
-    }
+    requireAuthoringDomains(prefix, diagnostic.domains, domains, messages);
     if (diagnostic.severity !== "error" && diagnostic.severity !== "warning") {
       messages.push(`${prefix} must use severity error or warning`);
     }
@@ -675,14 +675,7 @@ function requireAuthoringRecipes(
       messages.push(`${prefix} must not be duplicated`);
     }
     ids.add(recipe.id);
-    if (recipe.domains.length === 0) {
-      messages.push(`${prefix} must list at least one domain`);
-    }
-    for (const domain of recipe.domains) {
-      if (!domains.has(domain)) {
-        messages.push(`${prefix} references unknown domain: ${domain}`);
-      }
-    }
+    requireAuthoringDomains(prefix, recipe.domains, domains, messages);
     if (recipe.when.length === 0) {
       messages.push(`${prefix} must describe when to use it`);
     }

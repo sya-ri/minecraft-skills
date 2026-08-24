@@ -106,6 +106,7 @@ minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills minecraft search "Fabric Client GameTest visual evidence" --kind authoring-recipe
+minecraft-skills minecraft search "Fabric GUI scale clipping" --kind authoring-recipe
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -148,6 +149,12 @@ is not itself a signed string. Neither proves downloaded PNG bytes, a content di
 selection, ownership, or licensing. The profile resolver does not download images; pass a returned
 hash to the separate [`player-texture download`](./packages/cli/README.md#examples) command when PNG
 bytes are needed. Layout inspection and face cropping remain separate.
+
+Fabric client UI scale and clipping guidance is available through the cross-domain catalog search
+rather than a full Fabric authoring domain. The recipe keeps layout, drawing, clipping, and hit
+testing in one runtime-resolved scaled coordinate space, and requires deterministic geometry tests
+plus matching actual-render or screenshot checks. Concrete client API names still need current
+official Fabric documentation and target-version mapping evidence.
 
 `resourcepack validate-project` also validates `sounds.json` file/event references and local event
 cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification

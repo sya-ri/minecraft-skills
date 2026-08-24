@@ -1771,6 +1771,97 @@
         "fabric-client-visual-evidence-report"
       ],
       "failureMode": "Screenshots can look authoritative while unstable case identity, early capture, partial selection, silent baseline replacement, stale artifacts, or an overstated headless environment makes the evidence incomplete or irreproducible."
+    },
+    {
+      "id": "fabric-client-ui-scale-clipping",
+      "domains": [],
+      "title": "Design Fabric client UI without double scaling or hidden clipping",
+      "when": [
+        "The task creates or reviews a Fabric client screen, overlay, widget, or custom UI layout.",
+        "Text, images, controls, or input regions clip, shift, shrink, or stop aligning when GUI scale, window size, language, or interaction state changes.",
+        "The UI needs repeatable geometry and rendered evidence across multiple client display conditions."
+      ],
+      "steps": [
+        {
+          "id": "establish-one-scaled-coordinate-space",
+          "action": "Read the target-version screen or window values that already represent the current scaled viewport and establish them as the layout coordinate space. Capture configured GUI scale, resolved scale, window and framebuffer dimensions, and scaled viewport dimensions as one case tuple. Treat Auto as a runtime-resolved family of tuples, not as one magic scale value. Do not apply GUI scale again to layout, draw, clip, or pointer coordinates.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_authoring_guardrail"],
+            "packageApis": ["searchCatalog", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A coordinate-space table for viewport, framebuffer, draw, clip, and input values",
+            "Captured case tuples including configured GUI scale, resolved scale, window dimensions, framebuffer dimensions, and scaled viewport dimensions",
+            "Current official Fabric documentation and target-version mappings for concrete Screen and window APIs"
+          ],
+          "stopIfMissing": "Do not compensate for uncertain coordinates with another scale multiplication or division; verify the target-version scaled viewport and input surfaces first."
+        },
+        {
+          "id": "compute-one-layout-result",
+          "action": "Compute an immutable layout result from the scaled viewport, content measurements, and interaction state. Include component bounds, pre-clip content bounds, child placement, local clip, parent clip, effective ancestor intersection, and hit-test or focus bounds. Consume this same result for rendering, clip setup, and input instead of rebuilding related rectangles in separate paths.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog"],
+            "packageApis": ["searchCatalog"]
+          },
+          "evidence": [
+            "One layout-result type or fixture containing every render, clip, child, and hit-test rectangle",
+            "Assertions that component and ancestor clips form the effective intersection",
+            "Assertions that render and input paths consume the same state-specific layout result"
+          ],
+          "stopIfMissing": "Do not approve separately calculated draw, scissor, and pointer bounds whose equality is only assumed."
+        },
+        {
+          "id": "validate-content-before-clipping",
+          "action": "Measure complete glyph and image bounds before applying clips. Compare those bounds with the component, parent, and effective clip. If content intentionally exceeds a boundary, select and test an explicit wrapping, scrolling, ellipsis, crop, or overflow policy; clipped output alone must not turn accidental overflow into a passing result. Keep nested clip ownership balanced on every render path.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_authoring_guardrail"],
+            "packageApis": ["searchCatalog", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "Pre-clip glyph and image rectangles",
+            "Component, parent, and effective clip comparisons",
+            "An explicit and tested overflow policy for every intentionally non-fitting content path",
+            "Balanced nested clip setup and teardown across normal and exceptional render paths"
+          ],
+          "stopIfMissing": "A clean post-clip screenshot is not evidence that full content bounds fit or that nested clips are balanced."
+        },
+        {
+          "id": "exercise-scale-language-viewport-and-state-matrix",
+          "action": "Define a deterministic case matrix with the minimum supported scaled viewport, long localized translations, multiple resolved scales, Auto at more than one window size, and normal, hover, pressed, and disabled states. Assert layout bounds, pre-clip content, clip intersections, and hit regions for every case. Then capture actual client renders or screenshots for the same matrix so visual artifacts supplement rather than replace geometry proof.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_authoring_diagnostic"],
+            "packageApis": ["searchCatalog", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Parameterized geometry tests for every viewport, scale, Auto, translation, and interaction-state case",
+            "Numeric assertions for layout, pre-clip content, effective clips, and hit-test bounds",
+            "Actual-render or screenshot artifacts labeled with the same case tuples",
+            "A review result that distinguishes deterministic geometry failures from visual-rendering failures"
+          ],
+          "stopIfMissing": "Do not claim scale or clipping safety from the default language, one large viewport, one GUI scale, one interaction state, or screenshots alone."
+        },
+        {
+          "id": "verify-version-specific-client-apis",
+          "action": "Consult current official Fabric custom-screen and GUI-rendering documentation plus target-version mappings to verify every concrete Screen, window, drawing, input, and scissor API named by the implementation. Keep unverified details out of generated code and present the coordinate, layout, and test rules as general design guidance when exact APIs are unavailable.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog"],
+            "packageApis": ["searchCatalog"]
+          },
+          "evidence": [
+            "https://docs.fabricmc.net/develop/rendering/gui/custom-screens",
+            "https://docs.fabricmc.net/develop/rendering/gui-graphics",
+            "Target-version Fabric Yarn or other selected mapping documentation for each named Minecraft API"
+          ],
+          "stopIfMissing": "Do not convert general UI geometry guidance into target-version API claims without current official documentation and mapping evidence."
+        }
+      ],
+      "finalChecks": ["fabric-client-ui-scale-clipping-safety"],
+      "failureMode": "Independent scale, render, clip, and input calculations can pass a single screenshot while producing clipped content or misaligned controls in other resolved viewport cases."
     }
   ]
 }

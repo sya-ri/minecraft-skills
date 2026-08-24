@@ -554,4 +554,30 @@ describe("MCP resources", () => {
     );
     expect(requirement.contents[0]?.text).toContain("artifact-manifest");
   });
+
+  it("reads Fabric client UI scale and clipping guidance resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/fabric-client-ui-scale-clipping.json",
+        "minecraft-skills://data/authoring-guardrails/fabric-client-ui-scale-clipping-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/fabric-client-ui-scale-clipping-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/fabric-client-ui-scale-clipping.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("establish-one-scaled-coordinate-space");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/fabric-client-ui-scale-clipping-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("one immutable layout result");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/fabric-client-ui-scale-clipping-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("screenshots are the only proof");
+  });
 });

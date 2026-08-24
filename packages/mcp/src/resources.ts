@@ -171,8 +171,7 @@ export function listMinecraftSkillsResources(): Resource[] {
       uri: `${dataResourceBase}/authoring-guardrails.json`,
       name: "authoring-guardrails.json",
       title: "Minecraft Skills authoring guardrails",
-      description:
-        "Output guardrails that prevent unsupported Minecraft datapack, resourcepack, and Paper plugin claims.",
+      description: "Output guardrails for supported Minecraft authoring concerns.",
       mimeType: "application/json",
       size: textSize(JSON.stringify(authoringGuardrailIndex, null, 2)),
     },
@@ -204,8 +203,7 @@ export function listMinecraftSkillsResources(): Resource[] {
       uri: `${dataResourceBase}/authoring-recipes.json`,
       name: "authoring-recipes.json",
       title: "Minecraft Skills authoring recipes",
-      description:
-        "Task recipes that order exact lookups for common datapack, resourcepack, and Paper plugin work.",
+      description: "Task recipes that order exact checks for supported Minecraft authoring work.",
       mimeType: "application/json",
       size: textSize(JSON.stringify(authoringRecipeIndex, null, 2)),
     },
