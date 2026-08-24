@@ -30,6 +30,10 @@ All notable changes to this project are documented here.
   causes, crash metadata, platform/version statements, JAR artifacts, and explicitly named
   mod/plugin IDs. Credentials, IP addresses, absolute paths, terminal controls, and unsafe Unicode
   are sanitized before retained output, and extracted labels are never presented as blame.
+- Bounded CLI inventory and two-directory factual diff for direct Fabric mod JARs, including
+  stable one-file reads, hashes, normalized metadata and validation status, duplicate-ID and
+  ambiguity reporting, deterministic limits, and automation-friendly exit codes without exposing
+  absolute paths or archive bytes.
 - Offline Fabric mod validation across the Catalog API, CLI, and MCP, covering bounded structural
   rules for current `fabric.mod.json` schema v1, portable archive paths, referenced-file presence,
   and bounded JAR structure. CLI binary reads require one stable regular `.jar` file; MCP accepts

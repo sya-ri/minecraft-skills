@@ -30,6 +30,7 @@ type FabricModJarOpenFlags = {
 
 /** Test-only filesystem seams; production callers should leave this argument omitted. */
 export type FabricModJarFileIoOverrides = Partial<FabricModJarFileIo> & {
+  expectedPathSnapshot?: BigIntStats;
   openFlags?: FabricModJarOpenFlags;
 };
 
@@ -78,13 +79,20 @@ function safeOpenFlags(flags: FabricModJarOpenFlags): number {
   return flags.readonly | (flags.noFollow ?? 0) | (flags.nonBlock ?? 0);
 }
 
-/** Reads one stable regular JAR file after enforcing the caller's byte ceiling. */
+/**
+ * Reads one stable regular JAR file after enforcing the caller's byte ceiling.
+ * An expected snapshot closes the gap between a caller's accounting check and this read.
+ */
 export function readFabricModJarFile(
   filePath: string,
   maxBytes: number,
   overrides: FabricModJarFileIoOverrides = {},
 ): Buffer {
-  const { openFlags = defaultFabricModJarOpenFlags, ...ioOverrides } = overrides;
+  const {
+    expectedPathSnapshot,
+    openFlags = defaultFabricModJarOpenFlags,
+    ...ioOverrides
+  } = overrides;
   const io = { ...defaultFabricModJarFileIo, ...ioOverrides };
   let pathBefore: BigIntStats | undefined;
   try {
@@ -94,6 +102,9 @@ export function readFabricModJarFile(
   }
   if (!pathBefore?.isFile() || pathBefore.isSymbolicLink()) {
     throw new Error("fabric validate-mod requires a regular local .jar file");
+  }
+  if (expectedPathSnapshot && !sameFileSnapshot(expectedPathSnapshot, pathBefore)) {
+    throw new Error("fabric validate-mod archive changed before it could be read");
   }
   if (BigInt(maxBytes) < pathBefore.size) {
     throw new Error(`fabric validate-mod refuses archives larger than ${maxBytes} bytes`);
