@@ -101,6 +101,7 @@ assumption and ask the user to confirm it.
 - `get_fabric_toolchain`
 - `search_modrinth_projects`
 - `list_modrinth_project_versions`
+- `resolve_modrinth_compatibility`
 - `get_modrinth_resource`
 - `validate_modrinth_pack`
 - `find_datapack_entries`

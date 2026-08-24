@@ -73,6 +73,7 @@ import {
   listOutputRequirements,
   listResponsePatterns,
   findVersionsByPackFormat,
+  resolveModrinthCompatibility,
   searchAuthoringScenarios,
   searchAll,
   searchCommands,
@@ -155,6 +156,13 @@ const modrinthVersions = await listModrinthProjectVersions({
   gameVersions: ["1.21.11"],
   loaders: ["fabric"],
 });
+const modrinthCompatibility = await resolveModrinthCompatibility({
+  projects: ["sodium", "iris"],
+  gameVersion: "1.21.11",
+  loader: "fabric",
+});
+// Project IDs/slugs are canonicalized before version filters. Common pairs describe
+// published metadata and do not guarantee runtime interoperability.
 const modrinthProject = await getModrinthResource({
   resource: "project",
   identifier: "simple-voice-chat",

@@ -639,6 +639,107 @@ describe("minecraft-skills CLI", () => {
     expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
   });
 
+  it("resolves compatibility metadata for multiple Modrinth projects", async () => {
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      const projectId = url.includes("sodium") ? "sodium-id" : "iris-id";
+      return new Response(
+        JSON.stringify(
+          url.includes("/check")
+            ? { id: projectId }
+            : [
+                {
+                  id: projectId === "sodium-id" ? "sodium-version" : "iris-version",
+                  project_id: projectId,
+                  version_number: "1.0.0",
+                  version_type: "release",
+                  featured: true,
+                  date_published: "2026-01-01T00:00:00Z",
+                  game_versions: ["1.21.11"],
+                  loaders: ["fabric"],
+                },
+              ],
+        ),
+        { status: 200 },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await capture([
+      "modrinth",
+      "compatibility",
+      "sodium",
+      "iris",
+      "--game-version",
+      "1.21.11",
+      "--loader",
+      "fabric",
+      "--featured",
+      "true",
+      "--limit",
+      "1",
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"scope": "modrinth-version-metadata"');
+    expect(result.stdout.join("\n")).toContain('"sodium-version"');
+    expect(result.stdout.join("\n")).toContain('"iris-version"');
+    expect(result.stdout.join("\n")).toContain('"gameVersion": "1.21.11"');
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    const versionCalls = fetchMock.mock.calls.filter(([url]) => url.includes("/version"));
+    expect(versionCalls[0]?.[0]).toContain("featured=true");
+    expect(versionCalls[0]?.[0]).toContain("include_changelog=false");
+  });
+
+  it("strictly parses Modrinth compatibility value options", async () => {
+    const missing = await capture(["modrinth", "compatibility", "sodium", "iris", "--loader"]);
+    expect(missing.code).toBe(1);
+    expect(missing.stderr.join("\n")).toContain("--loader requires a value");
+
+    const followedByOption = await capture([
+      "modrinth",
+      "compatibility",
+      "sodium",
+      "iris",
+      "--loader",
+      "--limit",
+      "1",
+    ]);
+    expect(followedByOption.code).toBe(1);
+    expect(followedByOption.stderr.join("\n")).toContain("--loader requires a value");
+
+    const unknown = await capture([
+      "modrinth",
+      "compatibility",
+      "sodium",
+      "iris",
+      "--unknown",
+      "value",
+    ]);
+    expect(unknown.code).toBe(1);
+    expect(unknown.stderr.join("\n")).toContain("unknown option: --unknown");
+
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes("/check")) {
+        return new Response(
+          JSON.stringify({ id: url.includes("--example") ? "example-id" : "sodium-id" }),
+        );
+      }
+      return new Response("[]");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const optionLikeSlug = await capture([
+      "modrinth",
+      "compatibility",
+      "sodium",
+      "--",
+      "--example",
+    ]);
+    expect(optionLikeSlug.code).toBe(0);
+    expect(fetchMock.mock.calls.some(([url]) => url.includes("/project/--example/check"))).toBe(
+      true,
+    );
+  });
+
   it("gets Modrinth public resources", async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => ({
       ok: true,
