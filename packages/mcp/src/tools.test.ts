@@ -9,6 +9,7 @@ import {
   defaultMinecraftLogAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
   defaultServerPropertiesValidationLimits,
+  defaultServerAccessListValidationLimits,
   getVersionDetail,
   listDomains,
 } from "@minecraft-skills/catalog";
@@ -253,6 +254,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_project");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_log");
+    expect(tools.map((tool) => tool.name)).toContain("validate_server_access_list");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -1628,6 +1630,60 @@ describe("MCP tools", () => {
       defaultResourcepackProjectValidationLimits.maxPathLength,
     );
     expect(files?.items?.not?.anyOf).toHaveLength(2);
+  });
+
+  it("calls the bounded privacy-preserving server access-list validator", async () => {
+    const uuid = "123e4567-e89b-42d3-a456-426614174000";
+    const name = "PrivateName";
+    const result = await callMinecraftSkillsTool("validate_server_access_list", {
+      kind: "whitelist",
+      content: JSON.stringify([{ uuid, name }]),
+      evaluatedAt: "2026-08-25T00:00:00.000Z",
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(output).toContain('"valid": true');
+    expect(output).toContain('"kind": "whitelist"');
+    expect(output).toContain('"evaluatedAt": "2026-08-25T00:00:00.000Z"');
+    expect(output).not.toContain(uuid);
+    expect(output).not.toContain(name);
+  });
+
+  it("publishes and enforces server access-list request and diagnostic bounds", async () => {
+    const tool = tools.find((candidate) => candidate.name === "validate_server_access_list");
+    const content = tool?.inputSchema.properties.content as { maxLength?: number } | undefined;
+    const evaluatedAt = tool?.inputSchema.properties.evaluatedAt as
+      | { maxLength?: number; minLength?: number }
+      | undefined;
+    expect(content?.maxLength).toBe(defaultServerAccessListValidationLimits.maxInputCharacters);
+    expect(evaluatedAt).toMatchObject({ minLength: 24, maxLength: 24 });
+
+    const oversized = await callMinecraftSkillsTool("validate_server_access_list", {
+      kind: "whitelist",
+      content: " ".repeat(defaultServerAccessListValidationLimits.maxInputCharacters + 1),
+    });
+    expect(oversized.content[0]?.text).toContain("input-character-limit-exceeded");
+
+    const diagnosticHeavy = await callMinecraftSkillsTool("validate_server_access_list", {
+      kind: "whitelist",
+      content: JSON.stringify(Array.from({ length: 600 }, () => ({}))),
+    });
+    const parsed = JSON.parse(diagnosticHeavy.content[0]?.text ?? "{}") as {
+      retainedDiagnosticCount?: number;
+      omittedDiagnosticCount?: number;
+    };
+    expect(parsed.retainedDiagnosticCount).toBe(
+      defaultServerAccessListValidationLimits.maxDiagnostics,
+    );
+    expect(parsed.omittedDiagnosticCount).toBeGreaterThan(0);
+
+    const unknown = await callMinecraftSkillsTool("validate_server_access_list", {
+      kind: "whitelist",
+      content: "[]",
+      extra: true,
+    });
+    expect(unknown.isError).toBe(true);
+    expect(unknown.content[0]?.text).toContain("received an unknown argument");
   });
 
   it("rejects malformed or oversized resource-pack sound header base64", async () => {

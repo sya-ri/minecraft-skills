@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   analyzeMinecraftLog,
@@ -26,6 +26,7 @@ import {
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   downloadJavaPlayerTexture,
+  defaultServerAccessListValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -79,6 +80,7 @@ import {
   getVersionDetail,
   inspectResourcepackPngAlphaBounds,
   type JavaPlayerTextureKind,
+  inferServerAccessListKind,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -115,6 +117,7 @@ import {
   resolveResourcepackPngValidationLimits,
   resolveVelocityToolchain,
   resolveVersion,
+  type ServerAccessListKind,
   searchAll,
   searchAuthoringScenarios,
   searchCatalog,
@@ -130,6 +133,7 @@ import {
   searchVanillaDatapackJsonContent,
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
+  serverAccessListKinds,
   suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
@@ -144,6 +148,7 @@ import {
   validateServerProperties,
   validateVelocityPluginJar,
   velocityPluginJarValidationLimits,
+  validateServerAccessList,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -163,6 +168,7 @@ import {
 } from "./playerTextureOutput.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
+import { readServerAccessListFile } from "./serverAccessListFile.js";
 
 type Output = {
   write: (value: string) => void;
@@ -794,6 +800,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
     "minecraft analyze-log": "analyze-minecraft-log",
+    "minecraft validate-access-list": "validate-server-access-list",
     "fabric toolchain": "fabric-toolchain",
     "velocity toolchain": "velocity-toolchain",
     "fabric validate-mod": "fabric-validate-mod",
@@ -1013,6 +1020,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "compare-versions": "minecraft compare",
   "registry-entries": "minecraft registry-entries",
   "compare-registry-entries": "minecraft compare-registry-entries",
+  "validate-server-access-list": "minecraft validate-access-list",
   "server-reports": "datapack server-reports",
   "datapack-schema": "datapack schema",
   "search-datapack-schema": "datapack search-schema",
@@ -1272,6 +1280,7 @@ Grouped commands:
   minecraft-skills datapack commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
   minecraft-skills minecraft registry-entries [version] [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft compare-registry-entries <from> <to> [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
+  minecraft-skills minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips] [--evaluated-at UTC-timestamp]
   minecraft-skills datapack schema [version] [--edition java]
   minecraft-skills datapack search-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
   minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
@@ -3218,6 +3227,46 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       const result = validateModrinthPackArchive(archive, {
         additionalDownloadHosts: readRepeatedOption(args, "--allow-download-host"),
         limits: { maxArchiveBytes },
+      });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
+    }
+
+    if (command === "validate-server-access-list") {
+      const accessListPaths = positionalArgsWithOptions(args, {
+        values: ["--kind", "--evaluated-at"],
+      });
+      const accessListPath = accessListPaths[0];
+      if (accessListPaths.length !== 1 || !accessListPath) {
+        throw new Error("minecraft validate-access-list requires exactly one local JSON file");
+      }
+      const requestedKind = args.includes("--kind") ? readOption(args, "--kind", "") : "";
+      if (requestedKind && !serverAccessListKinds.includes(requestedKind as ServerAccessListKind)) {
+        throw new Error(
+          "minecraft validate-access-list --kind must be whitelist, ops, banned-players, or banned-ips",
+        );
+      }
+      const inferredKind = inferServerAccessListKind(basename(accessListPath));
+      if (requestedKind && inferredKind && requestedKind !== inferredKind) {
+        throw new Error(
+          "minecraft validate-access-list --kind does not match the canonical filename",
+        );
+      }
+      const kind = (requestedKind as ServerAccessListKind) || inferredKind;
+      if (!kind) {
+        throw new Error(
+          "minecraft validate-access-list requires --kind when the filename is not a canonical vanilla access-list filename",
+        );
+      }
+      const result = validateServerAccessList({
+        kind,
+        content: readServerAccessListFile(
+          accessListPath,
+          defaultServerAccessListValidationLimits.maxInputBytes,
+        ),
+        ...(args.includes("--evaluated-at")
+          ? { evaluatedAt: readOption(args, "--evaluated-at", "") }
+          : {}),
       });
       printJson(output, result);
       return result.valid ? 0 : 1;

@@ -226,6 +226,7 @@ export { vorbisIdentificationPageBytes } from "./resourcepackSound.js";
 export * from "./serverProperties.js";
 export * from "./velocityMeta.js";
 export * from "./velocityPluginJar.js";
+export * from "./serverAccessList.js";
 export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
@@ -1981,6 +1982,19 @@ function isVelocityPluginJarValidationDiscoveryQuery(query: string): boolean {
       normalized,
     );
   return hasArtifactContext && hasValidationIntent;
+}
+
+function isServerAccessListValidationQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  if (/\b(whitelist json|ops json|banned players json|banned ips json)\b/.test(normalized)) {
+    return true;
+  }
+  const hasValidationIntent = /\b(validate|check|inspect|lint|verify|diagnose)\b/.test(normalized);
+  const hasAccessListSubject =
+    /\b(server access list|server allowlist|server whitelist|server operator list|minecraft operator list|player ban list|ip ban list|whitelist file|server ban list file)\b/.test(
+      normalized,
+    );
+  return hasValidationIntent && hasAccessListSubject;
 }
 
 function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
@@ -5624,6 +5638,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Extract bounded events, explicit exception branches, crash metadata, and referenced artifacts before diagnosing the log.",
     );
   }
+  if (!options.domain && isServerAccessListValidationQuery(task)) {
+    add(
+      "minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips]",
+      "Validate a vanilla server access-list JSON file offline without returning identities or ban text.",
+    );
+  }
   if (!searchDomain || searchDomain === "datapack") {
     const datapackProjectValidationTask =
       /(validat|verif|check|audit|lint|diagnos|broken|missing|reference|cycle)/.test(lower) &&
@@ -6374,6 +6394,23 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   const discoveryTerm = primaryDiscoveryTerm(query);
   const include = (domain: DomainIdData | "minecraft") =>
     !options.domain || domain === options.domain || domain === "minecraft";
+
+  if (!options.domain && isServerAccessListValidationQuery(query)) {
+    addCrossResult(results, {
+      surface: "server-access-list-tools",
+      domain: "minecraft",
+      kind: "offline-validator",
+      title: "Validate vanilla server access-list JSON",
+      score: 100,
+      matches: [
+        "whitelist.json and ops.json",
+        "banned-players.json and banned-ips.json",
+        "privacy-preserving offline validation",
+      ],
+      lookup:
+        "minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips]",
+    });
+  }
 
   if (!options.domain && isModrinthCompatibilityTask(query)) {
     addCrossResult(results, {

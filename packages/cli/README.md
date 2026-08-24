@@ -100,6 +100,8 @@ minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
+minecraft-skills minecraft validate-access-list ./whitelist.json
+minecraft-skills minecraft validate-access-list ./custom.json --kind banned-players
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -217,6 +219,17 @@ bounded download validation and verified save succeeded. JSON never contains the
 downloaded byte array, or base64. It reports the requested reference and downloaded SHA-256 as
 separate observations and does not claim signatures, provenance, identity, ownership, freshness,
 or licensing.
+
+`minecraft validate-access-list` infers the list kind from the four canonical vanilla filenames or
+accepts an explicit `--kind whitelist|ops|banned-players|banned-ips`. It rejects symbolic links,
+reparse points, directories, and special files, then verifies a stable regular-file identity around
+the positioned bounded read and requires strict UTF-8. Results never contain input identities,
+addresses, reasons, sources, or local paths. Validation is offline; it does not resolve player names
+or verify UUID/IP ownership.
+Pass canonical UTC `--evaluated-at 2026-08-25T00:00:00.000Z` to reproduce ban-expiry
+classification; otherwise the returned `evaluatedAt` records the instant chosen by the validator.
+This checks canonical serializer output; because current loaders default some fields and clamp
+operator levels, a validation error does not prove that the server will reject the file.
 
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.

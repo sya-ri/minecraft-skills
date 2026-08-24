@@ -23,6 +23,7 @@ import {
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   defaultServerPropertiesValidationLimits,
+  defaultServerAccessListValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -145,6 +146,7 @@ import {
   validateServerProperties,
   validateVelocityPluginArchiveMetadata,
   velocityPluginJarValidationLimits,
+  validateServerAccessList,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
 import {
@@ -1361,6 +1363,36 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["files"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_server_access_list",
+    description:
+      "Validate canonical vanilla whitelist.json, ops.json, banned-players.json, or banned-ips.json content offline. Results are bounded and never return input player names, UUIDs, IP addresses, ban reasons, or ban sources.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        kind: {
+          type: "string",
+          enum: ["whitelist", "ops", "banned-players", "banned-ips"],
+        },
+        content: {
+          type: "string",
+          maxLength: defaultServerAccessListValidationLimits.maxInputCharacters,
+          description:
+            "UTF-8 JSON text. Byte, entry, field, string, node, and diagnostic limits also apply.",
+        },
+        evaluatedAt: {
+          type: "string",
+          minLength: 24,
+          maxLength: 24,
+          pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
+          description:
+            "Optional canonical UTC instant used to classify dated bans. The evaluated instant is always returned.",
+        },
+      },
+      required: ["kind", "content"],
       additionalProperties: false,
     },
   },
@@ -3710,6 +3742,30 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
           limits: projectLimits,
           pngLimits,
+        }),
+      );
+    }
+    if (name === "validate_server_access_list") {
+      assertToolArgs(input, args, name, ["kind", "content", "evaluatedAt"]);
+      if (
+        args.kind !== "whitelist" &&
+        args.kind !== "ops" &&
+        args.kind !== "banned-players" &&
+        args.kind !== "banned-ips"
+      ) {
+        throw new Error("validate_server_access_list requires a supported kind");
+      }
+      if (typeof args.content !== "string") {
+        throw new Error("validate_server_access_list requires string content");
+      }
+      if (args.evaluatedAt !== undefined && typeof args.evaluatedAt !== "string") {
+        throw new Error("validate_server_access_list evaluatedAt must be a string");
+      }
+      return text(
+        validateServerAccessList({
+          kind: args.kind,
+          content: args.content,
+          ...(typeof args.evaluatedAt === "string" ? { evaluatedAt: args.evaluatedAt } : {}),
         }),
       );
     }
