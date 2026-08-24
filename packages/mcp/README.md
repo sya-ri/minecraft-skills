@@ -50,9 +50,16 @@ equivalent agent guidance file:
 ```md
 Use minecraft-skills MCP tools whenever a task involves Minecraft.
 Do not guess Minecraft facts when a minecraft-skills MCP lookup can verify them.
+Before intent-based search tools, translate non-English user intent into concise English canonical
+Minecraft terms. Keep exact identifiers, namespace IDs, file paths, project titles, and content
+literals unchanged. Use the English terms only for the lookup, and keep the user's requested
+response language.
 If MCP cannot answer, check local project files or approved web sources; label any remaining
 assumption and ask the user to confirm it.
 ```
+
+This normalization is performed by the caller. MCP search tools do not expand language-specific
+aliases or reject Unicode query values.
 
 ## Tools
 

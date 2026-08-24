@@ -780,6 +780,10 @@ function printHelp(output: Output): void {
 Version-aware Minecraft authoring facts for AI agents and pack/plugin authors.
 All fact commands print JSON unless noted. Treat missing, unknown, or not-extracted fields as gaps,
 not permission to guess.
+For intent-based discovery searches, translate non-English user intent into concise English
+canonical Minecraft terms before passing a query. Keep exact identifiers, namespace IDs, file
+paths, project titles, and content literals unchanged. Use the English terms only for the lookup;
+keep the user's requested response language.
 
 Usage:
   minecraft-skills <group> <command> [options]

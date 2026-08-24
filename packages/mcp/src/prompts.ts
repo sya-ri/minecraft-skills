@@ -205,6 +205,7 @@ ${tools}
 
 Preflight rules:
 - Prefer exact target-version data over latest-version data.
+- Before intent-based search tools, translate non-English user intent into concise English canonical Minecraft terms. Use the English terms only for the lookup, and keep the user's requested response language. Keep exact identifiers, namespace IDs, file paths, project titles, and content literals unchanged.
 - Call list_intent_lookups when deciding which exact lookup path matches the user's intent.
 - Call list_authoring_recipes when you need an ordered workflow for common authoring tasks.
 - Call list_authoring_scenarios when you need a realistic evaluation case for the user's task shape.

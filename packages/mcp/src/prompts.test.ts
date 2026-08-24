@@ -35,6 +35,19 @@ describe("MCP prompts", () => {
     }
   });
 
+  it("normalizes only discovery intent before search calls", () => {
+    for (const prompt of prompts) {
+      const text = textFromPrompt(prompt.name);
+      expect(text).toContain(
+        "translate non-English user intent into concise English canonical Minecraft terms",
+      );
+      expect(text).toContain(
+        "Keep exact identifiers, namespace IDs, file paths, project titles, and content literals unchanged",
+      );
+      expect(text).toContain("keep the user's requested response language");
+    }
+  });
+
   it("builds Paper plugin prompt text", () => {
     const result = getMinecraftSkillsPrompt("use_minecraft_paper_plugins", {
       target_version: "1.21.11",

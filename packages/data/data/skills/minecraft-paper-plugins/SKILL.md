@@ -15,8 +15,11 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 1. Resolve the target Minecraft/Paper version if the user asks for version-specific behavior.
 2. Read `references/sources.md` before citing plugin API or event facts.
 3. Use the `minecraft-skills` CLI for machine-verifiable facts.
-4. Use `minecraft-skills plugin paper search "<task>"` before broad list commands when you need to
-   find relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source
+4. Before task-wording searches, translate non-English user intent into concise English canonical
+   Minecraft terms. Use the English terms only for lookups, and keep the user's requested response
+   language. Keep exact identifiers, namespace IDs, file paths, and content literals unchanged.
+   Then use `minecraft-skills plugin paper search "<task>"` before broad list commands when you need
+   to find relevant recipes, intents, guardrails, diagnostics, claim policies, fact surfaces, source
    tiers, datasets, or version-support entries.
 5. Use `minecraft-skills plugin paper intents` to choose the exact lookup path for the user's
    intent.
@@ -60,7 +63,8 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
    API surface facts, not method behavior prose.
 24. Use PaperMC documentation and API artifacts for authoritative Paper behavior.
 25. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
-   by behavior, partial name, or localized text.
+   by behavior, partial name, or localized text. Translate localized intent into concise English
+   event terms before searching; keep exact event class names unchanged.
 26. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 

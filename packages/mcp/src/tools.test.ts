@@ -228,6 +228,36 @@ describe("MCP tools", () => {
     expect(tools.every((tool) => tool.inputSchema.additionalProperties === false)).toBe(true);
   });
 
+  it("documents caller-side English normalization for intent-based searches", () => {
+    const semanticInputs = new Map([
+      ["search_authoring_scenarios", "query"],
+      ["search_catalog", "query"],
+      ["search_community_datasets", "query"],
+      ["search_all", "query"],
+      ["search_modrinth_projects", "query"],
+      ["find_datapack_entries", "query"],
+      ["find_resourcepack_assets", "query"],
+      ["suggest_minecraft_lookups", "task"],
+      ["search_paper_events", "query"],
+    ]);
+
+    for (const [name, propertyName] of semanticInputs) {
+      const tool = tools.find((candidate) => candidate.name === name);
+      const property = tool?.inputSchema.properties[propertyName] as
+        | Record<string, unknown>
+        | undefined;
+
+      expect(tool?.description).toContain("translate non-English user intent");
+      expect(tool?.description).toContain("keep the user's requested response language");
+      expect(property).toMatchObject({
+        type: "string",
+        description: expect.stringContaining("concise English canonical Minecraft terms"),
+      });
+      expect(property).not.toHaveProperty("pattern");
+      expect(property).not.toHaveProperty("enum");
+    }
+  });
+
   it("exposes domain discovery and domain-specific entrypoints", () => {
     expect(listDomains().map((domain) => domain.id)).toEqual([
       "datapack",

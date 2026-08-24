@@ -31,6 +31,13 @@ The public entrypoints are designed around two workflows:
   resolve a scenario into the exact recipes, intent lookups, diagnostics, claim policies, fact
   surfaces, and response patterns an agent should use.
 
+Before intent-based discovery searches, translate non-English user wording into concise English
+canonical Minecraft terms. For example, route a localized request for a player join listener with
+`player join event listener`. Keep exact identifiers, namespace IDs, file paths, project titles,
+and content literals unchanged. Use the English terms only for the lookup and keep the user's
+requested response language. This is a caller-side normalization rule: CLI and MCP entrypoints do
+not expand language-specific aliases or reject Unicode query values.
+
 ## CLI
 
 Install/run after publishing:

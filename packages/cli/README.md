@@ -107,6 +107,12 @@ minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host d
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 ```
 
+For intent-based discovery searches, translate non-English user wording into concise English
+canonical Minecraft terms before passing the query. Keep exact identifiers, namespace IDs, file
+paths, project titles, and content literals unchanged. Use the English terms only for the lookup and
+keep the user's requested response language. The CLI does not expand language-specific aliases or
+reject Unicode query values.
+
 Registry comparisons emit entry and protocol ID changes only for registries indexed in both
 versions. `outcome` reports whether the requested scope was fully, partially, or not comparable;
 `excludedRegistries` contains bounded per-version coverage statuses. Protocol changes require
