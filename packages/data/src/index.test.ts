@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -619,7 +619,12 @@ describe("@minecraft-skills/data", () => {
     expect(rules).toContain("isChunkLoaded as a point-in-time observation, not a lease");
     expect(rules).toContain("complete, partial, rejected, timeout, stale, or unloaded");
     expect(rules).toContain("applyPhysics=false");
-    expect(rules).toContain("entity scheduler that follows the entity");
+    expect(rules).toContain("entity scheduler as the handoff mechanism for entity work");
+    expect(rules).toContain("entity's identity, validity, lifecycle state");
+    expect(rules).toContain("do not require an unsafe cross-region World.getEntity lookup");
+    expect(rules).toContain("EntityScheduler retired callback as critical code");
+    expect(rules).toContain("record or forward only minimal terminal intent");
+    expect(rules).not.toContain("immutable world identity plus coordinates or entity UUID");
 
     const diagnostics = readDataJson<{
       diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
@@ -630,6 +635,10 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.severity).toBe("error");
     expect(diagnostic?.failIf.join("\n")).toContain("events alone");
     expect(diagnostic?.failIf.join("\n")).toContain("automatically released");
+    expect(diagnostic?.failIf.join("\n")).toContain("unsafe cross-region World.getEntity lookup");
+    expect(diagnostic?.failIf.join("\n")).toContain(
+      "EntityScheduler retired callback removes the entity or other entities",
+    );
 
     const scenarios = readDataJson<{
       scenarios: Array<{

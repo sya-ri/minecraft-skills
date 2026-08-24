@@ -1033,12 +1033,16 @@ requirement objects are descriptor-preflighted; invalid public input becomes a d
 instead of invoking accessors or throwing.
 The world-operation guidance is for bounded block and entity work that crosses chunk, tick,
 asynchronous, unload, teleport, or Folia region boundaries. It requires target chunks and generation
-policy to be fixed before mutation, forbids blocking a server tick owner with `Future.get()` or
-`Future.join()`, re-resolves coordinates and entity UUIDs in their current owner, returns typed
-partial outcomes, reconciles retries idempotently, and releases operation-owned chunk tickets on
-every terminal path. It does not treat `isChunkLoaded()` as a lease, async completion as arbitrary
-thread mutation safety, `applyPhysics=false` as a general safety guarantee, entity unload as death,
-teleport completion as unconditional success, or lifecycle events as complete cleanup.
+policy to be fixed before mutation, forbids waiting or blocking a server tick owner via `Future.get()`
+or `Future.join()`, re-resolves location coordinates in their region owner, and hands entity work to
+the entity scheduler so the callback can revalidate the current entity. It returns typed partial
+outcomes, reconciles retries idempotently, and releases operation-owned chunk tickets on every
+terminal path. It does not require unsafe cross-region `World.getEntity()` lookup as the only entity
+handoff, treat `isChunkLoaded()` as a lease, async completion as arbitrary-thread mutation safety,
+`applyPhysics=false` as a general safety guarantee, entity unload as death, teleport completion as
+unconditional success, or lifecycle events as complete cleanup. An `EntityScheduler` retired callback
+runs in critical code, so it should only record or forward minimal terminal intent; entity, chunk,
+world, and ticket-level cleanup belongs in a verified safe execution context.
 
 Resolve the Javadocs URL for the requested version with `getPaperApiReference`; the current official
 primary references include Paper's [World Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/World.html),

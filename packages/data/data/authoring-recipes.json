@@ -1905,7 +1905,7 @@
         },
         {
           "id": "acquire-chunks-without-blocking",
-          "action": "Acquire only the bounded target chunks through target-version-supported asynchronous APIs. Never call Future.get or Future.join on a server main, tick, or region thread. Treat isChunkLoaded as a snapshot, and if residency is required, let one lifecycle owner track exact plugin-ticket claims, shared references, deadlines, and release responsibility.",
+          "action": "Acquire only the bounded target chunks through target-version-supported asynchronous APIs. Never wait or block via Future.get or Future.join on a server main, tick, or region thread. Treat isChunkLoaded as a snapshot, and if residency is required, let one lifecycle owner track exact plugin-ticket claims, shared references, deadlines, and release responsibility.",
           "tools": {
             "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
             "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
@@ -1919,7 +1919,7 @@
         },
         {
           "id": "schedule-by-owner-and-re-resolve",
-          "action": "Carry only immutable world identity plus coordinates or entity UUID across asynchronous, tick, unload, teleport, or region boundaries. On continuation, schedule block and location work on the owning region and entity work on that entity's scheduler, then re-resolve and validate the target, operation generation, plugin state, chunk state, and preconditions immediately before use.",
+          "action": "Never dereference a retained world target outside its verified owner or treat it as current after lifecycle changes without owner-local revalidation. Carry immutable world identity plus coordinates for block and location work, then re-resolve and validate them on the owning region. For entity work, use that entity's scheduler as the handoff mechanism and validate the entity's identity, validity, lifecycle state, operation generation, plugin state, and preconditions inside the owned callback instead of requiring a cross-region World.getEntity lookup. Keep EntityScheduler retired callbacks minimal: record or forward terminal intent only, then perform entity, chunk, world, or ticket cleanup in a verified safe context.",
           "tools": {
             "cli": [
               "plugin paper api",
@@ -1942,10 +1942,11 @@
           },
           "evidence": [
             "A scheduler-ownership map for Paper and any claimed Folia support",
-            "Tests proving stale Chunk, Block, BlockState, mutable Location, and Entity references are not retained across lifecycle boundaries",
-            "An entity retired or scheduling-failure path and a location-region path for every world mutation"
+            "Tests proving retained Chunk, Block, BlockState, mutable Location, and Entity values are never dereferenced outside their verified owner or treated as current after lifecycle changes without owner-local revalidation",
+            "An entity-scheduler handoff that revalidates the entity inside the owned callback without requiring cross-region World.getEntity lookup, plus a location-region path for block and location mutation",
+            "A retired or scheduling-failure path whose critical retired callback only records or forwards minimal terminal intent and defers entity, chunk, world, and ticket-level cleanup"
           ],
-          "stopIfMissing": "Async completion is not mutation ownership; do not touch block or entity state until the target is re-resolved in its verified owning execution context."
+          "stopIfMissing": "Async completion is not mutation ownership; do not touch block or location state until it is re-resolved in its owning region, or entity state until the entity-scheduler callback revalidates it."
         },
         {
           "id": "apply-bounded-resumable-batches",

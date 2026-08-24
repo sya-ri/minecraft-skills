@@ -1453,11 +1453,15 @@ describe("catalog", () => {
       "generation policy explicitly",
       "isChunkLoaded as a point-in-time observation, not a lease",
       "not assume plugin chunk tickets are low-cost or automatically released",
-      "Future.get or Future.join",
+      "waiting or blocking via Future.get or Future.join",
       "Async completion proves only",
-      "immutable world identity plus coordinates or entity UUID",
+      "immutable world identity plus coordinates for location work",
       "region that owns that location",
-      "entity scheduler that follows the entity",
+      "entity scheduler as the handoff mechanism for entity work",
+      "entity's identity, validity, lifecycle state",
+      "do not require an unsafe cross-region World.getEntity lookup",
+      "EntityScheduler retired callback as critical code",
+      "record or forward only minimal terminal intent",
       "do not form an atomic multi-region transaction",
       "per-tick and per-region batches",
       "complete, partial, rejected, timeout, stale, or unloaded",
@@ -1469,15 +1473,23 @@ describe("catalog", () => {
     ]) {
       expect(rules).toContain(requirement);
     }
+    expect(rules).not.toContain(
+      "Do not retain Chunk, Block, BlockState, mutable Location, or Entity references",
+    );
+    expect(rules).not.toContain("immutable world identity plus coordinates or entity UUID");
 
     const diagnostic = getAuthoringDiagnostic("paper-world-operation-unbounded");
     expect(diagnostic.severity).toBe("error");
     const failIf = diagnostic.failIf.join("\n");
     for (const nonclaim of [
       "isChunkLoaded is treated as a lease",
-      "Future.get or Future.join",
+      "waits or blocks via Future.get or Future.join",
       "async API exists or completes on a particular thread",
       "automatically released",
+      "unsafe cross-region World.getEntity lookup",
+      "EntityScheduler retired callback removes the entity or other entities",
+      "loads chunks or worlds",
+      "modifies ticket levels",
       "multi-region",
       "unconditional success",
       "applyPhysics=false",
@@ -1494,10 +1506,23 @@ describe("catalog", () => {
     expect(scenario.mustAvoid.join("\n")).toContain(
       "assuming an async API exists or completes on a particular thread",
     );
+    expect(scenario.successCriteria.join("\n")).toContain(
+      "entity work uses the entity scheduler as its handoff",
+    );
+    expect(scenario.successCriteria.join("\n")).toContain(
+      "retired callbacks only record or forward minimal terminal intent",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain(
+      "requiring unsafe cross-region World.getEntity lookup",
+    );
 
     const checklist = getAuthoringChecklist("paper-plugin");
-    expect(checklist.steps.map((step) => step.id)).toContain(
-      "bound-chunk-spanning-world-operations",
+    const checklistStep = checklist.steps.find(
+      (step) => step.id === "bound-chunk-spanning-world-operations",
+    );
+    expect(checklistStep?.evidence.join("\n")).toContain("entity scheduler handoff");
+    expect(checklistStep?.evidence.join("\n")).toContain(
+      "critical retired callbacks only forward minimal terminal intent",
     );
 
     const plan = getAuthoringPlan({

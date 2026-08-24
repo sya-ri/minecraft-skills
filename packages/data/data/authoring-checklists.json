@@ -306,9 +306,9 @@
           },
           "evidence": [
             "The complete target chunk set, generation policy, chunk and target caps, per-tick and per-region budgets, timeout, and cancellation behavior are explicit before mutation.",
-            "Async chunk acquisition cannot block an owning tick and every mutation is rescheduled to and revalidated in the target-version location-region or entity owner.",
+            "Async chunk acquisition cannot wait or block an owning tick; location work re-resolves coordinates in its region owner, while entity work uses the entity scheduler handoff and revalidates the entity inside the owned callback without requiring cross-region World.getEntity lookup.",
             "Plugin-ticket claims and complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and disable paths have exactly-once lifecycle settlement and release.",
-            "Race and retry tests prove stale references are re-resolved and physics, drops, entity movement or removal, teleport false, unload, and disable cannot repeat or lose committed effects."
+            "Race and retry tests prove retained targets are not dereferenced outside their owner or treated as current after lifecycle changes without owner-local revalidation, critical retired callbacks only forward minimal terminal intent, and physics, drops, entity movement or removal, teleport false, unload, and disable cannot repeat or lose committed effects."
           ],
           "failureMode": "Do not approve a multi-chunk world operation whose targets, generation, scheduler ownership, progress outcomes, ticket release, and idempotent reconciliation are implicit or unbounded."
         }
