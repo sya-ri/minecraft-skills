@@ -5,6 +5,7 @@ import { getVersionDetail, listVersions } from "@minecraft-skills/catalog";
 import {
   buildJavaReportsSummary,
   generateJavaReports,
+  javaRegistryEntryIndexHeader,
   writeJavaReportsSummary,
 } from "./javaReports.js";
 
@@ -12,9 +13,21 @@ type Download = {
   url: string;
 };
 
-type ExistingReportsSummary = {
+export type ExistingReportsSummary = {
+  version?: string;
   datapack?: {
-    registries?: unknown[];
+    registries?: Array<{
+      id?: string;
+      entryCount?: number | null;
+      entryIndexStatus?: "indexed" | "unindexed";
+    }>;
+    registryEntries?: {
+      path?: string;
+      coverage?: "official-report" | "official-report-unavailable";
+      indexedRegistryCount?: number;
+      unindexedRegistryCount?: number;
+      entryCount?: number;
+    };
   };
   reports?: Array<{
     path?: string;
@@ -55,28 +68,309 @@ function safeFileName(version: string): string {
   return version.replaceAll(/[^a-zA-Z0-9._-]/g, "_");
 }
 
-function readSummary(path: string): ExistingReportsSummary | undefined {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+export function parseExistingJavaReportsSummary(
+  value: unknown,
+): ExistingReportsSummary | undefined {
+  if (!isPlainObject(value)) {
+    return undefined;
+  }
+  if (value.version !== undefined && typeof value.version !== "string") {
+    return undefined;
+  }
+
+  const summary: ExistingReportsSummary = {};
+  if (typeof value.version === "string") {
+    summary.version = value.version;
+  }
+
+  if (value.datapack !== undefined) {
+    const rawDatapack = value.datapack;
+    if (!isPlainObject(rawDatapack)) {
+      return undefined;
+    }
+    const datapack: NonNullable<ExistingReportsSummary["datapack"]> = {};
+    if (rawDatapack.registries !== undefined) {
+      if (!Array.isArray(rawDatapack.registries)) {
+        return undefined;
+      }
+      const registries: NonNullable<NonNullable<ExistingReportsSummary["datapack"]>["registries"]> =
+        [];
+      for (const rawRegistry of rawDatapack.registries) {
+        if (!isPlainObject(rawRegistry)) {
+          return undefined;
+        }
+        if (rawRegistry.id !== undefined && typeof rawRegistry.id !== "string") {
+          return undefined;
+        }
+        if (
+          rawRegistry.entryCount !== undefined &&
+          rawRegistry.entryCount !== null &&
+          typeof rawRegistry.entryCount !== "number"
+        ) {
+          return undefined;
+        }
+        if (
+          rawRegistry.entryIndexStatus !== undefined &&
+          rawRegistry.entryIndexStatus !== "indexed" &&
+          rawRegistry.entryIndexStatus !== "unindexed"
+        ) {
+          return undefined;
+        }
+        const registry: (typeof registries)[number] = {};
+        if (typeof rawRegistry.id === "string") {
+          registry.id = rawRegistry.id;
+        }
+        if (typeof rawRegistry.entryCount === "number" || rawRegistry.entryCount === null) {
+          registry.entryCount = rawRegistry.entryCount;
+        }
+        if (
+          rawRegistry.entryIndexStatus === "indexed" ||
+          rawRegistry.entryIndexStatus === "unindexed"
+        ) {
+          registry.entryIndexStatus = rawRegistry.entryIndexStatus;
+        }
+        registries.push(registry);
+      }
+      datapack.registries = registries;
+    }
+    if (rawDatapack.registryEntries !== undefined) {
+      const rawMetadata = rawDatapack.registryEntries;
+      if (!isPlainObject(rawMetadata)) {
+        return undefined;
+      }
+      if (rawMetadata.path !== undefined && typeof rawMetadata.path !== "string") {
+        return undefined;
+      }
+      if (
+        rawMetadata.coverage !== undefined &&
+        rawMetadata.coverage !== "official-report" &&
+        rawMetadata.coverage !== "official-report-unavailable"
+      ) {
+        return undefined;
+      }
+      for (const key of ["indexedRegistryCount", "unindexedRegistryCount", "entryCount"] as const) {
+        if (rawMetadata[key] !== undefined && typeof rawMetadata[key] !== "number") {
+          return undefined;
+        }
+      }
+      const metadata: NonNullable<
+        NonNullable<ExistingReportsSummary["datapack"]>["registryEntries"]
+      > = {};
+      if (typeof rawMetadata.path === "string") {
+        metadata.path = rawMetadata.path;
+      }
+      if (
+        rawMetadata.coverage === "official-report" ||
+        rawMetadata.coverage === "official-report-unavailable"
+      ) {
+        metadata.coverage = rawMetadata.coverage;
+      }
+      if (typeof rawMetadata.indexedRegistryCount === "number") {
+        metadata.indexedRegistryCount = rawMetadata.indexedRegistryCount;
+      }
+      if (typeof rawMetadata.unindexedRegistryCount === "number") {
+        metadata.unindexedRegistryCount = rawMetadata.unindexedRegistryCount;
+      }
+      if (typeof rawMetadata.entryCount === "number") {
+        metadata.entryCount = rawMetadata.entryCount;
+      }
+      datapack.registryEntries = metadata;
+    }
+    summary.datapack = datapack;
+  }
+
+  if (value.reports !== undefined) {
+    if (!Array.isArray(value.reports)) {
+      return undefined;
+    }
+    const reports: NonNullable<ExistingReportsSummary["reports"]> = [];
+    for (const rawReport of value.reports) {
+      if (
+        !isPlainObject(rawReport) ||
+        (rawReport.path !== undefined && typeof rawReport.path !== "string")
+      ) {
+        return undefined;
+      }
+      reports.push(typeof rawReport.path === "string" ? { path: rawReport.path } : {});
+    }
+    summary.reports = reports;
+  }
+
+  if (value.sources !== undefined) {
+    if (!Array.isArray(value.sources)) {
+      return undefined;
+    }
+    const sources: NonNullable<ExistingReportsSummary["sources"]> = [];
+    for (const rawSource of value.sources) {
+      if (
+        !isPlainObject(rawSource) ||
+        (rawSource.retrievedAt !== undefined && typeof rawSource.retrievedAt !== "string")
+      ) {
+        return undefined;
+      }
+      sources.push(
+        typeof rawSource.retrievedAt === "string" ? { retrievedAt: rawSource.retrievedAt } : {},
+      );
+    }
+    summary.sources = sources;
+  }
+
+  return summary;
+}
+
+export function readExistingJavaReportsSummary(path: string): ExistingReportsSummary | undefined {
   if (!existsSync(path)) {
     return undefined;
   }
-  return JSON.parse(readFileSync(path, "utf8")) as ExistingReportsSummary;
+  const source = readFileSync(path, "utf8");
+  try {
+    const parsed: unknown = JSON.parse(source);
+    return parseExistingJavaReportsSummary(parsed);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return undefined;
+    }
+    throw error;
+  }
 }
 
-export function shouldIngestJavaReports(summary: ExistingReportsSummary | undefined): boolean {
+function compareStrings(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+const namespacedIdPattern = /^[a-z0-9_.-]+:[a-z0-9/._-]+$/;
+
+export function isJavaRegistryEntryIndexValid(
+  rawSummary: unknown,
+  index: string | undefined,
+): boolean {
+  const summary = parseExistingJavaReportsSummary(rawSummary);
+  if (!summary) {
+    return false;
+  }
+  const version = summary.version;
+  const registries = summary.datapack?.registries;
+  const metadata = summary.datapack?.registryEntries;
+  if (!version || !registries || !metadata || index === undefined) {
+    return false;
+  }
+  if (
+    metadata.path !== `java/registry-entries/${version}.tsv` ||
+    (metadata.coverage !== "official-report" &&
+      metadata.coverage !== "official-report-unavailable") ||
+    !Number.isSafeInteger(metadata.indexedRegistryCount) ||
+    !Number.isSafeInteger(metadata.unindexedRegistryCount) ||
+    !Number.isSafeInteger(metadata.entryCount) ||
+    (metadata.indexedRegistryCount ?? -1) < 0 ||
+    (metadata.unindexedRegistryCount ?? -1) < 0 ||
+    (metadata.entryCount ?? -1) < 0
+  ) {
+    return false;
+  }
+
+  const indexedRegistries = registries.filter(
+    (registry) => registry.entryIndexStatus === "indexed",
+  );
+  const unindexedRegistries = registries.filter(
+    (registry) => registry.entryIndexStatus === "unindexed",
+  );
+  if (
+    registries.some(
+      (registry) => typeof registry.id !== "string" || !namespacedIdPattern.test(registry.id),
+    ) ||
+    new Set(registries.map((registry) => registry.id)).size !== registries.length ||
+    indexedRegistries.length + unindexedRegistries.length !== registries.length ||
+    metadata.indexedRegistryCount !== indexedRegistries.length ||
+    metadata.unindexedRegistryCount !== unindexedRegistries.length ||
+    unindexedRegistries.some((registry) => registry.entryCount !== null) ||
+    (metadata.coverage === "official-report-unavailable" && indexedRegistries.length > 0)
+  ) {
+    return false;
+  }
+
+  const normalized = index.replaceAll("\r\n", "\n");
+  const lines = normalized.endsWith("\n")
+    ? normalized.slice(0, -1).split("\n")
+    : normalized.split("\n");
+  if (lines.shift() !== javaRegistryEntryIndexHeader || lines.some((line) => line.length === 0)) {
+    return false;
+  }
+
+  const indexedById = new Map(indexedRegistries.map((registry) => [registry.id, registry]));
+  const counts = new Map<string, number>();
+  let previousKey: string | undefined;
+  for (const line of lines) {
+    const columns = line.split("\t");
+    if (columns.length !== 3) {
+      return false;
+    }
+    const [registryId, entryId, protocolId] = columns as [string, string, string];
+    if (
+      !registryId ||
+      !entryId ||
+      !namespacedIdPattern.test(registryId) ||
+      !namespacedIdPattern.test(entryId) ||
+      !indexedById.has(registryId) ||
+      (protocolId !== "" &&
+        (!/^(0|[1-9]\d*)$/.test(protocolId) || !Number.isSafeInteger(Number(protocolId))))
+    ) {
+      return false;
+    }
+    const key = `${registryId}\t${entryId}`;
+    if (previousKey !== undefined && compareStrings(previousKey, key) >= 0) {
+      return false;
+    }
+    previousKey = key;
+    counts.set(registryId, (counts.get(registryId) ?? 0) + 1);
+  }
+
+  if (metadata.entryCount !== lines.length) {
+    return false;
+  }
+  return indexedRegistries.every(
+    (registry) => registry.entryCount === (counts.get(registry.id ?? "") ?? 0),
+  );
+}
+
+export function shouldIngestJavaReports(
+  rawSummary: unknown,
+  registryEntryIndex: string | undefined,
+): boolean {
+  const summary = parseExistingJavaReportsSummary(rawSummary);
   if (!summary) {
     return true;
   }
   const hasRegistryReport = summary.reports?.some(
     (report) => report.path === "reports/registries.json",
   );
-  return hasRegistryReport === true && (summary.datapack?.registries?.length ?? 0) === 0;
+  if (hasRegistryReport === true && (summary.datapack?.registries?.length ?? 0) === 0) {
+    return true;
+  }
+  return !isJavaRegistryEntryIndexValid(summary, registryEntryIndex);
 }
 
 export function listPendingJavaReportVersions(root: string): string[] {
   const reportsRoot = join(root, "packages/data/data/java/reports");
   return listVersions("java")
     .filter((version) => {
-      return shouldIngestJavaReports(readSummary(join(reportsRoot, `${version.id}.json`)));
+      const summary = readExistingJavaReportsSummary(join(reportsRoot, `${version.id}.json`));
+      const registryEntryIndexPath = join(
+        root,
+        "packages/data/data/java/registry-entries",
+        `${version.id}.tsv`,
+      );
+      const registryEntryIndex = existsSync(registryEntryIndexPath)
+        ? readFileSync(registryEntryIndexPath, "utf8")
+        : undefined;
+      return shouldIngestJavaReports(summary, registryEntryIndex);
     })
     .map((version) => version.id);
 }
@@ -95,8 +389,16 @@ export async function ingestJavaReportSummaries(
   try {
     for (const version of listVersions("java")) {
       const output = join(reportsRoot, `${version.id}.json`);
-      const existing = readSummary(output);
-      if (!options.force && !shouldIngestJavaReports(existing)) {
+      const existing = readExistingJavaReportsSummary(output);
+      const registryEntryIndexPath = join(
+        options.root,
+        "packages/data/data/java/registry-entries",
+        `${version.id}.tsv`,
+      );
+      const existingRegistryEntryIndex = existsSync(registryEntryIndexPath)
+        ? readFileSync(registryEntryIndexPath, "utf8")
+        : undefined;
+      if (!options.force && !shouldIngestJavaReports(existing, existingRegistryEntryIndex)) {
         options.log?.(`skip ${version.id}: Java reports summary is complete`);
         continue;
       }

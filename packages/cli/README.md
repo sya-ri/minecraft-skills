@@ -62,6 +62,8 @@ minecraft-skills datapack find execute
 minecraft-skills datapack search-schema latest --kind advancement --contains criteria
 minecraft-skills datapack commands latest --prefix execute --limit 10
 minecraft-skills datapack compare-commands 1.20.6 1.21 --prefix attribute
+minecraft-skills minecraft registry-entries 26.2 --registry minecraft:item --exact minecraft:stone
+minecraft-skills minecraft compare-registry-entries 26.1.2 26.2 --registry minecraft:attribute --prefix minecraft:armor
 minecraft-skills datapack vanilla-paths latest --contains recipe
 minecraft-skills resourcepack vanilla-paths latest --contains models/block
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
@@ -90,6 +92,12 @@ minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 ```
+
+Registry comparisons emit entry and protocol ID changes only for registries indexed in both
+versions. `outcome` reports whether the requested scope was fully, partially, or not comparable;
+`excludedRegistries` contains bounded per-version coverage statuses. Protocol changes require
+numeric IDs in both versions; null-to-number and number-to-null observations are not classified as
+changes.
 
 The Modrinth command uses the public v2 search API and supports `--category`, sorting with
 `--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.

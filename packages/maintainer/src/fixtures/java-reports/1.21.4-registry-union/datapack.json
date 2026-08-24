@@ -11,7 +11,11 @@
     "minecraft:damage_type": {
       "elements": true,
       "stable": false,
-      "tags": true
+      "tags": true,
+      "entries": {
+        "minecraft:datapack_only": { "protocol_id": 9 },
+        "minecraft:magic": { "protocol_id": 5 }
+      }
     },
     "minecraft:worldgen/density_function": {
       "elements": true,

@@ -18,6 +18,7 @@ import {
   compareDatapackSchema,
   comparePaperApi,
   comparePaperApiSurface,
+  compareRegistryEntries,
   compareVanillaPaths,
   explainPackPath,
   fetchData,
@@ -81,6 +82,7 @@ import {
   searchPaperMembers,
   searchPaperTypes,
   searchResourcepackModelPaths,
+  searchRegistryEntries,
   searchVanillaPaths,
   suggestMinecraftLookups,
   validateResourcepackProject,
@@ -186,6 +188,18 @@ const lookupSuggestions = suggestMinecraftLookups({
 });
 const commands = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const commandDiff = compareCommands({ from: "1.20.6", to: "1.21", prefix: "attribute" });
+const registryEntries = searchRegistryEntries({
+  version: "26.2",
+  registry: "minecraft:item",
+  exact: "minecraft:stone",
+});
+const registryEntryDiff = compareRegistryEntries({
+  from: "26.1.2",
+  to: "26.2",
+  registry: "minecraft:block",
+});
+// changedProtocolIds requires numeric IDs on both sides; null observations are not changes.
+// Also includes added, removed, and bounded excludedRegistries coverage statuses.
 const datapackSchema = getDatapackSchemaSurface("java", "26.2");
 const advancementFields = searchDatapackSchema({
   version: "26.2",

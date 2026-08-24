@@ -8,6 +8,7 @@ import {
   compareDatapackSchema,
   comparePaperApi,
   comparePaperApiSurface,
+  compareRegistryEntries,
   compareVanillaPaths,
   compareVersions,
   type DatapackSchemaComparisonOptions,
@@ -87,6 +88,8 @@ import {
   type ModrinthResourceKind,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
+  type RegistryEntryComparisonOptions,
+  type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
   readCachedMinecraftAssetText,
   resolveVersion,
@@ -100,6 +103,7 @@ import {
   searchPaperEvents,
   searchPaperMembers,
   searchPaperTypes,
+  searchRegistryEntries,
   searchResourcepackModelPaths,
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
@@ -829,6 +833,44 @@ export const tools: ToolDefinition[] = [
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_registry_entries",
+    description:
+      "Search version-specific registry entry IDs and optional protocol IDs generated from official Minecraft server reports.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        registry: { type: "string" },
+        exact: { type: "string" },
+        contains: { type: "string" },
+        prefix: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_registry_entries",
+    description:
+      "Compare added and removed registry entry IDs plus reported protocol ID changes only where both official version indexes cover the registry; excluded registries include per-version coverage status.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        from: { type: "string" },
+        to: { type: "string" },
+        registry: { type: "string" },
+        exact: { type: "string" },
+        contains: { type: "string" },
+        prefix: { type: "string" },
+        limit: { type: "number", default: 50 },
+      },
+      required: ["from", "to"],
       additionalProperties: false,
     },
   },
@@ -2109,6 +2151,34 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_server_reports") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getJavaReportsSummary(edition, version));
+    }
+    if (name === "search_registry_entries") {
+      const registryOptions: RegistryEntrySearchOptions = {
+        edition,
+        version: typeof args.version === "string" ? args.version : "latest",
+      };
+      if (typeof args.registry === "string") registryOptions.registry = args.registry;
+      if (typeof args.exact === "string") registryOptions.exact = args.exact;
+      if (typeof args.contains === "string") registryOptions.contains = args.contains;
+      if (typeof args.prefix === "string") registryOptions.prefix = args.prefix;
+      if (typeof args.limit === "number") registryOptions.limit = args.limit;
+      return text(searchRegistryEntries(registryOptions));
+    }
+    if (name === "compare_registry_entries") {
+      if (typeof args.from !== "string" || typeof args.to !== "string") {
+        throw new Error("compare_registry_entries requires string from and to");
+      }
+      const registryOptions: RegistryEntryComparisonOptions = {
+        edition,
+        from: args.from,
+        to: args.to,
+      };
+      if (typeof args.registry === "string") registryOptions.registry = args.registry;
+      if (typeof args.exact === "string") registryOptions.exact = args.exact;
+      if (typeof args.contains === "string") registryOptions.contains = args.contains;
+      if (typeof args.prefix === "string") registryOptions.prefix = args.prefix;
+      if (typeof args.limit === "number") registryOptions.limit = args.limit;
+      return text(compareRegistryEntries(registryOptions));
     }
     if (name === "get_datapack_schema_surface") {
       const version = typeof args.version === "string" ? args.version : "latest";

@@ -575,6 +575,15 @@ export const ReportDatapackRegistry = type({
   tags: "boolean | null",
   entryCount: "number | null",
   protocolId: "number | null",
+  entryIndexStatus: "'indexed' | 'unindexed'",
+});
+
+export const ReportRegistryEntryIndex = type({
+  path: "string",
+  coverage: "'official-report' | 'official-report-unavailable'",
+  indexedRegistryCount: "number",
+  unindexedRegistryCount: "number",
+  entryCount: "number",
 });
 
 export const ReportFile = type({
@@ -595,6 +604,7 @@ export const JavaReportsSummary = type({
   datapack: {
     otherTypes: ReportDatapackOtherType.array(),
     registries: ReportDatapackRegistry.array(),
+    registryEntries: ReportRegistryEntryIndex,
   },
   reports: ReportFile.array(),
   sources: Source.array(),

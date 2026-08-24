@@ -117,7 +117,14 @@
   },
   "datapack": {
     "otherTypes": [],
-    "registries": []
+    "registries": [],
+    "registryEntries": {
+      "path": "java/registry-entries/1.13.2.tsv",
+      "coverage": "official-report-unavailable",
+      "indexedRegistryCount": 0,
+      "unindexedRegistryCount": 0,
+      "entryCount": 0
+    }
   },
   "reports": [
     {

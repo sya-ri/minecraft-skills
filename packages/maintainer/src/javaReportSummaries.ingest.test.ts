@@ -19,6 +19,7 @@ vi.mock("@minecraft-skills/catalog", () => ({
 vi.mock("./javaReports.js", () => ({
   buildJavaReportsSummary: mocks.buildJavaReportsSummary,
   generateJavaReports: mocks.generateJavaReports,
+  javaRegistryEntryIndexHeader: "registry_id\tentry_id\tentry_protocol_id",
   writeJavaReportsSummary: mocks.writeJavaReportsSummary,
 }));
 
@@ -38,14 +39,40 @@ function writeSummary(
   options: { registries: unknown[]; hasRegistryReport: boolean; retrievedAt: string },
 ): void {
   const reportsRoot = join(fixtureRoot, "packages/data/data/java/reports");
+  const registryEntriesRoot = join(fixtureRoot, "packages/data/data/java/registry-entries");
   mkdirSync(reportsRoot, { recursive: true });
+  mkdirSync(registryEntriesRoot, { recursive: true });
+  const registries = options.registries.map((registry) => {
+    const value = registry as Record<string, unknown>;
+    return {
+      id: typeof value.id === "string" ? value.id : "minecraft:test",
+      entryCount: 1,
+      entryIndexStatus: "indexed",
+    };
+  });
   writeFileSync(
     join(reportsRoot, `${version}.json`),
     JSON.stringify({
-      datapack: { registries: options.registries },
+      version,
+      datapack: {
+        registries,
+        registryEntries: {
+          path: `java/registry-entries/${version}.tsv`,
+          coverage: "official-report",
+          indexedRegistryCount: registries.length,
+          unindexedRegistryCount: 0,
+          entryCount: registries.length,
+        },
+      },
       reports: options.hasRegistryReport ? [{ path: "reports/registries.json" }] : [],
       sources: [{ retrievedAt: options.retrievedAt }],
     }),
+  );
+  writeFileSync(
+    join(registryEntriesRoot, `${version}.tsv`),
+    `registry_id\tentry_id\tentry_protocol_id\n${registries
+      .map((registry) => `${registry.id}\tminecraft:test\t0`)
+      .join("\n")}${registries.length > 0 ? "\n" : ""}`,
   );
 }
 
@@ -60,6 +87,7 @@ beforeEach(() => {
   mocks.buildJavaReportsSummary.mockImplementation((options) => ({
     summary: { version: options.version, retrievedAt: options.retrievedAt },
     commandPaths: [],
+    registryEntries: [],
   }));
   mocks.writeJavaReportsSummary.mockImplementation(() => undefined);
   vi.stubGlobal(
@@ -76,6 +104,32 @@ afterEach(() => {
 });
 
 describe("ingestJavaReportSummaries", () => {
+  it("repairs a structurally invalid summary without throwing a type error", async () => {
+    mocks.listVersions.mockReturnValue([{ id: "broken" }]);
+    const reportsRoot = join(fixtureRoot, "packages/data/data/java/reports");
+    mkdirSync(reportsRoot, { recursive: true });
+    writeFileSync(
+      join(reportsRoot, "broken.json"),
+      JSON.stringify({ datapack: { registries: {} } }),
+    );
+
+    const written = await ingestJavaReportSummaries({
+      root: fixtureRoot,
+      retrievedAt: "2026-08-24T00:00:00.000Z",
+      javaBin: "java-test",
+      force: false,
+    });
+
+    expect(written).toBe(1);
+    expect(mocks.generateJavaReports).toHaveBeenCalledTimes(1);
+    expect(mocks.buildJavaReportsSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: "broken",
+        retrievedAt: "2026-08-24T00:00:00.000Z",
+      }),
+    );
+  });
+
   it("skips complete summaries and preserves a repaired summary timestamp", async () => {
     writeSummary("complete", {
       registries: [{ id: "minecraft:item" }],

@@ -40,7 +40,7 @@ jobs:
       - name: Build maintainer tools
         run: mise exec -- pnpm --filter @minecraft-skills/maintainer build
 
-      - name: Audit current sources
+      - name: Audit current sources and generated indexes
         id: audit
         continue-on-error: true
         run: |
@@ -63,6 +63,7 @@ jobs:
             --retrieved-at "$RETRIEVED_AT"
           node packages/maintainer/dist/cli.mjs ingest-java-reports-all \
             --retrieved-at "$RETRIEVED_AT"
+          node packages/maintainer/dist/cli.mjs audit-java-reports
 
           curl -fsSL -o /tmp/papermc-paper-project.json \
             https://fill.papermc.io/v3/projects/paper

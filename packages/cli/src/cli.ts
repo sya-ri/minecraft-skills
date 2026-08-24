@@ -23,6 +23,7 @@ import {
   compareDatapackSchema,
   comparePaperApi,
   comparePaperApiSurface,
+  compareRegistryEntries,
   compareVanillaPaths,
   compareVersions,
   type DatapackSchemaComparisonOptions,
@@ -98,6 +99,8 @@ import {
   listVersions,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
+  type RegistryEntryComparisonOptions,
+  type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
   resolveVersion,
   searchAll,
@@ -110,6 +113,7 @@ import {
   searchPaperEvents,
   searchPaperMembers,
   searchPaperTypes,
+  searchRegistryEntries,
   searchResourcepackModelPaths,
   searchVanillaPaths,
   suggestMinecraftLookups,
@@ -408,6 +412,8 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft sources": "source-report",
     "minecraft search": "catalog-search",
     "minecraft search-all": "search-all",
+    "minecraft registry-entries": "registry-entries",
+    "minecraft compare-registry-entries": "compare-registry-entries",
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
     "fabric toolchain": "fabric-toolchain",
@@ -598,6 +604,8 @@ const flatCommandSuggestions: Record<string, string> = {
   "pack-formats": "minecraft pack-formats",
   "show-version": "minecraft show",
   "compare-versions": "minecraft compare",
+  "registry-entries": "minecraft registry-entries",
+  "compare-registry-entries": "minecraft compare-registry-entries",
   "server-reports": "datapack server-reports",
   "datapack-schema": "datapack schema",
   "search-datapack-schema": "datapack search-schema",
@@ -806,6 +814,8 @@ Grouped commands:
   minecraft-skills datapack|resourcepack response-patterns|response-pattern
   minecraft-skills plugin paper response-patterns|response-pattern
   minecraft-skills datapack commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
+  minecraft-skills minecraft registry-entries [version] [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
+  minecraft-skills minecraft compare-registry-entries <from> <to> [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills datapack schema [version] [--edition java]
   minecraft-skills datapack search-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
   minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
@@ -840,7 +850,7 @@ Grouped commands:
   minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
   minecraft-skills modrinth get <project|project-dependencies|version|version-file|user|categories|loaders|game-versions|project-types|side-types|donation-platforms|report-types|statistics> [identifier] [--algorithm sha1|sha512]
   minecraft-skills modrinth validate-pack <file.mrpack> [--allow-download-host host]... [--max-archive-bytes bytes]
-  minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory
+  minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory|registry-entries|compare-registry-entries
   minecraft-skills minecraft pack-format [version] [datapack|resourcepack]
   minecraft-skills minecraft versions-for-pack-format <datapack|resourcepack> <format> [minor]
   minecraft-skills minecraft search <query> [--domain datapack|resourcepack|paper-plugin] [--kind kind] [--limit 10]
@@ -889,8 +899,8 @@ Command reference:
                  Print bundled coverage or downloadable data manifest JSON.
   data cache-dir|cache-list|cache-clean|fetch
                  Inspect, clean, or download SHA-256 verified cache data.
-  minecraft latest|list|pack-formats|pack-format|versions-for-pack-format|show|compare|support|support-matrix|vanilla-inventory
-                 Inspect bundled version metadata and per-domain version support.
+  minecraft latest|list|pack-formats|pack-format|versions-for-pack-format|show|compare|support|support-matrix|vanilla-inventory|registry-entries|compare-registry-entries
+                 Inspect bundled version metadata, registry entry indexes, and per-domain version support.
   datapack server-reports|schema|search-schema|compare-schema|commands|compare-commands
                  Inspect command paths, observed datapack JSON shapes, file schemas, file kinds, and file content validation.
   datapack vanilla-paths|compare-vanilla-paths
@@ -1527,6 +1537,56 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     if (command === "server-reports") {
       const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getJavaReportsSummary(edition, requested));
+      return 0;
+    }
+
+    if (command === "registry-entries") {
+      const requested = positionalArgs(args)[0] ?? "latest";
+      const registryOptions: RegistryEntrySearchOptions = {
+        edition,
+        version: requested,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--registry")) {
+        registryOptions.registry = readOption(args, "--registry", "");
+      }
+      if (args.includes("--exact")) {
+        registryOptions.exact = readOption(args, "--exact", "");
+      }
+      if (args.includes("--contains")) {
+        registryOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--prefix")) {
+        registryOptions.prefix = readOption(args, "--prefix", "");
+      }
+      printJson(output, searchRegistryEntries(registryOptions));
+      return 0;
+    }
+
+    if (command === "compare-registry-entries") {
+      const [from, to] = positionalArgs(args);
+      if (!from || !to) {
+        throw new Error("compare-registry-entries command requires <from> and <to>");
+      }
+      const registryOptions: RegistryEntryComparisonOptions = {
+        edition,
+        from,
+        to,
+        limit: Number(readOption(args, "--limit", "50")),
+      };
+      if (args.includes("--registry")) {
+        registryOptions.registry = readOption(args, "--registry", "");
+      }
+      if (args.includes("--exact")) {
+        registryOptions.exact = readOption(args, "--exact", "");
+      }
+      if (args.includes("--contains")) {
+        registryOptions.contains = readOption(args, "--contains", "");
+      }
+      if (args.includes("--prefix")) {
+        registryOptions.prefix = readOption(args, "--prefix", "");
+      }
+      printJson(output, compareRegistryEntries(registryOptions));
       return 0;
     }
 

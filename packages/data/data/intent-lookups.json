@@ -171,6 +171,31 @@
       ]
     },
     {
+      "id": "verify-registry-entry",
+      "domains": ["datapack"],
+      "title": "Verify a vanilla registry entry ID",
+      "when": [
+        "the request references a vanilla registry entry such as an item, block, entity type, biome, particle, sound event, or damage type",
+        "the request asks whether a registry entry was added, removed, or assigned a different protocol ID between Minecraft versions"
+      ],
+      "lookups": [
+        {
+          "purpose": "Search or compare registry entry indexes generated from official server reports for the exact version.",
+          "tools": {
+            "cli": ["minecraft registry-entries", "minecraft compare-registry-entries"],
+            "mcp": ["search_registry_entries", "compare_registry_entries"],
+            "packageApis": ["searchRegistryEntries", "compareRegistryEntries"]
+          },
+          "evidence": [
+            "Registry and entry ID match for the requested version",
+            "Registry index coverage and registry status from the search result",
+            "Comparison outcome and excluded registry statuses when both versions are not indexed"
+          ],
+          "failureMode": "Do not claim an entry is absent when the official report or the specific registry was not indexed."
+        }
+      ]
+    },
+    {
       "id": "verify-datapack-json-shape",
       "domains": ["datapack"],
       "title": "Verify observed vanilla datapack JSON shape",
