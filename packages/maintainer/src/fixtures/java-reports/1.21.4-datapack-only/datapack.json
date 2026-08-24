@@ -1,0 +1,10 @@
+{
+  "others": {},
+  "registries": {
+    "minecraft:damage_type": {
+      "elements": true,
+      "stable": false,
+      "tags": true
+    }
+  }
+}

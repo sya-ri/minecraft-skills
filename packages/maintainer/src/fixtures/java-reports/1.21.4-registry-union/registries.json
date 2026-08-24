@@ -1,0 +1,15 @@
+{
+  "minecraft:biome": {
+    "protocol_id": 1,
+    "entries": {
+      "minecraft:plains": {}
+    }
+  },
+  "minecraft:damage_type": {
+    "protocol_id": 23,
+    "entries": {
+      "minecraft:generic": {},
+      "minecraft:magic": {}
+    }
+  }
+}
