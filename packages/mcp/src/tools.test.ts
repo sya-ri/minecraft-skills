@@ -190,6 +190,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
+    expect(tools.map((tool) => tool.name)).toContain("resolve_velocity_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
     expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
     expect(tools.map((tool) => tool.name)).toContain("resolve_modrinth_compatibility");
@@ -1665,6 +1666,41 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("net.fabricmc:fabric-loader:0.17.0");
     expect(result.content[0]?.text).toContain("net.fabricmc:yarn:1.21.11+build.6");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("calls resolve_velocity_toolchain", async () => {
+    const metadata = `<?xml version="1.0" encoding="UTF-8"?>
+<metadata><groupId>com.velocitypowered</groupId><artifactId>velocity-api</artifactId>
+<versioning><latest>4.1.0-SNAPSHOT</latest><release>4.0.0</release>
+<versions><version>4.0.0</version><version>4.1.0-SNAPSHOT</version></versions>
+<lastUpdated>20260814105730</lastUpdated></versioning></metadata>`;
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      if (url.includes("maven-metadata.xml")) {
+        return new Response(metadata, { headers: { "Content-Type": "application/xml" } });
+      }
+      if (url.includes("creating-your-first-plugin")) {
+        return new Response(
+          `<html><body>Project JDK is Java 25 or later
+          <table><tr><td>com.velocitypowered</td><td>velocity-api</td><td>4.1.0-SNAPSHOT</td></tr></table>
+          https://repo.papermc.io/repository/maven-public/</body></html>`,
+          { headers: { "Content-Type": "text/html" } },
+        );
+      }
+      return new Response(
+        "<html><body>Velocity 4.0.x and above requires at least Java 25.</body></html>",
+        { headers: { "Content-Type": "text/html" } },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("resolve_velocity_toolchain", {
+      limit: 1,
+      timeoutMs: 1000,
+    });
+    expect(result.content[0]?.text).toContain("com.velocitypowered:velocity-api:4.1.0-SNAPSHOT");
+    expect(result.content[0]?.text).toContain('"minimumVersion": 25');
+    expect(result.content[0]?.text).toContain('"minecraftGameVersions": "not-inferred"');
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 

@@ -98,6 +98,7 @@ minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
+minecraft-skills velocity toolchain --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
@@ -149,6 +150,14 @@ Meta v2 API. It prefers upstream `stable` entries without treating that flag as 
 compatibility guarantee. Generated tuples only combine entries listed for the same game version;
 they are not a separately published Fabric Meta guarantee. The command bounds returned candidates
 and reports versions without Yarn as incomplete instead of guessing.
+
+`velocity toolchain` reads the current `com.velocitypowered:velocity-api` version from bounded
+official PaperMC Maven metadata and cross-checks the official development guide and Java FAQ. It
+returns the repository, development docs, Javadocs, retrieval time, and per-source provenance.
+Documentation drift or temporary docs failures become actionable warnings when Maven metadata is
+still usable; missing or malformed Maven metadata fails the command. Candidate ordering is
+deterministic and bounded by `--limit`. Velocity API/server versions are never used to infer
+Minecraft game-version compatibility.
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data manifest`, `data cache-dir`, `data cache-list`, `data cache-clean`, and

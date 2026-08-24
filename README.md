@@ -83,6 +83,7 @@ minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills fabric toolchain 1.21.11
+minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
@@ -113,8 +114,9 @@ Release notes are tracked in [CHANGELOG.md](CHANGELOG.md).
 
 Primary support starts at Java Edition 1.13. Redistributable facts should come from official Mojang
 metadata and downloads served through Piston endpoints, extracted vanilla client/server data,
-PaperMC API artifacts and docs, official live Fabric Meta version metadata, structured community
-datasets, the `sya-ri/spigot-event-list` API contract, or reviewed original guidance.
+PaperMC API artifacts, Maven metadata, and docs, official live Fabric Meta version metadata,
+structured community datasets, the `sya-ri/spigot-event-list` API contract, or reviewed original
+guidance.
 
 Minecraft Wiki is human-only background for this project. AI workflows should not fetch, crawl,
 summarize, or cite Wiki pages; use bundled data, Mojang/Paper sources, source reports, and allowed

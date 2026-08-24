@@ -36,6 +36,9 @@ All notable changes to this project are documented here.
   bytes of each OGG file instead of decoding binary contents as UTF-8 or loading complete audio.
 - Official live Fabric Meta v2 toolchain lookup across the catalog API, CLI, MCP server, and
   natural-language discovery, with bounded Loader, Intermediary, Yarn, and tuple candidates.
+- Official live Velocity toolchain resolution across the catalog API, CLI, MCP server, and
+  natural-language discovery, with bounded Maven metadata and documentation reads, dependency and
+  Java requirement provenance, drift warnings, and no inferred Minecraft compatibility.
 - Version-specific official server report registry entry indexes, with exact, prefix, contains,
   registry, added/removed/protocol-ID comparison, and bounded-result filters across Catalog, CLI,
   and MCP. Comparisons exclude registries not indexed in both versions and report their coverage
