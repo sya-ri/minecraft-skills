@@ -5159,10 +5159,11 @@ export function searchVanillaDatapackJsonFiles(
   const prefix = options.prefix?.trim();
   const contains = options.contains?.trim();
   const kind = options.kind?.trim();
-  const files = listCachedMojangServerJarEntries(version).filter((entry) => {
-    if (!entry.path.startsWith("data/") || !entry.path.endsWith(".json")) {
-      return false;
-    }
+  const entries = listCachedMojangServerJarEntries(version);
+  const jsonFiles = entries.filter(
+    (entry) => entry.path.startsWith("data/") && entry.path.endsWith(".json"),
+  );
+  const files = jsonFiles.filter((entry) => {
     if (prefix && !entry.path.startsWith(prefix)) {
       return false;
     }
@@ -5179,9 +5180,7 @@ export function searchVanillaDatapackJsonFiles(
     edition,
     version,
     cache: getMojangServerJarStatus(version),
-    totalJsonFiles: listCachedMojangServerJarEntries(version).filter(
-      (entry) => entry.path.startsWith("data/") && entry.path.endsWith(".json"),
-    ).length,
+    totalJsonFiles: jsonFiles.length,
     matchedFiles: files.length,
     truncated: files.length > limit,
     files: files.slice(0, limit),
