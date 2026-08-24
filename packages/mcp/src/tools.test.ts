@@ -824,7 +824,7 @@ describe("MCP tools", () => {
   it("calls discovery-oriented search tools", async () => {
     const search = await callMinecraftSkillsTool("search_all", {
       version: "26.2",
-      query: "bundle",
+      query: "bundle item model",
       domain: "resourcepack",
       limit: 80,
     });
@@ -838,10 +838,10 @@ describe("MCP tools", () => {
 
     const resourcepack = await callMinecraftSkillsTool("find_resourcepack_assets", {
       version: "26.2",
-      query: "bundle",
+      query: "Diamond Sword",
       kind: "item-definition",
     });
-    expect(resourcepack.content[0]?.text).toContain("assets/minecraft/items/bundle.json");
+    expect(resourcepack.content[0]?.text).toContain("assets/minecraft/items/diamond_sword.json");
 
     const explanation = await callMinecraftSkillsTool("explain_pack_path", {
       version: "26.2",

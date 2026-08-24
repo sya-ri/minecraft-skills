@@ -34,6 +34,7 @@ import {
   readCachedMojangServerJarText,
   readDataJson,
   readDataText,
+  readMinecraftAssetsIndex,
   type SearchMinecraftAssetsOptions,
   type SearchMinecraftAssetsResult,
   searchMinecraftAssets,
@@ -1433,6 +1434,114 @@ function tokenizeScenarioSearch(value: string): string[] {
   return [...new Set(tokens)];
 }
 
+function normalizeSearchText(value: string): string {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim();
+}
+
+const discoverySearchStopWords = new Set([
+  ...scenarioSearchStopWords,
+  "find",
+  "get",
+  "list",
+  "lookup",
+  "need",
+  "please",
+  "search",
+  "show",
+  "use",
+  "using",
+  "want",
+]);
+
+const contextualDiscoveryIntentWords = new Set(["handler", "listener"]);
+
+function tokenizeDiscoveryQuery(query: string): string[] {
+  const tokens = [
+    ...new Set(
+      normalizeSearchText(query)
+        .split(/\s+/)
+        .filter((token) => token && !discoverySearchStopWords.has(token)),
+    ),
+  ];
+  const specificTokens = tokens.filter((token) => !contextualDiscoveryIntentWords.has(token));
+  return specificTokens.length > 0 ? specificTokens : tokens;
+}
+
+const discoveryFillerTokens = new Set([
+  "api",
+  "asset",
+  "audio",
+  "block",
+  "command",
+  "data",
+  "datapack",
+  "definition",
+  "field",
+  "image",
+  "item",
+  "language",
+  "member",
+  "model",
+  "pack",
+  "paper",
+  "path",
+  "plugin",
+  "resource",
+  "resourcepack",
+  "schema",
+  "sound",
+  "state",
+  "texture",
+  "translation",
+  "type",
+]);
+
+function primaryDiscoveryTerm(query: string): string {
+  const tokens = tokenizeDiscoveryQuery(query);
+  const searchableTokens = tokens.filter((token) => !discoveryFillerTokens.has(token));
+  return searchableTokens.reduce(
+    (longest, token) => (token.length > longest.length ? token : longest),
+    searchableTokens[0] ?? "",
+  );
+}
+
+function discoveryContainsOption(term: string): string {
+  return term ? ` --contains ${JSON.stringify(term)}` : "";
+}
+
+function matchesDiscoveryQuery(query: string, ...values: string[]): boolean {
+  const tokens = tokenizeDiscoveryQuery(query);
+  const haystack = normalizeSearchText(values.join(" "));
+  return tokens.length > 0 && tokens.every((token) => haystack.includes(token));
+}
+
+function scoreDiscoveryMatch(query: string, actual: string[], semantic: string[] = []): number {
+  const actualText = normalizeSearchText(actual.join(" "));
+  const semanticText = normalizeSearchText(semantic.join(" "));
+  return tokenizeDiscoveryQuery(query).reduce((score, token) => {
+    if (actualText.includes(token)) return score + 20;
+    if (semanticText.includes(token)) return score + 25;
+    return score;
+  }, 0);
+}
+
+function resourcepackDiscoveryTerms(path: string): string {
+  const terms = ["resourcepack resource pack", "asset"];
+  if (path.includes("/items/")) terms.push("item item definition model");
+  if (path.includes("/models/")) terms.push("model");
+  if (path.includes("/textures/") || path.endsWith(".png")) terms.push("texture image");
+  if (path.includes("/sounds/") || path.endsWith(".ogg")) terms.push("sound audio");
+  if (path.includes("/lang/")) terms.push("language translation");
+  if (path.includes("/blockstates/")) terms.push("block state");
+  if (path.includes("/atlases/")) terms.push("atlas");
+  if (path.includes("/font/")) terms.push("font");
+  return terms.join(" ");
+}
+
 function scoreScenarioSearchText(
   options: {
     source: AuthoringScenarioSearchMatch["source"];
@@ -2095,7 +2204,7 @@ export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResul
   if (!query) {
     throw new Error("Catalog search requires a non-empty query");
   }
-  const limit = normalizeLimit(options.limit, 10, 100);
+  const limit = normalizeLimit(options.limit, 10, 200);
   const domain = options.domain ? DomainId.assert(options.domain) : undefined;
   const kind = options.kind ? parseCatalogSearchKind(options.kind) : undefined;
   const tokens = tokenizeScenarioSearch(query);
@@ -4910,6 +5019,36 @@ function normalizeLimit(limit: number | undefined, defaultLimit: number, maxLimi
   return resolved;
 }
 
+function filterResourcepackModelPaths(
+  paths: string[],
+  options: Pick<ResourcepackModelPathSearchOptions, "contains" | "prefix" | "kind">,
+): string[] {
+  const contains = options.contains?.trim();
+  const prefix = options.prefix?.trim();
+  return paths.filter((path) => {
+    if (!path.endsWith(".json")) {
+      return false;
+    }
+    if (options.kind === "item-definition") {
+      if (!path.startsWith("assets/") || !path.includes("/items/")) return false;
+    } else if (options.kind === "model") {
+      if (!path.startsWith("assets/") || !path.includes("/models/")) return false;
+    } else if (
+      !path.startsWith("assets/") ||
+      (!path.includes("/models/") && !path.includes("/items/"))
+    ) {
+      return false;
+    }
+    if (prefix && !path.startsWith(prefix)) {
+      return false;
+    }
+    if (contains && !path.includes(contains)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function searchResourcepackModelPaths(
   options: ResourcepackModelPathSearchOptions = {},
 ): ResourcepackModelPathSearchResult {
@@ -4919,38 +5058,17 @@ export function searchResourcepackModelPaths(
   if (!hasDataFile(pathIndex)) {
     throw new Error(`No bundled resourcepack path index for ${editionId} ${modelSummary.version}`);
   }
-  const paths = readDataText(pathIndex)
-    .trim()
-    .split(/\r?\n/)
-    .filter((path) => {
-      if (!path.endsWith(".json")) {
-        return false;
-      }
-      if (options.kind === "item-definition") {
-        return path.startsWith("assets/") && path.includes("/items/");
-      }
-      if (options.kind === "model") {
-        return path.startsWith("assets/") && path.includes("/models/");
-      }
-      return path.startsWith("assets/") && (path.includes("/models/") || path.includes("/items/"));
-    });
+  const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
   const limit = normalizeLimit(options.limit, 50, 500);
-  const contains = options.contains?.trim();
-  const prefix = options.prefix?.trim();
-  const matched = paths.filter((path) => {
-    if (prefix && !path.startsWith(prefix)) {
-      return false;
-    }
-    if (contains && !path.includes(contains)) {
-      return false;
-    }
-    return true;
+  const modelPaths = filterResourcepackModelPaths(paths, {
+    ...(options.kind ? { kind: options.kind } : {}),
   });
+  const matched = filterResourcepackModelPaths(modelPaths, options);
 
   return {
     edition: editionId,
     version: modelSummary.version,
-    totalPaths: paths.length,
+    totalPaths: modelPaths.length,
     matchedPaths: matched.length,
     truncated: matched.length > limit,
     paths: matched.slice(0, limit),
@@ -5118,6 +5236,8 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   const limit = normalizeLimit(options.limit, 20, 200);
   const results: CrossSearchEntry[] = [];
   const gaps: string[] = [];
+  let sourceTruncated = false;
+  const discoveryTerm = primaryDiscoveryTerm(query);
   const include = (domain: DomainIdData | "minecraft") =>
     !options.domain || domain === options.domain || domain === "minecraft";
 
@@ -5126,6 +5246,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
     ...(options.domain ? { domain: options.domain } : {}),
     limit,
   });
+  sourceTruncated ||= catalog.truncated;
   for (const item of catalog.results) {
     addCrossResult(results, {
       surface: "catalog",
@@ -5139,86 +5260,115 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   }
 
   if (include("datapack")) {
-    const commands = searchCommands({ edition, version, contains: query, limit });
-    for (const path of commands.paths) {
+    const commands = filterCommandPaths(readCommandPathList(edition, version), {
+      contains: discoveryTerm,
+    });
+    for (const path of commands.filter((entry) =>
+      matchesDiscoveryQuery(query, entry, "datapack data pack command path"),
+    )) {
       addCrossResult(results, {
         surface: "commands",
         domain: "datapack",
         kind: "command-path",
         title: path,
+        score: scoreDiscoveryMatch(query, [path], ["datapack data pack command path"]),
         matches: [path],
-        lookup: `datapack commands ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `datapack commands ${version} --contains ${JSON.stringify(path)} --limit 1`,
       });
     }
-    const schema = searchDatapackSchema({ edition, version, contains: query, limit });
-    for (const field of schema.fields) {
+    const schema = flattenDatapackFields(getDatapackSchemaSurface(edition, version)).filter(
+      (field) =>
+        (field.kind.toLowerCase().includes(discoveryTerm) ||
+          field.path.toLowerCase().includes(discoveryTerm)) &&
+        matchesDiscoveryQuery(query, field.kind, field.path, "datapack data pack schema field"),
+    );
+    for (const field of schema) {
       addCrossResult(results, {
         surface: "datapack-schema",
         domain: "datapack",
         kind: field.kind,
         title: field.path,
+        score: scoreDiscoveryMatch(
+          query,
+          [field.path, field.kind],
+          ["datapack data pack schema field"],
+        ),
         matches: [field.path, field.kind],
-        lookup: `datapack search-schema ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `datapack search-schema ${version} --kind ${JSON.stringify(
+          field.kind,
+        )} --path ${JSON.stringify(field.path)} --limit 1`,
       });
     }
-    const paths = searchVanillaPaths({
-      edition,
-      version,
-      domain: "datapack",
-      contains: query,
-      limit,
+    const paths = filterVanillaPaths(readVanillaPathList(edition, version, "datapack"), {
+      contains: discoveryTerm,
     });
-    for (const path of paths.paths) {
+    for (const path of paths.filter((entry) =>
+      matchesDiscoveryQuery(query, entry, "datapack data pack path"),
+    )) {
       addCrossResult(results, {
         surface: "vanilla-paths",
         domain: "datapack",
         kind: "path",
         title: path,
+        score: scoreDiscoveryMatch(query, [path], ["datapack data pack path"]),
         matches: [path],
-        lookup: `datapack vanilla-paths ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `datapack vanilla-paths ${version} --prefix ${JSON.stringify(path)} --limit 1`,
       });
     }
   }
 
   if (include("resourcepack")) {
-    const paths = searchVanillaPaths({
-      edition,
-      version,
-      domain: "resourcepack",
-      contains: query,
-      limit,
+    const resourcepackPaths = readVanillaPathList(edition, version, "resourcepack");
+    const paths = filterVanillaPaths(resourcepackPaths, {
+      contains: discoveryTerm,
     });
-    for (const path of paths.paths) {
+    for (const path of paths.filter((entry) =>
+      matchesDiscoveryQuery(query, entry, resourcepackDiscoveryTerms(entry)),
+    )) {
       addCrossResult(results, {
         surface: "vanilla-paths",
         domain: "resourcepack",
         kind: "path",
         title: path,
+        score: scoreDiscoveryMatch(query, [path], [resourcepackDiscoveryTerms(path)]),
         matches: [path],
-        lookup: `resourcepack vanilla-paths ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `resourcepack vanilla-paths ${version} --prefix ${JSON.stringify(path)} --limit 1`,
       });
     }
-    const models = searchResourcepackModelPaths({ edition, version, contains: query, limit });
-    for (const path of models.paths) {
+    const models = filterResourcepackModelPaths(resourcepackPaths, {
+      contains: discoveryTerm,
+    });
+    for (const path of models.filter((entry) =>
+      matchesDiscoveryQuery(query, entry, resourcepackDiscoveryTerms(entry)),
+    )) {
+      const kind = path.includes("/items/") ? "item-definition" : "model";
       addCrossResult(results, {
         surface: "resourcepack-models",
         domain: "resourcepack",
-        kind: path.includes("/items/") ? "item-definition" : "model",
+        kind,
         title: path,
+        score: scoreDiscoveryMatch(query, [path], [resourcepackDiscoveryTerms(path)]) + 5,
         matches: [path],
-        lookup: `resourcepack search-models ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `resourcepack search-models ${version} --kind ${kind} --prefix ${JSON.stringify(
+          path,
+        )} --limit 1`,
       });
     }
     try {
-      const assets = searchMinecraftAssets({ version, contains: query, limit });
-      for (const path of assets.matches) {
+      const assets = readMinecraftAssetsIndex(version).paths.filter(
+        (entry) =>
+          entry.includes(discoveryTerm) &&
+          matchesDiscoveryQuery(query, entry, resourcepackDiscoveryTerms(entry)),
+      );
+      for (const path of assets) {
         addCrossResult(results, {
           surface: "minecraft-assets-cache",
           domain: "resourcepack",
           kind: "asset",
           title: path,
+          score: scoreDiscoveryMatch(query, [path], [resourcepackDiscoveryTerms(path)]),
           matches: [path],
-          lookup: `resourcepack assets search ${version} --contains ${JSON.stringify(query)}`,
+          lookup: `resourcepack assets search ${version} --prefix ${JSON.stringify(path)} --limit 1`,
         });
       }
     } catch (error) {
@@ -5231,26 +5381,58 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   }
 
   if (include("paper-plugin")) {
-    const types = searchPaperTypes({ version, contains: query, limit });
-    for (const type of types.types) {
+    const surface = getPaperApiSurface(version);
+    const types = surface.types.filter(
+      (entry) =>
+        (entry.name.toLowerCase().includes(discoveryTerm) ||
+          entry.qualifiedName.toLowerCase().includes(discoveryTerm)) &&
+        matchesDiscoveryQuery(query, entry.name, entry.qualifiedName, "paper plugin api type"),
+    );
+    for (const type of types) {
       addCrossResult(results, {
         surface: "paper-api-types",
         domain: "paper-plugin",
         kind: "type",
         title: type.qualifiedName,
+        score: scoreDiscoveryMatch(
+          query,
+          [type.name, type.qualifiedName],
+          ["paper plugin api type"],
+        ),
         matches: [type.qualifiedName],
-        lookup: `plugin paper types ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `plugin paper types ${version} --contains ${JSON.stringify(
+          type.qualifiedName,
+        )} --limit 1`,
       });
     }
-    const members = searchPaperMembers({ version, contains: query, limit });
-    for (const member of members.members) {
+    const members = surface.members.filter(
+      (entry) =>
+        (entry.name.toLowerCase().includes(discoveryTerm) ||
+          entry.label.toLowerCase().includes(discoveryTerm) ||
+          entry.qualifiedTypeName.toLowerCase().includes(discoveryTerm)) &&
+        matchesDiscoveryQuery(
+          query,
+          entry.name,
+          entry.label,
+          entry.qualifiedTypeName,
+          "paper plugin api member",
+        ),
+    );
+    for (const member of members) {
       addCrossResult(results, {
         surface: "paper-api-members",
         domain: "paper-plugin",
         kind: member.kind,
         title: `${member.qualifiedTypeName}.${member.name}`,
+        score: scoreDiscoveryMatch(
+          query,
+          [member.name, member.label, member.qualifiedTypeName],
+          ["paper plugin api member"],
+        ),
         matches: [member.name, member.qualifiedTypeName],
-        lookup: `plugin paper members ${version} --contains ${JSON.stringify(query)}`,
+        lookup: `plugin paper members ${version} --type ${JSON.stringify(
+          member.qualifiedTypeName,
+        )} --kind ${member.kind} --contains ${JSON.stringify(member.label)} --limit 1`,
       });
     }
   }
@@ -5269,7 +5451,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
     version,
     ...(options.domain ? { domain: options.domain } : {}),
     limit,
-    truncated: sorted.length > limit,
+    truncated: sourceTruncated || sorted.length > limit,
     results: sorted.slice(0, limit),
     gaps,
   };
@@ -5302,46 +5484,51 @@ export function findResourcepackAssets(
   const limit = normalizeLimit(options.limit, 25, 500);
   const kind = options.kind ?? "any";
   const filters = resourcepackKindFilters(kind);
+  const discoveryTerm = primaryDiscoveryTerm(query);
   const sections: ResourcepackAssetFindResult["sections"] = [];
-  const vanilla = searchVanillaPaths({
-    edition,
-    version,
-    domain: "resourcepack",
-    contains: query,
-    limit,
+  const vanilla = filterVanillaPaths(readVanillaPathList(edition, version, "resourcepack"), {
+    contains: discoveryTerm,
+    ...(filters.prefix ? { prefix: filters.prefix } : {}),
     ...(filters.extension ? { extension: filters.extension } : {}),
-  });
+  }).filter((path) => matchesDiscoveryQuery(query, path, resourcepackDiscoveryTerms(path)));
   sections.push({
     source: "vanilla-paths",
-    total: vanilla.matchedPaths,
-    truncated: vanilla.truncated,
-    paths: vanilla.paths,
+    total: vanilla.length,
+    truncated: vanilla.length > limit,
+    paths: vanilla.slice(0, limit),
   });
-  const models = searchResourcepackModelPaths({
-    edition,
-    version,
-    contains: query,
-    limit,
-    ...(filters.modelKind ? { kind: filters.modelKind } : {}),
-  });
+  const models = filterResourcepackModelPaths(
+    readVanillaPathList(edition, version, "resourcepack"),
+    {
+      contains: discoveryTerm,
+      ...(filters.prefix ? { prefix: filters.prefix } : {}),
+      ...(filters.modelKind ? { kind: filters.modelKind } : {}),
+    },
+  ).filter((path) => matchesDiscoveryQuery(query, path, resourcepackDiscoveryTerms(path)));
   sections.push({
     source: "resourcepack-models",
-    total: models.matchedPaths,
-    truncated: models.truncated,
-    paths: models.paths,
+    total: models.length,
+    truncated: models.length > limit,
+    paths: models.slice(0, limit),
   });
   try {
-    const cached = searchMinecraftAssets({
-      version,
-      contains: query,
-      limit,
-      ...(filters.extension ? { extension: filters.extension } : {}),
-    });
+    const extension = filters.extension
+      ? filters.extension.startsWith(".")
+        ? filters.extension
+        : `.${filters.extension}`
+      : undefined;
+    const paths = readMinecraftAssetsIndex(version).paths.filter(
+      (path) =>
+        (!filters.prefix || path.startsWith(filters.prefix)) &&
+        path.includes(discoveryTerm) &&
+        (!extension || path.endsWith(extension)) &&
+        matchesDiscoveryQuery(query, path, resourcepackDiscoveryTerms(path)),
+    );
     sections.push({
       source: "minecraft-assets-cache",
-      total: cached.total,
-      truncated: cached.total > cached.matches.length,
-      paths: cached.matches,
+      total: paths.length,
+      truncated: paths.length > limit,
+      paths: paths.slice(0, limit),
     });
   } catch (error) {
     sections.push({
@@ -5361,15 +5548,19 @@ export function findDatapackEntries(options: DatapackEntryFindOptions): Datapack
   const edition = Edition.assert(options.edition ?? "java");
   const version = resolveVersion(edition, options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 25, 500);
-  const commands = searchCommands({ edition, version, contains: query, limit });
-  const schema = searchDatapackSchema({ edition, version, contains: query, limit });
-  const paths = searchVanillaPaths({
-    edition,
-    version,
-    domain: "datapack",
-    contains: query,
-    limit,
-  });
+  const discoveryTerm = primaryDiscoveryTerm(query);
+  const commands = filterCommandPaths(readCommandPathList(edition, version), {
+    contains: discoveryTerm,
+  }).filter((path) => matchesDiscoveryQuery(query, path, "datapack data pack command path"));
+  const schema = flattenDatapackFields(getDatapackSchemaSurface(edition, version)).filter(
+    (field) =>
+      (field.kind.toLowerCase().includes(discoveryTerm) ||
+        field.path.toLowerCase().includes(discoveryTerm)) &&
+      matchesDiscoveryQuery(query, field.kind, field.path, "datapack data pack schema field"),
+  );
+  const paths = filterVanillaPaths(readVanillaPathList(edition, version, "datapack"), {
+    contains: discoveryTerm,
+  }).filter((path) => matchesDiscoveryQuery(query, path, "datapack data pack path"));
   return {
     schemaVersion: 1,
     query,
@@ -5378,24 +5569,24 @@ export function findDatapackEntries(options: DatapackEntryFindOptions): Datapack
     sections: [
       {
         source: "commands",
-        total: commands.matchedPaths,
-        truncated: commands.truncated,
-        entries: commands.paths,
-        lookup: `datapack commands ${version} --contains ${JSON.stringify(query)}`,
+        total: commands.length,
+        truncated: commands.length > limit,
+        entries: commands.slice(0, limit),
+        lookup: `datapack commands ${version}${discoveryContainsOption(discoveryTerm)}`,
       },
       {
         source: "datapack-schema",
-        total: schema.matchedFields,
-        truncated: schema.truncated,
-        entries: schema.fields,
-        lookup: `datapack search-schema ${version} --contains ${JSON.stringify(query)}`,
+        total: schema.length,
+        truncated: schema.length > limit,
+        entries: schema.slice(0, limit),
+        lookup: `datapack search-schema ${version}${discoveryContainsOption(discoveryTerm)}`,
       },
       {
         source: "vanilla-paths",
-        total: paths.matchedPaths,
-        truncated: paths.truncated,
-        entries: paths.paths,
-        lookup: `datapack vanilla-paths ${version} --contains ${JSON.stringify(query)}`,
+        total: paths.length,
+        truncated: paths.length > limit,
+        entries: paths.slice(0, limit),
+        lookup: `datapack vanilla-paths ${version}${discoveryContainsOption(discoveryTerm)}`,
       },
     ],
   };

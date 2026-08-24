@@ -1583,14 +1583,24 @@ describe("catalog", () => {
       limit: 10,
     });
     expect(result.version).toBe("26.2");
+    expect(result.totalPaths).toBe(
+      getResourcepackModelSummary("java", "26.2").files.itemDefinitions.count,
+    );
     expect(result.paths).toContain("assets/minecraft/items/bundle.json");
     expect(result.paths.every((path) => path.includes("/items/"))).toBe(true);
+    expect(
+      searchResourcepackModelPaths({
+        version: "26.2",
+        kind: "item-definition",
+        contains: "bundle item model",
+      }).paths,
+    ).toEqual([]);
   });
 
   it("searches across Minecraft surfaces", () => {
     const result = searchAll({
       version: "26.2",
-      query: "bundle",
+      query: "find item model for bundle",
       domain: "resourcepack",
       limit: 80,
     });
@@ -1598,17 +1608,64 @@ describe("catalog", () => {
     expect(result.results.map((entry) => entry.title)).toContain(
       "assets/minecraft/items/bundle.json",
     );
+    expect(
+      result.results.find((entry) => entry.title === "assets/minecraft/items/bundle.json")?.lookup,
+    ).toContain('--prefix "assets/minecraft/items/bundle.json"');
+
+    const lime = searchAll({
+      version: "26.2",
+      query: "lime model",
+      domain: "resourcepack",
+      limit: 200,
+    });
+    expect(lime.results.map((entry) => entry.surface)).toContain("resourcepack-models");
+
+    const itemModels = searchAll({
+      version: "26.2",
+      query: "item model",
+      domain: "resourcepack",
+      limit: 200,
+    });
+    expect(itemModels.results.map((entry) => entry.kind)).toContain("item-definition");
+
+    const paper = searchAll({
+      version: "26.2",
+      query: "listener for Paper Plugin Player Join Event",
+      domain: "paper-plugin",
+      limit: 80,
+    });
+    expect(paper.results.map((entry) => entry.title)).toContain(
+      "org.bukkit.event.player.PlayerJoinEvent",
+    );
+
+    const paperEvent = searchAll({
+      version: "26.2",
+      query: "paper event",
+      domain: "paper-plugin",
+      limit: 10,
+    });
+    expect(paperEvent.results[0]?.surface).toBe("catalog");
+
+    const large = searchAll({
+      version: "26.2",
+      query: "minecraft version",
+      limit: 200,
+    });
+    expect(large.results.filter((entry) => entry.surface === "catalog").length).toBeGreaterThan(
+      100,
+    );
+    expect(large.truncated).toBe(false);
   });
 
   it("finds resourcepack assets from all available indexes", () => {
     const result = findResourcepackAssets({
       version: "26.2",
-      query: "bundle",
+      query: "resourcepack Diamond Sword",
       kind: "item-definition",
     });
     expect(
       result.sections.some((section) =>
-        section.paths.includes("assets/minecraft/items/bundle.json"),
+        section.paths.includes("assets/minecraft/items/diamond_sword.json"),
       ),
     ).toBe(true);
   });
@@ -1616,7 +1673,7 @@ describe("catalog", () => {
   it("finds datapack entries", () => {
     const result = findDatapackEntries({
       version: "26.2",
-      query: "execute",
+      query: "search for datapack execute command",
       limit: 10,
     });
     expect(result.sections.find((section) => section.source === "commands")?.total).toBeGreaterThan(

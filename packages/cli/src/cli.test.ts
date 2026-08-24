@@ -843,7 +843,7 @@ describe("minecraft-skills CLI", () => {
     const searchAll = await capture([
       "minecraft",
       "search-all",
-      "bundle",
+      "bundle item model",
       "--domain",
       "resourcepack",
       "--limit",
@@ -860,12 +860,12 @@ describe("minecraft-skills CLI", () => {
       "resourcepack",
       "assets",
       "find",
-      "bundle",
+      "Diamond Sword",
       "--kind",
       "item-definition",
     ]);
     expect(resourcepack.code).toBe(0);
-    expect(resourcepack.stdout.join("\n")).toContain("assets/minecraft/items/bundle.json");
+    expect(resourcepack.stdout.join("\n")).toContain("assets/minecraft/items/diamond_sword.json");
 
     const explain = await capture([
       "minecraft",
