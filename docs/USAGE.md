@@ -126,6 +126,7 @@ minecraft-skills resourcepack models 26.2
 minecraft-skills resourcepack search-models 26.2 --kind item-definition --contains bundle
 minecraft-skills resourcepack classify-files assets/example/items/widget.json assets/example/textures/item/widget.png
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
+minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
 ```
 
@@ -141,6 +142,13 @@ pretending to validate payload internals.
 before their target-version support are reported as invalid. Missing minecraft-skills schemas or
 custom resource pack folders are reported as unvalidated gaps rather than proof that the file is
 invalid.
+
+`resourcepack validate-project` scans a complete directory and verifies item-definition model and
+special base references, legacy `overrides[].model` targets, model parents, texture paths, inherited
+texture variables, and local model-parent cycles against both project files and the target version's
+vanilla asset path index. It indexes PNG and OGG paths without decoding binary content as text and
+returns exit code 1 when errors make the graph invalid. Variables that can only be resolved inside an
+unbundled vanilla parent are reported individually as warnings.
 
 Paper plugin lookups:
 
@@ -261,6 +269,7 @@ Pack analysis tools include:
 - `classify_pack_files`
 - `get_pack_file_schema`
 - `validate_datapack_json`
+- `validate_resourcepack_project`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
@@ -307,6 +316,7 @@ import {
   searchMinecraftAssets,
   searchPaperMembers,
   searchVanillaPaths,
+  validateResourcepackProject,
 } from "@minecraft-skills/catalog";
 
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
@@ -332,6 +342,15 @@ const resourcepackAssetMatches = searchMinecraftAssets({
   version: "26.2",
   contains: "diamond_sword",
   extension: "json",
+});
+const resourcepackProject = validateResourcepackProject({
+  version: "26.2",
+  files: [
+    {
+      path: "assets/example/models/item/widget.json",
+      content: { parent: "minecraft:item/generated" },
+    },
+  ],
 });
 
 const commandMatches = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });

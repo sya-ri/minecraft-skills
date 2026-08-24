@@ -1,5 +1,12 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -103,6 +110,7 @@ import {
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validatePackFilesContent,
+  validateResourcepackProject,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -223,6 +231,32 @@ function packRelativePath(filePath: string, packRoot: string): string {
   return relative(resolve(packRoot), resolve(filePath)).replaceAll("\\", "/");
 }
 
+function readResourcepackProjectFiles(root: string): Array<{ path: string; content?: string }> {
+  const resolvedRoot = resolve(root);
+  const files: Array<{ path: string; content?: string }> = [];
+  const visit = (directory: string): void => {
+    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )) {
+      const fullPath = join(directory, entry.name);
+      if (entry.isDirectory()) {
+        visit(fullPath);
+        continue;
+      }
+      if (!entry.isFile()) {
+        continue;
+      }
+      const path = relative(resolvedRoot, fullPath).replaceAll("\\", "/");
+      files.push({
+        path,
+        ...(path.endsWith(".json") ? { content: readFileSync(fullPath, "utf8") } : {}),
+      });
+    }
+  };
+  visit(resolvedRoot);
+  return files;
+}
+
 function withDefaultDomain(args: string[], domain: "datapack" | "resourcepack"): string[] {
   return args.includes("--domain") ? args : [...args, "--domain", domain];
 }
@@ -340,6 +374,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "resourcepack classify-files": "classify-files",
     "resourcepack file-schema": "file-schema",
     "resourcepack validate-files": "validate-files",
+    "resourcepack validate-project": "validate-resourcepack-project",
     "resourcepack migration-plan": "migration-plan",
     "resourcepack search-models": "search-models",
     "skill list": "skills",
@@ -514,6 +549,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "classify-files": "datapack classify-files or resourcepack classify-files",
   "file-schema": "datapack file-schema or resourcepack file-schema",
   "validate-files": "datapack validate-files or resourcepack validate-files",
+  "validate-resourcepack-project": "resourcepack validate-project",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
@@ -727,6 +763,7 @@ Grouped commands:
   minecraft-skills resourcepack classify-files <path...>
   minecraft-skills resourcepack file-schema [version] <path>
   minecraft-skills resourcepack validate-files <version> <file...> [--pack-root dir]
+  minecraft-skills resourcepack validate-project <version> <directory> [--limit 100]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills resourcepack assets status [version]
@@ -1548,6 +1585,21 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+
+    if (command === "validate-resourcepack-project") {
+      const [version, directory] = positionalArgs(args);
+      if (!version || !directory) {
+        throw new Error("resourcepack validate-project requires <version> and <directory>");
+      }
+      const result = validateResourcepackProject({
+        edition,
+        version,
+        files: readResourcepackProjectFiles(directory),
+        limit: Number(readOption(args, "--limit", "100")),
+      });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
     }
 
     if (command === "migration-plan") {

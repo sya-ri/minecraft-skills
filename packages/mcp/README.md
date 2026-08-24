@@ -103,6 +103,7 @@ assumption and ask the user to confirm it.
 - `get_modrinth_resource`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
+- `validate_resourcepack_project`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`

@@ -104,6 +104,7 @@ import {
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validatePackFilesContent,
+  validateResourcepackProject,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -953,6 +954,33 @@ export const tools: ToolDefinition[] = [
             additionalProperties: false,
           },
         },
+      },
+      required: ["files"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_resourcepack_project",
+    description:
+      "Validate item-definition and legacy override model references, model parents, inherited texture references, and local model-parent cycles across a resource-pack project for a target Java version. Omit content for binary PNG/OGG files; their paths are indexed without text decoding.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", default: "latest" },
+        files: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string" },
+              content: {},
+            },
+            required: ["path"],
+            additionalProperties: false,
+          },
+        },
+        limit: { type: "integer", minimum: 1, maximum: 1_000, default: 100 },
       },
       required: ["files"],
       additionalProperties: false,
@@ -2138,6 +2166,33 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           version: typeof args.version === "string" ? args.version : "latest",
           domain: "datapack",
           files,
+        }),
+      );
+    }
+    if (name === "validate_resourcepack_project") {
+      if (!Array.isArray(args.files)) {
+        throw new Error("validate_resourcepack_project requires files array");
+      }
+      const files = args.files.map((file) => {
+        if (
+          typeof file !== "object" ||
+          file === null ||
+          !("path" in file) ||
+          typeof file.path !== "string"
+        ) {
+          throw new Error("validate_resourcepack_project files must include string path");
+        }
+        return {
+          path: file.path,
+          ...("content" in file ? { content: file.content } : {}),
+        };
+      });
+      return text(
+        validateResourcepackProject({
+          edition,
+          version: typeof args.version === "string" ? args.version : "latest",
+          files,
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
         }),
       );
     }

@@ -86,6 +86,7 @@ import {
   suggestMinecraftLookups,
   validatePackFileContent,
   validatePackFilesContent,
+  validateResourcepackProject,
 } from "./index.js";
 
 function testJar(entries: Record<string, string>): Buffer {
@@ -1091,6 +1092,429 @@ describe("catalog", () => {
       validFiles: 2,
       invalidFiles: 0,
     });
+  });
+
+  it("validates a resource-pack reference graph without decoding binary assets", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/items/widget.json",
+          content: {
+            model: { type: "minecraft:model", model: "example:item/widget" },
+          },
+        },
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            parent: "example:item/base",
+            textures: {
+              layer0: "example:item/widget",
+              particle: "#layer0",
+            },
+            elements: [
+              {
+                faces: { north: { texture: "#inherited" } },
+              },
+            ],
+          },
+        },
+        {
+          path: "assets/example/models/item/base.json",
+          content: {
+            parent: "minecraft:item/generated",
+            textures: { inherited: "example:item/widget" },
+          },
+        },
+        {
+          path: "assets/example/textures/item/widget.png",
+          content: Buffer.from([0xff, 0xfe, 0xfd]),
+        },
+        {
+          path: "assets/example/sounds/widget.ogg",
+          content: Buffer.from([0x4f, 0x67, 0x67, 0x53, 0xff]),
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      valid: true,
+      modelFiles: 2,
+      itemDefinitionFiles: 1,
+      binaryFiles: 2,
+      parsedJsonFiles: 3,
+      errorCount: 0,
+      diagnostics: [],
+    });
+    expect(result.checkedReferences).toBe(7);
+    expect(result.notes.join("\n")).toContain("were not decoded as text");
+  });
+
+  it("reports missing resource-pack model, parent, texture, and texture-variable references", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/items/widget.json",
+          content: {
+            model: { type: "minecraft:model", model: "example:item/missing" },
+          },
+        },
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            parent: "example:item/missing_parent",
+            textures: {
+              layer0: "example:item/missing_texture",
+            },
+          },
+        },
+        {
+          path: "assets/example/models/item/missing_variable.json",
+          content: {
+            textures: { particle: "#missing" },
+            elements: [{ faces: { north: { texture: "#face_missing" } } }],
+          },
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          severity: "error",
+          code: "missing-item-model",
+          path: "assets/example/items/widget.json",
+          reference: "example:item/missing",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "missing-model-parent",
+          path: "assets/example/models/item/widget.json",
+          reference: "example:item/missing_parent",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "missing-texture",
+          path: "assets/example/models/item/widget.json",
+          reference: "example:item/missing_texture",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "missing-texture-variable",
+          path: "assets/example/models/item/missing_variable.json",
+          reference: "#missing",
+        }),
+        expect.objectContaining({
+          severity: "error",
+          code: "missing-texture-variable",
+          path: "assets/example/models/item/missing_variable.json",
+          reference: "#face_missing",
+        }),
+      ]),
+    );
+  });
+
+  it("validates base-model references used by special item definitions", () => {
+    const valid = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/items/banner.json",
+          content: {
+            model: {
+              type: "minecraft:special",
+              base: "minecraft:item/template_banner",
+              model: { type: "minecraft:banner" },
+            },
+          },
+        },
+      ],
+    });
+    const missing = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/items/banner.json",
+          content: {
+            model: {
+              type: "minecraft:special",
+              base: "example:item/missing_banner_base",
+              model: { type: "minecraft:banner" },
+            },
+          },
+        },
+      ],
+    });
+
+    expect(valid.valid).toBe(true);
+    expect(missing.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: "error",
+        code: "missing-item-model",
+        path: "assets/example/items/banner.json",
+        reference: "example:item/missing_banner_base",
+      }),
+    );
+  });
+
+  it("validates legacy model override targets", () => {
+    const result = validateResourcepackProject({
+      version: "1.20",
+      files: [
+        {
+          path: "assets/example/models/item/clock.json",
+          content: {
+            parent: "minecraft:item/generated",
+            overrides: [{ predicate: { time: 0.5 }, model: "example:item/missing_clock_state" }],
+          },
+        },
+      ],
+    });
+
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: "error",
+        code: "missing-model-override",
+        path: "assets/example/models/item/clock.json",
+        reference: "example:item/missing_clock_state",
+      }),
+    );
+  });
+
+  it("resolves inherited texture variables in each concrete child context", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/items/good.json",
+          content: { model: { type: "minecraft:model", model: "example:item/good" } },
+        },
+        {
+          path: "assets/example/items/bad.json",
+          content: { model: { type: "minecraft:model", model: "example:item/bad" } },
+        },
+        {
+          path: "assets/example/models/item/template.json",
+          content: {
+            textures: { particle: "#layer0" },
+            elements: [{ faces: { north: { texture: "#layer0" } } }],
+          },
+        },
+        {
+          path: "assets/example/models/item/good.json",
+          content: {
+            parent: "example:item/template",
+            textures: { layer0: "example:item/widget" },
+          },
+        },
+        {
+          path: "assets/example/models/item/bad.json",
+          content: { parent: "example:item/template" },
+        },
+        {
+          path: "assets/example/textures/item/widget.png",
+          content: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+        },
+      ],
+    });
+
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({
+        code: "missing-texture-variable",
+        path: "assets/example/models/item/good.json",
+      }),
+    );
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "missing-texture-variable",
+        path: "assets/example/models/item/bad.json",
+        reference: "#layer0",
+      }),
+    );
+  });
+
+  it("lets child texture definitions override missing parent assets", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/models/item/template.json",
+          content: {
+            textures: { layer0: "example:item/missing_parent_texture" },
+            elements: [{ faces: { north: { texture: "#layer0" } } }],
+          },
+        },
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            parent: "example:item/template",
+            textures: { layer0: "example:item/widget" },
+          },
+        },
+        {
+          path: "assets/example/textures/item/widget.png",
+          content: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("reports texture alias cycles in a concrete model context", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            textures: { layer0: "#layer1", layer1: "#layer0" },
+            elements: [{ faces: { north: { texture: "#layer0" } } }],
+          },
+        },
+      ],
+    });
+
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "texture-variable-cycle",
+        path: "assets/example/models/item/widget.json",
+        reference: "#layer0",
+      }),
+    );
+  });
+
+  it("rejects model face textures that do not reference a texture variable", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            elements: [
+              { faces: { north: { texture: "example:item/missing_direct_face_texture" } } },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "invalid-texture-reference",
+        path: "assets/example/models/item/widget.json",
+        reference: "example:item/missing_direct_face_texture",
+      }),
+    );
+  });
+
+  it("rejects unsafe project paths and traversing resource locations", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "./assets/example/models/item/widget.json",
+          content: { parent: "minecraft:item/generated" },
+        },
+        {
+          path: "assets/example/items/widget.json",
+          content: {
+            model: { type: "minecraft:model", model: "example:item/../item/widget" },
+          },
+        },
+        {
+          path: "assets/example/items/dot_namespace.json",
+          content: { model: { type: "minecraft:model", model: "..:item/widget" } },
+        },
+        {
+          path: "assets/Example/models/item/Widget.json",
+          content: { parent: "minecraft:item/generated" },
+        },
+      ],
+    });
+
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "invalid-project-path" }),
+        expect.objectContaining({ code: "invalid-resource-path" }),
+        expect.objectContaining({
+          code: "invalid-model-reference",
+          reference: "example:item/../item/widget",
+        }),
+        expect.objectContaining({
+          code: "invalid-model-reference",
+          reference: "..:item/widget",
+        }),
+      ]),
+    );
+  });
+
+  it("warns when a texture variable can only be checked inside a vanilla parent", () => {
+    const result = validateResourcepackProject({
+      version: "1.21",
+      files: [
+        {
+          path: "assets/example/models/item/widget.json",
+          content: {
+            parent: "minecraft:item/music_disc_creator",
+            elements: [{ faces: { north: { texture: "#not_locally_known" } } }],
+          },
+        },
+      ],
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: "warning",
+        code: "unverified-vanilla-texture-variable",
+        reference: "#not_locally_known",
+      }),
+    );
+  });
+
+  it("detects deterministic local model-parent cycles", () => {
+    const result = validateResourcepackProject({
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/models/item/b.json",
+          content: { parent: "example:item/a" },
+        },
+        {
+          path: "assets/example/models/item/a.json",
+          content: { parent: "example:item/b" },
+        },
+      ],
+    });
+
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        severity: "error",
+        code: "model-parent-cycle",
+        path: "assets/example/models/item/a.json",
+        reference: "example:item/a -> example:item/b -> example:item/a",
+      }),
+    );
+  });
+
+  it("resolves vanilla resource-pack references against the requested version", () => {
+    const files = [
+      {
+        path: "assets/example/models/item/widget.json",
+        content: { parent: "minecraft:item/music_disc_creator" },
+      },
+    ];
+
+    expect(validateResourcepackProject({ version: "1.21", files }).valid).toBe(true);
+    expect(validateResourcepackProject({ version: "1.20.6", files }).diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "missing-model-parent",
+        reference: "minecraft:item/music_disc_creator",
+      }),
+    );
   });
 
   it("builds pack migration plans with considerations", () => {
