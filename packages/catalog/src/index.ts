@@ -183,6 +183,7 @@ export {
 } from "./javaPlayerTexture.js";
 export * from "./minecraftLog.js";
 export * from "./mixinConfig.js";
+export * from "./minecraftPerformance.js";
 export {
   type ModrinthCompatibilityFetch,
   type ModrinthCompatibilityFetchResponse,
@@ -1999,6 +2000,19 @@ function isServerAccessListValidationQuery(query: string): boolean {
       normalized,
     );
   return hasValidationIntent && hasAccessListSubject;
+}
+
+function isMinecraftPerformanceAnalysisQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasAnalysisIntent =
+    /\b(analyze|analyse|check|compare|diagnose|inspect|investigate|measure|review|trend|verify)\b/.test(
+      normalized,
+    );
+  const hasPerformanceSeries =
+    /\b(tps|mspt|tick lag|tick time|server performance|minecraft performance|performance regression|performance time series|performance timeseries)\b/.test(
+      normalized,
+    );
+  return hasAnalysisIntent && hasPerformanceSeries;
 }
 
 function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
@@ -5648,6 +5662,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Validate a vanilla server access-list JSON file offline without returning identities or ban text.",
     );
   }
+  if (!options.domain && isMinecraftPerformanceAnalysisQuery(task)) {
+    add(
+      "minecraft analyze-performance <file>",
+      "Analyze a bounded normalized Minecraft performance time series without inferring a root cause.",
+    );
+  }
   if (!searchDomain || searchDomain === "datapack") {
     const datapackProjectValidationTask =
       /(validat|verif|check|audit|lint|diagnos|broken|missing|reference|cycle)/.test(lower) &&
@@ -6413,6 +6433,22 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       ],
       lookup:
         "minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips]",
+    });
+  }
+
+  if (!options.domain && isMinecraftPerformanceAnalysisQuery(query)) {
+    addCrossResult(results, {
+      surface: "performance-analysis-tools",
+      domain: "minecraft",
+      kind: "offline-analyzer",
+      title: "Analyze normalized Minecraft performance time series",
+      score: 100,
+      matches: [
+        "TPS and MSPT threshold windows",
+        "coverage, trend, before/after comparison, and aligned association",
+        "bounded privacy-preserving input",
+      ],
+      lookup: "minecraft analyze-performance <file>",
     });
   }
 

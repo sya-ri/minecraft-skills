@@ -69,6 +69,7 @@ minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
+minecraft-skills minecraft analyze-performance ./performance-samples.json
 minecraft-skills datapack recipes
 minecraft-skills datapack find execute
 minecraft-skills datapack classify-files data/example/advancement/root.json
@@ -228,6 +229,15 @@ inspection on one stable UTF-8 `.bbmodel` file. A present name is metadata evide
 command does not validate animation playback, textures, rendering, exports, plugin formats,
 ModelEngine compatibility, or whether a group named `seat` enables seating. Newer, compressed, and
 unknown/custom formats remain explicitly indeterminate instead of being reported invalid.
+
+`minecraft analyze-performance` analyzes a bounded, normalized JSON time series without contacting
+the server. It reports metric coverage, min/p50/p95/max, threshold violation intervals, trends,
+before/after evidence, and exact-timestamp MSPT associations. Only Paper's documented 20 TPS target
+and 50 ms tick budget are defaults; CPU, heap, chunk, entity, player, and GC pause thresholds must
+be supplied explicitly. Associations and deltas are descriptive, never root-cause claims. When a
+threshold is violated, the only automated next step is a scoped spark profile while the issue is
+occurring. See [Performance analysis](docs/USAGE.md#performance-time-series-analysis) for the input
+contract, privacy constraints, bounds, and Paper source links.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
