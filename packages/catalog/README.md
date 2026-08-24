@@ -75,6 +75,8 @@ import {
   listOutputRequirements,
   listResponsePatterns,
   findVersionsByPackFormat,
+  downloadJavaPlayerTexture,
+  inspectJavaPlayerTextureBytes,
   resolveModrinthCompatibility,
   searchAuthoringScenarios,
   searchAll,
@@ -311,6 +313,15 @@ const playerSkinLayout = validatePlayerSkinLayout({
     hat: { x: 40, y: 8, width: 8, height: 8 },
   },
 });
+const inspectedPlayerTexture = inspectJavaPlayerTextureBytes(
+  "0123456789abcdef".repeat(4),
+  "skin",
+  readFileSync("./skin.png"),
+);
+const downloadedPlayerTexture = await downloadJavaPlayerTexture(
+  "0123456789abcdef".repeat(4),
+  "skin",
+);
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",
@@ -367,6 +378,16 @@ checks canonical zero-based half-open base-face `(8,8,8,8)` and hat `(40,8,8,8)`
 does not accept image bytes or identity data and does not infer slim/wide from pixels. PNG structure,
 IDAT, pixels, alpha/conversion results, display scaling, filtering, blending, clipping, and scissor
 state are not checked by this API.
+
+`inspectJavaPlayerTextureBytes` snapshots at most one MiB of direct `Uint8Array` or `Buffer` input,
+records its SHA-256, applies bounded PNG structure validation, and applies player-layout validation
+only for `skin`. `downloadJavaPlayerTexture` adds a fixed five-second request/body boundary for the
+internally constructed `https://textures.minecraft.net/texture/<64-lowercase-hex>` URL. Redirects,
+non-200 responses, non-PNG content, non-identity encoding, oversized bodies, hostile chunks, and
+excess chunk counts are closed outcomes. Successful Catalog results retain bounded bytes for API
+callers; the CLI deliberately omits them from JSON. The requested reference hash is not required to
+equal the downloaded SHA-256 and neither value proves profile signatures, provenance, account or
+texture ownership, freshness, licensing, rendered pixels, or cape/elytra layout.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function

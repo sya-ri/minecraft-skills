@@ -95,6 +95,7 @@ minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/w
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
+minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -166,6 +167,16 @@ Minecraft Java current 64x64 or legacy 64x32 layout and optional zero-based half
 hat source rectangles. A PNG CRC, critical-chunk, truncation, or safety-limit error leaves layout
 explicitly not checked and makes the command fail. The JSON validation result omits the input path
 and does not decode pixels or validate alpha, legacy conversion output, or GUI rendering behavior.
+
+`player-texture download` accepts one strict lowercase 64-hex texture reference, one
+`skin|cape|elytra` kind, and one new exact-`.png` output path. The HTTPS host and path shape, request
+headers, redirect policy, five-second timeout, identity encoding, and one-MiB response cap are
+fixed. Existing files, links/reparse points, special paths, changed parents, and create races are
+rejected without overwrite; partial writes are identity-gated for cleanup. Exit code 0 means both
+bounded download validation and verified save succeeded. JSON never contains the output path,
+downloaded byte array, or base64. It reports the requested reference and downloaded SHA-256 as
+separate observations and does not claim signatures, provenance, identity, ownership, freshness,
+or licensing.
 
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.

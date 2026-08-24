@@ -147,6 +147,23 @@ import {
 
 export * from "./fabricMeta.js";
 export {
+  downloadJavaPlayerTexture,
+  inspectJavaPlayerTextureBytes,
+  type JavaPlayerTextureContent,
+  type JavaPlayerTextureContentInspectionResult,
+  type JavaPlayerTextureDownloadResult,
+  type JavaPlayerTextureEvidence,
+  type JavaPlayerTextureFetch,
+  type JavaPlayerTextureInvalidContentResult,
+  type JavaPlayerTextureInvalidInputResult,
+  type JavaPlayerTextureInvalidResponseResult,
+  type JavaPlayerTextureKind,
+  type JavaPlayerTextureRequestFailureResult,
+  type JavaPlayerTextureResultContext,
+  javaPlayerTextureDownloadLimits,
+  javaPlayerTextureSourceEvidence,
+} from "./javaPlayerTexture.js";
+export {
   type ModrinthCompatibilityFetch,
   type ModrinthCompatibilityFetchResponse,
   type ModrinthCompatibilityOptions,

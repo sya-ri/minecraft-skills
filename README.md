@@ -87,6 +87,7 @@ minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/w
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
+minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills velocity toolchain
@@ -122,6 +123,13 @@ Java player-skin layout rules. It accepts current 64x64 and legacy 64x32 sources
 zero-based half-open face `(8,8,8,8)` and hat `(40,8,8,8)` rectangles. Layout remains explicitly
 not checked whenever PNG structure is invalid. Pixel/alpha decoding, legacy conversion output, and
 GUI scaling, filtering, blending, clipping, or scissor behavior remain outside its claims.
+
+`player-texture download` accepts only a lowercase 64-hex texture reference and a closed
+`skin|cape|elytra` kind. It constructs the fixed `https://textures.minecraft.net/texture/<hash>`
+request internally, rejects redirects or non-PNG/encoded/oversized responses, and writes only a
+new exact-`.png` regular file with exclusive creation. Success JSON omits downloaded bytes and the
+filesystem path. The reference hash and downloaded SHA-256 are separate evidence; neither proves
+profile signatures, provenance, ownership, freshness, or licensing.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

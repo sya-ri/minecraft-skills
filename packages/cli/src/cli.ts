@@ -32,6 +32,7 @@ import {
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
+  downloadJavaPlayerTexture,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -84,6 +85,7 @@ import {
   getVanillaInventory,
   getVersionDetail,
   inspectResourcepackPngAlphaBounds,
+  type JavaPlayerTextureKind,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -149,6 +151,10 @@ import {
   runRconCommand,
 } from "@minecraft-skills/rcon";
 import { readBoundedPngFile } from "./filePrefix.js";
+import {
+  validateNewPlayerTexturePngPath,
+  writeNewPlayerTexturePng,
+} from "./playerTextureOutput.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 
 type Output = {
@@ -204,6 +210,51 @@ function readOption(args: string[], name: string, fallback: string): string {
     return fallback;
   }
   return args[index + 1] ?? fallback;
+}
+
+function parsePlayerTextureDownloadArgs(args: string[]): {
+  hash: string;
+  kind: JavaPlayerTextureKind;
+  outputPath: string;
+} {
+  const options = new Map<string, string>();
+  const positionals: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    if (!arg.startsWith("--")) {
+      positionals.push(arg);
+      continue;
+    }
+    if (arg !== "--kind" && arg !== "--output") {
+      throw new Error(`player-texture download received unknown option: ${arg}`);
+    }
+    if (options.has(arg)) {
+      throw new Error(`player-texture download option must not be repeated: ${arg}`);
+    }
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`player-texture download ${arg} requires a value`);
+    }
+    options.set(arg, value);
+    index += 1;
+  }
+
+  const [hash, ...extraPositionals] = positionals;
+  if (!hash || extraPositionals.length > 0 || !/^[0-9a-f]{64}$/.test(hash)) {
+    throw new Error(
+      "player-texture download requires exactly one lowercase 64-hex texture reference hash",
+    );
+  }
+  const kind = options.get("--kind");
+  if (kind !== "skin" && kind !== "cape" && kind !== "elytra") {
+    throw new Error("player-texture download --kind must be skin, cape, or elytra");
+  }
+  const outputPath = options.get("--output");
+  if (!outputPath) {
+    throw new Error("player-texture download requires --output <new.png>");
+  }
+  return { hash, kind, outputPath };
 }
 
 const resourcepackPngValueOptions = [
@@ -673,6 +724,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "resourcepack migration-plan": "migration-plan",
     "resourcepack search-models": "search-models",
     "player-skin validate-layout": "validate-player-skin-layout",
+    "player-texture download": "download-player-texture",
     "skill list": "skills",
     "skill show": "skill",
     "skill write": "write-skill",
@@ -864,6 +916,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "validate-resourcepack-png": "resourcepack validate-png",
   "validate-resourcepack-project": "resourcepack validate-project",
   "validate-player-skin-layout": "player-skin validate-layout",
+  "download-player-texture": "player-texture download",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
@@ -903,6 +956,7 @@ const commandGroups = new Set([
   "datapack",
   "resourcepack",
   "player-skin",
+  "player-texture",
   "plugin",
   "fabric",
   "velocity",
@@ -1021,6 +1075,7 @@ Domains:
 Utilities:
   player-skin     Java player skins: bounded PNG structure, accepted dimensions, and canonical
                   face/hat source rectangles.
+  player-texture  Download one fixed-host Java skin, cape, or elytra PNG by texture reference hash.
 
 Common workflows:
   Pick a safe workflow for a task:
@@ -1101,6 +1156,7 @@ Grouped commands:
   minecraft-skills resourcepack inspect-png-alpha <file> [--require-nonempty] [--minimum-transparent-margin-pixels n] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n] [--max-inflated-bytes n]
   minecraft-skills resourcepack validate-png <file> [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
   minecraft-skills player-skin validate-layout <file> [--base-rect x,y,width,height] [--hat-rect x,y,width,height] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
+  minecraft-skills player-texture download <64-lowercase-hex> --kind skin|cape|elytra --output <new.png>
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
@@ -2035,6 +2091,36 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         (result.requirements.status === "met" || result.requirements.status === "not-requested")
         ? 0
         : 1;
+    }
+
+    if (command === "download-player-texture") {
+      const { hash, kind, outputPath } = parsePlayerTextureDownloadArgs(args);
+      const outputTarget = validateNewPlayerTexturePngPath(outputPath);
+      const result = await downloadJavaPlayerTexture(hash, kind);
+      if (result.status !== "downloaded") {
+        printJson(output, result);
+        return 1;
+      }
+      writeNewPlayerTexturePng(outputTarget, result.content.bytes);
+      printJson(output, {
+        schemaVersion: result.schemaVersion,
+        scope: result.scope,
+        status: result.status,
+        saved: true,
+        content: {
+          kind: result.content.kind,
+          byteLength: result.content.byteLength,
+          evidence: result.content.evidence,
+          png: result.content.png,
+          skinLayout: result.content.skinLayout,
+        },
+        limits: result.limits,
+        networkPolicy: result.networkPolicy,
+        sourceEvidence: result.sourceEvidence,
+        nonGuarantees: result.nonGuarantees,
+        privacy: result.privacy,
+      });
+      return 0;
     }
 
     if (command === "validate-player-skin-layout") {
