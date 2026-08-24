@@ -1433,6 +1433,132 @@ describe("catalog", () => {
     }
   });
 
+  it("exposes bounded lifecycle-owned Paper world operation guidance", () => {
+    const recipe = getAuthoringRecipe("paper-world-operation-safety");
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "verify-version-and-pre-enumerate-targets",
+      "acquire-chunks-without-blocking",
+      "schedule-by-owner-and-re-resolve",
+      "apply-bounded-resumable-batches",
+      "revalidate-racy-side-effects",
+      "reconcile-idempotently",
+      "terminate-and-release-exactly-once",
+    ]);
+    expect(recipe.finalChecks).toContain("paper-world-operation-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-world-operation-safety");
+    const rules = guardrail.rules.join("\n");
+    for (const requirement of [
+      "deduplicated set of world-and-chunk coordinates",
+      "generation policy explicitly",
+      "isChunkLoaded as a point-in-time observation, not a lease",
+      "not assume plugin chunk tickets are low-cost or automatically released",
+      "Future.get or Future.join",
+      "Async completion proves only",
+      "immutable world identity plus coordinates or entity UUID",
+      "region that owns that location",
+      "entity scheduler that follows the entity",
+      "do not form an atomic multi-region transaction",
+      "per-tick and per-region batches",
+      "complete, partial, rejected, timeout, stale, or unloaded",
+      "teleportAsync may complete false",
+      "unloaded or retired is not thereby proven dead or naturally despawned",
+      "applyPhysics=false makes arbitrary block placement safe",
+      "events as race signals",
+      "release resources exactly once",
+    ]) {
+      expect(rules).toContain(requirement);
+    }
+
+    const diagnostic = getAuthoringDiagnostic("paper-world-operation-unbounded");
+    expect(diagnostic.severity).toBe("error");
+    const failIf = diagnostic.failIf.join("\n");
+    for (const nonclaim of [
+      "isChunkLoaded is treated as a lease",
+      "Future.get or Future.join",
+      "async API exists or completes on a particular thread",
+      "automatically released",
+      "multi-region",
+      "unconditional success",
+      "applyPhysics=false",
+      "entity unload is treated as proof of death or despawn",
+      "events alone",
+      "non-idempotent side effect",
+    ]) {
+      expect(failIf).toContain(nonclaim);
+    }
+
+    const scenario = getAuthoringScenario("paper-world-operation-safety-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-world-operation-safety"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-world-operation-unbounded");
+    expect(scenario.mustAvoid.join("\n")).toContain(
+      "assuming an async API exists or completes on a particular thread",
+    );
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain(
+      "bound-chunk-spanning-world-operations",
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-world-operation-safety-review",
+      version: "26.2",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-world-operation-safety"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain("paper-world-operation-unbounded");
+  });
+
+  it("routes only chunk-lifecycle or bounded world-mutation safety requests", () => {
+    expect(
+      searchAuthoringScenarios({
+        query: "paper-world-operation-safety-review",
+        domain: "paper-plugin",
+      }).results[0]?.scenario.id,
+    ).toBe("paper-world-operation-safety-review");
+
+    for (const task of [
+      "Paper bounded block edit batches across chunk boundaries",
+      "Bukkit load and unload chunks with plugin chunk tickets",
+      "plugin getChunkAtAsync generation policy and ticket cleanup",
+      "Paper entity removal batch during chunk unload and plugin disable",
+      "Paper teleport across unloaded chunks with idempotent retry",
+    ]) {
+      const suggestions = suggestMinecraftLookups({ version: "26.2", task });
+      expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+        `plugin paper search ${JSON.stringify(task)}`,
+      );
+      expect(
+        suggestions.suggestedTools.some((entry) =>
+          entry.tool.startsWith("resourcepack assets find"),
+        ),
+      ).toBe(false);
+      expect(
+        suggestions.suggestedTools.some((entry) => entry.tool.startsWith("datapack find")),
+      ).toBe(false);
+      expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+        "paper-world-operation-safety-review",
+      );
+    }
+
+    for (const task of ["Paper entity update", "Paper teleport player"]) {
+      const search = searchAuthoringScenarios({ query: task, domain: "paper-plugin" });
+      expect(search.results[0]?.scenario.id).not.toBe("paper-world-operation-safety-review");
+    }
+
+    for (const task of [
+      "resource pack animated chunk texture",
+      "datapack fill blocks across loaded chunks",
+      "Fabric chunk loading and entity scheduler",
+    ]) {
+      const suggestions = suggestMinecraftLookups({ version: "26.2", task });
+      expect(
+        suggestions.scenarios.results.some(
+          (entry) => entry.scenario.id === "paper-world-operation-safety-review",
+        ),
+      ).toBe(false);
+    }
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

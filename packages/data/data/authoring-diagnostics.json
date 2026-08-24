@@ -1084,6 +1084,82 @@
         "Verify concrete client API names for the target version; otherwise keep the recommendation at the design-guidance level."
       ],
       "failureMode": "A UI can look acceptable in one screenshot while double scaling, stale clip geometry, or divergent hit bounds fail at another viewport, resolved scale, translation, or interaction state."
+    },
+    {
+      "id": "paper-world-operation-unbounded",
+      "domains": ["paper-plugin"],
+      "title": "Chunk-spanning world operation is unbounded or lacks lifecycle ownership",
+      "severity": "error",
+      "detectWhen": [
+        "Paper or Bukkit code loads, generates, pins, scans, or mutates more than one chunk",
+        "block, drop, entity, removal, movement, or teleport work crosses a chunk or scheduler boundary",
+        "the implementation retains Chunk, Block, BlockState, mutable Location, or Entity references across ticks, unloads, teleports, or asynchronous work",
+        "plugin chunk tickets, asynchronous chunk Futures, repeated batches, or plugin-disable cleanup have no single lifecycle owner"
+      ],
+      "requiredChecks": [
+        "resolve the target Paper version and verify every chunk, ticket, scheduler, entity, teleport, block, and event API plus its completion or callback context from official Paper sources",
+        "enumerate and deduplicate target world-and-chunk coordinates before mutation, then enforce chunk, target, generation, diagnostic, per-tick, per-region, and elapsed-time limits",
+        "choose generation allowed or forbidden explicitly and reject an over-limit or unbounded request before partial mutation",
+        "never call Future.get or Future.join on a server main, tick, or region thread, and never treat async completion as permission for arbitrary-thread world mutation",
+        "treat isChunkLoaded only as a snapshot; when residency is required, track bounded plugin-ticket ownership or sharing and exactly-once release for every terminal path",
+        "carry immutable world identity plus coordinates or entity UUID across boundaries, then re-resolve and revalidate in the location region scheduler or entity scheduler that owns the target",
+        "return complete, partial, rejected, timeout, stale, or unloaded with bounded progress counts instead of collapsing callback completion into success",
+        "revalidate before physics, drops, entity movement or removal, teleport, each resumed batch, chunk unload, cancellation, and plugin disable",
+        "make partial retries idempotent and reconcile observed postconditions without assuming applyPhysics=false, a successful schedule, an event callback, or an unloaded entity proves the intended final state"
+      ],
+      "evidence": [
+        "a target-version Paper API reference and official Paper World, Block, Entity, RegionScheduler, EntityScheduler, chunk-event, scheduling, and Folia documentation links",
+        "a bounded target and generation manifest plus scheduler ownership map",
+        "a ticket and operation lifecycle state machine with complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and disable paths",
+        "race and retry tests with per-target progress and resource-release assertions"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "the target chunks, generation policy, or maximum work are discovered only while mutations are already in progress",
+        "isChunkLoaded is treated as a lease or residency guarantee",
+        "Future.get or Future.join can block a server main, tick, or region thread",
+        "an async API exists or completes on a particular thread without target-version verification",
+        "an async chunk or teleport callback directly mutates blocks or entities without target-version completion-context and scheduler-ownership verification",
+        "plugin chunk tickets are assumed to be low-cost or automatically released",
+        "a chunk ticket has no bounded owner, sharing rule, timeout, or release path for partial, rejection, timeout, stale, unload, cancellation, exception, and plugin disable",
+        "a retained Chunk, Block, BlockState, mutable Location, or Entity reference is reused after unload, teleport, tick, or region handoff without re-resolution",
+        "one callback performs an unbounded number of chunk, block, drop, or entity operations",
+        "Paper main-thread code is claimed Folia-safe without location-region and entity ownership, or separately scheduled regions are presented as one atomic multi-region transaction",
+        "Future completion or teleportAsync completion is reported as unconditional success without inspecting per-target or Boolean results",
+        "applyPhysics=false is presented as a general safety or persistence guarantee",
+        "entity unload is treated as proof of death or despawn",
+        "events alone are the only cleanup path or are claimed to make multi-step world mutation atomic",
+        "a retry can repeat a drop, entity removal, teleport, or other non-idempotent side effect because committed progress is not reconciled"
+      ],
+      "safeResponse": [
+        "Pre-enumerate and cap target chunks, then choose generation policy before acquiring any chunk.",
+        "Chain asynchronous acquisition without blocking a tick owner, and reschedule mutation to the verified location or entity owner.",
+        "Re-resolve coordinates and UUIDs at each batch, return typed progress outcomes, and stop on stale, unloaded, timeout, cancellation, or disable.",
+        "Track ticket claims and partial side effects in one lifecycle owner, reconcile idempotently, and release each owned resource exactly once."
+      ],
+      "failureMode": "An unbounded or ownerless world operation can block ticks, leak chunk residency, race unloaded state, mutate from the wrong region, and repeat non-idempotent side effects after partial completion."
     }
   ]
 }

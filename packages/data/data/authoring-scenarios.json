@@ -645,6 +645,58 @@
         "claiming one concrete Fabric client-test API spelling works across every target release"
       ],
       "failureMode": "A screenshot suite can silently bless partial or stale output, overwrite its own oracle, and overstate CI evidence when selection, readiness, artifact ownership, failure phases, and environment limits are not explicit."
+    },
+    {
+      "id": "paper-world-operation-safety-review",
+      "domains": ["paper-plugin"],
+      "title": "Review a bounded lifecycle-owned Paper world operation",
+      "userPrompt": "Create or review a Paper operation that safely loads and mutates bounded block or entity targets across chunk and Folia region boundaries, survives unload and shutdown races, and releases every owned chunk ticket.",
+      "useWhen": [
+        "the request edits, scans, drops into, moves through, removes from, or teleports across multiple chunks",
+        "the code uses getChunkAtAsync, isChunkLoaded, plugin chunk tickets, RegionScheduler, EntityScheduler, teleportAsync, or chunk lifecycle events",
+        "a block or entity operation continues across ticks, asynchronous completion, chunk unload, region handoff, or plugin disable",
+        "the review needs fixed chunk or batch limits, explicit generation policy, typed partial outcomes, idempotent retry, or ticket cleanup"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-world-operation-safety"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-world-operation-unbounded"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the exact target Paper version, official API behavior sources, complete deduplicated chunk set, generation policy, chunk and target caps, per-tick and per-region budgets, timeout, and rejection rules are known before mutation",
+        "chunk acquisition never blocks a server main, tick, or region thread and async completion is transferred to the verified location-region or entity owner before mutation",
+        "isChunkLoaded is only a snapshot, while every required plugin ticket has bounded lifecycle ownership, sharing semantics, and exactly-once release on complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and disable",
+        "only immutable world identity plus coordinates or entity UUID crosses unload, tick, teleport, asynchronous, or region boundaries, and each target is re-resolved and revalidated immediately before use",
+        "each callback enforces target and time budgets and reports complete, partial, rejected, timeout, stale, or unloaded with bounded progress counts",
+        "physics, drops, entity movement or removal, teleport false, chunk unload, cancellation, and plugin disable are revalidated rather than inferred from scheduling or events",
+        "partial retries compare observed state with per-target progress and cannot repeat committed drops, removals, teleports, or other non-idempotent effects",
+        "Paper and Folia execution claims distinguish location-region work from entity scheduler work and never claim multi-region atomicity"
+      ],
+      "mustAvoid": [
+        "discovering an unbounded chunk set while world mutation is already running",
+        "letting a convenience overload choose whether missing chunks generate",
+        "treating isChunkLoaded as a residency lease",
+        "calling Future.get or Future.join on a server main, tick, or region thread",
+        "assuming an async API exists or completes on a particular thread without checking the target version",
+        "treating async or teleport Future completion as arbitrary-thread mutation safety or unconditional operation success",
+        "retaining Chunk, Block, BlockState, mutable Location, or Entity references across unload, teleport, tick, or region handoff",
+        "running unbounded chunk, block, drop, or entity work in one callback",
+        "assuming plugin chunk tickets are low-cost or automatically released",
+        "using one Paper main-thread transaction model as a Folia ownership model or presenting independently scheduled regions as atomic",
+        "presenting applyPhysics=false as a general block-placement safety guarantee",
+        "treating entity unload as death or despawn",
+        "relying on events alone for complete cleanup or atomicity",
+        "retrying partial non-idempotent work without per-target reconciliation"
+      ],
+      "failureMode": "Cross-chunk mutation can freeze ticks, load or pin unbounded terrain, race wrong-owner or unloaded state, leak tickets, and duplicate irreversible effects when the operation has no bounded target manifest, typed progress, reconciliation, or lifecycle owner."
     }
   ]
 }

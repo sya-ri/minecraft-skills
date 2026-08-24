@@ -454,7 +454,6 @@ describe("@minecraft-skills/data", () => {
       "fabric-client-visual-evidence-claim",
       "fabric-client-visual-evidence-report",
     ]);
-
     const scenarios = readDataJson<{
       scenarios: Array<{
         id: string;
@@ -593,6 +592,70 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.requiredChecks.join("\n")).toContain("especially Auto");
     expect(diagnostic?.failIf.join("\n")).toContain("GUI scale applied a second time");
     expect(diagnostic?.failIf.join("\n")).toContain("screenshots are the only proof");
+  });
+
+  it("bundles Paper world operation lifecycle safety guidance and official sources", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{ id: string; steps: Array<{ id: string }>; finalChecks: string[] }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-world-operation-safety");
+    expect(recipe?.steps.map((step) => step.id)).toEqual([
+      "verify-version-and-pre-enumerate-targets",
+      "acquire-chunks-without-blocking",
+      "schedule-by-owner-and-re-resolve",
+      "apply-bounded-resumable-batches",
+      "revalidate-racy-side-effects",
+      "reconcile-idempotently",
+      "terminate-and-release-exactly-once",
+    ]);
+    expect(recipe?.finalChecks).toContain("paper-world-operation-safety");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const rules = guardrails.guardrails
+      .find((entry) => entry.id === "paper-world-operation-safety")
+      ?.rules.join("\n");
+    expect(rules).toContain("isChunkLoaded as a point-in-time observation, not a lease");
+    expect(rules).toContain("complete, partial, rejected, timeout, stale, or unloaded");
+    expect(rules).toContain("applyPhysics=false");
+    expect(rules).toContain("entity scheduler that follows the entity");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-world-operation-unbounded",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("events alone");
+    expect(diagnostic?.failIf.join("\n")).toContain("automatically released");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-world-operation-safety-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-world-operation-safety"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain("paper-world-operation-unbounded");
+
+    const usage = readFileSync(join(process.cwd(), "../../docs/USAGE.md"), "utf8");
+    for (const officialUrl of [
+      "https://jd.papermc.io/paper/26.2/org/bukkit/World.html",
+      "https://jd.papermc.io/paper/26.2/org/bukkit/block/Block.html",
+      "https://jd.papermc.io/paper/26.2/org/bukkit/entity/Entity.html",
+      "https://jd.papermc.io/paper/26.2/org/bukkit/event/world/ChunkUnloadEvent.html",
+      "https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/RegionScheduler.html",
+      "https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/EntityScheduler.html",
+      "https://docs.papermc.io/paper/dev/folia-support/",
+      "https://docs.papermc.io/folia/reference/overview/",
+    ]) {
+      expect(usage).toContain(officialUrl);
+    }
   });
 
   it("loads bundled claim policy JSON", () => {

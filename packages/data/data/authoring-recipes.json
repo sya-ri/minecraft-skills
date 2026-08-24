@@ -1862,6 +1862,172 @@
       ],
       "finalChecks": ["fabric-client-ui-scale-clipping-safety"],
       "failureMode": "Independent scale, render, clip, and input calculations can pass a single screenshot while producing clipped content or misaligned controls in other resolved viewport cases."
+    },
+    {
+      "id": "paper-world-operation-safety",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review bounded Paper world operations across chunk boundaries",
+      "when": [
+        "the request loads, generates, pins, scans, or mutates multiple chunks from a Paper or Bukkit plugin",
+        "block edits, drops, entity movement or removal, or teleportation can cross a chunk, tick, unload, or Folia region boundary",
+        "the implementation uses async chunk loading, plugin chunk tickets, repeated world batches, RegionScheduler, EntityScheduler, or chunk lifecycle events",
+        "the review must prevent tick-thread blocking, stale references, ticket leaks, duplicate partial side effects, or shutdown races"
+      ],
+      "steps": [
+        {
+          "id": "verify-version-and-pre-enumerate-targets",
+          "action": "Resolve the target Paper version and verify the exact World, Chunk, Block, Entity, teleport, RegionScheduler, EntityScheduler, and event APIs from official Paper sources. Convert the complete requested selection into deduplicated world-and-chunk coordinates, define generation allowed or forbidden, and reject unknown, unbounded, or over-limit work before loading or mutation begins.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version Javadocs matches for every overload and callback or completion context used",
+            "A bounded target manifest containing world identities, chunk coordinates, generation policy, maximum chunks, maximum targets, timeout, and rejection rules"
+          ],
+          "stopIfMissing": "Do not begin loading or mutation until the complete chunk set, generation policy, target-version APIs, and hard limits are known."
+        },
+        {
+          "id": "acquire-chunks-without-blocking",
+          "action": "Acquire only the bounded target chunks through target-version-supported asynchronous APIs. Never call Future.get or Future.join on a server main, tick, or region thread. Treat isChunkLoaded as a snapshot, and if residency is required, let one lifecycle owner track exact plugin-ticket claims, shared references, deadlines, and release responsibility.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Target-version evidence for async chunk acquisition, generation flags, callback or Future completion context, isChunkLoaded, and plugin-ticket add and remove behavior",
+            "A bounded acquisition queue and ticket ledger that distinguishes claims added by this operation from same-plugin shared residency"
+          ],
+          "stopIfMissing": "Do not synchronously wait on chunk acquisition or treat a loaded snapshot as a lease; reject the design until asynchronous continuation and owned residency are explicit."
+        },
+        {
+          "id": "schedule-by-owner-and-re-resolve",
+          "action": "Carry only immutable world identity plus coordinates or entity UUID across asynchronous, tick, unload, teleport, or region boundaries. On continuation, schedule block and location work on the owning region and entity work on that entity's scheduler, then re-resolve and validate the target, operation generation, plugin state, chunk state, and preconditions immediately before use.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policies"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_claim_policies"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listClaimPolicies"
+            ]
+          },
+          "evidence": [
+            "A scheduler-ownership map for Paper and any claimed Folia support",
+            "Tests proving stale Chunk, Block, BlockState, mutable Location, and Entity references are not retained across lifecycle boundaries",
+            "An entity retired or scheduling-failure path and a location-region path for every world mutation"
+          ],
+          "stopIfMissing": "Async completion is not mutation ownership; do not touch block or entity state until the target is re-resolved in its verified owning execution context."
+        },
+        {
+          "id": "apply-bounded-resumable-batches",
+          "action": "Process a fixed maximum of targets and elapsed work per tick and per region, recording a resumable cursor and bounded diagnostics. Stop when cancelled, timed out, stale, unloaded, or disabled, and emit complete, partial, rejected, timeout, stale, or unloaded with attempted, applied, skipped, failed, and remaining counts.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Explicit item and time budgets for each tick and region plus an upper bound on queued callbacks and diagnostics",
+            "Typed progress and terminal outcomes that do not equate Future or callback completion with full mutation success"
+          ],
+          "stopIfMissing": "Do not run an unbounded chunk, block, drop, or entity loop in one callback or report unconditional success without per-target progress."
+        },
+        {
+          "id": "revalidate-racy-side-effects",
+          "action": "Before every side effect and resumed batch, recheck assumptions affected by neighboring physics, drops, entity movement or removal, teleport completion, chunk unload, cancellation, and plugin disable. Inspect teleport Boolean results, treat entity retirement or unload separately from death or despawn, and never use applyPhysics=false as a general safety or persistence guarantee.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Target-version Paper Javadocs for block physics flags, teleport results, entity scheduler retirement, and chunk or entity lifecycle events used",
+            "Race tests in which physics changes neighbors, a dropped or moved entity disappears, teleport returns false, a chunk unloads, or plugin disable begins between acquisition and apply"
+          ],
+          "stopIfMissing": "Do not infer a final world state from scheduling, event delivery, applyPhysics=false, an unloaded entity, or a completed teleport Future; inspect the actual result and current target."
+        },
+        {
+          "id": "reconcile-idempotently",
+          "action": "Give the operation a stable identity and record per-target compare-before-apply progress. On retry or recovery, reconcile observed postconditions and resume only unapplied work so drops, entity removals, teleports, and other non-idempotent effects cannot repeat after partial completion.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A per-target progress model and compare-before-apply rule",
+            "Tests that interrupt after partial mutation and prove retries neither repeat committed side effects nor skip remaining work"
+          ],
+          "stopIfMissing": "Do not retry a partially applied world operation until committed effects can be distinguished from remaining work."
+        },
+        {
+          "id": "terminate-and-release-exactly-once",
+          "action": "Use one lifecycle owner to accept exactly one terminal transition, stop new work, reconcile committed effects, settle the typed outcome, and release every owned ticket or scheduled resource once. Cover complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and plugin disable independently of whether lifecycle events arrive.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A ticket ledger and terminal-state transition that release only owned claims and handle shared same-plugin residency",
+            "Assertions that every terminal and plugin-disable path leaves no operation-owned tickets, batches, or unresolved completion",
+            "Tests proving duplicate events, callbacks, cancellation, and shutdown cleanup are idempotent"
+          ],
+          "stopIfMissing": "Do not rely on automatic ticket release or events alone; the lifecycle owner must independently release every owned claim exactly once."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-world-operation-safety",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A cross-chunk operation can block the owning tick, pin unbounded chunks, cross scheduler ownership, reuse unloaded targets, repeat partial side effects, or leak resources unless target discovery, acquisition, batches, outcomes, reconciliation, and cleanup share one bounded lifecycle."
     }
   ]
 }

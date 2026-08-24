@@ -82,6 +82,9 @@ minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
+minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
+minecraft-skills plugin paper recipe paper-world-operation-safety
+minecraft-skills plugin paper plan paper-world-operation-safety-review 26.2
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -847,6 +850,7 @@ import {
   analyzeMinecraftLog,
   getAuthoringContext,
   getAuthoringDiagnostic,
+  getAuthoringGuardrail,
   getAuthoringPlan,
   getAuthoringRecipe,
   getAuthoringScenario,
@@ -895,6 +899,10 @@ const scenario = getAuthoringScenario("paper-event-listener-review");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
 const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const itemDeliveryScenario = getAuthoringScenario("paper-item-delivery-review");
+const worldOperationGuardrail = getAuthoringGuardrail("paper-world-operation-safety");
+const worldOperationDiagnostic = getAuthoringDiagnostic("paper-world-operation-unbounded");
+const worldOperationRecipe = getAuthoringRecipe("paper-world-operation-safety");
+const worldOperationScenario = getAuthoringScenario("paper-world-operation-safety-review");
 const matchingScenarios = searchAuthoringScenarios({
   query: "Paper event listener",
   domain: "paper-plugin",
@@ -1023,6 +1031,25 @@ It supports every legal PNG color-type/bit-depth combination, filters 0-4, and A
 keys, and exact 16-bit keys are validated before alpha facts are complete. Option, limit, and
 requirement objects are descriptor-preflighted; invalid public input becomes a diagnostic result
 instead of invoking accessors or throwing.
+The world-operation guidance is for bounded block and entity work that crosses chunk, tick,
+asynchronous, unload, teleport, or Folia region boundaries. It requires target chunks and generation
+policy to be fixed before mutation, forbids blocking a server tick owner with `Future.get()` or
+`Future.join()`, re-resolves coordinates and entity UUIDs in their current owner, returns typed
+partial outcomes, reconciles retries idempotently, and releases operation-owned chunk tickets on
+every terminal path. It does not treat `isChunkLoaded()` as a lease, async completion as arbitrary
+thread mutation safety, `applyPhysics=false` as a general safety guarantee, entity unload as death,
+teleport completion as unconditional success, or lifecycle events as complete cleanup.
+
+Resolve the Javadocs URL for the requested version with `getPaperApiReference`; the current official
+primary references include Paper's [World Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/World.html),
+[Block Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/block/Block.html),
+[Entity Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/entity/Entity.html),
+[ChunkUnloadEvent Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/event/world/ChunkUnloadEvent.html),
+[RegionScheduler Javadocs](https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/RegionScheduler.html),
+[EntityScheduler Javadocs](https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/EntityScheduler.html),
+[Paper and Folia scheduler guidance](https://docs.papermc.io/paper/dev/folia-support/), and
+[Folia's region ownership overview](https://docs.papermc.io/folia/reference/overview/). API
+availability and callback or completion context must still be checked for the actual target version.
 
 Piston is Mojang's official metadata/download infrastructure, not a third-party dataset. Use
 `get_mojang_version_metadata` when an agent needs the official version metadata URL, client/server
