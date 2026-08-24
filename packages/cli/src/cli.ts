@@ -5,7 +5,6 @@ import {
   fstatSync,
   mkdirSync,
   openSync,
-  readdirSync,
   readFileSync,
   readSync,
   realpathSync,
@@ -136,6 +135,7 @@ import {
   type RconPermissionPreset,
   runRconCommand,
 } from "@minecraft-skills/rcon";
+import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 
 type Output = {
   write: (value: string) => void;
@@ -375,32 +375,6 @@ function packRelativePath(filePath: string, packRoot: string): string {
     return filePath.replaceAll("\\", "/");
   }
   return relative(resolve(packRoot), resolve(filePath)).replaceAll("\\", "/");
-}
-
-function readResourcepackProjectFiles(root: string): Array<{ path: string; content?: string }> {
-  const resolvedRoot = resolve(root);
-  const files: Array<{ path: string; content?: string }> = [];
-  const visit = (directory: string): void => {
-    for (const entry of readdirSync(directory, { withFileTypes: true }).sort((left, right) =>
-      left.name.localeCompare(right.name),
-    )) {
-      const fullPath = join(directory, entry.name);
-      if (entry.isDirectory()) {
-        visit(fullPath);
-        continue;
-      }
-      if (!entry.isFile()) {
-        continue;
-      }
-      const path = relative(resolvedRoot, fullPath).replaceAll("\\", "/");
-      files.push({
-        path,
-        ...(path.endsWith(".json") ? { content: readFileSync(fullPath, "utf8") } : {}),
-      });
-    }
-  };
-  visit(resolvedRoot);
-  return files;
 }
 
 function withDefaultDomain(args: string[], domain: "datapack" | "resourcepack"): string[] {

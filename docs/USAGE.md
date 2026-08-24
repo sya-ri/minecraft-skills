@@ -163,10 +163,20 @@ invalid.
 
 `resourcepack validate-project` scans a complete directory and verifies item-definition model and
 special base references, legacy `overrides[].model` targets, model parents, texture paths, inherited
-texture variables, and local model-parent cycles against both project files and the target version's
-vanilla asset path index. It indexes PNG and OGG paths without decoding binary content as text and
-returns exit code 1 when errors make the graph invalid. Variables that can only be resolved inside an
-unbundled vanilla parent are reported individually as warnings.
+texture variables, local model-parent cycles, `sounds.json` file/event targets, and local sound-event
+cycles. Model and texture references are checked against both project files and the target version's
+vanilla asset path index. PNG paths are indexed without decoding; each OGG file is read only through
+its strict 58-byte Ogg/Vorbis identification page. WAV, Opus, truncated or corrupt headers, and
+invalid Vorbis identification fields are errors. Stereo produces a positional-attenuation warning;
+more than two channels is an error because Minecraft's OpenAL upload path supports mono and stereo.
+Unavailable headers and external sound file/event references are warnings that also make validation
+completeness false. The command does not decode complete audio, duration, loudness, or later Vorbis
+packets, and returns exit code 1 when errors make the graph invalid. Variables that can only be
+resolved inside an unbundled vanilla parent are reported individually as warnings. Project requests,
+sound graphs, and retained diagnostics use published hard ceilings; results echo applied/exceeded
+limits, processed-file and completeness metadata, and exact omitted-diagnostic counts.
+The CLI applies matching file, directory-depth, path, and aggregate JSON-byte bounds while scanning,
+before it allocates the catalog request.
 
 Paper plugin lookups:
 
@@ -420,6 +430,9 @@ const resourcepackProject = validateResourcepackProject({
     },
   ],
 });
+
+// ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
+// needed; callers should avoid reading a complete audio file solely for validation.
 
 const commandMatches = searchCommands({ version: "26.2", prefix: "execute", limit: 10 });
 const assetMatches = searchVanillaPaths({

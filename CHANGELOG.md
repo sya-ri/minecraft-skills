@@ -9,8 +9,13 @@ All notable changes to this project are documented here.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.
-- Binary-safe resource-pack directory scanning that indexes PNG/OGG paths without decoding their
-  contents as UTF-8.
+- Resource-pack `sounds.json` file/event reference validation, local event-cycle detection, and
+  strict bounded checks of each OGG file's 58-byte Ogg/Vorbis identification page across the
+  catalog API, CLI, and MCP. Validation uses iterative graph traversal, rejects channel counts above
+  two, preserves per-entry diagnostics, and reports bounded request, diagnostic, and completeness
+  metadata.
+- Binary-safe resource-pack directory scanning that indexes PNG paths and reads only the first 58
+  bytes of each OGG file instead of decoding binary contents as UTF-8 or loading complete audio.
 - Official live Fabric Meta v2 toolchain lookup across the catalog API, CLI, MCP server, and
   natural-language discovery, with bounded Loader, Intermediary, Yarn, and tuple candidates.
 - Version-specific official server report registry entry indexes, with exact, prefix, contains,

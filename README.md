@@ -84,6 +84,13 @@ minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 ```
 
+`resourcepack validate-project` also validates `sounds.json` file/event references and local event
+cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification
+page; it does not fully decode audio. Stereo produces a positional warning, channel counts above two
+are rejected, and unverified external sound references are surfaced through completeness metadata.
+File/content/graph/diagnostic work is bounded and the result reports applied limits and omitted
+diagnostic counts.
+
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
 `excludedRegistries` fields expose partial coverage, while null-to-number observations are not

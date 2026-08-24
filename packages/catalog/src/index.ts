@@ -46,11 +46,16 @@ import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.
 import { inspectModrinthArchive } from "./modrinthZip.js";
 import { compareObservedProtocolIds } from "./registryEntryComparison.js";
 import {
+  defaultResourcepackProjectValidationLimits,
   type ResourcepackProjectDiagnostic,
   type ResourcepackProjectDiagnosticSeverity,
   type ResourcepackProjectFile,
+  type ResourcepackProjectValidationLimitName,
+  type ResourcepackProjectValidationLimits,
   type ResourcepackProjectValidationOptions,
   type ResourcepackProjectValidationResult,
+  type ResourcepackSoundValidationIncompleteReason,
+  resolveResourcepackProjectValidationLimits,
   validateResourcepackReferenceGraph,
 } from "./resourcepackProject.js";
 import {
@@ -144,7 +149,7 @@ export {
   modrinthCompatibilityLimits,
   resolveModrinthCompatibility,
 } from "./modrinthCompatibility.js";
-
+export { vorbisIdentificationPageBytes } from "./resourcepackSound.js";
 export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
@@ -198,8 +203,11 @@ export type {
   ResourcepackProjectDiagnostic,
   ResourcepackProjectDiagnosticSeverity,
   ResourcepackProjectFile,
+  ResourcepackProjectValidationLimitName,
+  ResourcepackProjectValidationLimits,
   ResourcepackProjectValidationOptions,
   ResourcepackProjectValidationResult,
+  ResourcepackSoundValidationIncompleteReason,
   ResponsePatternData,
   ResponsePatternIndexData,
   SearchMinecraftAssetsOptions,
@@ -210,10 +218,10 @@ export type {
   VersionIndexData,
   VersionSummaryData,
 };
-
 export {
   cleanCachedData,
   cleanMojangServerJar,
+  defaultResourcepackProjectValidationLimits,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
@@ -232,6 +240,7 @@ export {
   listCachedMojangServerJarEntries,
   readCachedMinecraftAssetText,
   readCachedMojangServerJarText,
+  resolveResourcepackProjectValidationLimits,
   searchMinecraftAssets,
 };
 
@@ -4645,13 +4654,14 @@ function staticPackFileJsonSchema(options: {
                 { type: "string" },
                 {
                   type: "object",
+                  required: ["name"],
                   additionalProperties: true,
                   properties: {
                     name: { type: "string" },
-                    type: { type: "string" },
-                    volume: { type: "number" },
-                    pitch: { type: "number" },
-                    weight: { type: "integer" },
+                    type: { type: "string", enum: ["file", "event"] },
+                    volume: { type: "number", exclusiveMinimum: 0 },
+                    pitch: { type: "number", exclusiveMinimum: 0 },
+                    weight: { type: "integer", minimum: 1 },
                     stream: { type: "boolean" },
                     attenuation_distance: { type: "integer" },
                     preload: { type: "boolean" },
@@ -4733,7 +4743,7 @@ function staticPackFileJsonSchema(options: {
         contentMediaType: file.extension === "ogg" ? "audio/ogg" : "application/octet-stream",
         "x-minecraft-skills": {
           format: "Resource pack sound asset.",
-          note: "This identifies the asset file format only; minecraft-skills does not validate audio codec details.",
+          note: "Project validation checks the bounded 58-byte Ogg/Vorbis identification page; it does not fully decode audio packets.",
         },
       };
     }
@@ -5237,6 +5247,7 @@ export function validateResourcepackProject(
     version,
     vanillaPaths: readVanillaPathList(edition, version, "resourcepack"),
     limit,
+    limits: resolveResourcepackProjectValidationLimits(options.limits),
   });
 }
 
