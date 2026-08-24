@@ -17,6 +17,10 @@ All notable changes to this project are documented here.
   and changelog filters.
 - Typed access to common public Modrinth project, dependency, version, file-hash, user, tag, and
   statistics resources.
+- Offline `.mrpack` and `modrinth.index.json` validation across the catalog API, CLI, and MCP,
+  including bounded ZIP reads and expansion, CRC/header/flag/extra-field integrity, special-file
+  and portable path safety, official download-host enforcement, archive assurance levels, hashes,
+  environment values, environment-aware override conflicts, and index/archive consistency checks.
 
 ### Changed
 

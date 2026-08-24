@@ -12,6 +12,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultModrinthPackValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -81,6 +82,7 @@ import {
   listSourceTiers,
   listVersionSupport,
   listVersions,
+  type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
@@ -103,6 +105,7 @@ import {
   suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
+  validateModrinthPack,
   validatePackFilesContent,
   validateResourcepackProject,
 } from "@minecraft-skills/catalog";
@@ -1018,6 +1021,58 @@ export const tools: ToolDefinition[] = [
         limit: { type: "number", default: 20 },
       },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_modrinth_pack",
+    description:
+      "Validate Modrinth modrinth.index.json data and optional .mrpack archive-entry metadata offline, including paths, hashes, URLs, environments, overrides, and index/archive consistency. Pass metadata only; binary archives are not accepted.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        index: {},
+        archiveEntries: {
+          type: "array",
+          maxItems: 25000,
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string" },
+              size: { type: "integer", minimum: 0 },
+              compressedSize: { type: "integer", minimum: 0 },
+              directory: { type: "boolean" },
+              compressionMethod: { type: "integer", enum: [0, 8] },
+              flags: { type: "integer", minimum: 0, maximum: 65535 },
+              crc32: { type: "integer", minimum: 0, maximum: 4294967295 },
+              unixMode: { type: "integer", minimum: 0, maximum: 65535 },
+            },
+            required: ["path"],
+            additionalProperties: false,
+          },
+        },
+        additionalDownloadHosts: {
+          type: "array",
+          maxItems: 64,
+          items: { type: "string" },
+          description:
+            "Exact additional HTTPS host names to allow. Each use produces a non-official-host warning.",
+        },
+        limits: {
+          type: "object",
+          properties: {
+            maxArchiveBytes: { type: "integer", minimum: 1, maximum: 536870912 },
+            maxArchiveEntries: { type: "integer", minimum: 1, maximum: 25000 },
+            maxIndexBytes: { type: "integer", minimum: 1, maximum: 16777216 },
+            maxEntryUncompressedBytes: { type: "integer", minimum: 1, maximum: 536870912 },
+            maxTotalUncompressedBytes: { type: "integer", minimum: 1, maximum: 4294967296 },
+            maxCompressionRatio: { type: "number", minimum: 1, maximum: 200 },
+            maxDiagnostics: { type: "integer", minimum: 1, maximum: 200 },
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["index"],
       additionalProperties: false,
     },
   },
@@ -2267,6 +2322,134 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.category === "string" ? { category: args.category } : {}),
           ...(typeof args.offset === "number" ? { offset: args.offset } : {}),
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "validate_modrinth_pack") {
+      if (!("index" in args)) {
+        throw new Error("validate_modrinth_pack requires index JSON data");
+      }
+      if (args.archiveEntries !== undefined && !Array.isArray(args.archiveEntries)) {
+        throw new Error("validate_modrinth_pack archiveEntries must be an array");
+      }
+      if (
+        Array.isArray(args.archiveEntries) &&
+        args.archiveEntries.length > defaultModrinthPackValidationLimits.maxArchiveEntries
+      ) {
+        throw new Error(
+          `validate_modrinth_pack archiveEntries must not exceed ${defaultModrinthPackValidationLimits.maxArchiveEntries} entries`,
+        );
+      }
+      const archiveEntries = Array.isArray(args.archiveEntries)
+        ? args.archiveEntries.map((entry) => {
+            const archiveEntry = asRecord(entry);
+            if (typeof archiveEntry.path !== "string") {
+              throw new Error("validate_modrinth_pack archive entries require string path");
+            }
+            if (archiveEntry.size !== undefined && typeof archiveEntry.size !== "number") {
+              throw new Error("validate_modrinth_pack archive entry size must be a number");
+            }
+            if (
+              archiveEntry.compressedSize !== undefined &&
+              typeof archiveEntry.compressedSize !== "number"
+            ) {
+              throw new Error(
+                "validate_modrinth_pack archive entry compressedSize must be a number",
+              );
+            }
+            if (
+              archiveEntry.directory !== undefined &&
+              typeof archiveEntry.directory !== "boolean"
+            ) {
+              throw new Error("validate_modrinth_pack archive entry directory must be a boolean");
+            }
+            return {
+              path: archiveEntry.path,
+              ...(typeof archiveEntry.size === "number" ? { size: archiveEntry.size } : {}),
+              ...(typeof archiveEntry.compressedSize === "number"
+                ? { compressedSize: archiveEntry.compressedSize }
+                : {}),
+              ...(typeof archiveEntry.directory === "boolean"
+                ? { directory: archiveEntry.directory }
+                : {}),
+              ...(typeof archiveEntry.compressionMethod === "number"
+                ? { compressionMethod: archiveEntry.compressionMethod }
+                : {}),
+              ...(typeof archiveEntry.flags === "number" ? { flags: archiveEntry.flags } : {}),
+              ...(typeof archiveEntry.crc32 === "number" ? { crc32: archiveEntry.crc32 } : {}),
+              ...(typeof archiveEntry.unixMode === "number"
+                ? { unixMode: archiveEntry.unixMode }
+                : {}),
+            };
+          })
+        : undefined;
+      const numericArchiveEntryFields = [
+        "compressionMethod",
+        "flags",
+        "crc32",
+        "unixMode",
+      ] as const;
+      if (Array.isArray(args.archiveEntries)) {
+        for (const entry of args.archiveEntries) {
+          const archiveEntry = asRecord(entry);
+          for (const field of numericArchiveEntryFields) {
+            if (archiveEntry[field] !== undefined && typeof archiveEntry[field] !== "number") {
+              throw new Error(`validate_modrinth_pack archive entry ${field} must be a number`);
+            }
+          }
+        }
+      }
+      if (
+        args.additionalDownloadHosts !== undefined &&
+        !Array.isArray(args.additionalDownloadHosts)
+      ) {
+        throw new Error("validate_modrinth_pack additionalDownloadHosts must be a string array");
+      }
+      if (Array.isArray(args.additionalDownloadHosts) && args.additionalDownloadHosts.length > 64) {
+        throw new Error(
+          "validate_modrinth_pack additionalDownloadHosts must not exceed 64 entries",
+        );
+      }
+      if (
+        Array.isArray(args.additionalDownloadHosts) &&
+        !args.additionalDownloadHosts.every((host) => typeof host === "string")
+      ) {
+        throw new Error("validate_modrinth_pack additionalDownloadHosts must be a string array");
+      }
+      let limits: Partial<ModrinthPackValidationLimits> | undefined;
+      if (args.limits !== undefined) {
+        if (!args.limits || typeof args.limits !== "object" || Array.isArray(args.limits)) {
+          throw new Error("validate_modrinth_pack limits must be an object");
+        }
+        const rawLimits = asRecord(args.limits);
+        const limitNames = [
+          "maxArchiveBytes",
+          "maxArchiveEntries",
+          "maxIndexBytes",
+          "maxEntryUncompressedBytes",
+          "maxTotalUncompressedBytes",
+          "maxCompressionRatio",
+          "maxDiagnostics",
+        ] as const;
+        limits = {};
+        for (const limitName of limitNames) {
+          const value = rawLimits[limitName];
+          if (value !== undefined) {
+            if (typeof value !== "number") {
+              throw new Error(`validate_modrinth_pack ${limitName} must be a number`);
+            }
+            limits[limitName] = value;
+          }
+        }
+      }
+      return text(
+        validateModrinthPack({
+          index: args.index,
+          ...(archiveEntries ? { archiveEntries } : {}),
+          ...(Array.isArray(args.additionalDownloadHosts)
+            ? { additionalDownloadHosts: args.additionalDownloadHosts as string[] }
+            : {}),
+          ...(limits ? { limits } : {}),
         }),
       );
     }

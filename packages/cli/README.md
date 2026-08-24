@@ -85,6 +85,9 @@ minecraft-skills plugin paper events "player join" --version 26.2
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
+minecraft-skills modrinth validate-pack ./example.mrpack
+minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
+minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 ```
 
 The Modrinth command uses the public v2 search API and supports `--category`, sorting with
@@ -98,6 +101,13 @@ to the graph without being decoded as text. Invalid graphs are printed as JSON a
 `--include-changelog` boolean filters.
 `modrinth get` exposes the remaining common public read resources, including dependencies, version
 and file-hash metadata, users, tags, and statistics.
+`modrinth validate-pack` requires the `.mrpack` extension and a regular file. It bounds reads from
+one opened file handle, rejecting oversized files and files whose size changes during the read,
+then validates the index plus binary ZIP integrity offline. `--max-archive-bytes` can lower, but
+never raise, the 512 MiB default. It does not
+download or resolve referenced files. Downloads are restricted to Modrinth's documented four
+hosts unless an exact host is repeated with `--allow-download-host`. An explicitly allowed
+non-official host produces a warning. Invalid packs return exit code 1; warning-only packs return 0.
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data manifest`, `data cache-dir`, `data cache-list`, `data cache-clean`, and
