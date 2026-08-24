@@ -364,6 +364,7 @@ const serverProperties = validateServerProperties({
 const logAnalysis = analyzeMinecraftLog({
   text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
 Caused by: java.lang.IllegalStateException: root`,
+  limits: { maxMixinFailures: 50 },
 });
 const blockbenchProject = inspectBlockbenchProject({
   project:
@@ -529,7 +530,15 @@ crash reports. It separates primary cause and suppressed branches, records only 
 platform/version and mod/plugin statements, and never infers ownership from Java package names.
 All limits may be lowered but not raised. Credentials, IP addresses, absolute paths, ANSI/OSC and
 unsafe Unicode controls are sanitized before values are retained or deduplicated; no raw input
-line is returned.
+line is returned. `mixinFailures` contains bounded facts only when explicit Mixin exception
+messages state that a shadow or injection target was not found, an injection check failed, a class
+from a defined mixin package was loaded directly, or a mixin contains a non-private static member.
+The categories do not assign blame or validate mappings, refmaps, configuration, target bytecode,
+fixes, or runtime compatibility. `noRefmapReported: false` means only that the same exception
+message did not contain the recognized no-refmap statement; it does not prove that a refmap was
+loaded or correct. Category-specific evidence fields are null when the message does not state them;
+counts that cannot be represented as safe integers are also null. `mixinFailureTotal`, retained and
+omitted counts, `maxMixinFailures`, and `exceededLimits` expose truncation explicitly.
 
 `validateFabricMod` checks bounded structural rules for current `fabric.mod.json` schema v1 data.
 Without `archiveEntries` it proves metadata structure only; caller-supplied entries additionally

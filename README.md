@@ -183,7 +183,11 @@ that omit exact commands, versions, skipped checks, known baselines, or remainin
 diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,
 retains only bounded events/frames/labels, and sanitizes credentials, IP addresses, absolute paths,
 terminal controls, and unsafe Unicode before returning JSON. Referenced JARs and explicitly named
-mods/plugins are evidence labels only, not automatic blame attribution.
+mods/plugins are evidence labels only, not automatic blame attribution. Explicit Mixin exception
+wording is also summarized into bounded shadow-target, injection-target/check, mixin-package class
+load, and invalid-static-member facts. These categories do not prove responsibility, mapping or
+refmap correctness, configuration validity, target bytecode validity, a fix, or runtime
+compatibility.
 
 `fabric validate-mod` checks bounded structural rules for current `fabric.mod.json` schema v1 and
 bounded JAR structure offline. It does not validate dependency predicates or satisfaction,

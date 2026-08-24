@@ -199,6 +199,152 @@ describe("Minecraft log analysis", () => {
     expect(result.components.map((entry) => entry.id)).not.toContain("hiddenpackage");
   });
 
+  it("extracts bounded facts from explicit Mixin runtime failure messages", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered",
+        "Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin [example.mixins.json:InventoryMixin] FAILED during APPLY",
+        "Caused by: org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field leftPos was not located in the target class net.minecraft.client.gui.screens.inventory.InventoryScreen. No refMap loaded.",
+        "org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Critical injection failure: @Inject annotation on openWardrobe could not find any targets matching 'mouseClicked' in net/minecraft/client/gui/screens/inventory/InventoryScreen. No refMap loaded.",
+        "org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Redirector hideArmor(Lnet/minecraft/class_1304;)V in example.client.mixins.json:PlayerRendererMixin from mod example failed injection check, (0/1) succeeded. Scanned 0 target(s). No refMap loaded.",
+        "org.spongepowered.asm.mixin.transformer.throwables.IllegalClassLoadError: example.mixin.PlayerRendererMixinKt is in a defined mixin package example.mixin.* owned by example.client.mixins.json and cannot be referenced directly",
+        "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: Mixin example.client.mixins.json:ExampleMixin from mod example contains non-private static field Companion:Lexample/mixin/ExampleMixin$Companion;",
+      ].join("\n"),
+    });
+
+    expect(result.mixinFailureTotal).toBe(5);
+    expect(result.retainedMixinFailureCount).toBe(5);
+    expect(result.omittedMixinFailureCount).toBe(0);
+    expect(result.mixinFailures).toEqual([
+      expect.objectContaining({
+        line: 3,
+        relation: "caused-by",
+        branch: "cause",
+        exceptionType: "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException",
+        category: "shadow-target-not-found",
+        subject: "leftPos",
+        memberKind: "field",
+        targetMember: "leftPos",
+        targetClass: "net.minecraft.client.gui.screens.inventory.InventoryScreen",
+        noRefmapReported: true,
+      }),
+      expect.objectContaining({
+        line: 4,
+        category: "injection-target-not-found",
+        subject: "openWardrobe",
+        annotation: "Inject",
+        selector: "mouseClicked",
+        targetClass: "net/minecraft/client/gui/screens/inventory/InventoryScreen",
+        noRefmapReported: true,
+      }),
+      expect.objectContaining({
+        line: 5,
+        category: "injection-check-failed",
+        subject: "Redirector hideArmor(Lnet/minecraft/class_1304;)V",
+        mixinConfig: "example.client.mixins.json:PlayerRendererMixin",
+        succeeded: 0,
+        required: 1,
+        scannedTargets: 0,
+        noRefmapReported: true,
+      }),
+      expect.objectContaining({
+        line: 6,
+        category: "mixin-package-class-load",
+        subject: "example.mixin.PlayerRendererMixinKt",
+        mixinPackage: "example.mixin.*",
+        mixinConfig: "example.client.mixins.json",
+        noRefmapReported: false,
+      }),
+      expect.objectContaining({
+        line: 7,
+        category: "invalid-static-member",
+        subject: "example.client.mixins.json:ExampleMixin from mod example",
+        memberKind: "field",
+        targetMember: "Companion:Lexample/mixin/ExampleMixin$Companion;",
+        noRefmapReported: false,
+      }),
+    ]);
+    expect(result.mixinFailures.map((failure) => failure.category)).not.toContain(
+      "mixin-apply-error",
+    );
+    expect(result.notes.join("\n")).toContain("do not identify blame");
+  });
+
+  it("does not infer Mixin failures from wrappers, lookalike exceptions, or generic messages", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered",
+        "Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin [example.mixins.json:ExampleMixin] FAILED during APPLY",
+        "example.InvalidMixinException: @Shadow field value was not located in the target class example.Target. No refMap loaded.",
+        "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: a different validation message",
+        "[12:00:00 ERROR]: @Inject annotation on handler could not find any targets matching 'run' in example/Target. No refMap loaded.",
+      ].join("\n"),
+    });
+
+    expect(result.mixinFailureTotal).toBe(0);
+    expect(result.mixinFailures).toEqual([]);
+  });
+
+  it("reports omitted Mixin failure evidence and only permits lowering its limit", () => {
+    const failure =
+      "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: @Shadow field value was not located in the target class example.Target.";
+    const result = analyzeMinecraftLog({
+      text: [failure, failure, failure].join("\n"),
+      limits: { maxMixinFailures: 2 },
+    });
+    const resolved = resolveMinecraftLogAnalysisLimits({
+      maxMixinFailures: defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1,
+    });
+
+    expect(result.mixinFailureTotal).toBe(3);
+    expect(result.retainedMixinFailureCount).toBe(2);
+    expect(result.omittedMixinFailureCount).toBe(1);
+    expect(result.exceededLimits).toContain("maxMixinFailures");
+    expect(result.analysisComplete).toBe(false);
+    expect(resolved.maxMixinFailures).toBe(defaultMinecraftLogAnalysisLimits.maxMixinFailures);
+  });
+
+  it("redacts and bounds extracted Mixin labels and keeps oversized counts non-numeric", () => {
+    const hugeCount = "9".repeat(100);
+    const result = analyzeMinecraftLog({
+      text: [
+        "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: Mixin token=hunter2 contains non-private static field Companion:Lexample/mixin/VeryLongCompanionName;",
+        `org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Redirector veryLongHandlerName()V in example.mixins.json:Mixin failed injection check, (${hugeCount}/${hugeCount}) succeeded. Scanned ${hugeCount} target(s).`,
+      ].join("\n"),
+      limits: { maxTextCharacters: 16 },
+    });
+    const serialized = JSON.stringify(result);
+
+    expect(result.mixinFailures).toHaveLength(2);
+    expect(serialized).not.toContain("hunter2");
+    expect(serialized).toContain("[REDACTED]");
+    expect(result.mixinFailures[0]?.subject.length).toBeLessThanOrEqual(16);
+    expect(result.mixinFailures[0]?.targetMember?.length).toBeLessThanOrEqual(16);
+    expect(result.mixinFailures[1]).toMatchObject({
+      succeeded: null,
+      required: null,
+      scannedTargets: null,
+    });
+    const retainedValues = [
+      ...result.exceptionChains.flatMap((chain) =>
+        chain.entries.flatMap((entry) => [entry.type, entry.message]),
+      ),
+      ...result.mixinFailures.flatMap((failure) => [
+        failure.exceptionType,
+        failure.subject,
+        failure.annotation,
+        failure.targetClass,
+        failure.targetMember,
+        failure.selector,
+        failure.mixinPackage,
+        failure.mixinConfig,
+      ]),
+    ].filter((value): value is string => typeof value === "string");
+    expect(retainedValues.reduce((total, value) => total + value.length, 0)).toBe(
+      result.retainedTextCharacters,
+    );
+  });
+
   it("redacts credentials, IP addresses, and absolute user paths before retaining output", () => {
     const result = analyzeMinecraftLog({
       text: [

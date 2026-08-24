@@ -205,6 +205,7 @@ const minecraftLogLimitOptions: Readonly<Record<string, keyof MinecraftLogAnalys
   "--max-line-characters": "maxLineCharacters",
   "--max-events": "maxEvents",
   "--max-exception-chains": "maxExceptionChains",
+  "--max-mixin-failures": "maxMixinFailures",
   "--max-exception-depth": "maxExceptionDepth",
   "--max-exception-entries": "maxExceptionEntries",
   "--max-stack-frames": "maxStackFrames",
@@ -1446,7 +1447,7 @@ Grouped commands:
   minecraft-skills minecraft search-all <query...> [--version latest] [--domain datapack|resourcepack|paper-plugin] [--limit 20]
   minecraft-skills minecraft explain-path [version] <path> [--domain datapack|resourcepack]
   minecraft-skills minecraft suggest-lookups <task...> [--version latest] [--domain datapack|resourcepack|paper-plugin]
-  minecraft-skills minecraft analyze-log <file> [--max-input-bytes bytes] [--max-characters chars] [--max-lines count] [--max-line-characters chars] [--max-events count] [--max-exception-chains count] [--max-exception-depth count] [--max-exception-entries count] [--max-stack-frames count]
+  minecraft-skills minecraft analyze-log <file> [--max-input-bytes bytes] [--max-characters chars] [--max-lines count] [--max-line-characters chars] [--max-events count] [--max-exception-chains count] [--max-mixin-failures count] [--max-exception-depth count] [--max-exception-entries count] [--max-stack-frames count]
     [--max-platforms count] [--max-artifacts count] [--max-components count] [--max-text-characters chars] [--max-retained-text-characters chars]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills minecraft validate-mixin-config <config.json> [--archive-entries entries.json] [--archive-entries-complete true|false]

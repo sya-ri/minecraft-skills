@@ -212,11 +212,16 @@ unsupported graph kinds are returned as explicit completeness gaps.
 `analyze_minecraft_log` accepts Minecraft Java log, stack-trace, or crash-report text within both a
 2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. Its optional `limits` object can only lower the
 Catalog ceilings for input bytes, characters, lines, line
-length, events, exception chains/depth/entries, stack frames, platforms, artifacts, components,
+length, events, exception chains/depth/entries, Mixin failure facts, stack frames, platforms,
+artifacts, components,
 per-value text, and aggregate retained text. The result keeps suppressed branches distinct and
 defines `deepestCause` as the last explicit `Caused by` on the primary chain. Credentials, IP
 addresses, absolute paths, terminal controls, and unsafe Unicode are sanitized before parsing or
 retention. Explicit JAR/mod/plugin labels are evidence only and do not assign responsibility.
+`mixinFailures` summarizes only five explicit Mixin exception message shapes: missing shadow or
+injection targets, failed injection checks, direct class loads from a defined mixin package, and
+non-private static members. The output does not validate mappings, refmaps, Mixin configuration,
+target bytecode, fixes, or runtime compatibility.
 
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects

@@ -84,7 +84,7 @@ minecraft-skills source report paper-plugin 26.2
 minecraft-skills source datasets
 minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
-minecraft-skills minecraft analyze-log ./logs/latest.log
+minecraft-skills minecraft analyze-log ./logs/latest.log --max-mixin-failures 50
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
@@ -124,14 +124,21 @@ minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
 
 `minecraft analyze-log <file>` structures a Minecraft Java log, stack trace, or crash report into
-bounded events, exception chains, crash metadata, explicit platform versions, JAR artifacts, and
-explicitly named mods/plugins. It accepts a regular file or symlink target, uses one file handle,
-checks size and timestamps before and after the bounded read, and rejects malformed UTF-8. Analysis
-limits can be lowered with the documented `--max-*` flags but cannot exceed Catalog defaults.
+bounded events, exception chains, explicit Mixin failure facts, crash metadata, explicit platform
+versions, JAR artifacts, and explicitly named mods/plugins. It accepts a regular file or symlink
+target, uses one file handle, checks size and timestamps before and after the bounded read, and
+rejects malformed UTF-8. Analysis limits, including `--max-mixin-failures`, can be lowered with the
+documented `--max-*` flags but cannot exceed Catalog defaults.
 Credentials, IP addresses, absolute paths, ANSI/OSC controls, unsafe C0/C1 controls, bidi
 overrides, and malformed Unicode are sanitized before parsing or retention. `deepestCause` follows
 only the explicit primary `Caused by` chain; suppressed branches and extracted component labels do
-not establish blame.
+not establish blame. `mixinFailures` recognizes only explicit Mixin exception wording for missing
+shadow targets, missing injection targets, failed injection checks, direct class loads from a
+defined mixin package, and non-private static members. It does not infer responsibility or validate
+mappings, refmaps, Mixin configuration, target bytecode, a proposed fix, or runtime compatibility.
+`noRefmapReported` is true only for the explicit no-refmap statement in the same exception message;
+false is not evidence that a refmap was loaded or correct. Total, retained, and omitted Mixin
+failure counts expose `--max-mixin-failures` truncation.
 
 The `paper-inventory-gui-interaction-review` scenario routes custom inventory menus through a
 default-deny click-and-drag policy. Its recipe and guardrail explicitly cover top, bottom, and
