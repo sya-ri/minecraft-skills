@@ -1612,9 +1612,87 @@ const scenarioSearchStopWords = new Set([
   "generate",
 ]);
 
-function tokenizeScenarioSearch(value: string): string[] {
-  const tokens = value
-    .toLowerCase()
+interface JapaneseMinecraftQueryAlias {
+  aliases: readonly string[];
+  canonical: string;
+}
+
+const japaneseMinecraftDomainAliases: readonly JapaneseMinecraftQueryAlias[] = [
+  { aliases: ["データパック", "データ パック"], canonical: "datapack" },
+  { aliases: ["リソースパック", "リソース パック"], canonical: "resourcepack" },
+  {
+    aliases: ["paperプラグイン", "paper プラグイン", "ペーパープラグイン", "ペーパー プラグイン"],
+    canonical: "paper plugin",
+  },
+  {
+    aliases: ["bukkitプラグイン", "bukkit プラグイン"],
+    canonical: "bukkit plugin",
+  },
+  {
+    aliases: ["spigotプラグイン", "spigot プラグイン"],
+    canonical: "spigot plugin",
+  },
+];
+
+const japaneseDatapackAliases: readonly JapaneseMinecraftQueryAlias[] = [
+  { aliases: ["関数コマンド", "ファンクションコマンド"], canonical: "function command" },
+  { aliases: ["ルートテーブル"], canonical: "loot table" },
+  { aliases: ["関数", "ファンクション"], canonical: "function" },
+];
+
+const japaneseResourcepackAliases: readonly JapaneseMinecraftQueryAlias[] = [
+  { aliases: ["アイテムモデル"], canonical: "item model" },
+  { aliases: ["アイテム定義"], canonical: "item definition" },
+  { aliases: ["ブロックステート"], canonical: "blockstate" },
+  { aliases: ["テクスチャ画像"], canonical: "texture image" },
+  { aliases: ["サウンド定義"], canonical: "sound definition" },
+  { aliases: ["テクスチャ"], canonical: "texture" },
+  { aliases: ["サウンド"], canonical: "sound" },
+];
+
+const japanesePaperPluginAliases: readonly JapaneseMinecraftQueryAlias[] = [
+  { aliases: ["イベントリスナー"], canonical: "event listener" },
+  { aliases: ["プレイヤー参加イベント"], canonical: "player join event" },
+  { aliases: ["スケジューラー", "スケジューラ"], canonical: "scheduler" },
+  { aliases: ["イベント"], canonical: "event" },
+  { aliases: ["リスナー"], canonical: "listener" },
+];
+
+function replaceJapaneseMinecraftAliases(
+  value: string,
+  rules: readonly JapaneseMinecraftQueryAlias[],
+): string {
+  let normalized = value;
+  for (const rule of rules) {
+    for (const alias of rule.aliases) {
+      normalized = normalized.replaceAll(alias, ` ${rule.canonical} `);
+    }
+  }
+  return normalized;
+}
+
+function normalizeJapaneseMinecraftQuery(value: string, domain?: DomainIdData): string {
+  let normalized = replaceJapaneseMinecraftAliases(
+    value.normalize("NFKC").toLowerCase(),
+    japaneseMinecraftDomainAliases,
+  );
+  if (domain === "datapack" || /\bdata[-_\s]*pack\b/.test(normalized)) {
+    normalized = replaceJapaneseMinecraftAliases(normalized, japaneseDatapackAliases);
+  }
+  if (domain === "resourcepack" || /\bresource[-_\s]*pack\b/.test(normalized)) {
+    normalized = replaceJapaneseMinecraftAliases(normalized, japaneseResourcepackAliases);
+  }
+  if (
+    domain === "paper-plugin" ||
+    /\b(?:paper|bukkit|spigot)(?:[-_\s]*plugin)?\b/.test(normalized)
+  ) {
+    normalized = replaceJapaneseMinecraftAliases(normalized, japanesePaperPluginAliases);
+  }
+  return normalized;
+}
+
+function tokenizeScenarioSearch(value: string, domain?: DomainIdData): string[] {
+  const tokens = normalizeJapaneseMinecraftQuery(value, domain)
     .split(/[^a-z0-9_.-]+/)
     .map((token) => token.trim())
     .filter((token) => token.length >= 3 && !scenarioSearchStopWords.has(token));
@@ -1850,7 +1928,7 @@ export function searchAuthoringScenarios(
   }
   const limit = normalizeLimit(options.limit, 10, 100);
   const domain = options.domain ? DomainId.assert(options.domain) : undefined;
-  const tokens = tokenizeScenarioSearch(query);
+  const tokens = tokenizeScenarioSearch(query, domain);
   const scenarios = listAuthoringScenarios(domain ? { domain } : {});
   const scored = scenarios
     .map((scenario) => {
@@ -2403,7 +2481,7 @@ export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResul
   const limit = normalizeLimit(options.limit, 10, 200);
   const domain = options.domain ? DomainId.assert(options.domain) : undefined;
   const kind = options.kind ? parseCatalogSearchKind(options.kind) : undefined;
-  const tokens = tokenizeScenarioSearch(query);
+  const tokens = tokenizeScenarioSearch(query, domain);
   const scored = collectCatalogSearchCandidates()
     .filter((candidate) => !kind || candidate.kind === kind)
     .filter(
@@ -5171,7 +5249,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   const edition = Edition.assert(options.edition ?? "java");
   const version = resolveVersion(edition, options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 8, 50);
-  const lower = task.toLowerCase();
+  const lower = normalizeJapaneseMinecraftQuery(task, options.domain);
   const suggestedTools: LookupSuggestionResult["suggestedTools"] = [];
   const add = (tool: string, reason: string) => {
     if (!suggestedTools.some((entry) => entry.tool === tool)) {

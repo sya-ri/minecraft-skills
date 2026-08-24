@@ -31,6 +31,9 @@ All notable changes to this project are documented here.
 
 ### Changed
 
+- Catalog, scenario, and lookup-suggestion searches now recognize a small set of high-confidence
+  Japanese Minecraft terms for data packs, resource packs, and Paper plugins while preserving the
+  original Unicode query and leaving ambiguous Japanese words unexpanded.
 - Discovery queries now match natural-language words across case, camelCase, and Minecraft
   identifier separators, so queries such as `Player Join Event`, `Diamond Sword`, and
   `bundle item model` find structured API and asset results without changing literal `contains`

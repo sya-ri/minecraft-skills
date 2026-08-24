@@ -1106,6 +1106,47 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"id": "prismarinejs-minecraft-assets"');
   });
 
+  it("routes high-confidence Japanese Minecraft queries", async () => {
+    const paper = await capture(["plugin", "paper", "search-scenarios", "イベントリスナー"]);
+    expect(paper.code).toBe(0);
+    expect(paper.stdout.join("\n")).toContain('"query": "イベントリスナー"');
+    expect(paper.stdout.join("\n")).toContain('"id": "paper-event-listener-review"');
+
+    const cases = [
+      ["data-packのファンクション", "datapack find", "function"],
+      ["resource_packのサウンド", "resourcepack assets find", "sound"],
+      ["Paperでイベントリスナー", "plugin paper search", "event"],
+    ] as const;
+    for (const [query, expectedTool, expectedToken] of cases) {
+      const result = await capture(["minecraft", "suggest-lookups", query]);
+      expect(result.code).toBe(0);
+      const output = JSON.parse(result.stdout.join("\n"));
+      expect(output.task).toBe(query);
+      expect(
+        output.suggestedTools.some((entry: { tool: string }) =>
+          entry.tool.startsWith(expectedTool),
+        ),
+      ).toBe(true);
+      expect(
+        output.catalog.results
+          .flatMap((entry: { matches: Array<{ matchedTokens: string[] }> }) => entry.matches)
+          .flatMap((match: { matchedTokens: string[] }) => match.matchedTokens),
+      ).toContain(expectedToken);
+      expect(
+        output.scenarios.results
+          .flatMap((entry: { matches: Array<{ matchedTokens: string[] }> }) => entry.matches)
+          .flatMap((match: { matchedTokens: string[] }) => match.matchedTokens),
+      ).toContain(expectedToken);
+    }
+
+    const ordinary = await capture(["minecraft", "suggest-lookups", "紙の資料を印刷する"]);
+    expect(ordinary.code).toBe(0);
+    expect(ordinary.stdout.join("\n")).not.toMatch(
+      /"tool": "(?:datapack|resourcepack|plugin paper|fabric toolchain)\b/,
+    );
+    expect(ordinary.stdout.join("\n")).toContain('"results": []');
+  });
+
   it("compares command paths", async () => {
     const result = await capture([
       "datapack",

@@ -80,6 +80,12 @@ minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 ```
 
+Catalog, scenario, and lookup-suggestion searches also accept a deliberately small set of
+high-confidence Japanese Minecraft terms, including `データパック`, `リソースパック`, and
+`Paperプラグイン`. Mixed queries such as `リソースパック item model` work without changing the
+original Unicode query in the result. Ambiguous standalone words such as `紙`, `モデル`, and
+`サウンド` are not aliases.
+
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
 `excludedRegistries` fields expose partial coverage, while null-to-number observations are not

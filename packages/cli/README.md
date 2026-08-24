@@ -132,6 +132,10 @@ diagnostics, intent lookup routing, and evidence in one payload for starting an 
 `datapack recipes`, `resourcepack recipes`, or `plugin paper recipes` lists ordered workflows for common authoring tasks.
 `plugin paper search-scenarios <query>` searches existing scenario, recipe, and intent text so an
 agent can route task wording to a scenario without inventing one.
+Catalog, scenario, and `minecraft suggest-lookups` queries accept high-confidence Japanese
+Minecraft terms such as `データパック`, `リソースパック`, and `Paperプラグイン`, including mixed
+Japanese/English input. The JSON response retains the original Unicode query, and ambiguous
+standalone words such as `紙` are not treated as Paper.
 `datapack scenarios`, `resourcepack scenarios`, or `plugin paper scenarios` lists realistic task shapes and required lookup IDs for evaluation.
 `datapack plan <scenario-id> [version]`, `resourcepack plan <scenario-id> [version]`, or `plugin paper plan <scenario-id> [version]` resolves one scenario into the exact recipes, intent
 lookups, diagnostics, claim policies, fact surfaces, response patterns, and optional evidence to use.

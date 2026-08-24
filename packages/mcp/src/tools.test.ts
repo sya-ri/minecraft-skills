@@ -367,6 +367,56 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"id": "paper-event-listener"');
   });
 
+  it("routes high-confidence Japanese Minecraft tool queries", async () => {
+    const datapack = await callMinecraftSkillsTool("search_catalog", {
+      query: "data_packのファンクション",
+      kind: "authoring-recipe",
+    });
+    const datapackOutput = JSON.parse(datapack.content[0]?.text ?? "{}");
+    expect(datapackOutput.results[0]?.id).toBe("datapack-function-command");
+    expect(
+      datapackOutput.results
+        .flatMap((entry: { matches: Array<{ matchedTokens: string[] }> }) => entry.matches)
+        .flatMap((match: { matchedTokens: string[] }) => match.matchedTokens),
+    ).toContain("function");
+
+    const paper = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paperでイベントリスナー",
+    });
+    const paperOutput = JSON.parse(paper.content[0]?.text ?? "{}");
+    expect(paperOutput.results[0]?.scenario.id).toBe("paper-event-listener-review");
+    expect(
+      paperOutput.results
+        .flatMap((entry: { matches: Array<{ matchedTokens: string[] }> }) => entry.matches)
+        .flatMap((match: { matchedTokens: string[] }) => match.matchedTokens),
+    ).toEqual(expect.arrayContaining(["event", "listener"]));
+
+    const resourcepack = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "26.2",
+      task: "resource-packのテクスチャ",
+    });
+    const resourcepackOutput = JSON.parse(resourcepack.content[0]?.text ?? "{}");
+    expect(
+      resourcepackOutput.suggestedTools.some((entry: { tool: string }) =>
+        entry.tool.startsWith("resourcepack assets find"),
+      ),
+    ).toBe(true);
+    expect(
+      resourcepackOutput.scenarios.results
+        .flatMap((entry: { matches: Array<{ matchedTokens: string[] }> }) => entry.matches)
+        .flatMap((match: { matchedTokens: string[] }) => match.matchedTokens),
+    ).toContain("texture");
+
+    const ordinary = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      version: "26.2",
+      task: "紙の資料を印刷する",
+    });
+    expect(ordinary.content[0]?.text).not.toMatch(
+      /"tool": "(?:datapack|resourcepack|plugin paper|fabric toolchain)\b/,
+    );
+    expect(ordinary.content[0]?.text).toContain('"results": []');
+  });
+
   it("calls authoring guardrail tools", async () => {
     const list = await callMinecraftSkillsTool("list_authoring_guardrails", {
       domain: "paper-plugin",

@@ -31,6 +31,15 @@ The public entrypoints are designed around two workflows:
   resolve a scenario into the exact recipes, intent lookups, diagnostics, claim policies, fact
   surfaces, and response patterns an agent should use.
 
+Task-wording searches preserve the submitted Unicode query and recognize a bounded set of
+high-confidence Japanese Minecraft aliases. For example, `データパックの関数コマンド`,
+`リソースパック item model`, and `Paperプラグインのイベントリスナー` route to the same catalog,
+scenario, and suggestion surfaces as their canonical English terms. Secondary terms such as
+`アイテムモデル` and `イベントリスナー` are expanded only when an explicit domain term or domain
+filter supplies context; ambiguous standalone words such as `紙`, `モデル`, or `サウンド` are not
+expanded. English domain markers may be joined, spaced, hyphenated, or underscored, so
+`resource-packのテクスチャ` and `data_packのファンクション` retain the same domain context.
+
 ## CLI
 
 Install/run after publishing:

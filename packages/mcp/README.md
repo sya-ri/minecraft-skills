@@ -138,6 +138,11 @@ assumption and ask the user to confirm it.
 - `list_references`
 - `get_source_policy`
 
+`search_catalog`, `search_authoring_scenarios`, and `suggest_minecraft_lookups` recognize a bounded
+set of high-confidence Japanese Minecraft terms while returning the original Unicode query.
+Explicit data-pack, resource-pack, and Paper-plugin phrases can be mixed with English, and a domain
+filter can disambiguate secondary terms. Ambiguous standalone Japanese words are not expanded.
+
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,
 and Unix modes for stronger metadata checks. The result therefore reports `validationStrength` as

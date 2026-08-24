@@ -254,6 +254,14 @@ const sourceTiers = listSourceTiers();
 const communityDatasets = listCommunityDatasets();
 ```
 
+`searchCatalog`, `searchAuthoringScenarios`, and `suggestMinecraftLookups` share a bounded Japanese
+Minecraft alias normalizer. It preserves the original query in returned payloads and supports mixed
+input such as `リソースパック item model`. Domain phrases are normalized directly; secondary terms
+require either a domain phrase in the query or an explicit domain filter. Ambiguous standalone
+Japanese words are left untouched. Connected, spaced, hyphenated, and underscored English domain
+markers (for example `resourcepack`, `resource pack`, `resource-pack`, and `resource_pack`) all
+supply the same context for Japanese secondary terms.
+
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function
 downloads or resolves files listed by the pack. Validation follows the

@@ -388,6 +388,60 @@ describe("catalog", () => {
     );
   });
 
+  it("normalizes high-confidence Japanese Minecraft search terms", () => {
+    for (const query of ["データパックの関数", "data-packのファンクション", "data_packの関数"]) {
+      const datapack = searchCatalog({
+        query,
+        kind: "authoring-recipe",
+      });
+      expect(datapack.query).toBe(query);
+      const functionRecipe = datapack.results.find(
+        (result) => result.id === "datapack-function-command",
+      );
+      expect(functionRecipe).toBeDefined();
+      expect(functionRecipe?.matches.flatMap((match) => match.matchedTokens)).toContain("function");
+
+      const scenario = searchAuthoringScenarios({ query });
+      expect(scenario.results[0]?.scenario.id).toBe("datapack-function-command-review");
+      expect(scenario.results[0]?.matches.flatMap((match) => match.matchedTokens)).toContain(
+        "function",
+      );
+    }
+
+    for (const [query, token] of [
+      ["リソースパックのテクスチャ", "texture"],
+      ["resource-packのサウンド", "sound"],
+      ["resource_packのアイテムモデル", "model"],
+    ] as const) {
+      const resourcepack = searchAuthoringScenarios({ query });
+      expect(resourcepack.results[0]?.scenario.id).toBe("resourcepack-asset-model-review");
+      expect(resourcepack.results[0]?.matches.flatMap((match) => match.matchedTokens)).toContain(
+        token,
+      );
+    }
+
+    for (const query of [
+      "Paperでイベントリスナー",
+      "Paperのイベントリスナー",
+      "Bukkitのイベントリスナー",
+      "Spigotでイベントのリスナー",
+    ]) {
+      const paper = searchAuthoringScenarios({ query });
+      expect(paper.query).toBe(query);
+      expect(paper.results[0]?.scenario.id).toBe("paper-event-listener-review");
+      expect(paper.results[0]?.matches.flatMap((match) => match.matchedTokens)).toEqual(
+        expect.arrayContaining(["event", "listener"]),
+      );
+    }
+  });
+
+  it("does not expand ambiguous or ordinary Japanese text", () => {
+    for (const query of ["紙の資料を印刷する", "モデルを撮影する", "イベントリスナーを実装する"]) {
+      expect(searchCatalog({ query }).results).toEqual([]);
+      expect(searchAuthoringScenarios({ query }).results).toEqual([]);
+    }
+  });
+
   it("builds authoring plans with scenario lookups resolved", () => {
     const plan = getAuthoringPlan({
       scenario: "paper-event-listener-review",
@@ -2640,5 +2694,45 @@ describe("catalog", () => {
       "resourcepack assets find",
     );
     expect(result.catalog.results.length).toBeGreaterThan(0);
+  });
+
+  it("routes Japanese Minecraft terms without changing the original task", () => {
+    const cases = [
+      ["データパックの関数", "datapack find", "function"],
+      ["data-packのファンクション", "datapack find", "function"],
+      ["リソースパックのテクスチャ", "resourcepack assets find", "texture"],
+      ["resource_packのサウンド", "resourcepack assets find", "sound"],
+      ["Paperでイベントリスナー", "plugin paper search", "event"],
+    ] as const;
+
+    for (const [task, expectedTool, expectedToken] of cases) {
+      const result = suggestMinecraftLookups({ version: "26.2", task });
+      expect(result.task).toBe(task);
+      expect(result.suggestedTools.some((entry) => entry.tool.startsWith(expectedTool))).toBe(true);
+      expect(result.catalog.results.length).toBeGreaterThan(0);
+      expect(result.scenarios.results.length).toBeGreaterThan(0);
+      expect(
+        result.catalog.results
+          .flatMap((entry) => entry.matches)
+          .flatMap((match) => match.matchedTokens),
+      ).toContain(expectedToken);
+      expect(
+        result.scenarios.results
+          .flatMap((entry) => entry.matches)
+          .flatMap((match) => match.matchedTokens),
+      ).toContain(expectedToken);
+    }
+
+    const ordinaryText = suggestMinecraftLookups({
+      version: "26.2",
+      task: "紙の資料を印刷する",
+    });
+    expect(
+      ordinaryText.suggestedTools.some((entry) =>
+        /^(datapack|resourcepack|plugin paper|fabric toolchain)\b/.test(entry.tool),
+      ),
+    ).toBe(false);
+    expect(ordinaryText.catalog.results).toEqual([]);
+    expect(ordinaryText.scenarios.results).toEqual([]);
   });
 });
