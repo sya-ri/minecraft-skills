@@ -13,6 +13,7 @@ Node.js 22.12 or newer is required.
 ## Examples
 
 ```ts
+import { readFileSync } from "node:fs";
 import {
   compareCommands,
   compareDatapackSchema,
@@ -89,6 +90,7 @@ import {
   searchVanillaPaths,
   suggestMinecraftLookups,
   validateResourcepackProject,
+  validateResourcepackPng,
   validateModrinthPack,
   validateModrinthPackArchive,
 } from "@minecraft-skills/catalog";
@@ -281,12 +283,17 @@ const resourcepackProject = validateResourcepackProject({
   ],
 });
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
-// Supply at most the first 58 bytes needed for the Ogg/Vorbis identification page. Larger binary
-// inputs are rejected before project processing. `limits` may lower (but never raise) the published
-// file, path, content-node, content-size, model-graph-work, sound-event, and sound-entry ceilings.
+// Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
+// PNG files may also be supplied as Uint8Array content for bounded structural validation.
+// `limits` may lower (but never raise) the published file, path, content-node, content-size,
+// aggregate-binary, model-graph-work, sound-event, and sound-entry ceilings. `pngLimits` similarly
+// lowers the project PNG byte, dimension, pixel, and chunk ceilings.
 // Results distinguish input `totalFiles` from `processedFiles`, expose `validationComplete` and
-// sound-specific incomplete reasons, echo `appliedLimits`, and report exact retained/omitted
-// diagnostic counts without retaining an unbounded diagnostic array.
+// sound- and PNG-specific incomplete reasons, echo `appliedLimits`, and report exact
+// retained/omitted diagnostic counts without retaining an unbounded diagnostic array.
+const resourcepackPng = validateResourcepackPng(readFileSync("./pack.png"), {
+  limits: { maxInputBytes: 4 * 1024 * 1024, maxPixels: 16_777_216 },
+});
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",
@@ -320,6 +327,14 @@ const sources = getSourceReport({ domain: "datapack", version: "26.2" });
 const sourceTiers = listSourceTiers();
 const communityDatasets = listCommunityDatasets();
 ```
+
+`validateResourcepackPng` validates complete bytes against the
+[W3C PNG specification](https://www.w3.org/TR/png-3/) with bounded signature, chunk framing, IHDR,
+method, ordering, and CRC checks. It does not decompress IDAT, validate rendered pixels, interpret
+APNG or animation `.mcmeta` semantics, or require square, power-of-two, or fixed-size `pack.png`
+dimensions. `validationComplete` and `exceededLimits` distinguish a completed structural result
+from an input or scan that stopped at a safety boundary. Project validation applies the same checks
+when a `.png` file supplies complete `Uint8Array` content and reports omitted content explicitly.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function

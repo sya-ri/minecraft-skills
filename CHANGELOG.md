@@ -43,8 +43,12 @@ All notable changes to this project are documented here.
   catalog API, CLI, and MCP. Validation uses iterative graph traversal, rejects channel counts above
   two, preserves per-entry diagnostics, and reports bounded request, diagnostic, and completeness
   metadata.
-- Binary-safe resource-pack directory scanning that indexes PNG paths and reads only the first 58
-  bytes of each OGG file instead of decoding binary contents as UTF-8 or loading complete audio.
+- Bounded structural resource-pack PNG validation across the Catalog API, CLI, MCP, and project
+  validator, including signature, chunk framing, IHDR, method, CRC, ordering, and truncation checks
+  with configurable byte, dimension, pixel, chunk, and diagnostic limits.
+- Binary-safe resource-pack directory scanning that validates PNG bytes within configured per-file
+  and aggregate binary caps and reads only the first 58 bytes of each OGG file instead of decoding
+  binary contents as UTF-8 or loading complete audio.
 - Official live Fabric Meta v2 toolchain lookup across the catalog API, CLI, MCP server, and
   natural-language discovery, with bounded Loader, Intermediary, Yarn, and tuple candidates.
 - Official live Velocity toolchain resolution across the catalog API, CLI, MCP server, and

@@ -28,6 +28,30 @@ function validVorbisIdentificationPage(): Buffer {
   );
 }
 
+function testPngChunk(type: string, data = Buffer.alloc(0)): Buffer {
+  const typeBytes = Buffer.from(type, "ascii");
+  const chunk = Buffer.alloc(12 + data.byteLength);
+  chunk.writeUInt32BE(data.byteLength, 0);
+  typeBytes.copy(chunk, 4);
+  data.copy(chunk, 8);
+  chunk.writeUInt32BE(crc32(Buffer.concat([typeBytes, data])), 8 + data.byteLength);
+  return chunk;
+}
+
+function testPng(width = 3, height = 5): Buffer {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    testPngChunk("IHDR", header),
+    testPngChunk("IDAT"),
+    testPngChunk("IEND"),
+  ]);
+}
+
 function testJar(entries: Record<string, string>): Buffer {
   const localParts: Buffer[] = [];
   const centralParts: Buffer[] = [];
@@ -186,6 +210,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
     expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_json");
+    expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_png");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
@@ -1307,7 +1332,10 @@ describe("MCP tools", () => {
             textures: { layer0: "example:item/widget" },
           },
         },
-        { path: "assets/example/textures/item/widget.png" },
+        {
+          path: "assets/example/textures/item/widget.png",
+          contentBase64: testPng().toString("base64"),
+        },
         {
           path: "assets/example/sounds.json",
           content: { widget: { sounds: ["example:widget"] } },
@@ -1322,6 +1350,8 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"checkedReferences": 4');
     expect(result.content[0]?.text).toContain('"binaryFiles": 2');
     expect(result.content[0]?.text).toContain('"inspectedSoundFiles": 1');
+    expect(result.content[0]?.text).toContain('"inspectedPngFiles": 1');
+    expect(result.content[0]?.text).toContain('"pngValidationComplete": true');
     expect(result.content[0]?.text).toContain('"validationComplete": true');
   });
 
@@ -1331,7 +1361,7 @@ describe("MCP tools", () => {
       | {
           maxItems?: number;
           items?: {
-            not?: { allOf?: unknown[] };
+            not?: { anyOf?: unknown[] };
             properties?: Record<string, { maxLength?: number }>;
           };
         }
@@ -1340,7 +1370,7 @@ describe("MCP tools", () => {
     expect(files?.items?.properties?.path?.maxLength).toBe(
       defaultResourcepackProjectValidationLimits.maxPathLength,
     );
-    expect(files?.items?.not?.allOf).toHaveLength(2);
+    expect(files?.items?.not?.anyOf).toHaveLength(2);
   });
 
   it("rejects malformed or oversized resource-pack sound header base64", async () => {
@@ -1348,7 +1378,7 @@ describe("MCP tools", () => {
       files: [{ path: "assets/example/sounds/test.ogg", contentBase64: "not base64" }],
     });
     expect(malformed.isError).toBe(true);
-    expect(malformed.content[0]?.text).toContain("canonical base64");
+    expect(malformed.content[0]?.text).toContain("canonical padded Base64");
 
     const oversized = await callMinecraftSkillsTool("validate_resourcepack_project", {
       files: [
@@ -1359,7 +1389,7 @@ describe("MCP tools", () => {
       ],
     });
     expect(oversized.isError).toBe(true);
-    expect(oversized.content[0]?.text).toContain("at most 58 bytes");
+    expect(oversized.content[0]?.text).toContain("58-byte limit");
 
     const conflicting = await callMinecraftSkillsTool("validate_resourcepack_project", {
       files: [
@@ -1420,6 +1450,117 @@ describe("MCP tools", () => {
     expect(sparseContent.isError).toBeUndefined();
     expect(sparseContent.content[0]?.text).toContain('"processedFiles": 0');
     expect(sparseContent.content[0]?.text).toContain('"maxContentNodes"');
+  });
+
+  it("calls validate_resourcepack_png with complete non-square PNG bytes", async () => {
+    const result = await callMinecraftSkillsTool("validate_resourcepack_png", {
+      contentBase64: testPng().toString("base64"),
+    });
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toContain('"validationStrength": "structure"');
+    expect(result.content[0]?.text).toContain('"valid": true');
+    expect(result.content[0]?.text).toContain('"width": 3');
+    expect(result.content[0]?.text).toContain('"height": 5');
+  });
+
+  it("reports PNG structural failures without treating them as MCP transport errors", async () => {
+    const png = testPng();
+    png[png.length - 1] = (png[png.length - 1] ?? 0) ^ 0xff;
+    const result = await callMinecraftSkillsTool("validate_resourcepack_png", {
+      contentBase64: png.toString("base64"),
+    });
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toContain('"valid": false');
+    expect(result.content[0]?.text).toContain('"png.crc-mismatch"');
+    expect(result.content[0]?.text).toContain('"validationComplete": false');
+  });
+
+  it.each([
+    ["whitespace", "AAAA AAAA", "without whitespace"],
+    ["URL-safe alphabet", "____", "without whitespace"],
+    ["missing padding", "Zg", "without whitespace"],
+    ["excess padding", "Zg===", "without whitespace"],
+    ["non-canonical pad bits", "AB==", "pad bits"],
+  ])("rejects %s in PNG Base64", async (_label, contentBase64, message) => {
+    const result = await callMinecraftSkillsTool("validate_resourcepack_png", { contentBase64 });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain(message);
+  });
+
+  it("caps PNG Base64 before and after encoded-length calculation", async () => {
+    const exactDecodedLength = await callMinecraftSkillsTool("validate_resourcepack_png", {
+      contentBase64: Buffer.alloc(8).toString("base64"),
+      limits: { maxInputBytes: 8 },
+    });
+    expect(exactDecodedLength.isError).toBeUndefined();
+    expect(exactDecodedLength.content[0]?.text).toContain('"png.invalid-signature"');
+
+    const encodedTooLong = await callMinecraftSkillsTool("validate_resourcepack_png", {
+      contentBase64: "A".repeat(13),
+      limits: { maxInputBytes: 8 },
+    });
+    expect(encodedTooLong.isError).toBe(true);
+    expect(encodedTooLong.content[0]?.text).toContain("encoded-length limit");
+
+    const decodedTooLong = await callMinecraftSkillsTool("validate_resourcepack_png", {
+      contentBase64: Buffer.alloc(9).toString("base64"),
+      limits: { maxInputBytes: 8 },
+    });
+    expect(decodedTooLong.isError).toBe(true);
+    expect(decodedTooLong.content[0]?.text).toContain("decodes to more than");
+  });
+
+  it("enforces the shared project binary budget before decoding OGG and PNG Base64", async () => {
+    const files = [
+      { path: "pack.png", contentBase64: testPng(1, 1).toString("base64") },
+      {
+        path: "assets/example/sounds/test.ogg",
+        contentBase64: validVorbisIdentificationPage().toString("base64"),
+      },
+    ];
+    const exact = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files,
+      limits: { maxBinaryContentBytes: 115 },
+    });
+    expect(exact.isError).toBeUndefined();
+    expect(exact.content[0]?.text).toContain('"inspectedPngFiles": 1');
+    expect(exact.content[0]?.text).toContain('"inspectedSoundFiles": 1');
+
+    const decodeSpy = vi.spyOn(Buffer, "from");
+    try {
+      const exceeded = await callMinecraftSkillsTool("validate_resourcepack_project", {
+        files,
+        limits: { maxBinaryContentBytes: 114 },
+      });
+      expect(exceeded.isError).toBe(true);
+      expect(exceeded.content[0]?.text).toContain(
+        "aggregate limit of 114 bytes before Base64 decoding",
+      );
+      expect(decodeSpy).not.toHaveBeenCalled();
+    } finally {
+      decodeSpy.mockRestore();
+    }
+  });
+
+  it("rejects invalid PNG limits and project Base64 placement", async () => {
+    const invalidLimit = await callMinecraftSkillsTool("validate_resourcepack_png", {
+      contentBase64: testPng().toString("base64"),
+      limits: { maxWidth: 0 },
+    });
+    expect(invalidLimit.isError).toBe(true);
+    expect(invalidLimit.content[0]?.text).toContain("limits.maxWidth must be an integer");
+
+    const nonPng = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [{ path: "pack.mcmeta", contentBase64: testPng().toString("base64") }],
+    });
+    expect(nonPng.isError).toBe(true);
+    expect(nonPng.content[0]?.text).toContain("accepted only for OGG and PNG files");
+
+    const unboundedPngContent = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      files: [{ path: "pack.png", content: "not binary-safe" }],
+    });
+    expect(unboundedPngContent.isError).toBe(true);
+    expect(unboundedPngContent.content[0]?.text).toContain("must use bounded contentBase64");
   });
 
   it("calls get_pack_migration_plan", async () => {

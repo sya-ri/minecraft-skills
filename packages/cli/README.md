@@ -91,6 +91,7 @@ minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --exte
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models latest
 minecraft-skills resourcepack search-models latest --kind item-definition --contains bundle
+minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
@@ -127,16 +128,27 @@ changes.
 The Modrinth command uses the public v2 search API and supports `--category`, sorting with
 `--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.
 
+`resourcepack validate-png` reads one regular local file through a bounded handle and validates its
+PNG signature, chunk framing, IHDR fields, method values, ordering, and scanned CRCs. It rejects
+symlinks and special files. Lower the conservative limits with `--max-bytes`, `--max-width`,
+`--max-height`, `--max-pixels`, `--max-chunks`, and `--max-diagnostics`.
+
 `resourcepack validate-project` recursively checks item-definition and legacy override model targets,
 model parents, textures, inherited texture variables, `sounds.json` file/event references, and local
-model and sound-event cycles. Special item-model base references are included. PNG files contribute
-paths without being decoded, while OGG files are read only through their strict 58-byte Ogg/Vorbis
+model and sound-event cycles against the project and target-version vanilla assets. Special
+item-model base references are included. PNG files receive the same bounded structural validation,
+while OGG files are read only through their strict 58-byte Ogg/Vorbis
 identification page using exact bounded prefix reads from regular files. Full audio decoding is out
 of scope. Stereo is accepted with a positional-attenuation warning; more than two channels is an
 error. Unverified external sound references keep a warning-only project valid but set validation
 completeness false. Directory traversal is iterative and applies file, directory-depth, path, and
-aggregate JSON-byte limits before loading project content. Invalid graphs or audio headers are
-printed as JSON and return exit code 1.
+aggregate JSON- and binary-byte limits before loading project content. Invalid graphs, PNG files,
+or audio headers are printed as JSON and return exit code 1.
+
+PNG validation follows the [W3C PNG specification](https://www.w3.org/TR/png-3/) but does not
+decompress IDAT or prove rendered texture validity. It does not impose square, power-of-two, or a
+fixed `pack.png` size.
+
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.
 `modrinth compatibility` accepts 2-10 project IDs or slugs and reports bounded common

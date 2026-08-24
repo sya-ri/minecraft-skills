@@ -6,6 +6,7 @@ import {
   readFileSync,
   readSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -35,6 +36,30 @@ function validVorbisIdentificationPage(): Buffer {
     "4f676753000200000000000000000100000000000000a7b4565b011e01766f72626973000000000180bb00000000000000000000000000008601",
     "hex",
   );
+}
+
+function pngChunk(type: string, data: Uint8Array = new Uint8Array()): Buffer {
+  const typeBytes = Buffer.from(type, "ascii");
+  const result = Buffer.alloc(12 + data.byteLength);
+  result.writeUInt32BE(data.byteLength, 0);
+  typeBytes.copy(result, 4);
+  Buffer.from(data).copy(result, 8);
+  result.writeUInt32BE(crc32(Buffer.concat([typeBytes, Buffer.from(data)])), 8 + data.byteLength);
+  return result;
+}
+
+function testPng(width = 1, height = 1): Buffer {
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT"),
+    pngChunk("IEND"),
+  ]);
 }
 
 async function capture(argv: string[]) {
@@ -1361,15 +1386,18 @@ describe("minecraft-skills CLI", () => {
       join(soundDirectory, "widget.ogg"),
       Buffer.concat([validVorbisIdentificationPage(), Buffer.alloc(256, 0xff)]),
     );
-    writeFileSync(join(textureDirectory, "widget.png"), Buffer.from([0xff, 0xfe, 0xfd]));
+    writeFileSync(join(root, "pack.png"), testPng(3, 5));
+    writeFileSync(join(textureDirectory, "widget.png"), testPng());
 
     try {
       const result = await capture(["resourcepack", "validate-project", "26.2", root]);
       expect(result.code).toBe(0);
       expect(result.stdout.join("\n")).toContain('"valid": true');
-      expect(result.stdout.join("\n")).toContain('"binaryFiles": 2');
+      expect(result.stdout.join("\n")).toContain('"binaryFiles": 3');
       expect(result.stdout.join("\n")).toContain('"inspectedSoundFiles": 1');
       expect(result.stdout.join("\n")).toContain("bounded 58-byte");
+      expect(result.stdout.join("\n")).toContain('"inspectedPngFiles": 2');
+      expect(result.stdout.join("\n")).toContain("IDAT payloads were not decompressed");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -1397,6 +1425,23 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("validates a bounded local PNG from bytes without relying on its extension", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-png-"));
+    const file = join(root, "texture.bin");
+    writeFileSync(file, testPng(3, 5));
+
+    try {
+      const result = await capture(["resourcepack", "validate-png", file]);
+      expect(result.code).toBe(0);
+      expect(result.stderr).toEqual([]);
+      expect(result.stdout.join("\n")).toContain('"validationStrength": "structure"');
+      expect(result.stdout.join("\n")).toContain('"width": 3');
+      expect(result.stdout.join("\n")).toContain('"height": 5');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("bounds resource-pack directory traversal and JSON reads before catalog validation", () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-project-scan-"));
     writeFileSync(join(root, "first.json"), "{}");
@@ -1405,6 +1450,7 @@ describe("minecraft-skills CLI", () => {
     try {
       expect(() =>
         readResourcepackProjectFiles(root, {
+          maxBinaryContentBytes: 100,
           maxContentDepth: 4,
           maxFiles: 1,
           maxPathLength: 100,
@@ -1413,6 +1459,7 @@ describe("minecraft-skills CLI", () => {
       ).toThrow("more than 1 files");
       expect(() =>
         readResourcepackProjectFiles(root, {
+          maxBinaryContentBytes: 100,
           maxContentDepth: 4,
           maxFiles: 10,
           maxPathLength: 100,
@@ -1424,12 +1471,69 @@ describe("minecraft-skills CLI", () => {
       mkdirSync(nested, { recursive: true });
       expect(() =>
         readResourcepackProjectFiles(root, {
+          maxBinaryContentBytes: 100,
           maxContentDepth: 1,
           maxFiles: 10,
           maxPathLength: 100,
           maxTextContentCharacters: 100,
         }),
       ).toThrow("directory depth above 1");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("returns failing PNG diagnostics for corruption and bounded reads", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-invalid-png-"));
+    const corruptedFile = join(root, "corrupted.png");
+    const oversizedFile = join(root, "oversized.png");
+    const corrupted = testPng();
+    corrupted[corrupted.length - 1] = (corrupted[corrupted.length - 1] ?? 0) ^ 0xff;
+    writeFileSync(corruptedFile, corrupted);
+    writeFileSync(oversizedFile, testPng());
+
+    try {
+      const corruptedResult = await capture(["resourcepack", "validate-png", corruptedFile]);
+      expect(corruptedResult.code).toBe(1);
+      expect(corruptedResult.stdout.join("\n")).toContain('"code": "png.crc-mismatch"');
+      expect(corruptedResult.stdout.join("\n")).toContain('"validationComplete": false');
+
+      const boundedResult = await capture([
+        "resourcepack",
+        "validate-png",
+        oversizedFile,
+        "--max-bytes",
+        "8",
+      ]);
+      expect(boundedResult.code).toBe(1);
+      expect(boundedResult.stdout.join("\n")).toContain('"code": "png.input-byte-limit-exceeded"');
+      expect(boundedResult.stdout.join("\n")).toContain('"inputBytes": 9');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("shares the project binary budget across bounded OGG prefixes and complete PNG bytes", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-binary-budget-"));
+    const soundDirectory = join(root, "assets", "example", "sounds");
+    mkdirSync(soundDirectory, { recursive: true });
+    writeFileSync(join(soundDirectory, "test.ogg"), validVorbisIdentificationPage());
+    writeFileSync(join(root, "pack.png"), testPng());
+    const scanLimits = {
+      maxBinaryContentBytes: 115,
+      maxContentDepth: 10,
+      maxFiles: 10,
+      maxPathLength: 1_024,
+      maxTextContentCharacters: 1_024,
+    };
+
+    try {
+      const files = readResourcepackProjectFiles(root, scanLimits);
+      expect(files.find((file) => file.path.endsWith(".ogg"))?.content).toHaveLength(58);
+      expect(files.find((file) => file.path.endsWith(".png"))?.content).toHaveLength(57);
+      expect(() =>
+        readResourcepackProjectFiles(root, { ...scanLimits, maxBinaryContentBytes: 114 }),
+      ).toThrow("project budget");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -1474,6 +1578,35 @@ describe("minecraft-skills CLI", () => {
       const result = await capture(["resourcepack", "validate-project", "26.2", root]);
       expect(result.code).toBe(1);
       expect(result.stdout.join("\n")).toContain('"code": "unsupported-sound-codec"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects directories and invalid PNG limits before reading", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-png-boundary-"));
+    try {
+      const directory = await capture(["resourcepack", "validate-png", root]);
+      expect(directory.code).toBe(1);
+      expect(directory.stderr.join("\n")).toContain("regular local PNG files");
+
+      const targetDirectory = join(root, "target");
+      const linkedPath = join(root, "linked.png");
+      mkdirSync(targetDirectory);
+      symlinkSync(targetDirectory, linkedPath, process.platform === "win32" ? "junction" : "dir");
+      const symlink = await capture(["resourcepack", "validate-png", linkedPath]);
+      expect(symlink.code).toBe(1);
+      expect(symlink.stderr.join("\n")).toContain("refuses symbolic links");
+
+      const invalidLimit = await capture([
+        "resourcepack",
+        "validate-png",
+        join(root, "missing.png"),
+        "--max-pixels",
+        "0",
+      ]);
+      expect(invalidLimit.code).toBe(1);
+      expect(invalidLimit.stderr.join("\n")).toContain("--max-pixels must be between 1 and");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

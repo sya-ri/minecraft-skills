@@ -29,6 +29,8 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultModrinthPackValidationLimits,
+  defaultResourcepackPngValidationLimits,
+  defaultResourcepackProjectValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -105,7 +107,9 @@ import {
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
+  type ResourcepackPngValidationLimits,
   resolveModrinthCompatibility,
+  resolveResourcepackPngValidationLimits,
   resolveVelocityToolchain,
   resolveVersion,
   searchAll,
@@ -128,6 +132,7 @@ import {
   type VanillaPathSearchOptions,
   validateModrinthPackArchive,
   validatePackFilesContent,
+  validateResourcepackPng,
   validateResourcepackProject,
 } from "@minecraft-skills/catalog";
 import {
@@ -136,6 +141,7 @@ import {
   type RconPermissionPreset,
   runRconCommand,
 } from "@minecraft-skills/rcon";
+import { readBoundedPngFile } from "./filePrefix.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 
 type Output = {
@@ -191,6 +197,79 @@ function readOption(args: string[], name: string, fallback: string): string {
     return fallback;
   }
   return args[index + 1] ?? fallback;
+}
+
+const resourcepackPngValueOptions = [
+  "--max-bytes",
+  "--max-width",
+  "--max-height",
+  "--max-pixels",
+  "--max-chunks",
+  "--max-diagnostics",
+] as const;
+
+function readResourcepackPngLimit(
+  args: string[],
+  option: string,
+  fallback: number,
+  command: string,
+): number {
+  if (!args.includes(option)) {
+    return fallback;
+  }
+  const value = readOption(args, option, "");
+  if (!/^\d+$/.test(value)) {
+    throw new Error(`${command} ${option} must be a positive integer`);
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || fallback < parsed) {
+    throw new Error(`${command} ${option} must be between 1 and ${fallback}`);
+  }
+  return parsed;
+}
+
+function readResourcepackPngLimits(
+  args: string[],
+  command = "resourcepack validate-png",
+): ResourcepackPngValidationLimits {
+  return resolveResourcepackPngValidationLimits({
+    maxInputBytes: readResourcepackPngLimit(
+      args,
+      "--max-bytes",
+      defaultResourcepackPngValidationLimits.maxInputBytes,
+      command,
+    ),
+    maxWidth: readResourcepackPngLimit(
+      args,
+      "--max-width",
+      defaultResourcepackPngValidationLimits.maxWidth,
+      command,
+    ),
+    maxHeight: readResourcepackPngLimit(
+      args,
+      "--max-height",
+      defaultResourcepackPngValidationLimits.maxHeight,
+      command,
+    ),
+    maxPixels: readResourcepackPngLimit(
+      args,
+      "--max-pixels",
+      defaultResourcepackPngValidationLimits.maxPixels,
+      command,
+    ),
+    maxChunks: readResourcepackPngLimit(
+      args,
+      "--max-chunks",
+      defaultResourcepackPngValidationLimits.maxChunks,
+      command,
+    ),
+    maxDiagnostics: readResourcepackPngLimit(
+      args,
+      "--max-diagnostics",
+      defaultResourcepackPngValidationLimits.maxDiagnostics,
+      command,
+    ),
+  });
 }
 
 function readBooleanOption(args: string[], name: string, fallback: boolean): boolean {
@@ -501,6 +580,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "resourcepack classify-files": "classify-files",
     "resourcepack file-schema": "file-schema",
     "resourcepack validate-files": "validate-files",
+    "resourcepack validate-png": "validate-resourcepack-png",
     "resourcepack validate-project": "validate-resourcepack-project",
     "resourcepack migration-plan": "migration-plan",
     "resourcepack search-models": "search-models",
@@ -691,6 +771,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "classify-files": "datapack classify-files or resourcepack classify-files",
   "file-schema": "datapack file-schema or resourcepack file-schema",
   "validate-files": "datapack validate-files or resourcepack validate-files",
+  "validate-resourcepack-png": "resourcepack validate-png",
   "validate-resourcepack-project": "resourcepack validate-project",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
@@ -921,7 +1002,8 @@ Grouped commands:
   minecraft-skills resourcepack classify-files <path...>
   minecraft-skills resourcepack file-schema [version] <path>
   minecraft-skills resourcepack validate-files <version> <file...> [--pack-root dir]
-  minecraft-skills resourcepack validate-project <version> <directory> [--limit 100]
+  minecraft-skills resourcepack validate-png <file> [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
+  minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills resourcepack assets status [version]
@@ -1025,6 +1107,12 @@ Options:
   --version <version>    Select a version for commands that accept named options.
   --limit <n>            Limit search results. Search commands validate their own maximums.
   --pack-root <dir>      Strip a local pack root when validating files so paths become pack-relative.
+  --max-bytes <n>        Lower the PNG input-byte cap for resource-pack PNG validation.
+  --max-width <n>        Lower the PNG width cap for resource-pack PNG validation.
+  --max-height <n>       Lower the PNG height cap for resource-pack PNG validation.
+  --max-pixels <n>       Lower the PNG total-pixel cap for resource-pack PNG validation.
+  --max-chunks <n>       Lower the PNG chunk-count cap for resource-pack PNG validation.
+  --max-diagnostics <n>  Lower retained diagnostics for standalone PNG validation.
   --force                Overwrite or refetch where supported.
 
 Cache:
@@ -1803,16 +1891,42 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return 0;
     }
 
+    if (command === "validate-resourcepack-png") {
+      const [filePath, ...extraPaths] = positionalArgsWithOptions(args, {
+        values: resourcepackPngValueOptions,
+      });
+      if (!filePath || extraPaths.length > 0) {
+        throw new Error("resourcepack validate-png requires exactly one <file>");
+      }
+      const limits = readResourcepackPngLimits(args);
+      const result = validateResourcepackPng(readBoundedPngFile(filePath, limits.maxInputBytes), {
+        limits,
+      });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
+    }
+
     if (command === "validate-resourcepack-project") {
       const [version, directory] = positionalArgs(args);
       if (!version || !directory) {
         throw new Error("resourcepack validate-project requires <version> and <directory>");
       }
+      if (args.includes("--max-diagnostics")) {
+        throw new Error(
+          "resourcepack validate-project uses --limit for the shared diagnostic output cap",
+        );
+      }
+      const pngLimits = readResourcepackPngLimits(args, "resourcepack validate-project");
       const result = validateResourcepackProject({
         edition,
         version,
-        files: readResourcepackProjectFiles(directory),
+        files: readResourcepackProjectFiles(
+          directory,
+          defaultResourcepackProjectValidationLimits,
+          pngLimits,
+        ),
         limit: Number(readOption(args, "--limit", "100")),
+        pngLimits,
       });
       printJson(output, result);
       return result.valid ? 0 : 1;

@@ -46,10 +46,21 @@ import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.
 import { inspectModrinthArchive } from "./modrinthZip.js";
 import { compareObservedProtocolIds } from "./registryEntryComparison.js";
 import {
+  defaultResourcepackPngValidationLimits,
+  type ResourcepackPngDiagnostic,
+  type ResourcepackPngValidationLimits,
+  type ResourcepackPngValidationOptions,
+  type ResourcepackPngValidationResult,
+  resolveResourcepackPngValidationLimits,
+  validateResourcepackPng,
+} from "./resourcepackPng.js";
+import {
   defaultResourcepackProjectValidationLimits,
+  type ResourcepackPngValidationIncompleteReason,
   type ResourcepackProjectDiagnostic,
   type ResourcepackProjectDiagnosticSeverity,
   type ResourcepackProjectFile,
+  type ResourcepackProjectPngValidationLimitName,
   type ResourcepackProjectValidationLimitName,
   type ResourcepackProjectValidationLimits,
   type ResourcepackProjectValidationOptions,
@@ -201,9 +212,15 @@ export type {
   PaperPluginDataData,
   ReferenceData,
   ResourcepackModelSummaryData,
+  ResourcepackPngDiagnostic,
+  ResourcepackPngValidationIncompleteReason,
+  ResourcepackPngValidationLimits,
+  ResourcepackPngValidationOptions,
+  ResourcepackPngValidationResult,
   ResourcepackProjectDiagnostic,
   ResourcepackProjectDiagnosticSeverity,
   ResourcepackProjectFile,
+  ResourcepackProjectPngValidationLimitName,
   ResourcepackProjectValidationLimitName,
   ResourcepackProjectValidationLimits,
   ResourcepackProjectValidationOptions,
@@ -222,6 +239,7 @@ export type {
 export {
   cleanCachedData,
   cleanMojangServerJar,
+  defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   fetchData,
   fetchMinecraftAssetFile,
@@ -241,8 +259,10 @@ export {
   listCachedMojangServerJarEntries,
   readCachedMinecraftAssetText,
   readCachedMojangServerJarText,
+  resolveResourcepackPngValidationLimits,
   resolveResourcepackProjectValidationLimits,
   searchMinecraftAssets,
+  validateResourcepackPng,
 };
 
 export type PackFormatSummary = {
@@ -5322,6 +5342,7 @@ export function validateResourcepackProject(
     vanillaPaths: readVanillaPathList(edition, version, "resourcepack"),
     limit,
     limits: resolveResourcepackProjectValidationLimits(options.limits),
+    pngLimits: resolveResourcepackPngValidationLimits(options.pngLimits),
   });
 }
 
