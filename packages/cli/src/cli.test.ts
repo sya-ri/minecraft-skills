@@ -653,6 +653,60 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("prints Paper plugin testing evidence guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("choose-the-minimum-sufficient-evidence-layer");
+    expect(recipe.stdout.join("\n")).toContain("loaded-server test");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-plugin-testing-evidence-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-plugin-test-evidence-gap");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "MockBukkit loaded server test evidence",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-plugin-testing-evidence-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-plugin-testing-evidence-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-plugin-testing-evidence"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-plugin-test-evidence-gap"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-plugin-testing-evidence",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("type-compatibility evidence only");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-plugin-test-evidence-gap",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("loaded-plugin evidence");
+  });
+
   it("prints claim policies", async () => {
     const list = await capture(["plugin", "paper", "claim-policies"]);
     expect(list.code).toBe(0);

@@ -121,6 +121,10 @@ const sessionPlan = getAuthoringPlan({
   scenario: "paper-player-session-lifecycle-review",
   version: "1.21.11",
 });
+const testingEvidencePlan = getAuthoringPlan({
+  scenario: "paper-plugin-testing-evidence-review",
+  version: "1.21.11",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -130,6 +134,7 @@ const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const inventoryRecipe = getAuthoringRecipe("paper-inventory-gui-interactions");
 const adminCommandRecipe = getAuthoringRecipe("paper-administrative-command-operability");
 const sessionRecipe = getAuthoringRecipe("paper-player-session-lifecycle");
+const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -141,12 +146,17 @@ const inventoryScenario = getAuthoringScenario("paper-inventory-gui-interaction-
 const playerIdentityScenario = getAuthoringScenario(
   "paper-player-identity-and-display-review",
 );
+const testingEvidenceScenario = getAuthoringScenario(
+  "paper-plugin-testing-evidence-review",
+);
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
 const sessionGuardrail = getAuthoringGuardrail("paper-player-session-lifecycle-safety");
+const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
+const testingEvidenceDiagnostic = getAuthoringDiagnostic("paper-plugin-test-evidence-gap");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
 const sessionDiagnostic = getAuthoringDiagnostic("paper-player-session-lifecycle-unsafe");
 const adminCommandScenario = getAuthoringScenario(

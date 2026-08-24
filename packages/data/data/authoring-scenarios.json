@@ -478,6 +478,53 @@
         "mixing item or inventory contents and ownership settlement into this lifecycle concern"
       ],
       "failureMode": "Connection-scoped work can outlive its player session, corrupt a replacement session, leak resources, or lose durable updates when cleanup depends on a single ideal event order."
+    },
+    {
+      "id": "paper-plugin-testing-evidence-review",
+      "domains": ["paper-plugin"],
+      "title": "Design or review evidence for a Paper plugin change",
+      "userPrompt": "Create or review a Paper plugin test plan whose evidence is strong enough for each runtime claim without relying on unsupported mocks or nondeterministic waits.",
+      "useWhen": [
+        "the request asks how to test a Paper plugin feature or whether existing tests are sufficient",
+        "the change touches plugin load, commands, listeners, scheduling, persistence, inventories, packets, resources, reload, disconnect, or disable",
+        "the available choices include pure tests, mocks or fakes, MockBukkit, a loaded Paper server, or a real client",
+        "a final answer must distinguish compilation, harness coverage, runtime verification, and manual evidence"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-plugin-testing-evidence"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-plugin-test-evidence-gap"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "every material behavior and final claim names an observable boundary and minimum sufficient evidence layer",
+        "pure tests cover deterministic domain rules while mocks and fakes model only plugin-owned contracts",
+        "MockBukkit is used only for behavior supported by the selected harness and its limitations remain explicit",
+        "target-version loaded-server tests cover changed plugin descriptors, bootstrap, dependency wiring, registration, scheduler integration, reload, and disable behavior",
+        "protocol evidence covers packet transport and shape, while a real instrumented client or captured client state covers rendering, audio, input, resource-pack application, and other client-visible outcomes",
+        "time, task ordering, retries, timeouts, external responses, identifiers, and cleanup are deterministic and isolated",
+        "failure, duplicate callback, stale completion, cancellation, disconnect, partial enable, reload, disable, restart, and migration paths are tested when in scope",
+        "the final report lists exact commands, target versions, results, known baselines, skipped or unavailable checks, manual work, and a conclusion limited to completed evidence"
+      ],
+      "mustAvoid": [
+        "calling compilation or static analysis proof that the plugin works",
+        "mocking undocumented Paper internals and treating configured return values as runtime evidence",
+        "silently stubbing unsupported MockBukkit methods",
+        "changing bootstrap or registration without loading the plugin on a target-version server",
+        "using Thread.sleep, wall-clock polling, a live network, or shared mutable fixtures for deterministic behavior",
+        "testing asynchronous success without cancellation, stale completion, and teardown ordering",
+        "replacing a persistence adapter with memory-only storage when claiming serialization or migration correctness",
+        "using server state alone to claim a client rendered, heard, received, or applied something",
+        "reporting all tests passed without exact commands, version, failures, skips, baselines, and limitations"
+      ],
+      "failureMode": "A convenient harness can verify the wrong boundary, allowing runtime, lifecycle, persistence, or client failures to escape while the implementation is reported as fully tested."
     }
   ]
 }

@@ -34,6 +34,8 @@ minecraft-skills plugin paper plan paper-administrative-command-operability-revi
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
 minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
+minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
+minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
@@ -252,6 +254,12 @@ administrative-command checks for operational coverage, explicit support or reje
 applicable sender kind, explicit targets, permissions, protected secret input, justified safe
 out-of-band alternatives, bulk confirmation, atomic reload rollback, effective-state inspection,
 and observable success or failure results.
+
+`plugin paper plan paper-plugin-testing-evidence-review [version]` maps runtime claims to pure
+tests, plugin-owned fakes, explicitly supported MockBukkit behavior, a loaded target-version Paper
+server, or client-visible evidence. It also requires controlled time and task ordering, lifecycle
+and stale-completion cases, isolated cleanup, exact commands and versions, known baselines, and an
+explicit list of skipped, unavailable, or manual checks.
 
 ## Data Sources
 

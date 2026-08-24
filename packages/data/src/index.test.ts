@@ -73,6 +73,7 @@ describe("@minecraft-skills/data", () => {
       "paper-administrative-command-operability",
     );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-protocol-safety");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
   });
 
   it("loads bundled authoring scenario JSON", () => {
@@ -87,6 +88,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-inventory-gui-interaction-review");
     expect(scenarioIds).toContain("paper-administrative-command-operability-review");
     expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
+    expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
   });
 
   it("loads bundled intent lookup JSON", () => {
@@ -106,6 +108,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-inventory-gui-interaction-safety");
     expect(guardrailIds).toContain("paper-administrative-command-operability");
     expect(guardrailIds).toContain("paper-plugin-protocol-safety");
+    expect(guardrailIds).toContain("paper-plugin-testing-evidence");
   });
 
   it("loads bundled authoring diagnostic JSON", () => {
@@ -120,6 +123,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-inventory-gui-interaction-unbounded");
     expect(diagnosticIds).toContain("paper-administrative-command-incomplete");
     expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
+    expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
   });
 
   it("bundles complete Paper inventory GUI lifecycle safety guidance", () => {
@@ -260,6 +264,56 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf).toEqual(
       expect.arrayContaining([expect.stringContaining("fire-and-forget persistence")]),
     );
+  });
+
+  it("loads complete Paper plugin testing evidence guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; evidence: string[]; stopIfMissing: string }>;
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-plugin-testing-evidence");
+    expect(recipe?.steps.map((step) => step.id)).toContain(
+      "choose-the-minimum-sufficient-evidence-layer",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "loaded-server test",
+    );
+    expect(recipe?.steps.map((step) => step.stopIfMissing).join("\n")).toContain("MockBukkit");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-plugin-testing-evidence-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-plugin-testing-evidence"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain("paper-plugin-test-evidence-gap");
+    expect(scenario?.mustAvoid.join("\n")).toContain("Thread.sleep");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-plugin-testing-evidence",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("type-compatibility evidence only");
+    expect(guardrail?.rules.join("\n")).toContain("protocol oracle for packet transport");
+    expect(guardrail?.rules.join("\n")).toContain("real instrumented client");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-plugin-test-evidence-gap",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("loaded-plugin evidence");
   });
 
   it("loads bundled claim policy JSON", () => {

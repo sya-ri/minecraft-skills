@@ -1215,6 +1215,74 @@ describe("catalog", () => {
     );
   });
 
+  it("matches Paper plugin runtime claims to sufficient test evidence", () => {
+    const recipe = getAuthoringRecipe("paper-plugin-testing-evidence");
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "map-claims-to-observable-boundaries",
+      "choose-the-minimum-sufficient-evidence-layer",
+      "make-tests-deterministic-and-owned",
+      "exercise-outcomes-ordering-and-teardown",
+      "report-exact-evidence-and-limitations",
+    ]);
+    expect(recipe.finalChecks).toContain("paper-plugin-testing-evidence");
+    expect(recipe.steps[1]?.evidence.join("\n")).toContain("loaded-server test");
+    expect(recipe.steps[1]?.stopIfMissing).toContain("MockBukkit");
+    expect(recipe.steps[1]?.action).toContain("protocol-level oracle for packet transport");
+    expect(recipe.steps[1]?.action).toContain("real instrumented client");
+
+    const guardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
+    const rules = guardrail.rules.join("\n");
+    expect(rules).toContain("compilation as type-compatibility evidence only");
+    expect(rules).toContain("MockBukkit only for APIs and semantics");
+    expect(rules).toContain("protocol oracle for packet transport");
+    expect(rules).toContain("real instrumented client");
+    expect(rules).toContain("wall-clock sleeps");
+
+    const diagnostic = getAuthoringDiagnostic("paper-plugin-test-evidence-gap");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("loaded-plugin evidence");
+    expect(diagnostic.failIf.join("\n")).toContain("server-only test");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("known baselines");
+
+    const scenario = getAuthoringScenario("paper-plugin-testing-evidence-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-plugin-testing-evidence"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-plugin-test-evidence-gap");
+    expect(scenario.successCriteria.join("\n")).toContain(
+      "protocol evidence covers packet transport",
+    );
+    expect(scenario.successCriteria.join("\n")).toContain("real instrumented client");
+
+    const search = searchAuthoringScenarios({
+      query: "Paper plugin MockBukkit loaded server test evidence Thread.sleep",
+      domain: "paper-plugin",
+    });
+    expect(search.results[0]?.scenario.id).toBe("paper-plugin-testing-evidence-review");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-plugin-testing-evidence-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-plugin-testing-evidence"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain("paper-plugin-test-evidence-gap");
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "test a Paper plugin with MockBukkit and loaded server evidence",
+    });
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search ")),
+    ).toBe(true);
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-plugin-testing-evidence-review",
+    );
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack assets")),
+    ).toBe(false);
+    expect(suggestions.suggestedTools.some((entry) => entry.tool.startsWith("datapack find"))).toBe(
+      false,
+    );
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

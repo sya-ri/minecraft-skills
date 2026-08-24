@@ -807,6 +807,73 @@
         "Verify lifecycle APIs for the target version and state gaps instead of inventing transfer or scheduler behavior."
       ],
       "failureMode": "Old connection work can act on a replacement player session, leak resources, retain Player objects, or reorder durable state across reconnect and shutdown."
+    },
+    {
+      "id": "paper-plugin-test-evidence-gap",
+      "domains": ["paper-plugin"],
+      "title": "Paper plugin claim exceeds the completed test evidence",
+      "severity": "error",
+      "detectWhen": [
+        "a Paper plugin change is described as working, safe, verified, or production-ready",
+        "the only evidence is compilation, static analysis, a mocked unit test, or an unsupported MockBukkit path",
+        "plugin bootstrap, registration, scheduler, persistence, lifecycle, packet, resource, or client-visible behavior changed",
+        "tests use wall-clock sleeps, live dependencies, shared mutable fixtures, or uncontrolled asynchronous completion"
+      ],
+      "requiredChecks": [
+        "map every material claim to a boundary capable of observing it",
+        "verify the target Minecraft and Paper version for runtime evidence",
+        "separate pure logic, owned adapter, MockBukkit-supported, loaded-server, and client-visible evidence",
+        "exercise expected failures, duplicate and out-of-order callbacks, cancellation, disconnect, reload, disable, and stale completion where applicable",
+        "load the plugin and verify descriptors, dependency wiring, registration, partial-enable cleanup, and disable when those surfaces changed",
+        "test serialization, restart or reload, older or malformed data, and recovery at the real adapter boundary when persistence changed",
+        "remove wall-clock sleeps and live dependencies by controlling clocks, tasks, retries, timeouts, and external responses",
+        "report exact commands, versions, results, known baselines, skipped checks, and remaining manual verification"
+      ],
+      "evidence": [
+        "a claim-to-observation and evidence-layer matrix",
+        "targeted deterministic test results plus loaded-server or client evidence where required",
+        "cleanup and isolation evidence for global and lifecycle state",
+        "a final limitations statement whose wording matches the strongest completed test"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper guardrail",
+          "plugin paper output-requirements"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "get_authoring_guardrail",
+          "list_output_requirements"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "getAuthoringGuardrail",
+          "listOutputRequirements"
+        ]
+      },
+      "failIf": [
+        "a runtime or production claim is based only on compilation, static analysis, or a pure unit test",
+        "a mock or fake defines Paper behavior that the real API contract or selected harness does not prove",
+        "unsupported MockBukkit behavior is silently stubbed or skipped while the result is reported as verified",
+        "plugin descriptor, bootstrap, dependency wiring, registration, reload, or disable changes have no loaded-plugin evidence",
+        "scheduler or asynchronous behavior has no controlled ordering, cancellation, timeout, stale-completion, and teardown tests",
+        "persistence or migration changes are tested only through an in-memory replacement rather than the real adapter format",
+        "a server-only test is cited as proof of rendering, audio, input, packet delivery, resource-pack application, or another client-observed result",
+        "tests depend on wall-clock sleeps, live network services, execution order, or shared state without bounded cleanup",
+        "the reported target version differs from the runtime fixture or is not recorded",
+        "the final answer omits failed, skipped, unavailable, manual, or known-baseline checks"
+      ],
+      "safeResponse": [
+        "State which behavior each completed test layer can actually observe.",
+        "Add the smallest target-version loaded-server or client check needed for uncovered runtime claims.",
+        "Control time, ordering, external responses, and cleanup before relying on the test repeatedly.",
+        "Narrow the final claim and list remaining verification when stronger evidence is unavailable."
+      ],
+      "failureMode": "A test suite can report success while the plugin does not load, violates Paper runtime semantics, loses state during lifecycle transitions, or fails for clients because the chosen evidence never observed those boundaries."
     }
   ]
 }

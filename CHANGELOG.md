@@ -47,6 +47,9 @@ All notable changes to this project are documented here.
   per-connection generations, idempotent teardown and partial rollback, stale async publication
   fences, revisioned durable flushes, shutdown barriers, fallback reconciliation, and leak
   observability without mixing in inventory contents or ownership settlement.
+- Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
+  owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
+  claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

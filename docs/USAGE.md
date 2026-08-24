@@ -76,6 +76,8 @@ minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
+minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
+minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -115,6 +117,16 @@ click, drag, and close handlers. Editable sessions must choose per-session or de
 ownership, settle their stacks exactly once across close, replacement, disconnect, death, and
 shutdown, and define an explicit overflow outcome. The diagnostic also rejects deprecated
 `InventoryClickEvent.setCursor` mutation and direct conditional reopen from `InventoryCloseEvent`.
+
+The `paper-plugin-testing-evidence-review` scenario maps every runtime claim to the minimum boundary
+that can observe it. Pure unit tests cover deterministic rules, test doubles cover plugin-owned
+contracts, MockBukkit covers only explicitly supported harness behavior, and plugin bootstrap,
+registration, scheduler integration, reload, and disable changes require a loaded target-version
+Paper server. Packet transport and shape need a protocol oracle; rendering, audio, input, resource-
+pack application, and other client-visible outcomes need a real instrumented client or captured
+client state. The recipe also requires controlled time and task ordering, lifecycle and stale
+completion cases, isolated cleanup, and a final report of exact commands, versions, baselines,
+skips, unavailable environments, and manual checks.
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
 support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).
