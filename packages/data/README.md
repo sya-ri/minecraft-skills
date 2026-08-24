@@ -17,6 +17,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Generic Paper administrative-command guidance for operation coverage, sender and target models,
   permissions, protected secret input, justified safe out-of-band alternatives, bulk scope,
   atomic reload rollback, observability, recovery, and failure tests.
+- Paper player identity and display guidance for stable persistence, offline resolution, explicit
+  presentation sources, bounded profile lookup, and cross-server cache convergence.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

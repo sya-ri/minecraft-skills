@@ -61,6 +61,7 @@ minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
 minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 26.2
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
+minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -321,6 +322,13 @@ permissions; protected secret input; justified safe out-of-band alternatives; bo
 atomic last-known-good reload; invoker/target feedback; effective-state status; and failure-path
 tests.
 
+For Paper player data, use
+`plugin paper plan paper-player-identity-and-display-review <version>`. The resolved workflow keeps
+stable identity separate from mutable account names and presentation labels, verifies the actual
+Player, OfflinePlayer, profile, and display APIs used, and requires rename, offline, cache, and
+cross-server tests. The workflow also makes online-mode, offline-mode, and trusted proxy identity
+assumptions explicit before treating a UUID as authoritative.
+
 ## Source Policy
 
 Bundled facts come from Mojang version metadata and downloads served through Piston endpoints,
@@ -439,6 +447,10 @@ const matchingScenarios = searchAuthoringScenarios({
   domain: "paper-plugin",
 });
 const plan = getAuthoringPlan({ scenario: "paper-event-listener-review", version: "26.2" });
+const playerIdentityPlan = getAuthoringPlan({
+  scenario: "paper-player-identity-and-display-review",
+  version: "1.21.11",
+});
 const claimPolicy = getClaimPolicy("paper-type-or-member-exists");
 const outputRequirement = getOutputRequirement("paper-plugin-output-safety");
 const responsePattern = getResponsePattern("paper-api-answer");

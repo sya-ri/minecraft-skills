@@ -555,6 +555,41 @@ describe("MCP tools", () => {
     expect(inventory.content[0]?.text).toContain("repeated callbacks");
   });
 
+  it("calls Paper player identity and display guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-player-identity-and-display",
+    });
+    expect(recipe.content[0]?.text).toContain("persist-and-resolve-stable-identity");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-player-identity-and-display-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-player-identity-display-confusion");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper UUID player identity display name OfflinePlayer rename cache",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-player-identity-and-display-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-player-identity-and-display-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-player-identity-and-display"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-player-identity-display-confusion"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-player-identity-and-display",
+    });
+    expect(guardrail.content[0]?.text).toContain("stable player identifier");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-player-identity-display-confusion",
+    });
+    expect(diagnostic.content[0]?.text).toContain("only persistent player key");
+  });
+
   it("calls claim policy tools", async () => {
     const list = await callMinecraftSkillsTool("list_claim_policies", {
       domain: "paper-plugin",
@@ -1449,7 +1484,12 @@ describe("MCP tools", () => {
       version: "1.21.11",
       task: "reward a player with experience points",
     });
-    expect(experienceReward.content[0]?.text).not.toContain("plugin paper search");
+    const experienceRewardOutput = JSON.parse(experienceReward.content[0]?.text ?? "{}") as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      experienceRewardOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper ")),
+    ).toBe(false);
 
     const inventorySuggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
       version: "1.21.11",

@@ -586,6 +586,76 @@
         "Return a typed result to the invoker, expose effective state, and test denial, rollback, retry, partial, and bulk boundaries."
       ],
       "failureMode": "Operators may be unable to inspect or recover a feature, while implicit sender, target, permission, scope, and reload behavior can apply privileged mutations to the wrong state or hide failures."
+    },
+    {
+      "id": "paper-player-identity-display-confusion",
+      "domains": ["paper-plugin"],
+      "title": "Stable player identity, lookup name, and display output are conflated",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code stores, resolves, compares, caches, or displays a player",
+        "a model or method exposes a generic name or displayName without defined semantics",
+        "Player, OfflinePlayer, PlayerProfile, UUID, account name, nickname, or Component values cross persistence and presentation boundaries",
+        "renames, offline lookup, null names, duplicate labels, cache invalidation, or cross-server updates are unhandled"
+      ],
+      "requiredChecks": [
+        "trace stable identity, lookup input, current account name, optional display label, and rendered output as separate values",
+        "verify persistent keys and ownership survive account-name changes only where an authenticated online or trusted-proxy identity or independent account link guarantees continuity; otherwise require an explicit direct-offline limitation and no automatic remapping",
+        "distinguish online, known offline, unknown, invalid, ambiguous when applicable, and unavailable resolution outcomes",
+        "verify an OfflinePlayer object is not used by itself as proof of known identity",
+        "define an intentional label source, Component or plain-text form, trust and markup policy, transport encoding and escaping, mention, newline, control-character, and Component event policy, fallback, disambiguation, and UUID visibility for each output transport",
+        "bound external lookup, cache lifetime, negative caching, retry, threading, and cross-server refresh behavior",
+        "test rename, offline and unknown state, null names, duplicate labels, stale results, timeout, reconnect, and every output surface"
+      ],
+      "evidence": [
+        "a player identity value-flow, authentication or proxy-forwarding decision, and persistence schema",
+        "target-version Paper API evidence for every player identity, profile, lookup, and display member used",
+        "a presentation matrix and output assertions",
+        "state-transition tests for rename, cache refresh, and cross-server convergence"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "a mutable account name, nickname, display label, or unauthenticated forwarded identifier is the only persistent player key",
+        "UUID stability or authority is assumed across online-mode, offline-mode, or proxy-forwarding changes without an identity decision and migration policy",
+        "direct offline mode claims rename continuity without an independently authenticated account link or automatically remaps ownership from a mutable name",
+        "unknown input is accepted because an OfflinePlayer object was returned",
+        "a decorated Component or display label is reused for exact lookup, authorization, or storage",
+        "an untrusted account name or display label is parsed as MiniMessage or other markup, triggers an unintended external mention, reaches Markdown or HTML without encoding, retains disallowed newlines or control characters, or carries an unapproved Component click or hover event",
+        "Player.name, OfflinePlayer.name, displayName, UUID, or a fallback chain reaches user-facing output without an explicit presentation contract",
+        "raw UUID or historical-name data is exposed to ordinary players without an explicit requirement",
+        "profile, database, or network lookup blocks the main server thread or can wait without a timeout",
+        "server-local caches have no revision or invalidation rule and can overwrite newer identity or display data",
+        "tests cover only one currently-online player with an unchanged name"
+      ],
+      "safeResponse": [
+        "Use stable identity for persistence and make lookup results explicit.",
+        "Choose and document the display source separately for every transport.",
+        "Bound remote lookup and define authoritative cache refresh before claiming cross-server consistency.",
+        "Add rename, offline, unknown, fallback, stale-cache, and output tests."
+      ],
+      "failureMode": "Identity and authorization can follow a mutable label, while user interfaces leak raw identifiers or show stale names when lookup, storage, and presentation share one ambiguous value."
     }
   ]
 }

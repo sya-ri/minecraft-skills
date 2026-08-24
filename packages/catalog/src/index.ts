@@ -5384,6 +5384,18 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     /\b(data ?pack|mcfunction|advancement|loot table|predicate|worldgen)\b/.test(normalizedTask);
   const explicitResourcepackTask =
     /\b(resource ?pack|asset|blockstate|font|model|texture|translation)\b/.test(normalizedTask);
+  const hasDatapackContext = /\b(?:data[-_\s]*pack|datapack)\b/.test(lower);
+  const hasResourcepackContext = /\b(?:resource[-_\s]*pack|resourcepack)\b/.test(lower);
+  const hasExplicitPaperContext =
+    /\b(?:paper[-_\s]+plugin|bukkit|spigot|offlineplayer|playerprofile)\b/.test(lower) ||
+    (/\bpaper\b/.test(lower) && !hasDatapackContext && !hasResourcepackContext);
+  const inferredDomains = [
+    hasDatapackContext ? "datapack" : undefined,
+    hasResourcepackContext ? "resourcepack" : undefined,
+    hasExplicitPaperContext ? "paper-plugin" : undefined,
+  ].filter((domain): domain is NonNullable<LookupSuggestionOptions["domain"]> => Boolean(domain));
+  const inferredDomain = inferredDomains.length === 1 ? inferredDomains[0] : undefined;
+  const searchDomain = options.domain ?? inferredDomain;
   const suggestedTools: LookupSuggestionResult["suggestedTools"] = [];
   const add = (tool: string, reason: string) => {
     if (!suggestedTools.some((entry) => entry.tool === tool)) {
@@ -5395,7 +5407,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     `minecraft search-all ${JSON.stringify(task)} --version ${version}`,
     "Start with a cross-domain search.",
   );
-  if (!options.domain || options.domain === "datapack") {
+  if (!searchDomain || searchDomain === "datapack") {
     if (
       /(command|execute|function|advancement|loot|recipe|predicate|tag|datapack|data pack)/.test(
         lower,
@@ -5429,7 +5441,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       }
     }
   }
-  if (!options.domain || options.domain === "resourcepack") {
+  if (!searchDomain || searchDomain === "resourcepack") {
     if (
       /(resource|asset|model|texture|item|blockstate|sound|font|lang|resource pack)/.test(lower) &&
       (options.domain === "resourcepack" ||
@@ -5446,7 +5458,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       );
     }
   }
-  if (!options.domain || options.domain === "paper-plugin") {
+  if (!searchDomain || searchDomain === "paper-plugin") {
     const paperApiTask = /(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(
       lower,
     );
@@ -5462,11 +5474,17 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     const administrativeCommandTask =
       (options.domain === "paper-plugin" && (commandTask || administrativeOperationTask)) ||
       (!options.domain && commandTask && administrativeRoleTask);
+    const playerIdentityTask =
+      /(player|offlineplayer|playerprofile|gameprofile|uuid)/.test(lower) &&
+      /(identity|name|display|profile|lookup|resolve|rename|offline|cache)/.test(lower) &&
+      (searchDomain === "paper-plugin" ||
+        /(paper|bukkit|spigot|offlineplayer|playerprofile)/.test(lower));
     if (
       paperItemDeliveryTask ||
       paperInventoryGuiTask ||
       paperApiTask ||
-      administrativeCommandTask
+      administrativeCommandTask ||
+      playerIdentityTask
     ) {
       add(
         `plugin paper search ${JSON.stringify(task)}`,
@@ -5482,7 +5500,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       );
     }
   }
-  if (!options.domain && isFabricToolchainDiscoveryQuery(task)) {
+  if (!searchDomain && isFabricToolchainDiscoveryQuery(task)) {
     add(
       `fabric toolchain ${JSON.stringify(version)}`,
       "Look up official live Fabric Loader, Intermediary, and Yarn candidates for the target game version.",
@@ -5504,22 +5522,48 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     );
   }
 
-  const catalog = searchCatalog({
+  const explicitNonPaperPlatform =
+    !searchDomain && /\b(?:fabric|forge|neoforge|quilt)\b/.test(lower);
+  const catalogSearchLimit = explicitNonPaperPlatform ? 200 : limit;
+  const scenarioSearchLimit = explicitNonPaperPlatform ? 100 : limit;
+
+  let catalog = searchCatalog({
     query: task,
-    ...(options.domain ? { domain: options.domain } : {}),
-    limit,
+    ...(searchDomain ? { domain: searchDomain } : {}),
+    limit: catalogSearchLimit,
   });
-  const scenarios = searchAuthoringScenarios({
+  let scenarios = searchAuthoringScenarios({
     query: task,
-    ...(options.domain ? { domain: options.domain } : {}),
-    limit,
+    ...(searchDomain ? { domain: searchDomain } : {}),
+    limit: scenarioSearchLimit,
   });
+  if (explicitNonPaperPlatform) {
+    const catalogResults = catalog.results.filter(
+      (entry) =>
+        entry.domains.length === 0 || entry.domains.some((domain) => domain !== "paper-plugin"),
+    );
+    const scenarioResults = scenarios.results.filter((entry) =>
+      entry.scenario.domains.some((domain) => domain !== "paper-plugin"),
+    );
+    catalog = {
+      ...catalog,
+      limit,
+      truncated: catalog.truncated || catalogResults.length > limit,
+      results: catalogResults.slice(0, limit),
+    };
+    scenarios = {
+      ...scenarios,
+      limit,
+      truncated: scenarios.truncated || scenarioResults.length > limit,
+      results: scenarioResults.slice(0, limit),
+    };
+  }
   return {
     schemaVersion: 1,
     task,
     edition,
     version,
-    ...(options.domain ? { domain: options.domain } : {}),
+    ...(searchDomain ? { domain: searchDomain } : {}),
     suggestedTools,
     catalog,
     scenarios,

@@ -20,6 +20,7 @@ minecraft-skills skill write minecraft-paper-plugins --output ./skills
 minecraft-skills plugin paper context 26.2
 minecraft-skills plugin paper recipes
 minecraft-skills plugin paper recipe paper-event-listener
+minecraft-skills plugin paper recipe paper-player-identity-and-display
 minecraft-skills plugin paper search-scenarios "Paper event listener"
 minecraft-skills plugin paper search-scenarios "full inventory reward leftovers"
 minecraft-skills plugin paper scenarios
@@ -30,12 +31,15 @@ minecraft-skills plugin paper search-scenarios "inventory GUI shift-click drag"
 minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 1.21.11
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
+minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
 minecraft-skills plugin paper guardrail paper-api-surface-limits
+minecraft-skills plugin paper guardrail paper-player-identity-and-display
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
+minecraft-skills plugin paper diagnostic paper-player-identity-display-confusion
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements

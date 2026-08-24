@@ -106,6 +106,10 @@ const adminCommandPlan = getAuthoringPlan({
   scenario: "paper-administrative-command-operability-review",
   version: "26.2",
 });
+const playerIdentityPlan = getAuthoringPlan({
+  scenario: "paper-player-identity-and-display-review",
+  version: "1.21.11",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -122,6 +126,9 @@ const scenarioMatches = searchAuthoringScenarios({
 const listenerScenario = getAuthoringScenario("paper-event-listener-review");
 const itemDeliveryScenario = getAuthoringScenario("paper-item-delivery-review");
 const inventoryScenario = getAuthoringScenario("paper-inventory-gui-interaction-review");
+const playerIdentityScenario = getAuthoringScenario(
+  "paper-player-identity-and-display-review",
+);
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");

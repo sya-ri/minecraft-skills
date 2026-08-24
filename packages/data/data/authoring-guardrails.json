@@ -145,6 +145,32 @@
         "tests proving sender acceptance and rejection, target, permission, failure, observability, reload rollback, bulk-scope behavior, and secret redaction"
       ],
       "failureMode": "An incomplete administrative command can force operators to edit files, restart servers, impersonate targets, or infer success from logs while unsafe sender, scope, permission, and reload paths remain untested."
+    },
+    {
+      "id": "paper-player-identity-and-display",
+      "domains": ["paper-plugin"],
+      "title": "Separate stable player identity from mutable names and display output",
+      "rules": [
+        "Use a stable player identifier backed by the authenticated identity boundary for persistence, ownership, joins, permissions, and references; account names and presentation labels are mutable attributes, not primary identity.",
+        "Document online mode, offline mode, and trusted proxy forwarding; do not treat every observed UUID as equally stable or authoritative. Direct offline mode needs an independently authenticated account link for rename-continuous identity; otherwise state that continuity is unavailable, forbid automatic name-based ownership remapping, and define migration if the identity mode changes.",
+        "Classify each player-related value as stable identity, lookup input, current account name, plugin-defined display label, or rendered Component or text instead of passing a generic name between layers.",
+        "Resolve human input through an explicit exact-match and normalization policy, and represent online, known offline, unknown, invalid, ambiguous when applicable, and lookup-unavailable outcomes separately.",
+        "Do not treat an OfflinePlayer object alone as evidence that a player is known, registered, or has joined.",
+        "Choose the intended label independently for every human-facing surface; never expose Player.name, OfflinePlayer.name, displayName, UUID, or a fallback chain merely because it is available.",
+        "Keep Component-based presentation distinct from plain account-name lookup and persistence values; treat untrusted names and labels as text rather than MiniMessage or other markup, and define allowed styling, click or hover events, null fallback, duplicate-label disambiguation, encoding, escaping, mention handling, newline and control-character handling, and plain-text serialization per transport.",
+        "Show UUIDs or historical names only for an explicit machine-integration, diagnostic, audit, or operator requirement, with an appropriate audience and privacy policy.",
+        "Perform profile, database, and network lookup off the main server thread with timeouts, bounded positive and negative caches, observable failure, and target-compatible Bukkit publication.",
+        "Define the authoritative source for each identity mapping, account-name attribute, and display label, plus an ordering, revision, or invalidation rule for join, rename discovery, profile update, reconnect, and cross-server propagation.",
+        "Test authenticated rename continuity or the explicit direct-offline limitation, known offline and unknown input, null names, duplicate, markup-like, mention-like, control-character, and event-bearing labels, stale caches, lookup timeout, reconnect, and every player-facing output transport in scope."
+      ],
+      "requiredEvidence": [
+        "a value-flow table separating stable identity, lookup input, account name, display label, and rendered output",
+        "target-version Paper API type/member matches for Player, OfflinePlayer, profile, identity, lookup, and display APIs actually referenced",
+        "a persistence and resolution model that survives account-name changes only where an authenticated identity or independent account link supports it, records authentication or proxy-forwarding assumptions, and rejects unresolved identity",
+        "a per-transport presentation and fallback matrix",
+        "cache, threading, and cross-server convergence tests"
+      ],
+      "failureMode": "Treating every player-related value as a name can attach data to the wrong identity, break after renames, expose internal identifiers, or render inconsistent labels across transports and servers."
     }
   ]
 }
