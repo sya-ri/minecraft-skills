@@ -403,4 +403,36 @@ describe("MCP resources", () => {
     );
     expect(diagnostic.contents[0]?.text).toContain("Messenger.MAX_MESSAGE_SIZE");
   });
+
+  it("reads Paper player-session lifecycle safety resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-player-session-lifecycle.json",
+        "minecraft-skills://data/authoring-scenarios/paper-player-session-lifecycle-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-player-session-lifecycle-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-player-session-lifecycle-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-player-session-lifecycle.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("reject-stale-asynchronous-publication");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-player-session-lifecycle-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-player-session-lifecycle-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-player-session-lifecycle-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("session instance or generation");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-player-session-lifecycle-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("fire-and-forget persistence");
+  });
 });

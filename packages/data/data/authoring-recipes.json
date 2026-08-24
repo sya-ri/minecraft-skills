@@ -1146,6 +1146,153 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "An underspecified plugin-message protocol can trust spoofed identities, allocate or decompress attacker-controlled sizes, duplicate side effects, leak connection state, or stall the server thread."
+    },
+    {
+      "id": "paper-player-session-lifecycle",
+      "domains": ["paper-plugin"],
+      "title": "Own and tear down Paper player-session state safely",
+      "when": [
+        "the request creates per-connection Paper player state, tasks, subscriptions, listeners, pollers, UI viewers, cooldowns, or caches",
+        "Paper code reacts to join, quit, kick, connection close, transfer, reconnect, plugin reload, or disable",
+        "an asynchronous callback or persistence write can complete after a player reconnects or a plugin stops",
+        "the request investigates leaked player sessions, stale Player references, duplicate cleanup, or lost durable state"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-lifecycle-surfaces",
+          "action": "Resolve the target Paper version, then search its Paper type and member surfaces before naming lifecycle events or scheduler APIs. Treat event search as candidate discovery only. Verify any PlayerQuitEvent, PlayerKickEvent, PlayerConnectionCloseEvent, AsyncPlayerPreLoginEvent, transfer, or scheduler surface actually used, and inspect target-version documentation for ordering, cancellation, and phases. Do not assume every signal fires: define a fallback reconciliation sweep over the plugin's authoritative session registry and current connection state.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_reference"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiReference"
+            ]
+          },
+          "evidence": [
+            "Target-version Paper type and member matches for every lifecycle event and API named in generated code",
+            "Target-version documentation evidence for event phase and ordering claims",
+            "For Paper 1.21.11 only after that verification: PlayerQuitEvent represents departure for a player who joined, PlayerKickEvent carries cause information, and PlayerConnectionCloseEvent follows PlayerQuitEvent for logged-in players and a successful AsyncPlayerPreLoginEvent but is not emitted for cancelled pre-login",
+            "A coverage table mapping quit, kick, transfer when relevant, connection close, failed or cancelled login, plugin disable or reload, and missing or late signals to cleanup triggers and reconciliation"
+          ],
+          "stopIfMissing": "Do not invent a transfer event, scheduler call, lifecycle member, or guarantee that a candidate event fires in every connection phase."
+        },
+        {
+          "id": "separate-durable-data-from-session-state",
+          "action": "Separate durable player data from per-connection transient state. Give each accepted connection a new opaque session instance or monotonic generation in addition to stable player identity and plugin lifecycle epoch. Own tasks, subscriptions, listeners, pollers, UI viewers, transient cooldowns, caches, callbacks, and reverse indexes through that session object rather than a UUID-only map, and avoid retaining Player references outside the live session boundary.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A state model distinguishing durable player records, live session instances or generations, and the plugin lifecycle epoch",
+            "An ownership table for every task, subscription, listener, poller, UI viewer, cooldown, cache entry, callback, and reverse index",
+            "No long-lived Player reference in durable records, global callbacks, or completed-session state"
+          ],
+          "stopIfMissing": "Do not approve session resources stored only by player UUID because a rapid reconnect can reuse the key while old work is still completing."
+        },
+        {
+          "id": "make-acquisition-and-teardown-transactional",
+          "action": "Record each acquired session resource immediately. If initialization fails partway, dispose completed acquisitions in reverse order. Use one idempotent close path with an explicit state transition so quit, kick, transfer when relevant, connection close, plugin disable or reload, initialization failure, reconciliation, and repeated or late signals can all request cleanup safely. Cancel owned work, unregister or close owned resources, remove reverse indexes, and clear references even when an earlier cleanup action fails.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A session state machine whose close transition is safe to invoke more than once",
+            "An acquisition ledger and reverse-order partial-initialization rollback",
+            "Cleanup assertions for cancellation, unregistration, closed viewers, cleared reverse indexes, removed references, and independently reported cleanup failures"
+          ],
+          "stopIfMissing": "Do not spread cleanup across event handlers without one idempotent owner and a partial-initialization rollback path."
+        },
+        {
+          "id": "reject-stale-asynchronous-publication",
+          "action": "Every asynchronous callback must capture only stable input plus the originating session generation and plugin epoch. Before publishing a result, reacquire the current player or target through a target-version-supported API in the required execution context, verify that the plugin is still accepting publications and that the current session generation matches, then discard or redirect stale results. Cancellation is not sufficient because already-running work may still complete.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policy"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_claim_policy"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getClaimPolicy"
+            ]
+          },
+          "evidence": [
+            "A publication guard comparing player identity, session generation, and plugin lifecycle epoch",
+            "A documented target-compatible execution context for Bukkit or Paper-facing publication",
+            "A test in which an old callback completes after reconnect and cannot mutate or message the new session"
+          ],
+          "stopIfMissing": "Do not publish an async result from a captured Player reference, UUID-only lookup, or plugin state that was checked only when work started."
+        },
+        {
+          "id": "bound-durable-flush-and-shutdown",
+          "action": "Define ordered durable persistence separately from transient teardown. Use a monotonic revision or idempotency key so late writes cannot overwrite newer state, bound queueing, retries, and flush time, and specify transfer and reconnect semantics. During plugin stop, stop accepting new sessions and publications, close sessions, await already-owned writes behind an explicit shutdown barrier, perform bounded final flushes where the host contract permits them, and expose timeout or recovery state instead of starting fire-and-forget work after disable.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper members", "plugin paper claim-policy"],
+            "mcp": ["get_paper_api_reference", "search_paper_members", "get_claim_policy"],
+            "packageApis": ["getPaperApiReference", "searchPaperMembers", "getClaimPolicy"]
+          },
+          "evidence": [
+            "A per-player write-order contract using revisions or idempotency keys",
+            "A bounded shutdown sequence with admission closed before a barrier waits for in-flight persistence",
+            "Explicit semantics for same-server reconnect and proxy or server transfer, including whether durable state is handed off, reloaded, or revision-checked",
+            "An observable timeout, retry, journal, or recovery decision when persistence cannot finish within the shutdown budget"
+          ],
+          "stopIfMissing": "Do not claim durable shutdown safety when writes are unordered, unbounded, or launched after plugin disable without a host-owned completion barrier."
+        },
+        {
+          "id": "reconcile-observe-and-test-races",
+          "action": "Run a bounded reconciliation sweep that finds sessions whose connection or plugin epoch is no longer current and closes them without relying on one perfect event sequence. Observe active sessions, resources acquired and disposed, close reasons, repeated cleanup, rejected late callbacks, persistence queue age, shutdown-barrier timeouts, and leaked sessions or reverse-index entries. Test lifecycle races and missing signals. Item or inventory contents, ownership settlement, and transactional delivery are outside this concern; route those to their dedicated inventory or delivery guidance.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Tests for rapid reconnect, an old callback after reconnect, double cleanup, partial initialization failure, transfer semantics, disable with in-flight persistence, and missing or late lifecycle events",
+            "A reconciliation test that removes an orphaned session and all reverse references",
+            "Metrics or structured logs that make nonzero leaked-session and stale-publication counts actionable",
+            "A scope statement excluding item or inventory contents and ownership settlement"
+          ],
+          "stopIfMissing": "Do not approve lifecycle handling based only on a normal join followed by one quit event."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-player-session-lifecycle-safety",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A UUID-only session map or event-only cleanup path can leak resources, let old callbacks mutate a replacement connection, retain stale Player references, or lose and reorder durable state during reconnect, transfer, reload, and shutdown."
     }
   ]
 }

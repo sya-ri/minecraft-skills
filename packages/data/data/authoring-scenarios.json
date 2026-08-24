@@ -413,6 +413,71 @@
         "performing blocking I/O or unsafe Bukkit state publication in a plugin-message callback"
       ],
       "failureMode": "A plausible codec can still permit identity spoofing, memory or decompression denial of service, duplicate side effects, stale-session responses, unbounded uploads, or unsafe server-thread work."
+    },
+    {
+      "id": "paper-player-session-lifecycle-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper player-session lifecycle ownership and teardown",
+      "userPrompt": "Create or review Paper player-session state that survives rapid reconnect, late async completion, transfer, partial initialization, and plugin shutdown without leaking transient resources or losing durable updates.",
+      "useWhen": [
+        "the request creates per-player tasks, subscriptions, listeners, pollers, UI viewers, cooldowns, caches, callbacks, or reverse indexes",
+        "Paper code handles join, quit, kick, connection close, transfer, reconnect, plugin reload, or disable",
+        "old asynchronous work can finish after a replacement connection starts",
+        "durable player persistence is flushed during disconnect or shutdown",
+        "the request diagnoses stale Player references or leaked sessions"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-player-session-lifecycle"],
+        "intents": [
+          "prepare-generation",
+          "discover-paper-event-candidates",
+          "verify-paper-type-or-member"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-threading-assumption",
+          "paper-player-session-lifecycle-unsafe"
+        ],
+        "claimPolicies": [
+          "paper-type-or-member-exists",
+          "paper-event-candidate",
+          "folia-or-thread-safety"
+        ],
+        "factSurfaces": [
+          "paper-builds",
+          "paper-api-index",
+          "paper-api-surface",
+          "paper-event-search"
+        ],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "durable player data is separated from per-connection transient state",
+        "every accepted connection has a distinct session instance or generation and plugin lifecycle epoch",
+        "tasks, subscriptions, listeners, pollers, UI viewers, cooldowns, caches, callbacks, reverse indexes, and references have one session owner",
+        "one idempotent close path handles quit, kick, relevant transfer, connection close, plugin disable or reload, initialization failure, repeated signals, and reconciliation",
+        "partial initialization disposes acquired resources in reverse order and cleanup continues after individual failures",
+        "late callbacks revalidate current session generation, plugin state, and publication context without retaining stale Player references",
+        "durable writes are ordered with revisions or idempotency keys and plugin shutdown uses a bounded explicit barrier",
+        "transfer and reconnect semantics are explicit rather than inferred from event timing",
+        "a fallback reconciliation sweep and leak observability cover missing or late lifecycle events",
+        "tests cover rapid reconnect, old completion, double cleanup, partial initialization failure, transfer, disable with in-flight persistence, and missing or late events"
+      ],
+      "mustAvoid": [
+        "using only player UUID as the owner of connection-scoped resources",
+        "assuming one quit, kick, transfer, or connection-close event fires in every phase",
+        "inventing target-version transfer, lifecycle, or scheduler APIs",
+        "capturing Player in asynchronous or durable state after the live session boundary",
+        "letting an old callback publish into a replacement session",
+        "making cancellation the only stale-callback defense",
+        "leaving reverse indexes or resource references after teardown",
+        "allowing a late durable write to overwrite a newer revision",
+        "launching fire-and-forget persistence after plugin disable",
+        "mixing item or inventory contents and ownership settlement into this lifecycle concern"
+      ],
+      "failureMode": "Connection-scoped work can outlive its player session, corrupt a replacement session, leak resources, or lose durable updates when cleanup depends on a single ideal event order."
     }
   ]
 }

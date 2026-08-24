@@ -726,6 +726,87 @@
         "Mark target-version API members or limits as unverified when the Paper surface and official documentation do not establish them."
       ],
       "failureMode": "A protocol that merely parses successful examples can remain exploitable through spoofing, oversized or compressed payloads, duplicate delivery, stale correlations, state leaks, and unsafe execution."
+    },
+    {
+      "id": "paper-player-session-lifecycle-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper player-session resources can leak or publish after their connection is stale",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code stores connection-scoped resources in a player UUID map",
+        "tasks, subscriptions, listeners, pollers, UI viewers, cooldowns, caches, callbacks, or reverse indexes are created per connection",
+        "cleanup depends on one quit, kick, transfer, or connection-close event",
+        "an async callback can complete after reconnect, transfer, plugin reload, or disable",
+        "durable state is written during disconnect or shutdown",
+        "Player references remain reachable from asynchronous, cached, static, or durable state"
+      ],
+      "requiredChecks": [
+        "separate durable player records from transient session instances or generations",
+        "trace every acquired resource and reverse reference to one session owner",
+        "verify one idempotent close path covers repeated signals and partial initialization rollback",
+        "verify stale callbacks compare current generation and plugin state immediately before publication",
+        "verify no stale Player reference crosses the session boundary",
+        "verify durable writes have monotonic revisions or idempotency keys, bounded retry and flush behavior, and an explicit shutdown barrier",
+        "define reconnect and transfer semantics without assuming an unverified event or firing order",
+        "verify a bounded reconciliation sweep closes orphans when lifecycle events are missing or late",
+        "verify leak and persistence observability plus the required lifecycle race tests",
+        "confirm item or inventory contents and ownership settlement are routed to separate guidance"
+      ],
+      "evidence": [
+        "A session state machine and resource acquisition ledger",
+        "Target-version Paper type, member, event, and documentation evidence",
+        "Publication-fence and revisioned-persistence tests",
+        "Shutdown-barrier and reconciliation tests",
+        "Metrics or structured logs for active and leaked sessions, rejected stale callbacks, cleanup balance, persistence queue age, and shutdown timeout"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper events",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper api",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "search_paper_events",
+          "search_paper_types",
+          "search_paper_members",
+          "get_paper_api_reference",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "searchPaperEvents",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getPaperApiReference",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "connection-scoped resources are keyed only by UUID with no session instance or generation",
+        "a new connection can reuse the same entry while old tasks or callbacks still run",
+        "cleanup is not idempotent or does not dispose partial acquisitions in reverse order",
+        "quit, kick, transfer, connection close, plugin stop, initialization failure, repeated signals, and reconciliation cannot converge on one close path",
+        "cleanup leaves tasks, subscriptions, listeners, pollers, UI viewers, cooldowns, caches, reverse indexes, or references reachable",
+        "an asynchronous callback publishes without rechecking the current session generation and plugin state",
+        "Player is retained after the session is no longer current",
+        "a late or retried durable write can overwrite a newer player revision",
+        "plugin disable starts unowned fire-and-forget persistence or has no bounded completion barrier",
+        "transfer or reconnect semantics depend on an invented API or assumed event order",
+        "there is no fallback reconciliation path for missing or late events",
+        "tests omit rapid reconnect, old callback after reconnect, double cleanup, partial initialization failure, transfer, disable with in-flight persistence, or missing and late events"
+      ],
+      "safeResponse": [
+        "Introduce a distinct session generation and one resource ledger per accepted connection.",
+        "Route every close signal through one idempotent teardown and reconcile orphaned sessions.",
+        "Fence asynchronous publication with current generation and plugin state, then reacquire the live target.",
+        "Order durable writes by revision and wait behind a bounded shutdown barrier.",
+        "Verify lifecycle APIs for the target version and state gaps instead of inventing transfer or scheduler behavior."
+      ],
+      "failureMode": "Old connection work can act on a replacement player session, leak resources, retain Player objects, or reorder durable state across reconnect and shutdown."
     }
   ]
 }

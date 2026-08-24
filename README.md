@@ -62,6 +62,7 @@ minecraft-skills plugin paper plan paper-administrative-command-operability-revi
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
+minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack

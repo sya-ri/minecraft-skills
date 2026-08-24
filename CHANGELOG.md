@@ -31,6 +31,10 @@ All notable changes to this project are documented here.
   session-scoped correlation and idempotency, one terminal response, bounded chunk/backpressure
   state, complete timeout/reconnect/disable cleanup, safe execution contexts, hostile tests, and
   target-version API evidence for transport members and limits.
+- Paper player-session lifecycle safety guidance across data, Catalog, CLI, and MCP, covering
+  per-connection generations, idempotent teardown and partial rollback, stale async publication
+  fences, revisioned durable flushes, shutdown barriers, fallback reconciliation, and leak
+  observability without mixing in inventory contents or ownership settlement.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

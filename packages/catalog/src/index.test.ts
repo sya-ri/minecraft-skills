@@ -4425,4 +4425,89 @@ describe("catalog", () => {
       "paper-plugin-protocol-safety-review",
     );
   });
+
+  it("exposes and routes Paper player-session lifecycle safety guidance", () => {
+    const recipe = getAuthoringRecipe("paper-player-session-lifecycle");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "verify-target-lifecycle-surfaces",
+        "make-acquisition-and-teardown-transactional",
+        "reject-stale-asynchronous-publication",
+        "bound-durable-flush-and-shutdown",
+        "reconcile-observe-and-test-races",
+      ]),
+    );
+    expect(
+      recipe.steps.find((step) => step.id === "verify-target-lifecycle-surfaces")?.tools.mcp,
+    ).toEqual(expect.arrayContaining(["search_paper_types", "search_paper_members"]));
+    expect(
+      recipe.steps
+        .find((step) => step.id === "verify-target-lifecycle-surfaces")
+        ?.evidence.join("\n"),
+    ).toContain("not emitted for cancelled pre-login");
+    expect(recipe.finalChecks).toContain("paper-player-session-lifecycle-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-player-session-lifecycle-safety");
+    expect(guardrail.rules.join("\n")).toContain("session instance or generation");
+    expect(guardrail.rules.join("\n")).toContain("explicit bounded persistence barrier");
+    expect(guardrail.rules.join("\n")).toContain("fallback reconciliation sweep");
+
+    const diagnostic = getAuthoringDiagnostic("paper-player-session-lifecycle-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("old tasks or callbacks still run");
+    expect(diagnostic.failIf.join("\n")).toContain("fire-and-forget persistence");
+    expect(diagnostic.failIf.join("\n")).toContain("missing or late events");
+
+    const scenario = getAuthoringScenario("paper-player-session-lifecycle-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-player-session-lifecycle"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-player-session-lifecycle-unsafe");
+    expect(scenario.mustAvoid.join("\n")).toContain("inventory contents");
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "Paper player session rapid reconnect stale async callback teardown shutdown",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-player-session-lifecycle-review");
+    expect(scenarioSearch.results[0]?.matches.flatMap((match) => match.matchedTokens)).toEqual(
+      expect.arrayContaining(["session", "reconnect", "callback"]),
+    );
+
+    const catalogSearch = searchCatalog({
+      query: "session generation teardown reconnect",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-player-session-lifecycle",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-player-session-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-player-session-lifecycle");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-player-session-lifecycle-unsafe",
+    );
+    expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-api-surface");
+
+    const task = "Paper player reconnect leaves an old async callback and leaked session task";
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task,
+      domain: "paper-plugin",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      `plugin paper search ${JSON.stringify(task)}`,
+    );
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-player-session-lifecycle",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-player-session-lifecycle-review",
+    );
+  });
 });

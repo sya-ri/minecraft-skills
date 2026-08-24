@@ -198,6 +198,34 @@
         "hostile and boundary tests for decoding, spoofed identity, duplicates, stale sessions, timeouts, cleanup, chunk ordering/checksum/expiry, and backpressure"
       ],
       "failureMode": "Untrusted payloads can cross authorization boundaries, exhaust memory or work budgets, replay side effects, leak per-connection state, or publish unsafe Bukkit mutations."
+    },
+    {
+      "id": "paper-player-session-lifecycle-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper connection-scoped work inside one player-session generation",
+      "rules": [
+        "Separate durable player data from transient state owned by one accepted connection.",
+        "Identify a session by stable player identity plus an opaque session instance or generation and plugin lifecycle epoch, not by UUID alone.",
+        "Own tasks, subscriptions, listeners, pollers, UI viewers, cooldowns, caches, callbacks, reverse indexes, and references from one session ledger.",
+        "Use one idempotent close transition for quit, kick, relevant transfer, connection close, plugin disable or reload, failed or partial initialization, repeated signals, and reconciliation.",
+        "Dispose partial acquisitions in reverse order; continue clearing remaining resources and references when one cleanup action fails.",
+        "Do not retain Player references outside the live session boundary. Late async callbacks must reacquire a current target and verify session generation, plugin state, and required publication context.",
+        "Cancellation alone is not a publication fence; an already-running callback can still finish.",
+        "Order durable writes with revisions or idempotency keys and use bounded queues, retries, and flushes so an old session cannot overwrite newer state.",
+        "Close admission before plugin shutdown, wait behind an explicit bounded persistence barrier, and expose timeout or recovery state instead of starting fire-and-forget work after disable.",
+        "Verify target-version lifecycle event and scheduler APIs before naming them, do not assume every event fires in every phase, and provide a fallback reconciliation sweep.",
+        "Define transfer and reconnect semantics explicitly and observe active sessions, rejected stale publications, cleanup balance, reverse-index leaks, persistence age, and shutdown timeouts.",
+        "Keep item or inventory contents, ownership settlement, and transactional delivery outside this session-resource concern."
+      ],
+      "requiredEvidence": [
+        "A durable-versus-transient state model and per-session resource ownership ledger",
+        "Target-version Paper type, member, event, and documentation evidence for the lifecycle surfaces actually used",
+        "An idempotent state machine, reverse-order rollback, generation and plugin-state publication fence, and reconciliation design",
+        "A revisioned persistence order and bounded shutdown-barrier contract",
+        "Race tests for rapid reconnect, stale completion, double cleanup, partial initialization, transfer, disable with in-flight persistence, and missing or late events",
+        "Leak metrics or structured logs plus a scope statement excluding inventory contents and settlement"
+      ],
+      "failureMode": "Transient resources and callbacks can escape their connection generation, while unordered or unbounded shutdown writes corrupt durable player state."
     }
   ]
 }

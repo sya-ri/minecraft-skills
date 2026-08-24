@@ -32,14 +32,18 @@ minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 1.21.11
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
+minecraft-skills plugin paper recipe paper-player-session-lifecycle
+minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
 minecraft-skills plugin paper guardrail paper-api-surface-limits
 minecraft-skills plugin paper guardrail paper-player-identity-and-display
+minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-player-identity-display-confusion
+minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements
