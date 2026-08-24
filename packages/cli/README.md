@@ -94,6 +94,7 @@ minecraft-skills resourcepack search-models latest --kind item-definition --cont
 minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/widget.png --require-nonempty --minimum-transparent-margin-pixels 1
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
+minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills plugin paper info
 minecraft-skills plugin paper api 26.2
 minecraft-skills plugin paper api-index 26.2
@@ -159,6 +160,12 @@ or audio headers are printed as JSON and return exit code 1.
 PNG validation follows the [W3C PNG specification](https://www.w3.org/TR/png-3/) but does not
 decompress IDAT or prove rendered texture validity. It does not impose square, power-of-two, or a
 fixed `pack.png` size.
+
+`player-skin validate-layout` first applies the same bounded complete-PNG validation, then checks
+Minecraft Java current 64x64 or legacy 64x32 layout and optional zero-based half-open base-face and
+hat source rectangles. A PNG CRC, critical-chunk, truncation, or safety-limit error leaves layout
+explicitly not checked and makes the command fail. The JSON validation result omits the input path
+and does not decode pixels or validate alpha, legacy conversion output, or GUI rendering behavior.
 
 `modrinth versions` accepts a project ID or slug and optional `--featured` and
 `--include-changelog` boolean filters.

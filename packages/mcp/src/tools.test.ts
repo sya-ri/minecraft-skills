@@ -243,6 +243,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_json");
     expect(tools.map((tool) => tool.name)).toContain("inspect_resourcepack_png_alpha_bounds");
+    expect(tools.map((tool) => tool.name)).toContain("validate_player_skin_layout");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_png");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
@@ -1719,6 +1720,84 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"valid": true');
     expect(result.content[0]?.text).toContain('"width": 3');
     expect(result.content[0]?.text).toContain('"height": 5');
+  });
+
+  it("exposes a closed structured player-skin layout schema", () => {
+    const tool = tools.find((entry) => entry.name === "validate_player_skin_layout");
+    expect(tool?.inputSchema).toMatchObject({
+      required: ["width", "height"],
+      additionalProperties: false,
+      properties: {
+        width: { type: "integer", minimum: 1, maximum: 16_384 },
+        height: { type: "integer", minimum: 1, maximum: 16_384 },
+        sourceRects: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            base: { type: "object", additionalProperties: false },
+            hat: { type: "object", additionalProperties: false },
+          },
+        },
+      },
+    });
+  });
+
+  it("validates structured current, legacy, and clipped player-skin layouts", async () => {
+    const current = await callMinecraftSkillsTool("validate_player_skin_layout", {
+      width: 64,
+      height: 64,
+      sourceRects: {
+        base: { x: 8, y: 8, width: 8, height: 8 },
+        hat: { x: 40, y: 8, width: 8, height: 8 },
+      },
+    });
+    expect(current.isError).toBeUndefined();
+    expect(current.content[0]?.text).toContain('"valid": true');
+    expect(current.content[0]?.text).toContain('"layoutStatus": "current"');
+
+    const legacy = await callMinecraftSkillsTool("validate_player_skin_layout", {
+      width: 64,
+      height: 32,
+    });
+    expect(legacy.isError).toBeUndefined();
+    expect(legacy.content[0]?.text).toContain('"layoutStatus": "legacy"');
+
+    const clipped = await callMinecraftSkillsTool("validate_player_skin_layout", {
+      width: 64,
+      height: 64,
+      sourceRects: { base: { x: 8, y: 8, width: 7, height: 8 } },
+    });
+    expect(clipped.isError).toBeUndefined();
+    expect(clipped.content[0]?.text).toContain('"valid": false');
+    expect(clipped.content[0]?.text).toContain('"skin.face-base-rect-mismatch"');
+  });
+
+  it("passes proxy and accessor boundaries directly to the player-skin validator", async () => {
+    let getterCalls = 0;
+    const accessor = { height: 64 } as Record<string, unknown>;
+    Object.defineProperty(accessor, "width", {
+      enumerable: true,
+      get: () => {
+        getterCalls += 1;
+        return 64;
+      },
+    });
+    const accessorResult = await callMinecraftSkillsTool("validate_player_skin_layout", accessor);
+    expect(accessorResult.isError).toBeUndefined();
+    expect(accessorResult.content[0]?.text).toContain("input.accessor-property-not-accepted");
+    expect(getterCalls).toBe(0);
+
+    const proxy = new Proxy(
+      { width: 64, height: 64 },
+      {
+        get: () => {
+          throw new Error("proxy trap must not run");
+        },
+      },
+    );
+    const proxyResult = await callMinecraftSkillsTool("validate_player_skin_layout", proxy);
+    expect(proxyResult.isError).toBeUndefined();
+    expect(proxyResult.content[0]?.text).toContain("input.proxy-not-accepted");
   });
 
   it("reports PNG structural failures without treating them as MCP transport errors", async () => {

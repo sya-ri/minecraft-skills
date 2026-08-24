@@ -74,6 +74,16 @@ signature, chunk, IHDR, ordering, and CRC rules. That evidence establishes only 
 structural surface; it does not establish target-version Minecraft behavior, rendered appearance,
 or animation semantics.
 
+The Java player-skin layout validator is pinned to the current official Minecraft 26.2 metadata at
+`https://piston-meta.mojang.com/v1/packages/c75d82e7fa6eca5a043dab0c6cf77cb8317644f4/26.2.json`
+and its client artifact SHA-1 `2dc72797acbc1b63fc16a11c4ac393605f453754`. Audited client
+classes are `SkinTextureDownloader`, `PlayerFaceExtractor`, `SkinManager`,
+`SkinManager$TextureCache`, and `PlayerModelType`. That evidence establishes accepted 64x64 and
+legacy 64x32 source dimensions, the client's legacy-to-64x64 processing path, canonical base-face
+and hat source rectangles, and slim/wide metadata behavior. It does not establish decoded pixel or
+alpha results, skin ownership or signatures, network retrieval, or later GUI scaling, filtering,
+blending, clipping, or scissor state.
+
 ## Importer Policy
 
 Future importers should follow this shape:
