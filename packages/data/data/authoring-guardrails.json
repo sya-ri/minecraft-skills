@@ -226,6 +226,32 @@
         "Leak metrics or structured logs plus a scope statement excluding inventory contents and settlement"
       ],
       "failureMode": "Transient resources and callbacks can escape their connection generation, while unordered or unbounded shutdown writes corrupt durable player state."
+    },
+    {
+      "id": "paper-plugin-testing-evidence",
+      "domains": ["paper-plugin"],
+      "title": "Do not claim more Paper behavior than the completed tests prove",
+      "rules": [
+        "Map every material behavior and final claim to the boundary that can observe it before selecting a test framework.",
+        "Treat compilation as type-compatibility evidence only; it does not prove plugin loading, descriptor correctness, dependency wiring, registration, Paper runtime semantics, scheduling, persistence, or client-visible behavior.",
+        "Use pure unit tests for deterministic domain rules and plugin-owned contracts, not as substitutes for Bukkit or Paper behavior.",
+        "Use mocks and fakes only for caller-controlled interfaces with stated semantics; do not invent return values or lifecycle behavior for undocumented Paper internals and then cite the result as runtime evidence.",
+        "Use MockBukkit only for APIs and semantics the selected version of its harness actually supports, and keep unsupported behavior explicit instead of silently stubbing it.",
+        "Run a loaded target-version Paper server when changes affect plugin descriptors, bootstrap, dependency injection, command or listener registration, scheduler integration, serialization adapters, reload, or disable behavior.",
+        "Use a protocol oracle for packet transport and shape claims; use a real instrumented client or captured client state for rendering, audio, input, resource-pack application, and interaction outcomes that protocol evidence cannot observe.",
+        "Control clocks, identifiers, task completion, retries, and timeouts; avoid wall-clock sleeps, live network dependencies, shared mutable fixtures, and test-order coupling.",
+        "Cover expected failure outcomes, duplicate and out-of-order callbacks, cancellation, disconnect, partial enable, reload, disable, and stale asynchronous completion whenever those transitions are possible.",
+        "Test persistence and migration at the real adapter boundary with isolated temporary state, restart or reload, malformed or older data, and partial-write recovery where applicable.",
+        "Restore static state, registries, files, ports, executors, plugin instances, and server fixtures after every test, including failed setup and partial enable.",
+        "Report exact commands, target versions, results, known unrelated baselines, skipped checks, unavailable environments, and manual verification still required; scope the conclusion to the strongest completed evidence layer."
+      ],
+      "requiredEvidence": [
+        "a claim-to-observation matrix covering each changed behavior",
+        "target-version unit, harness, loaded-server, or client evidence appropriate to each claim",
+        "deterministic lifecycle and asynchronous ordering tests where relevant",
+        "exact reproducible test commands and an explicit limitations report"
+      ],
+      "failureMode": "Tests can stay green while the deployed plugin fails when an evidence layer cannot observe the behavior being claimed or nondeterministic fixtures hide lifecycle and ordering defects."
     }
   ]
 }

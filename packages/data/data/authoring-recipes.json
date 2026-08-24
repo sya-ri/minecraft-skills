@@ -1293,6 +1293,158 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "A UUID-only session map or event-only cleanup path can leak resources, let old callbacks mutate a replacement connection, retain stale Player references, or lose and reorder durable state during reconnect, transfer, reload, and shutdown."
+    },
+    {
+      "id": "paper-plugin-testing-evidence",
+      "domains": ["paper-plugin"],
+      "title": "Match Paper plugin test evidence to runtime claims",
+      "when": [
+        "the request implements, reviews, or reports confidence in a Paper plugin change",
+        "a test plan must choose between pure unit tests, fakes or mocks, MockBukkit, a loaded Paper server, and manual client verification",
+        "plugin bootstrap, events, commands, scheduling, persistence, inventories, packets, resources, or lifecycle behavior could compile without working on the target server",
+        "a final answer is about to claim that a feature works, is safe, or is production-ready"
+      ],
+      "steps": [
+        {
+          "id": "map-claims-to-observable-boundaries",
+          "action": "List each behavior and final claim separately, then identify the boundary that can observe it: pure domain logic, an owned adapter contract, Bukkit or Paper semantics, plugin load and registration, a real server lifecycle, or a client-visible result. Record the target Minecraft and Paper version plus high-risk transitions such as enable, reload, disconnect, duplicate callbacks, cancellation, timeout, and disable.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "A claim-to-observation matrix naming the runtime boundary required for every material behavior",
+            "The exact target Minecraft and Paper version or build used by runtime evidence",
+            "A risk list covering lifecycle, concurrency, persistence, transport, and client-visible behavior that is in scope"
+          ],
+          "stopIfMissing": "Do not choose a test library or report that the feature works until every material claim has an observable proving boundary."
+        },
+        {
+          "id": "choose-the-minimum-sufficient-evidence-layer",
+          "action": "Use fast pure tests for deterministic domain rules and owned adapters, test doubles for caller-controlled contracts, MockBukkit only for Paper behavior it faithfully implements, and a loaded target-version Paper server for bootstrap and runtime semantics. Use a protocol-level oracle for packet transport and shape claims, and a real instrumented client or captured client state for rendering, audio, input, resource-pack application, and other client-observed outcomes. Combine layers when one behavior crosses boundaries; compilation proves only type compatibility.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper fact-surfaces",
+              "plugin paper claim-policies",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "list_fact_surfaces",
+              "list_claim_policies",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "listFactSurfaces",
+              "listClaimPolicies",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "A stated evidence layer for each claim and the limitations of that layer",
+            "A loaded-server test for plugin descriptors, dependency wiring, enable or disable behavior, and registration changes",
+            "A protocol oracle for packet transport and shape claims, plus a real instrumented client or captured client state for client-visible outcomes",
+            "An explicit unsupported or unverified note where the available harness cannot prove the behavior"
+          ],
+          "stopIfMissing": "Do not present mocks, MockBukkit, compilation, or a server-only assertion as proof of behavior outside that layer's observable contract."
+        },
+        {
+          "id": "make-tests-deterministic-and-owned",
+          "action": "Separate domain decisions from Bukkit and external I/O, inject owned clocks, schedulers, identifiers, repositories, and transports where practical, and assert durable outcomes instead of internal call sequences. Use isolated temporary state, bounded fake responses, deterministic task advancement, and cleanup for global registries, static state, files, ports, executors, and plugin instances.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "Tests run without wall-clock sleeps, unbounded retries, live network dependencies, or order dependence",
+            "Test doubles model contracts owned by the plugin instead of inventing Paper behavior",
+            "Each test restores global, filesystem, scheduler, and plugin lifecycle state even after failure"
+          ],
+          "stopIfMissing": "Do not replace an uncontrolled runtime dependency with a nondeterministic sleep, shared singleton, or mock of undocumented Paper internals."
+        },
+        {
+          "id": "exercise-outcomes-ordering-and-teardown",
+          "action": "Test the success path together with expected business failures, exceptions or unavailable dependencies, duplicate and out-of-order callbacks, timeout and cancellation, disconnect, reload, and disable. For asynchronous work, control completion order and prove stale results cannot publish after the owning session or plugin generation ends. For persistence, test serialization, restart or reload, migration, and partial-write recovery at the real adapter boundary.",
+          "tools": {
+            "cli": [
+              "plugin paper search-scenarios",
+              "plugin paper diagnostics",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "search_authoring_scenarios",
+              "list_authoring_diagnostics",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "searchAuthoringScenarios",
+              "listAuthoringDiagnostics",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Assertions for every typed outcome and externally visible side effect",
+            "Controlled ordering tests for asynchronous success, failure, cancellation, stale completion, and teardown",
+            "Reload or restart evidence for persistent format and migration changes",
+            "Idempotent cleanup evidence for partial enable and repeated disable paths"
+          ],
+          "stopIfMissing": "Do not approve a lifecycle or asynchronous change from a single immediate-success test."
+        },
+        {
+          "id": "report-exact-evidence-and-limitations",
+          "action": "Run the smallest targeted tests that prove the changed behavior, then broaden only across shared boundaries. Report exact commands, target versions, passed and failed counts, known unrelated baselines, runtime fixtures, and remaining manual or unavailable checks. Word the conclusion no stronger than the highest evidence layer actually completed.",
+          "tools": {
+            "cli": [
+              "plugin paper diagnostic",
+              "plugin paper output-requirements",
+              "plugin paper response-patterns"
+            ],
+            "mcp": [
+              "get_authoring_diagnostic",
+              "list_output_requirements",
+              "list_response_patterns"
+            ],
+            "packageApis": [
+              "getAuthoringDiagnostic",
+              "listOutputRequirements",
+              "listResponsePatterns"
+            ]
+          },
+          "evidence": [
+            "Exact reproducible commands and target versions for each completed evidence layer",
+            "A distinction between new failures, known baselines, skipped checks, and unavailable environments",
+            "A final claim whose scope matches the strongest completed test rather than the intended deployment"
+          ],
+          "stopIfMissing": "Do not say tests pass, the plugin works, or the change is production-ready without naming what ran and what remains unverified."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A green compiler or convenient mock can be mistaken for runtime proof, leaving plugin load, Paper semantics, lifecycle ordering, persistence, or client-visible behavior untested while the result is reported as working."
     }
   ]
 }

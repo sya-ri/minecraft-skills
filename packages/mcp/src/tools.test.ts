@@ -758,6 +758,42 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("calls Paper plugin testing evidence guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-plugin-testing-evidence",
+    });
+    expect(recipe.content[0]?.text).toContain("choose-the-minimum-sufficient-evidence-layer");
+    expect(recipe.content[0]?.text).toContain("loaded-server test");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-plugin-testing-evidence-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-plugin-test-evidence-gap");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper plugin MockBukkit loaded server test evidence",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-plugin-testing-evidence-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-plugin-testing-evidence-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-plugin-testing-evidence"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-plugin-test-evidence-gap"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-plugin-testing-evidence",
+    });
+    expect(guardrail.content[0]?.text).toContain("type-compatibility evidence only");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-plugin-test-evidence-gap",
+    });
+    expect(diagnostic.content[0]?.text).toContain("loaded-plugin evidence");
+  });
+
   it("calls claim policy tools", async () => {
     const list = await callMinecraftSkillsTool("list_claim_policies", {
       domain: "paper-plugin",

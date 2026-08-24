@@ -63,6 +63,7 @@ minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
+minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
@@ -130,6 +131,12 @@ request internally, rejects redirects or non-PNG/encoded/oversized responses, an
 new exact-`.png` regular file with exclusive creation. Success JSON omits downloaded bytes and the
 filesystem path. The reference hash and downloaded SHA-256 are separate evidence; neither proves
 profile signatures, provenance, ownership, freshness, or licensing.
+
+`paper-plugin-testing-evidence-review` builds a claim-to-observation test plan. It distinguishes
+pure logic and owned test doubles from MockBukkit-supported behavior, loaded target-version Paper
+evidence, and client-visible checks. The guidance rejects compilation-only runtime claims,
+nondeterministic wall-clock waits, silent stubs for unsupported harness behavior, and conclusions
+that omit exact commands, versions, skipped checks, known baselines, or remaining manual work.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
