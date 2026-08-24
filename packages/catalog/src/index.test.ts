@@ -84,10 +84,23 @@ import {
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
   suggestMinecraftLookups,
+  validateModrinthPack,
+  validateModrinthPackArchive,
   validatePackFileContent,
   validatePackFilesContent,
   validateResourcepackProject,
 } from "./index.js";
+
+function crc32(value: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of value) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
 
 function testJar(entries: Record<string, string>): Buffer {
   const localParts: Buffer[] = [];
@@ -96,13 +109,14 @@ function testJar(entries: Record<string, string>): Buffer {
   for (const [name, content] of Object.entries(entries)) {
     const nameBytes = Buffer.from(name);
     const contentBytes = Buffer.from(content);
+    const checksum = crc32(contentBytes);
     const local = Buffer.alloc(30 + nameBytes.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
     local.writeUInt16LE(0, 6);
     local.writeUInt16LE(0, 8);
     local.writeUInt32LE(0, 10);
-    local.writeUInt32LE(0, 14);
+    local.writeUInt32LE(checksum, 14);
     local.writeUInt32LE(contentBytes.length, 18);
     local.writeUInt32LE(contentBytes.length, 22);
     local.writeUInt16LE(nameBytes.length, 26);
@@ -117,7 +131,7 @@ function testJar(entries: Record<string, string>): Buffer {
     central.writeUInt16LE(0, 8);
     central.writeUInt16LE(0, 10);
     central.writeUInt32LE(0, 12);
-    central.writeUInt32LE(0, 16);
+    central.writeUInt32LE(checksum, 16);
     central.writeUInt32LE(contentBytes.length, 20);
     central.writeUInt32LE(contentBytes.length, 24);
     central.writeUInt16LE(nameBytes.length, 28);
@@ -142,6 +156,40 @@ function testJar(entries: Record<string, string>): Buffer {
   end.writeUInt32LE(offset, 16);
   end.writeUInt16LE(0, 20);
   return Buffer.concat([...localParts, centralDirectory, end]);
+}
+
+function validModrinthFile(
+  path: string,
+  downloads = ["https://cdn.modrinth.com/data/example/versions/1/example.jar"],
+): Record<string, unknown> {
+  return {
+    path,
+    hashes: {
+      sha1: "a".repeat(40),
+      sha512: "b".repeat(128),
+    },
+    env: {
+      client: "required",
+      server: "optional",
+    },
+    downloads,
+    fileSize: 123,
+  };
+}
+
+function validModrinthIndex(): Record<string, unknown> {
+  return {
+    formatVersion: 1,
+    game: "minecraft",
+    versionId: "example-pack-1.0.0",
+    name: "Example Pack",
+    summary: "A test pack",
+    files: [validModrinthFile("mods/example.jar")],
+    dependencies: {
+      minecraft: "1.21.11",
+      "fabric-loader": "0.18.4",
+    },
+  };
 }
 
 function withCachedServerJar(
@@ -1708,6 +1756,424 @@ describe("catalog", () => {
       json: async () => ({ projects: 123 }),
     }));
     expect(result).toEqual({ projects: 123 });
+  });
+
+  it("validates a Modrinth pack index and archive offline", () => {
+    const index = JSON.stringify(validModrinthIndex());
+    const result = validateModrinthPackArchive(
+      testJar({
+        "modrinth.index.json": index,
+        "overrides/config/example.json": "base",
+        "server-overrides/config/example.json": "server",
+      }),
+    );
+    const inconsistent = validateModrinthPack({
+      index,
+      archiveEntries: [{ path: "modrinth.index.json", size: 1 }],
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.errorCount).toBe(0);
+    expect(result.warningCount).toBe(1);
+    expect(result.validationStrength).toBe("binary");
+    expect(result.archive).toEqual({ provided: true, entries: 3, overrideFiles: 2 });
+    expect(result.index).toMatchObject({
+      formatVersion: 1,
+      game: "minecraft",
+      versionId: "example-pack-1.0.0",
+      name: "Example Pack",
+      files: 1,
+    });
+    expect(result.diagnostics[0]?.code).toBe("archive.override-layer-conflict");
+    expect(inconsistent.valid).toBe(false);
+    expect(inconsistent.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "archive.index-size-mismatch" })]),
+    );
+  });
+
+  it("applies binary archive limits through the public validator", () => {
+    const archive = testJar({
+      "modrinth.index.json": JSON.stringify(validModrinthIndex()),
+    });
+    const result = validateModrinthPackArchive(archive, {
+      limits: { maxArchiveBytes: archive.byteLength - 1 },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.validationStrength).toBe("binary");
+    expect(result.archive).toEqual({ provided: true, entries: 0, overrideFiles: 0 });
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "archive.byte-limit-exceeded" }),
+    ]);
+  });
+
+  it("does not derive index consistency errors after incomplete ZIP inspection", () => {
+    const result = validateModrinthPackArchive(Buffer.from("not a zip"));
+
+    expect(result.valid).toBe(false);
+    expect(result.archive).toEqual({ provided: true, entries: 0, overrideFiles: 0 });
+    expect(result.diagnostics).toEqual([expect.objectContaining({ code: "archive.invalid-zip" })]);
+  });
+
+  it("reports invalid Modrinth index fields with deterministic diagnostics", () => {
+    const invalidIndex = {
+      formatVersion: 2,
+      game: "other",
+      versionId: " ",
+      name: "",
+      files: [
+        {
+          path: "mods/example.jar",
+          hashes: { sha1: "bad", sha512: "bad" },
+          env: { client: "sometimes", server: "unsupported" },
+          downloads: [
+            "http://example.com/example.jar",
+            "http://example.com/example.jar",
+            "https://example.com/%zz",
+          ],
+          fileSize: -1,
+        },
+        {
+          path: "MODS/example.jar",
+          hashes: { sha1: "a".repeat(40), sha512: "b".repeat(128) },
+          downloads: ["https://example.com/example.jar"],
+          fileSize: 1,
+        },
+      ],
+      dependencies: { minecraft: "" },
+    };
+
+    const result = validateModrinthPack({ index: invalidIndex });
+    const secondResult = validateModrinthPack({ index: invalidIndex });
+    const malformedJson = validateModrinthPack({ index: "{" });
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics).toEqual(secondResult.diagnostics);
+    expect(malformedJson.diagnostics).toEqual([
+      expect.objectContaining({ code: "index.invalid-json", path: "modrinth.index.json" }),
+    ]);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(
+      expect.arrayContaining([
+        "file.download",
+        "file.duplicate-download",
+        "file.normalized-path-conflict",
+        "file.env-side",
+        "file.sha1",
+        "file.sha512",
+        "file.size",
+        "index.format-version",
+        "index.game",
+        "index.minecraft-dependency",
+        "index.name",
+        "index.version-id",
+      ]),
+    );
+  });
+
+  it("rejects traversal in downloaded and archived Modrinth pack paths", () => {
+    const index = validModrinthIndex();
+    const files = index.files as Array<Record<string, unknown>>;
+    files[0] = { ...files[0], path: "../outside.jar" };
+    const archiveEntries = [
+      { path: "overrides/../../escape.txt", size: 1 },
+      { path: "overrides/config/duplicate.txt", size: 1 },
+      { path: "overrides/config/duplicate.txt", size: 1 },
+      { path: "modrinth.index.json", size: JSON.stringify(index).length },
+    ];
+
+    const result = validateModrinthPack({ index, archiveEntries });
+    const reversed = validateModrinthPack({ index, archiveEntries: [...archiveEntries].reverse() });
+    const missingIndex = validateModrinthPack({
+      index: validModrinthIndex(),
+      archiveEntries: [{ path: "overrides/options.txt", size: 1 }],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.diagnostics).toEqual(reversed.diagnostics);
+    expect(missingIndex.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "archive.index-missing" })]),
+    );
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "file.unsafe-path", path: "/files/0/path" }),
+        expect.objectContaining({
+          code: "archive.unsafe-path",
+          path: "archive:overrides/../../escape.txt",
+        }),
+        expect.objectContaining({
+          code: "archive.duplicate-path",
+          path: "archive:overrides/config/duplicate.txt",
+        }),
+      ]),
+    );
+  });
+
+  it("enforces the official Modrinth download hosts with explicit warning-only extensions", () => {
+    const officialIndex = validModrinthIndex();
+    officialIndex.files = [
+      validModrinthFile("mods/example.jar", [
+        "https://cdn.modrinth.com/data/example/example.jar",
+        "https://github.com/example/project/releases/download/1/example.jar",
+        "https://raw.githubusercontent.com/example/project/main/example.jar",
+        "https://gitlab.com/example/project/-/raw/main/example.jar",
+      ]),
+    ];
+    const official = validateModrinthPack({ index: officialIndex });
+
+    const customIndex = validModrinthIndex();
+    customIndex.files = [
+      validModrinthFile("mods/example.jar", ["https://downloads.example.org/example.jar"]),
+    ];
+    const blocked = validateModrinthPack({ index: customIndex });
+    const explicitlyAllowed = validateModrinthPack({
+      index: customIndex,
+      additionalDownloadHosts: ["downloads.example.org"],
+    });
+    const nonStandardPortIndex = validModrinthIndex();
+    nonStandardPortIndex.files = [
+      validModrinthFile("mods/example.jar", [
+        "https://github.com:8443/example/project/example.jar",
+      ]),
+    ];
+    const nonStandardPort = validateModrinthPack({ index: nonStandardPortIndex });
+
+    expect(official.valid).toBe(true);
+    expect(official.validationStrength).toBe("none");
+    expect(blocked.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "file.download-host" })]),
+    );
+    expect(explicitlyAllowed.valid).toBe(true);
+    expect(explicitlyAllowed.errorCount).toBe(0);
+    expect(explicitlyAllowed.warningCount).toBe(1);
+    expect(explicitlyAllowed.diagnostics[0]?.code).toBe("file.unofficial-download-host");
+    expect(nonStandardPort.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "file.download" })]),
+    );
+  });
+
+  it("rejects Windows-unsafe paths and portable normalization collisions", () => {
+    const index = validModrinthIndex();
+    index.files = [
+      validModrinthFile("mods/example.jar:payload"),
+      validModrinthFile("mods/CON.txt"),
+      validModrinthFile("mods/COM\u00b9.txt"),
+      validModrinthFile("mods/trailing."),
+      validModrinthFile("mods/Caf\u00e9.jar"),
+      validModrinthFile("mods/Cafe\u0301.jar"),
+    ];
+
+    const result = validateModrinthPack({
+      index,
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1 },
+        { path: "overrides/NUL", size: 1 },
+        { path: "overrides/config/Foo.json", size: 1 },
+        { path: "overrides/config/foo.json", size: 1 },
+      ],
+    });
+    const codes = result.diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(result.valid).toBe(false);
+    expect(result.validationStrength).toBe("metadata");
+    expect(codes.filter((code) => code === "file.unsafe-path")).toHaveLength(4);
+    expect(codes).toContain("file.normalized-path-conflict");
+    expect(codes).toContain("archive.unsafe-path");
+    expect(codes).toContain("archive.normalized-path-conflict");
+  });
+
+  it("detects archive, override, and download ancestor-descendant conflicts", () => {
+    const index = validModrinthIndex();
+    index.files = [validModrinthFile("config")];
+    const result = validateModrinthPack({
+      index,
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1 },
+        { path: "overrides/config/a.json", size: 1 },
+        { path: "overrides/tree", size: 1 },
+        { path: "overrides/tree/file.json", size: 1 },
+        { path: "overrides/empty/child/", size: 0, directory: true },
+        { path: "overrides/empty", size: 1 },
+        { path: "server-overrides/config/", size: 0, directory: true },
+      ],
+    });
+    const codes = result.diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(result.valid).toBe(false);
+    expect(codes).toContain("archive.path-conflict");
+    expect(codes).toContain("archive.override-path-conflict");
+    expect(codes).toContain("archive.download-override-path-conflict");
+  });
+
+  it("keeps mutually exclusive client and server override projections independent", () => {
+    const mutuallyExclusive = validateModrinthPack({
+      index: validModrinthIndex(),
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1 },
+        { path: "client-overrides/config", size: 1 },
+        { path: "server-overrides/config/example.json", size: 1 },
+      ],
+    });
+    const sharedBaseConflict = validateModrinthPack({
+      index: validModrinthIndex(),
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1 },
+        { path: "overrides/config", size: 1 },
+        { path: "client-overrides/config/example.json", size: 1 },
+      ],
+    });
+
+    expect(mutuallyExclusive.valid).toBe(true);
+    expect(mutuallyExclusive.diagnostics).toEqual([]);
+    expect(sharedBaseConflict.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "archive.override-path-conflict" })]),
+    );
+  });
+
+  it("bounds metadata sizes, compression ratios, entry counts, and index bytes", () => {
+    const metadata = validateModrinthPack({
+      index: validModrinthIndex(),
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1, compressedSize: 1 },
+        {
+          path: "overrides/a.txt",
+          size: 25,
+          compressedSize: 1,
+          compressionMethod: 0,
+          flags: 1,
+          unixMode: 0xa000,
+        },
+        { path: "overrides/b.txt", size: 25, compressedSize: 25 },
+      ],
+      limits: {
+        maxEntryUncompressedBytes: 20,
+        maxTotalUncompressedBytes: 30,
+        maxCompressionRatio: 10,
+      },
+    });
+    const entryCount = validateModrinthPack({
+      index: validModrinthIndex(),
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1 },
+        { path: "overrides/a.txt", size: 1 },
+      ],
+      limits: { maxArchiveEntries: 1 },
+    });
+    const oversizedIndex = validateModrinthPack({
+      index: JSON.stringify(validModrinthIndex()),
+      limits: { maxIndexBytes: 1 },
+    });
+    const codes = metadata.diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "archive.entry-size-limit",
+        "archive.total-size-limit",
+        "archive.compression-ratio-limit",
+        "archive.encrypted-entry",
+        "archive.special-file",
+        "archive.stored-size-mismatch",
+      ]),
+    );
+    expect(entryCount.diagnostics[0]?.code).toBe("archive.entry-limit");
+    expect(oversizedIndex.diagnostics[0]?.code).toBe("index.size-limit");
+  });
+
+  it("rejects impossible archive metadata and honors fractional compression limits", () => {
+    const result = validateModrinthPack({
+      index: validModrinthIndex(),
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 0, compressedSize: 0, compressionMethod: 0 },
+        {
+          path: "overrides/zero-compressed.txt",
+          size: 1,
+          compressedSize: 0,
+          compressionMethod: 8,
+        },
+        {
+          path: "overrides/stored-mismatch.txt",
+          size: 2,
+          compressedSize: 1,
+          compressionMethod: 0,
+        },
+      ],
+      limits: { maxCompressionRatio: 1.5 },
+    });
+    const codes = result.diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(codes.filter((code) => code === "archive.compression-ratio-limit")).toHaveLength(2);
+    expect(codes).toContain("archive.stored-size-mismatch");
+  });
+
+  it("caps retained diagnostics while preserving total counts", () => {
+    const index = validModrinthIndex();
+    index.files = Array.from({ length: 10 }, () => ({}));
+    const result = validateModrinthPack({ index, limits: { maxDiagnostics: 1 } });
+
+    expect(result.valid).toBe(false);
+    expect(result.errorCount).toBeGreaterThan(result.diagnostics.length);
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.severity).toBe("error");
+    expect(result.diagnostics[0]?.code).not.toBe("validation.diagnostics-truncated");
+    expect(result.diagnosticsTruncated).toBe(true);
+    expect(result.omittedDiagnosticCount).toBe(
+      result.errorCount + result.warningCount - result.diagnostics.length,
+    );
+  });
+
+  it("bounds object-form file arrays and extreme path, URL, and host strings", () => {
+    const tooManyFiles = validModrinthIndex();
+    tooManyFiles.files = [
+      validModrinthFile("mods/a.jar"),
+      validModrinthFile("mods/b.jar"),
+      validModrinthFile("mods/c.jar"),
+    ];
+    const fileLimit = validateModrinthPack({
+      index: tooManyFiles,
+      limits: { maxArchiveEntries: 2 },
+    });
+
+    const extreme = validModrinthIndex();
+    const extremeDependencyPrefix = "dependency".repeat(2_000);
+    extreme.dependencies = {
+      minecraft: "1.21.11",
+      [`${extremeDependencyPrefix}a`]: "1.0.0",
+      [`${extremeDependencyPrefix}b`]: "1.0.0",
+    };
+    extreme.files = [
+      validModrinthFile(`mods/${"a".repeat(4_097)}`, [
+        `https://cdn.modrinth.com/${"b".repeat(8_192)}`,
+      ]),
+    ];
+    const boundedStrings = validateModrinthPack({
+      index: extreme,
+      additionalDownloadHosts: ["c".repeat(254)],
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 1 },
+        { path: `overrides/${"d".repeat(4_097)}`, size: 1 },
+        { path: "overrides/runtime-directory", directory: "yes" as never },
+      ],
+    });
+    const codes = boundedStrings.diagnostics.map((diagnostic) => diagnostic.code);
+
+    expect(fileLimit.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "index.file-limit" })]),
+    );
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "file.unsafe-path",
+        "file.download",
+        "index.dependency-name-length",
+        "validation.invalid-download-host",
+        "archive.unsafe-path",
+        "archive.invalid-directory",
+      ]),
+    );
+    expect(
+      boundedStrings.diagnostics.every(
+        (diagnostic) => diagnostic.path.length <= 2_048 && diagnostic.message.length <= 2_048,
+      ),
+    ).toBe(true);
+    expect(
+      boundedStrings.index?.dependencies.every((dependency) => dependency.length <= 4_096),
+    ).toBe(true);
   });
 
   it("builds Paper API references for supported versions", () => {

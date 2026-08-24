@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 import {
+  closeSync,
   existsSync,
+  fstatSync,
   mkdirSync,
+  openSync,
   readdirSync,
   readFileSync,
+  readSync,
   realpathSync,
   writeFileSync,
 } from "node:fs";
@@ -23,6 +27,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultModrinthPackValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -109,6 +114,7 @@ import {
   suggestMinecraftLookups,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
+  validateModrinthPackArchive,
   validatePackFilesContent,
   validateResourcepackProject,
 } from "@minecraft-skills/catalog";
@@ -135,6 +141,37 @@ const defaultOutput: Output = {
   error: (value) => console.error(value),
 };
 
+function readBoundedRegularFile(filePath: string, maxBytes: number): Buffer {
+  const file = openSync(filePath, "r");
+  try {
+    const before = fstatSync(file);
+    if (!before.isFile()) {
+      throw new Error("modrinth validate-pack requires a regular local .mrpack file");
+    }
+    if (before.size > maxBytes) {
+      throw new Error(`modrinth validate-pack refuses archives larger than ${maxBytes} bytes`);
+    }
+
+    const contents = Buffer.allocUnsafe(before.size);
+    let offset = 0;
+    while (offset < contents.byteLength) {
+      const bytesRead = readSync(file, contents, offset, contents.byteLength - offset, null);
+      if (bytesRead === 0) {
+        break;
+      }
+      offset += bytesRead;
+    }
+
+    const after = fstatSync(file);
+    if (offset !== before.size || after.size !== before.size) {
+      throw new Error("modrinth validate-pack archive changed while it was being read");
+    }
+    return contents;
+  } finally {
+    closeSync(file);
+  }
+}
+
 function readOption(args: string[], name: string, fallback: string): string {
   const index = args.indexOf(name);
   if (index === -1) {
@@ -152,6 +189,22 @@ function readBooleanOption(args: string[], name: string, fallback: boolean): boo
     return false;
   }
   throw new Error(`${name} must be true or false`);
+}
+
+function readRepeatedOption(args: string[], name: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    if (args[index] !== name) {
+      continue;
+    }
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`${name} requires a value`);
+    }
+    values.push(value);
+    index += 1;
+  }
+  return values;
 }
 
 function positionalArgs(args: string[]): string[] {
@@ -359,6 +412,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "modrinth search": "modrinth-search",
     "modrinth versions": "modrinth-versions",
     "modrinth get": "modrinth-get",
+    "modrinth validate-pack": "modrinth-validate-pack",
     "datapack server-reports": "server-reports",
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
@@ -780,6 +834,7 @@ Grouped commands:
   minecraft-skills modrinth search <query...> [--version version] [--type type] [--loader loader] [--category category] [--index relevance|downloads|follows|newest|updated] [--offset 0] [--limit 10]
   minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
   minecraft-skills modrinth get <project|project-dependencies|version|version-file|user|categories|loaders|game-versions|project-types|side-types|donation-platforms|report-types|statistics> [identifier] [--algorithm sha1|sha512]
+  minecraft-skills modrinth validate-pack <file.mrpack> [--allow-download-host host]... [--max-archive-bytes bytes]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory
   minecraft-skills minecraft pack-format [version] [datapack|resourcepack]
   minecraft-skills minecraft versions-for-pack-format <datapack|resourcepack> <format> [minor]
@@ -2133,6 +2188,39 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+
+    if (command === "modrinth-validate-pack") {
+      const packPaths = positionalArgs(args);
+      const packPath = packPaths[0];
+      if (packPaths.length !== 1 || !packPath) {
+        throw new Error("modrinth validate-pack requires exactly one local .mrpack file");
+      }
+      if (!packPath.toLowerCase().endsWith(".mrpack")) {
+        throw new Error("modrinth validate-pack requires a file with the .mrpack extension");
+      }
+      const maxArchiveBytes = readIntegerArg(
+        args.includes("--max-archive-bytes")
+          ? readOption(args, "--max-archive-bytes", "")
+          : String(defaultModrinthPackValidationLimits.maxArchiveBytes),
+        "modrinth validate-pack --max-archive-bytes",
+      );
+      if (
+        !Number.isSafeInteger(maxArchiveBytes) ||
+        maxArchiveBytes < 1 ||
+        maxArchiveBytes > defaultModrinthPackValidationLimits.maxArchiveBytes
+      ) {
+        throw new Error(
+          `modrinth validate-pack --max-archive-bytes must be between 1 and ${defaultModrinthPackValidationLimits.maxArchiveBytes}`,
+        );
+      }
+      const archive = readBoundedRegularFile(packPath, maxArchiveBytes);
+      const result = validateModrinthPackArchive(archive, {
+        additionalDownloadHosts: readRepeatedOption(args, "--allow-download-host"),
+        limits: { maxArchiveBytes },
+      });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
     }
 
     if (command === "explain-path") {

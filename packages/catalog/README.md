@@ -83,6 +83,8 @@ import {
   searchVanillaPaths,
   suggestMinecraftLookups,
   validateResourcepackProject,
+  validateModrinthPack,
+  validateModrinthPackArchive,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
@@ -149,6 +151,17 @@ const modrinthVersions = await listModrinthProjectVersions({
 const modrinthProject = await getModrinthResource({
   resource: "project",
   identifier: "simple-voice-chat",
+});
+const modrinthPack = validateModrinthPack({
+  index: {
+    formatVersion: 1,
+    game: "minecraft",
+    versionId: "example-1.0.0",
+    name: "Example",
+    files: [],
+    dependencies: { minecraft: "1.21.11" },
+  },
+  archiveEntries: [{ path: "modrinth.index.json" }],
 });
 const datapackEntries = findDatapackEntries({ version: "26.2", query: "execute" });
 const resourcepackAssets = findResourcepackAssets({
@@ -221,6 +234,29 @@ const sources = getSourceReport({ domain: "datapack", version: "26.2" });
 const sourceTiers = listSourceTiers();
 const communityDatasets = listCommunityDatasets();
 ```
+
+`validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
+entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function
+downloads or resolves files listed by the pack. Validation follows the
+[official Modrinth pack format](https://support.modrinth.com/en/articles/8802351-modrinth-modpack-format-mrpack).
+
+The result reports `validationStrength` as `none` (index only), `metadata` (caller-supplied archive
+metadata), or `binary` (the archive bytes were inspected). Binary inspection verifies ZIP central
+and local headers, extra-field record bounds, flags, compression, bounded expansion, expanded
+sizes, CRC-32, entry overlap, and Unix regular-file/directory markers according to the
+[PKWARE ZIP APPNOTE](https://support.pkware.com/pkzip/appnote). It rejects symlinks and other
+special files, malformed extra fields, and Unicode Path extras that could expose a name other than
+the validated ZIP entry name.
+
+Default limits are 512 MiB of archive input, 25,000 entries, a 16 MiB index, 512 MiB per expanded
+entry, 4 GiB total expanded data, a 200:1 compression ratio, and 200 retained diagnostics. Lower
+individual values through `limits`; totals still include diagnostics omitted from the bounded
+result array. Download URLs default to Modrinth's four documented hosts (`cdn.modrinth.com`,
+`github.com`, `raw.githubusercontent.com`, and `gitlab.com`). `additionalDownloadHosts` explicitly
+allows exact extra hosts and emits a warning for every non-official URL.
+
+Portable paths are capped at 4,096 characters, URLs at 8,192 characters, downloads at 64 per file,
+and explicit additional hosts at 64 so object-form Catalog/MCP inputs remain bounded too.
 
 ## Coverage
 

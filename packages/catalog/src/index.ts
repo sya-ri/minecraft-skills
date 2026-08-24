@@ -40,6 +40,7 @@ import {
   searchMinecraftAssets,
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
+import { inspectModrinthArchive } from "./modrinthZip.js";
 import {
   type ResourcepackProjectDiagnostic,
   type ResourcepackProjectDiagnosticSeverity,
@@ -640,6 +641,84 @@ export type ModrinthResourceOptions = {
   resource: ModrinthResourceKind;
   identifier?: string;
   algorithm?: "sha1" | "sha512";
+};
+
+export type ModrinthPackArchiveEntry = {
+  path: string;
+  size?: number;
+  compressedSize?: number;
+  directory?: boolean;
+  compressionMethod?: number;
+  flags?: number;
+  crc32?: number;
+  unixMode?: number;
+};
+
+export type ModrinthPackValidationStrength = "none" | "metadata" | "binary";
+
+export type ModrinthPackValidationLimits = {
+  maxArchiveBytes: number;
+  maxArchiveEntries: number;
+  maxIndexBytes: number;
+  maxEntryUncompressedBytes: number;
+  maxTotalUncompressedBytes: number;
+  maxCompressionRatio: number;
+  maxDiagnostics: number;
+};
+
+export const defaultModrinthPackValidationLimits: Readonly<ModrinthPackValidationLimits> =
+  Object.freeze({
+    maxArchiveBytes: 512 * 1024 * 1024,
+    maxArchiveEntries: 25_000,
+    maxIndexBytes: 16 * 1024 * 1024,
+    maxEntryUncompressedBytes: 512 * 1024 * 1024,
+    maxTotalUncompressedBytes: 4 * 1024 * 1024 * 1024,
+    maxCompressionRatio: 200,
+    maxDiagnostics: 200,
+  });
+
+export type ModrinthPackValidationOptions = {
+  index: unknown;
+  archiveEntries?: ModrinthPackArchiveEntry[];
+  additionalDownloadHosts?: string[];
+  limits?: Partial<ModrinthPackValidationLimits>;
+};
+
+export type ModrinthPackArchiveValidationOptions = {
+  additionalDownloadHosts?: string[];
+  limits?: Partial<ModrinthPackValidationLimits>;
+};
+
+export type ModrinthPackDiagnostic = {
+  severity: "error" | "warning";
+  code: string;
+  path: string;
+  message: string;
+};
+
+export type ModrinthPackValidationResult = {
+  schemaVersion: 1;
+  specification: string;
+  valid: boolean;
+  errorCount: number;
+  warningCount: number;
+  validationStrength: ModrinthPackValidationStrength;
+  diagnosticsTruncated: boolean;
+  omittedDiagnosticCount: number;
+  index: {
+    formatVersion: number | null;
+    game: string | null;
+    versionId: string | null;
+    name: string | null;
+    files: number;
+    dependencies: string[];
+  } | null;
+  archive: {
+    provided: boolean;
+    entries: number;
+    overrideFiles: number;
+  };
+  diagnostics: ModrinthPackDiagnostic[];
 };
 
 export type PaperApiReference = {
@@ -6118,6 +6197,1380 @@ export async function searchPaperEvents(
     throw new Error(`Paper event search failed: ${response.status} ${response.statusText}`);
   }
   return response.json();
+}
+
+const modrinthPackSpecification =
+  "https://support.modrinth.com/en/articles/8802351-modrinth-modpack-format-mrpack";
+const modrinthPackEnvironmentValues = new Set(["required", "optional", "unsupported"]);
+const modrinthPackOverrideRoots = new Set(["overrides", "server-overrides", "client-overrides"]);
+export const modrinthPackOfficialDownloadHosts = Object.freeze([
+  "cdn.modrinth.com",
+  "github.com",
+  "raw.githubusercontent.com",
+  "gitlab.com",
+] as const);
+const modrinthPackOfficialDownloadHostSet = new Set<string>(modrinthPackOfficialDownloadHosts);
+const windowsReservedPathSegment =
+  /^(?:con|prn|aux|nul|conin\$|conout\$|com[1-9\u00b9\u00b2\u00b3]|lpt[1-9\u00b9\u00b2\u00b3])$/i;
+const maxModrinthPackDiagnosticTextLength = 2_048;
+const maxModrinthPackPathLength = 4_096;
+const maxModrinthPackDownloadLength = 8_192;
+const maxModrinthPackDownloadsPerFile = 64;
+const maxModrinthPackMetadataTextLength = 4_096;
+const maxModrinthPackDependencies = 256;
+const maxModrinthPackAdditionalHosts = 64;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function compareText(left: string, right: string): number {
+  if (left < right) {
+    return -1;
+  }
+  if (left > right) {
+    return 1;
+  }
+  return 0;
+}
+
+function hasControlCharacter(value: string): boolean {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    if (codePoint <= 0x1f || codePoint === 0x7f) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasUnencodedUriCharacter(value: string): boolean {
+  const illegalAscii = '<>"{}|\\^`';
+  for (const character of value) {
+    const codePoint = character.codePointAt(0) ?? 0;
+    if (codePoint <= 0x20 || codePoint >= 0x7f || illegalAscii.includes(character)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function sortModrinthPackDiagnostics(
+  diagnostics: ModrinthPackDiagnostic[],
+): ModrinthPackDiagnostic[] {
+  return diagnostics.sort(
+    (left, right) =>
+      (left.severity === right.severity ? 0 : left.severity === "error" ? -1 : 1) ||
+      compareText(left.path, right.path) ||
+      compareText(left.code, right.code) ||
+      compareText(left.message, right.message),
+  );
+}
+
+function normalizedModrinthPackLimit(
+  value: unknown,
+  fallback: number,
+  minimum = 0,
+  integer = true,
+): number {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    (!integer || Number.isSafeInteger(value)) &&
+    value >= minimum
+    ? Math.min(value, fallback)
+    : fallback;
+}
+
+function resolveModrinthPackValidationLimits(
+  limits: Partial<ModrinthPackValidationLimits> | undefined,
+): ModrinthPackValidationLimits {
+  return {
+    maxArchiveBytes: normalizedModrinthPackLimit(
+      limits?.maxArchiveBytes,
+      defaultModrinthPackValidationLimits.maxArchiveBytes,
+      1,
+    ),
+    maxArchiveEntries: normalizedModrinthPackLimit(
+      limits?.maxArchiveEntries,
+      defaultModrinthPackValidationLimits.maxArchiveEntries,
+      1,
+    ),
+    maxIndexBytes: normalizedModrinthPackLimit(
+      limits?.maxIndexBytes,
+      defaultModrinthPackValidationLimits.maxIndexBytes,
+      1,
+    ),
+    maxEntryUncompressedBytes: normalizedModrinthPackLimit(
+      limits?.maxEntryUncompressedBytes,
+      defaultModrinthPackValidationLimits.maxEntryUncompressedBytes,
+      1,
+    ),
+    maxTotalUncompressedBytes: normalizedModrinthPackLimit(
+      limits?.maxTotalUncompressedBytes,
+      defaultModrinthPackValidationLimits.maxTotalUncompressedBytes,
+      1,
+    ),
+    maxCompressionRatio: normalizedModrinthPackLimit(
+      limits?.maxCompressionRatio,
+      defaultModrinthPackValidationLimits.maxCompressionRatio,
+      1,
+      false,
+    ),
+    maxDiagnostics: normalizedModrinthPackLimit(
+      limits?.maxDiagnostics,
+      defaultModrinthPackValidationLimits.maxDiagnostics,
+      1,
+    ),
+  };
+}
+
+class ModrinthPackDiagnosticCollector {
+  readonly limits: ModrinthPackValidationLimits;
+  private readonly retained: ModrinthPackDiagnostic[] = [];
+  errorCount = 0;
+  warningCount = 0;
+
+  constructor(limits: ModrinthPackValidationLimits) {
+    this.limits = limits;
+  }
+
+  add(
+    severity: ModrinthPackDiagnostic["severity"],
+    code: string,
+    path: string,
+    message: string,
+  ): void {
+    if (severity === "error") {
+      this.errorCount += 1;
+    } else {
+      this.warningCount += 1;
+    }
+    if (this.retained.length < this.limits.maxDiagnostics) {
+      this.retained.push({
+        severity,
+        code,
+        path: this.boundedText(path),
+        message: this.boundedText(message),
+      });
+    }
+  }
+
+  private boundedText(value: string): string {
+    return value.length <= maxModrinthPackDiagnosticTextLength
+      ? value
+      : `${value.slice(0, maxModrinthPackDiagnosticTextLength - 1)}\u2026`;
+  }
+
+  finish(): {
+    diagnostics: ModrinthPackDiagnostic[];
+    diagnosticsTruncated: boolean;
+    omittedDiagnosticCount: number;
+  } {
+    const total = this.errorCount + this.warningCount;
+    const retainedOriginalCount = this.retained.length;
+    if (total > retainedOriginalCount) {
+      return {
+        diagnostics: sortModrinthPackDiagnostics(this.retained),
+        diagnosticsTruncated: true,
+        omittedDiagnosticCount: total - retainedOriginalCount,
+      };
+    }
+    return {
+      diagnostics: sortModrinthPackDiagnostics(this.retained),
+      diagnosticsTruncated: false,
+      omittedDiagnosticCount: 0,
+    };
+  }
+}
+
+function modrinthPackPathProblem(path: string, directory = false): string | null {
+  if (!path) {
+    return "Path must not be empty.";
+  }
+  if (path.length > maxModrinthPackPathLength) {
+    return `Path must not exceed ${maxModrinthPackPathLength} characters.`;
+  }
+  if (hasControlCharacter(path)) {
+    return "Path must not contain control characters.";
+  }
+  if (/^[A-Za-z]:/.test(path)) {
+    return "Path must not start with a Windows drive name.";
+  }
+  if (path.startsWith("/") || path.startsWith("\\")) {
+    return "Path must be relative to the Minecraft instance directory.";
+  }
+  if (path.includes("\\")) {
+    return "Path must use forward slashes.";
+  }
+
+  const normalizedPath = directory && path.endsWith("/") ? path.slice(0, -1) : path;
+  if (!normalizedPath) {
+    return "Path must identify an entry below the archive root.";
+  }
+  if (!directory && path.endsWith("/")) {
+    return "A file path must not end with a slash.";
+  }
+  const segments = normalizedPath.split("/");
+  if (segments.some((segment) => segment === "..")) {
+    return "Path must not contain a parent-directory segment (..).";
+  }
+  if (segments.some((segment) => segment === "." || segment === "")) {
+    return "Path must be normalized without dot or empty segments.";
+  }
+  for (const segment of segments) {
+    if (/[<>"|?*]/u.test(segment)) {
+      return "Path segments must not contain characters forbidden by Windows filesystems.";
+    }
+    if (segment.includes(":")) {
+      return "Path segments must not contain a colon or Windows alternate-data-stream name.";
+    }
+    if (/[. ]$/u.test(segment)) {
+      return "Path segments must not end with a dot or space.";
+    }
+    const basename = (segment.split(".")[0] ?? "").replace(/[. ]+$/u, "");
+    if (windowsReservedPathSegment.test(basename)) {
+      return `Path segment is a reserved Windows device name: ${segment}`;
+    }
+  }
+  return null;
+}
+
+function modrinthPackPathKey(path: string, directory = false): string {
+  const pathWithoutSlash = directory && path.endsWith("/") ? path.slice(0, -1) : path;
+  return pathWithoutSlash.normalize("NFC").toLowerCase().normalize("NFC");
+}
+
+function modrinthPackSortablePath(path: string): string {
+  const boundedPath =
+    path.length <= maxModrinthPackPathLength ? path : path.slice(0, maxModrinthPackPathLength);
+  return boundedPath.normalize("NFC").toLowerCase().normalize("NFC");
+}
+
+function modrinthPackArchiveEntryPointer(path: string, position: number): string {
+  return path.length <= maxModrinthPackPathLength
+    ? `archive:${path}`
+    : `archive:<entry-${position}-path-too-long>`;
+}
+
+function modrinthPackAncestorKeys(pathKey: string): string[] {
+  const segments = pathKey.split("/");
+  return segments.slice(0, -1).map((_, index) => segments.slice(0, index + 1).join("/"));
+}
+
+function modrinthPackDownloadProblem(download: string): { message: string | null; host: string } {
+  if (!download) {
+    return { message: "Download URL must not be empty.", host: "" };
+  }
+  if (download.length > maxModrinthPackDownloadLength) {
+    return {
+      message: `Download URL must not exceed ${maxModrinthPackDownloadLength} characters.`,
+      host: "",
+    };
+  }
+  if (hasUnencodedUriCharacter(download)) {
+    return {
+      message: "Download URL must be an RFC 3986 URI without spaces or other unencoded characters.",
+      host: "",
+    };
+  }
+  if (/%(?![0-9a-f]{2})/i.test(download)) {
+    return { message: "Download URL must not contain malformed percent encoding.", host: "" };
+  }
+  try {
+    const url = new URL(download);
+    if (url.protocol !== "https:") {
+      return { message: "Download URL must use HTTPS.", host: "" };
+    }
+    if (!url.hostname) {
+      return { message: "Download URL must include a host.", host: "" };
+    }
+    if (url.username || url.password) {
+      return { message: "Download URL must not contain credentials.", host: "" };
+    }
+    if (url.port) {
+      return { message: "Download URL must use the standard HTTPS port.", host: "" };
+    }
+    return { message: null, host: url.hostname.toLowerCase().replace(/\.$/u, "") };
+  } catch {
+    return { message: "Download URL must be a valid absolute HTTPS URL.", host: "" };
+  }
+}
+
+function modrinthPackResult(options: {
+  collector: ModrinthPackDiagnosticCollector;
+  index: ModrinthPackValidationResult["index"];
+  archiveProvided: boolean;
+  archiveEntries: number;
+  overrideFiles: number;
+  validationStrength: ModrinthPackValidationStrength;
+}): ModrinthPackValidationResult {
+  const diagnosticsResult = options.collector.finish();
+  return {
+    schemaVersion: 1,
+    specification: modrinthPackSpecification,
+    valid: options.collector.errorCount === 0,
+    errorCount: options.collector.errorCount,
+    warningCount: options.collector.warningCount,
+    validationStrength: options.validationStrength,
+    diagnosticsTruncated: diagnosticsResult.diagnosticsTruncated,
+    omittedDiagnosticCount: diagnosticsResult.omittedDiagnosticCount,
+    index: options.index,
+    archive: {
+      provided: options.archiveProvided,
+      entries: options.archiveEntries,
+      overrideFiles: options.overrideFiles,
+    },
+    diagnostics: diagnosticsResult.diagnostics,
+  };
+}
+
+function normalizeAdditionalDownloadHost(host: unknown): string | null {
+  if (typeof host !== "string" || !host || host.length > 253 || host.includes(":")) {
+    return null;
+  }
+  try {
+    const url = new URL(`https://${host}/`);
+    if (
+      url.username ||
+      url.password ||
+      url.port ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash
+    ) {
+      return null;
+    }
+    return url.hostname.toLowerCase().replace(/\.$/u, "");
+  } catch {
+    return null;
+  }
+}
+
+function findModrinthPackFileConflict(
+  pathKey: string,
+  files: Map<string, string>,
+  descendants: Map<string, string>,
+): string | undefined {
+  const ancestor = modrinthPackAncestorKeys(pathKey)
+    .map((key) => files.get(key))
+    .find((value) => value !== undefined);
+  return ancestor ?? descendants.get(pathKey);
+}
+
+function registerModrinthPackFile(
+  pathKey: string,
+  pointer: string,
+  files: Map<string, string>,
+  descendants: Map<string, string>,
+): void {
+  files.set(pathKey, pointer);
+  registerModrinthPackDescendant(pathKey, pointer, descendants);
+}
+
+function registerModrinthPackDescendant(
+  pathKey: string,
+  pointer: string,
+  descendants: Map<string, string>,
+): void {
+  for (const ancestor of modrinthPackAncestorKeys(pathKey)) {
+    if (!descendants.has(ancestor)) {
+      descendants.set(ancestor, pointer);
+    }
+  }
+}
+
+function boundedModrinthPackRecordKeys(
+  record: Record<string, unknown>,
+  limit: number,
+): { keys: string[]; truncated: boolean } {
+  const keys: string[] = [];
+  let truncated = false;
+  for (const key in record) {
+    if (!Object.hasOwn(record, key)) {
+      continue;
+    }
+    if (keys.length === limit) {
+      truncated = true;
+      break;
+    }
+    keys.push(key);
+  }
+  const decoratedKeys = keys.map((key, index) => ({
+    key,
+    index,
+    sortKey:
+      key.length <= maxModrinthPackPathLength ? key : key.slice(0, maxModrinthPackPathLength),
+  }));
+  decoratedKeys.sort(
+    (left, right) => compareText(left.sortKey, right.sortKey) || left.index - right.index,
+  );
+  return { keys: decoratedKeys.map((entry) => entry.key), truncated };
+}
+
+type ModrinthPackInternalValidationOptions = {
+  collector: ModrinthPackDiagnosticCollector;
+  strength: ModrinthPackValidationStrength;
+  skipIndexValidation?: boolean;
+  archiveProvided?: boolean;
+  archiveEntryCount?: number;
+};
+
+/**
+ * Validates Modrinth pack index data and optional archive metadata without network access.
+ * Archive paths are treated as untrusted input and checked before layer projection.
+ */
+export function validateModrinthPack(
+  options: ModrinthPackValidationOptions,
+): ModrinthPackValidationResult {
+  const limits = resolveModrinthPackValidationLimits(options.limits);
+  return validateModrinthPackInternal(options, {
+    collector: new ModrinthPackDiagnosticCollector(limits),
+    strength: options.archiveEntries === undefined ? "none" : "metadata",
+  });
+}
+
+function validateModrinthPackInternal(
+  options: ModrinthPackValidationOptions,
+  internal: ModrinthPackInternalValidationOptions,
+): ModrinthPackValidationResult {
+  const { collector } = internal;
+  const { limits } = collector;
+  const add = collector.add.bind(collector);
+
+  const additionalDownloadHosts = new Set<string>();
+  if (options.additionalDownloadHosts !== undefined) {
+    if (!Array.isArray(options.additionalDownloadHosts)) {
+      add(
+        "error",
+        "validation.invalid-download-hosts",
+        "options.additionalDownloadHosts",
+        "additionalDownloadHosts must be an array of host names when present.",
+      );
+    } else {
+      if (options.additionalDownloadHosts.length > maxModrinthPackAdditionalHosts) {
+        add(
+          "error",
+          "validation.download-host-limit",
+          "options.additionalDownloadHosts",
+          `additionalDownloadHosts must not contain more than ${maxModrinthPackAdditionalHosts} entries.`,
+        );
+      }
+      const boundedHosts = options.additionalDownloadHosts.slice(0, maxModrinthPackAdditionalHosts);
+      for (const [index, host] of boundedHosts.entries()) {
+        const normalizedHost = normalizeAdditionalDownloadHost(host);
+        if (!normalizedHost) {
+          add(
+            "error",
+            "validation.invalid-download-host",
+            `options.additionalDownloadHosts/${index}`,
+            "Additional download hosts must be bare host names without a scheme, port, or path.",
+          );
+        } else {
+          additionalDownloadHosts.add(normalizedHost);
+        }
+      }
+    }
+  }
+
+  let indexValue = options.index;
+  let indexByteSize: number | undefined;
+  let indexFailureAlreadyReported = internal.skipIndexValidation === true;
+  if (typeof indexValue === "string") {
+    indexByteSize = Buffer.byteLength(indexValue, "utf8");
+    if (indexByteSize > limits.maxIndexBytes) {
+      add(
+        "error",
+        "index.size-limit",
+        "modrinth.index.json",
+        `Index is ${indexByteSize} bytes; the configured limit is ${limits.maxIndexBytes}.`,
+      );
+      indexValue = null;
+      indexFailureAlreadyReported = true;
+    } else {
+      try {
+        indexValue = JSON.parse(indexValue.replace(/^\uFEFF/u, "")) as unknown;
+      } catch {
+        add("error", "index.invalid-json", "modrinth.index.json", "Index must contain valid JSON.");
+        indexValue = null;
+        indexFailureAlreadyReported = true;
+      }
+    }
+  }
+
+  const downloadedPaths = new Map<string, { pointer: string; raw: string }>();
+  const downloadedFiles = new Map<string, string>();
+  const downloadedDescendants = new Map<string, string>();
+  let indexSummary: ModrinthPackValidationResult["index"] = null;
+  if (internal.skipIndexValidation) {
+    indexSummary = null;
+  } else if (!isRecord(indexValue)) {
+    if (!indexFailureAlreadyReported) {
+      add("error", "index.invalid-type", "modrinth.index.json", "Index must be a JSON object.");
+    }
+  } else {
+    const dependencyKeyResult = isRecord(indexValue.dependencies)
+      ? boundedModrinthPackRecordKeys(indexValue.dependencies, maxModrinthPackDependencies)
+      : { keys: [], truncated: false };
+    const dependencyKeys = dependencyKeyResult.keys;
+    indexSummary = {
+      formatVersion: typeof indexValue.formatVersion === "number" ? indexValue.formatVersion : null,
+      game: typeof indexValue.game === "string" ? indexValue.game : null,
+      versionId:
+        typeof indexValue.versionId === "string" &&
+        indexValue.versionId.length <= maxModrinthPackMetadataTextLength
+          ? indexValue.versionId
+          : null,
+      name:
+        typeof indexValue.name === "string" &&
+        indexValue.name.length <= maxModrinthPackMetadataTextLength
+          ? indexValue.name
+          : null,
+      files: Array.isArray(indexValue.files) ? indexValue.files.length : 0,
+      dependencies: dependencyKeys.map((dependency, index) =>
+        dependency.length <= maxModrinthPackPathLength
+          ? dependency
+          : `<dependency-${index}-name-too-long>`,
+      ),
+    };
+
+    if (dependencyKeyResult.truncated) {
+      add(
+        "error",
+        "index.dependency-limit",
+        "/dependencies",
+        `dependencies exceeds the ${maxModrinthPackDependencies}-entry safety limit.`,
+      );
+    }
+
+    if (indexValue.formatVersion !== 1) {
+      add("error", "index.format-version", "/formatVersion", "formatVersion must be the number 1.");
+    }
+    if (indexValue.game !== "minecraft") {
+      add("error", "index.game", "/game", 'game must be the string "minecraft".');
+    }
+    for (const [field, label] of [
+      ["versionId", "versionId"],
+      ["name", "name"],
+    ] as const) {
+      const value = indexValue[field];
+      if (
+        typeof value !== "string" ||
+        value.length > maxModrinthPackMetadataTextLength ||
+        !value.trim()
+      ) {
+        add(
+          "error",
+          `index.${field === "versionId" ? "version-id" : "name"}`,
+          `/${field}`,
+          `${label} must be a non-empty string no longer than ${maxModrinthPackMetadataTextLength} characters.`,
+        );
+      }
+    }
+    if (
+      indexValue.summary !== undefined &&
+      (typeof indexValue.summary !== "string" ||
+        indexValue.summary.length > maxModrinthPackMetadataTextLength)
+    ) {
+      add(
+        "error",
+        "index.summary",
+        "/summary",
+        `summary must be a string no longer than ${maxModrinthPackMetadataTextLength} characters when present.`,
+      );
+    }
+
+    if (!isRecord(indexValue.dependencies)) {
+      add(
+        "error",
+        "index.dependencies",
+        "/dependencies",
+        "dependencies must be an object containing Minecraft and loader version strings.",
+      );
+    } else {
+      if (
+        typeof indexValue.dependencies.minecraft !== "string" ||
+        indexValue.dependencies.minecraft.length > maxModrinthPackMetadataTextLength ||
+        !indexValue.dependencies.minecraft.trim()
+      ) {
+        add(
+          "error",
+          "index.minecraft-dependency",
+          "/dependencies/minecraft",
+          `dependencies.minecraft must be a non-empty version string no longer than ${maxModrinthPackMetadataTextLength} characters.`,
+        );
+      }
+      for (const dependency of dependencyKeys) {
+        const value = indexValue.dependencies[dependency];
+        const dependencyPointer =
+          dependency.length <= maxModrinthPackPathLength
+            ? `/dependencies/${dependency}`
+            : "/dependencies/<name-too-long>";
+        if (dependency.length > maxModrinthPackPathLength) {
+          add(
+            "error",
+            "index.dependency-name-length",
+            dependencyPointer,
+            `Dependency identifiers must not exceed ${maxModrinthPackPathLength} characters.`,
+          );
+        }
+        if (
+          typeof value !== "string" ||
+          value.length > maxModrinthPackMetadataTextLength ||
+          !value.trim()
+        ) {
+          add(
+            "error",
+            "index.dependency-version",
+            dependencyPointer,
+            `Dependency versions must be non-empty strings no longer than ${maxModrinthPackMetadataTextLength} characters.`,
+          );
+        }
+      }
+    }
+
+    if (!Array.isArray(indexValue.files)) {
+      add("error", "index.files", "/files", "files must be an array.");
+    } else {
+      if (indexValue.files.length > limits.maxArchiveEntries) {
+        add(
+          "error",
+          "index.file-limit",
+          "/files",
+          `files has ${indexValue.files.length} entries; the configured limit is ${limits.maxArchiveEntries}.`,
+        );
+      }
+      const boundedFiles = indexValue.files.slice(0, limits.maxArchiveEntries);
+      for (const [fileIndex, fileValue] of boundedFiles.entries()) {
+        const pointer = `/files/${fileIndex}`;
+        if (!isRecord(fileValue)) {
+          add("error", "file.invalid-type", pointer, "Each file entry must be an object.");
+          continue;
+        }
+
+        if (typeof fileValue.path !== "string") {
+          add("error", "file.path", `${pointer}/path`, "File path must be a string.");
+        } else {
+          const pathProblem = modrinthPackPathProblem(fileValue.path);
+          if (pathProblem) {
+            add("error", "file.unsafe-path", `${pointer}/path`, pathProblem);
+          } else {
+            const pathKey = modrinthPackPathKey(fileValue.path);
+            const previous = downloadedPaths.get(pathKey);
+            if (previous) {
+              add(
+                "error",
+                previous.raw === fileValue.path
+                  ? "file.duplicate-path"
+                  : "file.normalized-path-conflict",
+                `${pointer}/path`,
+                `File path conflicts with ${previous.pointer} after portable path normalization: ${fileValue.path}`,
+              );
+            } else {
+              const conflictPointer = findModrinthPackFileConflict(
+                pathKey,
+                downloadedFiles,
+                downloadedDescendants,
+              );
+              if (conflictPointer) {
+                add(
+                  "error",
+                  "file.path-conflict",
+                  `${pointer}/path`,
+                  `File path has a file/directory conflict with ${conflictPointer}: ${fileValue.path}`,
+                );
+              }
+              downloadedPaths.set(pathKey, { pointer: `${pointer}/path`, raw: fileValue.path });
+              registerModrinthPackFile(
+                pathKey,
+                `${pointer}/path`,
+                downloadedFiles,
+                downloadedDescendants,
+              );
+            }
+          }
+        }
+
+        if (!isRecord(fileValue.hashes)) {
+          add("error", "file.hashes", `${pointer}/hashes`, "hashes must be an object.");
+        } else {
+          if (
+            typeof fileValue.hashes.sha1 !== "string" ||
+            fileValue.hashes.sha1.length !== 40 ||
+            !/^[0-9a-f]{40}$/i.test(fileValue.hashes.sha1)
+          ) {
+            add(
+              "error",
+              "file.sha1",
+              `${pointer}/hashes/sha1`,
+              "SHA-1 must be a 40-character hexadecimal string.",
+            );
+          }
+          if (
+            typeof fileValue.hashes.sha512 !== "string" ||
+            fileValue.hashes.sha512.length !== 128 ||
+            !/^[0-9a-f]{128}$/i.test(fileValue.hashes.sha512)
+          ) {
+            add(
+              "error",
+              "file.sha512",
+              `${pointer}/hashes/sha512`,
+              "SHA-512 must be a 128-character hexadecimal string.",
+            );
+          }
+        }
+
+        if (!Array.isArray(fileValue.downloads) || fileValue.downloads.length === 0) {
+          add(
+            "error",
+            "file.downloads",
+            `${pointer}/downloads`,
+            "downloads must be a non-empty array of HTTPS URLs.",
+          );
+        } else {
+          if (fileValue.downloads.length > maxModrinthPackDownloadsPerFile) {
+            add(
+              "error",
+              "file.download-limit",
+              `${pointer}/downloads`,
+              `downloads must not contain more than ${maxModrinthPackDownloadsPerFile} URLs.`,
+            );
+          }
+          const downloads = new Set<string>();
+          const boundedDownloads = fileValue.downloads.slice(0, maxModrinthPackDownloadsPerFile);
+          for (const [downloadIndex, downloadValue] of boundedDownloads.entries()) {
+            const downloadPointer = `${pointer}/downloads/${downloadIndex}`;
+            if (typeof downloadValue !== "string") {
+              add("error", "file.download", downloadPointer, "Download URL must be a string.");
+              continue;
+            }
+            const downloadCheck = modrinthPackDownloadProblem(downloadValue);
+            if (downloadCheck.message) {
+              add("error", "file.download", downloadPointer, downloadCheck.message);
+            } else if (!modrinthPackOfficialDownloadHostSet.has(downloadCheck.host)) {
+              if (additionalDownloadHosts.has(downloadCheck.host)) {
+                add(
+                  "warning",
+                  "file.unofficial-download-host",
+                  downloadPointer,
+                  `Download host ${downloadCheck.host} was explicitly allowed but is not in Modrinth's official four-host allowlist.`,
+                );
+              } else {
+                add(
+                  "error",
+                  "file.download-host",
+                  downloadPointer,
+                  `Download host ${downloadCheck.host} is not allowed. Use an official host or explicitly add this exact host.`,
+                );
+              }
+            }
+            if (downloadValue.length > maxModrinthPackDownloadLength) {
+              continue;
+            }
+            if (downloads.has(downloadValue)) {
+              add(
+                "warning",
+                "file.duplicate-download",
+                downloadPointer,
+                "Download URL is duplicated within this file entry.",
+              );
+            }
+            downloads.add(downloadValue);
+          }
+        }
+
+        if (
+          typeof fileValue.fileSize !== "number" ||
+          !Number.isSafeInteger(fileValue.fileSize) ||
+          fileValue.fileSize < 0
+        ) {
+          add(
+            "error",
+            "file.size",
+            `${pointer}/fileSize`,
+            "fileSize must be a non-negative safe integer.",
+          );
+        }
+
+        if (fileValue.env !== undefined) {
+          if (!isRecord(fileValue.env)) {
+            add("error", "file.env", `${pointer}/env`, "env must be an object when present.");
+          } else {
+            for (const side of ["client", "server"] as const) {
+              if (
+                typeof fileValue.env[side] !== "string" ||
+                fileValue.env[side].length > 16 ||
+                !modrinthPackEnvironmentValues.has(fileValue.env[side])
+              ) {
+                add(
+                  "error",
+                  "file.env-side",
+                  `${pointer}/env/${side}`,
+                  `${side} must be required, optional, or unsupported.`,
+                );
+              }
+            }
+            if (fileValue.env.client === "unsupported" && fileValue.env.server === "unsupported") {
+              add(
+                "warning",
+                "file.unused-environment",
+                `${pointer}/env`,
+                "File is unsupported on both client and server and will not be installed.",
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const archiveEntries = options.archiveEntries;
+  let overrideFiles = 0;
+  if (archiveEntries !== undefined && !Array.isArray(archiveEntries)) {
+    add(
+      "error",
+      "archive.invalid-entries",
+      "archive",
+      "archiveEntries must be an array when present.",
+    );
+  } else if (archiveEntries) {
+    if (archiveEntries.length > limits.maxArchiveEntries) {
+      add(
+        "error",
+        "archive.entry-limit",
+        "archive",
+        `Archive has ${archiveEntries.length} entries; the configured limit is ${limits.maxArchiveEntries}.`,
+      );
+      return modrinthPackResult({
+        collector,
+        index: indexSummary,
+        archiveProvided: true,
+        archiveEntries: archiveEntries.length,
+        overrideFiles,
+        validationStrength: internal.strength,
+      });
+    }
+
+    const seenArchivePaths = new Map<
+      string,
+      { pointer: string; raw: string; directory: boolean }
+    >();
+    const archiveFiles = new Map<string, string>();
+    const archiveDescendants = new Map<string, string>();
+    const overrideTargets = new Map<
+      string,
+      Array<{ layer: string; path: string; directory: boolean }>
+    >();
+    const clientOverridePaths = {
+      nodes: new Map<string, { path: string; directory: boolean }>(),
+      files: new Map<string, string>(),
+      descendants: new Map<string, string>(),
+    };
+    const serverOverridePaths = {
+      nodes: new Map<string, { path: string; directory: boolean }>(),
+      files: new Map<string, string>(),
+      descendants: new Map<string, string>(),
+    };
+    let indexEntries = 0;
+    let indexEntrySize: number | undefined;
+    let totalUncompressedSize = 0;
+    let totalLimitReported = false;
+
+    const orderedEntries = archiveEntries
+      .map((entry, position) => {
+        const path = isRecord(entry) && typeof entry.path === "string" ? entry.path : "";
+        const boundedPath =
+          path.length <= maxModrinthPackPathLength
+            ? path
+            : path.slice(0, maxModrinthPackPathLength);
+        return {
+          entry,
+          position,
+          boundedPath,
+          sortKey: modrinthPackSortablePath(boundedPath),
+        };
+      })
+      .sort(
+        (left, right) =>
+          compareText(left.sortKey, right.sortKey) ||
+          compareText(left.boundedPath, right.boundedPath) ||
+          left.position - right.position,
+      );
+    for (const { entry, position } of orderedEntries) {
+      if (!isRecord(entry) || typeof entry.path !== "string") {
+        add(
+          "error",
+          "archive.invalid-entry",
+          `archive:${position}`,
+          "Each archive entry must be an object with a string path.",
+        );
+        continue;
+      }
+      const entryPointer = modrinthPackArchiveEntryPointer(entry.path, position);
+      if (entry.directory !== undefined && typeof entry.directory !== "boolean") {
+        add(
+          "error",
+          "archive.invalid-directory",
+          entryPointer,
+          "Archive entry directory must be a boolean when present.",
+        );
+      }
+      const directory =
+        typeof entry.directory === "boolean" ? entry.directory : entry.path.endsWith("/");
+      const pathProblem = modrinthPackPathProblem(entry.path, directory);
+      if (pathProblem) {
+        add("error", "archive.unsafe-path", entryPointer, pathProblem);
+        continue;
+      }
+      if (entry.size !== undefined && (!Number.isSafeInteger(entry.size) || entry.size < 0)) {
+        add(
+          "error",
+          "archive.invalid-size",
+          entryPointer,
+          "Archive entry size must be a non-negative safe integer when present.",
+        );
+      }
+      const validSize =
+        typeof entry.size === "number" && Number.isSafeInteger(entry.size) && entry.size >= 0;
+      if (validSize && entry.size !== undefined) {
+        if (entry.size > limits.maxEntryUncompressedBytes) {
+          add(
+            "error",
+            "archive.entry-size-limit",
+            entryPointer,
+            `Entry expands to ${entry.size} bytes; the configured per-entry limit is ${limits.maxEntryUncompressedBytes}.`,
+          );
+        }
+        if (
+          !totalLimitReported &&
+          totalUncompressedSize > limits.maxTotalUncompressedBytes - entry.size
+        ) {
+          add(
+            "error",
+            "archive.total-size-limit",
+            "archive",
+            `Archive entries exceed the configured total uncompressed limit of ${limits.maxTotalUncompressedBytes} bytes.`,
+          );
+          totalLimitReported = true;
+        } else if (!totalLimitReported) {
+          totalUncompressedSize += entry.size;
+        }
+      }
+      if (
+        entry.compressedSize !== undefined &&
+        (!Number.isSafeInteger(entry.compressedSize) || entry.compressedSize < 0)
+      ) {
+        add(
+          "error",
+          "archive.invalid-compressed-size",
+          entryPointer,
+          "Compressed size must be a non-negative safe integer when present.",
+        );
+      }
+      const validatedCompressedSize =
+        typeof entry.compressedSize === "number" &&
+        Number.isSafeInteger(entry.compressedSize) &&
+        entry.compressedSize >= 0
+          ? entry.compressedSize
+          : undefined;
+      if (
+        validSize &&
+        entry.size !== undefined &&
+        validatedCompressedSize !== undefined &&
+        (entry.size === 0
+          ? 0
+          : validatedCompressedSize === 0
+            ? Number.POSITIVE_INFINITY
+            : entry.size / validatedCompressedSize) > limits.maxCompressionRatio
+      ) {
+        add(
+          "error",
+          "archive.compression-ratio-limit",
+          entryPointer,
+          `Entry compression ratio exceeds the configured limit of ${limits.maxCompressionRatio}:1.`,
+        );
+      }
+      if (
+        entry.compressionMethod !== undefined &&
+        (!Number.isSafeInteger(entry.compressionMethod) ||
+          (entry.compressionMethod !== 0 && entry.compressionMethod !== 8))
+      ) {
+        add(
+          "error",
+          "archive.unsupported-compression",
+          entryPointer,
+          "compressionMethod must be ZIP stored (0) or deflate (8) when present.",
+        );
+      }
+      if (
+        entry.compressionMethod === 0 &&
+        validSize &&
+        entry.size !== undefined &&
+        validatedCompressedSize !== undefined &&
+        validatedCompressedSize !== entry.size
+      ) {
+        add(
+          "error",
+          "archive.stored-size-mismatch",
+          entryPointer,
+          "Stored ZIP entries must have equal compressed and uncompressed sizes.",
+        );
+      }
+      if (
+        entry.flags !== undefined &&
+        (!Number.isSafeInteger(entry.flags) || entry.flags < 0 || entry.flags > 0xffff)
+      ) {
+        add("error", "archive.invalid-flags", entryPointer, "flags must be a 16-bit integer.");
+      } else if (entry.flags !== undefined) {
+        if ((entry.flags & 0x0041) !== 0) {
+          add(
+            "error",
+            "archive.encrypted-entry",
+            entryPointer,
+            "Encrypted ZIP entries are not supported.",
+          );
+        }
+        if ((entry.flags & ~(0x0041 | 0x080e)) !== 0) {
+          add(
+            "error",
+            "archive.unsupported-flags",
+            entryPointer,
+            "ZIP entry uses unsupported general-purpose flags.",
+          );
+        }
+        if (entry.compressionMethod === 0 && (entry.flags & 0x0006) !== 0) {
+          add(
+            "error",
+            "archive.unsupported-flags",
+            entryPointer,
+            "Deflate compression-option flags cannot be used by a stored entry.",
+          );
+        }
+      }
+      if (
+        entry.crc32 !== undefined &&
+        (!Number.isSafeInteger(entry.crc32) || entry.crc32 < 0 || entry.crc32 > 0xffffffff)
+      ) {
+        add("error", "archive.invalid-crc32", entryPointer, "crc32 must be a 32-bit integer.");
+      }
+      if (
+        entry.unixMode !== undefined &&
+        (!Number.isSafeInteger(entry.unixMode) || entry.unixMode < 0 || entry.unixMode > 0xffff)
+      ) {
+        add(
+          "error",
+          "archive.invalid-unix-mode",
+          entryPointer,
+          "unixMode must be a 16-bit integer.",
+        );
+      } else if (entry.unixMode !== undefined) {
+        const fileType = entry.unixMode & 0xf000;
+        if (fileType !== 0 && fileType !== 0x4000 && fileType !== 0x8000) {
+          add(
+            "error",
+            "archive.special-file",
+            entryPointer,
+            "Archive entries must be regular files or directories, not symlinks, devices, or other special files.",
+          );
+        } else if ((fileType === 0x4000) !== directory && fileType !== 0) {
+          add(
+            "error",
+            "archive.unix-mode-mismatch",
+            entryPointer,
+            "Unix file type does not match the archive directory metadata.",
+          );
+        }
+      }
+
+      const pathWithoutSlash =
+        directory && entry.path.endsWith("/") ? entry.path.slice(0, -1) : entry.path;
+      const pathKey = modrinthPackPathKey(entry.path, directory);
+      const previous = seenArchivePaths.get(pathKey);
+      if (previous) {
+        add(
+          "error",
+          previous.raw === pathWithoutSlash
+            ? "archive.duplicate-path"
+            : "archive.normalized-path-conflict",
+          entryPointer,
+          `Archive entry conflicts with ${previous.pointer} after portable path normalization.`,
+        );
+      } else {
+        seenArchivePaths.set(pathKey, { pointer: entryPointer, raw: pathWithoutSlash, directory });
+        const conflictPointer = directory
+          ? modrinthPackAncestorKeys(pathKey)
+              .map((key) => archiveFiles.get(key))
+              .find((value) => value !== undefined)
+          : findModrinthPackFileConflict(pathKey, archiveFiles, archiveDescendants);
+        if (conflictPointer) {
+          add(
+            "error",
+            "archive.path-conflict",
+            entryPointer,
+            `Archive path has a file/directory conflict with ${conflictPointer}.`,
+          );
+        }
+        if (!directory) {
+          registerModrinthPackFile(pathKey, entryPointer, archiveFiles, archiveDescendants);
+        } else {
+          registerModrinthPackDescendant(pathKey, entryPointer, archiveDescendants);
+        }
+      }
+
+      if (pathWithoutSlash === "modrinth.index.json") {
+        if (directory) {
+          add(
+            "error",
+            "archive.index-directory",
+            entryPointer,
+            "modrinth.index.json must be a file at the archive root.",
+          );
+        } else {
+          indexEntries += 1;
+          indexEntrySize = entry.size;
+          if (validSize && entry.size !== undefined && entry.size > limits.maxIndexBytes) {
+            add(
+              "error",
+              "archive.index-size-limit",
+              entryPointer,
+              `Index entry is ${entry.size} bytes; the configured limit is ${limits.maxIndexBytes}.`,
+            );
+          }
+        }
+        continue;
+      }
+
+      const [root, ...targetSegments] = pathWithoutSlash.split("/");
+      if (!root || !modrinthPackOverrideRoots.has(root)) {
+        add(
+          "warning",
+          "archive.unrecognized-entry",
+          entryPointer,
+          "Entry is outside the standard override directories and is not installed by the .mrpack format.",
+        );
+        continue;
+      }
+      if (targetSegments.length === 0) {
+        continue;
+      }
+
+      const target = targetSegments.join("/");
+      const targetKey = modrinthPackPathKey(target);
+      const targets = overrideTargets.get(targetKey) ?? [];
+      targets.push({ layer: root, path: entryPointer, directory });
+      overrideTargets.set(targetKey, targets);
+      const applicableOverridePaths =
+        root === "overrides"
+          ? [clientOverridePaths, serverOverridePaths]
+          : root === "client-overrides"
+            ? [clientOverridePaths]
+            : [serverOverridePaths];
+      const typeConflictPointers = new Set<string>();
+      const hierarchyConflictPointers = new Set<string>();
+      for (const paths of applicableOverridePaths) {
+        const previousNode = paths.nodes.get(targetKey);
+        if (previousNode && previousNode.directory !== directory) {
+          typeConflictPointers.add(previousNode.path);
+        } else if (!previousNode) {
+          paths.nodes.set(targetKey, { path: entryPointer, directory });
+        }
+
+        const conflictPointer = directory
+          ? modrinthPackAncestorKeys(targetKey)
+              .map((key) => paths.files.get(key))
+              .find((value) => value !== undefined)
+          : findModrinthPackFileConflict(targetKey, paths.files, paths.descendants);
+        if (conflictPointer) {
+          hierarchyConflictPointers.add(conflictPointer);
+        }
+        if (directory) {
+          registerModrinthPackDescendant(targetKey, entryPointer, paths.descendants);
+        } else if (!paths.files.has(targetKey)) {
+          registerModrinthPackFile(targetKey, entryPointer, paths.files, paths.descendants);
+        }
+      }
+      for (const conflictPointer of [...typeConflictPointers].sort(compareText)) {
+        add(
+          "error",
+          "archive.override-path-conflict",
+          entryPointer,
+          `Projected override path changes between a file and directory at ${conflictPointer}.`,
+        );
+      }
+      for (const conflictPointer of [...hierarchyConflictPointers].sort(compareText)) {
+        add(
+          "error",
+          "archive.override-path-conflict",
+          entryPointer,
+          `Projected override path has a file/directory conflict with ${conflictPointer}.`,
+        );
+      }
+      if (directory) {
+        continue;
+      }
+      overrideFiles += 1;
+    }
+
+    if (indexEntries === 0) {
+      add(
+        "error",
+        "archive.index-missing",
+        "archive:modrinth.index.json",
+        "Archive must contain modrinth.index.json at its root.",
+      );
+    } else if (indexEntries > 1) {
+      add(
+        "error",
+        "archive.index-duplicate",
+        "archive:modrinth.index.json",
+        "Archive must contain exactly one root modrinth.index.json file.",
+      );
+    }
+    if (
+      indexEntries === 1 &&
+      indexByteSize !== undefined &&
+      indexEntrySize !== undefined &&
+      indexByteSize !== indexEntrySize
+    ) {
+      add(
+        "error",
+        "archive.index-size-mismatch",
+        "archive:modrinth.index.json",
+        `Index JSON has ${indexByteSize} UTF-8 bytes but archive metadata reports ${indexEntrySize}.`,
+      );
+    }
+
+    for (const [targetKey, targets] of [...overrideTargets].sort(([left], [right]) =>
+      compareText(left, right),
+    )) {
+      const fileTargets = targets.filter((target) => !target.directory);
+      const directoryTargets = targets.filter((target) => target.directory);
+      const fileLayers = [...new Set(fileTargets.map((target) => target.layer))].sort(compareText);
+      if (fileLayers.includes("overrides") && fileLayers.length > 1) {
+        add(
+          "warning",
+          "archive.override-layer-conflict",
+          targets[0]?.path ?? `archive:${targetKey}`,
+          `Override layers ${fileLayers.join(", ")} target the same installed path; the environment-specific layer overwrites overrides/${targetKey}.`,
+        );
+      }
+      const downloadedPath = downloadedPaths.get(targetKey);
+      if (downloadedPath && directoryTargets.length > 0) {
+        add(
+          "error",
+          "archive.download-override-path-conflict",
+          targets[0]?.path ?? `archive:${targetKey}`,
+          `Override directory conflicts with downloaded file ${downloadedPath.pointer}: ${targetKey}`,
+        );
+      } else if (downloadedPath && fileTargets.length > 0) {
+        add(
+          "warning",
+          "archive.download-override-conflict",
+          targets[0]?.path ?? `archive:${targetKey}`,
+          `Override targets the same installed path as ${downloadedPath.pointer}: ${targetKey}`,
+        );
+      } else if (fileTargets.length > 0) {
+        const downloadedConflict = findModrinthPackFileConflict(
+          targetKey,
+          downloadedFiles,
+          downloadedDescendants,
+        );
+        if (downloadedConflict) {
+          add(
+            "error",
+            "archive.download-override-path-conflict",
+            targets[0]?.path ?? `archive:${targetKey}`,
+            `Override path has a file/directory conflict with ${downloadedConflict}: ${targetKey}`,
+          );
+        }
+      } else {
+        const downloadedAncestor = modrinthPackAncestorKeys(targetKey)
+          .map((key) => downloadedFiles.get(key))
+          .find((value) => value !== undefined);
+        if (downloadedAncestor) {
+          add(
+            "error",
+            "archive.download-override-path-conflict",
+            targets[0]?.path ?? `archive:${targetKey}`,
+            `Override directory has a downloaded-file ancestor at ${downloadedAncestor}: ${targetKey}`,
+          );
+        }
+      }
+    }
+  }
+
+  return modrinthPackResult({
+    collector,
+    index: indexSummary,
+    archiveProvided: internal.archiveProvided ?? archiveEntries !== undefined,
+    archiveEntries:
+      internal.archiveEntryCount ?? (Array.isArray(archiveEntries) ? archiveEntries.length : 0),
+    overrideFiles,
+    validationStrength: internal.strength,
+  });
+}
+
+/** Reads and validates a local `.mrpack` archive without downloading referenced files. */
+export function validateModrinthPackArchive(
+  archive: Uint8Array,
+  options: ModrinthPackArchiveValidationOptions = {},
+): ModrinthPackValidationResult {
+  const limits = resolveModrinthPackValidationLimits(options.limits);
+  const collector = new ModrinthPackDiagnosticCollector(limits);
+  const inspected = inspectModrinthArchive(archive, {
+    limits,
+    addDiagnostic: (diagnostic) => {
+      const code =
+        diagnostic.code === "archive.eocd-invalid" ||
+        diagnostic.code === "archive.inspection-failed"
+          ? "archive.invalid-zip"
+          : diagnostic.code;
+      collector.add(
+        "error",
+        code,
+        diagnostic.path ? `archive:${diagnostic.path}` : "archive",
+        diagnostic.message,
+      );
+    },
+  });
+
+  let index: string | undefined;
+  if (inspected.indexBytes !== null) {
+    try {
+      index = new TextDecoder("utf-8", { fatal: true }).decode(inspected.indexBytes);
+    } catch {
+      collector.add(
+        "error",
+        "archive.index-encoding",
+        "archive:modrinth.index.json",
+        "modrinth.index.json must use valid UTF-8 encoding.",
+      );
+    }
+  }
+
+  return validateModrinthPackInternal(
+    {
+      index,
+      ...(inspected.entriesAuthoritative
+        ? {
+            archiveEntries: inspected.entries.map((entry) => ({
+              path: entry.path,
+              directory: entry.directory,
+            })),
+          }
+        : {}),
+      ...(options.additionalDownloadHosts
+        ? { additionalDownloadHosts: options.additionalDownloadHosts }
+        : {}),
+      limits,
+    },
+    {
+      collector,
+      strength: "binary",
+      skipIndexValidation: index === undefined,
+      archiveProvided: true,
+      archiveEntryCount: inspected.entries.length,
+    },
+  );
 }
 
 const modrinthApiBaseUrl = "https://api.modrinth.com/v2/search";

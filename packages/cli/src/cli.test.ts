@@ -4,6 +4,17 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 
+function crc32(value: Uint8Array): number {
+  let crc = 0xffffffff;
+  for (const byte of value) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
 async function capture(argv: string[]) {
   const stdout: string[] = [];
   const stderr: string[] = [];
@@ -12,6 +23,63 @@ async function capture(argv: string[]) {
     error: (value) => stderr.push(value),
   });
   return { code, stdout, stderr };
+}
+
+function createStoredZip(entries: Record<string, string>): Buffer {
+  const localParts: Buffer[] = [];
+  const centralParts: Buffer[] = [];
+  let offset = 0;
+  for (const [name, content] of Object.entries(entries)) {
+    const nameBytes = Buffer.from(name);
+    const contentBytes = Buffer.from(content);
+    const checksum = crc32(contentBytes);
+    const localHeader = Buffer.alloc(30 + nameBytes.length);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt16LE(0, 6);
+    localHeader.writeUInt16LE(0, 8);
+    localHeader.writeUInt32LE(0, 10);
+    localHeader.writeUInt32LE(checksum, 14);
+    localHeader.writeUInt32LE(contentBytes.length, 18);
+    localHeader.writeUInt32LE(contentBytes.length, 22);
+    localHeader.writeUInt16LE(nameBytes.length, 26);
+    localHeader.writeUInt16LE(0, 28);
+    nameBytes.copy(localHeader, 30);
+    localParts.push(localHeader, contentBytes);
+
+    const centralHeader = Buffer.alloc(46 + nameBytes.length);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt16LE(0, 8);
+    centralHeader.writeUInt16LE(0, 10);
+    centralHeader.writeUInt32LE(0, 12);
+    centralHeader.writeUInt32LE(checksum, 16);
+    centralHeader.writeUInt32LE(contentBytes.length, 20);
+    centralHeader.writeUInt32LE(contentBytes.length, 24);
+    centralHeader.writeUInt16LE(nameBytes.length, 28);
+    centralHeader.writeUInt16LE(0, 30);
+    centralHeader.writeUInt16LE(0, 32);
+    centralHeader.writeUInt16LE(0, 34);
+    centralHeader.writeUInt16LE(0, 36);
+    centralHeader.writeUInt32LE(0, 38);
+    centralHeader.writeUInt32LE(offset, 42);
+    nameBytes.copy(centralHeader, 46);
+    centralParts.push(centralHeader);
+    offset += localHeader.length + contentBytes.length;
+  }
+
+  const centralDirectory = Buffer.concat(centralParts);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(0, 4);
+  end.writeUInt16LE(0, 6);
+  end.writeUInt16LE(centralParts.length, 8);
+  end.writeUInt16LE(centralParts.length, 10);
+  end.writeUInt32LE(centralDirectory.length, 12);
+  end.writeUInt32LE(offset, 16);
+  end.writeUInt16LE(0, 20);
+  return Buffer.concat([...localParts, centralDirectory, end]);
 }
 
 describe("minecraft-skills CLI", () => {
@@ -529,6 +597,84 @@ describe("minecraft-skills CLI", () => {
 
     await capture(["modrinth", "get", "game-versions"]);
     expect(fetchMock.mock.calls[1]?.[0]).toBe("https://api.modrinth.com/v2/tag/game_version");
+  });
+
+  it("validates a local Modrinth pack archive without network access", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-mrpack-cli-"));
+    const packPath = join(root, "example.mrpack");
+    const index = JSON.stringify({
+      formatVersion: 1,
+      game: "minecraft",
+      versionId: "example-1.0.0",
+      name: "Example",
+      files: [],
+      dependencies: { minecraft: "1.21.11" },
+    });
+    try {
+      writeFileSync(packPath, createStoredZip({ "modrinth.index.json": index }));
+      const result = await capture(["modrinth", "validate-pack", packPath]);
+      expect(result.code).toBe(0);
+      expect(result.stderr).toEqual([]);
+      expect(result.stdout.join("\n")).toContain('"valid": true');
+      expect(result.stdout.join("\n")).toContain('"entries": 1');
+      expect(result.stdout.join("\n")).toContain('"validationStrength": "binary"');
+
+      const warningIndex = JSON.stringify({
+        formatVersion: 1,
+        game: "minecraft",
+        versionId: "example-1.0.0",
+        name: "Example",
+        files: [
+          {
+            path: "mods/example.jar",
+            hashes: { sha1: "a".repeat(40), sha512: "b".repeat(128) },
+            downloads: ["https://downloads.example.org/example.jar"],
+            fileSize: 1,
+          },
+        ],
+        dependencies: { minecraft: "1.21.11" },
+      });
+      writeFileSync(packPath, createStoredZip({ "modrinth.index.json": warningIndex }));
+      const warningOnly = await capture([
+        "modrinth",
+        "validate-pack",
+        packPath,
+        "--allow-download-host",
+        "downloads.example.org",
+      ]);
+      expect(warningOnly.code).toBe(0);
+      expect(warningOnly.stdout.join("\n")).toContain('"valid": true');
+      expect(warningOnly.stdout.join("\n")).toContain('"file.unofficial-download-host"');
+
+      const wrongExtensionPath = join(root, "example.zip");
+      writeFileSync(wrongExtensionPath, createStoredZip({ "modrinth.index.json": index }));
+      const wrongExtension = await capture(["modrinth", "validate-pack", wrongExtensionPath]);
+      expect(wrongExtension.code).toBe(1);
+      expect(wrongExtension.stderr.join("\n")).toContain(".mrpack extension");
+
+      const directoryPath = join(root, "directory.mrpack");
+      mkdirSync(directoryPath);
+      const directory = await capture(["modrinth", "validate-pack", directoryPath]);
+      expect(directory.code).toBe(1);
+      expect(directory.stderr.join("\n")).toContain("regular local .mrpack file");
+
+      const overLimit = await capture([
+        "modrinth",
+        "validate-pack",
+        packPath,
+        "--max-archive-bytes",
+        "1",
+      ]);
+      expect(overLimit.code).toBe(1);
+      expect(overLimit.stderr.join("\n")).toContain("larger than 1 bytes");
+
+      writeFileSync(packPath, Buffer.from("not a zip"));
+      const invalid = await capture(["modrinth", "validate-pack", packPath]);
+      expect(invalid.code).toBe(1);
+      expect(invalid.stdout.join("\n")).toContain('"code": "archive.invalid-zip"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("prints Paper API references", async () => {

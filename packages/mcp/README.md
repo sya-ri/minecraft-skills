@@ -101,6 +101,7 @@ assumption and ask the user to confirm it.
 - `search_modrinth_projects`
 - `list_modrinth_project_versions`
 - `get_modrinth_resource`
+- `validate_modrinth_pack`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `validate_resourcepack_project`
@@ -133,6 +134,13 @@ assumption and ask the user to confirm it.
 - `list_domains`
 - `list_references`
 - `get_source_policy`
+
+`validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
+binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,
+and Unix modes for stronger metadata checks. The result therefore reports `validationStrength` as
+`none` or `metadata`, never `binary`. Downloads use Modrinth's official four-host allowlist by
+default. `additionalDownloadHosts` explicitly extends it and produces non-official-host warnings;
+`limits` bounds entries, sizes, ratios, and retained diagnostics.
 
 ## Resources
 

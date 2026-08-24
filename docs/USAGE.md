@@ -64,6 +64,9 @@ minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
+minecraft-skills modrinth validate-pack ./example.mrpack
+minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
+minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -176,6 +179,28 @@ responses small; pass `--include-changelog true` when they are needed.
 `modrinth get` covers the other common public read APIs: project details and dependencies, version
 details and file-hash lookup, users, categories, loaders, game versions, project/side types,
 donation/report types, and instance statistics. Run the CLI help to see the accepted resource names.
+
+`modrinth validate-pack <file.mrpack>` performs an offline preflight of the ZIP container and
+`modrinth.index.json`. It checks portable normalized paths and ancestor collisions, required
+SHA-1/SHA-512 hashes, HTTPS download hosts, file sizes, environments, dependency metadata,
+override layering, and index/archive consistency. Binary validation also checks ZIP flags,
+central/local header agreement, extra-field record bounds, alternate Unicode path fields, bounded
+expansion, expanded sizes, CRC-32, overlapping data, and Unix type/marker consistency. It rejects
+symlinks, devices, and other special files. It does not download the referenced files. The default bounds are 512 MiB
+of archive input, 25,000 entries, a 16 MiB index, 512 MiB per entry, 4 GiB total expanded data, a
+200:1 ratio, and 200 retained diagnostics. `--max-archive-bytes` can lower, but never raise, the
+archive-input bound.
+
+Object-form validation also caps index file traversal at the configured archive-entry limit,
+portable paths at 4,096 characters, URLs at 8,192 characters, and downloads at 64 per file.
+
+The official default host allowlist is `cdn.modrinth.com`, `github.com`,
+`raw.githubusercontent.com`, and `gitlab.com`. Repeat `--allow-download-host <host>` only when an
+additional exact host is intentionally trusted; each such URL remains visible as a warning, and a
+warning-only result exits 0. Results distinguish `none`, `metadata`, and `binary` archive assurance
+in `validationStrength`. The Catalog equivalent is
+`validateModrinthPack({ index, archiveEntries, additionalDownloadHosts, limits })`; MCP clients can
+use `validate_modrinth_pack` with JSON and entry metadata without sending archive binaries.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and

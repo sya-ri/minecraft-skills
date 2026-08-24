@@ -144,6 +144,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
     expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
     expect(tools.map((tool) => tool.name)).toContain("get_modrinth_resource");
+    expect(tools.map((tool) => tool.name)).toContain("validate_modrinth_pack");
     expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
     expect(tools.map((tool) => tool.name)).toContain("find_resourcepack_assets");
     expect(tools.map((tool) => tool.name)).toContain("explain_pack_path");
@@ -996,6 +997,138 @@ describe("MCP tools", () => {
     expect(url).toContain("versions%3A1.21.11");
     expect(url).toContain("categories%3Afabric");
     expect(new Headers(init?.headers).get("User-Agent")).toContain("minecraft-skills");
+  });
+
+  it("validates Modrinth index JSON and archive metadata without binary input", async () => {
+    const result = await callMinecraftSkillsTool("validate_modrinth_pack", {
+      index: {
+        formatVersion: 1,
+        game: "minecraft",
+        versionId: "example-1.0.0",
+        name: "Example",
+        files: [],
+        dependencies: { minecraft: "1.21.11" },
+      },
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 100 },
+        { path: "overrides/../../outside.txt", size: 1 },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toContain('"valid": false');
+    expect(result.content[0]?.text).toContain('"validationStrength": "metadata"');
+    expect(result.content[0]?.text).toContain('"code": "archive.unsafe-path"');
+  });
+
+  it("allows an explicit non-official Modrinth download host with a warning", async () => {
+    const result = await callMinecraftSkillsTool("validate_modrinth_pack", {
+      index: {
+        formatVersion: 1,
+        game: "minecraft",
+        versionId: "example-1.0.0",
+        name: "Example",
+        files: [
+          {
+            path: "mods/example.jar",
+            hashes: { sha1: "a".repeat(40), sha512: "b".repeat(128) },
+            downloads: ["https://downloads.example.org/example.jar"],
+            fileSize: 1,
+          },
+        ],
+        dependencies: { minecraft: "1.21.11" },
+      },
+      additionalDownloadHosts: ["downloads.example.org"],
+      limits: { maxDiagnostics: 10 },
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toContain('"valid": true');
+    expect(result.content[0]?.text).toContain('"file.unofficial-download-host"');
+  });
+
+  it("does not echo an unbounded Modrinth dependency key", async () => {
+    const dependencyPrefix = "dependency".repeat(2_000);
+    const result = await callMinecraftSkillsTool("validate_modrinth_pack", {
+      index: {
+        formatVersion: 1,
+        game: "minecraft",
+        versionId: "example-1.0.0",
+        name: "Example",
+        files: [],
+        dependencies: {
+          minecraft: "1.21.11",
+          [`${dependencyPrefix}a`]: "1.0.0",
+          [`${dependencyPrefix}b`]: "1.0.0",
+        },
+      },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(output).toContain("name-too-long");
+    expect(output.length).toBeLessThan(20_000);
+  });
+
+  it("rejects impossible Modrinth archive metadata through MCP", async () => {
+    const result = await callMinecraftSkillsTool("validate_modrinth_pack", {
+      index: {
+        formatVersion: 1,
+        game: "minecraft",
+        versionId: "example-1.0.0",
+        name: "Example",
+        files: [],
+        dependencies: { minecraft: "1.21.11" },
+      },
+      archiveEntries: [
+        { path: "modrinth.index.json", size: 0, compressedSize: 0, compressionMethod: 0 },
+        {
+          path: "overrides/zero-compressed.txt",
+          size: 1,
+          compressedSize: 0,
+          compressionMethod: 8,
+        },
+        {
+          path: "overrides/stored-mismatch.txt",
+          size: 2,
+          compressedSize: 1,
+          compressionMethod: 0,
+        },
+      ],
+      limits: { maxCompressionRatio: 1.5 },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(output).toContain('"archive.compression-ratio-limit"');
+    expect(output).toContain('"archive.stored-size-mismatch"');
+  });
+
+  it("enforces Modrinth MCP hard caps before mapping untrusted arrays", async () => {
+    const index = {
+      formatVersion: 1,
+      game: "minecraft",
+      versionId: "example-1.0.0",
+      name: "Example",
+      files: [],
+      dependencies: { minecraft: "1.21.11" },
+    };
+    const tooManyEntries = await callMinecraftSkillsTool("validate_modrinth_pack", {
+      index,
+      archiveEntries: Array.from({ length: 25_001 }, (_, entry) => ({
+        path: `overrides/entry-${entry}.txt`,
+      })),
+    });
+    const tooManyHosts = await callMinecraftSkillsTool("validate_modrinth_pack", {
+      index,
+      additionalDownloadHosts: Array.from(
+        { length: 65 },
+        (_, host) => `downloads-${host}.example.org`,
+      ),
+    });
+
+    expect(tooManyEntries.isError).toBe(true);
+    expect(tooManyEntries.content[0]?.text).toContain("must not exceed 25000 entries");
+    expect(tooManyHosts.isError).toBe(true);
+    expect(tooManyHosts.content[0]?.text).toContain("must not exceed 64 entries");
   });
 
   it("calls list_modrinth_project_versions", async () => {
