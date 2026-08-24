@@ -225,6 +225,7 @@ export {
 export { vorbisIdentificationPageBytes } from "./resourcepackSound.js";
 export * from "./serverProperties.js";
 export * from "./velocityMeta.js";
+export * from "./velocityPluginJar.js";
 export type {
   AuthoringChecklistData,
   AuthoringChecklistIndexData,
@@ -1967,6 +1968,19 @@ function isFabricModValidationDiscoveryQuery(query: string): boolean {
       normalized,
     );
   return hasFabricArtifact && hasValidationIntent;
+}
+
+function isVelocityPluginJarValidationDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  if (!/\bvelocity\b/u.test(normalized)) return false;
+  const hasArtifactContext =
+    /\b(?:artifact|classfile|descriptor|entrypoint|jar|jdk|metadata|plugin)\b/u.test(normalized) ||
+    /\b(?:java target|velocity plugin json)\b/u.test(normalized);
+  const hasValidationIntent =
+    /\b(?:check|inspect|lint|validat(?:e|es|ed|ing|ion)?|verif(?:y|ies|ied|ication))\b/u.test(
+      normalized,
+    );
+  return hasArtifactContext && hasValidationIntent;
 }
 
 function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
@@ -5739,6 +5753,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Validate bounded Fabric Loader v1 metadata, JAR structure, and referenced-file presence offline.",
     );
   }
+  if (!searchDomain && isVelocityPluginJarValidationDiscoveryQuery(task)) {
+    add(
+      "plugin velocity validate-jar <file.jar>",
+      "Validate bounded Velocity descriptor, entrypoint class, annotation, and Java-target evidence offline.",
+    );
+  }
   const migrationTask =
     /\b(migrat(?:e|es|ed|ing|ion)?|upgrad(?:e|es|ed|ing)|port(?:s|ed|ing)?|version)\b/.test(
       lower,
@@ -5756,7 +5776,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   }
 
   const explicitNonPaperPlatform =
-    !searchDomain && /\b(?:fabric|forge|neoforge|quilt)\b/.test(lower);
+    !searchDomain && /\b(?:fabric|forge|neoforge|quilt|velocity)\b/.test(lower);
   const catalogSearchLimit = explicitNonPaperPlatform ? 200 : limit;
   const scenarioSearchLimit = explicitNonPaperPlatform ? 100 : limit;
 
@@ -6434,6 +6454,23 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       score: 100,
       matches: ["fabric.mod.json schemaVersion 1", "JAR paths", "referenced files"],
       lookup: "fabric validate-mod <file.jar>",
+    });
+  }
+
+  if (!options.domain && isVelocityPluginJarValidationDiscoveryQuery(query)) {
+    addCrossResult(results, {
+      surface: "velocity-plugin-validator",
+      domain: "minecraft",
+      kind: "offline-jar-validator",
+      title: "Validate a Velocity plugin JAR",
+      score: 100,
+      matches: [
+        "velocity-plugin.json",
+        "entrypoint class",
+        "runtime-visible @Plugin metadata",
+        "Java classfile target",
+      ],
+      lookup: "plugin velocity validate-jar <file.jar>",
     });
   }
 

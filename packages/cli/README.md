@@ -111,6 +111,8 @@ minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
 minecraft-skills plugin paper validate-jar ./build/libs/example.jar
 minecraft-skills plugin paper validate-jar ./build/libs/example.jar --max-archive-bytes 16777216
+minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
+minecraft-skills plugin velocity validate-jar ./build/libs/example.jar --target-java 26
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
@@ -244,6 +246,16 @@ archive-local class absence is a warning because external classloaders may suppl
 does not include descriptor values or class bytes. Errors return 1;
 warnings and explicitly incomplete/experimental coverage do not by themselves make the artifact
 invalid.
+
+`plugin velocity validate-jar` applies the same regular-file, non-symlink, stable-read, 64 MiB
+ceiling before bounded ZIP inspection. It checks root `velocity-plugin.json` integrity and current
+structural fields, exact entrypoint class presence, bounded classfile identity, that entrypoint's
+selected Java target (Java 25 by default), and runtime-visible `@Plugin` evidence. Other classfiles
+are not target-scanned. Targets below the current Velocity 4 Java 25 floor are rejected; older
+Velocity lines are not modeled. It does not resolve dependency
+satisfaction, prove full JVM linkage or Guice injection, check classpath/API compatibility, load
+Velocity, or establish runtime behavior or security. Annotation absence or mismatch is evidence,
+not a claim about loader rejection. Errors return 1; warnings and explicit unknowns return 0.
 
 `fabric toolchain` reads Loader, Intermediary, and Yarn candidates from the official live Fabric
 Meta v2 API. It prefers upstream `stable` entries without treating that flag as a complete project

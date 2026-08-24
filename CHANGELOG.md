@@ -38,6 +38,9 @@ All notable changes to this project are documented here.
   rules for current `fabric.mod.json` schema v1, portable archive paths, referenced-file presence,
   and bounded JAR structure. CLI binary reads require one stable regular `.jar` file; MCP accepts
   metadata and optional entry metadata, but not binary JARs.
+- Bounded offline Velocity plugin JAR validation across Catalog, CLI, MCP, and English discovery,
+  separating binary ZIP/CRC/classfile/Java-target/annotation evidence from metadata-only MCP input
+  and explicitly retaining dependency, linkage, injection, API-compatibility, and runtime limits.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

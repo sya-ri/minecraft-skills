@@ -93,6 +93,7 @@ minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric mods inventory ./server/mods
@@ -190,6 +191,13 @@ reported difference exits 1. Neither command emits absolute input paths, JAR byt
 operating-system error details. They do not resolve dependencies or load order, prove
 Minecraft-version compatibility, authenticity, Modrinth origin, or startup, or download, update,
 or delete files.
+
+`plugin velocity validate-jar` performs a bounded offline inspection of a regular local JAR. It
+checks ZIP and descriptor integrity, current Velocity descriptor structure and IDs, exact
+entrypoint class presence, classfile identity and Java target, and runtime-visible `@Plugin`
+evidence. It does not load Velocity, resolve dependency satisfaction, prove JVM linkage or Guice
+injection, or establish runtime behavior or security. MCP accepts descriptor and entry-list
+metadata only and therefore cannot claim binary, classfile, or annotation evidence.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

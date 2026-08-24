@@ -105,6 +105,8 @@ import {
   validateModrinthPackArchive,
   validatePaperPluginArchiveMetadata,
   validatePaperPluginJar,
+  validateVelocityPluginArchiveMetadata,
+  validateVelocityPluginJar,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
@@ -419,6 +421,17 @@ const paperPluginMetadata = validatePaperPluginArchiveMetadata({
   archiveEntriesComplete: true,
   pluginYml: "name: ExamplePlugin\nversion: '1'\nmain: dev.example.ExamplePlugin\napi-version: '26.2'",
 });
+const velocityPluginBinary = validateVelocityPluginJar({
+  archive: readFileSync("./build/libs/example.jar"),
+});
+const velocityPluginMetadata = validateVelocityPluginArchiveMetadata({
+  descriptor: { id: "example", main: "dev.example.ExamplePlugin" },
+  archiveEntries: [
+    { path: "velocity-plugin.json", size: 64 },
+    { path: "dev/example/ExamplePlugin.class", size: 1 },
+  ],
+  archiveEntriesComplete: true,
+});
 const sources = getSourceReport({ domain: "datapack", version: "26.2" });
 const sourceTiers = listSourceTiers();
 const communityDatasets = listCommunityDatasets();
@@ -521,6 +534,20 @@ identifiers remain unknown rather than being accepted or rejected speculatively.
 Paper's experimental `paper-plugin.yml`, unknown keys, unchecked class bytecode and resolution,
 YAML runtime-parser parity, and unexecuted server loading in `incompleteReasons`. Hard ceilings are
 exported as `paperPluginJarValidationLimits`; no network is used.
+
+`validateVelocityPluginJar({ archive })` performs bounded binary inspection of a Velocity plugin
+JAR. It verifies ZIP central/local structure, descriptor and entrypoint CRC, fatal UTF-8 JSON,
+current descriptor structure and IDs, the exact main-class path, bounded classfile identity and Java
+target, and runtime-visible `@Plugin` evidence. `validateVelocityPluginArchiveMetadata` accepts
+descriptor JSON plus caller-supplied entries and cannot claim any binary, CRC, classfile, Java
+target, or annotation proof. Text descriptors reject duplicate object keys before JSON parsing;
+parsed descriptor objects cannot retain that source-level evidence and report it as incomplete.
+Both functions leave dependency satisfaction, complete bytecode/JVM
+linkage, exact Gson runtime coercion, classpath and Velocity API compatibility, Guice
+construction/injection, actual Velocity loading, runtime behavior, and security unverified.
+Annotation absence or mismatch is evidence, not proof of loader rejection. Fixed ceilings are
+exported as `velocityPluginJarValidationLimits`; runtime targets start at the current Velocity 4
+Java 25 floor, and older Velocity lines are not modeled.
 
 ## Coverage
 

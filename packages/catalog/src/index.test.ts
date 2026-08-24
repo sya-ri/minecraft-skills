@@ -4679,6 +4679,34 @@ describe("catalog", () => {
     );
   });
 
+  it("routes English Velocity artifact validation queries without hijacking API questions", () => {
+    for (const query of [
+      "Validate this Velocity plugin JAR",
+      "Check velocity-plugin.json and the Java target",
+      "Inspect Velocity entrypoint classfile metadata",
+    ]) {
+      const search = searchAll({ version: "26.2", query });
+      expect(search.results).toContainEqual(
+        expect.objectContaining({
+          surface: "velocity-plugin-validator",
+          lookup: "plugin velocity validate-jar <file.jar>",
+        }),
+      );
+      const suggestions = suggestMinecraftLookups({ version: "26.2", task: query });
+      expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+        "plugin velocity validate-jar <file.jar>",
+      );
+    }
+
+    const unrelated = searchAll({
+      version: "26.2",
+      query: "How do I register a Velocity event listener?",
+    });
+    expect(unrelated.results.some((entry) => entry.surface === "velocity-plugin-validator")).toBe(
+      false,
+    );
+  });
+
   it("finds resourcepack assets from all available indexes", () => {
     const result = findResourcepackAssets({
       version: "26.2",
