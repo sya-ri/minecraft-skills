@@ -127,7 +127,384 @@
   },
   "datapack": {
     "otherTypes": [],
-    "registries": []
+    "registries": [
+      {
+        "id": "minecraft:activity",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 15,
+        "protocolId": 43
+      },
+      {
+        "id": "minecraft:attribute",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 13,
+        "protocolId": 35
+      },
+      {
+        "id": "minecraft:biome",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 79,
+        "protocolId": 12
+      },
+      {
+        "id": "minecraft:biome_source",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 20
+      },
+      {
+        "id": "minecraft:block",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 763,
+        "protocolId": 3
+      },
+      {
+        "id": "minecraft:block_entity_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 33,
+        "protocolId": 22
+      },
+      {
+        "id": "minecraft:block_placer_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 3,
+        "protocolId": 14
+      },
+      {
+        "id": "minecraft:block_state_provider_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 13
+      },
+      {
+        "id": "minecraft:carver",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 8
+      },
+      {
+        "id": "minecraft:chunk_generator",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 3,
+        "protocolId": 21
+      },
+      {
+        "id": "minecraft:chunk_status",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 13,
+        "protocolId": 25
+      },
+      {
+        "id": "minecraft:custom_stat",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 74,
+        "protocolId": 24
+      },
+      {
+        "id": "minecraft:decorator",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 38,
+        "protocolId": 11
+      },
+      {
+        "id": "minecraft:enchantment",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 38,
+        "protocolId": 4
+      },
+      {
+        "id": "minecraft:entity_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 107,
+        "protocolId": 5
+      },
+      {
+        "id": "minecraft:feature",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 53,
+        "protocolId": 10
+      },
+      {
+        "id": "minecraft:feature_size_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 2,
+        "protocolId": 18
+      },
+      {
+        "id": "minecraft:fluid",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 1
+      },
+      {
+        "id": "minecraft:foliage_placer_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 9,
+        "protocolId": 15
+      },
+      {
+        "id": "minecraft:item",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 975,
+        "protocolId": 6
+      },
+      {
+        "id": "minecraft:loot_condition_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 16,
+        "protocolId": 46
+      },
+      {
+        "id": "minecraft:loot_function_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 21,
+        "protocolId": 45
+      },
+      {
+        "id": "minecraft:loot_pool_entry_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 8,
+        "protocolId": 44
+      },
+      {
+        "id": "minecraft:memory_module_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 59,
+        "protocolId": 40
+      },
+      {
+        "id": "minecraft:menu",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 24,
+        "protocolId": 32
+      },
+      {
+        "id": "minecraft:mob_effect",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 32,
+        "protocolId": 2
+      },
+      {
+        "id": "minecraft:motive",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 26,
+        "protocolId": 23
+      },
+      {
+        "id": "minecraft:particle_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 72,
+        "protocolId": 19
+      },
+      {
+        "id": "minecraft:point_of_interest_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 21,
+        "protocolId": 39
+      },
+      {
+        "id": "minecraft:pos_rule_test",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 3,
+        "protocolId": 29
+      },
+      {
+        "id": "minecraft:potion",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 43,
+        "protocolId": 7
+      },
+      {
+        "id": "minecraft:recipe_serializer",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 21,
+        "protocolId": 34
+      },
+      {
+        "id": "minecraft:recipe_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 7,
+        "protocolId": 33
+      },
+      {
+        "id": "minecraft:rule_test",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 6,
+        "protocolId": 28
+      },
+      {
+        "id": "minecraft:schedule",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 4,
+        "protocolId": 42
+      },
+      {
+        "id": "minecraft:sensor_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 14,
+        "protocolId": 41
+      },
+      {
+        "id": "minecraft:sound_event",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 985,
+        "protocolId": 0
+      },
+      {
+        "id": "minecraft:stat_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 9,
+        "protocolId": 36
+      },
+      {
+        "id": "minecraft:structure_feature",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 18,
+        "protocolId": 26
+      },
+      {
+        "id": "minecraft:structure_piece",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 59,
+        "protocolId": 27
+      },
+      {
+        "id": "minecraft:structure_pool_element",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 31
+      },
+      {
+        "id": "minecraft:structure_processor",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 9,
+        "protocolId": 30
+      },
+      {
+        "id": "minecraft:surface_builder",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 15,
+        "protocolId": 9
+      },
+      {
+        "id": "minecraft:tree_decorator_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 5,
+        "protocolId": 17
+      },
+      {
+        "id": "minecraft:trunk_placer_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 6,
+        "protocolId": 16
+      },
+      {
+        "id": "minecraft:villager_profession",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 15,
+        "protocolId": 38
+      },
+      {
+        "id": "minecraft:villager_type",
+        "elements": null,
+        "stable": null,
+        "tags": null,
+        "entryCount": 7,
+        "protocolId": 37
+      }
+    ]
   },
   "reports": [
     {

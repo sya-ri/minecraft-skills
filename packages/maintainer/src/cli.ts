@@ -41,6 +41,7 @@ import {
   writeObservedDatapackSchemaSurface,
 } from "./datapackSchemaSurfaces.js";
 import { buildJavaVersionIndex } from "./javaManifest.js";
+import { ingestJavaReportSummaries, listPendingJavaReportVersions } from "./javaReportSummaries.js";
 import {
   buildJavaReportsSummary,
   generateJavaReports,
@@ -1364,6 +1365,8 @@ Usage:
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-java-reports-all [--java-bin <java>] [--force] [--retrieved-at <iso>]
+  minecraft-skills-maintainer audit-java-reports
   minecraft-skills-maintainer ingest-paper-project --project-json <project.json> [--java-latest <version>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-builds [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-paper-api-indexes [--retrieved-at <iso>]
@@ -1389,6 +1392,9 @@ Commands:
   generate-java-reports
                         Run Mojang data generator reports from a server jar.
   ingest-java-reports   Generate compact report summary and command path index from server reports.
+  ingest-java-reports-all
+                        Download server jars and generate missing or incomplete report summaries.
+  audit-java-reports    Report versions whose server report summaries need generation or repair.
   ingest-paper-project
                         Generate Paper plugin support and event search data from PaperMC API JSON.
   ingest-paper-builds  Download latest build summaries for all bundled Paper-supported versions.
@@ -1501,6 +1507,18 @@ function ingestJavaReports(args: string[]): void {
     ...summary,
   });
   console.log(`wrote Java ${detail.version} reports summary and command paths`);
+}
+
+async function ingestAllJavaReports(args: string[]): Promise<void> {
+  const root = findRepositoryRoot();
+  const written = await ingestJavaReportSummaries({
+    root,
+    retrievedAt: readOption(args, "--retrieved-at") ?? new Date().toISOString(),
+    javaBin: readOption(args, "--java-bin") ?? "java",
+    force: args.includes("--force"),
+    log: (message) => console.log(message),
+  });
+  console.log(`wrote ${written} Java reports summary files`);
 }
 
 function generateReports(args: string[]): void {
@@ -1769,6 +1787,17 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
     if (command === "ingest-java-reports") {
       ingestJavaReports(argv.slice(1));
       return 0;
+    }
+
+    if (command === "ingest-java-reports-all") {
+      await ingestAllJavaReports(argv.slice(1));
+      return 0;
+    }
+
+    if (command === "audit-java-reports") {
+      const pendingVersions = listPendingJavaReportVersions(findRepositoryRoot());
+      console.log(JSON.stringify({ ok: pendingVersions.length === 0, pendingVersions }, null, 2));
+      return pendingVersions.length === 0 ? 0 : 1;
     }
 
     if (command === "generate-java-reports") {
