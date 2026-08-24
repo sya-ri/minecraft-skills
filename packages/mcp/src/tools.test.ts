@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { deflateSync } from "node:zlib";
 import {
   defaultResourcepackProjectValidationLimits,
   getVersionDetail,
@@ -48,6 +49,37 @@ function testPng(width = 3, height = 5): Buffer {
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     testPngChunk("IHDR", header),
     testPngChunk("IDAT"),
+    testPngChunk("IEND"),
+  ]);
+}
+
+function testAlphaPng(alphaRows: readonly (readonly number[])[]): Buffer {
+  const height = alphaRows.length;
+  const width = alphaRows[0]?.length ?? 0;
+  if (width === 0 || height === 0 || alphaRows.some((row) => row.length !== width)) {
+    throw new Error("testAlphaPng requires a non-empty rectangular alpha grid");
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
+  header[8] = 8;
+  header[9] = 6;
+  const filtered = Buffer.alloc(height * (1 + width * 4));
+  for (let y = 0; y < height; y += 1) {
+    const rowOffset = y * (1 + width * 4);
+    filtered[rowOffset] = 0;
+    for (let x = 0; x < width; x += 1) {
+      const pixelOffset = rowOffset + 1 + x * 4;
+      filtered[pixelOffset] = 0x12;
+      filtered[pixelOffset + 1] = 0x34;
+      filtered[pixelOffset + 2] = 0x56;
+      filtered[pixelOffset + 3] = alphaRows[y]?.[x] ?? 0;
+    }
+  }
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    testPngChunk("IHDR", header),
+    testPngChunk("IDAT", deflateSync(filtered)),
     testPngChunk("IEND"),
   ]);
 }
@@ -210,6 +242,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_pack_file_schema");
     expect(tools.map((tool) => tool.name)).toContain("validate_pack_files");
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_json");
+    expect(tools.map((tool) => tool.name)).toContain("inspect_resourcepack_png_alpha_bounds");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_png");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
@@ -1450,6 +1483,231 @@ describe("MCP tools", () => {
     expect(sparseContent.isError).toBeUndefined();
     expect(sparseContent.content[0]?.text).toContain('"processedFiles": 0');
     expect(sparseContent.content[0]?.text).toContain('"maxContentNodes"');
+  });
+
+  it("returns complete alpha bounds and optional caller policy as data", async () => {
+    const contentBase64 = testAlphaPng([
+      [0, 0, 0],
+      [0, 128, 0],
+      [0, 0, 0],
+    ]).toString("base64");
+    const result = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", {
+      contentBase64,
+      requirements: {
+        nonEmpty: true,
+        minimumTransparentMarginPixels: 1,
+      },
+    });
+    expect(result.isError).toBeUndefined();
+    const body = JSON.parse(result.content[0]?.text ?? "null") as Record<string, unknown>;
+    expect(body).toMatchObject({
+      inspectionStrength: "static-alpha",
+      pixelInspectionStatus: "complete",
+      pixelInspectionComplete: true,
+      pixelDataValid: true,
+      content: "nonempty",
+      nonzeroAlphaPixelCount: 1,
+      partiallyTransparentPixelCount: 1,
+      contentBounds: {
+        x: 1,
+        y: 1,
+        width: 1,
+        height: 1,
+        xEndExclusive: 2,
+        yEndExclusive: 2,
+      },
+      transparentMargins: { top: 1, right: 1, bottom: 1, left: 1, minimum: 1 },
+      requirements: { status: "met", failures: [] },
+    });
+    expect(body).not.toHaveProperty("path");
+    expect(body).not.toHaveProperty("pixels");
+    expect(body).not.toHaveProperty("rgb");
+
+    const definition = tools.find((tool) => tool.name === "inspect_resourcepack_png_alpha_bounds");
+    expect(Object.keys(definition?.inputSchema.properties ?? {}).sort()).toEqual([
+      "contentBase64",
+      "limits",
+      "requirements",
+    ]);
+  });
+
+  it("reports malformed and bounded pixel data without MCP transport errors", async () => {
+    const malformed = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", {
+      contentBase64: testPng(1, 1).toString("base64"),
+    });
+    expect(malformed.isError).toBeUndefined();
+    expect(malformed.content[0]?.text).toContain('"pixelInspectionStatus": "invalid"');
+    expect(malformed.content[0]?.text).toContain(
+      '"pixelInspectionReason": "zlib-decompression-failed"',
+    );
+
+    const bounded = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", {
+      contentBase64: testAlphaPng([[255]]).toString("base64"),
+      limits: { maxInflatedBytes: 4 },
+      requirements: { nonEmpty: true },
+    });
+    expect(bounded.isError).toBeUndefined();
+    expect(bounded.content[0]?.text).toContain('"pixelInspectionStatus": "indeterminate"');
+    expect(bounded.content[0]?.text).toContain(
+      '"pixelInspectionReason": "inflated-byte-limit-exceeded"',
+    );
+    expect(bounded.content[0]?.text).toContain('"status": "not-checked"');
+    expect(bounded.content[0]?.text).toContain('"valid": true');
+  });
+
+  it("descriptor-preflights hostile alpha-inspection root objects without running user code", async () => {
+    const contentBase64 = testAlphaPng([[255]]).toString("base64");
+    let trapCalls = 0;
+    const liveProxy = new Proxy(
+      { contentBase64 },
+      {
+        ownKeys() {
+          trapCalls += 1;
+          throw new Error("must not run");
+        },
+      },
+    );
+    const revoked = Proxy.revocable({ contentBase64 }, {});
+    revoked.revoke();
+    let accessorCalls = 0;
+    const accessor = {};
+    Object.defineProperty(accessor, "contentBase64", {
+      enumerable: true,
+      get() {
+        accessorCalls += 1;
+        throw new Error("must not run");
+      },
+    });
+    const hidden = {};
+    Object.defineProperty(hidden, "contentBase64", {
+      enumerable: false,
+      value: contentBase64,
+    });
+    class RequestInput {
+      contentBase64 = contentBase64;
+    }
+    const withSymbol = { contentBase64, [Symbol("hidden")]: true };
+    const sparse = new Array(2);
+
+    for (const input of [
+      null,
+      sparse,
+      new RequestInput(),
+      liveProxy,
+      revoked.proxy,
+      accessor,
+      hidden,
+      withSymbol,
+      { contentBase64, unknown: true },
+    ]) {
+      const result = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", input);
+      expect(result.isError).toBe(true);
+    }
+    expect(trapCalls).toBe(0);
+    expect(accessorCalls).toBe(0);
+  });
+
+  it("descriptor-preflights alpha limits and requirements without running accessors", async () => {
+    const contentBase64 = testAlphaPng([[255]]).toString("base64");
+    let accessorCalls = 0;
+    let proxyTrapCalls = 0;
+    const accessorLimits = {};
+    Object.defineProperty(accessorLimits, "maxPixels", {
+      enumerable: true,
+      get() {
+        accessorCalls += 1;
+        throw new Error("must not run");
+      },
+    });
+    const accessorRequirements = {};
+    Object.defineProperty(accessorRequirements, "nonEmpty", {
+      enumerable: true,
+      get() {
+        accessorCalls += 1;
+        throw new Error("must not run");
+      },
+    });
+    const proxyHandler = {
+      ownKeys() {
+        proxyTrapCalls += 1;
+        throw new Error("must not run");
+      },
+    };
+    const liveLimits = new Proxy({}, proxyHandler);
+    const liveRequirements = new Proxy({}, proxyHandler);
+    const revokedRequirements = Proxy.revocable({}, {});
+    revokedRequirements.revoke();
+    const hiddenRequirements = {};
+    Object.defineProperty(hiddenRequirements, "nonEmpty", {
+      enumerable: false,
+      value: true,
+    });
+    class Limits {
+      maxPixels = 1;
+    }
+
+    const inputs = [
+      { contentBase64, limits: null },
+      { contentBase64, limits: [] },
+      { contentBase64, limits: new Limits() },
+      { contentBase64, limits: accessorLimits },
+      { contentBase64, limits: liveLimits },
+      { contentBase64, limits: { maxPixels: 1, [Symbol("hidden")]: 1 } },
+      { contentBase64, limits: { unknown: 1 } },
+      { contentBase64, requirements: revokedRequirements.proxy },
+      { contentBase64, requirements: new Array(1) },
+      { contentBase64, requirements: accessorRequirements },
+      { contentBase64, requirements: liveRequirements },
+      { contentBase64, requirements: hiddenRequirements },
+      { contentBase64, requirements: { unknown: true } },
+      { contentBase64, requirements: { nonEmpty: "true" } },
+      { contentBase64, requirements: { minimumTransparentMarginPixels: 16_385 } },
+      { contentBase64, path: "texture.png" },
+      { contentBase64, url: "https://example.invalid/texture.png" },
+    ];
+    for (const input of inputs) {
+      const result = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", input);
+      expect(result.isError).toBe(true);
+    }
+    expect(accessorCalls).toBe(0);
+    expect(proxyTrapCalls).toBe(0);
+  });
+
+  it.each([
+    ["whitespace", "AAAA AAAA", "without whitespace"],
+    ["URL-safe alphabet", "____", "without whitespace"],
+    ["missing padding", "Zg", "without whitespace"],
+    ["excess padding", "Zg===", "without whitespace"],
+    ["non-canonical pad bits", "AB==", "pad bits"],
+  ])("rejects %s in alpha-inspection Base64", async (_label, contentBase64, message) => {
+    const result = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", {
+      contentBase64,
+    });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain(message);
+  });
+
+  it("checks the alpha-inspection decoded byte bound before Base64 allocation", async () => {
+    const contentBase64 = Buffer.alloc(9).toString("base64");
+    const decodeSpy = vi.spyOn(Buffer, "from");
+    try {
+      const encoded = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", {
+        contentBase64: "A".repeat(13),
+        limits: { maxInputBytes: 8 },
+      });
+      expect(encoded.isError).toBe(true);
+      expect(encoded.content[0]?.text).toContain("encoded-length limit");
+
+      const result = await callMinecraftSkillsTool("inspect_resourcepack_png_alpha_bounds", {
+        contentBase64,
+        limits: { maxInputBytes: 8 },
+      });
+      expect(result.isError).toBe(true);
+      expect(result.content[0]?.text).toContain("decodes to more than the 8-byte limit");
+      expect(decodeSpy).not.toHaveBeenCalled();
+    } finally {
+      decodeSpy.mockRestore();
+    }
   });
 
   it("calls validate_resourcepack_png with complete non-square PNG bytes", async () => {

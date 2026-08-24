@@ -83,6 +83,7 @@ minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains models/item --fetch
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack file-schema 26.2 assets/example/items/widget.json
+minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/widget.png --require-nonempty --minimum-transparent-margin-pixels 1
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
@@ -109,6 +110,11 @@ Complete PNG bytes are checked for bounded container structure, IHDR fields, and
 without decompressing IDAT or claiming rendered-texture validity. File/content/graph/diagnostic work
 is bounded, including a shared aggregate binary budget, and the result reports applied limits and
 omitted diagnostic counts.
+
+`resourcepack inspect-png-alpha` additionally decodes one bounded static PNG and reports nonzero-
+alpha pixel counts, zero-based half-open content bounds, and transparent margins. It never crops or
+rewrites the file and does not return paths, pixels, or RGB samples. Empty content is a valid fact;
+it fails only when `--require-nonempty` or another requested policy is not met.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

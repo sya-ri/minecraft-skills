@@ -1,3 +1,4 @@
+import { types as nodeTypes } from "node:util";
 import {
   type CatalogSearchKind,
   type CommandComparisonOptions,
@@ -14,6 +15,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultModrinthPackValidationLimits,
+  defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
   explainPackPath,
@@ -66,6 +68,7 @@ import {
   getVanillaDatapackJson,
   getVanillaInventory,
   getVersionDetail,
+  inspectResourcepackPngAlphaBounds,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -94,10 +97,13 @@ import {
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
   type ResourcepackModelPathSearchOptions,
+  type ResourcepackPngAlphaBoundsLimits,
+  type ResourcepackPngAlphaBoundsRequirements,
   type ResourcepackPngValidationLimits,
   type ResourcepackProjectValidationLimits,
   readCachedMinecraftAssetText,
   resolveModrinthCompatibility,
+  resolveResourcepackPngAlphaBoundsLimits,
   resolveResourcepackPngValidationLimits,
   resolveResourcepackProjectValidationLimits,
   resolveVelocityToolchain,
@@ -180,6 +186,28 @@ const resourcepackPngLimitSchemaProperties = Object.fromEntries(
       default: defaultResourcepackPngValidationLimits[name],
     },
   ]),
+);
+
+const resourcepackPngAlphaLimitNames = [
+  ...resourcepackPngLimitNames,
+  "maxInflatedBytes",
+] as const satisfies readonly (keyof ResourcepackPngAlphaBoundsLimits)[];
+
+const resourcepackPngAlphaLimitSchemaProperties = Object.fromEntries(
+  resourcepackPngAlphaLimitNames.map((name) => [
+    name,
+    {
+      type: "integer",
+      minimum: 1,
+      maximum: defaultResourcepackPngAlphaBoundsLimits[name],
+      default: defaultResourcepackPngAlphaBoundsLimits[name],
+    },
+  ]),
+);
+
+const maximumMinimumTransparentMarginPixels = Math.max(
+  defaultResourcepackPngAlphaBoundsLimits.maxWidth,
+  defaultResourcepackPngAlphaBoundsLimits.maxHeight,
 );
 
 const maximumResourcepackPngBase64Characters =
@@ -1050,6 +1078,46 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "inspect_resourcepack_png_alpha_bounds",
+    description:
+      "Inspect one complete static PNG for nonzero-alpha content bounds, transparent margins, alpha counts, and optional nonempty/minimum-margin caller policy. The bounded result does not return pixels, RGB samples, paths, rendered output, APNG frames, or .mcmeta animation frames.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        contentBase64: {
+          type: "string",
+          minLength: 1,
+          maxLength: maximumResourcepackPngBase64Characters,
+          description: "Canonical padded Base64 for one complete PNG datastream.",
+        },
+        limits: {
+          type: "object",
+          properties: resourcepackPngAlphaLimitSchemaProperties,
+          additionalProperties: false,
+        },
+        requirements: {
+          type: "object",
+          properties: {
+            nonEmpty: {
+              type: "boolean",
+              description: "Require at least one pixel whose decoded alpha sample is nonzero.",
+            },
+            minimumTransparentMarginPixels: {
+              type: "integer",
+              minimum: 0,
+              maximum: maximumMinimumTransparentMarginPixels,
+              description:
+                "Require this many fully transparent pixels on every side of a nonempty content box.",
+            },
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["contentBase64"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "validate_resourcepack_png",
     description:
       "Validate complete PNG bytes for a resource pack using bounded PNG signature, chunk, IHDR, method, and CRC checks. This structural validator does not decompress IDAT data or claim rendered-texture validity.",
@@ -1866,6 +1934,51 @@ function asRecord(value: unknown): Record<string, unknown> {
   return {};
 }
 
+function plainDataRecordArg(
+  value: unknown,
+  label: string,
+  allowedNames: ReadonlySet<string>,
+): Record<string, unknown> {
+  try {
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      nodeTypes.isProxy(value) ||
+      Array.isArray(value)
+    ) {
+      throw new Error(`${label} must be a non-proxy plain data object`);
+    }
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) {
+      throw new Error(`${label} must be a plain data object`);
+    }
+    const keys = Reflect.ownKeys(value);
+    if (
+      allowedNames.size < keys.length ||
+      keys.some((key) => typeof key !== "string" || !allowedNames.has(key))
+    ) {
+      throw new Error(`${label} contains an unknown or symbol property`);
+    }
+    const result: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
+    for (const key of keys) {
+      if (typeof key !== "string") {
+        continue;
+      }
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (!descriptor?.enumerable || !("value" in descriptor)) {
+        throw new Error(`${label} properties must be enumerable own data properties`);
+      }
+      result[key] = descriptor.value;
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith(label)) {
+      throw error;
+    }
+    throw new Error(`${label} could not be inspected safely as a plain data object`);
+  }
+}
+
 function text(value: unknown): ToolResult {
   return {
     content: [
@@ -2256,7 +2369,107 @@ function decodeCanonicalBase64(inspected: InspectedCanonicalBase64, label: strin
   return decoded;
 }
 
+function resourcepackPngAlphaLimitsArg(value: unknown): Partial<ResourcepackPngAlphaBoundsLimits> {
+  if (value === undefined) {
+    return {};
+  }
+  const label = "inspect_resourcepack_png_alpha_bounds limits";
+  const values = plainDataRecordArg(value, label, new Set(resourcepackPngAlphaLimitNames));
+  const limits: Partial<ResourcepackPngAlphaBoundsLimits> = {};
+  for (const name of resourcepackPngAlphaLimitNames) {
+    if (!Object.hasOwn(values, name)) {
+      continue;
+    }
+    const requested = values[name];
+    if (
+      typeof requested !== "number" ||
+      !Number.isSafeInteger(requested) ||
+      requested < 1 ||
+      defaultResourcepackPngAlphaBoundsLimits[name] < requested
+    ) {
+      throw new Error(
+        `${label}.${name} must be an integer from 1 through ${defaultResourcepackPngAlphaBoundsLimits[name]}`,
+      );
+    }
+    limits[name] = requested;
+  }
+  return limits;
+}
+
+function resourcepackPngAlphaRequirementsArg(
+  value: unknown,
+): ResourcepackPngAlphaBoundsRequirements | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  const label = "inspect_resourcepack_png_alpha_bounds requirements";
+  const values = plainDataRecordArg(
+    value,
+    label,
+    new Set(["nonEmpty", "minimumTransparentMarginPixels"]),
+  );
+  const requirements: ResourcepackPngAlphaBoundsRequirements = {};
+  if (Object.hasOwn(values, "nonEmpty")) {
+    if (typeof values.nonEmpty !== "boolean") {
+      throw new Error(`${label}.nonEmpty must be boolean`);
+    }
+    requirements.nonEmpty = values.nonEmpty;
+  }
+  if (Object.hasOwn(values, "minimumTransparentMarginPixels")) {
+    const requested = values.minimumTransparentMarginPixels;
+    if (
+      typeof requested !== "number" ||
+      !Number.isSafeInteger(requested) ||
+      requested < 0 ||
+      maximumMinimumTransparentMarginPixels < requested
+    ) {
+      throw new Error(
+        `${label}.minimumTransparentMarginPixels must be an integer from 0 through ${maximumMinimumTransparentMarginPixels}`,
+      );
+    }
+    requirements.minimumTransparentMarginPixels = requested;
+  }
+  return requirements;
+}
+
+function inspectResourcepackPngAlphaBoundsTool(input: unknown): ToolResult {
+  try {
+    const tool = "inspect_resourcepack_png_alpha_bounds";
+    const args = plainDataRecordArg(
+      input,
+      `${tool} input`,
+      new Set(["contentBase64", "limits", "requirements"]),
+    );
+    const limits = resolveResourcepackPngAlphaBoundsLimits(
+      resourcepackPngAlphaLimitsArg(args.limits),
+    );
+    const requirements = resourcepackPngAlphaRequirementsArg(args.requirements);
+    const label = `${tool} contentBase64`;
+    const inspected = inspectCanonicalBase64(args.contentBase64, limits.maxInputBytes, label);
+    const bytes = decodeCanonicalBase64(inspected, label);
+    return text(
+      inspectResourcepackPngAlphaBounds(bytes, {
+        limits,
+        ...(requirements === undefined ? {} : { requirements }),
+      }),
+    );
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: error instanceof Error ? error.message : String(error),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
 export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
+  if (name === "inspect_resourcepack_png_alpha_bounds") {
+    return inspectResourcepackPngAlphaBoundsTool(input);
+  }
   const args = asRecord(input);
   const edition = typeof args.edition === "string" ? args.edition : "java";
 

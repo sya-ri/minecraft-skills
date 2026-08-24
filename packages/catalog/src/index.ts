@@ -160,6 +160,23 @@ export {
   modrinthCompatibilityLimits,
   resolveModrinthCompatibility,
 } from "./modrinthCompatibility.js";
+export {
+  defaultResourcepackPngAlphaBoundsLimits,
+  inspectResourcepackPngAlphaBounds,
+  type ResourcepackPngAlphaBoundsDiagnostic,
+  type ResourcepackPngAlphaBoundsLimits,
+  type ResourcepackPngAlphaBoundsOptions,
+  type ResourcepackPngAlphaBoundsRequirements,
+  type ResourcepackPngAlphaBoundsResult,
+  type ResourcepackPngAlphaInspectionReason,
+  type ResourcepackPngAlphaInspectionStatus,
+  type ResourcepackPngAlphaRequirementFailure,
+  type ResourcepackPngAlphaRequirementsResult,
+  type ResourcepackPngAlphaTransparencySource,
+  type ResourcepackPngContentBounds,
+  type ResourcepackPngTransparentMargins,
+  resolveResourcepackPngAlphaBoundsLimits,
+} from "./resourcepackPngAlpha.js";
 export { vorbisIdentificationPageBytes } from "./resourcepackSound.js";
 export * from "./velocityMeta.js";
 export type {

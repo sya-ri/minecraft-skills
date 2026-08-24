@@ -91,6 +91,7 @@ minecraft-skills resourcepack assets search 26.2 --contains diamond_sword --exte
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
 minecraft-skills resourcepack models latest
 minecraft-skills resourcepack search-models latest --kind item-definition --contains bundle
+minecraft-skills resourcepack inspect-png-alpha ./assets/example/textures/item/widget.png --require-nonempty --minimum-transparent-margin-pixels 1
 minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills plugin paper info
@@ -132,6 +133,16 @@ The Modrinth command uses the public v2 search API and supports `--category`, so
 PNG signature, chunk framing, IHDR fields, method values, ordering, and scanned CRCs. It rejects
 symlinks and special files. Lower the conservative limits with `--max-bytes`, `--max-width`,
 `--max-height`, `--max-pixels`, `--max-chunks`, and `--max-diagnostics`.
+
+`resourcepack inspect-png-alpha` reuses that stable regular-file reader and structural validation,
+then boundedly decodes the static PNG image. Content is exactly a decoded alpha sample other than
+zero. The JSON result contains alpha counts, zero-based half-open content bounds, and transparent
+top/right/bottom/left margins; it contains no paths, pixels, or RGB samples and never modifies the
+file. Use `--max-inflated-bytes` to lower the filtered-image byte ceiling. Optional
+`--require-nonempty` and `--minimum-transparent-margin-pixels <n>` apply caller policy without
+turning an unrequested empty image into an invalid PNG. Exit code 0 requires complete pixel
+inspection and a policy status of `met` or `not-requested`; structurally invalid, indeterminate,
+not-met, and not-checked results return exit code 1.
 
 `resourcepack validate-project` recursively checks item-definition and legacy override model targets,
 model parents, textures, inherited texture variables, `sounds.json` file/event references, and local
