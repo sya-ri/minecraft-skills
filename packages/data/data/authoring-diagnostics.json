@@ -656,6 +656,76 @@
         "Add rename, offline, unknown, fallback, stale-cache, and output tests."
       ],
       "failureMode": "Identity and authorization can follow a mutable label, while user interfaces leak raw identifiers or show stale names when lookup, storage, and presentation share one ambiguous value."
+    },
+    {
+      "id": "paper-plugin-protocol-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper plugin-message, custom payload, or RPC boundary lacks strict protocol safety",
+      "severity": "error",
+      "detectWhen": [
+        "plugin code decodes a plugin message, custom payload, RPC request, response, or chunk",
+        "payload contents select a player, permission, request, operation, allocation, decompression, or Bukkit mutation",
+        "requests, retries, responses, chunks, or uploads retain state beyond one callback"
+      ],
+      "requiredChecks": [
+        "verify namespaced incoming/outgoing channel registration, sending, listener connection identity, StandardMessenger validation, Messenger.MAX_CHANNEL_SIZE, Messenger.MAX_MESSAGE_SIZE, and lifecycle APIs against the target Paper surface and official docs",
+        "require a versioned envelope, explicit kinds, exact decoder consumption, and rejection of malformed, trailing, unknown, oversized, over-nested, and over-decompressed input",
+        "validate every byte, string, list, map, nesting, declared decompressed, total, and allocation size before allocation, and enforce an actual-output cap during decompression",
+        "distinguish configuration-stage connections from authenticated joined players before selecting authorization context",
+        "bind authorization and claimed player actions to the authenticated connection or trusted proxy boundary",
+        "scope request IDs to the connection/session and define duplicate, idempotency, one-terminal-response, timeout, cancellation, reconnect, close, and disable behavior",
+        "define an unavailable-transport outcome when no eligible live connection or player can carry a plugin message",
+        "bound concurrent requests, chunks, uploads, queued bytes, and work with ordering, checksum, total-size, expiry, and backpressure rules",
+        "retry only declared idempotent operations, separate transport failures from business outcomes, and keep blocking I/O and unsafe Bukkit publication out of the callback context",
+        "exercise hostile and exact-boundary cases for every protocol rule"
+      ],
+      "evidence": [
+        "target-version Paper API type/member search results and official plugin-messaging/Javadocs links",
+        "reviewed envelope, codec, authorization, request-state, retry, error, chunk, backpressure, and cleanup contracts",
+        "tests covering malformed/trailing/unknown input, all size limits, spoofing, duplicates, stale sessions, cleanup, ordering, checksum, expiry, and overload"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "a channel is unregistered, not namespaced, or has no explicit enable/disable ownership",
+        "the decoder accepts unknown versions or kinds, malformed or trailing bytes, allocates before validating all bounds, or decompresses without an enforced actual-output cap",
+        "authorization trusts a player UUID, name, permission, role, or proxy claim supplied by the payload rather than its authenticated transport boundary",
+        "a configuration-stage connection is treated as an authenticated joined player without an explicit verified transition",
+        "request IDs are reusable across sessions, duplicate handling is undefined, or more than one terminal response can be emitted",
+        "requests, chunks, uploads, futures, or queues are unbounded or survive timeout, cancellation, reconnect, close, or disable",
+        "the protocol assumes a plugin message can be sent without an eligible live connection or player carrier",
+        "chunks omit ordering, checksum, total-size, expiry, completion, or backpressure checks",
+        "a non-idempotent operation is retried, a transport error is represented as a business result, or the callback performs blocking I/O or unsafe Bukkit publication",
+        "numeric transport limits are guessed rather than derived from verified target-version Messenger constants or reviewed explicit lower policy"
+      ],
+      "safeResponse": [
+        "Stop decoding at the first invalid field and reject the entire message without side effects.",
+        "Use the authenticated connection or trusted proxy boundary as the authority and treat payload identity as untrusted data.",
+        "Expire and remove all session request/upload state, enforce bounded backpressure, and return at most one typed transport terminal.",
+        "Mark target-version API members or limits as unverified when the Paper surface and official documentation do not establish them."
+      ],
+      "failureMode": "A protocol that merely parses successful examples can remain exploitable through spoofing, oversized or compressed payloads, duplicate delivery, stale correlations, state leaks, and unsafe execution."
     }
   ]
 }

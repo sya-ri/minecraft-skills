@@ -62,6 +62,9 @@ minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 26.2
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
+minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
+minecraft-skills plugin paper search-scenarios "chunked upload request correlation"
+minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2

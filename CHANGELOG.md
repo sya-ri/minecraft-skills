@@ -24,6 +24,13 @@ All notable changes to this project are documented here.
   stable persistence, exact offline resolution, intentional per-transport labels, bounded profile
   lookup, authentication and proxy identity assumptions, rename continuity, and cross-server cache
   convergence.
+- Searchable Paper plugin-message, custom-payload, RPC, codec, request-correlation, and chunked-upload
+  protocol guidance across recipes, scenarios, guardrails, diagnostics, CLI, and MCP resources. The
+  workflow requires namespaced lifecycle-managed channels, versioned message kinds, exact decoding,
+  bounds before allocation, hard output caps during decompression, authenticated connection identity,
+  session-scoped correlation and idempotency, one terminal response, bounded chunk/backpressure
+  state, complete timeout/reconnect/disable cleanup, safe execution contexts, hostile tests, and
+  target-version API evidence for transport members and limits.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

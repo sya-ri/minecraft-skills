@@ -982,6 +982,170 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "Player data can attach to the wrong subject, disappear after a rename, leak raw identifiers, or show inconsistent labels when stable identity, lookup input, and presentation are treated as one interchangeable name."
+    },
+    {
+      "id": "paper-plugin-protocol-safety",
+      "domains": ["paper-plugin"],
+      "title": "Design or review a safe Paper plugin message, custom payload, or RPC protocol",
+      "when": [
+        "the request sends or receives a Paper plugin message or custom payload",
+        "the request designs an RPC, binary protocol, message codec, request correlation, or response envelope",
+        "the request implements chunked upload, retries, timeouts, or connection-scoped protocol state"
+      ],
+      "steps": [
+        {
+          "id": "resolve-paper-transport-evidence",
+          "action": "Resolve Paper support for the target version, inspect the official Paper plugin-messaging documentation, and verify every transport type, registration call, listener signature, send call, and size constant used against the target Paper API surface.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper info",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api-surface"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_plugin_data",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_surface"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperPluginData",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiSurface"
+            ]
+          },
+          "evidence": [
+            "target-version Paper support and Javadocs URL",
+            "target-version type/member matches for the transport APIs actually used",
+            "target-version member matches for Messenger.MAX_CHANNEL_SIZE and Messenger.MAX_MESSAGE_SIZE when they are used as transport ceilings, plus any StandardMessenger validation member referenced by the implementation",
+            "official plugin-messaging documentation for incoming/outgoing registration, byte-array transport through a connection or player, and lifecycle behavior",
+            "verified listener connection-state handling because a callback can represent a configuration-stage connection rather than a joined player"
+          ],
+          "stopIfMissing": "Do not invent transport members or copy a documentation example or StandardMessenger transport validation as proof of a safe application codec. Do not hardcode protocol limits from memory; use verified target-version API constants or explicit lower project policy backed by evidence."
+        },
+        {
+          "id": "define-channel-and-versioned-envelope",
+          "action": "Use namespaced registered channels with explicit enable/disable lifecycle, and define one versioned envelope with explicit request, response, error, cancellation, chunk, and control message kinds.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrails",
+              "plugin paper diagnostics"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "list_authoring_guardrails",
+              "list_authoring_diagnostics"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listAuthoringGuardrails",
+              "listAuthoringDiagnostics"
+            ]
+          },
+          "evidence": [
+            "documented channel namespace and registration ownership",
+            "an envelope table covering version, message kind, request identifier, operation, payload, and terminal outcome",
+            "explicit compatibility behavior for unknown versions and message kinds"
+          ],
+          "stopIfMissing": "Do not overload one implicit payload shape or accept unregistered, non-namespaced, unknown-version, or unknown-kind traffic."
+        },
+        {
+          "id": "make-decoding-strict-and-bounded",
+          "action": "Decode with exact input consumption and reject malformed, truncated, trailing, unknown, or non-canonical data; validate byte, string, list, map, nesting, declared decompressed, and allocation sizes before allocating, and enforce an actual-output cap throughout decompression.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "codec contract with exact-consumption and unknown-field behavior",
+            "limits for every attacker-controlled length, nesting depth, decoded collection, declared and actual decompressed body, and allocation",
+            "boundary and hostile decoder tests for empty, truncated, trailing, oversized, deeply nested, compressed, and unknown data"
+          ],
+          "stopIfMissing": "Reject before allocation when a declared or derived size exceeds its bound, and never start decompression unless actual output is capped and aborted at the configured limit."
+        },
+        {
+          "id": "bind-identity-and-request-state",
+          "action": "Bind authorization and the acting player to the authenticated connection or explicitly trusted proxy boundary, scope request IDs to that connection/session, and define duplicate handling with at most one terminal response.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policies",
+              "plugin paper guardrails"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "list_claim_policies",
+              "list_authoring_guardrails"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listClaimPolicies",
+              "listAuthoringGuardrails"
+            ]
+          },
+          "evidence": [
+            "authorization matrix derived from trusted connection identity rather than a claimed payload player or UUID",
+            "connection/session-scoped request correlation and duplicate/idempotency state",
+            "separate transport error and business outcome envelopes with one terminal response per accepted request"
+          ],
+          "stopIfMissing": "Do not assume every callback has a joined player, authorize from payload identity, reuse request IDs across sessions, retry undeclared non-idempotent operations, or emit both success and failure terminals for one request."
+        },
+        {
+          "id": "bound-lifecycle-and-chunk-state",
+          "action": "Bound concurrent requests, chunks, uploads, queued bytes, and work; verify chunk ordering, checksum, declared total size, completion, expiry, and backpressure; clean state on timeout, cancellation, reconnect, connection close, and plugin disable.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrails"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_authoring_guardrails"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listAuthoringGuardrails"
+            ]
+          },
+          "evidence": [
+            "per-connection and global concurrency, byte, chunk, upload, queue, timeout, and expiry budgets",
+            "an explicit unavailable-transport outcome because plugin messaging requires an eligible live connection or player carrier rather than a durable standalone server transport",
+            "cleanup tests for cancellation, timeout, reconnect, close, and disable",
+            "execution plan that keeps blocking I/O and heavy decoding off the server thread and publishes Bukkit state only in an API-safe context"
+          ],
+          "stopIfMissing": "Do not retain orphaned request or upload state, accept unbounded work, block the server thread, or publish Bukkit state from an unsafe execution context."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-plugin-protocol-safety",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "An underspecified plugin-message protocol can trust spoofed identities, allocate or decompress attacker-controlled sizes, duplicate side effects, leak connection state, or stall the server thread."
     }
   ]
 }

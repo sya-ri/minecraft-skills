@@ -4322,4 +4322,66 @@ describe("catalog", () => {
       ).toBe(true);
     }
   });
+
+  it("routes Paper plugin protocol tasks to strict transport safety guidance", () => {
+    const recipe = getAuthoringRecipe("paper-plugin-protocol-safety");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "resolve-paper-transport-evidence",
+        "make-decoding-strict-and-bounded",
+        "bind-identity-and-request-state",
+        "bound-lifecycle-and-chunk-state",
+      ]),
+    );
+    expect(recipe.finalChecks).toContain("paper-plugin-protocol-safety");
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "Messenger.MAX_MESSAGE_SIZE",
+    );
+
+    const guardrail = getAuthoringGuardrail("paper-plugin-protocol-safety");
+    expect(guardrail.rules.join("\n")).toContain("authenticated connection");
+    expect(guardrail.rules.join("\n")).toContain("at most one terminal response");
+
+    const diagnostic = getAuthoringDiagnostic("paper-plugin-protocol-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("actual-output cap");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("StandardMessenger validation");
+    expect(diagnostic.failIf.join("\n")).toContain("Messenger constants");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-plugin-protocol-safety-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-plugin-protocol-safety");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain("paper-plugin-protocol-unsafe");
+
+    for (const query of [
+      "plugin message",
+      "custom payload",
+      "RPC",
+      "codec",
+      "request correlation",
+      "chunked upload",
+    ]) {
+      const scenarioSearch = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarioSearch.results[0]?.scenario.id, query).toBe(
+        "paper-plugin-protocol-safety-review",
+      );
+
+      const catalogSearch = searchCatalog({
+        query,
+        domain: "paper-plugin",
+        kind: "authoring-recipe",
+      });
+      expect(catalogSearch.results[0]?.id, query).toBe("paper-plugin-protocol-safety");
+    }
+
+    const suggestions = suggestMinecraftLookups({ task: "custom payload request correlation" });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContainEqual(
+      expect.stringContaining("plugin paper search"),
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-plugin-protocol-safety-review",
+    );
+  });
 });

@@ -307,6 +307,40 @@ describe("minecraft-skills CLI", () => {
     expect(inventory.stdout.join("\n")).toContain('"id": "paper-inventory-gui-interaction-review"');
   });
 
+  it("routes Paper plugin protocol tasks through recipes, scenarios, and diagnostics", async () => {
+    const scenarioSearch = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "custom payload request correlation",
+    ]);
+    expect(scenarioSearch.code).toBe(0);
+    expect(scenarioSearch.stdout.join("\n")).toContain(
+      '"id": "paper-plugin-protocol-safety-review"',
+    );
+
+    const catalogSearch = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "chunked upload codec",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalogSearch.code).toBe(0);
+    expect(catalogSearch.stdout.join("\n")).toContain('"id": "paper-plugin-protocol-safety"');
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-plugin-protocol-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("authenticated connection");
+    expect(diagnostic.stdout.join("\n")).toContain("Messenger.MAX_MESSAGE_SIZE");
+  });
+
   it("prints authoring plans", async () => {
     const result = await capture([
       "plugin",
