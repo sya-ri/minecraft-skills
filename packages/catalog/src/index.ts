@@ -3205,12 +3205,21 @@ export function comparePaperApi(fromRequested: string, toRequested: string): Pap
   };
 }
 
-export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
+const paperApiSurfaceCache = new Map<string, PaperApiSurfaceData>();
+const paperApiSurfaceCacheLimit = 2;
+
+function readPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
   const reference = getPaperApiReference(requested);
   if (!reference.supported) {
     throw new Error(
       `No bundled Paper API surface for ${reference.requestedVersion}; latest supported is ${reference.latestSupportedVersion}`,
     );
+  }
+  const cached = paperApiSurfaceCache.get(reference.minecraftVersion);
+  if (cached) {
+    paperApiSurfaceCache.delete(reference.minecraftVersion);
+    paperApiSurfaceCache.set(reference.minecraftVersion, cached);
+    return cached;
   }
   const path = `java/paper-api-surfaces/${reference.minecraftVersion}.json`;
   if (!hasDataFile(path)) {
@@ -3224,11 +3233,21 @@ export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
       }),
     );
   }
-  return PaperApiSurface.assert(readDataJson(path));
+  const surface = PaperApiSurface.assert(readDataJson(path));
+  paperApiSurfaceCache.set(reference.minecraftVersion, surface);
+  if (paperApiSurfaceCache.size > paperApiSurfaceCacheLimit) {
+    const oldestVersion = paperApiSurfaceCache.keys().next().value;
+    if (oldestVersion) paperApiSurfaceCache.delete(oldestVersion);
+  }
+  return surface;
+}
+
+export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
+  return structuredClone(readPaperApiSurface(requested));
 }
 
 export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTypeSearchResult {
-  const surface = getPaperApiSurface(options.version ?? "latest");
+  const surface = readPaperApiSurface(options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 50, 500);
   const packageName = options.packageName?.trim();
   const contains = options.contains?.trim().toLowerCase();
@@ -3251,14 +3270,14 @@ export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTyp
     totalTypes: surface.types.length,
     matchedTypes: matched.length,
     truncated: matched.length > limit,
-    types: matched.slice(0, limit),
+    types: matched.slice(0, limit).map((entry) => ({ ...entry })),
   };
 }
 
 export function searchPaperMembers(
   options: PaperMemberSearchOptions = {},
 ): PaperMemberSearchResult {
-  const surface = getPaperApiSurface(options.version ?? "latest");
+  const surface = readPaperApiSurface(options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 50, 500);
   const typeName = options.type?.trim();
   const packageName = options.packageName?.trim();
@@ -3289,7 +3308,7 @@ export function searchPaperMembers(
     totalMembers: surface.members.length,
     matchedMembers: matched.length,
     truncated: matched.length > limit,
-    members: matched.slice(0, limit),
+    members: matched.slice(0, limit).map((entry) => ({ ...entry })),
   };
 }
 
@@ -3301,16 +3320,24 @@ export function comparePaperApiSurface(
   fromRequested: string,
   toRequested: string,
 ): PaperApiSurfaceComparison {
-  const from = getPaperApiSurface(fromRequested);
-  const to = getPaperApiSurface(toRequested);
+  const from = readPaperApiSurface(fromRequested);
+  const to = readPaperApiSurface(toRequested);
   const fromTypes = new Map(from.types.map((entry) => [entry.qualifiedName, entry]));
   const toTypes = new Map(to.types.map((entry) => [entry.qualifiedName, entry]));
   const fromMembers = new Map(from.members.map((entry) => [memberKey(entry), entry]));
   const toMembers = new Map(to.members.map((entry) => [memberKey(entry), entry]));
-  const addedTypes = to.types.filter((entry) => !fromTypes.has(entry.qualifiedName));
-  const removedTypes = from.types.filter((entry) => !toTypes.has(entry.qualifiedName));
-  const addedMembers = to.members.filter((entry) => !fromMembers.has(memberKey(entry)));
-  const removedMembers = from.members.filter((entry) => !toMembers.has(memberKey(entry)));
+  const addedTypes = to.types
+    .filter((entry) => !fromTypes.has(entry.qualifiedName))
+    .map((entry) => ({ ...entry }));
+  const removedTypes = from.types
+    .filter((entry) => !toTypes.has(entry.qualifiedName))
+    .map((entry) => ({ ...entry }));
+  const addedMembers = to.members
+    .filter((entry) => !fromMembers.has(memberKey(entry)))
+    .map((entry) => ({ ...entry }));
+  const removedMembers = from.members
+    .filter((entry) => !toMembers.has(memberKey(entry)))
+    .map((entry) => ({ ...entry }));
 
   return {
     from: from.minecraftVersion,

@@ -21,6 +21,8 @@ All notable changes to this project are documented here.
   filters.
 - Vanilla datapack JSON searches now scan cached Mojang server jar entries once per request while
   preserving total and filtered result counts.
+- Paper API searches now reuse up to two parsed and validated version surfaces in the same process
+  while public surface results remain independent mutable values.
 
 ## 0.1.5 - 2026-06-24
 
