@@ -78,6 +78,7 @@ minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills datapack commands 26.2 --prefix execute
 minecraft-skills minecraft registry-entries 26.2 --registry minecraft:item --exact minecraft:stone
 minecraft-skills minecraft compare-registry-entries 26.1.2 26.2 --registry minecraft:block
+minecraft-skills minecraft validate-mixin-config ./example.mixins.json
 minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
 minecraft-skills datapack vanilla-json fetch 26.2
 minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe
@@ -232,6 +233,12 @@ Registry comparisons report entry and protocol ID changes only where both versio
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
 `excludedRegistries` fields expose partial coverage, while null-to-number observations are not
 classified as protocol changes.
+
+`minecraft validate-mixin-config` performs a bounded offline preflight of SpongePowered Mixin
+configuration JSON. Optional JSON archive-entry paths add local presence evidence, but missing
+entries never prove absence from dependencies, the runtime classpath, or plugin-generated mixins.
+See [Mixin configuration validation](docs/MIXIN_CONFIG_VALIDATION.md) for the exact audited source,
+raw-versus-parsed duplicate-key evidence, bounds, and explicit non-goals.
 
 For the full CLI, MCP tools, package API, cache behavior, and authoring workflows, see
 [docs/USAGE.md](docs/USAGE.md). Version-by-version coverage is summarized in

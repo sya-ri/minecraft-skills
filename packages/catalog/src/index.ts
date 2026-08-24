@@ -182,6 +182,7 @@ export {
   javaPlayerTextureSourceEvidence,
 } from "./javaPlayerTexture.js";
 export * from "./minecraftLog.js";
+export * from "./mixinConfig.js";
 export {
   type ModrinthCompatibilityFetch,
   type ModrinthCompatibilityFetchResponse,

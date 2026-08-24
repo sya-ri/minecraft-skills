@@ -116,6 +116,7 @@ aliases or reject Unicode query values.
 - `validate_modrinth_pack`
 - `validate_paper_plugin_jar`
 - `validate_velocity_plugin_jar`
+- `validate_mixin_config`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `inspect_resourcepack_png_alpha_bounds`
@@ -295,6 +296,14 @@ complete list whose entries all pass normalization; otherwise absence remains un
 command when binary evidence is required. Descriptor strings are checked for duplicate JSON object
 keys before parsing. Parsed object input cannot represent duplicates, so the result exposes
 `duplicateKeysChecked: false` and keeps source-key uniqueness incomplete.
+
+`validate_mixin_config` accepts raw Mixin config JSON text or an already-parsed object plus optional
+logical entry paths from one supplied archive. Raw text preserves duplicate-key source evidence;
+parsed objects cannot prove original key uniqueness. `archiveEntriesComplete` applies only to the
+supplied archive, so locally missing references remain unknown rather than proving runtime
+classpath absence. The tool accepts no local filesystem paths or binary archives and does not
+inspect bytecode, target/injection behavior, mappings, or launcher integration. See
+[Mixin configuration validation](../../docs/MIXIN_CONFIG_VALIDATION.md).
 
 `compare_registry_entries` emits entry and protocol ID changes only for registries indexed in both
 versions. Its `outcome` and bounded `excludedRegistries` fields expose incomplete coverage without

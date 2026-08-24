@@ -91,6 +91,8 @@ minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 10485
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills velocity toolchain
+minecraft-skills minecraft validate-mixin-config ./example.mixins.json
+minecraft-skills minecraft validate-mixin-config ./example.mixins.json --archive-entries ./archive-entries.json --archive-entries-complete true
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
@@ -444,6 +446,16 @@ lookups completed and validated; `outcome` separately reports `compatible`, `no-
 details and file-hash lookup, users, categories, loaders, game versions, project/side types,
 donation/report types, and instance statistics. Run the CLI help to see the accepted resource names.
 
+`minecraft validate-mixin-config <config.json>` performs a bounded offline Mixin configuration
+preflight. `--archive-entries` accepts a JSON string array of logical paths from one supplied
+archive; `--archive-entries-complete` defaults to false and applies only to that archive. Local
+absence is unknown because dependencies, the wider runtime classpath, and plugin-generated mixins
+are not inspected. Raw CLI text retains duplicate-key source evidence, while the Catalog and MCP
+object form cannot prove original source-key uniqueness. Definitive errors exit 1; warnings and
+unknown archive evidence remain valid and exit 0. See
+[Mixin configuration validation](MIXIN_CONFIG_VALIDATION.md) for pinned upstream sources, checked
+fields, bounds, and explicit non-goals.
+
 `modrinth validate-pack <file.mrpack>` performs an offline preflight of the ZIP container and
 `modrinth.index.json`. It checks portable normalized paths and ancestor collisions, required
 SHA-1/SHA-512 hashes, HTTPS download hosts, file sizes, environments, dependency metadata,
@@ -698,6 +710,7 @@ Analysis and pack tools include:
 - `validate_resourcepack_project`
 - `validate_server_access_list`
 - `inspect_blockbench_project`
+- `validate_mixin_config`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`

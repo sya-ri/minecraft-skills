@@ -105,6 +105,7 @@ import {
   validatePlayerSkinLayout,
   validateServerProperties,
   validateServerAccessList,
+  validateMixinConfig,
   validateModrinthPack,
   validateModrinthPackArchive,
   validatePaperPluginArchiveMetadata,
@@ -263,6 +264,12 @@ const modrinthPack = validateModrinthPack({
     dependencies: { minecraft: "1.21.11" },
   },
   archiveEntries: [{ path: "modrinth.index.json" }],
+});
+const mixinConfig = validateMixinConfig({
+  config:
+    '{"minVersion":"0.8.7","package":"com.example.mixin","mixins":["ExampleMixin"]}',
+  archiveEntries: ["com/example/mixin/ExampleMixin.class"],
+  archiveEntriesComplete: true,
 });
 const datapackEntries = findDatapackEntries({ version: "26.2", query: "execute" });
 const resourcepackAssets = findResourcepackAssets({
@@ -600,6 +607,14 @@ construction/injection, actual Velocity loading, runtime behavior, and security 
 Annotation absence or mismatch is evidence, not proof of loader rejection. Fixed ceilings are
 exported as `velocityPluginJarValidationLimits`; runtime targets start at the current Velocity 4
 Java 25 floor, and older Velocity lines are not modeled.
+
+`validateMixinConfig` is a pure bounded preflight for raw Mixin config JSON text or parsed JSON
+objects plus optional logical entry paths from one supplied archive. Raw text retains duplicate-key
+source evidence. A complete entry list is complete only for that archive; missing local entries are
+unknown because dependencies, the runtime classpath, and plugin-generated mixins are not inspected.
+The function does not inspect class bytecode, targets, injections, mappings, or launcher behavior.
+See [Mixin configuration validation](../../docs/MIXIN_CONFIG_VALIDATION.md) for the pinned Mixin and
+Gson sources, evidence levels, bounds, and non-goals.
 
 ## Coverage
 

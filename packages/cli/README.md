@@ -73,6 +73,8 @@ minecraft-skills minecraft pack-format 26.2 datapack
 minecraft-skills minecraft versions-for-pack-format resourcepack 88
 minecraft-skills minecraft show 26.2
 minecraft-skills minecraft compare 1.20.6 1.21
+minecraft-skills minecraft validate-mixin-config ./example.mixins.json
+minecraft-skills minecraft validate-mixin-config ./example.mixins.json --archive-entries ./archive-entries.json --archive-entries-complete true
 minecraft-skills datapack server-reports latest
 minecraft-skills datapack schema latest
 minecraft-skills datapack find execute
@@ -297,6 +299,14 @@ Velocity lines are not modeled. It does not resolve dependency
 satisfaction, prove full JVM linkage or Guice injection, check classpath/API compatibility, load
 Velocity, or establish runtime behavior or security. Annotation absence or mismatch is evidence,
 not a claim about loader rejection. Errors return 1; warnings and explicit unknowns return 0.
+
+`minecraft validate-mixin-config` reads one bounded, stable, regular UTF-8 config file. Optional
+`--archive-entries` input is a JSON string array of logical paths from one supplied archive;
+`--archive-entries-complete` defaults to `false` and cannot be claimed without that array. Raw config
+text preserves duplicate-key evidence. Definitive config errors return exit code 1, while warnings
+and unknown local-absence evidence remain valid and return 0. The command does not inspect the wider
+runtime classpath, bytecode, targets, injection behavior, mappings, or launcher integration. See
+[Mixin configuration validation](../../docs/MIXIN_CONFIG_VALIDATION.md).
 
 `fabric toolchain` reads Loader, Intermediary, and Yarn candidates from the official live Fabric
 Meta v2 API. It prefers upstream `stable` entries without treating that flag as a complete project

@@ -143,6 +143,7 @@ import {
   type VanillaPathSearchOptions,
   validateDatapackProject,
   validateFabricModJar,
+  validateMixinConfig,
   validateModrinthPackArchive,
   validatePackFilesContent,
   validatePaperPluginJar,
@@ -171,6 +172,7 @@ import {
   validateNewPlayerTexturePngPath,
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
+import { readMixinConfigCliFiles } from "./mixinConfigFiles.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
@@ -869,6 +871,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft suggest-lookups": "suggest-lookups",
     "minecraft analyze-log": "analyze-minecraft-log",
     "minecraft validate-access-list": "validate-server-access-list",
+    "minecraft validate-mixin-config": "validate-mixin-config",
     "fabric toolchain": "fabric-toolchain",
     "velocity toolchain": "velocity-toolchain",
     "fabric validate-mod": "fabric-validate-mod",
@@ -1092,6 +1095,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "registry-entries": "minecraft registry-entries",
   "compare-registry-entries": "minecraft compare-registry-entries",
   "validate-server-access-list": "minecraft validate-access-list",
+  "validate-mixin-config": "minecraft validate-mixin-config",
   "server-reports": "datapack server-reports",
   "datapack-schema": "datapack schema",
   "search-datapack-schema": "datapack search-schema",
@@ -1253,6 +1257,8 @@ Start here:
   minecraft-skills minecraft sources [domain] [version]
       Print allowed source tiers, prohibited automation, community structured datasets, and optional
       domain/version provenance.
+  minecraft-skills minecraft validate-mixin-config <config.json> [--archive-entries entries.json] [--archive-entries-complete true|false]
+      Validate bounded Mixin config JSON and optional JSON archive-entry path metadata offline.
   minecraft-skills rcon status [--config path] [--profile name]
       Inspect resolved RCON configuration without printing secrets.
   minecraft-skills rcon init [--config path] [--profile local] [--preset readonly|guarded|full]
@@ -1335,6 +1341,8 @@ Safety notes:
   - Velocity JAR validation checks bounded archive, descriptor, entrypoint classfile, Java target,
     and runtime-visible annotation evidence. It does not load Velocity, resolve dependencies,
     prove JVM linkage or injection, or establish runtime behavior or security.
+  - Mixin archive-entry evidence covers only the supplied archive. Missing local entries do not
+    prove absence from dependencies, the runtime classpath, or plugin-generated mixins.
   - Minecraft Wiki pages are human-only background: do not fetch, crawl, summarize, or cite them in
     AI workflows.
 
@@ -1430,6 +1438,7 @@ Grouped commands:
   minecraft-skills minecraft analyze-log <file> [--max-input-bytes bytes] [--max-characters chars] [--max-lines count] [--max-line-characters chars] [--max-events count] [--max-exception-chains count] [--max-exception-depth count] [--max-exception-entries count] [--max-stack-frames count]
     [--max-platforms count] [--max-artifacts count] [--max-components count] [--max-text-characters chars] [--max-retained-text-characters chars]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
+  minecraft-skills minecraft validate-mixin-config <config.json> [--archive-entries entries.json] [--archive-entries-complete true|false]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
   minecraft-skills skill list|show|write
   minecraft-skills reference list [--domain datapack|resourcepack|paper-plugin]
@@ -1649,6 +1658,46 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       const result = await getVerifiedJavaPlayerTextures(args[0]);
       printJson(output, result);
       return result.status === "verified" ? 0 : 1;
+    }
+
+    if (command === "validate-mixin-config") {
+      if (args.includes("--edition")) {
+        throw new Error("Unknown option: --edition");
+      }
+      for (const option of ["--archive-entries", "--archive-entries-complete"]) {
+        if (args.filter((arg) => arg === option).length > 1) {
+          throw new Error(`minecraft validate-mixin-config option must not be repeated: ${option}`);
+        }
+      }
+      const configPaths = positionalArgsWithOptions(args, {
+        values: ["--archive-entries", "--archive-entries-complete"],
+      });
+      const configPath = configPaths[0];
+      if (configPaths.length !== 1 || !configPath) {
+        throw new Error(
+          "minecraft validate-mixin-config requires exactly one local Mixin config JSON file",
+        );
+      }
+      const archiveEntriesPath = args.includes("--archive-entries")
+        ? readOption(args, "--archive-entries", "")
+        : undefined;
+      const archiveEntriesComplete = readBooleanOption(args, "--archive-entries-complete", false);
+      if (archiveEntriesComplete && !archiveEntriesPath) {
+        throw new Error(
+          "minecraft validate-mixin-config --archive-entries-complete true requires --archive-entries",
+        );
+      }
+      const files = readMixinConfigCliFiles({
+        configPath,
+        ...(archiveEntriesPath ? { archiveEntriesPath } : {}),
+      });
+      const result = validateMixinConfig({
+        config: files.config,
+        ...(files.archiveEntries !== undefined ? { archiveEntries: files.archiveEntries } : {}),
+        archiveEntriesComplete,
+      });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
     }
 
     if (command === "domains") {

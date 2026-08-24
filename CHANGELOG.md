@@ -53,6 +53,10 @@ All notable changes to this project are documented here.
 - Bounded `.bbmodel` metadata and exact animation/group name inspection across Catalog, CLI, and
   MCP, with conservative unknown results for newer, compressed, custom/plugin, unsupported, or
   incomplete inputs and explicit non-guarantees for runtime, rendering, and ModelEngine behavior.
+- Bounded offline SpongePowered Mixin configuration validation across Catalog, CLI, and a
+  metadata-only MCP tool, including raw duplicate-key evidence, audited VersionNumber/Gson field
+  shapes, duplicate declaration checks, and optional supplied-archive presence evidence which does
+  not infer runtime classpath absence.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.
