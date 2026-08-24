@@ -19,6 +19,8 @@ All notable changes to this project are documented here.
   identifier separators, so queries such as `Player Join Event`, `Diamond Sword`, and
   `bundle item model` find structured API and asset results without changing literal `contains`
   filters.
+- Vanilla datapack JSON searches now scan cached Mojang server jar entries once per request while
+  preserving total and filtered result counts.
 
 ## 0.1.5 - 2026-06-24
 
