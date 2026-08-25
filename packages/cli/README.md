@@ -112,6 +112,8 @@ minecraft-skills plugin paper events "player join" --version 26.2
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
+minecraft-skills fabric mods inventory ./server/mods
+minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills velocity toolchain --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -262,6 +264,36 @@ bounded structural rules for current `fabric.mod.json` schema v1, portable JAR p
 and referenced-file presence; invalid results return exit code 1. It does not validate dependency
 predicates or satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax,
 nested JAR metadata, or icon pixels.
+
+`fabric mods inventory <directory>` scans no subdirectories and selects only direct entries whose
+basenames end in exact lowercase `.jar`; `.JAR` and nested JARs are ignored. The root must be a
+direct directory, and JAR candidates must be regular files rather than symbolic links, directory
+junctions, directories, or special entries. After a bounded entry scan, candidates are sorted by
+basename and read one at a time with stable identity, size, and timestamp checks. Results contain
+no absolute input path, archive bytes/base64, or operating-system error details. Each retained entry
+reports its basename, byte length, SHA-256, Fabric mod ID/version/environment, and binary
+validation strength, validity, and error/warning counts. Duplicate declared mod IDs are reported
+as facts. Invalid, rejected, duplicate, or incomplete inventories return exit code 1.
+
+The inventory hard ceilings are 10,000 direct entries, 512 JAR candidates, 256 MiB per JAR, 1 GiB
+of `accountedJarBytes`, 200 retained scan diagnostics, and 100 retained duplicate-ID groups. Entry
+or JAR-count overflow discards the incomplete candidate selection; the complete bounded candidate
+set is otherwise sorted before the total-byte ceiling is applied. Lower internal test/library
+limits cannot raise these public ceilings.
+
+`fabric mods diff <left> <right>` inventories both directories and pairs only unique, valid,
+non-null mod IDs. It reports additions, removals, and version, environment, SHA-256,
+validation-status, and filename changes. Duplicate IDs or identified invalid entries go to
+`ambiguous`; rejected or missing-ID entries go to `unidentified`, so neither is arbitrarily paired.
+`comparisonComplete` requires both scans to complete without ambiguous or unidentified entries;
+`hasDifferences` covers reported added, removed, or changed pairs among retained pairable entries.
+When a scan is incomplete, additions and removals are not a complete directory comparison; use
+`comparisonComplete` as that completeness guard. A difference, ambiguity, unidentified entry, or
+incomplete scan returns exit code 1; a complete identical comparison returns 0.
+
+These commands do not resolve dependency graphs or load order; prove Minecraft-version
+compatibility, authenticity, Modrinth origin, or runtime startup; or download, update, or delete
+files.
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data manifest`, `data cache-dir`, `data cache-list`, `data cache-clean`, and

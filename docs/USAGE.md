@@ -88,6 +88,8 @@ minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
+minecraft-skills fabric mods inventory ./server/mods
+minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -420,6 +422,41 @@ numeric fields, and limits against the Catalog hard ceilings before invoking val
 `limits` object exposes only archive-entry count, metadata byte/node/depth/string-byte, and retained
 diagnostic ceilings; binary ZIP size and compression limits remain exclusive to local JAR
 validation.
+
+`fabric mods inventory <directory>` is a local CLI-only direct-directory inventory. It scans no
+subdirectories and selects only entry basenames with the exact lowercase `.jar` suffix, so `.JAR`
+and nested JARs are ignored. The root must be a direct directory, not a symbolic link or directory
+junction. Each selected JAR must remain a regular file rather than a symbolic link, junction,
+directory, or special entry. The command first collects a bounded candidate-name set, then sorts it
+by basename and reads one stable file at a time through the same identity, size, and timestamp
+checks as `fabric validate-mod`.
+
+Inventory entries report only basename, byte length, SHA-256, Fabric mod ID/version/environment,
+and binary validation strength, validity, and error/warning counts. Absolute input paths, JAR
+bytes/base64, and operating-system error details are not included in JSON. Duplicate declared mod
+IDs are retained as factual groups. The published hard ceilings are 10,000 direct directory
+entries, 512 JAR candidates, 256 MiB per JAR, 1 GiB of `accountedJarBytes`, 200 retained scan
+diagnostics, and 100 retained duplicate-ID groups. Entry or JAR-count overflow discards the
+incomplete candidate selection. Once all candidate names are known, lexicographic order makes the
+total-byte cutoff deterministic. Limit overflow, a read race, or a scan failure sets
+`validationComplete` false. Invalid, rejected, duplicate, or incomplete inventories exit 1;
+complete inventories containing only valid unique mods exit 0.
+
+`fabric mods diff <left-directory> <right-directory>` inventories both sides and safely pairs only
+unique, valid entries with non-null mod IDs. The result reports added and removed IDs plus version,
+environment, SHA-256, validation-status, and filename changes. Duplicate-ID or identified invalid
+entries are placed in `ambiguous`; rejected or missing-ID entries are placed in `unidentified`
+instead of being paired by filename or position. `comparisonComplete` is true only when both scans
+complete with no ambiguous or unidentified entries. `hasDifferences` covers reported additions,
+removals, or changed pairs among retained pairable entries. When a scan is incomplete, those entries
+remain useful evidence, but additions and removals do not describe the complete directory; use
+`comparisonComplete` as that completeness guard. A difference, ambiguity, unidentified entry, or
+incomplete comparison exits 1; only a complete identical comparison exits 0.
+
+Inventory and diff do not resolve dependency graphs or load order; prove Minecraft-version
+compatibility, authenticity, Modrinth origin, or runtime startup; or download, update, or delete
+files. They are factual local comparisons, not compatibility or launch guarantees. There is no
+Catalog or MCP equivalent because neither surface accepts or traverses local filesystem paths.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and

@@ -94,6 +94,8 @@ minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills fabric validate-mod ./example-mod.jar
+minecraft-skills fabric mods inventory ./server/mods
+minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -168,6 +170,25 @@ bounded JAR structure offline. It does not validate dependency predicates or sat
 entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR metadata, or icon
 pixels. MCP clients use `validate_fabric_mod` with metadata and optional archive-entry metadata
 because binary JAR uploads are not accepted.
+
+`fabric mods inventory` inspects only direct regular files whose basenames end in exact lowercase
+`.jar`; it does not recurse and rejects symbolic-link, junction, directory, and special JAR
+entries. It sorts filenames, reads one stable JAR at a time, and reports basename, byte length,
+SHA-256, Fabric mod ID/version/environment, and validation status. Fixed hard ceilings are 10,000
+direct entries, 512 JAR candidates, 256 MiB per JAR, 1 GiB of accounted JAR bytes, 200 retained scan
+diagnostics, and 100 retained duplicate-ID groups. Invalid, rejected, duplicate, or incomplete
+inventories exit 1.
+
+`fabric mods diff` safely pairs only unique valid non-null mod IDs. It reports additions, removals,
+and version, environment, hash, validation-status, and filename changes; duplicate, invalid, or
+unidentified entries remain explicit ambiguous or unidentified output instead of being paired.
+`comparisonComplete` is false for incomplete or ambiguous inputs, while `hasDifferences` covers
+reported changes among retained pairable entries. Treat additions and removals as a complete
+directory comparison only when `comparisonComplete` is true; either an incomplete comparison or a
+reported difference exits 1. Neither command emits absolute input paths, JAR bytes, or
+operating-system error details. They do not resolve dependencies or load order, prove
+Minecraft-version compatibility, authenticity, Modrinth origin, or startup, or download, update,
+or delete files.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
