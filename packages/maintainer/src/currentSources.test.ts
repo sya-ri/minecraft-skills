@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { auditCurrentSources } from "./currentSources.js";
 
+const bundled = {
+  javaLatestRelease: "26.2",
+  paperLatestVersion: "26.2",
+  paperLatestBuild: 30,
+};
+
 describe("auditCurrentSources", () => {
   it("passes when bundled latest data matches current sources", async () => {
     const result = await auditCurrentSources({
       checkedAt: "2026-06-22T00:00:00.000Z",
+      bundled,
       fetchJson: async (url) => {
         if (url.includes("version_manifest_v2")) {
           return {
@@ -56,6 +63,7 @@ describe("auditCurrentSources", () => {
   it("reports stale bundled latest data", async () => {
     const result = await auditCurrentSources({
       checkedAt: "2026-06-22T00:00:00.000Z",
+      bundled,
       fetchJson: async (url) => {
         if (url.includes("version_manifest_v2")) {
           return {
