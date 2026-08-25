@@ -404,6 +404,36 @@
       "failureMode": "A PDC value can be present but unreadable, semantically malformed, attached to the wrong lifetime, partially migrated, unintentionally copied or deleted, or falsely reported durable without target-version runtime evidence."
     },
     {
+      "id": "paper-server-backed-paged-ui-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep server-backed Minecraft UI pages bounded, ordered, and generation-safe",
+      "rules": [
+        "Fetch one bounded page at the database, repository, or service boundary; never fetch all matching rows and slice or truncate them in plugin or client memory.",
+        "Give each record a stable ID and define a total deterministic order with a unique tie-breaker plus explicit null and collation behavior.",
+        "Keep opaque cursors server-owned and bind them to viewer authorization, filters, search, sort, direction, and any snapshot or revision they require.",
+        "An opaque cursor is not itself a snapshot guarantee; state whether the feed is snapshot-consistent or live and document the insertion and deletion behavior actually provided.",
+        "Return bounded items, nextCursor or equivalent continuation, explicit exhausted semantics, current request generation or correlation, and the accepted revision when the consistency contract uses one.",
+        "Distinguish initial loading, ready, loading more, empty, error, retrying, reset, and exhausted states.",
+        "Accept a response only for the current viewer generation, query, direction, expected predecessor cursor, correlation, and revision.",
+        "Handle duplicate page delivery idempotently and deduplicate rows by stable item ID without reordering; if the same ID has changed payload, reject it under snapshot semantics or use an explicit monotonic version and replace rule under live-feed semantics instead of silently choosing first or last, and reposition or reset if a sort field changed.",
+        "Reject reversed, skipped, out-of-order, cyclic, nonadvancing, and late pages.",
+        "Start a fresh generation on filter, search, sort, authorization, reconnect, or viewer-instance changes; reopen resumes only through an intentionally validated token.",
+        "When data shrinks, reset or refresh a cursor view, or clamp a numbered view against refreshed snapshot totals; never loop on the same empty out-of-range page.",
+        "Bound page size, lookahead, in-flight requests, queued pages, retained rows, retries, and prefetch distance, and stop prefetch at failure or explicit exhaustion.",
+        "Reauthorize every page request at the server boundary instead of treating a prior page or cursor as lasting permission.",
+        "Test empty and exact page boundaries, tied sort values, insertions, deletions, final-page shrink, identical, changed non-sort, and changed sort payload duplicates for one stable ID, reversed and stale completion, query reset, reopen, reconnect, cursor rejection and cycles, retry, and prefetch bounds.",
+        "Route inventory click and settlement, protocol framing and hostile decoding, connection teardown, and runtime evidence to their dedicated guidance; keep rendering geometry, screen-specific design, persistence flush, and business-specific page sizes outside this concern."
+      ],
+      "requiredEvidence": [
+        "A page-contract table for authority, viewer scope, authorization, filter, sort, stable record identity, unique tie-breaker, cursor or revision, and snapshot or live-feed guarantees",
+        "Repository, query, or adapter evidence that each request retrieves only one bounded page plus bounded lookahead or count work",
+        "Request, response, and UI-state definitions covering generation, query, nextCursor or equivalent continuation, items, exhausted, loading, empty, failure, reset, and terminal states",
+        "Acceptance and reset logic for duplicate, reversed, out-of-order, nonadvancing, cyclic, late, reopened, reconnected, changed-query, and stale-revision responses",
+        "Deterministic boundary and mutation tests plus adapter-level proof of source paging and explicit request, memory, retry, and prefetch bounds"
+      ],
+      "failureMode": "A list that only looks paged can silently omit records, load the complete collection, skip ties, duplicate or reverse pages, append stale results to a replacement viewer, or run unbounded requests and memory after data changes."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",

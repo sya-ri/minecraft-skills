@@ -2219,6 +2219,133 @@
       "failureMode": "An implicit PDC contract can misread a present value, erase another namespace, publish half a migration, lose data at a snapshot or holder boundary, or make malformed and future records unrecoverable."
     },
     {
+      "id": "paper-server-backed-paged-ui",
+      "domains": ["paper-plugin"],
+      "title": "Design or review a bounded server-backed paged Minecraft UI",
+      "when": [
+        "a Paper inventory, menu, protocol-driven client screen, or other Minecraft UI displays a server-backed collection",
+        "the request mentions pagination, paging, infinite scroll, load more, next page, an opaque cursor, or a fixed result limit",
+        "a list silently truncates records, fetches all records before slicing, duplicates rows, skips tied rows, or appends a stale page",
+        "the UI must survive query changes, reopen, reconnect, insertion, deletion, or a shrinking final page"
+      ],
+      "steps": [
+        {
+          "id": "define-page-source-order-and-consistency",
+          "action": "Name the authoritative service or repository boundary, viewer and authorization scope, filter and sort inputs, stable record identity, and a total order with a unique tie-breaker. Choose either an opaque cursor or keyset contract whose exact position and query binding remain server-owned, or an explicit snapshot or revision contract for numbered pages. State whether results are a stable snapshot or a live feed and document the insertion and deletion behavior that choice can actually guarantee.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper search-scenarios",
+              "plugin paper guardrails",
+              "plugin paper diagnostics"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "search_authoring_scenarios",
+              "list_authoring_guardrails",
+              "list_authoring_diagnostics"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "searchAuthoringScenarios",
+              "listAuthoringGuardrails",
+              "listAuthoringDiagnostics"
+            ]
+          },
+          "evidence": [
+            "A page-contract table naming viewer scope, authorization, filter, sort, null and collation rules, stable record ID, unique tie-breaker, and snapshot or live-feed semantics",
+            "A cursor or revision design bound to the complete query and ordering rather than a client-editable row offset",
+            "Explicit guarantees and limitations for insertions and deletions before, inside, and after the current page"
+          ],
+          "stopIfMissing": "Do not add page controls around an unstable or non-unique order, and do not call a cursor snapshot-consistent unless the server binds and verifies a snapshot or revision that provides that guarantee."
+        },
+        {
+          "id": "fetch-one-bounded-page-at-the-source",
+          "action": "Fetch at most one bounded page plus only the bounded lookahead or count evidence required by the chosen contract at the database, repository, or service boundary. Project the fields needed for that page in bounded batches. Do not fetch an unbounded collection into plugin memory, slice or take a fixed prefix afterward, or hide additional records without a continuation or terminal result.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A repository or service API that accepts the bounded page request instead of returning the complete collection",
+            "Query or adapter evidence that the requested page, lookahead, projection, and related-field work stay within explicit row, byte, and call bounds",
+            "A result path that distinguishes continuation, terminal exhaustion, empty data, and failure instead of silently truncating"
+          ],
+          "stopIfMissing": "Do not describe a list as paged when the backend still loads every matching row or returns only a hard-coded prefix with no way to reach the remainder."
+        },
+        {
+          "id": "define-the-page-envelope-and-ui-state-machine",
+          "action": "Each request carries a current viewer or request generation plus the complete query identity and expected cursor or revision. Return bounded items, nextCursor or an equivalent opaque continuation when applicable, explicit exhausted state, and the accepted snapshot or revision when the consistency contract uses one. Represent initial loading, ready, loading more, empty, error, retrying, reset, and exhausted as distinct states so an empty first page, a failed next page, and a successful terminal page cannot collapse into one ambiguous boolean.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Request and response shapes containing generation or correlation, query identity, cursor or revision, items, nextCursor or equivalent continuation, and exhausted semantics",
+            "A UI state transition table for initial loading, ready, loading more, empty, error, retrying, reset, and exhausted",
+            "A documented page-size policy with an explicit bound and validation, without treating one fixed size as universally correct"
+          ],
+          "stopIfMissing": "Do not infer end-of-list solely from a short or empty response unless that is an explicit server contract, and do not represent loading, empty, error, and terminal exhaustion with one nullable list or boolean."
+        },
+        {
+          "id": "fence-duplicate-reversed-and-late-pages",
+          "action": "Accept a response only when its viewer generation, query identity, request correlation, direction, and predecessor cursor or revision match the currently expected transition. Make duplicate delivery idempotent, deduplicate retained rows by stable item ID, and define what happens when the same ID reappears with changed payload: reject the inconsistency under a snapshot contract, or apply an explicit monotonic version and replace rule under live-feed semantics. A live replacement must preserve ordering when sort fields are unchanged and intentionally reposition or reset when an ordering field changes. Reject reversed, skipped, out-of-order, and late pages, and stop with a typed error when a nonterminal response repeats or cycles a cursor instead of advancing it. Never append an old response to a replacement query or reopened viewer.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "An acceptance predicate comparing current generation, query, correlation, expected predecessor, direction, and revision immediately before publication",
+            "Idempotent duplicate-page behavior and stable-ID deduplication that do not reorder accepted rows, plus a snapshot-rejection or live-version replacement rule for changed payloads with the same ID and changed sort fields",
+            "Tests where page two arrives before page one, an earlier or opposite-direction page arrives late, the same page arrives twice with identical, changed non-sort, and changed sort payloads, and a response completes after reset or reconnect"
+          ],
+          "stopIfMissing": "Do not append a page merely because its transport request succeeded; a response that is duplicate, reversed, out of order, cyclic, or stale for the current viewer must not mutate visible state."
+        },
+        {
+          "id": "reset-clamp-and-bound-prefetch",
+          "action": "Increment the request generation and reset pages and continuations when filters, search text, sort, authorization scope, reconnect, or a new viewer instance changes the query. On reopen, either start a fresh generation or validate an intentionally resumable token before use. When data shrinks, reset or refresh a cursor view, or clamp a numbered view against refreshed snapshot totals so it cannot loop on an empty out-of-range page. Limit in-flight requests, queued pages, retained rows, and prefetch distance; pause on failure and stop at explicit exhaustion.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Reset and resume rules for query change, permission change, reopen, reconnect, revision invalidation, and stale cursor outcomes",
+            "A data-shrink rule that reaches a valid final page or an explicit empty state without repeatedly requesting the same empty page",
+            "Explicit per-view bounds for in-flight requests, queued pages, retained rows, retries, and prefetch distance"
+          ],
+          "stopIfMissing": "Do not reuse a continuation across a changed query or viewer generation, auto-fetch until the complete collection is resident, or retry a failed or nonadvancing page without a bound and state transition."
+        },
+        {
+          "id": "test-boundaries-mutations-and-route-adjacent-concerns",
+          "action": "Test empty data, one row, exactly one page, one row beyond a page, tied sort values, insertion and deletion around the cursor, deletion of the last page, complete data shrink, duplicate delivery with identical, changed non-sort, and changed sort payloads for one stable ID, reversed and out-of-order responses, old-generation completion, cursor rejection or cycles, query reset, reopen, reconnect, retry, and bounded prefetch. Route inventory click and settlement to paper-inventory-gui-interactions, protocol framing and hostile decoding to paper-plugin-protocol-safety, connection teardown to paper-player-session-lifecycle, and runtime proof to paper-plugin-testing-evidence. Keep rendering geometry, screen-specific design, persistence flush, and business-specific page sizes outside this concern.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper search-scenarios", "plugin paper plan"],
+            "mcp": ["get_authoring_recipe", "search_authoring_scenarios", "get_authoring_plan"],
+            "packageApis": ["getAuthoringRecipe", "searchAuthoringScenarios", "getAuthoringPlan"]
+          },
+          "evidence": [
+            "A deterministic boundary and mutation test matrix covering every listed transition",
+            "Separate adapter evidence that the actual data source performs bounded page retrieval",
+            "A routing statement for inventory interaction, transport, player-session, and testing guidance plus explicit exclusions for rendering, design, persistence flush, and fixed business sizing"
+          ],
+          "stopIfMissing": "Do not approve a paged UI from a first-page happy-path test, and do not fold click handling, rendering layout, persistence flush design, or project-specific list policy into this contract."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-server-backed-paged-ui-safety",
+        "paper-player-session-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A list can appear paged while silently dropping records, repeatedly loading the full result set, skipping tied rows, duplicating or reversing pages, publishing stale responses into a replacement viewer, looping after data shrink, or prefetching without bounds."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",

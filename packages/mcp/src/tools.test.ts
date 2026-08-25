@@ -1584,6 +1584,56 @@ describe("MCP tools", () => {
     );
   });
 
+  it("calls bounded server-backed paged Minecraft UI guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-server-backed-paged-ui",
+    });
+    expect(recipe.content[0]?.text).toContain("fetch-one-bounded-page-at-the-source");
+    expect(recipe.content[0]?.text).toContain("same ID reappears with changed payload");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-server-backed-paged-ui-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-server-backed-paged-ui-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "opaque cursor stale response duplicate page",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-server-backed-paged-ui-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-server-backed-paged-ui-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-server-backed-paged-ui"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-server-backed-paged-ui-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-server-backed-paged-ui-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("unique tie-breaker");
+    expect(guardrail.content[0]?.text).toContain("prefetch distance");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-server-backed-paged-ui-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("fetches all matching records");
+    expect(diagnostic.content[0]?.text).toContain("snapshot rejection");
+
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("bound-server-backed-paged-ui");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "fetch all truncate cursor generation",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-server-backed-paged-ui"');
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",

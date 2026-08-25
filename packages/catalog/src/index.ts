@@ -6723,6 +6723,7 @@ function addCrossResult(
 }
 
 const genericRegistryDiscoveryTerms = new Set(["entries", "entry", "registries", "registry"]);
+const dedicatedToolRouteScore = Number.MAX_SAFE_INTEGER;
 
 function matchesRegistryDiscoveryPrefilter(entry: RegistryEntry, term: string): boolean {
   if (!term || genericRegistryDiscoveryTerms.has(term)) {
@@ -6754,7 +6755,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "offline-validator",
       title: "Validate vanilla server access-list JSON",
-      score: 100,
+      score: dedicatedToolRouteScore,
       matches: [
         "whitelist.json and ops.json",
         "banned-players.json and banned-ips.json",
@@ -6771,7 +6772,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "offline-analyzer",
       title: "Analyze normalized Minecraft performance time series",
-      score: 100,
+      score: dedicatedToolRouteScore,
       matches: [
         "TPS and MSPT threshold windows",
         "coverage, trend, before/after comparison, and aligned association",
@@ -6787,7 +6788,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "compatibility-resolver",
       title: "Resolve common Modrinth project version metadata",
-      score: 100,
+      score: dedicatedToolRouteScore,
       matches: ["Modrinth project compatibility", "common game-version and loader pairs"],
       lookup: "modrinth compatibility <project-id-or-slug> <project-id-or-slug> [more projects]",
     });
@@ -6799,7 +6800,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "bounded-validator",
       title: "Validate a Java Edition server.properties file",
-      score: 250,
+      score: dedicatedToolRouteScore,
       matches: [
         "Java Properties syntax",
         "duplicate last-wins evidence",
@@ -6833,7 +6834,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "live-toolchain-lookup",
       title: "Fabric Loader + Intermediary + Yarn candidates",
-      score: 100,
+      score: dedicatedToolRouteScore,
       matches: ["Fabric Loader", "Intermediary", "Yarn", "official Fabric Meta v2"],
       lookup: `fabric toolchain ${JSON.stringify(version)}`,
     });
@@ -6845,7 +6846,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "live-toolchain-resolution",
       title: "Velocity API dependency and Java requirement",
-      score: 250,
+      score: dedicatedToolRouteScore,
       matches: ["velocity-api", "PaperMC Maven", "Velocity development docs", "Java requirement"],
       lookup: "velocity toolchain",
     });
@@ -6857,7 +6858,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "offline-artifact-validation",
       title: "Fabric mod metadata and JAR validation",
-      score: 250,
+      score: dedicatedToolRouteScore,
       matches: ["fabric.mod.json schemaVersion 1", "JAR paths", "referenced files"],
       lookup: "fabric validate-mod <file.jar>",
     });
@@ -6869,7 +6870,7 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       domain: "minecraft",
       kind: "offline-jar-validator",
       title: "Validate a Velocity plugin JAR",
-      score: 100,
+      score: dedicatedToolRouteScore,
       matches: [
         "velocity-plugin.json",
         "entrypoint class",

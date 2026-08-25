@@ -104,6 +104,10 @@ minecraft-skills plugin paper search-scenarios "bounded per-key delta coalescing
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
 minecraft-skills plugin paper guardrail paper-high-frequency-persistence-safety
 minecraft-skills plugin paper diagnostic paper-high-frequency-persistence-unsafe
+minecraft-skills plugin paper search-scenarios "opaque cursor stale response duplicate page"
+minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
+minecraft-skills plugin paper guardrail paper-server-backed-paged-ui-safety
+minecraft-skills plugin paper diagnostic paper-server-backed-paged-ui-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -898,6 +902,19 @@ rather than deleting by type. Capacity modifiers are applied before finite nonne
 absorption clamps, and tests cover multiple sources, weaker reapply, expiry, death, quit,
 reconnect, reload, and repeated cleanup. Logical ItemStack identity, persistent-data schema,
 scheduling, and combat-balance values remain separate concerns.
+
+For a Minecraft inventory, menu, or protocol-driven screen backed by a database or service, resolve
+`plugin paper plan paper-server-backed-paged-ui-review <version>`. The workflow requires one bounded
+page to be fetched at the source, a stable ID and total order with a unique tie-breaker, and either
+a server-owned opaque cursor or an explicit snapshot revision with honest live-versus-snapshot
+semantics. Responses carry bounded items, continuation and exhaustion, plus a request generation;
+the UI exposes distinct loading, empty, error, and terminal states and rejects duplicate, reversed,
+out-of-order, cyclic, or late pages. Repeated stable IDs use an explicit snapshot-conflict or
+versioned live-replacement rule instead of silently choosing the first or last payload. Query,
+authorization, reopen, reconnect, and data-shrink transitions reset, validate, refresh, or clamp
+navigation, while requests, retained rows, retries, and prefetch remain bounded. Inventory click
+safety, rendering geometry, screen-specific design, persistence flushing, and business-specific
+page sizes remain separate concerns.
 
 ## Source Policy
 

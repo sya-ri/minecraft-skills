@@ -766,6 +766,56 @@
       "failureMode": "Persistent data can be misclassified, truncated, stranded on a snapshot, lost during holder conversion, overwritten across namespaces, or left partially migrated when its typed storage and lifecycle contract is implicit."
     },
     {
+      "id": "paper-server-backed-paged-ui-review",
+      "domains": ["paper-plugin"],
+      "title": "Review a server-backed paged Minecraft UI",
+      "userPrompt": "Review this server-backed Minecraft inventory or client list for fixed-limit truncation, backend page bounds, stable cursor ordering, page state, stale responses, reset behavior, mutation handling, and bounded prefetch.",
+      "useWhen": [
+        "a Paper inventory, menu, protocol-driven client screen, or other Minecraft UI shows a server-backed collection",
+        "the implementation uses pagination, infinite scroll, load more, page numbers, an opaque cursor, or a fixed maximum result count",
+        "records disappear after a limit, pages duplicate or skip tied rows, an old response appears after a query change, or the final page loops after deletion",
+        "the review must separate page delivery from inventory clicks, rendering layout, protocol framing, or persistence flushing"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-server-backed-paged-ui"],
+        "intents": ["prepare-generation"],
+        "diagnostics": [
+          "paper-server-backed-paged-ui-unsafe",
+          "paper-player-session-lifecycle-unsafe",
+          "paper-plugin-test-evidence-gap",
+          "paper-threading-assumption"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the source boundary accepts a bounded page request and does not fetch all matching records or silently truncate a fixed prefix",
+        "records have stable identity and a total deterministic order with an explicit unique tie-breaker and null or collation rules",
+        "the cursor or revision is server-owned, bound to the complete query and viewer scope, and paired with honest snapshot or live-feed guarantees",
+        "the response explicitly carries bounded items, nextCursor or equivalent continuation, exhausted semantics, request generation or correlation, and any required revision",
+        "initial loading, ready, loading more, empty, error, retrying, reset, and exhausted are distinct states",
+        "duplicate pages are idempotent, rows deduplicate by stable ID, changed payloads for the same ID are rejected for snapshots or replaced by an explicit monotonic live version rule that repositions or resets on changed sort fields, and reversed, skipped, out-of-order, cyclic, or late responses cannot mutate the current viewer",
+        "query changes, authorization changes, reopen, reconnect, and stale revisions start a fresh generation or validate an intentional resume token",
+        "cursor views reset or refresh after data shrink, numbered views clamp against a refreshed snapshot, and neither loops on an empty out-of-range page",
+        "in-flight requests, queued pages, retained rows, retries, and prefetch distance have explicit bounds",
+        "tests cover empty and exact boundaries, ties, insertion, deletion, full shrink, identical, changed non-sort, and changed sort payload duplicates, stale delivery, reset, reopen, reconnect, retry, cursor cycles, and prefetch bounds"
+      ],
+      "mustAvoid": [
+        "loading the complete result set and slicing it in plugin or client memory",
+        "returning a hard-coded prefix with no continuation or terminal state",
+        "sorting by a non-unique field without a stable unique tie-breaker",
+        "treating an opaque cursor as proof of snapshot consistency without a bound and verified revision contract",
+        "appending every successful transport response without checking generation, query, direction, expected predecessor, or revision",
+        "silently keeping the first or last changed payload for a repeated stable ID without snapshot or live-feed semantics",
+        "using one nullable list or loading boolean for loading, empty, failure, and exhaustion",
+        "reusing continuations across a changed query, reopened viewer, or replacement connection",
+        "auto-fetching or retrying until all rows are resident without request, memory, time, and failure bounds",
+        "mixing inventory click safety, rendering geometry, screen-specific design, persistence flush logic, or a business-specific fixed page size into this concern"
+      ],
+      "failureMode": "A visually paged list can still hide data, issue unbounded backend work, skip tied rows, duplicate or reverse pages, publish stale results after reset, or loop forever after the data set shrinks."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",

@@ -30,6 +30,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Paper high-frequency persistence guidance for measured write-path selection, bounded per-key
   delta coalescing, exact partial-flush accounting, verified whole-transaction retries, shutdown
   recovery, and real-adapter contention evidence.
+- Server-backed paged Minecraft UI guidance for bounded source queries, stable cursor ordering,
+  explicit page and UI states, generation-fenced responses, mutation recovery, and bounded prefetch.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor

@@ -168,6 +168,10 @@ const persistencePlan = getAuthoringPlan({
   scenario: "paper-high-frequency-persistence-review",
   version: "1.21.11",
 });
+const pagedUiPlan = getAuthoringPlan({
+  scenario: "paper-server-backed-paged-ui-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -204,6 +208,7 @@ const bossBarRecipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
 const persistentDataRecipe = getAuthoringRecipe("paper-persistent-data-contract");
 const displayInteractionRecipe = getAuthoringRecipe("paper-display-interaction-contract");
 const persistenceRecipe = getAuthoringRecipe("paper-high-frequency-persistence");
+const pagedUiRecipe = getAuthoringRecipe("paper-server-backed-paged-ui");
 const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
 const customRecipeRegistrationRecipe = getAuthoringRecipe(
   "paper-custom-recipe-registration",
@@ -232,6 +237,7 @@ const itemStackIdentityScenario = getAuthoringScenario(
 const displayInteractionScenario = getAuthoringScenario(
   "paper-display-interaction-contract-review",
 );
+const pagedUiScenario = getAuthoringScenario("paper-server-backed-paged-ui-review");
 const testingEvidenceScenario = getAuthoringScenario(
   "paper-plugin-testing-evidence-review",
 );
@@ -260,6 +266,7 @@ const bossBarGuardrail = getAuthoringGuardrail("paper-bossbar-audience-lifecycle
 const persistentDataGuardrail = getAuthoringGuardrail("paper-persistent-data-contract");
 const displayInteractionGuardrail = getAuthoringGuardrail("paper-display-interaction-contract");
 const persistenceGuardrail = getAuthoringGuardrail("paper-high-frequency-persistence-safety");
+const pagedUiGuardrail = getAuthoringGuardrail("paper-server-backed-paged-ui-safety");
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const customRecipeGuardrail = getAuthoringGuardrail("paper-custom-recipe-ownership");
 const attributeEffectGuardrail = getAuthoringGuardrail(
@@ -274,6 +281,7 @@ const regionProtectionGuardrail = getAuthoringGuardrail(
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const eventListenerDiagnostic = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
+const pagedUiDiagnostic = getAuthoringDiagnostic("paper-server-backed-paged-ui-unsafe");
 const testingEvidenceDiagnostic = getAuthoringDiagnostic("paper-plugin-test-evidence-gap");
 const modelEngineBindingDiagnostic = getAuthoringDiagnostic(
   "paper-modelengine-runtime-binding-unsafe",

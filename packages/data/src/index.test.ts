@@ -87,6 +87,7 @@ describe("@minecraft-skills/data", () => {
       "paper-plugin-configuration-lifecycle",
     );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-persistent-data-contract");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-server-backed-paged-ui");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-custom-recipe-registration",
@@ -111,6 +112,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-itemstack-semantic-identity-review");
     expect(scenarioIds).toContain("paper-plugin-configuration-lifecycle-review");
     expect(scenarioIds).toContain("paper-persistent-data-contract-review");
+    expect(scenarioIds).toContain("paper-server-backed-paged-ui-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
     expect(scenarioIds).toContain("paper-custom-recipe-review");
   });
@@ -138,6 +140,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-itemstack-semantic-identity");
     expect(guardrailIds).toContain("paper-plugin-configuration-lifecycle-safety");
     expect(guardrailIds).toContain("paper-persistent-data-contract");
+    expect(guardrailIds).toContain("paper-server-backed-paged-ui-safety");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
     expect(guardrailIds).toContain("paper-custom-recipe-ownership");
   });
@@ -160,6 +163,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-itemstack-identity-or-state-loss");
     expect(diagnosticIds).toContain("paper-plugin-configuration-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-persistent-data-contract-unsafe");
+    expect(diagnosticIds).toContain("paper-server-backed-paged-ui-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
     expect(diagnosticIds).toContain("paper-custom-recipe-registration-unsafe");
   });
@@ -897,6 +901,81 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.severity).toBe("error");
     expect(diagnostic?.failIf.join("\n")).toContain("already-running callback");
     expect(diagnostic?.failIf.join("\n")).toContain("prohibited scheduler Future wait");
+  });
+
+  it("loads bounded server-backed paged Minecraft UI guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-server-backed-paged-ui");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-page-source-order-and-consistency",
+        "fetch-one-bounded-page-at-the-source",
+        "fence-duplicate-reversed-and-late-pages",
+        "reset-clamp-and-bound-prefetch",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "database, repository, or service boundary",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "inventory click and settlement",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "same ID reappears with changed payload",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "intentionally reposition or reset",
+    );
+    expect(recipe?.finalChecks).toContain("paper-server-backed-paged-ui-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-server-backed-paged-ui-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-server-backed-paged-ui"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain("paper-server-backed-paged-ui-unsafe");
+    expect(scenario?.successCriteria.join("\n")).toContain("total deterministic order");
+    expect(scenario?.successCriteria.join("\n")).toContain("bounded page");
+    expect(scenario?.successCriteria.join("\n")).toContain("nextCursor");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-server-backed-paged-ui-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("database, repository, or service boundary");
+    expect(guardrail?.rules.join("\n")).toContain("changed payload");
+    expect(guardrail?.rules.join("\n")).toContain("Reject reversed, skipped, out-of-order");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-server-backed-paged-ui-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("fetches all matching records");
+    expect(diagnostic?.failIf.join("\n")).toContain("old-generation page");
+    expect(diagnostic?.failIf.join("\n")).toContain("snapshot rejection");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain("bound-server-backed-paged-ui");
   });
 
   it("loads complete Paper plugin testing evidence guidance", () => {

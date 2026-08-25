@@ -465,7 +465,7 @@ describe("Minecraft performance analysis", () => {
       version: "26.2",
       query: "compare Minecraft server MSPT before and after deployment",
     });
-    expect(search.results).toContainEqual(
+    expect(search.results[0]).toEqual(
       expect.objectContaining({
         surface: "performance-analysis-tools",
         kind: "offline-analyzer",

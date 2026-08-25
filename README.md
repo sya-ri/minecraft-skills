@@ -72,6 +72,7 @@ minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
+minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"

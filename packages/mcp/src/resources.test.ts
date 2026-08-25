@@ -751,6 +751,46 @@ describe("MCP resources", () => {
     expect(checklist.contents[0]?.text).toContain("bound-high-frequency-persistence");
   });
 
+  it("reads bounded server-backed paged Minecraft UI resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-server-backed-paged-ui.json",
+        "minecraft-skills://data/authoring-scenarios/paper-server-backed-paged-ui-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-server-backed-paged-ui-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-server-backed-paged-ui-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-server-backed-paged-ui.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("fetch-one-bounded-page-at-the-source");
+    expect(recipe.contents[0]?.text).toContain("same ID reappears with changed payload");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-server-backed-paged-ui-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-server-backed-paged-ui-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-server-backed-paged-ui-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("unique tie-breaker");
+    expect(guardrail.contents[0]?.text).toContain("monotonic version");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-server-backed-paged-ui-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("fetches all matching records");
+    expect(diagnostic.contents[0]?.text).toContain("snapshot rejection");
+
+    const checklist = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-checklists/paper-plugin.json",
+    );
+    expect(checklist.contents[0]?.text).toContain("bound-server-backed-paged-ui");
+  });
+
   it("reads Paper plugin testing evidence resources", () => {
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",

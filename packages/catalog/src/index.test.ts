@@ -6247,6 +6247,102 @@ describe("catalog", () => {
     expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-api-surface");
   });
 
+  it("exposes and routes bounded server-backed paged Minecraft UI guidance", () => {
+    const recipe = getAuthoringRecipe("paper-server-backed-paged-ui");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-page-source-order-and-consistency",
+        "fetch-one-bounded-page-at-the-source",
+        "define-the-page-envelope-and-ui-state-machine",
+        "fence-duplicate-reversed-and-late-pages",
+        "reset-clamp-and-bound-prefetch",
+      ]),
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "database, repository, or service boundary",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "initial loading, ready, loading more, empty, error",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "same ID reappears with changed payload",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "intentionally reposition or reset",
+    );
+    expect(recipe.finalChecks).toContain("paper-server-backed-paged-ui-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-server-backed-paged-ui-safety");
+    expect(guardrail.rules.join("\n")).toContain("unique tie-breaker");
+    expect(guardrail.rules.join("\n")).toContain("request generation");
+    expect(guardrail.rules.join("\n")).toContain("changed payload");
+    expect(guardrail.rules.join("\n")).toContain("Reject reversed, skipped, out-of-order");
+    expect(guardrail.rules.join("\n")).toContain("prefetch distance");
+    expect(guardrail.rules.join("\n")).toContain("insertions, deletions, final-page shrink");
+
+    const diagnostic = getAuthoringDiagnostic("paper-server-backed-paged-ui-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("fetches all matching records");
+    expect(diagnostic.failIf.join("\n")).toContain("old-generation page");
+    expect(diagnostic.failIf.join("\n")).toContain("same empty out-of-range page");
+
+    const scenario = getAuthoringScenario("paper-server-backed-paged-ui-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-server-backed-paged-ui"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-server-backed-paged-ui-unsafe");
+    expect(scenario.successCriteria.join("\n")).toContain("total deterministic order");
+    expect(scenario.successCriteria.join("\n")).toContain("bounded page");
+    expect(scenario.successCriteria.join("\n")).toContain("nextCursor");
+    expect(scenario.mustAvoid.join("\n")).toContain("complete result set");
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("bound-server-backed-paged-ui");
+
+    for (const query of [
+      "server-backed inventory pagination fixed limit truncates records",
+      "opaque cursor stale response duplicate page",
+      "server-backed paged inventory infinite scroll data shrink bounded prefetch",
+    ]) {
+      const scenarioSearch = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarioSearch.results[0]?.scenario.id, query).toBe(
+        "paper-server-backed-paged-ui-review",
+      );
+    }
+
+    const catalogSearch = searchCatalog({
+      query: "fetch all truncate cursor generation",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-server-backed-paged-ui",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-server-backed-paged-ui-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-server-backed-paged-ui");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-server-backed-paged-ui-unsafe",
+    );
+
+    const task = "Paper paged inventory appends a stale duplicate cursor response after reconnect";
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task,
+      domain: "paper-plugin",
+    });
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-server-backed-paged-ui",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-server-backed-paged-ui-review",
+    );
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",
