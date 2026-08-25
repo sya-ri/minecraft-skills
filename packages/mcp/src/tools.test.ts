@@ -1264,6 +1264,57 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("calls and routes Paper persistent data contract guidance tools", async () => {
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("define-persistent-data-contract");
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-persistent-data-contract",
+    });
+    expect(recipe.content[0]?.text).toContain("define-owned-keys-types-and-bounds");
+    expect(recipe.content[0]?.text).toContain("copyTo copies custom keys");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-persistent-data-contract-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-persistent-data-contract-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "PersistentDataContainer NamespacedKey schema migration wrong type",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-persistent-data-contract-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-persistent-data-contract-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-persistent-data-contract"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-persistent-data-contract-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-persistent-data-contract",
+    });
+    expect(guardrail.content[0]?.text).toContain("primitive-type matching only");
+    expect(guardrail.content[0]?.text).toContain("Use copyTo only");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-persistent-data-contract-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("set receives null as deletion");
+    expect(diagnostic.content[0]?.text).toContain("unsupported-future record");
+
+    const suggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      task: "migrate a PersistentDataContainer schema between holders",
+      version: "1.21.11",
+    });
+    expect(suggestions.content[0]?.text).toContain('"domain": "paper-plugin"');
+    expect(suggestions.content[0]?.text).toContain('"id": "paper-persistent-data-contract-review"');
+    expect(suggestions.content[0]?.text).not.toContain("minecraft pack-format");
+  });
+
   it("calls Paper BossBar audience lifecycle guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-bossbar-audience-lifecycle",

@@ -83,6 +83,7 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-plugin-configuration-lifecycle",
     );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-persistent-data-contract");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
   });
 
@@ -102,6 +103,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-bossbar-audience-lifecycle-review");
     expect(scenarioIds).toContain("paper-itemstack-semantic-identity-review");
     expect(scenarioIds).toContain("paper-plugin-configuration-lifecycle-review");
+    expect(scenarioIds).toContain("paper-persistent-data-contract-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
   });
 
@@ -126,6 +128,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-bossbar-audience-lifecycle-safety");
     expect(guardrailIds).toContain("paper-itemstack-semantic-identity");
     expect(guardrailIds).toContain("paper-plugin-configuration-lifecycle-safety");
+    expect(guardrailIds).toContain("paper-persistent-data-contract");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
   });
 
@@ -145,6 +148,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-bossbar-audience-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-itemstack-identity-or-state-loss");
     expect(diagnosticIds).toContain("paper-plugin-configuration-lifecycle-unsafe");
+    expect(diagnosticIds).toContain("paper-persistent-data-contract-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
   });
 
@@ -236,6 +240,84 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf).toEqual(
       expect.arrayContaining([expect.stringContaining("only persistent player key")]),
     );
+  });
+
+  it("loads complete Paper persistent data contract guidance", () => {
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "define-persistent-data-contract",
+    );
+
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-persistent-data-contract");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-owned-keys-types-and-bounds",
+        "match-holder-lifetime-and-publication",
+        "migrate-replace-copy-and-remove-safely",
+        "test-storage-contract-and-recovery",
+      ]),
+    );
+    const actions = recipe?.steps.map((step) => step.action).join("\n") ?? "";
+    expect(actions).toContain("has(key, type), which checks only the stored primitive type");
+    expect(actions).toContain("holder snapshot");
+    expect(actions).toContain("copyTo copies custom keys");
+    expect(actions).toContain("advance the version only after success");
+    expect(actions).toContain("ItemStack logical identity");
+    expect(recipe?.finalChecks).toContain("paper-persistent-data-contract");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-persistent-data-contract-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-persistent-data-contract"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-persistent-data-contract-unsafe",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("unsupported-future");
+    expect(scenario?.mustAvoid.join("\n")).toContain("logical identity");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-persistent-data-contract",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("primitive-type matching only");
+    expect(guardrail?.rules.join("\n")).toContain("Use copyTo only");
+    expect(guardrail?.rules.join("\n")).toContain("do not describe PDC as transactional");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{
+        id: string;
+        severity: string;
+        requiredChecks: string[];
+        failIf: string[];
+      }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-persistent-data-contract-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.requiredChecks.join("\n")).toContain("custom adapter payload lengths");
+    expect(diagnostic?.failIf.join("\n")).toContain("set receives null as deletion");
+    expect(diagnostic?.failIf.join("\n")).toContain("unsupported-future record");
   });
 
   it("loads complete Paper ItemStack semantic identity guidance", () => {

@@ -1273,6 +1273,106 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper persistent data contract guidance", () => {
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("define-persistent-data-contract");
+
+    const recipe = getAuthoringRecipe("paper-persistent-data-contract");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "verify-target-persistent-data-surfaces",
+        "define-owned-keys-types-and-bounds",
+        "match-holder-lifetime-and-publication",
+        "migrate-replace-copy-and-remove-safely",
+        "test-storage-contract-and-recovery",
+      ]),
+    );
+    const actions = recipe.steps.map((step) => step.action).join("\n");
+    expect(actions).toContain("has(key, type), which checks only the stored primitive type");
+    expect(actions).toContain("copyTo copies custom keys");
+    expect(actions).toContain("advance the version only after success");
+    expect(actions).toContain("ItemStack logical identity");
+    expect(recipe.finalChecks).toContain("paper-persistent-data-contract");
+
+    const guardrail = getAuthoringGuardrail("paper-persistent-data-contract");
+    const rules = guardrail.rules.join("\n");
+    expect(rules).toContain("primitive-type matching only");
+    expect(rules).toContain("Use copyTo only");
+    expect(rules).toContain("Use remove for deletion");
+    expect(rules).toContain("do not describe PDC as transactional");
+
+    const diagnostic = getAuthoringDiagnostic("paper-persistent-data-contract-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.requiredChecks.join("\n")).toContain("custom adapter payload lengths");
+    expect(diagnostic.failIf.join("\n")).toContain("set receives null as deletion");
+    expect(diagnostic.failIf.join("\n")).toContain("unsupported-future record");
+
+    const scenario = getAuthoringScenario("paper-persistent-data-contract-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-persistent-data-contract"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-persistent-data-contract-unsafe");
+    expect(scenario.mustAvoid.join("\n")).toContain("logical identity");
+
+    for (const query of [
+      "PersistentDataContainer NamespacedKey schema migration holder copy wrong type",
+      "Paper PDC primitive type malformed custom adapter",
+      "NamespacedKey persistent data storage restart",
+    ]) {
+      const search = searchAuthoringScenarios({ query });
+      expect(search.results[0]?.scenario.id, query).toBe("paper-persistent-data-contract-review");
+    }
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-persistent-data-contract-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-persistent-data-contract"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-persistent-data-contract-unsafe",
+    );
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "migrate a PersistentDataContainer schema between holders",
+    });
+    expect(suggestions.domain).toBe("paper-plugin");
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      'plugin paper search "migrate a PersistentDataContainer schema between holders"',
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-persistent-data-contract-review",
+    );
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("minecraft pack-format")),
+    ).toBe(false);
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack assets")),
+    ).toBe(false);
+    expect(suggestions.suggestedTools.some((entry) => entry.tool.startsWith("datapack find"))).toBe(
+      false,
+    );
+
+    const nonPaper = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "Fabric persistent data container schema migration",
+    });
+    expect(nonPaper.domain).not.toBe("paper-plugin");
+    expect(
+      nonPaper.scenarios.results.some(
+        (entry) => entry.scenario.id === "paper-persistent-data-contract-review",
+      ),
+    ).toBe(false);
+
+    const itemIdentity = searchAuthoringScenarios({
+      query: "Paper ItemStack PDC identity lore migration",
+      domain: "paper-plugin",
+    });
+    expect(
+      itemIdentity.results.some(
+        (entry) => entry.scenario.id === "paper-persistent-data-contract-review",
+      ),
+    ).toBe(false);
+  });
+
   it("exposes Paper ItemStack semantic identity and state-preserving update guidance", () => {
     const checklist = getAuthoringChecklist("paper-plugin");
     expect(checklist.steps.map((step) => step.id)).toContain(

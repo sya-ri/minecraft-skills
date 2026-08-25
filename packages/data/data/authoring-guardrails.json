@@ -349,6 +349,35 @@
       "failureMode": "Mutable cached configuration, partial resource replacement, racing reloads, stale saves, or incomplete cleanup can make runtime state diverge from both the operator file and the reported reload result."
     },
     {
+      "id": "paper-persistent-data-contract",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper persistent data typed, owned, versioned, and recoverable",
+      "rules": [
+        "Create reusable NamespacedKey values in the owning plugin namespace; use another namespace only through an explicit cross-plugin contract.",
+        "Maintain a closed data dictionary for every key: holder scope, primitive PersistentDataType, complex representation, optionality, default, bounds, schema version, readers, and writers.",
+        "Treat has(key) as existence only and has(key, type) as primitive-type matching only. A custom adapter backed by BYTE_ARRAY does not make an arbitrary byte array a valid complex value.",
+        "Handle missing, wrong-primitive, malformed, oversized, unknown-value, supported-old, and unsupported-future data as distinct typed outcomes.",
+        "Bound byte arrays, numeric arrays, strings, lists, nested tag containers, nesting depth, and all allocations before domain publication.",
+        "Choose a PersistentDataHolder whose lifecycle matches the record, and verify the target-version read and mutation-publication path instead of retaining detached snapshots or temporary edit containers.",
+        "Use read-only views for inspection, treat OfflinePlayer PDC as read-only where documented, publish TileState snapshot changes with the required update, and verify version-gated ItemStack access before use.",
+        "Never assume PDC copies when data moves between holders. Define selected keys, destination collision behavior, source deletion, retries, and recovery explicitly.",
+        "Use copyTo only when copying every custom key is intended and choose replace deliberately; otherwise copy an allowlist of owned keys and preserve foreign namespaces.",
+        "Use remove for deletion because set rejects null, and do not clear or rewrite keys outside the plugin's ownership contract.",
+        "Version each independently evolved record; validate all migration steps before publishing the new state and advancing its marker, preserve or reject unsupported-future data, and make retries idempotent.",
+        "Use a nested tag container or an explicit recovery protocol when multiple fields must change together; do not describe PDC as transactional.",
+        "Do not infer save timing, thread safety, or scheduler compatibility from PDC type or member indexes; verify holder behavior and access context for the target Paper version.",
+        "Test codecs and migrations purely, then use a loaded target-version Paper server for holder snapshot, update, serialization, unload, reload, or restart behavior that the claim requires.",
+        "Keep ItemStack logical identity, similarity, and presentation ownership outside this generic storage contract."
+      ],
+      "requiredEvidence": [
+        "target-version Paper type/member matches plus official PDC guide and Javadocs behavior for every holder and PDC operation referenced",
+        "a key/type/bounds/schema ownership registry and holder-lifetime publication table",
+        "a bounded migration, copy, replace, removal, and recovery design that preserves foreign and unsupported-future data",
+        "wrong-type, malformed, oversized, old-version, future-version, repeated-migration, copy-collision, holder-boundary, and restart tests at sufficient evidence layers"
+      ],
+      "failureMode": "A PDC value can be present but unreadable, semantically malformed, attached to the wrong lifetime, partially migrated, unintentionally copied or deleted, or falsely reported durable without target-version runtime evidence."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",

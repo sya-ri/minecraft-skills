@@ -507,6 +507,39 @@ describe("MCP resources", () => {
     expect(diagnostic.contents[0]?.text).toContain("fire-and-forget persistence");
   });
 
+  it("reads Paper persistent data contract resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-persistent-data-contract.json",
+        "minecraft-skills://data/authoring-scenarios/paper-persistent-data-contract-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-persistent-data-contract.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-persistent-data-contract-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-persistent-data-contract.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("define-owned-keys-types-and-bounds");
+    expect(recipe.contents[0]?.text).toContain("copyTo copies custom keys");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-persistent-data-contract-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-persistent-data-contract-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-persistent-data-contract.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("primitive-type matching only");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-persistent-data-contract-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("unsupported-future record");
+  });
+
   it("reads Paper BossBar audience lifecycle resources", () => {
     const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
     expect(uris).toEqual(
