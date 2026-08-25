@@ -124,6 +124,11 @@ All notable changes to this project are documented here.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.
+- Paper custom-recipe lifecycle guidance across recipes, scenarios, guardrails, and diagnostics,
+  covering stable plugin-owned `NamespacedKey`s, owned-key-only reconciliation, observed add/remove
+  results and partial recovery, deliberate material versus `RecipeChoice.ExactChoice` matching,
+  canonical shaped/shapeless collision detection, and separate online-client resend and recipe-book
+  discovery policies.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

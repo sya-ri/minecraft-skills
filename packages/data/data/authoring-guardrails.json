@@ -512,6 +512,37 @@
         "tests for loaded and unloaded chunks, generation allowed and denied, chunk boundaries, ticket sharing and release, main-thread wait rejection, stale references, physics and drop side effects, entity movement and removal, teleport false, unload and disable races, partial retry, timeout, Folia ownership boundaries, and idempotent reconciliation"
       ],
       "failureMode": "A chunk-spanning operation can stall a tick thread, generate or pin an unbounded area, mutate from the wrong owner, reuse stale block or entity references, leak tickets, or duplicate partial side effects when loading, unloading, teleportation, physics, and plugin shutdown race its batches."
+    },
+    {
+      "id": "paper-custom-recipe-ownership",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper custom recipe keys, matching, and reload plugin-owned",
+      "rules": [
+        "Assign every custom recipe a stable NamespacedKey in the owning plugin namespace and retain the exact set of keys that the plugin currently owns.",
+        "Parse, normalize, and validate the complete desired definition set before mutating the server recipe registry.",
+        "Reconcile only plugin-owned unchanged, added, changed, and removed keys; never use clearRecipes or resetRecipes as plugin reload or disable cleanup.",
+        "Treat global recipe-registry replacement as a sequence with partial-failure risk, not an atomic transaction; observe every addRecipe and removeRecipe boolean result.",
+        "Publish an explicit applied, rejected, restored, or partial outcome and recover toward the last-known-good owned definitions when replacement fails.",
+        "Declare ingredient identity per slot as material-only, exact ItemStack aside from amount, or a separately verified custom flow.",
+        "Use RecipeChoice.ExactChoice only when complete ItemStack equality aside from stack size is intended; it is not a subset matcher or an amount constraint.",
+        "Do not silently weaken metadata-sensitive ingredients to material-only matching when built-in recipe choices cannot express the product contract.",
+        "Validate every key, result, shaped pattern, ingredient symbol, and shapeless count before registry mutation.",
+        "Canonicalize shaped recipes from occupied bounds, slot positions, and declared ingredient identity, and shapeless recipes from counted ingredient-identity multisets; include only target-version-verified symmetry behavior.",
+        "Reject duplicate keys and report distinct definitions that can match the same crafting input instead of allowing declaration or iteration order to choose an output silently.",
+        "Separate recipe-list resends from recipe-book discovery; target-version verify both policies and preserve or remove discovery state only by explicit product decision.",
+        "Execute registry mutation in a target-compatible server context and test enable, unchanged reload, add, change, remove, duplicate or conflicting keys, partial failure, disable, and re-enable.",
+        "Use a loaded target-version server for registry, matching, consumption, and output claims, plus client evidence when claiming online list visibility or recipe-book behavior.",
+        "Expose desired, applied, rejected, restored, and stale keys plus client-resend outcomes without logging sensitive item payloads unnecessarily."
+      ],
+      "requiredEvidence": [
+        "a plugin-owned key inventory and desired-versus-applied reconciliation plan",
+        "target-version Paper type, member, recipe documentation, and mutation-context evidence",
+        "an ingredient-identity matrix with positive and negative matches",
+        "canonical match signatures and a collision report for the complete desired set",
+        "per-key add and remove results, recovery results, and partial-failure observability",
+        "loaded-server lifecycle and crafting tests plus client evidence for any visibility claim"
+      ],
+      "failureMode": "A recipe reload can delete unrelated recipes, leave a mixed old/new owned set, accept unintended ingredients, lose discovery state, or leave online clients with a stale recipe list."
     }
   ]
 }

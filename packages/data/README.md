@@ -37,6 +37,9 @@ Redistributable canonical data for Minecraft Skills consumers.
   migration, unknown-item pass-through, and duplicate-lore or rollback tests.
 - Paper plugin testing-evidence guidance that maps pure tests, owned fakes, MockBukkit, loaded
   target-version Paper servers, and client-visible verification to bounded runtime claims.
+- Paper custom-recipe lifecycle guidance for stable plugin-owned keys, owned-key reconciliation,
+  observed registry mutation results, partial recovery, ingredient identity, shaped/shapeless
+  collision detection, and independent client resend and recipe-book discovery policies.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

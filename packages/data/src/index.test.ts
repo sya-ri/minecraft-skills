@@ -85,6 +85,9 @@ describe("@minecraft-skills/data", () => {
     );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-persistent-data-contract");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-custom-recipe-registration",
+    );
   });
 
   it("loads bundled authoring scenario JSON", () => {
@@ -105,6 +108,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-plugin-configuration-lifecycle-review");
     expect(scenarioIds).toContain("paper-persistent-data-contract-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
+    expect(scenarioIds).toContain("paper-custom-recipe-review");
   });
 
   it("loads bundled intent lookup JSON", () => {
@@ -130,6 +134,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-plugin-configuration-lifecycle-safety");
     expect(guardrailIds).toContain("paper-persistent-data-contract");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
+    expect(guardrailIds).toContain("paper-custom-recipe-ownership");
   });
 
   it("loads bundled authoring diagnostic JSON", () => {
@@ -150,6 +155,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-plugin-configuration-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-persistent-data-contract-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
+    expect(diagnosticIds).toContain("paper-custom-recipe-registration-unsafe");
   });
 
   it("bundles Paper event dispatch and listener ownership safety guidance", () => {
@@ -1021,6 +1027,66 @@ describe("@minecraft-skills/data", () => {
     ]) {
       expect(usage).toContain(officialUrl);
     }
+  });
+
+  it("loads complete Paper custom recipe ownership guidance", () => {
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "own-custom-recipe-keys-and-matching",
+    );
+
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; stopIfMissing: string }>;
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-custom-recipe-registration");
+    expect(recipe?.steps.map((step) => step.id)).toContain("reconcile-only-plugin-owned-recipes");
+    expect(recipe?.steps.map((step) => step.id)).toContain(
+      "validate-patterns-counts-and-match-collisions",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "RecipeChoice.ExactChoice",
+    );
+    expect(recipe?.steps.map((step) => step.stopIfMissing).join("\n")).toContain("clearRecipes");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find((entry) => entry.id === "paper-custom-recipe-review");
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-custom-recipe-registration"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-custom-recipe-registration-unsafe",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("resetRecipes");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-custom-recipe-ownership",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("last-known-good");
+    expect(guardrail?.rules.join("\n")).toContain("recipe-book discovery");
+    expect(guardrail?.rules.join("\n")).toContain("counted ingredient-identity multisets");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-custom-recipe-registration-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("partial replacement");
+    expect(diagnostic?.failIf.join("\n")).toContain("colliding recipe outputs");
   });
 
   it("loads bundled claim policy JSON", () => {

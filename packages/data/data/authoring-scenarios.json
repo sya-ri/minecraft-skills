@@ -909,6 +909,61 @@
         "retrying partial non-idempotent work without per-target reconciliation"
       ],
       "failureMode": "Cross-chunk mutation can freeze ticks, load or pin unbounded terrain, race wrong-owner or unloaded state, leak tickets, and duplicate irreversible effects when the operation has no bounded target manifest, typed progress, reconciliation, or lifecycle owner."
+    },
+    {
+      "id": "paper-custom-recipe-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper custom recipe ownership, matching, and reload",
+      "userPrompt": "Create or review configurable Paper custom recipes that reconcile only plugin-owned keys, preserve exact ingredient semantics, expose partial registration failure, and keep online clients consistent across reload.",
+      "useWhen": [
+        "Paper code registers shaped or shapeless recipes",
+        "recipe definitions come from configuration or can change at runtime",
+        "ingredients depend on ItemStack metadata instead of material alone",
+        "online players need late recipe-list updates or recipe-book discovery",
+        "the request changes or diagnoses recipe reload, disable, or re-enable behavior"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-custom-recipe-registration"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-custom-recipe-registration-unsafe"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "every recipe has a stable plugin-owned NamespacedKey",
+        "desired definitions are fully parsed and validated before global registry mutation",
+        "reload reconciles unchanged, added, changed, and removed owned keys without clearing or resetting unrelated recipes",
+        "every add and remove result contributes to an explicit applied, rejected, restored, or partial outcome",
+        "material, exact-stack, and custom-flow ingredient identity are deliberately separated",
+        "RecipeChoice.ExactChoice is used only when full stack equality aside from amount is intended",
+        "shaped occupied bounds and slot identities or shapeless counted ingredient multisets produce target-compatible canonical match signatures",
+        "duplicate keys and distinct recipes that can match the same crafting input are rejected or explicitly resolved before registry mutation",
+        "recipe-list resend and recipe-book discovery policies are separate and target-version verified",
+        "partial failure recovers toward last-known-good owned definitions and remains observable",
+        "loaded-server and client evidence cover reload, matching, consumption, output, online visibility, disable, and re-enable"
+      ],
+      "mustAvoid": [
+        "calling clearRecipes or resetRecipes for plugin reload or disable",
+        "removing recipes outside the plugin-owned key set",
+        "ignoring false addRecipe or removeRecipe results",
+        "mutating the registry before all desired definitions validate",
+        "describing a sequence of global mutations as atomic",
+        "using material-only matching when metadata is part of ingredient identity",
+        "using RecipeChoice.ExactChoice for subset matching or amount-sensitive matching",
+        "checking only NamespacedKey collisions while different keys accept the same crafting input",
+        "letting declaration or iteration order silently decide between colliding recipe outputs",
+        "assuming shaped rotations, mirroring, tags, or custom-choice behavior without target-version evidence",
+        "assuming registration automatically updates every online client or discovers the recipe",
+        "claiming client visibility from server-only assertions",
+        "inventing custom recipe matching or lifecycle APIs not verified for the target version"
+      ],
+      "failureMode": "A plausible recipe implementation can corrupt unrelated registry state, silently apply only part of a reload, accept unintended items, or leave online recipe lists and recipe books stale."
     }
   ]
 }
