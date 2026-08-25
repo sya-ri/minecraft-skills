@@ -32,6 +32,8 @@ minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 1.21.11
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
+minecraft-skills plugin paper recipe paper-itemstack-semantic-identity
+minecraft-skills plugin paper plan paper-itemstack-semantic-identity-review 26.2
 minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
@@ -43,11 +45,13 @@ minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
 minecraft-skills plugin paper guardrail paper-api-surface-limits
 minecraft-skills plugin paper guardrail paper-player-identity-and-display
+minecraft-skills plugin paper guardrail paper-itemstack-semantic-identity
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-player-identity-display-confusion
+minecraft-skills plugin paper diagnostic paper-itemstack-identity-or-state-loss
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper claim-policies
@@ -131,6 +135,7 @@ minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 10485
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
 minecraft-skills minecraft search "Fabric Client GameTest visual evidence" --kind authoring-recipe
+minecraft-skills minecraft search "Fabric GUI scale clipping" --kind authoring-recipe
 minecraft-skills velocity toolchain --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -351,6 +356,13 @@ contract. The records distinguish non-render assertions, virtual-framebuffer cli
 interactive clients; concrete test APIs still require current official Fabric documentation and
 target-version API or mappings.
 
+`minecraft search "Fabric GUI scale clipping"` returns domain-neutral Fabric client UI guidance
+without introducing a full Fabric authoring context. The recipe and guardrail prevent reapplying
+GUI scale to an already-scaled viewport, keep draw, clip, and hit-test rectangles in one layout
+result, and require pre-clip content bounds plus paired geometry and actual-render checks. Any
+concrete Screen, window, drawing, input, or scissor API still requires current official Fabric
+documentation and target-version mappings.
+
 `velocity toolchain` reads the current `com.velocitypowered:velocity-api` version from bounded
 official PaperMC Maven metadata and cross-checks the official development guide and Java FAQ. It
 returns the repository, development docs, Javadocs, retrieval time, and per-source provenance.
@@ -450,6 +462,13 @@ administrative-command checks for operational coverage, explicit support or reje
 applicable sender kind, explicit targets, permissions, protected secret input, justified safe
 out-of-band alternatives, bulk confirmation, atomic reload rollback, effective-state inspection,
 and observable success or failure results.
+
+`plugin paper plan paper-itemstack-semantic-identity-review [version]` separates a stable
+namespaced logical item ID and schema version from mutable names, lore, models, Material, similarity,
+and rendering. It routes updates through an owned copy and a closed presentation allowlist,
+preserves all other gameplay, PDC, component, and subtype state, leaves unknown items untouched,
+and requires deterministic idempotent migrations with duplicate-lore, rollback, aliasing,
+comparison-purpose, and unrelated-state preservation tests.
 
 `plugin paper plan paper-plugin-testing-evidence-review [version]` maps runtime claims to pure
 tests, plugin-owned fakes, explicitly supported MockBukkit behavior, a loaded target-version Paper

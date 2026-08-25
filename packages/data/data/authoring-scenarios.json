@@ -556,6 +556,56 @@
       "failureMode": "A BossBar audience controller can flicker, display to stale or ineligible viewers, mutate a replacement, retain Player references, or leak visible bars after its local or distributed lifecycle ends."
     },
     {
+      "id": "paper-itemstack-semantic-identity-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper ItemStack semantic identity, presentation refresh, and migration",
+      "userPrompt": "Create or review Paper code that recognizes and migrates plugin-defined ItemStacks, updates only owned presentation, and preserves every unrelated item state.",
+      "useWhen": [
+        "custom items are recognized by material, name, lore, item model, custom model data, or visual appearance",
+        "an ItemStack display name, item name, lore, model, tooltip, or render flag must be refreshed",
+        "older item schemas in inventories, containers, entities, or persistence must migrate",
+        "ItemStack.equals, isSimilar, stackability, grouping, or visual equality is used to decide custom-item identity",
+        "an updater reconstructs an ItemStack or mutates a shared template or cached instance"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-itemstack-semantic-identity"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-itemstack-identity-or-state-loss"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "a stable plugin-owned namespaced logical item ID is stored separately from an explicit schema or migration version",
+        "material, custom or display name, item name, lore, item model, custom model data, tooltip styling, and client rendering are never the sole logical item identity",
+        "missing, malformed, foreign, unknown, and unsupported-future IDs or versions produce explicit unchanged or rejected outcomes",
+        "logical identity, application stackability or similarity, and client-rendered visual equality have separate predicates and evidence",
+        "a possibly shared ItemStack is cloned or otherwise owned before mutation and the original remains unchanged until a complete successful update is published",
+        "presentation refresh replaces only a closed owned allowlist while amount, enchantments, attributes, damage, gameplay state, unowned PDC, data components, subtype metadata, and all out-of-scope state are preserved",
+        "migrations are deterministic, one-version, idempotent, failure-safe, and mark a new version only after the transformation succeeds",
+        "unknown items are untouched and canonical lore replacement uses declared whole-field or persisted structural ownership, neither accumulating duplicates nor deleting lines by matching display text",
+        "tests cover duplicate lore, repeat refresh and migration, unknown and malformed items, failed steps, alias isolation, similarity decisions, and unrelated-state preservation",
+        "target-version loaded-server evidence is used for Paper behavior not fully observable in pure tests"
+      ],
+      "mustAvoid": [
+        "using Material, display name, item name, lore, item model, custom model data, or apparent rendering as the custom-item primary key",
+        "assuming two stacks with the same logical ID are stackable, similar in all gameplay state, or visually identical",
+        "assuming ItemStack.isSimilar proves logical identity or client-rendered equality",
+        "mutating an ItemStack that may still be shared by a template, cache, event, inventory, or another subsystem",
+        "building a replacement stack from Material and copying only remembered metadata fields",
+        "clearing or overwriting enchantments, attributes, damage, unowned PDC, unknown data components, subtype metadata, or any state outside the explicit presentation or migration allowlist",
+        "editing lore without declared whole-field or structural segment ownership, appending canonical lore on every run, or deleting duplicate lines by their rendered text",
+        "advancing the schema version before a migration step and validation succeed",
+        "mutating unknown, malformed, or unsupported-future items in an attempt to repair them",
+        "making universal cross-version API or data-component claims without target-version evidence"
+      ],
+      "failureMode": "Display edits and schema upgrades can silently change identity, erase gameplay or third-party data, duplicate presentation, or partially commit when identity, ownership, comparison purpose, and migration state are not explicit."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",
@@ -645,6 +695,60 @@
         "claiming one concrete Fabric client-test API spelling works across every target release"
       ],
       "failureMode": "A screenshot suite can silently bless partial or stale output, overwrite its own oracle, and overstate CI evidence when selection, readiness, artifact ownership, failure phases, and environment limits are not explicit."
+    },
+    {
+      "id": "paper-world-operation-safety-review",
+      "domains": ["paper-plugin"],
+      "title": "Review a bounded lifecycle-owned Paper world operation",
+      "userPrompt": "Create or review a Paper operation that safely loads and mutates bounded block or entity targets across chunk and Folia region boundaries, survives unload and shutdown races, and releases every owned chunk ticket.",
+      "useWhen": [
+        "the request edits, scans, drops into, moves through, removes from, or teleports across multiple chunks",
+        "the code uses getChunkAtAsync, isChunkLoaded, plugin chunk tickets, RegionScheduler, EntityScheduler, teleportAsync, or chunk lifecycle events",
+        "a block or entity operation continues across ticks, asynchronous completion, chunk unload, region handoff, or plugin disable",
+        "the review needs fixed chunk or batch limits, explicit generation policy, typed partial outcomes, idempotent retry, or ticket cleanup"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-world-operation-safety"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-world-operation-unbounded"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the exact target Paper version, official API behavior sources, complete deduplicated chunk set, generation policy, chunk and target caps, per-tick and per-region budgets, timeout, and rejection rules are known before mutation",
+        "chunk acquisition never waits or blocks via Future.get or Future.join on a server main, tick, or region thread and async completion is transferred to the verified location-region or entity owner before mutation",
+        "isChunkLoaded is only a snapshot, while every required plugin ticket has bounded lifecycle ownership, sharing semantics, and exactly-once release on complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and disable",
+        "location work carries immutable world identity plus coordinates and re-resolves them in the owning region, while entity work uses the entity scheduler as its handoff and revalidates entity identity, validity, state, and operation preconditions inside the owned callback without requiring cross-region World.getEntity lookup",
+        "EntityScheduler retired callbacks only record or forward minimal terminal intent and defer entity, chunk, world, and ticket-level cleanup because the callback runs in critical code",
+        "each callback enforces target and time budgets and reports complete, partial, rejected, timeout, stale, or unloaded with bounded progress counts",
+        "physics, drops, entity movement or removal, teleport false, chunk unload, cancellation, and plugin disable are revalidated rather than inferred from scheduling or events",
+        "partial retries compare observed state with per-target progress and cannot repeat committed drops, removals, teleports, or other non-idempotent effects",
+        "Paper and Folia execution claims distinguish location-region work from entity scheduler work and never claim multi-region atomicity"
+      ],
+      "mustAvoid": [
+        "discovering an unbounded chunk set while world mutation is already running",
+        "letting a convenience overload choose whether missing chunks generate",
+        "treating isChunkLoaded as a residency lease",
+        "waiting or blocking via Future.get or Future.join on a server main, tick, or region thread",
+        "assuming an async API exists or completes on a particular thread without checking the target version",
+        "treating async or teleport Future completion as arbitrary-thread mutation safety or unconditional operation success",
+        "dereferencing retained Chunk, Block, BlockState, mutable Location, or Entity values outside their verified owner or treating them as current after a lifecycle change without owner-local revalidation",
+        "requiring unsafe cross-region World.getEntity lookup instead of using the entity scheduler as the entity handoff, or performing entity, chunk, world, or ticket-level cleanup inside its critical retired callback",
+        "running unbounded chunk, block, drop, or entity work in one callback",
+        "assuming plugin chunk tickets are low-cost or automatically released",
+        "using one Paper main-thread transaction model as a Folia ownership model or presenting independently scheduled regions as atomic",
+        "presenting applyPhysics=false as a general block-placement safety guarantee",
+        "treating entity unload as death or despawn",
+        "relying on events alone for complete cleanup or atomicity",
+        "retrying partial non-idempotent work without per-target reconciliation"
+      ],
+      "failureMode": "Cross-chunk mutation can freeze ticks, load or pin unbounded terrain, race wrong-owner or unloaded state, leak tickets, and duplicate irreversible effects when the operation has no bounded target manifest, typed progress, reconciliation, or lifecycle owner."
     }
   ]
 }

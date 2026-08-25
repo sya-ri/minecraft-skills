@@ -85,6 +85,20 @@ set reconciliation, causal failure phases, and environment-specific results. A v
 can exercise a client render path in its recorded environment, but does not establish physical
 display, GPU and driver, native input, accessibility, shader, or complete modpack behavior.
 
+## Fabric Client GUI Guidance
+
+The [official Fabric custom-screen guide](https://docs.fabricmc.net/develop/rendering/gui/custom-screens)
+and [GUI drawing guide](https://docs.fabricmc.net/develop/rendering/gui-graphics) are the primary
+documentation evidence for current screen initialization, drawing, and clipping concepts. Exact
+Minecraft client names remain version- and mapping-specific, so implementations must also verify
+the selected target-version mappings before naming Screen, window, input, drawing, or scissor APIs.
+
+The bundled scale and clipping records are human-reviewed design guidance. Official documentation
+can establish the current API surface and clipping facilities, but it does not prove that a
+project's layout rectangles, pre-clip content bounds, hit regions, translations, state variants, or
+screenshots are correct. Those claims require deterministic project geometry assertions paired
+with actual client rendering over the documented case matrix.
+
 ## Stable Format Specifications
 
 Container validators may use the format publisher's stable specification for format-level facts.
