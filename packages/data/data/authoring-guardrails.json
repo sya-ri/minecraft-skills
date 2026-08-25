@@ -665,6 +665,36 @@
         "bounded observability proving retired generations, active models, carriers, animation owners, callbacks, and registry entries return to baseline"
       ],
       "failureMode": "An unverified or poorly ordered runtime binding can expose its carrier, attach the wrong asset, silently play a substitute animation, allow channel conflicts, resurrect stale generations, or leave ghost models and carriers after lifecycle transitions."
+    },
+    {
+      "id": "paper-region-protection-policy-safety",
+      "domains": ["paper-plugin"],
+      "title": "Require explicit and complete Paper protection-policy decisions",
+      "rules": [
+        "Resolve the target Paper version and inventory policy actions before choosing listeners. Verify each event and actor, source, cause, affected-target, direction, destination, or proposed-state member against official target-version documentation.",
+        "Treat event search results as candidates and record coverage gaps. One plausible event does not prove that direct, indirect, alternate, multi-target, or cross-boundary paths are covered.",
+        "Normalize every verified path into actor, source, action, target, cause, boundary, and proposed outcome; do not collapse the policy into target coordinates plus a nullable player.",
+        "Keep the immediate source separate from an indirect responsible actor. Resolve a projectile shooter, igniting or priming entity, source block, or other cause only through documented event data or plugin-owned context, and preserve unknown attribution when provenance is absent.",
+        "Define an explicit default and conflict precedence for protected, public or unprotected, bypass, vanilla or environmental, plugin-owned, and unknown-cause decisions. A missing matrix row must not silently become allow or deny.",
+        "Keep bypass and public access as explicit policy inputs and outcomes rather than scattered listener shortcuts. Reusable guidance must not prescribe a concrete permission name, region geometry, game mode, mob rule, or material list.",
+        "Do not equate a null actor with denial or cancel all environmental events inside protected space. Inventory the vanilla mechanics that should remain available and add positive regression cases for them and for ordinary public or unprotected behavior.",
+        "Cover multi-event paths independently. An interaction decision does not prove the later placement, ignition, explosion, growth, spread, flow, or entity-change event will be authorized correctly.",
+        "Evaluate every affected target and each source-to-target boundary transition. Include outside-to-inside, inside-to-outside, same-policy, different-policy, and mixed multi-target sets.",
+        "For pistons, evaluate every moved block and its destination; for explosions, structures, and multi-place actions, evaluate the complete affected set; for flow and spread, evaluate source and destination rather than only the event origin.",
+        "Choose whole-event denial or a partial filtered outcome explicitly. Filter affected targets only when the target-version API documents the necessary mutation surface and the policy permits partial application.",
+        "Keep the policy function deterministic. Route event priority, prior-cancellation handling, execution context, registration ownership, teardown, and in-flight behavior to the Paper event-listener concern.",
+        "Authorize direct plugin-originated world mutations before calling world APIs and route chunk ownership, scheduling, batching, rollback, and shutdown to a separate bounded world-operation lifecycle. Event cancellation is not proof that plugin API mutations are intercepted or atomic.",
+        "Use table-driven policy tests for allow and deny, defaults, exceptions, direct and indirect causes, unknown attribution, every boundary direction, and mixed target sets. Include positive preserved-mechanics rows, not only rejection rows.",
+        "Use a loaded target-version Paper server for claims about which built-in events fire, which fields the server supplies, and how cancellation or documented filtering affects the world. Constructing built-in events directly is not sufficient runtime evidence because their constructors are not plugin API."
+      ],
+      "requiredEvidence": [
+        "an exact target version, official Paper listener documentation, and target-version Javadocs for every event and member used",
+        "a behavior-to-event inventory with verified direct, indirect, multi-event, multi-target, and cross-boundary paths plus explicit gaps",
+        "an actor, source, action, target, cause, boundary, and outcome matrix with explicit defaults, precedence, and bypass, public, vanilla or environmental, plugin-owned, and unknown-cause decisions",
+        "an event-path contract for all affected targets and explicit whole-event or documented partial outcomes",
+        "table-driven allow and deny regressions plus loaded-Paper evidence for event wiring and positive preserved-mechanics cases"
+      ],
+      "failureMode": "A single-coordinate or blanket-cancellation design can miss indirect and cross-boundary changes, apply exceptions inconsistently, break public or vanilla mechanics, and provide false confidence from deny-only tests."
     }
   ]
 }

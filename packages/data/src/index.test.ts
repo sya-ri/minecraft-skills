@@ -1773,4 +1773,83 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.severity).toBe("error");
     expect(diagnostic?.failIf.join("\n")).toContain("hidden effect");
   });
+
+  it("bundles generic Paper region protection policy guidance", () => {
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const checklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    const checklistStep = checklist?.steps.find(
+      (entry) => entry.id === "design-region-protection-policy",
+    );
+    expect(checklistStep?.evidence.join("\n")).toContain(
+      "actor, source, action, target, cause, boundary, and outcome matrix",
+    );
+
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-region-protection-policy");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "normalize-policy-decision-input",
+        "define-defaults-precedence-and-exceptions",
+        "decide-all-targets-and-boundaries",
+        "separate-policy-from-execution-and-world-operations",
+        "prove-policy-table-and-runtime-paths",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "player-placed fire is documented through BlockPlaceEvent",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain("loaded-Paper evidence");
+    expect(recipe?.finalChecks).toContain("paper-region-protection-policy-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-region-protection-policy-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual([
+      "paper-region-protection-policy",
+      "paper-event-listener",
+    ]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-region-protection-policy-incomplete",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("direct plugin world mutation");
+    expect(scenario?.mustAvoid.join("\n")).toContain("fixed region shape");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-region-protection-policy-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("null actor with denial");
+    expect(guardrail?.rules.join("\n")).toContain("every moved block and its destination");
+    expect(guardrail?.requiredEvidence.join("\n")).toContain("table-driven allow and deny");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; requiredChecks: string[]; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-region-protection-policy-incomplete",
+    );
+    expect(diagnostic?.requiredChecks.join("\n")).toContain(
+      "actor, source, action, target, cause, boundary",
+    );
+    expect(diagnostic?.failIf.join("\n")).toContain("blanket-cancelled");
+    expect(diagnostic?.failIf.join("\n")).toContain("constructed built-in events");
+  });
 });

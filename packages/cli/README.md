@@ -56,6 +56,8 @@ minecraft-skills plugin paper recipe paper-attribute-effect-ownership
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
 minecraft-skills plugin paper plan paper-modelengine-runtime-binding-review 1.21.11
+minecraft-skills plugin paper recipe paper-region-protection-policy
+minecraft-skills plugin paper plan paper-region-protection-policy-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
@@ -71,6 +73,7 @@ minecraft-skills plugin paper guardrail paper-custom-recipe-ownership
 minecraft-skills plugin paper guardrail paper-high-frequency-persistence-safety
 minecraft-skills plugin paper guardrail paper-attribute-effect-ownership-safety
 minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
+minecraft-skills plugin paper guardrail paper-region-protection-policy-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -84,6 +87,7 @@ minecraft-skills plugin paper diagnostic paper-custom-recipe-registration-unsafe
 minecraft-skills plugin paper diagnostic paper-high-frequency-persistence-unsafe
 minecraft-skills plugin paper diagnostic paper-attribute-effect-ownership-unsafe
 minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsafe
+minecraft-skills plugin paper diagnostic paper-region-protection-policy-incomplete
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements
@@ -528,6 +532,13 @@ owned pair generations, input-unavailable pending hit targets, serialized regist
 bounded reconciliation, explicit removal, hand and event-duplication policy, and separate pure,
 loaded-server, and target-client evidence for layout, lifecycle, rendering, and real click
 boundaries.
+
+`plugin paper plan paper-region-protection-policy-review [version]` resolves a version-scoped event
+inventory and an explicit actor, source, action, target, cause, boundary, and outcome policy. It
+defines defaults plus bypass, public, vanilla, and plugin exceptions; evaluates every multi-target
+and cross-boundary effect; rejects blanket environmental cancellation; and requires table-driven
+allow, deny, and preserved-mechanics evidence. Event execution and registration, together with
+direct plugin world-operation lifecycles, stay in their dedicated concerns.
 
 ## Performance Time-Series Analysis
 

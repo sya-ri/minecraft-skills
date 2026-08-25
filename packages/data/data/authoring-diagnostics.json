@@ -1932,6 +1932,88 @@
         "Limit claims to deterministic adapter evidence until the exact loaded server and paired client evidence are complete."
       ],
       "failureMode": "A binding that lacks exact runtime evidence, ordered publication, animation ownership, generation fencing, or loaded-runtime proof can show the wrong entity, play the wrong state, or leak stale models and carriers."
+    },
+    {
+      "id": "paper-region-protection-policy-incomplete",
+      "domains": ["paper-plugin"],
+      "title": "Paper region protection policy is incomplete or overbroad",
+      "severity": "error",
+      "detectWhen": [
+        "a Paper listener allows or cancels a world-affecting action from a region, world, ownership, membership, public, or bypass check",
+        "the same protected target can be reached by players, projectiles, entities, blocks, environmental mechanics, plugins, or an unattributed cause",
+        "an event exposes source and destination, direction, multiple affected blocks or entities, or a proposed state",
+        "protection listeners cancel broad environmental event classes or rely on one event path for several mechanics",
+        "tests assert denials but do not prove intended public, unprotected, vanilla, bypass, or plugin exception behavior"
+      ],
+      "requiredChecks": [
+        "resolve the target Paper version and verify a behavior-to-event inventory against official listener documentation and target-version Javadocs",
+        "normalize actor, source, action, target, cause, boundary, and proposed outcome without inventing indirect attribution",
+        "define the default and precedence for protected, public or unprotected, bypass, vanilla or environmental, plugin-owned, and unknown-cause rows",
+        "enumerate alternate and multi-event paths for each protected behavior, including documented handoffs such as player fire placement using BlockPlaceEvent",
+        "evaluate every affected target plus source-to-target direction for multi-place, piston, explosion, structure, flow, spread, and other applicable target-version paths",
+        "choose whole-event denial or documented per-target filtering explicitly and define whether partial outcomes are valid",
+        "route handler execution and registration semantics to the Paper event-listener concern and direct plugin world mutation to a separate bounded world-operation lifecycle",
+        "run table-driven allow and deny regressions plus loaded target-version event-path and preserved-mechanics checks proportional to the claims"
+      ],
+      "evidence": [
+        "Official Paper event-listener documentation and target-version event Javadocs",
+        "A behavior-to-event coverage inventory and normalized policy matrix",
+        "Explicit default, precedence, exception, unknown-cause, boundary, and partial-outcome rules",
+        "Table-driven policy results and loaded-Paper event-path evidence with positive preserved-mechanics cases"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper recipe",
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper events",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_recipe",
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_events",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringRecipe",
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperEvents",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "the effective policy is only if this target is protected then cancel",
+        "only direct player events are covered while indirect projectiles, entities, blocks, environment, plugins, or unknown causes can reach the same action",
+        "a projectile shooter, igniting entity, priming source, block owner, or player is inferred without documented provenance",
+        "player fire placement is treated as covered only by BlockIgniteEvent despite target-version documentation routing that action through BlockPlaceEvent",
+        "one interaction or precursor event is assumed to authorize every later world-changing event",
+        "a multi-place action, piston, explosion, structure, or other multi-target event is decided from only one origin or target",
+        "flow, spread, movement, or another cross-boundary action checks only its source or only its destination",
+        "outside-to-inside, inside-to-outside, different-policy, or mixed multi-target transitions have no decision",
+        "bypass, public or unprotected, vanilla or environmental, plugin-owned, unknown-cause, default, or conflict precedence is implicit",
+        "environmental events are blanket-cancelled without positive tests for intended vanilla and public or unprotected mechanics",
+        "affected targets are partially filtered without target-version API evidence and an explicit partial-outcome policy",
+        "event priority, cancellation phase, thread context, registration, or teardown is guessed inside the region policy instead of handled by the event-listener concern",
+        "event cancellation is relied upon as the only authorization or atomicity mechanism for direct plugin-originated world mutations",
+        "tests cover only denial, use constructed built-in events as runtime proof, or omit indirect, exception, unknown, boundary, mixed-target, and preserved-mechanics rows"
+      ],
+      "safeResponse": [
+        "List policy actions first, then verify every applicable target-version event path and field while keeping gaps explicit.",
+        "Normalize actor, source, cause, target set, and boundary direction before applying one deterministic policy matrix.",
+        "Make default, precedence, bypass, public, vanilla or environmental, plugin-owned, and unknown decisions explicit without prescribing project-specific rule values.",
+        "Evaluate all affected targets, choose atomic or documented partial behavior, and route listener execution and plugin world operations to their dedicated concerns.",
+        "Add table-driven allow and deny rows plus loaded-Paper event-path and positive preserved-mechanics evidence."
+      ],
+      "failureMode": "An incomplete or overbroad policy can be bypassed through alternate provenance and boundary paths while disabling unrelated mechanics and misreporting event-level tests as complete enforcement."
     }
   ]
 }

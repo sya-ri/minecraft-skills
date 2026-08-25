@@ -913,4 +913,38 @@ describe("MCP resources", () => {
     );
     expect(diagnostic.contents[0]?.text).toContain("old-generation callbacks");
   });
+
+  it("reads Paper region protection policy resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-region-protection-policy.json",
+        "minecraft-skills://data/authoring-scenarios/paper-region-protection-policy-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-region-protection-policy-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-region-protection-policy-incomplete.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-region-protection-policy.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("normalize-policy-decision-input");
+    expect(recipe.contents[0]?.text).toContain("decide-all-targets-and-boundaries");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-region-protection-policy-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-region-protection-policy-incomplete");
+    expect(scenario.contents[0]?.text).toContain("paper-event-listener");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-region-protection-policy-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("every moved block and its destination");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-region-protection-policy-incomplete.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("blanket-cancelled");
+  });
 });
