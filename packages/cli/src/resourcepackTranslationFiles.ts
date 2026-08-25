@@ -1,11 +1,12 @@
 import {
+  type BigIntStats,
   closeSync,
+  constants,
   fstatSync,
   lstatSync,
   openSync,
   readSync,
   realpathSync,
-  type Stats,
 } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import {
@@ -14,7 +15,10 @@ import {
   type ResourcepackTranslationValidationLimits,
 } from "@minecraft-skills/catalog";
 
-type FileIdentity = Pick<Stats, "ctimeMs" | "dev" | "ino" | "mtimeMs" | "size">;
+type FileIdentity = Pick<
+  BigIntStats,
+  "ctimeNs" | "dev" | "ino" | "mode" | "mtimeNs" | "nlink" | "size"
+>;
 
 export function sameResourcepackTranslationFileIdentity(
   left: FileIdentity,
@@ -23,9 +27,11 @@ export function sameResourcepackTranslationFileIdentity(
   return (
     left.dev === right.dev &&
     left.ino === right.ino &&
+    left.mode === right.mode &&
+    left.nlink === right.nlink &&
     left.size === right.size &&
-    left.mtimeMs === right.mtimeMs &&
-    left.ctimeMs === right.ctimeMs
+    left.mtimeNs === right.mtimeNs &&
+    left.ctimeNs === right.ctimeNs
   );
 }
 
@@ -37,40 +43,86 @@ function relativeInside(root: string, target: string): string | null {
   return value.replaceAll("\\", "/");
 }
 
-function inspectRoot(packRoot: string): { lexical: string; real: string } {
+type InspectedRoot = {
+  lexical: string;
+  real: string;
+  snapshot: BigIntStats;
+};
+
+function stableDirectory(path: string, snapshot: BigIntStats): boolean {
+  try {
+    const current = lstatSync(path, { bigint: true });
+    return (
+      current.isDirectory() &&
+      !current.isSymbolicLink() &&
+      sameResourcepackTranslationFileIdentity(snapshot, current)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function inspectRoot(packRoot: string): InspectedRoot {
   try {
     const lexical = resolve(packRoot);
-    const status = lstatSync(lexical);
+    const status = lstatSync(lexical, { bigint: true });
     if (status.isSymbolicLink() || !status.isDirectory()) {
       throw new Error("invalid root");
     }
-    return { lexical, real: realpathSync(lexical) };
+    const real = realpathSync(lexical);
+    if (!stableDirectory(lexical, status) || !stableDirectory(real, status)) {
+      throw new Error("unstable root");
+    }
+    return { lexical, real, snapshot: status };
   } catch {
     throw new Error("resourcepack validate-translations requires a regular pack root directory");
+  }
+}
+
+function requireStableRoot(root: InspectedRoot, label: string): void {
+  if (!stableDirectory(root.lexical, root.snapshot) || !stableDirectory(root.real, root.snapshot)) {
+    throw new Error(`${label} pack root changed while inputs were being read`);
+  }
+}
+
+function stableRegularFile(path: string, snapshot: BigIntStats): boolean {
+  try {
+    const current = lstatSync(path, { bigint: true });
+    return (
+      current.isFile() &&
+      !current.isSymbolicLink() &&
+      sameResourcepackTranslationFileIdentity(snapshot, current)
+    );
+  } catch {
+    return false;
   }
 }
 
 function readTranslationFile(
   inputPath: string,
   inputIndex: number,
-  roots: { lexical: string; real: string },
+  roots: InspectedRoot,
   remainingBytes: number,
   limits: ResourcepackTranslationValidationLimits,
 ): ResourcepackTranslationFile & { bytes: number } {
   const label = `resourcepack validate-translations input ${inputIndex + 1}`;
   let lexicalPath: string;
   let realPath: string;
-  let snapshot: Stats;
+  let snapshot: BigIntStats;
   try {
+    requireStableRoot(roots, label);
     lexicalPath = resolve(inputPath);
     if (!relativeInside(roots.lexical, lexicalPath)) {
       throw new Error("outside root");
     }
-    snapshot = lstatSync(lexicalPath);
+    snapshot = lstatSync(lexicalPath, { bigint: true });
     if (snapshot.isSymbolicLink() || !snapshot.isFile()) {
       throw new Error("unsupported file");
     }
     realPath = realpathSync(lexicalPath);
+    if (!stableRegularFile(lexicalPath, snapshot) || !stableRegularFile(realPath, snapshot)) {
+      throw new Error("unstable file");
+    }
   } catch {
     throw new Error(`${label} must be a regular file inside the pack root`);
   }
@@ -81,34 +133,52 @@ function readTranslationFile(
   if (packPath.length > limits.maxPathLength) {
     throw new Error(`${label} pack-relative path exceeds the configured bound`);
   }
-  if (!Number.isSafeInteger(snapshot.size) || snapshot.size < 0 || snapshot.size > remainingBytes) {
+  if (snapshot.size < 0n || snapshot.size > BigInt(remainingBytes)) {
     throw new Error(`${label} exceeds the remaining translation text byte bound`);
   }
 
   let handle: number;
   try {
-    handle = openSync(realPath, "r");
+    const noFollow = typeof constants.O_NOFOLLOW === "number" ? constants.O_NOFOLLOW : 0;
+    const nonBlock = typeof constants.O_NONBLOCK === "number" ? constants.O_NONBLOCK : 0;
+    handle = openSync(realPath, constants.O_RDONLY | noFollow | nonBlock);
   } catch {
     throw new Error(`${label} could not be opened safely`);
   }
   try {
-    const opened = fstatSync(handle);
-    if (!opened.isFile() || !sameResourcepackTranslationFileIdentity(snapshot, opened)) {
+    const opened = fstatSync(handle, { bigint: true });
+    if (
+      !opened.isFile() ||
+      !sameResourcepackTranslationFileIdentity(snapshot, opened) ||
+      !stableRegularFile(lexicalPath, snapshot) ||
+      !stableRegularFile(realPath, snapshot)
+    ) {
       throw new Error(`${label} changed before it was opened`);
     }
-    const buffer = Buffer.allocUnsafe(snapshot.size);
+    const buffer = Buffer.allocUnsafe(Number(snapshot.size));
     let offset = 0;
     while (offset < buffer.byteLength) {
-      const bytesRead = readSync(handle, buffer, offset, buffer.byteLength - offset, null);
+      const remaining = buffer.byteLength - offset;
+      const bytesRead = readSync(handle, buffer, offset, remaining, offset);
+      if (!Number.isSafeInteger(bytesRead) || bytesRead < 0 || remaining < bytesRead) {
+        throw new Error(`${label} returned an invalid local file read length`);
+      }
       if (bytesRead === 0) {
         break;
       }
       offset += bytesRead;
     }
-    const after = fstatSync(handle);
-    if (offset !== buffer.byteLength || !sameResourcepackTranslationFileIdentity(opened, after)) {
+    const after = fstatSync(handle, { bigint: true });
+    if (
+      offset !== buffer.byteLength ||
+      !after.isFile() ||
+      !sameResourcepackTranslationFileIdentity(opened, after) ||
+      !stableRegularFile(lexicalPath, snapshot) ||
+      !stableRegularFile(realPath, snapshot)
+    ) {
       throw new Error(`${label} changed while it was being read`);
     }
+    requireStableRoot(roots, label);
     let content: string;
     try {
       content = new TextDecoder("utf-8", { fatal: true }).decode(buffer);

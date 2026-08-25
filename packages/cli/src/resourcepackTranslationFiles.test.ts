@@ -86,14 +86,22 @@ describe("readResourcepackTranslationFiles", () => {
   });
 
   it("compares every stable-file snapshot field", () => {
-    const snapshot = { ctimeMs: 1, dev: 2, ino: 3, mtimeMs: 4, size: 5 };
+    const snapshot = {
+      ctimeNs: 1n,
+      dev: 2n,
+      ino: 3n,
+      mode: 4n,
+      mtimeNs: 5n,
+      nlink: 6n,
+      size: 7n,
+    };
 
     expect(sameResourcepackTranslationFileIdentity(snapshot, { ...snapshot })).toBe(true);
-    for (const field of ["ctimeMs", "dev", "ino", "mtimeMs", "size"] as const) {
+    for (const field of ["ctimeNs", "dev", "ino", "mode", "mtimeNs", "nlink", "size"] as const) {
       expect(
         sameResourcepackTranslationFileIdentity(snapshot, {
           ...snapshot,
-          [field]: snapshot[field] + 1,
+          [field]: snapshot[field] + 1n,
         }),
       ).toBe(false);
     }
