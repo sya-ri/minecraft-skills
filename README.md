@@ -13,7 +13,7 @@ The project helps AI check real versioned data before it writes code or pack fil
 
 - Skill folders for datapack, resourcepack, and Paper plugin authoring.
 - CLI/API/MCP lookups for versions, pack formats, commands, registry entries, vanilla paths,
-  JSON/model shapes, Paper API indexes, and Paper events.
+  JSON/model shapes, server.properties validation, Paper API indexes, and Paper events.
 - Authoring guidance for what to verify, what evidence is required, and how to phrase unknowns.
 - Bundled Java 1.13+ data, with cache downloads for heavier generated surfaces.
 
@@ -98,6 +98,7 @@ minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --lo
 minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loader fabric
 minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
+minecraft-skills server validate-properties ./server.properties --version 1.21.11
 ```
 
 For intent-based discovery, translate non-English user wording into concise English canonical
@@ -113,6 +114,13 @@ treats submitted namespaces as closed unless `--allow-merged-namespace-dependenc
 References supplied by another pack or mod, JSON files without version-compatible schema coverage,
 dynamic macro commands, pack overlays, and graph kinds not yet interpreted are reported as
 incomplete rather than guessed.
+
+`server validate-properties` performs an offline, bounded parse using Java Properties line,
+separator, continuation, and escape semantics. It reports duplicate last-wins behavior, a
+conservative set of stable scalar checks, and correlations that can be proven within this file.
+Property values are never returned. Unknown keys, target-version membership, and runtime encoding
+remain explicit coverage gaps, so `validationComplete` stays conservatively false without official
+generated defaults for the requested version.
 
 `resourcepack validate-project` also validates `sounds.json` file/event references and local event
 cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification

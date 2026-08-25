@@ -19,6 +19,7 @@ import {
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
+  defaultServerPropertiesValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -134,6 +135,7 @@ import {
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
+  validateServerProperties,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
 import {
@@ -406,6 +408,25 @@ export const tools: ToolDefinition[] = [
         limit: { type: "number", minimum: 1, maximum: 100, default: 10 },
       },
       required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_server_properties",
+    description:
+      "Conservatively validate one bounded Java Edition server.properties text using Java Properties syntax, duplicate last-wins evidence, a stable value-type subset, and file-local RCON/resource-pack correlations. No filesystem or network access occurs, no property values are returned, unknown keys remain explicit, and target-version key membership/runtime encoding are not claimed.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content: {
+          type: "string",
+          maxLength: defaultServerPropertiesValidationLimits.maxInputBytes,
+          description:
+            "server.properties text. UTF-8 byte size is checked again before validation; values are not returned.",
+        },
+        targetVersion: { type: "string", minLength: 1, maxLength: 64 },
+      },
+      required: ["content"],
       additionalProperties: false,
     },
   },
@@ -2664,6 +2685,29 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.domain === "string" ? { domain: args.domain } : {}),
           ...(typeof args.kind === "string" ? { kind: args.kind as CatalogSearchKind } : {}),
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
+    }
+    if (name === "validate_server_properties") {
+      assertToolArgs(input, args, name, ["content", "targetVersion"]);
+      const content = requiredStringArg(args, name, "content", {
+        maxLength: defaultServerPropertiesValidationLimits.maxInputBytes,
+      });
+      if (
+        defaultServerPropertiesValidationLimits.maxInputBytes < Buffer.byteLength(content, "utf8")
+      ) {
+        throw new Error(
+          `validate_server_properties content must be at most ${defaultServerPropertiesValidationLimits.maxInputBytes} UTF-8 bytes`,
+        );
+      }
+      const targetVersion = optionalStringArg(args, name, "targetVersion", {
+        minLength: 1,
+        maxLength: 64,
+      });
+      return text(
+        validateServerProperties({
+          content,
+          ...(targetVersion ? { targetVersion } : {}),
         }),
       );
     }

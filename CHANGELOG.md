@@ -21,6 +21,10 @@ All notable changes to this project are documented here.
 - Bounded datapack project validation across the catalog API, CLI, and MCP, including portable
   paths, `pack.mcmeta`, version-aware file checks, function/tag/advancement-parent references,
   registry evidence, cycle detection, external-reference uncertainty, and explicit completeness.
+- Bounded offline `server.properties` validation across Catalog, CLI, MCP, and natural-language
+  discovery, with Java Properties parsing, duplicate last-wins evidence, conservative scalar and
+  file-local correlation checks, strict file/UTF-8 preflight, value-free results, and explicit
+  unknown target-version/runtime-encoding coverage.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

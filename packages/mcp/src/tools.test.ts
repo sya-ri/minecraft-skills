@@ -6,6 +6,7 @@ import { deflateSync } from "node:zlib";
 import {
   defaultDatapackProjectValidationLimits,
   defaultResourcepackProjectValidationLimits,
+  defaultServerPropertiesValidationLimits,
   getVersionDetail,
   listDomains,
 } from "@minecraft-skills/catalog";
@@ -211,6 +212,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("search_community_datasets");
     expect(tools.map((tool) => tool.name)).toContain("get_community_dataset");
     expect(tools.map((tool) => tool.name)).toContain("get_rcon_config_status");
+    expect(tools.map((tool) => tool.name)).toContain("validate_server_properties");
     expect(tools.map((tool) => tool.name)).toContain("create_rcon_config");
     expect(tools.map((tool) => tool.name)).not.toContain("run_rcon_command");
     expect(tools.map((tool) => tool.name)).toContain("list_intent_lookups");
@@ -404,6 +406,43 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"name": "minecraft-paper-plugins"');
     expect(result.content[0]?.text).toContain('"path": "skills/minecraft-paper-plugins"');
+  });
+
+  it("calls validate_server_properties without returning values", async () => {
+    const secret = "mcp-private-rcon-value";
+    const result = await callMinecraftSkillsTool("validate_server_properties", {
+      targetVersion: "1.21.11",
+      content: `server-port=25565\nonline-mode=true\nrcon.password=${secret}\n`,
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"targetVersion": "1.21.11"');
+    expect(output).toContain('"validationComplete": false');
+    expect(output).not.toContain(secret);
+  });
+
+  it("bounds validate_server_properties before catalog validation", async () => {
+    const utf8Oversized = await callMinecraftSkillsTool("validate_server_properties", {
+      content: "あ".repeat(Math.floor(defaultServerPropertiesValidationLimits.maxInputBytes / 2)),
+    });
+    const unknownArgument = await callMinecraftSkillsTool("validate_server_properties", {
+      content: "pvp=true",
+      unsafe: true,
+    });
+    const invalidVersion = await callMinecraftSkillsTool("validate_server_properties", {
+      content: "pvp=true",
+      targetVersion: "private version label",
+    });
+
+    expect(utf8Oversized.isError).toBe(true);
+    expect(utf8Oversized.content[0]?.text).toContain("UTF-8 bytes");
+    expect(unknownArgument).toMatchObject({
+      isError: true,
+      content: [{ text: "validate_server_properties received an unknown argument" }],
+    });
+    expect(invalidVersion.isError).toBe(true);
+    expect(invalidVersion.content[0]?.text).toContain("bounded version identifier");
   });
 
   it("calls get_skill", async () => {

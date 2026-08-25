@@ -144,6 +144,7 @@ import {
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
+  validateServerProperties,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -158,6 +159,7 @@ import {
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
+import { readBoundedServerProperties } from "./serverPropertiesFile.js";
 
 type Output = {
   write: (value: string) => void;
@@ -484,6 +486,38 @@ function parseModrinthCompatibilityArgs(args: string[]): {
   return { projects, options };
 }
 
+function parseServerPropertiesArgs(args: string[]): {
+  path: string;
+  targetVersion?: string;
+} {
+  const paths: string[] = [];
+  let targetVersion: string | undefined;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (!argument) continue;
+    if (argument === "--version") {
+      if (targetVersion !== undefined) {
+        throw new Error("server validate-properties --version must not be repeated");
+      }
+      const value = args[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error("server validate-properties --version requires a value");
+      }
+      targetVersion = value;
+      index += 1;
+      continue;
+    }
+    if (argument.startsWith("--")) {
+      throw new Error(`Unknown option: ${argument}`);
+    }
+    paths.push(argument);
+  }
+  if (1 < paths.length) {
+    throw new Error("server validate-properties accepts at most one local server.properties file");
+  }
+  return { path: paths[0] ?? "server.properties", ...(targetVersion ? { targetVersion } : {}) };
+}
+
 function positionalArgs(args: string[]): string[] {
   const positional: string[] = [];
   for (let index = 0; index < args.length; index += 1) {
@@ -705,6 +739,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "modrinth compatibility": "modrinth-compatibility",
     "modrinth get": "modrinth-get",
     "modrinth validate-pack": "modrinth-validate-pack",
+    "server validate-properties": "server-validate-properties",
     "datapack server-reports": "server-reports",
     "datapack schema": "datapack-schema",
     "datapack search-schema": "search-datapack-schema",
@@ -939,6 +974,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "paper-events": "plugin paper events",
   "fabric-toolchain": "fabric toolchain",
   "velocity-toolchain": "velocity toolchain",
+  "server-validate-properties": "server validate-properties",
   paper:
     "plugin paper info, plugin paper api, plugin paper types, plugin paper members, or plugin paper events",
   references: "reference list",
@@ -964,6 +1000,7 @@ const commandGroups = new Set([
   "plugin",
   "fabric",
   "velocity",
+  "server",
   "rcon",
   "skill",
   "reference",
@@ -1063,6 +1100,9 @@ Start here:
       --force is passed.
   minecraft-skills rcon run <command...> [--config path] [--profile name]
       Run one Minecraft RCON command only if the selected profile permissions allow it.
+  minecraft-skills server validate-properties [server.properties] [--version version]
+      Conservatively validate bounded Java Properties syntax, stable value types, duplicates, and
+      file-local RCON/resource-pack correlations without returning property values.
   minecraft-skills source tiers
   minecraft-skills source datasets
       Inspect source tiers and recommended structured community datasets such as PrismarineJS and
@@ -1108,6 +1148,8 @@ Safety notes:
   - Paper Javadocs indexes prove API name presence, not behavior, nullability, overload semantics,
     thread safety, or Folia safety.
   - Paper event search results are candidates until checked against Paper/Bukkit API surfaces.
+  - server.properties validation does not prove target-version key membership, runtime encoding,
+    proxy authentication, or fork-specific behavior; unknown keys remain explicit coverage gaps.
   - Minecraft Wiki pages are human-only background: do not fetch, crawl, summarize, or cite them in
     AI workflows.
 
@@ -1183,6 +1225,7 @@ Grouped commands:
   minecraft-skills modrinth compatibility <project-id-or-slug...> [--game-version version] [--loader loader] [--featured true|false] [--limit 3] [--timeout-ms 10000] [-- <option-like-slug...>]
   minecraft-skills modrinth get <project|project-dependencies|version|version-file|user|categories|loaders|game-versions|project-types|side-types|donation-platforms|report-types|statistics> [identifier] [--algorithm sha1|sha512]
   minecraft-skills modrinth validate-pack <file.mrpack> [--allow-download-host host]... [--max-archive-bytes bytes]
+  minecraft-skills server validate-properties [server.properties] [--version version]
   minecraft-skills minecraft latest|list|show|compare|support|support-matrix|pack-formats|vanilla-inventory|registry-entries|compare-registry-entries
   minecraft-skills minecraft pack-format [version] [datapack|resourcepack]
   minecraft-skills minecraft versions-for-pack-format <datapack|resourcepack> <format> [minor]
@@ -2883,6 +2926,20 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+
+    if (command === "server-validate-properties") {
+      const parsed = parseServerPropertiesArgs(args);
+      const propertyPath = parsed.path;
+      if (!propertyPath.toLowerCase().endsWith(".properties")) {
+        throw new Error("server validate-properties requires a .properties file");
+      }
+      const result = validateServerProperties({
+        content: readBoundedServerProperties(propertyPath),
+        ...(parsed.targetVersion ? { targetVersion: parsed.targetVersion } : {}),
+      });
+      printJson(output, result);
+      return result.valid && result.preflight.accepted ? 0 : 1;
     }
 
     if (command === "modrinth-validate-pack") {

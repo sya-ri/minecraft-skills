@@ -219,6 +219,7 @@ export {
   resolveResourcepackPngAlphaBoundsLimits,
 } from "./resourcepackPngAlpha.js";
 export { vorbisIdentificationPageBytes } from "./resourcepackSound.js";
+export * from "./serverProperties.js";
 export * from "./velocityMeta.js";
 export type {
   AuthoringChecklistData,
@@ -1934,6 +1935,22 @@ function isFabricToolchainDiscoveryQuery(query: string): boolean {
   }
   const hasMinecraftOrFabricContext = /\b(minecraft|fabric)\b/.test(normalized);
   return hasMinecraftOrFabricContext && /\b(yarn|toolchain)\b/.test(normalized);
+}
+
+function isServerPropertiesValidationQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  if (
+    /\bserver properties\b/.test(normalized) &&
+    /\b(check|lint|parse|review|validat(?:e|es|ed|ing|ion|or))\b/.test(normalized)
+  ) {
+    return true;
+  }
+  if (/\bserver[.]properties\b/i.test(query)) return true;
+  const hasPropertyKey =
+    /\b(enable-rcon|online-mode|query[.]port|rcon[.](?:password|port)|resource-pack-sha1|server-port)\b/i.test(
+      query,
+    );
+  return hasPropertyKey && /\b(config|configuration|properties|server)\b/.test(normalized);
 }
 
 function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
@@ -5684,6 +5701,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Resolve the current official velocity-api coordinate, repository, documentation, and applicable Java requirement.",
     );
   }
+  if (!searchDomain && isServerPropertiesValidationQuery(task)) {
+    add(
+      `server validate-properties server.properties --version ${version}`,
+      "Validate bounded Java Properties syntax, duplicate effective values, stable value types, and file-local server property correlations without returning values.",
+    );
+  }
   const migrationTask =
     /\b(migrat(?:e|es|ed|ing|ion)?|upgrad(?:e|es|ed|ing)|port(?:s|ed|ing)?|version)\b/.test(
       lower,
@@ -6309,6 +6332,22 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       score: 100,
       matches: ["Modrinth project compatibility", "common game-version and loader pairs"],
       lookup: "modrinth compatibility <project-id-or-slug> <project-id-or-slug> [more projects]",
+    });
+  }
+
+  if (!options.domain && isServerPropertiesValidationQuery(query)) {
+    addCrossResult(results, {
+      surface: "server-properties-tools",
+      domain: "minecraft",
+      kind: "bounded-validator",
+      title: "Validate a Java Edition server.properties file",
+      score: 250,
+      matches: [
+        "Java Properties syntax",
+        "duplicate last-wins evidence",
+        "RCON and resource-pack correlations",
+      ],
+      lookup: `server validate-properties server.properties --version ${version}`,
     });
   }
 

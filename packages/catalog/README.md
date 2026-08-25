@@ -96,6 +96,7 @@ import {
   validateResourcepackProject,
   validateResourcepackPng,
   validatePlayerSkinLayout,
+  validateServerProperties,
   validateModrinthPack,
   validateModrinthPackArchive,
 } from "@minecraft-skills/catalog";
@@ -317,6 +318,13 @@ const datapackProject = validateDatapackProject({
 // Submitted namespaces are closed by default. Set assumeLocalNamespacesComplete: false only when
 // another pack or mod may merge dependencies into the same namespace; unresolved targets then
 // remain explicit completeness warnings instead of hard missing-reference errors.
+const serverProperties = validateServerProperties({
+  targetVersion: "1.21.11",
+  content: "server-port=25565\nonline-mode=true\n",
+});
+// `serverProperties` never contains property values. Java Properties syntax validation is
+// complete within the published bounds, while exact target-version keys/defaults and the
+// Minecraft runtime reader/encoding remain explicit unknowns.
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
 // Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
 // PNG files may also be supplied as Uint8Array content for bounded structural validation.
@@ -442,6 +450,18 @@ allows exact extra hosts and emits a warning for every non-official URL.
 
 Portable paths are capped at 4,096 characters, URLs at 8,192 characters, downloads at 64 per file,
 and explicit additional hosts at 64 so object-form Catalog/MCP inputs remain bounded too.
+
+`validateServerProperties` is a pure offline validator for one text payload. It follows
+[`java.util.Properties.load(Reader)`](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Properties.html#load(java.io.Reader))
+logical-line, separator, continuation, and escape behavior,
+then checks duplicate last-wins semantics, conservative stable scalar types, and only correlations
+provable within the file. The API caps UTF-8 bytes, physical/logical lines and lengths,
+continuations, entries, decoded key/value lengths, unknown-key evidence, and diagnostics. Limit
+overrides may only lower the published ceilings. No values are retained in the result; passwords,
+seeds, URL credentials/query strings, and token-like values are classified before parsed records
+are retained for duplicate resolution or diagnostics.
+Because no generated target-version default set or runtime reader is bundled, recognized keys do
+not prove version membership and `validationComplete` remains false.
 
 ## Coverage
 

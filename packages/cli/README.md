@@ -117,6 +117,7 @@ minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
+minecraft-skills server validate-properties ./server.properties --version 1.21.11
 ```
 
 For intent-based discovery searches, translate non-English user wording into concise English
@@ -226,6 +227,17 @@ Documentation drift or temporary docs failures become actionable warnings when M
 still usable; missing or malformed Maven metadata fails the command. Candidate ordering is
 deterministic and bounded by `--limit`. Velocity API/server versions are never used to infer
 Minecraft game-version compatibility.
+
+`server validate-properties` requires one regular `.properties` file (default:
+`./server.properties`). It opens with no-follow/nonblocking flags where the host exposes them,
+binds the handle to bigint path identity and timestamps before and after reading, enforces strict
+UTF-8 and the Catalog byte ceiling, and performs no network access. Node does not expose
+openat-style ancestor-relative traversal, so quiesce a tree that a malicious local writer can
+replace concurrently. Output never contains property values. Java Properties syntax, Java-width
+stable scalar checks, duplicate effective values, and file-local RCON/resource-pack correlations
+are reported separately from unknown keys, target-version membership, runtime encoding, proxy
+configuration, and fork behavior. Invalid or preflight-rejected files return exit code 1;
+warning-only files return 0.
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data manifest`, `data cache-dir`, `data cache-list`, `data cache-clean`, and
