@@ -39,6 +39,12 @@ export type CurrentSourceAudit = {
   mismatches: string[];
 };
 
+type CurrentSourceAuditOptions = {
+  checkedAt?: string;
+  fetchJson?: FetchJson;
+  bundled?: CurrentSourceAudit["bundled"];
+};
+
 const mojangManifestUrl = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 const paperProjectUrl = "https://fill.papermc.io/v3/projects/paper";
 
@@ -132,13 +138,22 @@ function supportedPaperReleaseVersions(project: PaperProject): string[] {
     .sort(compareMinecraftVersions);
 }
 
+function loadBundledSources(): CurrentSourceAudit["bundled"] {
+  const catalog = getCatalog();
+  const paper = getPaperPluginData();
+  return {
+    javaLatestRelease: catalog.latest.java,
+    paperLatestVersion: paper.latest.minecraftVersion,
+    paperLatestBuild: paper.latest.build,
+  };
+}
+
 export async function auditCurrentSources(
-  options: { checkedAt?: string; fetchJson?: FetchJson } = {},
+  options: CurrentSourceAuditOptions = {},
 ): Promise<CurrentSourceAudit> {
   const fetchJson = options.fetchJson ?? defaultFetchJson;
   const checkedAt = options.checkedAt ?? new Date().toISOString();
-  const catalog = getCatalog();
-  const paper = getPaperPluginData();
+  const bundled = options.bundled ?? loadBundledSources();
 
   const mojangManifest = await fetchJson(mojangManifestUrl);
   assertMojangManifest(mojangManifest);
@@ -170,30 +185,26 @@ export async function auditCurrentSources(
   }
 
   const mismatches: string[] = [];
-  if (catalog.latest.java !== mojangManifest.latest.release) {
+  if (bundled.javaLatestRelease !== mojangManifest.latest.release) {
     mismatches.push(
-      `bundled Java latest ${catalog.latest.java} differs from Mojang latest release ${mojangManifest.latest.release}`,
+      `bundled Java latest ${bundled.javaLatestRelease} differs from Mojang latest release ${mojangManifest.latest.release}`,
     );
   }
-  if (paper.latest.minecraftVersion !== paperLatestVersion) {
+  if (bundled.paperLatestVersion !== paperLatestVersion) {
     mismatches.push(
-      `bundled Paper latest ${paper.latest.minecraftVersion} differs from PaperMC latest ${paperLatestVersion}`,
+      `bundled Paper latest ${bundled.paperLatestVersion} differs from PaperMC latest ${paperLatestVersion}`,
     );
   }
-  if (paper.latest.build !== paperLatestBuild) {
+  if (bundled.paperLatestBuild !== paperLatestBuild) {
     mismatches.push(
-      `bundled Paper latest build ${paper.latest.build} differs from PaperMC latest build ${paperLatestBuild}`,
+      `bundled Paper latest build ${bundled.paperLatestBuild} differs from PaperMC latest build ${paperLatestBuild}`,
     );
   }
 
   return {
     ok: mismatches.length === 0,
     checkedAt,
-    bundled: {
-      javaLatestRelease: catalog.latest.java,
-      paperLatestVersion: paper.latest.minecraftVersion,
-      paperLatestBuild: paper.latest.build,
-    },
+    bundled,
     current: {
       javaLatestRelease: mojangManifest.latest.release,
       javaLatestSnapshot: mojangManifest.latest.snapshot,
