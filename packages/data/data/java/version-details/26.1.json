@@ -60,7 +60,7 @@
     },
     "paper-plugin": {
       "status": "not-yet-published",
-      "facts": ["paper_supported=false", "paper_latest_supported=26.2", "paper_latest_build=30"],
+      "facts": ["paper_supported=false", "paper_latest_supported=26.2", "paper_latest_build=119"],
       "unknowns": ["paper_api_version", "server_api_changes", "folia_compatibility_notes"]
     }
   },
