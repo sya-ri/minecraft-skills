@@ -50,6 +50,9 @@ All notable changes to this project are documented here.
   responses and timeouts, distinguish profile/key/signature failure outcomes, and expose only
   canonical identity, texture references derived from verified signed metadata, and model evidence
   without downloading PNG data.
+- Bounded `.bbmodel` metadata and exact animation/group name inspection across Catalog, CLI, and
+  MCP, with conservative unknown results for newer, compressed, custom/plugin, unsupported, or
+  incomplete inputs and explicit non-guarantees for runtime, rendering, and ModelEngine behavior.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

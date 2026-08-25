@@ -158,6 +158,7 @@ import {
   type VersionSummaryData,
 } from "./schemas.js";
 
+export * from "./blockbenchProject.js";
 export * from "./fabricMeta.js";
 export * from "./fabricMod.js";
 export * from "./javaClassArchive.js";

@@ -4,6 +4,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   analyzeMinecraftLog,
+  blockbenchProjectInspectionLimits,
   type CatalogSearchKind,
   type CommandComparisonOptions,
   type CommandSearchOptions,
@@ -80,6 +81,7 @@ import {
   getVerifiedJavaPlayerTextures,
   getVersionDetail,
   inferServerAccessListKind,
+  inspectBlockbenchProject,
   inspectResourcepackPngAlphaBounds,
   type JavaPlayerTextureKind,
   listAuthoringChecklists,
@@ -158,6 +160,7 @@ import {
   type RconPermissionPreset,
   runRconCommand,
 } from "@minecraft-skills/rcon";
+import { readBlockbenchProjectFile } from "./blockbenchProjectFile.js";
 import { readBoundedArchiveFile } from "./boundedArchiveFile.js";
 import { readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabricModDirectory.js";
@@ -629,6 +632,69 @@ function positionalArgsWithOptions(
   return positional;
 }
 
+function parseBlockbenchInspectionArgs(args: string[]): {
+  filePath: string;
+  requiredAnimations: string[];
+  requiredGroups: string[];
+  limit: number;
+} {
+  const positionals: string[] = [];
+  const requiredAnimations: string[] = [];
+  const requiredGroups: string[] = [];
+  let limit = 100;
+  let limitSeen = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (!argument) {
+      continue;
+    }
+    if (argument === "--require-animation" || argument === "--require-group") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        throw new Error(`blockbench inspect-project ${argument} requires a value`);
+      }
+      (argument === "--require-animation" ? requiredAnimations : requiredGroups).push(value);
+      index += 1;
+      continue;
+    }
+    if (argument === "--limit") {
+      if (limitSeen) {
+        throw new Error("blockbench inspect-project --limit must not be repeated");
+      }
+      const value = args[index + 1];
+      if (!value || !/^\d+$/u.test(value)) {
+        throw new Error("blockbench inspect-project --limit requires a positive integer");
+      }
+      limit = Number(value);
+      if (
+        !Number.isSafeInteger(limit) ||
+        limit < 1 ||
+        blockbenchProjectInspectionLimits.maxDiagnostics < limit
+      ) {
+        throw new Error(
+          `blockbench inspect-project --limit must be between 1 and ${blockbenchProjectInspectionLimits.maxDiagnostics}`,
+        );
+      }
+      limitSeen = true;
+      index += 1;
+      continue;
+    }
+    if (argument.startsWith("--")) {
+      throw new Error("blockbench inspect-project received an unknown option");
+    }
+    positionals.push(argument);
+  }
+  if (positionals.length !== 1) {
+    throw new Error("blockbench inspect-project requires exactly one local .bbmodel file");
+  }
+  return {
+    filePath: positionals[0] as string,
+    requiredAnimations,
+    requiredGroups,
+    limit,
+  };
+}
+
 function readPackFormatDomain(value: string): "datapack" | "resourcepack" {
   if (value === "datapack" || value === "resourcepack") {
     return value;
@@ -806,6 +872,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "fabric toolchain": "fabric-toolchain",
     "velocity toolchain": "velocity-toolchain",
     "fabric validate-mod": "fabric-validate-mod",
+    "blockbench inspect-project": "blockbench-inspect-project",
     "modrinth search": "modrinth-search",
     "modrinth versions": "modrinth-versions",
     "modrinth compatibility": "modrinth-compatibility",
@@ -1063,6 +1130,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "fabric-validate-mod": "fabric validate-mod",
   "fabric-mods-inventory": "fabric mods inventory",
   "fabric-mods-diff": "fabric mods diff",
+  "blockbench-inspect-project": "blockbench inspect-project",
   paper:
     "plugin paper info, plugin paper api, plugin paper types, plugin paper members, or plugin paper events",
   references: "reference list",
@@ -1091,6 +1159,7 @@ const commandGroups = new Set([
   "fabric",
   "velocity",
   "server",
+  "blockbench",
   "rcon",
   "player-profile",
   "skill",
@@ -1344,6 +1413,7 @@ Grouped commands:
   minecraft-skills fabric mods inventory <directory>
   minecraft-skills fabric mods diff <left-directory> <right-directory>
   minecraft-skills velocity toolchain [--limit 10] [--timeout-ms 5000]
+  minecraft-skills blockbench inspect-project <file.bbmodel> [--require-animation name]... [--require-group name]... [--limit 100]
   minecraft-skills modrinth search <query...> [--version version] [--type type] [--loader loader] [--category category] [--index relevance|downloads|follows|newest|updated] [--offset 0] [--limit 10]
   minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
   minecraft-skills modrinth compatibility <project-id-or-slug...> [--game-version version] [--loader loader] [--featured true|false] [--limit 3] [--timeout-ms 10000] [-- <option-like-slug...>]
@@ -1422,6 +1492,8 @@ Command reference:
                  Compare unique valid mod IDs; differences, ambiguity, or incomplete results exit 1.
   velocity toolchain
                  Resolve the current official velocity-api coordinate, documentation, and applicable Java requirement.
+  blockbench inspect-project
+                 Inspect bounded .bbmodel metadata and exact animation/group names without validating runtime behavior.
   reference list Print generated skill references.
   domain show    Print canonical JSON for an authoring domain.
   source policy  Print source and license policy JSON.
@@ -3097,6 +3169,21 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+    if (command === "blockbench-inspect-project") {
+      const parsedArgs = parseBlockbenchInspectionArgs(args);
+      const result = inspectBlockbenchProject({
+        project: readBlockbenchProjectFile(parsedArgs.filePath),
+        requireAnimations: parsedArgs.requiredAnimations,
+        requireGroups: parsedArgs.requiredGroups,
+        limit: parsedArgs.limit,
+      });
+      printJson(output, result);
+      const requirementsSatisfied = [
+        ...result.requested.animations,
+        ...result.requested.groups,
+      ].every((requirement) => requirement.status === "present");
+      return result.inspectionComplete && requirementsSatisfied ? 0 : 1;
     }
 
     if (command === "modrinth-search") {

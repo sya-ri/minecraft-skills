@@ -1,6 +1,8 @@
 import { types as nodeTypes } from "node:util";
 import {
   analyzeMinecraftLog,
+  type BlockbenchProjectInspectionOptions,
+  blockbenchProjectInspectionLimits,
   type CatalogSearchKind,
   type CommandComparisonOptions,
   type CommandSearchOptions,
@@ -75,6 +77,7 @@ import {
   getVanillaInventory,
   getVerifiedJavaPlayerTextures,
   getVersionDetail,
+  inspectBlockbenchProject,
   inspectResourcepackPngAlphaBounds,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
@@ -1432,6 +1435,49 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["kind", "content"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "inspect_blockbench_project",
+    description:
+      "Inspect bounded raw JSON text or structured .bbmodel data for metadata and exact case-sensitive animation/group names. This is not a complete Blockbench, animation, rendering, plugin-format, or ModelEngine validator.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: {
+          oneOf: [
+            {
+              type: "string",
+              maxLength: blockbenchProjectInspectionLimits.maxProjectCharacters,
+              description:
+                "Raw uncompressed .bbmodel JSON text. <lz> data is reported unsupported.",
+            },
+            {
+              type: "object",
+              description:
+                "Parsed .bbmodel object. Original raw-source duplicate keys cannot be proven.",
+            },
+          ],
+        },
+        requireAnimations: {
+          type: "array",
+          maxItems: blockbenchProjectInspectionLimits.maxRequiredNames,
+          items: { type: "string", maxLength: blockbenchProjectInspectionLimits.maxNameCharacters },
+        },
+        requireGroups: {
+          type: "array",
+          maxItems: blockbenchProjectInspectionLimits.maxRequiredNames,
+          items: { type: "string", maxLength: blockbenchProjectInspectionLimits.maxNameCharacters },
+        },
+        limit: {
+          type: "integer",
+          minimum: 1,
+          maximum: blockbenchProjectInspectionLimits.maxDiagnostics,
+          default: blockbenchProjectInspectionLimits.maxDiagnostics,
+        },
+      },
+      required: ["project"],
       additionalProperties: false,
     },
   },
@@ -3088,6 +3134,25 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
   if (name === "get_verified_java_player_textures") {
     const parsed = readPlayerProfileToolInput(input, "uuid");
     return text(parsed.ok ? await getVerifiedJavaPlayerTextures(parsed.value) : parsed.outcome);
+  }
+  if (name === "inspect_blockbench_project") {
+    try {
+      const result = inspectBlockbenchProject(input as BlockbenchProjectInspectionOptions);
+      return {
+        ...text(result),
+        ...(result.outcome === "invalid-input" ? { isError: true } : {}),
+      };
+    } catch {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "inspect_blockbench_project could not safely inspect the supplied data",
+          },
+        ],
+        isError: true,
+      };
+    }
   }
   try {
     if (name === "validate_velocity_plugin_jar") {

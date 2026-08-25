@@ -125,6 +125,7 @@ aliases or reject Unicode query values.
 - `validate_resourcepack_project`
 - `validate_server_properties`
 - `validate_server_access_list`
+- `inspect_blockbench_project`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`
@@ -242,6 +243,14 @@ An optional 24-character canonical UTC `evaluatedAt` makes ban-expiry classifica
 the effective instant is always returned.
 The tool checks canonical serializer output, not every defaulted or clamped shape accepted by the
 server loader; `valid: false` therefore does not guarantee loader rejection.
+
+`inspect_blockbench_project` accepts bounded raw `.bbmodel` JSON text or a safe structured object,
+plus repeatable exact animation/group requirements. Raw text reports duplicate-key evidence;
+object input reports source uniqueness as unknown. The result contains only bounded metadata and
+names. Newer formats, `<lz>` compression, unknown/custom formats, unsupported shapes, and exceeded
+limits remain indeterminate, so requested absence is `unknown`. A present name does not validate
+animation playback, textures, rendering/export, plugin semantics, ModelEngine compatibility, or
+behavior associated with any group (including one named `seat`).
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,
