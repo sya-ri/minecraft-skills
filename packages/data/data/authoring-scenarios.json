@@ -964,6 +964,73 @@
         "inventing custom recipe matching or lifecycle APIs not verified for the target version"
       ],
       "failureMode": "A plausible recipe implementation can corrupt unrelated registry state, silently apply only part of a reload, accept unintended items, or leave online recipe lists and recipe books stale."
+    },
+    {
+      "id": "paper-display-interaction-contract-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper display and Interaction entity contracts",
+      "userPrompt": "Create or review a clickable Paper in-world surface whose display pose, Interaction hit target, event routing, ownership, refresh, and cleanup remain aligned and bounded.",
+      "useWhen": [
+        "TextDisplay, ItemDisplay, or BlockDisplay entities are paired with Interaction entities",
+        "a hologram, board, label, model, or world-space control has clickable regions",
+        "a visual and its hitbox use separate offsets, pivots, rotations, scales, or configuration defaults",
+        "display-backed controls duplicate, leak, remain after reload, or route clicks to stale logical elements",
+        "billboard, transformation, view range, or interpolation behavior affects a clickable display"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-display-interaction-contract", "paper-event-listener"],
+        "intents": [
+          "prepare-generation",
+          "verify-paper-type-or-member",
+          "discover-paper-event-candidates"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-threading-assumption",
+          "paper-display-interaction-contract-unsafe",
+          "paper-plugin-test-evidence-gap"
+        ],
+        "claimPolicies": [
+          "paper-type-or-member-exists",
+          "paper-event-candidate",
+          "folia-or-thread-safety"
+        ],
+        "factSurfaces": [
+          "paper-builds",
+          "paper-api-index",
+          "paper-api-surface",
+          "paper-event-search"
+        ],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the target Paper version and every Display subtype, Interaction member, lifecycle member, and event are verified before behavior is claimed",
+        "one immutable local-space layout defines anchor, axes, units, facing, subtype origin, transformation order, logical rectangles, and every offset",
+        "each logical element produces its visual and Interaction specifications together from the same layout result",
+        "Display transformation, billboard, display dimensions, view range, and client interpolation remain distinct from Interaction width and height",
+        "ItemDisplay center, BlockDisplay corner, TextDisplay or custom-model pivots, and approach-angle behavior have target-client evidence",
+        "each entity has a stable surface ID, element ID, generation, role, persistence policy, and authoritative owner",
+        "replacement registers pending identities while hit targets remain outside live input space, publishes complete pairs through one serialized transition, rolls back partial creation, retires only stale owned generations, and preserves foreign entities",
+        "right-click event choice, hand, cancellation, eligibility, and duplicate policy map one current Interaction to one logical action",
+        "temporary entities are explicitly removed even in never-unloading chunks and reconciliation is bounded by owned identities or indexed locations",
+        "pure layout, loaded-server lifecycle, and target-client visual or input tests each prove only the boundary they can observe"
+      ],
+      "mustAvoid": [
+        "maintaining independent visual and hitbox coordinate formulas",
+        "treating Display width or height, affine transformation, billboard, or interpolation as proof of Interaction geometry",
+        "guessing TextDisplay or custom-model pivots from ItemDisplay or BlockDisplay behavior",
+        "placing an unregistered or pending Interaction in live input space, publishing half a display and Interaction pair, or leaving a partial replacement generation alive",
+        "identifying owned entities only by type, custom name, proximity, or visible content",
+        "scanning or deleting every Display or Interaction in a world during reconciliation",
+        "relying on setPersistent(false) or chunk unload instead of explicit idempotent removal",
+        "listening to both PlayerInteractEntityEvent and PlayerInteractAtEntityEvent without an explicit duplicate policy",
+        "executing once per hand or accepting clicks from stale, foreign, hidden, or unauthorized Interaction entities",
+        "claiming client-visible alignment, interpolation, or click boundaries from matrices, mocks, or server state alone",
+        "redefining generic scheduler, persistent-data, event-priority, ItemStack identity, or cross-chunk operation guidance inside this geometry and ownership concern"
+      ],
+      "failureMode": "A world-space control can render at one pose while accepting input at another, retain orphaned generations, double-run actions, or remove foreign entities when its visual, hit-target, and ownership specifications diverge."
     }
   ]
 }

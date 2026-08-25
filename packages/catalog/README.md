@@ -160,6 +160,10 @@ const persistentDataPlan = getAuthoringPlan({
   scenario: "paper-persistent-data-contract-review",
   version: "1.21.11",
 });
+const displayInteractionPlan = getAuthoringPlan({
+  scenario: "paper-display-interaction-contract-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -182,6 +186,7 @@ const sessionRecipe = getAuthoringRecipe("paper-player-session-lifecycle");
 const configurationLifecycleRecipe = getAuthoringRecipe("paper-plugin-configuration-lifecycle");
 const bossBarRecipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
 const persistentDataRecipe = getAuthoringRecipe("paper-persistent-data-contract");
+const displayInteractionRecipe = getAuthoringRecipe("paper-display-interaction-contract");
 const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
 const customRecipeRegistrationRecipe = getAuthoringRecipe(
   "paper-custom-recipe-registration",
@@ -204,6 +209,9 @@ const bossBarScenario = getAuthoringScenario("paper-bossbar-audience-lifecycle-r
 const itemStackIdentityScenario = getAuthoringScenario(
   "paper-itemstack-semantic-identity-review",
 );
+const displayInteractionScenario = getAuthoringScenario(
+  "paper-display-interaction-contract-review",
+);
 const testingEvidenceScenario = getAuthoringScenario(
   "paper-plugin-testing-evidence-review",
 );
@@ -220,6 +228,7 @@ const configurationLifecycleGuardrail = getAuthoringGuardrail(
 );
 const bossBarGuardrail = getAuthoringGuardrail("paper-bossbar-audience-lifecycle-safety");
 const persistentDataGuardrail = getAuthoringGuardrail("paper-persistent-data-contract");
+const displayInteractionGuardrail = getAuthoringGuardrail("paper-display-interaction-contract");
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const customRecipeGuardrail = getAuthoringGuardrail("paper-custom-recipe-ownership");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
@@ -239,6 +248,9 @@ const bossBarDiagnostic = getAuthoringDiagnostic("paper-bossbar-audience-lifecyc
 const persistentDataDiagnostic = getAuthoringDiagnostic("paper-persistent-data-contract-unsafe");
 const customRecipeDiagnostic = getAuthoringDiagnostic(
   "paper-custom-recipe-registration-unsafe",
+);
+const displayInteractionDiagnostic = getAuthoringDiagnostic(
+  "paper-display-interaction-contract-unsafe",
 );
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",

@@ -359,6 +359,43 @@
           "failureMode": "Do not approve event code that relies on implicit priority, cancelled-event behavior, MONITOR mutation, assumed thread safety, or unowned dynamic registration."
         },
         {
+          "id": "define-display-interaction-contract",
+          "reason": "Paper Display entities are visual-only and their client-rendered transforms are independent from Interaction entity hit targets, event delivery, and lifecycle ownership.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper events",
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "search_paper_events",
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "searchPaperEvents",
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "One local-space layout emits paired display and Interaction specifications with explicit subtype origins and independent visual versus hit-target fields.",
+            "Stable owned surface and element IDs, generations, roles, input-unavailable pending hit targets, serialized publication, rollback, bounded reconciliation, and explicit removal preserve complete pairs and foreign entities.",
+            "One current owned Interaction maps to one logical action with an explicit hand, event-class, cancellation, eligibility, and duplicate-delivery policy.",
+            "Pure layout, loaded target-version Paper lifecycle, and target-client visual or click evidence cover the separate boundaries being claimed."
+          ],
+          "failureMode": "Do not approve a clickable display whose visual and hitbox geometry have separate sources, whose pair ownership is ambiguous, or whose client alignment and click boundaries were inferred from server state alone."
+        },
+        {
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {

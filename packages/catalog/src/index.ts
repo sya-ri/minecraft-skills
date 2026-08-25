@@ -2087,6 +2087,81 @@ function isPaperInventoryGuiDiscoveryQuery(query: string): boolean {
   return hasInventoryContext && hasInteractionContext && hasCustomContext;
 }
 
+function isPaperDisplayInteractionContractDiscoveryQuery(
+  query: string,
+  domain?: DomainIdData,
+): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasExplicitPaperContext = /\b(paper|bukkit|spigot|paper plugin)\b/.test(normalized);
+  const hasExplicitNonPaperPlatform = /\b(fabric|forge|neoforge|quilt|sponge)\b/.test(normalized);
+  if (hasExplicitNonPaperPlatform && !hasExplicitPaperContext) {
+    return false;
+  }
+  const hasExplicitPackContext =
+    /\b(resource ?pack|data ?pack|asset|blockstate|texture|mcfunction|worldgen)\b/.test(normalized);
+  const hasExcludedUiContext =
+    /\b(inventory ?gui|inventoryclickevent|inventorydragevent|boss ?bar|bossbar|client screen|hud|overlay)\b/.test(
+      normalized,
+    );
+  const hasDisplayContext =
+    /\b(display entit(?:y|ies)|textdisplay|text display|itemdisplay|item display|blockdisplay|block display|hologram|in world (?:ui|control|surface)|world space (?:ui|control|surface))\b/.test(
+      normalized,
+    );
+  const hasInteractionEntityContext =
+    /\b(interaction entit(?:y|ies)|playerinteractentityevent|player interact entity event|playerinteractatentityevent|player interact at entity event)\b/.test(
+      normalized,
+    );
+  const hasExplicitClassPair = hasDisplayContext && hasInteractionEntityContext;
+  if (hasExplicitPackContext && !hasExplicitPaperContext && !hasExplicitClassPair) {
+    return false;
+  }
+  const hasInputGeometryContext =
+    /\b(click|clickable|right click|hit ?box|hit target|interaction target|interact(?:ion|ive)|input)\b/.test(
+      normalized,
+    );
+  const hasContractContext =
+    /\b(align(?:ed|ment)?|anchor|billboard|bound(?:ary|aries|s)?|cleanup|coordinate|duplicate|generation|geometry|interpolat(?:e|ed|es|ing|ion)|layout|leak|lifecycle|offset|origin|owner(?:ship)?|pair|pivot|refresh|reload|remove|replace|rotation|scale|stale|transform(?:ation)?)\b/.test(
+      normalized,
+    );
+  if (hasExcludedUiContext && !hasExplicitClassPair) {
+    return false;
+  }
+  const hasClickableDisplay =
+    hasDisplayContext && hasInputGeometryContext && (hasContractContext || hasExplicitPaperContext);
+  const hasOwnedInteractionTarget =
+    hasInteractionEntityContext &&
+    hasContractContext &&
+    (hasDisplayContext || hasExplicitPaperContext || domain === "paper-plugin");
+  return (
+    (domain === "paper-plugin" || hasExplicitPaperContext || hasExplicitClassPair) &&
+    (hasExplicitClassPair || hasClickableDisplay || hasOwnedInteractionTarget)
+  );
+}
+
+function shouldSuppressPaperDisplayInteractionContractQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasExplicitPaperContext = /\b(paper|bukkit|spigot|paper plugin)\b/.test(normalized);
+  const hasForeignPlatformOrPackContext =
+    /\b(fabric|forge|neoforge|quilt|sponge|resource ?pack|data ?pack|mcfunction|worldgen)\b/.test(
+      normalized,
+    );
+  const hasExcludedUiContext =
+    /\b(inventory ?gui|inventoryclickevent|inventorydragevent|boss ?bar|bossbar|client screen|hud|overlay)\b/.test(
+      normalized,
+    );
+  const hasExplicitClassPair =
+    /\b(display entit(?:y|ies)|textdisplay|text display|itemdisplay|item display|blockdisplay|block display)\b/.test(
+      normalized,
+    ) &&
+    /\b(interaction entit(?:y|ies)|playerinteractentityevent|player interact entity event|playerinteractatentityevent|player interact at entity event)\b/.test(
+      normalized,
+    );
+  return (
+    (!hasExplicitPaperContext && hasForeignPlatformOrPackContext && !hasExplicitClassPair) ||
+    (hasExcludedUiContext && !hasExplicitClassPair)
+  );
+}
+
 function isPaperItemIdentityOrPresentationDiscoveryQuery(query: string): boolean {
   const normalized = normalizeSearchText(query);
   return (
@@ -2386,6 +2461,12 @@ export function searchAuthoringScenarios(
   const tokens = tokenizeScenarioSearch(query);
   const paperItemDeliveryQuery = isPaperItemDeliveryDiscoveryQuery(query);
   const paperInventoryGuiQuery = isPaperInventoryGuiDiscoveryQuery(query);
+  const paperDisplayInteractionContractQuery = isPaperDisplayInteractionContractDiscoveryQuery(
+    query,
+    domain,
+  );
+  const suppressPaperDisplayInteractionContractQuery =
+    shouldSuppressPaperDisplayInteractionContractQuery(query);
   const paperWorldOperationQuery = isPaperWorldOperationSafetyDiscoveryQuery(query);
   const paperItemStackSemanticIdentityQuery = isPaperItemStackSemanticIdentityDiscoveryQuery(
     query,
@@ -2400,6 +2481,12 @@ export function searchAuthoringScenarios(
   const scenarios = listAuthoringScenarios(domain ? { domain } : {});
   const scored = scenarios
     .map((scenario) => {
+      if (
+        suppressPaperDisplayInteractionContractQuery &&
+        scenario.id === "paper-display-interaction-contract-review"
+      ) {
+        return { scenario, score: 0, matches: [] };
+      }
       if (scenario.id === "paper-world-operation-safety-review" && !paperWorldOperationQuery) {
         return { scenario, score: 0, matches: [] };
       }
@@ -2412,6 +2499,8 @@ export function searchAuthoringScenarios(
       let score =
         (paperItemDeliveryQuery && scenario.id === "paper-item-delivery-review") ||
         (paperInventoryGuiQuery && scenario.id === "paper-inventory-gui-interaction-review") ||
+        (paperDisplayInteractionContractQuery &&
+          scenario.id === "paper-display-interaction-contract-review") ||
         (paperWorldOperationQuery && scenario.id === "paper-world-operation-safety-review") ||
         (paperItemStackSemanticIdentityQuery &&
           scenario.id === "paper-itemstack-semantic-identity-review") ||
@@ -5812,6 +5901,10 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   const normalizedTask = normalizeSearchText(task);
   const paperItemDeliveryTask = isPaperItemDeliveryDiscoveryQuery(task);
   const paperInventoryGuiTask = isPaperInventoryGuiDiscoveryQuery(task);
+  const paperDisplayInteractionContractTask = isPaperDisplayInteractionContractDiscoveryQuery(
+    task,
+    options.domain,
+  );
   const paperWorldOperationTask = isPaperWorldOperationSafetyDiscoveryQuery(task);
   const paperItemStackSemanticIdentityTask = isPaperItemStackSemanticIdentityDiscoveryQuery(
     task,
@@ -5834,6 +5927,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     ) ||
     /\bplugin chunk tickets?\b/.test(lower) ||
     (/\bpaper\b/.test(lower) && !hasDatapackContext && !hasResourcepackContext) ||
+    paperDisplayInteractionContractTask ||
     paperItemStackSemanticIdentityTask ||
     paperPersistentDataContractTask;
   const inferredDomains = [
@@ -5898,7 +5992,9 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       ) &&
       (options.domain === "datapack" ||
         explicitDatapackTask ||
-        (!paperInventoryGuiTask && !paperWorldOperationTask))
+        (!paperInventoryGuiTask &&
+          !paperWorldOperationTask &&
+          !paperDisplayInteractionContractTask))
     ) {
       add(
         `datapack find ${JSON.stringify(task)} --version ${version}`,
@@ -5932,7 +6028,10 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       /(resource|asset|model|texture|item|blockstate|sound|font|lang|resource pack)/.test(lower) &&
       (options.domain === "resourcepack" ||
         explicitResourcepackTask ||
-        (!paperItemDeliveryTask && !paperInventoryGuiTask && !paperWorldOperationTask))
+        (!paperItemDeliveryTask &&
+          !paperInventoryGuiTask &&
+          !paperWorldOperationTask &&
+          !paperDisplayInteractionContractTask))
     ) {
       add(
         `resourcepack assets find ${JSON.stringify(task)} --version ${version}`,
@@ -5968,6 +6067,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     if (
       paperItemDeliveryTask ||
       paperInventoryGuiTask ||
+      paperDisplayInteractionContractTask ||
       paperWorldOperationTask ||
       paperItemStackSemanticIdentityTask ||
       paperPersistentDataContractTask ||

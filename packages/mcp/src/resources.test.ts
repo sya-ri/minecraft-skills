@@ -675,6 +675,44 @@ describe("MCP resources", () => {
     expect(diagnostic.contents[0]?.text).toContain("prohibited scheduler Future wait");
   });
 
+  it("reads Paper display interaction contract resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-display-interaction-contract.json",
+        "minecraft-skills://data/authoring-scenarios/paper-display-interaction-contract-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-display-interaction-contract.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-display-interaction-contract-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-display-interaction-contract.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("derive-visuals-and-hit-targets-from-one-layout");
+    expect(recipe.contents[0]?.text).toContain("spuriously in addition to the parent event");
+    expect(recipe.contents[0]?.text).toContain(
+      "Never place an unregistered or pending Interaction",
+    );
+    expect(recipe.contents[0]?.text).not.toContain("jd.papermc.io/paper/1.21.11");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-display-interaction-contract-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-display-interaction-contract-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-display-interaction-contract.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("never-unloading chunk");
+    expect(guardrail.contents[0]?.text).toContain("pending Interaction outside live input space");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-display-interaction-contract-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("foreign Display or Interaction entities");
+  });
+
   it("reads Paper plugin testing evidence resources", () => {
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",

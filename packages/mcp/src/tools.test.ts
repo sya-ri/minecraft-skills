@@ -1469,6 +1469,73 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-scheduled-task-lifecycle"');
   });
 
+  it("calls and routes Paper display interaction contract guidance tools", async () => {
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("define-display-interaction-contract");
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-display-interaction-contract",
+    });
+    expect(recipe.content[0]?.text).toContain("derive-visuals-and-hit-targets-from-one-layout");
+    expect(recipe.content[0]?.text).toContain("spuriously in addition to the parent event");
+    expect(recipe.content[0]?.text).toContain("Never place an unregistered or pending Interaction");
+    expect(recipe.content[0]?.text).not.toContain("jd.papermc.io/paper/1.21.11");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-display-interaction-contract-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-display-interaction-contract-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "ItemDisplay Interaction entity hitbox offset layout",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-display-interaction-contract-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-display-interaction-contract-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-display-interaction-contract"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-event-listener"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-display-interaction-contract-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-display-interaction-contract",
+    });
+    expect(guardrail.content[0]?.text).toContain("never-unloading chunk");
+    expect(guardrail.content[0]?.text).toContain("pending Interaction outside live input space");
+    expect(guardrail.content[0]?.text).toContain("possible extra delivery");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-display-interaction-contract-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("both parent and position-specific");
+    expect(diagnostic.content[0]?.text).toContain("foreign Display or Interaction entities");
+
+    const suggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      task: "align a Paper ItemDisplay and Interaction entity hitbox",
+      version: "1.21.11",
+    });
+    expect(suggestions.content[0]?.text).toContain('"domain": "paper-plugin"');
+    expect(suggestions.content[0]?.text).toContain(
+      '"id": "paper-display-interaction-contract-review"',
+    );
+    expect(suggestions.content[0]?.text).not.toContain("resourcepack assets");
+
+    const customModelSuggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      task: "ItemDisplay custom resource pack model with Interaction entity hitbox offset",
+      version: "1.21.11",
+    });
+    expect(customModelSuggestions.content[0]?.text).toContain("plugin paper search");
+    expect(customModelSuggestions.content[0]?.text).toContain("resourcepack assets find");
+    expect(customModelSuggestions.content[0]?.text).toContain(
+      '"id": "paper-display-interaction-contract-review"',
+    );
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",

@@ -2857,6 +2857,191 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "Custom recipes can overwrite unrelated registry entries, disappear or duplicate across reload, match the wrong items, leave clients stale, or report success after a partial global mutation."
+    },
+    {
+      "id": "paper-display-interaction-contract",
+      "domains": ["paper-plugin"],
+      "title": "Design aligned and owned Paper display interaction surfaces",
+      "when": [
+        "the request pairs TextDisplay, ItemDisplay, or BlockDisplay entities with Interaction entities",
+        "a hologram, world-space control, board, label, or other display-backed surface must be clickable",
+        "the visible content and Interaction hitbox are offset, rotated differently, intermittently clickable, or stale after refresh",
+        "display and hit-target entities can leak, duplicate, or survive a reload with ambiguous ownership",
+        "client-side display interpolation or billboard behavior can diverge from the server-side interaction target"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-display-and-interaction-surfaces",
+          "action": "Resolve the target Paper version and verify every Display subtype, Interaction member, entity lifecycle member, and interaction event actually used against the matching Paper API surface and current official behavior documentation. The official display guide says display entities were added in 1.19.4, marks the page fully accurate from 1.20, describes displays as having no hitbox by default, and distinguishes the centered ItemDisplay model origin from the BlockDisplay corner origin. Treat those statements as version-scoped behavior evidence and treat bundled type/member indexes as name evidence only. The current Display Javadocs describe a visual-only entity, while Interaction is a separate entity that records interactions and exposes its own width, height, and response settings.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper events",
+              "plugin paper fact-surfaces"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "search_paper_events",
+              "list_fact_surfaces"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "searchPaperEvents",
+              "listFactSurfaces"
+            ]
+          },
+          "evidence": [
+            "Target-version matches for Display, the selected TextDisplay, ItemDisplay, or BlockDisplay subtype, Interaction, every transformation or dimension member used, and the selected interaction event",
+            "Official display behavior and origin guidance: https://docs.papermc.io/paper/dev/display-entities/",
+            "Matching target-version Display and Interaction Javadocs selected from https://jd.papermc.io/paper/ rather than a fixed latest-version route",
+            "An explicit list of visual, hit-target, persistence, visibility, scheduler, and event assumptions not established by type/member indexes"
+          ],
+          "stopIfMissing": "Do not invent an older-version Display or Interaction API, infer hitbox geometry from similar method names, or copy latest-version event and transformation behavior into an unresolved target."
+        },
+        {
+          "id": "derive-visuals-and-hit-targets-from-one-layout",
+          "action": "Define one immutable local-space layout contract before spawning entities: surface anchor, horizontal and vertical axes, forward direction, units, logical element rectangles, depth ordering, display subtype and model origin, transformation order, and the conversion from each logical rectangle to both its visual pose and Interaction location, width, and height. Keep Display transformation, billboard, display width or height, view range, and client interpolation distinct from Interaction dimensions; no similarly named Display value proves a clickable bound. Account for ItemDisplay center versus BlockDisplay corner origins, and verify TextDisplay or custom-model pivots in the target client instead of guessing. Derive both entity specifications from the same pure layout result so configuration defaults, runtime overrides, refreshes, and tests cannot apply competing offsets.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper recipe",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_recipe",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "A coordinate contract naming anchor, axes, units, facing, subtype origin, transformation order, and every configurable offset exactly once",
+            "A pure layout model whose element ID produces the display specification and Interaction specification together",
+            "Boundary examples for minimum and maximum element positions, rotations, scales, and hit-target sizes",
+            "Target-client evidence for subtype or resource-pack model pivots and any billboarded or transformed clickable surface"
+          ],
+          "stopIfMissing": "Do not maintain a display-position formula beside an unrelated hitbox-position formula, reuse Display width or height as Interaction bounds without proof, or assume a billboard, affine transform, or custom model also rotates and scales the server interaction target."
+        },
+        {
+          "id": "publish-and-reconcile-owned-entity-pairs",
+          "action": "Give every logical surface and element stable plugin-owned identities, a generation, and explicit display or hit-target roles. Build replacement specifications and a pending registry record before spawning any hit target. Choose and prove a staging mechanism that keeps every pending Interaction outside live input space until its entity identity is registered and the complete generation can be published in one serialized, non-suspending owner-context transition. Never place an unregistered or pending Interaction at a live hit location; if the platform boundary cannot make exposure atomic, keep the previous generation authoritative and the replacement hit targets unavailable until the publication fence can complete. Remove partial creations on failure, then retire only the previous owned generation after the replacement is current. Define whether entities are temporary or durable, how reload or restart rediscovers durable ownership, and how missing, duplicated, mismatched, or foreign entities are handled. The official display guide warns that setPersistent(false) does not remove a temporary display from a chunk that never unloads, so always execute explicit idempotent removal. Keep lookups and reconciliation bounded by owned IDs or indexed locations; do not scan or delete every Display or Interaction in a world, and route storage, scheduler, and cross-chunk mechanics to their dedicated guidance.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "An ownership record for surface ID, element ID, generation, display entity, Interaction entity, persistence policy, and authoritative registry",
+            "A staged create, input-unavailable, register, publish, retire, and rollback transition with no live pending Interaction and idempotent removal of both roles",
+            "A bounded reconciliation table for complete pair, missing display, missing hit target, duplicates, stale generation, malformed ownership, and foreign entity",
+            "Reload, disable, partial-spawn failure, repeated refresh, and never-unloading-chunk tests with balanced created and removed entity counts"
+          ],
+          "stopIfMissing": "Do not delete entities by type, custom name, proximity, or display content; place an unregistered or pending Interaction in live input space; publish half a pair; retain an old generation after replacement; or rely on chunk unload as the cleanup path."
+        },
+        {
+          "id": "route-one-interaction-to-one-logical-element",
+          "action": "Resolve an event's clicked Interaction through the current owned generation to one logical element before running domain actions. Define right-click versus attack scope, intended hand, cancellation policy, permissions, viewer or session eligibility, and exactly-once behavior. Treat PlayerInteractEntityEvent as the parent right-click candidate and PlayerInteractAtEntityEvent as the position-specific candidate, then verify the matching target-version Javadocs for their hand, cancellation, position, and delivery semantics. When the target-version position-specific Javadocs warn that the client can send it spuriously in addition to the parent event, follow their recommendation to use the parent unless the position is required. Choose one verified event path or an explicit deduplication rule rather than executing both. Delegate listener priority, cancellation interoperability, thread context, and deferred side effects to the general Paper event-listener contract.",
+          "tools": {
+            "cli": [
+              "plugin paper events",
+              "plugin paper members",
+              "plugin paper recipe",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "search_paper_events",
+              "search_paper_members",
+              "get_authoring_recipe",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchPaperEvents",
+              "searchPaperMembers",
+              "getAuthoringRecipe",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "The target-version event class, clicked entity accessor, hand accessor, cancellation behavior, and clicked-position accessor only when position is required",
+            "Matching target-version PlayerInteractEntityEvent Javadocs selected from https://jd.papermc.io/paper/",
+            "Matching target-version PlayerInteractAtEntityEvent Javadocs and any duplicate-delivery warning selected from https://jd.papermc.io/paper/",
+            "Tests for main hand, off hand, cancelled event, stale generation, foreign Interaction, repeated event delivery, unauthorized viewer, and missing logical element"
+          ],
+          "stopIfMissing": "Do not execute once per hand, listen to both parent and position-specific events without a duplicate policy, trust any Interaction entity of the right type, or treat a stale entity reference as a current logical element."
+        },
+        {
+          "id": "test-layout-lifecycle-and-client-result",
+          "action": "Test the pure layout first with exact vectors, rectangles, pivots, rotations, and generated pair specifications. Then load the plugin on the target Paper version to verify spawn, registry publication, interaction mapping, replacement, rollback, reload, disable, and bounded cleanup. Use a real target client or captured client state for visible alignment, custom-model pivots, billboard behavior, view range, and interpolation because server entity state cannot prove the rendered pose. Inspect debug hitboxes where applicable and click the visual center and boundaries from representative approach angles. For a moving display, define when the surface is clickable and test that policy instead of assuming client-side interpolation keeps the server Interaction synchronized.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic",
+              "plugin paper output-requirements"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic",
+              "list_output_requirements"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Pure deterministic layout tests covering subtype origins, configuration overrides, boundary positions, transformations, and paired entity specifications",
+            "Loaded target-version Paper tests for complete and partial spawn, current-generation event routing, repeated refresh, reload reconciliation, disable, and foreign-entity preservation",
+            "Target-client screenshots or captured state with visible content and debug hitboxes, plus center, edge, outside, hand, and approach-angle interaction results",
+            "A leak assertion showing bounded registry size and balanced owned Display and Interaction creation or removal across repeated lifecycle transitions"
+          ],
+          "stopIfMissing": "Do not claim visual alignment from pure matrices or server locations alone, claim click correctness from a synthetic event alone, or claim cleanup from one successful disable without partial and repeated lifecycle cases."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-event-candidate",
+        "paper-display-interaction-contract",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A display-backed control can look correct while its independent Interaction target is offset or stale, execute twice, leak generations, or delete another plugin's entities when geometry and ownership are not one explicit contract."
     }
   ]
 }

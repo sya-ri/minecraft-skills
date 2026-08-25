@@ -1630,6 +1630,84 @@
         "Run loaded-server lifecycle and crafting tests before claiming the recipe change works."
       ],
       "failureMode": "Recipe mutation can corrupt shared registry state, silently leave a mixed configuration, craft from unintended ingredients, or diverge between server and online clients."
+    },
+    {
+      "id": "paper-display-interaction-contract-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper display and Interaction contract is misaligned or unowned",
+      "severity": "error",
+      "detectWhen": [
+        "a TextDisplay, ItemDisplay, or BlockDisplay is paired with an Interaction entity",
+        "a display-backed control is visible but its click target is offset, too large, too small, stale, or intermittent",
+        "visual and hit-target positions are computed in separate classes, formulas, configuration defaults, or refresh paths",
+        "display or Interaction entities duplicate, leak, survive reload unexpectedly, or disappear independently",
+        "one right click can trigger through both hands or both PlayerInteractEntityEvent and PlayerInteractAtEntityEvent",
+        "billboard, transformation, custom-model pivot, view range, or interpolation behavior is assumed to change the Interaction hitbox"
+      ],
+      "requiredChecks": [
+        "resolve the target Paper version and verify all Display, Interaction, lifecycle, and event APIs used",
+        "record one anchor, axes, units, facing, subtype origin, transformation order, logical rectangle, and offset source",
+        "derive paired display and Interaction specifications from the same pure layout result",
+        "separate Display rendering dimensions and client interpolation from Interaction width, height, and server location",
+        "verify ItemDisplay, BlockDisplay, TextDisplay, and custom-model pivots used by the implementation with sufficient target-client evidence",
+        "record stable surface and element IDs, generation, role, persistence policy, authoritative registry, and bounded discovery path",
+        "keep pending hit targets outside live input space, register their identities before exposure, and make publication, rollback, replacement, explicit removal, reload reconciliation, and foreign preservation idempotent",
+        "map only a current owned Interaction to a logical element and define hand, event-class, duplicate, cancellation, permission, and viewer policy",
+        "exercise pure geometry boundaries, partial spawn, repeated refresh, stale events, reload, disable, never-unloading chunks, and foreign entities",
+        "capture target-client visual alignment and center, edge, outside, hand, interpolation, and representative approach-angle click results"
+      ],
+      "evidence": [
+        "target-version type/member/event search results and official display and interaction behavior documentation",
+        "a coordinate diagram or table plus pure layout fixtures that emit both entity specifications",
+        "an ownership and generation state machine with bounded reconciliation and balanced create or remove counts",
+        "loaded-server lifecycle or event results and real-client screenshots or captured input evidence"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper events",
+          "plugin paper recipe",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "search_paper_types",
+          "search_paper_members",
+          "search_paper_events",
+          "get_authoring_recipe",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "searchPaperEvents",
+          "getAuthoringRecipe",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "the visual and hit target use independent coordinate or configuration sources",
+        "Display width, height, transform, billboard, view range, or interpolation is treated as an Interaction hitbox contract",
+        "a subtype or custom-model pivot is guessed without target-client evidence",
+        "an unregistered or pending Interaction can receive live input, or a partial pair or stale generation can become authoritative or survive rollback",
+        "ownership depends only on entity type, name, proximity, or visible content",
+        "cleanup scans or removes foreign Display or Interaction entities or depends on chunk unload",
+        "the same input can run once per hand or through both parent and position-specific interaction events",
+        "a stale, foreign, hidden, or unauthorized Interaction can resolve to a current logical action",
+        "server state, matrices, a mock, or a synthetic event is reported as proof of rendered alignment and real click boundaries",
+        "generic scheduler, persistent-data, event-priority, ItemStack identity, or cross-chunk rules are reimplemented without their dedicated guidance"
+      ],
+      "safeResponse": [
+        "Stop publishing the surface and consolidate visual and hit-target geometry into one pure layout result.",
+        "Assign explicit owned identities, roles, and generations, keep pending hit targets input-unavailable, then publish and reconcile complete pairs through a bounded registry.",
+        "Choose one right-click event path, filter the intended hand, and reject stale or foreign targets before side effects.",
+        "Remove temporary owned entities explicitly and preserve every entity whose ownership cannot be proved.",
+        "Add loaded-server lifecycle evidence and target-client visual or click evidence before claiming alignment or cleanup."
+      ],
+      "failureMode": "A misaligned or ambiguously owned display surface can accept clicks in the wrong place, duplicate actions, leak entities, or damage unrelated in-world UI during recovery."
     }
   ]
 }

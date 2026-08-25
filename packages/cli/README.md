@@ -46,6 +46,8 @@ minecraft-skills plugin paper recipe paper-persistent-data-contract
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper recipe paper-custom-recipe-registration
 minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
+minecraft-skills plugin paper recipe paper-display-interaction-contract
+minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
@@ -508,6 +510,12 @@ server evidence for claimed snapshot, update, unload, reload, or restart behavio
 owned-key-only reconciliation, per-key add/remove results and partial recovery, material versus
 `RecipeChoice.ExactChoice` ingredient semantics, shaped/shapeless equal-input collision detection,
 and online-client recipe-list resend versus recipe-book discovery.
+`plugin paper plan paper-display-interaction-contract-review [version]` derives a visual Display and
+its independent Interaction hit target from one local-space layout. It defines subtype origins,
+owned pair generations, input-unavailable pending hit targets, serialized registered publication,
+bounded reconciliation, explicit removal, hand and event-duplication policy, and separate pure,
+loaded-server, and target-client evidence for layout, lifecycle, rendering, and real click
+boundaries.
 
 ## Performance Time-Series Analysis
 

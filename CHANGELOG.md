@@ -121,6 +121,11 @@ All notable changes to this project are documented here.
   custom data, holder lifetime and publication, explicit cross-holder copy, selective replacement
   and removal, failure-safe schema migration, foreign-key preservation, and restart evidence
   without mixing in ItemStack identity or presentation policy.
+- Paper Display and Interaction entity contract guidance across data, Catalog, CLI, MCP, and English
+  discovery, covering shared local-space geometry, separate visual and hit-target semantics, owned
+  pair generations, input-unavailable pending hit targets, serialized registered publication,
+  bounded reconciliation, explicit cleanup, event and hand deduplication, and target-client
+  alignment evidence without duplicating generic lifecycle rules.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.

@@ -1566,6 +1566,92 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-scheduled-task-lifecycle"');
   });
 
+  it("prints and routes Paper display interaction contract guidance", async () => {
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("define-display-interaction-contract");
+
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-display-interaction-contract",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("derive-visuals-and-hit-targets-from-one-layout");
+    expect(recipe.stdout.join("\n")).toContain("spuriously in addition to the parent event");
+    expect(recipe.stdout.join("\n")).toContain(
+      "Never place an unregistered or pending Interaction",
+    );
+    expect(recipe.stdout.join("\n")).not.toContain("jd.papermc.io/paper/1.21.11");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-display-interaction-contract-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-display-interaction-contract-unsafe");
+    expect(scenario.stdout.join("\n")).toContain("persistent-data");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "ItemDisplay Interaction entity hitbox offset layout",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-display-interaction-contract-review"');
+
+    const customModelSuggestions = await capture([
+      "minecraft",
+      "suggest-lookups",
+      "ItemDisplay custom resource pack model with Interaction entity hitbox offset",
+      "--version",
+      "1.21.11",
+    ]);
+    expect(customModelSuggestions.code).toBe(0);
+    expect(customModelSuggestions.stdout.join("\n")).toContain("plugin paper search");
+    expect(customModelSuggestions.stdout.join("\n")).toContain("resourcepack assets find");
+    expect(customModelSuggestions.stdout.join("\n")).toContain(
+      '"id": "paper-display-interaction-contract-review"',
+    );
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-display-interaction-contract-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-display-interaction-contract"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-event-listener"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-display-interaction-contract-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-display-interaction-contract",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("never-unloading chunk");
+    expect(guardrail.stdout.join("\n")).toContain("pending Interaction outside live input space");
+    expect(guardrail.stdout.join("\n")).toContain("possible extra delivery");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-display-interaction-contract-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("both parent and position-specific");
+    expect(diagnostic.stdout.join("\n")).toContain("foreign Display or Interaction entities");
+  });
+
   it("prints Paper plugin testing evidence guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
     expect(recipe.code).toBe(0);
