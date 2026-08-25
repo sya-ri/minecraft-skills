@@ -9,9 +9,9 @@ import {
   defaultMinecraftLogAnalysisLimits,
   defaultMinecraftPerformanceAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
+  defaultResourcepackTranslationValidationLimits,
   defaultServerAccessListValidationLimits,
   defaultServerPropertiesValidationLimits,
-  defaultResourcepackTranslationValidationLimits,
   getVersionDetail,
   listDomains,
 } from "@minecraft-skills/catalog";

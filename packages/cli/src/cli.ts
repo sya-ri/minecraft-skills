@@ -152,11 +152,11 @@ import {
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
+  validateResourcepackTranslations,
   validateServerAccessList,
   validateServerProperties,
   validateVelocityPluginJar,
   velocityPluginJarValidationLimits,
-  validateResourcepackTranslations,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -178,9 +178,9 @@ import {
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
+import { readResourcepackTranslationFiles } from "./resourcepackTranslationFiles.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
-import { readResourcepackTranslationFiles } from "./resourcepackTranslationFiles.js";
 
 type Output = {
   write: (value: string) => void;

@@ -26,9 +26,9 @@ import {
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
+  defaultResourcepackTranslationValidationLimits,
   defaultServerAccessListValidationLimits,
   defaultServerPropertiesValidationLimits,
-  defaultResourcepackTranslationValidationLimits,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -155,11 +155,11 @@ import {
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
+  validateResourcepackTranslations,
   validateServerAccessList,
   validateServerProperties,
   validateVelocityPluginArchiveMetadata,
   velocityPluginJarValidationLimits,
-  validateResourcepackTranslations,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
 import {
