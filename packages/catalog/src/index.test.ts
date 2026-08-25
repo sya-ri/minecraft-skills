@@ -4740,4 +4740,25 @@ describe("catalog", () => {
       "paper-player-session-lifecycle-review",
     );
   });
+
+  it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
+    for (const task of [
+      "analyze this Minecraft server log",
+      "find the deepest Caused by in this Java stack trace",
+      "inspect a Mixin apply crash report",
+    ]) {
+      const result = suggestMinecraftLookups({ version: "1.21.11", task });
+      expect(result.suggestedTools.map((entry) => entry.tool)).toContain(
+        "minecraft analyze-log <log-file>",
+      );
+    }
+
+    const unrelated = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "find a Minecraft item model",
+    });
+    expect(unrelated.suggestedTools.map((entry) => entry.tool)).not.toContain(
+      "minecraft analyze-log <log-file>",
+    );
+  });
 });

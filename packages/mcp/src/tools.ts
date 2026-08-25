@@ -1,5 +1,6 @@
 import { types as nodeTypes } from "node:util";
 import {
+  analyzeMinecraftLog,
   type CatalogSearchKind,
   type CommandComparisonOptions,
   type CommandSearchOptions,
@@ -15,6 +16,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultDatapackProjectValidationLimits,
+  defaultMinecraftLogAnalysisLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
@@ -91,6 +93,7 @@ import {
   listSourceTiers,
   listVersionSupport,
   listVersions,
+  type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
   modrinthCompatibilityLimits,
@@ -1372,6 +1375,99 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "analyze_minecraft_log",
+    description:
+      "Structure a bounded Minecraft Java log, Java stack trace, or crash report into explicit log events, exception and suppressed branches, the last explicit primary cause, crash metadata, platform/version statements, JAR artifacts, and explicitly named mod/plugin IDs. Sensitive values, IP addresses, and absolute paths are redacted before retained output; extracted labels are not blame attribution.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          maxLength: defaultMinecraftLogAnalysisLimits.maxCharacters,
+          description: "UTF-8-decoded log text. Do not send binary log archives.",
+        },
+        limits: {
+          type: "object",
+          properties: {
+            maxInputBytes: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxInputBytes,
+            },
+            maxCharacters: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxCharacters,
+            },
+            maxLines: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxLines,
+            },
+            maxLineCharacters: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxLineCharacters,
+            },
+            maxEvents: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxEvents,
+            },
+            maxExceptionChains: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxExceptionChains,
+            },
+            maxExceptionDepth: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxExceptionDepth,
+            },
+            maxExceptionEntries: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxExceptionEntries,
+            },
+            maxStackFrames: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxStackFrames,
+            },
+            maxPlatforms: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxPlatforms,
+            },
+            maxArtifacts: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxArtifacts,
+            },
+            maxComponents: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxComponents,
+            },
+            maxTextCharacters: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxTextCharacters,
+            },
+            maxRetainedTextCharacters: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxRetainedTextCharacters,
+            },
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["text"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "search_all",
     description: `Search across Minecraft catalog guidance, datapack command/schema/path indexes, resourcepack path/model/asset indexes, and Paper API indexes. ${semanticSearchGuidance}`,
     inputSchema: {
@@ -2518,6 +2614,50 @@ function resourcepackPngAlphaLimitsArg(value: unknown): Partial<ResourcepackPngA
   return limits;
 }
 
+const minecraftLogLimitNames = [
+  "maxInputBytes",
+  "maxCharacters",
+  "maxLines",
+  "maxLineCharacters",
+  "maxEvents",
+  "maxExceptionChains",
+  "maxExceptionDepth",
+  "maxExceptionEntries",
+  "maxStackFrames",
+  "maxPlatforms",
+  "maxArtifacts",
+  "maxComponents",
+  "maxTextCharacters",
+  "maxRetainedTextCharacters",
+] as const satisfies readonly (keyof MinecraftLogAnalysisLimits)[];
+
+function minecraftLogLimitsArg(value: unknown): Partial<MinecraftLogAnalysisLimits> | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("analyze_minecraft_log limits must be an object");
+  }
+  const record = value as Record<string, unknown>;
+  if (Object.keys(record).some((name) => !minecraftLogLimitNames.includes(name as never))) {
+    throw new Error("analyze_minecraft_log limits received an unknown argument");
+  }
+  const limits: Partial<MinecraftLogAnalysisLimits> = {};
+  for (const name of minecraftLogLimitNames) {
+    const parsed = optionalIntegerArg(
+      record,
+      "analyze_minecraft_log limits",
+      name,
+      1,
+      defaultMinecraftLogAnalysisLimits[name],
+    );
+    if (parsed !== undefined) {
+      limits[name] = parsed;
+    }
+  }
+  return limits;
+}
+
 function resourcepackPngAlphaRequirementsArg(
   value: unknown,
 ): ResourcepackPngAlphaBoundsRequirements | undefined {
@@ -2599,6 +2739,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     const args = asRecord(input);
     const edition = typeof args.edition === "string" ? args.edition : "java";
 
+    if (name === "analyze_minecraft_log") {
+      assertToolArgs(input, args, name, ["text", "limits"]);
+      const logText = requiredStringArg(args, name, "text", {
+        maxLength: defaultMinecraftLogAnalysisLimits.maxCharacters,
+      });
+      const limits = minecraftLogLimitsArg(args.limits);
+      return text(
+        analyzeMinecraftLog({
+          text: logText,
+          ...(limits ? { limits } : {}),
+        }),
+      );
+    }
     if (name === "list_domains") {
       return text(listDomains());
     }

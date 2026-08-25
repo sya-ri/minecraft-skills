@@ -105,6 +105,7 @@ aliases or reject Unicode query values.
 - `find_versions_by_pack_format`
 - `compare_versions`
 - `search_all`
+- `analyze_minecraft_log`
 - `get_fabric_toolchain`
 - `resolve_velocity_toolchain`
 - `search_modrinth_projects`
@@ -184,6 +185,15 @@ namespaces are assumed complete by default. Set `assumeLocalNamespacesComplete` 
 another pack or mod may merge resources into the same namespace. Those unresolved dependencies,
 JSON without version-compatible schema coverage, dynamic macro commands, pack overlays, and
 unsupported graph kinds are returned as explicit completeness gaps.
+
+`analyze_minecraft_log` accepts Minecraft Java log, stack-trace, or crash-report text within both a
+2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. Its optional `limits` object can only lower the
+Catalog ceilings for input bytes, characters, lines, line
+length, events, exception chains/depth/entries, stack frames, platforms, artifacts, components,
+per-value text, and aggregate retained text. The result keeps suppressed branches distinct and
+defines `deepestCause` as the last explicit `Caused by` on the primary chain. Credentials, IP
+addresses, absolute paths, terminal controls, and unsafe Unicode are sanitized before parsing or
+retention. Explicit JAR/mod/plugin labels are evidence only and do not assign responsibility.
 
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects

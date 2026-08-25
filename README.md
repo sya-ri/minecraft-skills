@@ -66,6 +66,7 @@ minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
+minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills datapack recipes
 minecraft-skills datapack find execute
@@ -154,6 +155,12 @@ pure logic and owned test doubles from MockBukkit-supported behavior, loaded tar
 evidence, and client-visible checks. The guidance rejects compilation-only runtime claims,
 nondeterministic wall-clock waits, silent stubs for unsupported harness behavior, and conclusions
 that omit exact commands, versions, skipped checks, known baselines, or remaining manual work.
+
+`minecraft analyze-log` structures Minecraft Java logs, Java stack traces, and crash reports before
+diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,
+retains only bounded events/frames/labels, and sanitizes credentials, IP addresses, absolute paths,
+terminal controls, and unsafe Unicode before returning JSON. Referenced JARs and explicitly named
+mods/plugins are evidence labels only, not automatic blame attribution.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

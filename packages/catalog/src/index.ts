@@ -176,6 +176,7 @@ export {
   javaPlayerTextureDownloadLimits,
   javaPlayerTextureSourceEvidence,
 } from "./javaPlayerTexture.js";
+export * from "./minecraftLog.js";
 export {
   type ModrinthCompatibilityFetch,
   type ModrinthCompatibilityFetchResponse,
@@ -5584,6 +5585,16 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     `minecraft search-all ${JSON.stringify(task)} --version ${version}`,
     "Start with a cross-domain search.",
   );
+  if (
+    /\b(crash report|stack ?trace|latest\.log|debug\.log|server log|minecraft log|java exception|caused by|mixin apply)\b/.test(
+      lower,
+    )
+  ) {
+    add(
+      "minecraft analyze-log <log-file>",
+      "Extract bounded events, explicit exception branches, crash metadata, and referenced artifacts before diagnosing the log.",
+    );
+  }
   if (!searchDomain || searchDomain === "datapack") {
     const datapackProjectValidationTask =
       /(validat|verif|check|audit|lint|diagnos|broken|missing|reference|cycle)/.test(lower) &&

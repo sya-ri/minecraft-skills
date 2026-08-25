@@ -84,6 +84,7 @@ minecraft-skills source report paper-plugin 26.2
 minecraft-skills source datasets
 minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
+minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills fabric toolchain 1.21.11
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
@@ -109,6 +110,16 @@ minecraft-skills rcon init --config ./.minecraft-skills/rcon.json --preset reado
 minecraft-skills rcon status --config ./.minecraft-skills/rcon.json
 minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
+
+`minecraft analyze-log <file>` structures a Minecraft Java log, stack trace, or crash report into
+bounded events, exception chains, crash metadata, explicit platform versions, JAR artifacts, and
+explicitly named mods/plugins. It accepts a regular file or symlink target, uses one file handle,
+checks size and timestamps before and after the bounded read, and rejects malformed UTF-8. Analysis
+limits can be lowered with the documented `--max-*` flags but cannot exceed Catalog defaults.
+Credentials, IP addresses, absolute paths, ANSI/OSC controls, unsafe C0/C1 controls, bidi
+overrides, and malformed Unicode are sanitized before parsing or retention. `deepestCause` follows
+only the explicit primary `Caused by` chain; suppressed branches and extracted component labels do
+not establish blame.
 
 The `paper-inventory-gui-interaction-review` scenario routes custom inventory menus through a
 default-deny click-and-drag policy. Its recipe and guardrail explicitly cover top, bottom, and
@@ -508,8 +519,9 @@ The server exposes the same catalog as tools, resources, and prompts. Prompts:
 - `use_minecraft_resourcepacks`
 - `use_minecraft_paper_plugins`
 
-Pack analysis tools include:
+Analysis and pack tools include:
 
+- `analyze_minecraft_log`
 - `classify_pack_files`
 - `get_pack_file_schema`
 - `validate_datapack_json`
@@ -557,6 +569,7 @@ Use `@minecraft-skills/catalog` for validated data access:
 ```ts
 import { readFileSync } from "node:fs";
 import {
+  analyzeMinecraftLog,
   getAuthoringContext,
   getAuthoringDiagnostic,
   getAuthoringPlan,
@@ -586,6 +599,10 @@ import {
 
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
 const velocity = await resolveVelocityToolchain({ limit: 5, timeoutMs: 5000 });
+const logAnalysis = analyzeMinecraftLog({
+  text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
+Caused by: java.lang.IllegalStateException: root`,
+});
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");
 const scenario = getAuthoringScenario("paper-event-listener-review");

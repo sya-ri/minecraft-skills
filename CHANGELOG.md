@@ -25,6 +25,11 @@ All notable changes to this project are documented here.
   discovery, with Java Properties parsing, duplicate last-wins evidence, conservative scalar and
   file-local correlation checks, strict file/UTF-8 preflight, value-free results, and explicit
   unknown target-version/runtime-encoding coverage.
+- Bounded Minecraft Java log and crash-report analysis across Catalog, CLI, and MCP, including
+  structured log events, explicit exception and suppressed branches, last explicit primary
+  causes, crash metadata, platform/version statements, JAR artifacts, and explicitly named
+  mod/plugin IDs. Credentials, IP addresses, absolute paths, terminal controls, and unsafe Unicode
+  are sanitized before retained output, and extracted labels are never presented as blame.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.
