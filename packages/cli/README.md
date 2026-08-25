@@ -58,6 +58,9 @@ minecraft-skills plugin paper recipe paper-death-respawn-handoff
 minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
 minecraft-skills plugin paper recipe paper-scoreboard-ownership-lifecycle
 minecraft-skills plugin paper plan paper-scoreboard-ownership-lifecycle-review 1.21.11
+minecraft-skills plugin paper search-scenarios "Paper Mob Pathfinder stalled unreachable target"
+minecraft-skills plugin paper recipe paper-mob-navigation-ownership
+minecraft-skills plugin paper plan paper-mob-navigation-ownership-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper recipe paper-attribute-effect-ownership
@@ -85,6 +88,7 @@ minecraft-skills plugin paper guardrail paper-region-protection-policy-safety
 minecraft-skills plugin paper guardrail paper-server-backed-paged-ui-safety
 minecraft-skills plugin paper guardrail paper-death-respawn-handoff-safety
 minecraft-skills plugin paper guardrail paper-scoreboard-ownership-lifecycle-safety
+minecraft-skills plugin paper guardrail paper-mob-navigation-ownership-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -102,6 +106,7 @@ minecraft-skills plugin paper diagnostic paper-region-protection-policy-incomple
 minecraft-skills plugin paper diagnostic paper-server-backed-paged-ui-unsafe
 minecraft-skills plugin paper diagnostic paper-death-respawn-handoff-unsafe
 minecraft-skills plugin paper diagnostic paper-scoreboard-ownership-lifecycle-unsafe
+minecraft-skills plugin paper diagnostic paper-mob-navigation-ownership-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements
@@ -532,6 +537,15 @@ respawn outcome separately, and reconciles only plugin-owned temporary state and
 across duplicate callbacks, unavailable worlds, quit, reconnect, reload, and disable. Final event
 cancellation alone never proves ownership: ambiguous competing-listener sequences fail closed and
 downed side effects stay staged until an explicit ownership contract succeeds.
+
+`plugin paper plan paper-mob-navigation-ownership-review [version]` resolves target-version mob and
+Pathfinder semantics into one generation-scoped controller phase. It verifies post-state after
+target and path invocation, treats `moveTo` and `EntityPathfindEvent` as start signals rather than
+arrival, defines arrival and progress tolerances, and bounds synchronous entity-context admission,
+per-pass work, replan intervals, attempts, queues, backoff, and timeouts. Since Paper exposes no
+current-path owner token, an equal destination cannot authorize cleanup: an exclusive coordinator
+or cooperative writer contract is required to stop, clear, or restore; otherwise reload, removal,
+and disable fail closed and preserve unknown vanilla or foreign navigation.
 
 `plugin paper plan paper-plugin-testing-evidence-review [version]` maps runtime claims to pure
 tests, plugin-owned fakes, explicitly supported MockBukkit behavior, a loaded target-version Paper

@@ -874,6 +874,39 @@ describe("MCP resources", () => {
     expect(checklist.contents[0]?.text).toContain("preserve-scoreboard-ownership-lifecycle");
   });
 
+  it("reads Paper mob navigation ownership resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-mob-navigation-ownership.json",
+        "minecraft-skills://data/authoring-scenarios/paper-mob-navigation-ownership-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-mob-navigation-ownership-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-mob-navigation-ownership-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-mob-navigation-ownership.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("classify-path-and-progress-outcomes");
+    expect(recipe.contents[0]?.text).toContain("Paper exposes no plugin owner token");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-mob-navigation-ownership-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-mob-navigation-ownership-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-mob-navigation-ownership-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("no current-path owner token");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-mob-navigation-ownership-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("replanning can happen every tick");
+  });
+
   it("reads Paper plugin testing evidence resources", () => {
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",

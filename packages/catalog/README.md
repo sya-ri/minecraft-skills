@@ -180,6 +180,10 @@ const scoreboardPlan = getAuthoringPlan({
   scenario: "paper-scoreboard-ownership-lifecycle-review",
   version: "1.21.11",
 });
+const mobNavigationPlan = getAuthoringPlan({
+  scenario: "paper-mob-navigation-ownership-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -218,6 +222,7 @@ const displayInteractionRecipe = getAuthoringRecipe("paper-display-interaction-c
 const persistenceRecipe = getAuthoringRecipe("paper-high-frequency-persistence");
 const pagedUiRecipe = getAuthoringRecipe("paper-server-backed-paged-ui");
 const deathRespawnRecipe = getAuthoringRecipe("paper-death-respawn-handoff");
+const mobNavigationRecipe = getAuthoringRecipe("paper-mob-navigation-ownership");
 const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
 const customRecipeRegistrationRecipe = getAuthoringRecipe(
   "paper-custom-recipe-registration",
@@ -252,6 +257,9 @@ const deathRespawnScenario = getAuthoringScenario("paper-death-respawn-handoff-r
 const scoreboardScenario = getAuthoringScenario(
   "paper-scoreboard-ownership-lifecycle-review",
 );
+const mobNavigationScenario = getAuthoringScenario(
+  "paper-mob-navigation-ownership-review",
+);
 const testingEvidenceScenario = getAuthoringScenario(
   "paper-plugin-testing-evidence-review",
 );
@@ -282,6 +290,9 @@ const displayInteractionGuardrail = getAuthoringGuardrail("paper-display-interac
 const persistenceGuardrail = getAuthoringGuardrail("paper-high-frequency-persistence-safety");
 const pagedUiGuardrail = getAuthoringGuardrail("paper-server-backed-paged-ui-safety");
 const deathRespawnGuardrail = getAuthoringGuardrail("paper-death-respawn-handoff-safety");
+const mobNavigationGuardrail = getAuthoringGuardrail(
+  "paper-mob-navigation-ownership-safety",
+);
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const customRecipeGuardrail = getAuthoringGuardrail("paper-custom-recipe-ownership");
 const attributeEffectGuardrail = getAuthoringGuardrail(
@@ -331,6 +342,9 @@ const attributeEffectDiagnostic = getAuthoringDiagnostic(
 const deathRespawnDiagnostic = getAuthoringDiagnostic("paper-death-respawn-handoff-unsafe");
 const scoreboardDiagnostic = getAuthoringDiagnostic(
   "paper-scoreboard-ownership-lifecycle-unsafe",
+);
+const mobNavigationDiagnostic = getAuthoringDiagnostic(
+  "paper-mob-navigation-ownership-unsafe",
 );
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",
