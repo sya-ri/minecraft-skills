@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { lstatSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Worker } from "node:worker_threads";
 import { afterEach, describe, expect, it } from "vitest";
 import { runCli } from "./cli.js";
 import {
@@ -309,7 +308,7 @@ describe("Fabric mods directory inventory", () => {
     expect(deterministicTotal.accountedJarBytes).toBe(alpha.byteLength);
   });
 
-  it("fails closed on a stable-read race and sanitizes filesystem failures", async () => {
+  it("fails closed on a stable-read replacement and sanitizes filesystem failures", () => {
     const root = temporaryRoot();
     const modPath = join(root, "racing.jar");
     const archive = fabricJar("racing", "1.0.0");
@@ -323,37 +322,20 @@ describe("Fabric mods directory inventory", () => {
     ).toThrow("archive changed before it could be read");
     writeFileSync(modPath, archive);
 
-    const stopBuffer = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
-    const stop = new Int32Array(stopBuffer);
-    const worker = new Worker(
-      `
-        const { parentPort, workerData } = require("node:worker_threads");
-        const { utimesSync } = require("node:fs");
-        const stop = new Int32Array(workerData.stopBuffer);
-        let tick = 0;
-        parentPort.postMessage("ready");
-        while (Atomics.load(stop, 0) === 0) {
-          const timestamp = new Date(1700000000000 + (tick % 100000) * 1000);
-          tick += 1;
-          try { utimesSync(workerData.modPath, timestamp, timestamp); } catch {}
-        }
-      `,
-      { eval: true, workerData: { modPath, stopBuffer } },
-    );
-    await new Promise<void>((resolve, reject) => {
-      worker.once("message", () => resolve());
-      worker.once("error", reject);
+    const originalSnapshot = lstatSync(modPath, { bigint: true });
+    const replacementPath = join(root, "replacement.bin");
+    writeFileSync(replacementPath, Buffer.concat([archive, Buffer.from("replacement")]));
+    const replacementSnapshot = lstatSync(replacementPath, { bigint: true });
+    let pathSnapshotCalls = 0;
+    const raced = inventoryFabricModsDirectory(root, {
+      jarFileIoOverrides: {
+        lstat: () => {
+          pathSnapshotCalls += 1;
+          return pathSnapshotCalls === 1 ? originalSnapshot : replacementSnapshot;
+        },
+      },
     });
-
-    let raced = inventoryFabricModsDirectory(root);
-    try {
-      for (let attempt = 0; attempt < 50 && raced.validationComplete; attempt += 1) {
-        raced = inventoryFabricModsDirectory(root);
-      }
-    } finally {
-      Atomics.store(stop, 0, 1);
-      await worker.terminate();
-    }
+    expect(pathSnapshotCalls).toBe(2);
     expect(raced.validationComplete).toBe(false);
     expect(raced.entries).toEqual([
       expect.objectContaining({ fileName: "racing.jar", rejectionCode: "jar-read-failed" }),
