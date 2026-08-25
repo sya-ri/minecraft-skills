@@ -6343,6 +6343,78 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper death and respawn handoff guidance", () => {
+    const recipe = getAuthoringRecipe("paper-death-respawn-handoff");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "verify-target-death-and-respawn-contracts",
+        "model-exclusive-handoff-states",
+        "settle-death-items-and-experience-once",
+        "separate-respawn-decision-from-applied-outcome",
+        "reconcile-owned-state-through-lifecycle",
+      ]),
+    );
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain("items-to-keep");
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "cancel, later uncancel, and later recancel",
+    );
+    expect(recipe.finalChecks).toContain("paper-death-respawn-handoff-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-death-respawn-handoff-safety");
+    expect(guardrail.rules.join("\n")).toContain("PLUGIN_OWNED_DOWNED");
+    expect(guardrail.rules.join("\n")).toContain("preserve it by default");
+    expect(guardrail.rules.join("\n")).toContain("fail closed");
+
+    const diagnostic = getAuthoringDiagnostic("paper-death-respawn-handoff-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("keep-inventory");
+    expect(diagnostic.failIf.join("\n")).toContain("replay settlement");
+    expect(diagnostic.failIf.join("\n")).toContain("cancel to uncancel to recancel");
+
+    const scenario = getAuthoringScenario("paper-death-respawn-handoff-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-death-respawn-handoff"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-death-respawn-handoff-unsafe");
+    expect(scenario.mustAvoid.join("\n")).toContain("fixed fallback world");
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("design-death-respawn-handoff");
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "PlayerDeathEvent respawn keepInventory itemsToKeep unavailable world",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-death-respawn-handoff-review");
+
+    const catalogSearch = searchCatalog({
+      query: "death respawn handoff keep inventory experience",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]?.id).toBe("paper-death-respawn-handoff");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-death-respawn-handoff-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-death-respawn-handoff");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-death-respawn-handoff-unsafe",
+    );
+    expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-event-search");
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "settle Paper death drops and experience before respawn without replay on reconnect",
+      domain: "paper-plugin",
+    });
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-death-respawn-handoff",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-death-respawn-handoff-review",
+    );
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",

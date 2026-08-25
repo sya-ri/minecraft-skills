@@ -725,6 +725,35 @@
         "table-driven allow and deny regressions plus loaded-Paper evidence for event wiring and positive preserved-mechanics cases"
       ],
       "failureMode": "A single-coordinate or blanket-cancellation design can miss indirect and cross-boundary changes, apply exceptions inconsistently, break public or vanilla mechanics, and provide false confidence from deny-only tests."
+    },
+    {
+      "id": "paper-death-respawn-handoff-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper death settlement and respawn handoff owned and idempotent",
+      "rules": [
+        "Verify the target-version death cancellation, revive-health, item, experience, respawn reason, bed or anchor, post-respawn, location, and nullable world-lookup contracts before implementing the handoff.",
+        "Represent VANILLA_DEATH, PLUGIN_OWNED_DOWNED, and RESPAWN_PENDING as mutually exclusive states correlated by a plugin-generated death epoch.",
+        "Distinguish plugin cancellation intent from the later non-mutating observed outcome; final isCancelled cannot distinguish uninterrupted ownership from cancel to uncancel to recancel, so require an explicit cancellation-ownership contract such as a cooperative owner token or reviewed exclusive deployment policy and otherwise fail closed without claiming downed state.",
+        "Stage or defer downed side effects until cancellation ownership is proven; if an owned effect was provisionally applied, compare-and-roll-back only that exact effect when ownership becomes ambiguous.",
+        "Commit one immutable settlement receipt for each uncancelled death epoch and never settle a cancelled downed outcome or replay settlement from a duplicate callback.",
+        "Assign each original item exactly one disposition; an item retained through items-to-keep must be removed from drops, and keep-inventory requires a separate explicit drop decision.",
+        "Treat keep-level, new experience, new level, new total experience, dropped experience, and should-drop-experience as one coherent settlement rather than independent flags.",
+        "Begin destination policy from the server-selected respawn location and preserve it by default; declare explicit precedence before a plugin destination can override bed, respawn anchor, missing-block, or world fallback selection.",
+        "Require a finite plugin location whose world resolves and is loaded at decision time; an invalid, unavailable, or denied plugin candidate leaves the original event destination unchanged.",
+        "Treat event destination mutation as a decision and record the distinct actual outcome only after the target-verified post-respawn reset boundary.",
+        "Consume pending state only for a matching death epoch and target-verified death respawn reason; unrelated portal or plugin respawns must not advance the handoff.",
+        "Track every temporary mutation in an ownership ledger and compare-and-restore only exact plugin-owned state, preserving foreign and vanilla changes.",
+        "Carry the narrow settlement receipt and destination outcome across quit, reconnect, and reload without retaining live Bukkit objects; disable stops admission, performs bounded owned cleanup, and never starts fire-and-forget recovery.",
+        "Test duplicate and out-of-order callbacks, external cancel and uncancel, cancel to uncancel to recancel, competing owners, ambiguous final cancellation, staged side effects, item and experience combinations, invalid and unavailable destinations, bed and anchor precedence, non-death respawns, reconnect, reload, disable, and foreign-state changes.",
+        "Keep generic teleport and chunk loading, region protection, complete player-session ownership, combat balance, and game-specific downed or revive mechanics in separate concerns."
+      ],
+      "requiredEvidence": [
+        "target-version official Paper or Bukkit documentation for every event and member behavior used",
+        "a state-transition table, cancellation-ownership contract, staged-side-effect ledger, item and experience settlement ledger, destination precedence table, and temporary-state ownership ledger",
+        "a durable or otherwise reload-safe handoff receipt with distinct destination decision and applied outcome",
+        "table-driven deterministic tests plus target-version loaded-server evidence for runtime event and respawn semantics"
+      ],
+      "failureMode": "Without exclusive ownership, a coherent settlement tuple, preserved vanilla destination precedence, post-respawn outcome observation, and lifecycle reconciliation, death handling can duplicate or erase state and recover into the wrong world or player state."
     }
   ]
 }

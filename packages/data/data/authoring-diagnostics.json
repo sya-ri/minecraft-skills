@@ -2089,6 +2089,88 @@
         "Add table-driven allow and deny rows plus loaded-Paper event-path and positive preserved-mechanics evidence."
       ],
       "failureMode": "An incomplete or overbroad policy can be bypassed through alternate provenance and boundary paths while disabling unrelated mechanics and misreporting event-level tests as complete enforcement."
+    },
+    {
+      "id": "paper-death-respawn-handoff-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper death settlement or respawn handoff can duplicate, overwrite, or replay state",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code mutates death drops, items-to-keep, keep-inventory, keep-level, or experience fields",
+        "a death event is cancelled to represent plugin-owned downed state",
+        "a plugin selects a respawn location or restores player state around respawn",
+        "death or respawn state survives duplicate callbacks, quit, reconnect, reload, disable, or world unavailability"
+      ],
+      "requiredChecks": [
+        "verify target-version cancellation, revive, death settlement, respawn reason, bed or anchor, post-respawn, location, and world-lookup contracts",
+        "prove VANILLA_DEATH, PLUGIN_OWNED_DOWNED, and RESPAWN_PENDING are mutually exclusive for one death epoch",
+        "distinguish this plugin's cancellation intent from a later observed outcome and from external cancellation through an explicit ownership contract such as a cooperative owner token or reviewed exclusive deployment policy rather than final isCancelled",
+        "stage downed side effects until ownership is proven and compare-and-roll-back exact provisional owned effects on ambiguity",
+        "account for every original item once and reconcile items-to-keep with drops and keep-inventory",
+        "reconcile retained and dropped experience as one tuple and commit one settlement receipt",
+        "start destination selection from the original event location and apply an explicit bed, anchor, missing-block, world, and plugin precedence table",
+        "validate that any plugin destination is finite and its world is present and loaded without guessing a fallback",
+        "separate destination selection from post-respawn observed application and consume only a matching death reason and epoch",
+        "clear or restore only exact plugin-owned temporary state after the target-verified reset boundary",
+        "reconcile pending receipts across duplicate callbacks, quit, reconnect, reload, and disable without replay or live Bukkit object retention",
+        "cover external cancel and uncancel, cancel to uncancel to recancel, competing owners, staged side effects, invalid and unavailable worlds, destination precedence, foreign state, and lifecycle recovery in deterministic and loaded-server tests"
+      ],
+      "evidence": [
+        "A target-version API and behavior evidence record",
+        "Exclusive transition, cancellation ownership, staged side-effect, settlement, destination, and ownership tables",
+        "An idempotent death-epoch receipt with separate decision and applied outcome fields",
+        "Duplicate, invalid-destination, unavailable-world, reconnect, reload, and disable test results"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper events",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper recipe",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "search_paper_events",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_recipe",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "searchPaperEvents",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringRecipe",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "downed, vanilla death, and respawn pending can overlap or are independent booleans",
+        "any cancelled death is treated as plugin-owned, final isCancelled is treated as owner identity, or cancel to uncancel to recancel can be misclassified as uninterrupted plugin cancellation",
+        "downed side effects publish before ownership is proven or ambiguous provisional owned effects have no compare-and-rollback path",
+        "the event is mutated at MONITOR or depends on an unverified listener ordering",
+        "an item can remain in drops while also being retained, deferred, removed, or re-granted",
+        "keep-inventory is assumed to prevent drops or keep-level is assumed to prevent dropped experience",
+        "settlement can execute more than once or no receipt exists before respawn pending begins",
+        "a plugin destination overrides bed, respawn anchor, or world fallback without explicit policy",
+        "a non-finite or unavailable-world location is selected, a fixed fallback world is guessed, or this concern loads chunks or issues a second teleport",
+        "setRespawnLocation is treated as arrival proof or reset-prone state is restored before post-respawn",
+        "a non-death respawn or mismatched epoch consumes the pending death handoff",
+        "cleanup blanket-resets state, overwrites a foreign change, or retains Player, World, or Location in a durable record",
+        "quit, reconnect, reload, disable, a duplicate callback, or partial recovery can replay settlement or leave unowned temporary state",
+        "tests omit external cancel, uncancel, cancel to uncancel to recancel, competing owners, staged side effects, keep/drop combinations, invalid and unavailable destinations, precedence, reconnect, reload, or disable"
+      ],
+      "safeResponse": [
+        "Create one death epoch with an exclusive state and an immutable exactly-once settlement receipt.",
+        "Require an explicit cancellation-ownership contract such as a cooperative owner token or reviewed exclusive deployment policy, otherwise fail closed and do not publish downed side effects.",
+        "Preserve the server-selected respawn location by default and select a verified plugin candidate only through explicit precedence.",
+        "Observe actual post-respawn state separately, then clear or compare-and-restore only plugin-owned temporary mutations.",
+        "Persist or explicitly resolve pending handoffs through a bounded disable path and test every duplicate and unavailable outcome."
+      ],
+      "failureMode": "A non-idempotent or weakly owned handoff can duplicate drops and experience, steal cancellation ownership, replace a valid vanilla destination, restore state too early, or replay recovery after reconnect and reload."
     }
   ]
 }

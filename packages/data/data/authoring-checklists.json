@@ -670,6 +670,41 @@
             "The UI rejects duplicate, reversed, and late responses; explicitly rejects snapshot payload conflicts or applies a monotonic live-version replace rule that repositions or resets repeated IDs when sort fields change; resets or clamps invalid navigation; bounds prefetch and retained state; and tests boundaries, ties, mutations, and stale responses."
           ],
           "failureMode": "Do not approve a list UI that fetches all records and slices or truncates them locally, or that appends responses without generation and cursor validation."
+        },
+        {
+          "id": "design-death-respawn-handoff",
+          "reason": "Death cancellation, drop and experience settlement, respawn selection, post-respawn reset, and reconnect or disable recovery form one ownership-sensitive handoff that can duplicate or overwrite player state when designed independently.",
+          "tools": {
+            "cli": [
+              "plugin paper search-scenarios",
+              "plugin paper plan",
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "search_authoring_scenarios",
+              "get_authoring_plan",
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchAuthoringScenarios",
+              "getAuthoringPlan",
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "VANILLA_DEATH, PLUGIN_OWNED_DOWNED, and RESPAWN_PENDING are mutually exclusive for one death epoch.",
+            "Cancellation ownership is explicit; cancel to uncancel to recancel fails closed, and downed side effects stay staged until ownership is proven.",
+            "Items and experience have one exactly-once settlement receipt before respawn pending begins.",
+            "Respawn destination precedence preserves the server-selected bed, anchor, or world outcome by default and records actual post-respawn application separately.",
+            "Plugin-owned temporary state and pending receipts converge without replay across duplicate callbacks, quit, reconnect, reload, and disable."
+          ],
+          "failureMode": "Do not approve death or respawn handling without target-version event evidence, an exclusive state machine, coherent settlement, explicit destination precedence, and lifecycle recovery tests."
         }
       ]
     }

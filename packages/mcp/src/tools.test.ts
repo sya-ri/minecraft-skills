@@ -1287,6 +1287,49 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("calls Paper death and respawn handoff guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-death-respawn-handoff",
+    });
+    expect(recipe.content[0]?.text).toContain("settle-death-items-and-experience-once");
+    expect(recipe.content[0]?.text).toContain("setRespawnLocation as a selection decision");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-death-respawn-handoff-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-death-respawn-handoff-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "PlayerDeathEvent respawn keepInventory itemsToKeep unavailable world",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-death-respawn-handoff-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-death-respawn-handoff-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-death-respawn-handoff"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-death-respawn-handoff-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-death-respawn-handoff-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("mutually exclusive states");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-death-respawn-handoff-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("replay settlement");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "death respawn handoff keep inventory experience",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-death-respawn-handoff"');
+  });
+
   it("calls Paper high-frequency persistence contention guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-high-frequency-persistence",

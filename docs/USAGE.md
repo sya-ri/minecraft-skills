@@ -108,6 +108,10 @@ minecraft-skills plugin paper search-scenarios "opaque cursor stale response dup
 minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
 minecraft-skills plugin paper guardrail paper-server-backed-paged-ui-safety
 minecraft-skills plugin paper diagnostic paper-server-backed-paged-ui-unsafe
+minecraft-skills plugin paper search-scenarios "PlayerDeathEvent respawn keepInventory itemsToKeep"
+minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
+minecraft-skills plugin paper guardrail paper-death-respawn-handoff-safety
+minecraft-skills plugin paper diagnostic paper-death-respawn-handoff-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -915,6 +919,21 @@ authorization, reopen, reconnect, and data-shrink transitions reset, validate, r
 navigation, while requests, retained rows, retries, and prefetch remain bounded. Inventory click
 safety, rendering geometry, screen-specific design, persistence flushing, and business-specific
 page sizes remain separate concerns.
+
+For Paper player death and respawn ownership, resolve
+`plugin paper plan paper-death-respawn-handoff-review <version>`. The plan first verifies the
+target's death cancellation, revive, item, experience, respawn, location, and world-lookup
+contracts. It makes vanilla death, plugin-owned downed, and respawn pending mutually exclusive for
+one death epoch; reconciles drops, items-to-keep, keep-inventory, retained experience, and dropped
+experience into one settlement receipt; and never replays that receipt during recovery. A final
+cancelled value cannot prove which listener owns the outcome, so downed side effects remain staged
+until a cooperative ownership contract succeeds and ambiguous cancel-to-uncancel-to-recancel flows
+fail closed. Destination selection starts from Paper's server-selected location and preserves bed,
+respawn-anchor, or world fallback behavior by default. It validates any explicit plugin candidate
+and records the actual post-reset outcome separately. Only plugin-owned temporary state may be
+restored or cleared. Duplicate callbacks, invalid or unavailable worlds, quit, reconnect, reload,
+and disable must
+converge without an extra teleport or guessed fallback world.
 
 ## Source Policy
 

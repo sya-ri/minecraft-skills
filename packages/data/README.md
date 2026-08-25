@@ -32,6 +32,10 @@ Redistributable canonical data for Minecraft Skills consumers.
   recovery, and real-adapter contention evidence.
 - Server-backed paged Minecraft UI guidance for bounded source queries, stable cursor ordering,
   explicit page and UI states, generation-fenced responses, mutation recovery, and bounded prefetch.
+- Paper death and respawn handoff guidance for exclusive state ownership, exactly-once item and
+  experience settlement, vanilla-first destination precedence, post-respawn outcome observation,
+  fail-closed cancellation ambiguity, staged downed side effects, and reconnect, reload, or disable
+  recovery without replay.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor
