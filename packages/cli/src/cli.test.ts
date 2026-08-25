@@ -15,7 +15,10 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { deflateSync } from "node:zlib";
-import { getVersionDetail } from "@minecraft-skills/catalog";
+import {
+  defaultServerPropertiesValidationLimits,
+  getVersionDetail,
+} from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 import { classifyDatapackProjectEntry, readDatapackProjectFiles } from "./datapackProjectFiles.js";
@@ -24,6 +27,7 @@ import {
   classifyResourcepackProjectEntry,
   readResourcepackProjectFiles,
 } from "./resourcepackProjectFiles.js";
+import { readBoundedServerProperties } from "./serverPropertiesFile.js";
 
 function crc32(value: Uint8Array): number {
   let crc = 0xffffffff;
@@ -193,6 +197,132 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout).toEqual([
       "minecraft-paper-plugins\tpaper-plugin\tskills/minecraft-paper-plugins\tMinecraft Paper Plugins",
     ]);
+  });
+
+  it("validates a bounded server.properties file without returning values", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-server-properties-cli-"));
+    const propertyPath = join(root, "server.properties");
+    const invalidPath = join(root, "invalid.properties");
+    const bomPath = join(root, "bom.properties");
+    try {
+      writeFileSync(
+        propertyPath,
+        "server-port=25565\nonline-mode=true\nrcon.password=private-rcon-value\n",
+        "utf8",
+      );
+      writeFileSync(invalidPath, "server-port=70000\n", "utf8");
+      writeFileSync(bomPath, Buffer.from("\uFEFFpvp=true\n", "utf8"));
+
+      const result = await capture([
+        "server",
+        "validate-properties",
+        propertyPath,
+        "--version",
+        "1.21.11",
+      ]);
+      const serialized = result.stdout.join("\n");
+      expect(result.code).toBe(0);
+      expect(serialized).toContain('"targetVersion": "1.21.11"');
+      expect(serialized).toContain('"validationComplete": false');
+      expect(serialized).not.toContain("private-rcon-value");
+
+      const invalid = await capture(["server", "validate-properties", invalidPath]);
+      expect(invalid.code).toBe(1);
+      expect(invalid.stdout.join("\n")).toContain("property.port-invalid");
+
+      const bomPrefixed = await capture(["server", "validate-properties", bomPath]);
+      const bomResult = JSON.parse(bomPrefixed.stdout.join("\n")) as {
+        coverage: {
+          recognizedKeyCount: number;
+          unknownKeyCount: number;
+          unknownKeys: Array<{ key: string }>;
+        };
+      };
+      expect(bomPrefixed.code).toBe(0);
+      expect(bomResult.coverage).toMatchObject({
+        recognizedKeyCount: 0,
+        unknownKeyCount: 1,
+        unknownKeys: [{ key: "\uFEFFpvp" }],
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects unsafe server.properties inputs before parsing", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-server-properties-input-"));
+    const invalidUtf8Path = join(root, "invalid-utf8.properties");
+    const oversizedPath = join(root, "oversized.properties");
+    const directoryPath = join(root, "directory.properties");
+    try {
+      writeFileSync(invalidUtf8Path, Buffer.from([0xff]));
+      writeFileSync(
+        oversizedPath,
+        Buffer.alloc(defaultServerPropertiesValidationLimits.maxInputBytes + 1, 0x61),
+      );
+      mkdirSync(directoryPath);
+
+      const invalidUtf8 = await capture(["server", "validate-properties", invalidUtf8Path]);
+      const oversized = await capture(["server", "validate-properties", oversizedPath]);
+      const directory = await capture(["server", "validate-properties", directoryPath]);
+      const unknownOption = await capture([
+        "server",
+        "validate-properties",
+        invalidUtf8Path,
+        "--allow-unsafe",
+      ]);
+      const repeatedVersion = await capture([
+        "server",
+        "validate-properties",
+        invalidUtf8Path,
+        "--version",
+        "1.21.11",
+        "--version",
+        "26.2",
+      ]);
+      const unsupportedEdition = await capture([
+        "server",
+        "validate-properties",
+        invalidUtf8Path,
+        "--edition",
+        "java",
+      ]);
+
+      expect(invalidUtf8).toMatchObject({
+        code: 1,
+        stdout: [],
+        stderr: ["server validate-properties requires strict UTF-8 input"],
+      });
+      expect(oversized.code).toBe(1);
+      expect(oversized.stderr.join("\n")).toContain("refuses files larger than");
+      expect(directory.code).toBe(1);
+      expect(directory.stderr.join("\n")).toContain("regular, non-symlink local file");
+      expect(unknownOption.stderr).toEqual(["Unknown option: --allow-unsafe"]);
+      expect(repeatedVersion.stderr).toEqual([
+        "server validate-properties --version must not be repeated",
+      ]);
+      expect(unsupportedEdition.stderr).toEqual(["Unknown option: --edition"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("binds server.properties reads to the captured regular-file identity", () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-server-properties-identity-"));
+    const expectedPath = join(root, "expected.properties");
+    const replacementPath = join(root, "replacement.properties");
+    writeFileSync(expectedPath, "pvp=true\n", "utf8");
+    writeFileSync(replacementPath, "pvp=false", "utf8");
+
+    try {
+      expect(() =>
+        readBoundedServerProperties(expectedPath, {
+          open: () => openSync(replacementPath, "r"),
+        }),
+      ).toThrow("file identity changed before it could be read");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("prints packaged skill payloads", async () => {

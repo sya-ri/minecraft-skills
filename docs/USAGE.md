@@ -93,6 +93,7 @@ minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
+minecraft-skills server validate-properties ./server.properties --version 1.21.11
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -378,6 +379,16 @@ minimum only when the official FAQ range applies to the resolved API major. Docu
 reported without silently replacing Maven's `latest` value. Velocity API and server versions do
 not prove Minecraft protocol, client, or backend-server compatibility, so no game-version mapping
 is inferred.
+
+`server validate-properties` reads a regular file once with no-follow/nonblocking flags where
+available plus bigint path/handle identity and timestamp checks, rejects non-UTF-8 or oversized
+input, and does not use the network. Node does not expose openat-style ancestor-relative traversal;
+quiesce a tree that a malicious local writer can replace concurrently. Validation follows Java
+Properties natural/logical line, separator, continuation, and escape semantics; it then checks
+duplicates, conservative Java-width stable scalar types, and only RCON/resource-pack correlations
+provable inside the same file. No property values are returned. Unknown keys, target-version
+membership, the server's runtime reader/encoding, proxy authentication, and fork-specific behavior
+remain explicit gaps, so `validationComplete` is false without official generated defaults.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and

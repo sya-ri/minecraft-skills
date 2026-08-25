@@ -119,6 +119,7 @@ aliases or reject Unicode query values.
 - `validate_resourcepack_png`
 - `validate_datapack_project`
 - `validate_resourcepack_project`
+- `validate_server_properties`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`
@@ -196,6 +197,13 @@ reports applied/exceeded limits, processed files, completeness (including unveri
 references), and omitted diagnostic counts. `limits.maxBinaryContentBytes` may lower the project
 aggregate before any Base64 payload is decoded, while `pngLimits` lowers PNG-specific byte,
 dimension, pixel, and chunk caps; neither can raise the conservative defaults.
+
+`validate_server_properties` accepts one bounded text payload and an optional target-version label.
+Its schema caps characters and runtime preflight separately caps UTF-8 bytes before Catalog work.
+It performs no filesystem or network access and never returns property values. Results distinguish
+Java Properties syntax evidence, a conservative stable key/value subset, unknown keys, and
+unverified target-version/runtime-encoding coverage; therefore exact version support is never
+inferred from the caller's label.
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,

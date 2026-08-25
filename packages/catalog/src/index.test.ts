@@ -4201,6 +4201,56 @@ describe("catalog", () => {
     expect(contextualYarn.results.some((entry) => entry.surface === "fabric-meta")).toBe(true);
   });
 
+  it("discovers bounded server.properties validation without domain false positives", () => {
+    const search = searchAll({
+      version: "1.21.11",
+      query: "validate this server.properties file",
+    });
+    expect(search.results[0]).toMatchObject({
+      surface: "server-properties-tools",
+      kind: "bounded-validator",
+      lookup: "server validate-properties server.properties --version 1.21.11",
+    });
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "check enable-rcon in the server configuration",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      "server validate-properties server.properties --version 1.21.11",
+    );
+
+    const scoped = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "validate server properties",
+      domain: "paper-plugin",
+    });
+    expect(
+      scoped.suggestedTools.some((entry) => entry.tool.startsWith("server validate-properties")),
+    ).toBe(false);
+
+    const unrelated = searchAll({
+      version: "1.21.11",
+      query: "inspect Java object properties",
+    });
+    expect(unrelated.results.some((entry) => entry.surface === "server-properties-tools")).toBe(
+      false,
+    );
+
+    for (const query of ["server properties validation", "server properties validator"]) {
+      expect(
+        searchAll({ version: "1.21.11", query }).results.some(
+          (entry) => entry.surface === "server-properties-tools",
+        ),
+      ).toBe(true);
+      expect(
+        suggestMinecraftLookups({ version: "1.21.11", task: query }).suggestedTools.some((entry) =>
+          entry.tool.startsWith("server validate-properties"),
+        ),
+      ).toBe(true);
+    }
+  });
+
   it("does not route Fabric API-only or general Yarn package-manager queries", () => {
     for (const query of [
       "Which Fabric API version should I use?",
