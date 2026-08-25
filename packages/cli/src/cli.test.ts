@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { deflateSync } from "node:zlib";
 import {
+  defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultServerPropertiesValidationLimits,
   getVersionDetail,
@@ -23,6 +24,7 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 import { classifyDatapackProjectEntry, readDatapackProjectFiles } from "./datapackProjectFiles.js";
+import { readFabricModJarFile } from "./fabricModJarFile.js";
 import { readFilePrefix } from "./filePrefix.js";
 import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
 import {
@@ -37,6 +39,8 @@ function fakeBigIntStats(kind: FakeFileKind, identity: bigint, size = 0n): BigIn
   return {
     dev: 1n,
     ino: identity,
+    mode: 0o100644n,
+    nlink: 1n,
     size,
     ctimeNs: identity * 10n,
     mtimeNs: identity * 10n,
@@ -1362,6 +1366,155 @@ describe("minecraft-skills CLI", () => {
 
     await capture(["modrinth", "get", "game-versions"]);
     expect(fetchMock.mock.calls[1]?.[0]).toBe("https://api.modrinth.com/v2/tag/game_version");
+  });
+
+  it("validates a local Fabric mod JAR with bounded regular-file reads", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-fabric-mod-cli-"));
+    const modPath = join(root, "example.jar");
+    const metadata = JSON.stringify({
+      schemaVersion: 1,
+      id: "example_mod",
+      version: "1.0.0",
+      name: "Example Mod",
+    });
+    try {
+      writeFileSync(modPath, createStoredZip({ "fabric.mod.json": metadata }));
+      const result = await capture(["fabric", "validate-mod", modPath]);
+      const output = result.stdout.join("\n");
+      expect(result.code).toBe(0);
+      expect(result.stderr).toEqual([]);
+      expect(output).toContain('"valid": true');
+      expect(output).toContain('"validationStrength": "binary"');
+      expect(output).toContain('"schema": "fabric.mod.json-v1-structural"');
+
+      const wrongExtension = join(root, "example.zip");
+      writeFileSync(wrongExtension, createStoredZip({ "fabric.mod.json": metadata }));
+      const extensionResult = await capture(["fabric", "validate-mod", wrongExtension]);
+      expect(extensionResult.code).toBe(1);
+      expect(extensionResult.stderr.join("\n")).toContain(".jar extension");
+
+      const directory = join(root, "directory.jar");
+      mkdirSync(directory);
+      const directoryResult = await capture(["fabric", "validate-mod", directory]);
+      expect(directoryResult.code).toBe(1);
+      expect(directoryResult.stderr.join("\n")).toContain("regular local .jar file");
+
+      const overFileLimit = await capture([
+        "fabric",
+        "validate-mod",
+        modPath,
+        "--max-archive-bytes",
+        "1",
+      ]);
+      expect(overFileLimit.code).toBe(1);
+      expect(overFileLimit.stderr.join("\n")).toContain("larger than 1 bytes");
+
+      const raisedHardLimit = await capture([
+        "fabric",
+        "validate-mod",
+        modPath,
+        "--max-archive-bytes",
+        String(defaultFabricModValidationLimits.maxArchiveBytes + 1),
+      ]);
+      expect(raisedHardLimit.code).toBe(1);
+      expect(raisedHardLimit.stderr.join("\n")).toContain(
+        `must be between 1 and ${defaultFabricModValidationLimits.maxArchiveBytes}`,
+      );
+
+      const unknownOption = await capture(["fabric", "validate-mod", modPath, "--binary"]);
+      expect(unknownOption.code).toBe(1);
+      expect(unknownOption.stderr).toEqual(["Unknown option: --binary"]);
+
+      writeFileSync(
+        modPath,
+        createStoredZip({
+          "fabric.mod.json": JSON.stringify({
+            schemaVersion: 2,
+            id: "example_mod",
+            version: "1.0.0",
+          }),
+        }),
+      );
+      const unsupportedSchema = await capture(["fabric", "validate-mod", modPath]);
+      expect(unsupportedSchema.code).toBe(1);
+      expect(unsupportedSchema.stdout.join("\n")).toContain(
+        '"code": "metadata.unsupported-schema-version"',
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects Fabric JAR special files before attempting to open them", () => {
+    for (const kind of ["symlink", "fifo", "device"] as const) {
+      const open = vi.fn(() => 7);
+      expect(() =>
+        readFabricModJarFile("special.jar", 1_024, {
+          lstat: () => fakeBigIntStats(kind, 1n),
+          open,
+        }),
+      ).toThrow("requires a regular local .jar file");
+      expect(open).not.toHaveBeenCalled();
+    }
+  });
+
+  it("opens a preclassified Fabric JAR with nonblocking no-follow flags", () => {
+    const contents = Buffer.from("jar", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const open = vi.fn(() => 7);
+    const close = vi.fn();
+
+    const result = readFabricModJarFile("example.jar", 1_024, {
+      lstat: () => expected,
+      open,
+      fstat: () => expected,
+      read: (_handle, buffer, offset, length) => {
+        contents.copy(buffer, offset, 0, length);
+        return length;
+      },
+      close,
+      openFlags: { readonly: 1, noFollow: 2, nonBlock: 4 },
+    });
+
+    expect(result).toEqual(contents);
+    expect(open).toHaveBeenCalledWith("example.jar", 7);
+    expect(close).toHaveBeenCalledWith(7);
+  });
+
+  it("rejects a Fabric JAR path replaced before or during its read", () => {
+    const contents = Buffer.from("jar", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const replacement = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    const special = fakeBigIntStats("fifo", 3n);
+    const openedReplacement = vi.fn(() => 7);
+
+    expect(() =>
+      readFabricModJarFile("example.jar", 1_024, {
+        lstat: () => expected,
+        open: openedReplacement,
+        fstat: () => special,
+        close: () => undefined,
+        openFlags: { readonly: 1, noFollow: 2, nonBlock: 4 },
+      }),
+    ).toThrow("changed before it could be read");
+    expect(openedReplacement).toHaveBeenCalledWith("example.jar", 7);
+
+    let pathChecks = 0;
+    expect(() =>
+      readFabricModJarFile("example.jar", 1_024, {
+        lstat: () => {
+          pathChecks += 1;
+          return pathChecks < 3 ? expected : replacement;
+        },
+        open: () => 7,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length) => {
+          contents.copy(buffer, offset, 0, length);
+          return length;
+        },
+        close: () => undefined,
+      }),
+    ).toThrow("changed while it was being read");
   });
 
   it("validates a local Modrinth pack archive without network access", async () => {
@@ -3143,6 +3296,7 @@ describe("minecraft-skills CLI", () => {
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");
+    expect(output).toContain("fabric validate-mod <file.jar>");
     expect(output).toContain("docs/USAGE.md");
   });
 

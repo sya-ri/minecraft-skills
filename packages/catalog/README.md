@@ -94,6 +94,8 @@ import {
   suggestMinecraftLookups,
   inspectResourcepackPngAlphaBounds,
   validateDatapackProject,
+  validateFabricMod,
+  validateFabricModJar,
   validateResourcepackProject,
   validateResourcepackPng,
   validatePlayerSkinLayout,
@@ -205,6 +207,17 @@ const fabricToolchain = await getFabricToolchainCompatibility({
   limit: 10,
 });
 const velocityToolchain = await resolveVelocityToolchain({ limit: 10, timeoutMs: 5000 });
+const fabricMetadata = validateFabricMod({
+  metadata: {
+    schemaVersion: 1,
+    id: "example_mod",
+    version: "1.0.0",
+  },
+  archiveEntries: [{ path: "fabric.mod.json" }],
+});
+// Supply bytes from a bounded local-file reader owned by the caller.
+declare const localJarBytes: Uint8Array;
+const fabricJar = validateFabricModJar(localJarBytes);
 const modrinthProjects = await searchModrinthProjects({
   query: "voice chat",
   version: "1.21.11",
@@ -439,6 +452,13 @@ platform/version and mod/plugin statements, and never infers ownership from Java
 All limits may be lowered but not raised. Credentials, IP addresses, absolute paths, ANSI/OSC and
 unsafe Unicode controls are sanitized before values are retained or deduplicated; no raw input
 line is returned.
+
+`validateFabricMod` checks bounded structural rules for current `fabric.mod.json` schema v1 data.
+Without `archiveEntries` it proves metadata structure only; caller-supplied entries additionally
+check archive paths and referenced-file presence. `validateFabricModJar` adds bounded inspection of
+the actual ZIP bytes and reports binary evidence. Neither API validates dependency predicates or
+satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR
+metadata, or icon pixels.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function

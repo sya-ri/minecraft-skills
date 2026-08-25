@@ -30,6 +30,10 @@ All notable changes to this project are documented here.
   causes, crash metadata, platform/version statements, JAR artifacts, and explicitly named
   mod/plugin IDs. Credentials, IP addresses, absolute paths, terminal controls, and unsafe Unicode
   are sanitized before retained output, and extracted labels are never presented as blame.
+- Offline Fabric mod validation across the Catalog API, CLI, and MCP, covering bounded structural
+  rules for current `fabric.mod.json` schema v1, portable archive paths, referenced-file presence,
+  and bounded JAR structure. CLI binary reads require one stable regular `.jar` file; MCP accepts
+  metadata and optional entry metadata, but not binary JARs.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

@@ -106,6 +106,7 @@ aliases or reject Unicode query values.
 - `compare_versions`
 - `search_all`
 - `analyze_minecraft_log`
+- `validate_fabric_mod`
 - `get_fabric_toolchain`
 - `resolve_velocity_toolchain`
 - `search_modrinth_projects`
@@ -225,6 +226,15 @@ default. `additionalDownloadHosts` explicitly extends it and produces non-offici
 `resolve_velocity_toolchain` performs the same bounded official PaperMC Maven/docs lookup as the
 CLI. Its provenance distinguishes retrieved, unavailable, and malformed sources, and its result
 explicitly declines to infer Minecraft compatibility from Velocity versions.
+
+`validate_fabric_mod` accepts parsed `fabric.mod.json` data or bounded JSON text plus optional
+`archiveEntries`; it never accepts binary JAR content. Input arrays, path strings, JSON complexity,
+and caller-supplied limits are checked against fixed Catalog ceilings before validation. It covers
+bounded structural rules for current schema v1 and available archive-reference evidence, but does
+not validate dependency predicates or satisfaction, entrypoint classes or runtime loading,
+mixin/access-widener syntax, nested JAR metadata, or icon pixels. `limits` can lower only the
+archive-entry count, metadata byte/node/depth/string-byte, and retained-diagnostic ceilings that
+this metadata-only surface actually applies.
 
 `compare_registry_entries` emits entry and protocol ID changes only for registries indexed in both
 versions. Its `outcome` and bounded `excludedRegistries` fields expose incomplete coverage without

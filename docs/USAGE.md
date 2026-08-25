@@ -86,6 +86,8 @@ minecraft-skills minecraft search "prismarine assets" --kind community-dataset
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills fabric toolchain 1.21.11
+minecraft-skills fabric validate-mod ./example-mod.jar
+minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -400,6 +402,24 @@ duplicates, conservative Java-width stable scalar types, and only RCON/resource-
 provable inside the same file. No property values are returned. Unknown keys, target-version
 membership, the server's runtime reader/encoding, proxy authentication, and fork-specific behavior
 remain explicit gaps, so `validationComplete` is false without official generated defaults.
+
+`fabric validate-mod <file.jar>` reads one regular local JAR only after checking the 256 MiB hard
+ceiling, then confirms file identity, size, and timestamps before and after the read. A lower
+ceiling can be selected with `--max-archive-bytes`; callers cannot raise the published maximum. The
+offline validator checks bounded structural rules for current `fabric.mod.json` schema v1,
+portable and duplicate archive paths, bounded ZIP expansion, and presence of referenced icons,
+mixin configurations, access wideners, and nested JARs. It does not validate dependency predicates
+or satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR
+metadata, or icon pixels. Invalid metadata or archives return exit code 1.
+
+The Catalog APIs are `validateFabricMod({ metadata, archiveEntries, limits })` for metadata-only
+evidence and `validateFabricModJar(bytes, { limits })` for local binary validation. MCP clients use
+`validate_fabric_mod` with parsed metadata or bounded JSON text and optional archive-entry metadata;
+binary JARs are deliberately unsupported. MCP preflights JSON complexity, array count, path length,
+numeric fields, and limits against the Catalog hard ceilings before invoking validation. Its
+`limits` object exposes only archive-entry count, metadata byte/node/depth/string-byte, and retained
+diagnostic ceilings; binary ZIP size and compression limits remain exclusive to local JAR
+validation.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and
