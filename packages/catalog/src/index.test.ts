@@ -5253,4 +5253,109 @@ describe("catalog", () => {
       "minecraft analyze-log <log-file>",
     );
   });
+
+  it("exposes and routes Paper BossBar audience lifecycle guidance", () => {
+    const recipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "verify-target-bossbar-and-lifecycle-surfaces",
+        "select-a-stable-winner-with-hysteresis",
+        "reconcile-an-authoritative-viewer-set-by-diff",
+        "serialize-bounded-revisioned-updates",
+        "terminally-hide-detach-and-drop-the-generation",
+      ]),
+    );
+    expect(
+      recipe.steps.find((step) => step.id === "verify-target-bossbar-and-lifecycle-surfaces")?.tools
+        .mcp,
+    ).toEqual(
+      expect.arrayContaining([
+        "get_paper_api_reference",
+        "search_paper_types",
+        "search_paper_members",
+      ]),
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "current-minus-desired removals",
+    );
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "same-identity reconnect",
+    );
+    expect(recipe.finalChecks).toEqual(
+      expect.arrayContaining([
+        "paper-bossbar-audience-lifecycle-safety",
+        "paper-player-session-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+      ]),
+    );
+
+    const guardrail = getAuthoringGuardrail("paper-bossbar-audience-lifecycle-safety");
+    expect(guardrail.rules.join("\n")).toContain("stable tie-break key");
+    expect(guardrail.rules.join("\n")).toContain("one serialized writer");
+    expect(guardrail.rules.join("\n")).toContain("non-owning viewer-session end");
+    expect(guardrail.rules.join("\n")).toContain("bounded observable cleanup-failure outcome");
+    expect(guardrail.rules.join("\n")).toContain("distributed ownership");
+
+    const diagnostic = getAuthoringDiagnostic("paper-bossbar-audience-lifecycle-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("hash-map");
+    expect(diagnostic.failIf.join("\n")).toContain("indefinitely delay hide");
+    expect(diagnostic.failIf.join("\n")).toContain("zero-viewer leak assertions");
+
+    const scenario = getAuthoringScenario("paper-bossbar-audience-lifecycle-review");
+    expect(scenario.requiredLookups.recipes).toEqual(
+      expect.arrayContaining(["paper-bossbar-audience-lifecycle", "paper-plugin-testing-evidence"]),
+    );
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-bossbar-audience-lifecycle-unsafe",
+    );
+    expect(scenario.successCriteria.join("\n")).toContain("repeated disable");
+    expect(scenario.mustAvoid.join("\n")).toContain("vanilla /bossbar command authoring");
+
+    for (const query of [
+      "BossBar viewer hysteresis arbitration",
+      "BossBar stale generation viewer leak replacement",
+      "BossBar audience reconnect transfer cleanup",
+    ]) {
+      const scenarioSearch = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarioSearch.results[0]?.scenario.id, query).toBe(
+        "paper-bossbar-audience-lifecycle-review",
+      );
+
+      const catalogSearch = searchCatalog({
+        query,
+        domain: "paper-plugin",
+        kind: "authoring-recipe",
+      });
+      expect(catalogSearch.results[0]?.id, query).toBe("paper-bossbar-audience-lifecycle");
+    }
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-bossbar-audience-lifecycle-review",
+      version: "26.2",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(
+      expect.arrayContaining(["paper-bossbar-audience-lifecycle", "paper-plugin-testing-evidence"]),
+    );
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-bossbar-audience-lifecycle-unsafe",
+    );
+    expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-api-surface");
+
+    const task = "Paper BossBar viewers flicker and leak after replacement and reconnect";
+    const suggestions = suggestMinecraftLookups({
+      version: "26.2",
+      task,
+      domain: "paper-plugin",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      `plugin paper search ${JSON.stringify(task)}`,
+    );
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-bossbar-audience-lifecycle",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-bossbar-audience-lifecycle-review",
+    );
+  });
 });

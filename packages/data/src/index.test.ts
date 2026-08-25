@@ -73,6 +73,9 @@ describe("@minecraft-skills/data", () => {
       "paper-administrative-command-operability",
     );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-protocol-safety");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-bossbar-audience-lifecycle",
+    );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
   });
 
@@ -88,6 +91,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-inventory-gui-interaction-review");
     expect(scenarioIds).toContain("paper-administrative-command-operability-review");
     expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
+    expect(scenarioIds).toContain("paper-bossbar-audience-lifecycle-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
   });
 
@@ -108,6 +112,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-inventory-gui-interaction-safety");
     expect(guardrailIds).toContain("paper-administrative-command-operability");
     expect(guardrailIds).toContain("paper-plugin-protocol-safety");
+    expect(guardrailIds).toContain("paper-bossbar-audience-lifecycle-safety");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
   });
 
@@ -123,6 +128,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-inventory-gui-interaction-unbounded");
     expect(diagnosticIds).toContain("paper-administrative-command-incomplete");
     expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
+    expect(diagnosticIds).toContain("paper-bossbar-audience-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
   });
 
@@ -264,6 +270,96 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf).toEqual(
       expect.arrayContaining([expect.stringContaining("fire-and-forget persistence")]),
     );
+  });
+
+  it("loads complete Paper BossBar audience lifecycle guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[]; stopIfMissing: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-bossbar-audience-lifecycle");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "select-a-stable-winner-with-hysteresis",
+        "reconcile-an-authoritative-viewer-set-by-diff",
+        "serialize-bounded-revisioned-updates",
+        "terminally-hide-detach-and-drop-the-generation",
+        "test-races-reconcile-leaks-and-report-limits",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "current-minus-desired removals",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain("priority switch margin");
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "rapid enter and leave",
+    );
+    expect(recipe?.steps.map((step) => step.stopIfMissing).join("\n")).toContain("starve cleanup");
+    expect(recipe?.finalChecks).toEqual(
+      expect.arrayContaining([
+        "paper-bossbar-audience-lifecycle-safety",
+        "paper-player-session-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+      ]),
+    );
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-bossbar-audience-lifecycle-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(
+      expect.arrayContaining(["paper-bossbar-audience-lifecycle", "paper-plugin-testing-evidence"]),
+    );
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-bossbar-audience-lifecycle-unsafe",
+    );
+    const successCriteria = scenario?.successCriteria.join("\n") ?? "";
+    expect(successCriteria).toContain("backend transfer");
+    expect(successCriteria).toContain("repeated disable");
+    expect(successCriteria).toContain("zero attached viewers");
+    expect(successCriteria).toContain("stale generations and revisions");
+    const excludedScope = scenario?.mustAvoid.join("\n") ?? "";
+    expect(excludedScope).toContain("one non-owning viewer session ends");
+    expect(excludedScope).toContain("ModelEngine");
+    expect(excludedScope).toContain("vanilla /bossbar command authoring");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-bossbar-audience-lifecycle-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("exactly one plugin-owned current generation");
+    expect(guardrail?.rules.join("\n")).toContain("desired viewer identity set as authoritative");
+    expect(guardrail?.rules.join("\n")).toContain("distributed ownership");
+    expect(guardrail?.requiredEvidence.join("\n")).toContain("zero viewer leaks");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{
+        id: string;
+        severity: string;
+        requiredChecks: string[];
+        failIf: string[];
+      }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-bossbar-audience-lifecycle-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.requiredChecks.join("\n")).toContain("monotonic revision");
+    expect(diagnostic?.failIf.join("\n")).toContain("repeatedly adds viewers");
+    expect(diagnostic?.failIf.join("\n")).toContain("rapid reconnect");
+    expect(diagnostic?.failIf.join("\n")).toContain("only bar handle");
   });
 
   it("loads complete Paper plugin testing evidence guidance", () => {

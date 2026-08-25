@@ -76,6 +76,10 @@ minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
+minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
+minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
+minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
+minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
@@ -715,6 +719,18 @@ initialization, plugin stop, repeated signals, and reconciliation through one id
 It also requires stale-callback publication fences, revisioned persistence, a bounded shutdown
 barrier, leak observability, and race tests. Item or inventory contents and ownership settlement are
 explicitly outside this guidance.
+
+For a Paper BossBar whose candidates or viewers change over time, resolve
+`plugin paper plan paper-bossbar-audience-lifecycle-review <version>`. The plan gives each logical
+slot one owner generation and one bounded revisioned writer, evaluates explicit audience gates,
+selects competing candidates by stable priority with controlled hysteresis, and reconciles an
+authoritative desired viewer identity set by remove/add differences. Replacement, owner or
+encounter end, owning-session close, reconnect, backend transfer, reload, and disable converge on
+one idempotent hide-and-detach path; a non-owning viewer-session end removes only that viewer from a
+shared bar. The workflow includes stale-update and viewer-leak tests. Cross-server ownership is
+an explicit plugin policy, not a guarantee of the Paper BossBar API. Boss AI, encounter mechanics,
+custom mobs, ModelEngine, scoreboards, action bars, and vanilla `/bossbar` command authoring are
+outside this workflow.
 
 ## Source Policy
 
