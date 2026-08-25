@@ -2085,6 +2085,40 @@ function isPaperInventoryGuiDiscoveryQuery(query: string): boolean {
   return hasInventoryContext && hasInteractionContext && hasCustomContext;
 }
 
+function isPaperItemStackSemanticIdentityDiscoveryQuery(
+  query: string,
+  domain?: DomainIdData,
+): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasExplicitPaperContext = /\b(paper|bukkit|spigot|paper plugin)\b/.test(normalized);
+  const hasBukkitItemApiContext =
+    /\b(itemmeta|item meta|persistentdatacontainer|persistent data container|pdc|namespacedkey|namespaced key)\b/.test(
+      normalized,
+    );
+  const hasExplicitNonPaperPlatform = /\b(fabric|forge|neoforge|quilt|sponge)\b/.test(normalized);
+  if (hasExplicitNonPaperPlatform && !hasExplicitPaperContext) {
+    return false;
+  }
+  const hasExplicitPackContext =
+    /\b(resource ?pack|data ?pack|asset|blockstate|texture|mcfunction|worldgen)\b/.test(normalized);
+  if (hasExplicitPackContext && !hasExplicitPaperContext && !hasBukkitItemApiContext) {
+    return false;
+  }
+  const hasItemContext =
+    /\b(itemstack|item stack|itemmeta|item meta|custom item|plugin item|persistentdatacontainer|persistent data container|pdc)\b/.test(
+      normalized,
+    );
+  const hasSemanticOrUpdateContext =
+    /\b(identity|identifier|identify|recognize|recognition|semantic|schema|migrat(?:e|es|ed|ing|ion)|versioned|display name|custom name|item name|lore|item model|custom model data|metadata|preserv(?:e|es|ed|ing|ation)|clone|alias|similar|similarity|stackability|refresh|update)\b/.test(
+      normalized,
+    );
+  return (
+    hasItemContext &&
+    hasSemanticOrUpdateContext &&
+    (domain === "paper-plugin" || hasExplicitPaperContext || hasBukkitItemApiContext)
+  );
+}
+
 function isVelocityToolchainDiscoveryQuery(query: string): boolean {
   const normalized = normalizeSearchText(query);
   const describesMotion =
@@ -2290,6 +2324,10 @@ export function searchAuthoringScenarios(
   const paperItemDeliveryQuery = isPaperItemDeliveryDiscoveryQuery(query);
   const paperInventoryGuiQuery = isPaperInventoryGuiDiscoveryQuery(query);
   const paperWorldOperationQuery = isPaperWorldOperationSafetyDiscoveryQuery(query);
+  const paperItemStackSemanticIdentityQuery = isPaperItemStackSemanticIdentityDiscoveryQuery(
+    query,
+    domain,
+  );
   const scenarios = listAuthoringScenarios(domain ? { domain } : {});
   const scored = scenarios
     .map((scenario) => {
@@ -2299,7 +2337,9 @@ export function searchAuthoringScenarios(
       let score =
         (paperItemDeliveryQuery && scenario.id === "paper-item-delivery-review") ||
         (paperInventoryGuiQuery && scenario.id === "paper-inventory-gui-interaction-review") ||
-        (paperWorldOperationQuery && scenario.id === "paper-world-operation-safety-review")
+        (paperWorldOperationQuery && scenario.id === "paper-world-operation-safety-review") ||
+        (paperItemStackSemanticIdentityQuery &&
+          scenario.id === "paper-itemstack-semantic-identity-review")
           ? 1_000
           : 0;
       const matches: AuthoringScenarioSearchMatch[] = [];
@@ -5694,6 +5734,10 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
   const paperItemDeliveryTask = isPaperItemDeliveryDiscoveryQuery(task);
   const paperInventoryGuiTask = isPaperInventoryGuiDiscoveryQuery(task);
   const paperWorldOperationTask = isPaperWorldOperationSafetyDiscoveryQuery(task);
+  const paperItemStackSemanticIdentityTask = isPaperItemStackSemanticIdentityDiscoveryQuery(
+    task,
+    options.domain,
+  );
   const explicitDatapackTask =
     /\b(data ?pack|mcfunction|advancement|loot table|predicate|worldgen)\b/.test(normalizedTask);
   const explicitResourcepackTask =
@@ -5705,7 +5749,8 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       lower,
     ) ||
     /\bplugin chunk tickets?\b/.test(lower) ||
-    (/\bpaper\b/.test(lower) && !hasDatapackContext && !hasResourcepackContext);
+    (/\bpaper\b/.test(lower) && !hasDatapackContext && !hasResourcepackContext) ||
+    paperItemStackSemanticIdentityTask;
   const inferredDomains = [
     hasDatapackContext ? "datapack" : undefined,
     hasResourcepackContext ? "resourcepack" : undefined,
@@ -5839,6 +5884,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       paperItemDeliveryTask ||
       paperInventoryGuiTask ||
       paperWorldOperationTask ||
+      paperItemStackSemanticIdentityTask ||
       paperApiTask ||
       administrativeCommandTask ||
       playerIdentityTask ||
@@ -5893,7 +5939,11 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       lower,
     ) ||
     (/\bfrom\b/.test(lower) && /\bto\b/.test(lower));
-  if (migrationTask && !paperInventoryGuiTask) {
+  if (
+    migrationTask &&
+    !paperInventoryGuiTask &&
+    (!paperItemStackSemanticIdentityTask || hasDatapackContext || hasResourcepackContext)
+  ) {
     add(`minecraft pack-format ${version} datapack`, "Check target data pack format.");
     add(`minecraft pack-format ${version} resourcepack`, "Check target resource pack format.");
   }

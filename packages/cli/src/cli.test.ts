@@ -1147,6 +1147,75 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("only persistent player key");
   });
 
+  it("prints and routes Paper ItemStack semantic identity guidance", async () => {
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain(
+      "separate-item-identity-presentation-and-migration",
+    );
+
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-itemstack-semantic-identity",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("define-logical-identity-and-version");
+    expect(recipe.stdout.join("\n")).toContain("migrate-deterministically-and-idempotently");
+    expect(recipe.stdout.join("\n")).toContain("unknown items must be returned untouched");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-itemstack-semantic-identity-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-itemstack-identity-or-state-loss");
+    expect(scenario.stdout.join("\n")).toContain("duplicate lore");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "ItemStack PDC identity migration preserve lore",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-itemstack-semantic-identity-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-itemstack-semantic-identity-review",
+      "26.2",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-itemstack-semantic-identity"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-itemstack-identity-or-state-loss"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-itemstack-semantic-identity",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("all unowned PDC entries");
+    expect(guardrail.stdout.join("\n")).toContain("ItemStack.isSimilar is equals without amount");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-itemstack-identity-or-state-loss",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("possibly aliased ItemStack");
+    expect(diagnostic.stdout.join("\n")).toContain("repeat migration");
+  });
+
   it("prints and routes Paper player-session lifecycle safety guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-player-session-lifecycle"]);
     expect(recipe.code).toBe(0);

@@ -900,6 +900,84 @@
       "failureMode": "An apparently functional bar can flicker, show to the wrong audience, leak Player or viewer state, mutate its replacement, or remain visible after its lifecycle ends."
     },
     {
+      "id": "paper-itemstack-identity-or-state-loss",
+      "domains": ["paper-plugin"],
+      "title": "Paper ItemStack identity is presentation-derived or an update can erase unrelated state",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code recognizes a custom item from Material, custom or display name, item name, lore, item model, custom model data, tooltip styling, or apparent rendering",
+        "ItemStack.equals or isSimilar is used without naming whether the decision is identity, stackability, grouping, deduplication, or visual comparison",
+        "presentation refresh creates a new ItemStack or copies only selected metadata onto a replacement",
+        "an ItemStack from a template, cache, inventory, event, entity, or holder is mutated without an ownership or clone boundary",
+        "migration reads or writes a schema version, appends lore, or edits PDC or data components",
+        "unknown item IDs or versions are coerced into a current known item"
+      ],
+      "requiredChecks": [
+        "verify a stable plugin-owned namespaced logical ID and separate explicit schema version exist",
+        "verify Material and all presentation or rendering fields are excluded as sole logical identity",
+        "define logical identity, application similarity or stackability, and visual equality independently",
+        "verify target-version ItemStack.isSimilar, equals, amount, ItemMeta copy or edit, PDC, presentation, and component snapshot semantics actually used",
+        "trace object ownership and clone or private-copy publication boundaries",
+        "enumerate the exact presentation and migration allowlists, define whole-field or structural ownership for list-valued presentation, and prove every unlisted state category is preserved",
+        "verify unknown, malformed, foreign, and unsupported-future items remain unchanged",
+        "verify one-version migrations are deterministic, idempotent, rollback-safe, and advance versions only after success",
+        "verify canonical lore replacement handles duplicates without append accumulation or text-based deletion",
+        "run duplicate-lore, repeat-migration, unknown-item, failure, aliasing, similarity-purpose, and unrelated-state preservation tests"
+      ],
+      "evidence": [
+        "A stable ID and version schema plus typed recognition and migration outcomes",
+        "Target-version Paper or Bukkit Javadocs and official PDC guidance for referenced APIs",
+        "An ItemStack ownership, allowlist, migration, and commit diagram",
+        "Structural before-and-after fixtures and idempotency or rollback assertions",
+        "Loaded target-version Paper evidence where real meta, PDC, subtype, or data-component application is claimed"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "Material, custom or display name, item name, lore, item model, custom model data, tooltip style, render flags, or client appearance is the only custom-item key",
+        "the logical ID and schema version share one ambiguous value or the version is inferred from current presentation",
+        "a missing, malformed, foreign, unknown, or unsupported-future item is mutated into a known current item",
+        "ItemStack.isSimilar or equals is called semantic identity or visual equality without a separately defined comparison contract",
+        "a possibly aliased ItemStack is mutated before cloning or proving exclusive ownership",
+        "presentation refresh reconstructs from Material or copies a remembered subset of metadata",
+        "amount, enchantments, attributes, damage, unbreakable or gameplay state, unowned PDC, identity keys, unrelated or unknown data components, subtype metadata, or other out-of-scope state can be cleared or overwritten",
+        "copied ItemMeta or a mutable component snapshot is changed without being applied back as the target-version API requires",
+        "lore is edited without whole-field or persisted structural ownership, appended on each refresh, or matched and deleted by rendered text",
+        "a schema marker advances before its migration step and validation succeed",
+        "migration failure can publish a partially changed stack or repeated migration changes a current item again",
+        "tests omit duplicate lore, repeat migration, unknown untouched, alias isolation, comparison decisions, failure rollback, or unrelated-state preservation"
+      ],
+      "safeResponse": [
+        "Introduce a stable namespaced logical ID and a separate explicit schema version.",
+        "Clone or own the stack, then replace only the feature-owned presentation allowlist on existing metadata.",
+        "Preserve every other field by default and publish only a fully successful deterministic migration.",
+        "Separate identity, stackability or similarity, and visual equality, then test their divergent cases.",
+        "Leave unknown items untouched and verify the target-version APIs before naming or calling them."
+      ],
+      "failureMode": "A display-only change can become a destructive item rewrite or a false identity match, while failed migrations become unrecoverable if unknown state is overwritten or versions advance early."
+    },
+    {
       "id": "paper-plugin-test-evidence-gap",
       "domains": ["paper-plugin"],
       "title": "Paper plugin claim exceeds the completed test evidence",

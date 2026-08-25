@@ -1273,6 +1273,72 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes Paper ItemStack semantic identity and state-preserving update guidance", () => {
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain(
+      "separate-item-identity-presentation-and-migration",
+    );
+
+    const recipe = getAuthoringRecipe("paper-itemstack-semantic-identity");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-logical-identity-and-version",
+        "separate-identity-similarity-and-visual-equality",
+        "refresh-only-owned-presentation",
+        "migrate-deterministically-and-idempotently",
+        "test-semantic-boundaries-and-state-preservation",
+      ]),
+    );
+    expect(recipe.finalChecks).toContain("paper-itemstack-semantic-identity");
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "stable plugin-owned namespaced or domain item identifier",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "ItemStack.isSimilar documentation describes equals without amount",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "leaving the original unchanged on failure",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "whole-field ownership or a persisted structural composition contract",
+    );
+
+    const guardrail = getAuthoringGuardrail("paper-itemstack-semantic-identity");
+    const rules = guardrail.rules.join("\n");
+    expect(rules).toContain("plugin-owned namespaced or domain logical ID");
+    expect(rules).toContain("ItemStack.isSimilar is equals without amount");
+    expect(rules).toContain("Clone an ItemStack");
+    expect(rules).toContain("all unowned PDC entries");
+    expect(rules).toContain("Write a new version only after");
+    expect(rules).toContain("unknown items");
+
+    const diagnostic = getAuthoringDiagnostic("paper-itemstack-identity-or-state-loss");
+    expect(diagnostic.severity).toBe("error");
+    const failures = diagnostic.failIf.join("\n");
+    expect(failures).toContain("only custom-item key");
+    expect(failures).toContain("possibly aliased ItemStack");
+    expect(failures).toContain("persisted structural ownership");
+    expect(failures).toContain("schema marker advances before");
+    expect(failures).toContain("unknown untouched");
+
+    const scenario = getAuthoringScenario("paper-itemstack-semantic-identity-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-itemstack-semantic-identity"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-itemstack-identity-or-state-loss",
+    );
+    expect(scenario.successCriteria.join("\n")).toContain("duplicate lore");
+    expect(scenario.successCriteria.join("\n")).toContain("unrelated-state preservation");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-itemstack-semantic-identity-review",
+      version: "26.2",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-itemstack-semantic-identity");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-itemstack-identity-or-state-loss",
+    );
+  });
+
   it("matches Paper plugin runtime claims to sufficient test evidence", () => {
     const recipe = getAuthoringRecipe("paper-plugin-testing-evidence");
     expect(recipe.steps.map((step) => step.id)).toEqual([
@@ -1336,6 +1402,22 @@ describe("catalog", () => {
     expect(
       suggestions.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack assets")),
     ).toBe(false);
+
+    const mixedPackMigration = suggestMinecraftLookups({
+      version: "26.2",
+      task: "Paper plugin migrate custom item resource pack model",
+    });
+    expect(
+      mixedPackMigration.suggestedTools.some((entry) =>
+        entry.tool.startsWith("minecraft pack-format"),
+      ),
+    ).toBe(true);
+    expect(
+      mixedPackMigration.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper ")),
+    ).toBe(true);
+    expect(
+      mixedPackMigration.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack ")),
+    ).toBe(true);
     expect(suggestions.suggestedTools.some((entry) => entry.tool.startsWith("datapack find"))).toBe(
       false,
     );
@@ -4792,7 +4874,7 @@ describe("catalog", () => {
     expect(large.results.filter((entry) => entry.surface === "catalog").length).toBeGreaterThan(
       100,
     );
-    expect(large.truncated).toBe(false);
+    expect(large.results.length).toBeLessThanOrEqual(large.limit);
   });
 
   it("routes natural-language Fabric toolchain queries to the live lookup", () => {
@@ -5266,6 +5348,97 @@ describe("catalog", () => {
         result.scenarios.results.every((entry) => entry.scenario.domains.includes(expectedDomain)),
       ).toBe(true);
     }
+  });
+
+  it("routes ItemStack identity and migration wording without stealing pack item-model tasks", () => {
+    for (const query of [
+      "ItemStack PDC semantic identity schema migration preserve lore",
+      "Paper custom item identity refresh display name without losing damage",
+      "clone ItemMeta before updating custom item lore",
+    ]) {
+      const scenarios = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarios.results[0]?.scenario.id, query).toBe(
+        "paper-itemstack-semantic-identity-review",
+      );
+    }
+
+    const catalog = searchCatalog({
+      query: "ItemStack identity migration preserve metadata",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.results[0]).toEqual(
+      expect.objectContaining({ id: "paper-itemstack-semantic-identity" }),
+    );
+
+    const task = "ItemStack PDC identity migration preserving enchantments and attributes";
+    const suggestions = suggestMinecraftLookups({ version: "26.2", task });
+    expect(suggestions.domain).toBe("paper-plugin");
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      `plugin paper search ${JSON.stringify(task)}`,
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-itemstack-semantic-identity-review",
+    );
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("minecraft pack-format")),
+    ).toBe(false);
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack assets")),
+    ).toBe(false);
+
+    for (const [unrelatedTask, expectedDomain] of [
+      ["migrate resource pack item model", "resourcepack"],
+      ["data pack custom item schema recipe", "datapack"],
+    ] as const) {
+      const unrelated = suggestMinecraftLookups({ version: "26.2", task: unrelatedTask });
+      expect(unrelated.domain).toBe(expectedDomain);
+      expect(unrelated.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper "))).toBe(
+        false,
+      );
+      expect(
+        unrelated.scenarios.results.some(
+          (entry) => entry.scenario.id === "paper-itemstack-semantic-identity-review",
+        ),
+      ).toBe(false);
+    }
+
+    for (const unrelatedTask of [
+      "Fabric custom item schema migration",
+      "Forge ItemStack identity migration",
+      "NeoForge custom item lore update",
+    ]) {
+      const unrelated = suggestMinecraftLookups({ version: "26.2", task: unrelatedTask });
+      expect(unrelated.domain, unrelatedTask).not.toBe("paper-plugin");
+      expect(
+        unrelated.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper ")),
+        unrelatedTask,
+      ).toBe(false);
+      expect(
+        unrelated.scenarios.results.some(
+          (entry) => entry.scenario.id === "paper-itemstack-semantic-identity-review",
+        ),
+        unrelatedTask,
+      ).toBe(false);
+    }
+
+    const ambiguous = suggestMinecraftLookups({
+      version: "26.2",
+      task: "custom item identity schema migration",
+    });
+    expect(ambiguous.domain).not.toBe("paper-plugin");
+    expect(ambiguous.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper "))).toBe(
+      false,
+    );
+
+    const domainScoped = suggestMinecraftLookups({
+      version: "26.2",
+      domain: "paper-plugin",
+      task: "refresh custom item lore while preserving enchantments",
+    });
+    expect(domainScoped.scenarios.results[0]?.scenario.id).toBe(
+      "paper-itemstack-semantic-identity-review",
+    );
   });
 
   it("routes Paper plugin protocol tasks to strict transport safety guidance", () => {

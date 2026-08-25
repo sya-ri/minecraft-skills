@@ -1505,6 +1505,137 @@
       "failureMode": "Unowned or independently updated BossBars can oscillate, accumulate viewers, publish stale state into a replacement, and survive reconnect, transfer, owner completion, or plugin shutdown."
     },
     {
+      "id": "paper-itemstack-semantic-identity",
+      "domains": ["paper-plugin"],
+      "title": "Preserve semantic identity and unrelated state when updating Paper ItemStacks",
+      "when": [
+        "the request recognizes, compares, refreshes, or migrates a plugin-defined ItemStack",
+        "custom items currently rely on material, custom name, lore, item model, custom model data, or rendered appearance for identity",
+        "display text or model data must change without erasing enchantments, attributes, damage, persistent data, data components, or another system's state",
+        "an item schema changes and older inventory, container, entity, or persisted stacks must be upgraded safely"
+      ],
+      "steps": [
+        {
+          "id": "define-logical-identity-and-version",
+          "action": "Define one stable plugin-owned namespaced or domain item identifier and a separate explicit schema or migration version. Store them in target-version-supported custom persistent data rather than deriving identity from Material, custom or display name, item name, lore, item model, custom model data, tooltip styling, or client rendering. Material may be an invariant checked after identity is known, but material alone is not a logical custom-item key. Treat a missing, malformed, foreign-namespace, or unknown identifier as an unknown item with an explicit unchanged outcome.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "A stable logical item-ID registry with a plugin-owned namespace and no presentation-derived keys",
+            "A separate current schema version plus typed outcomes for known-current, known-old, unknown, malformed, unsupported-future, and failed migration",
+            "Target-version Paper or Bukkit type/member evidence for ItemStack, ItemMeta, NamespacedKey, PersistentDataHolder or PersistentDataContainer, and the exact accessors used",
+            "Official Paper documentation evidence that persistent custom data is namespaced and that lore or display-name storage is collision-prone"
+          ],
+          "stopIfMissing": "Do not recognize or migrate a custom item until its stable logical ID, version key, unknown-item outcome, and target-version storage APIs are explicit."
+        },
+        {
+          "id": "separate-identity-similarity-and-visual-equality",
+          "action": "Define three independent questions: whether two stacks carry the same logical item ID, whether they are eligible for the application's stack, merge, grouping, or comparison operation, and whether a particular client/resource-pack context renders them alike. Current ItemStack.isSimilar documentation describes equals without amount, so use it only when that complete metadata comparison matches the required decision; never substitute it for logical identity or visual equality. Conversely, matching logical IDs do not prove similar gameplay state or identical presentation.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Separate predicates or typed decisions for logical identity, application stackability or similarity, and visual comparison",
+            "Target-version documentation for ItemStack.equals, ItemStack.isSimilar, amount handling, and every other comparison API used",
+            "Tests where equal logical IDs have different damage or presentation, different logical IDs render alike, and amount-only differences exercise the chosen similarity rule",
+            "A statement that server-side metadata cannot prove client-rendered visual equality"
+          ],
+          "stopIfMissing": "Do not use ItemStack.isSimilar, Material equality, or apparent rendering as a universal custom-item identity predicate."
+        },
+        {
+          "id": "refresh-only-owned-presentation",
+          "action": "Acquire ownership before mutation: clone the ItemStack or otherwise prove the caller owns the instance when another inventory, cache, template, event, or subsystem may share it. Mutate the owned copy in place through target-version-supported meta APIs instead of reconstructing it from Material. Replace only a documented presentation allowlist owned by this feature, such as the chosen custom or item name, lore, item model or custom model data, tooltip style, or render flags. For a list-valued field such as lore, declare whole-field ownership or a persisted structural composition contract that identifies an owned segment without rendered-text matching; if neither exists, leave that field unchanged. Preserve amount, enchantments, attribute modifiers, damage, unbreakable and other gameplay state, every unowned PDC key, identity and version keys, custom or unknown data components, subtype-specific metadata, and all unlisted state unless a named migration explicitly transforms it. When getItemMeta returns a copy, apply it back; when an API returns a component snapshot, set the changed component back; inside editMeta, interact only with the provided meta as its Javadocs require.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "An ownership boundary showing when an ItemStack is cloned and when the updated copy replaces the original reference",
+            "A closed presentation-component allowlist, explicit whole-field or structural ownership for list-valued presentation, and a default-preserve rule for every field outside it",
+            "Target-version Javadocs evidence for ItemStack cloning or copying, getItemMeta or editMeta, setItemMeta, custom or item name, lore, item model or custom model data, and component snapshot behavior actually used",
+            "Before-and-after structural tests proving enchantments, attributes, damage, amount, unowned PDC keys, owned identity, unrelated data components, subtype metadata, and unknown state remain equal"
+          ],
+          "stopIfMissing": "Do not refresh presentation by constructing a new stack or selectively copying remembered fields, mutate a possibly aliased ItemStack in place, or edit lore when line ownership would have to be inferred from rendered text."
+        },
+        {
+          "id": "migrate-deterministically-and-idempotently",
+          "action": "Dispatch migration by the stable logical ID and stored schema version. Run deterministic one-version steps on a private working copy, reject unsupported future or malformed versions, validate the result, and write each new version only after its transformation succeeds. Publish the migrated copy only after the full requested chain succeeds, leaving the original unchanged on failure. A current-version item must be a no-op, repeating migration must produce the same state, unknown items must be returned untouched, and presentation refresh must canonically replace owned lore or other fields instead of appending on every run or deleting lines by duplicate display text.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper diagnostic", "plugin paper members"],
+            "mcp": ["get_authoring_recipe", "get_authoring_diagnostic", "search_paper_members"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringDiagnostic", "searchPaperMembers"]
+          },
+          "evidence": [
+            "An ordered migration registry keyed by logical item ID and exact from-version",
+            "A private-copy commit boundary that leaves the source unchanged after exceptions, rejected validation, unknown ID, malformed version, or unsupported future version",
+            "Tests proving current-version and repeat migration are idempotent, every supported old version reaches the same canonical current state, and version markers never advance after a failed step",
+            "A duplicate-lore test set proving canonical whole-field-owned lore does not accumulate and, when structured sharing is supported, an identical unowned line outside the owned segment survives without text matching"
+          ],
+          "stopIfMissing": "Do not mark an item current before its migration succeeds, mutate unknown items speculatively, or make display-text replacement the migration selector."
+        },
+        {
+          "id": "test-semantic-boundaries-and-state-preservation",
+          "action": "Test the identity and update functions as value transformations with exact structural snapshots. Cover duplicate and visually identical lore, repeated presentation refresh, repeated migration, missing or malformed identity, unknown and unsupported-future items, failed intermediate migration, alias isolation, amount differences, same-ID but nonsimilar stacks, different-ID but visually identical stacks, and preservation of every unrelated state category. Add a target-version loaded-server test when correctness depends on Paper applying ItemMeta, PDC, subtype metadata, or data-component behavior rather than only plugin-owned pure logic.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Pure tests for ID and version dispatch, no-op current state, repeat migration, unknown untouched, failure rollback, duplicate lore, and comparison decisions",
+            "Structural preservation assertions for amount, enchantments, attributes, damage, unbreakable state, unowned PDC, custom data components, subtype metadata, and all out-of-scope state represented by fixtures",
+            "An aliasing test showing updating one clone or owned copy does not mutate a template, cache entry, or separate holder",
+            "Loaded target-version Paper evidence for API semantics not fully observable in pure code, with exact version and limitations"
+          ],
+          "stopIfMissing": "Do not approve the updater from a single freshly-created item whose only metadata is the expected name and lore."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-itemstack-semantic-identity",
+        "paper-plugin-testing-evidence"
+      ],
+      "failureMode": "A presentation refresh or migration can misrecognize an item, erase unrelated gameplay or third-party state, mutate aliased templates, duplicate lore, or advance a schema marker after partial failure when ItemStack identity and ownership are implicit."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",

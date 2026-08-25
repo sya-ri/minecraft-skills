@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Paper ItemStack semantic-identity and presentation-update guidance across data, Catalog, CLI, and
+  MCP. It requires stable namespaced logical IDs with separate schema versions, distinguishes
+  identity from similarity and rendering, clones or owns stacks before mutation, preserves all
+  non-allowlisted metadata and components, migrates deterministically and idempotently, leaves
+  unknown items untouched, and tests duplicate lore, rollback, aliasing, comparisons, and unrelated
+  state preservation.
 - Bounded static PNG alpha inspection across the Catalog API, CLI, and MCP, including every legal
   color-type/bit-depth combination, filters 0-4, Adam7, PLTE/tRNS semantics, nonzero-alpha counts,
   zero-based half-open content bounds, four-side transparent margins, optional nonempty/minimum-

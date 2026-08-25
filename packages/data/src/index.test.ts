@@ -76,6 +76,9 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-bossbar-audience-lifecycle",
     );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-itemstack-semantic-identity",
+    );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
   });
 
@@ -92,6 +95,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-administrative-command-operability-review");
     expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
     expect(scenarioIds).toContain("paper-bossbar-audience-lifecycle-review");
+    expect(scenarioIds).toContain("paper-itemstack-semantic-identity-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
   });
 
@@ -113,6 +117,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-administrative-command-operability");
     expect(guardrailIds).toContain("paper-plugin-protocol-safety");
     expect(guardrailIds).toContain("paper-bossbar-audience-lifecycle-safety");
+    expect(guardrailIds).toContain("paper-itemstack-semantic-identity");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
   });
 
@@ -129,6 +134,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-administrative-command-incomplete");
     expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
     expect(diagnosticIds).toContain("paper-bossbar-audience-lifecycle-unsafe");
+    expect(diagnosticIds).toContain("paper-itemstack-identity-or-state-loss");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
   });
 
@@ -220,6 +226,87 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf).toEqual(
       expect.arrayContaining([expect.stringContaining("only persistent player key")]),
     );
+  });
+
+  it("loads complete Paper ItemStack semantic identity guidance", () => {
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "separate-item-identity-presentation-and-migration",
+    );
+
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "paper-itemstack-semantic-identity",
+    );
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-logical-identity-and-version",
+        "refresh-only-owned-presentation",
+        "migrate-deterministically-and-idempotently",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "unknown items must be returned untouched",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "duplicate-lore test",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "whole-field ownership or a persisted structural composition contract",
+    );
+    expect(recipe?.finalChecks).toContain("paper-itemstack-semantic-identity");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-itemstack-semantic-identity-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-itemstack-semantic-identity"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-itemstack-identity-or-state-loss",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("similarity");
+    expect(scenario?.successCriteria.join("\n")).toContain("all out-of-scope state");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-itemstack-semantic-identity",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("all unowned PDC entries");
+    expect(guardrail?.rules.join("\n")).toContain("Write a new version only after");
+    expect(guardrail?.requiredEvidence.join("\n")).toContain("unknown-item");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{
+        id: string;
+        severity: string;
+        requiredChecks: string[];
+        failIf: string[];
+      }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-itemstack-identity-or-state-loss",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.requiredChecks.join("\n")).toContain("repeat-migration");
+    expect(diagnostic?.failIf.join("\n")).toContain("possibly aliased ItemStack");
+    expect(diagnostic?.failIf.join("\n")).toContain("unrelated-state preservation");
   });
 
   it("loads Paper player-session lifecycle safety guidance", () => {

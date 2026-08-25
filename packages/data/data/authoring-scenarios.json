@@ -556,6 +556,56 @@
       "failureMode": "A BossBar audience controller can flicker, display to stale or ineligible viewers, mutate a replacement, retain Player references, or leak visible bars after its local or distributed lifecycle ends."
     },
     {
+      "id": "paper-itemstack-semantic-identity-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper ItemStack semantic identity, presentation refresh, and migration",
+      "userPrompt": "Create or review Paper code that recognizes and migrates plugin-defined ItemStacks, updates only owned presentation, and preserves every unrelated item state.",
+      "useWhen": [
+        "custom items are recognized by material, name, lore, item model, custom model data, or visual appearance",
+        "an ItemStack display name, item name, lore, model, tooltip, or render flag must be refreshed",
+        "older item schemas in inventories, containers, entities, or persistence must migrate",
+        "ItemStack.equals, isSimilar, stackability, grouping, or visual equality is used to decide custom-item identity",
+        "an updater reconstructs an ItemStack or mutates a shared template or cached instance"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-itemstack-semantic-identity"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-itemstack-identity-or-state-loss"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "a stable plugin-owned namespaced logical item ID is stored separately from an explicit schema or migration version",
+        "material, custom or display name, item name, lore, item model, custom model data, tooltip styling, and client rendering are never the sole logical item identity",
+        "missing, malformed, foreign, unknown, and unsupported-future IDs or versions produce explicit unchanged or rejected outcomes",
+        "logical identity, application stackability or similarity, and client-rendered visual equality have separate predicates and evidence",
+        "a possibly shared ItemStack is cloned or otherwise owned before mutation and the original remains unchanged until a complete successful update is published",
+        "presentation refresh replaces only a closed owned allowlist while amount, enchantments, attributes, damage, gameplay state, unowned PDC, data components, subtype metadata, and all out-of-scope state are preserved",
+        "migrations are deterministic, one-version, idempotent, failure-safe, and mark a new version only after the transformation succeeds",
+        "unknown items are untouched and canonical lore replacement uses declared whole-field or persisted structural ownership, neither accumulating duplicates nor deleting lines by matching display text",
+        "tests cover duplicate lore, repeat refresh and migration, unknown and malformed items, failed steps, alias isolation, similarity decisions, and unrelated-state preservation",
+        "target-version loaded-server evidence is used for Paper behavior not fully observable in pure tests"
+      ],
+      "mustAvoid": [
+        "using Material, display name, item name, lore, item model, custom model data, or apparent rendering as the custom-item primary key",
+        "assuming two stacks with the same logical ID are stackable, similar in all gameplay state, or visually identical",
+        "assuming ItemStack.isSimilar proves logical identity or client-rendered equality",
+        "mutating an ItemStack that may still be shared by a template, cache, event, inventory, or another subsystem",
+        "building a replacement stack from Material and copying only remembered metadata fields",
+        "clearing or overwriting enchantments, attributes, damage, unowned PDC, unknown data components, subtype metadata, or any state outside the explicit presentation or migration allowlist",
+        "editing lore without declared whole-field or structural segment ownership, appending canonical lore on every run, or deleting duplicate lines by their rendered text",
+        "advancing the schema version before a migration step and validation succeed",
+        "mutating unknown, malformed, or unsupported-future items in an attempt to repair them",
+        "making universal cross-version API or data-component claims without target-version evidence"
+      ],
+      "failureMode": "Display edits and schema upgrades can silently change identity, erase gameplay or third-party data, duplicate presentation, or partially commit when identity, ownership, comparison purpose, and migration state are not explicit."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",
