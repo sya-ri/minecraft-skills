@@ -623,11 +623,12 @@ name a root cause.
 Defaults cap normalized input at 4 MiB of UTF-8 and 4,194,304 UTF-16 code units, 10,000 samples, a
 366-day window, 500 retained diagnostics, eight fixed series, and 100 retained violation intervals
 per series. The CLI
-also rejects a non-regular or final symlink file, unstable same-handle reads, malformed UTF-8,
-duplicate object keys, JSON deeper than 16 containers, and JSON beyond the fixed structural-node
-budget before `JSON.parse`. Invalid or insufficient input and threshold violations exit 1; only an
-analyzed result without violations exits 0. Catalog and MCP inputs are already parsed objects, so
-they cannot prove whether the original source JSON contained duplicate keys.
+also rejects a non-regular or final symlink file, path or same-handle identity changes during
+positioned reads, malformed UTF-8, duplicate object keys, JSON deeper than 16 containers, and JSON
+beyond the fixed structural-node budget before `JSON.parse`. Invalid or insufficient input and
+threshold violations exit 1; only an analyzed result without violations exits 0. Catalog and MCP
+inputs are already parsed objects, so they cannot prove whether the original source JSON contained
+duplicate keys.
 
 ## Authoring Safety Data
 

@@ -449,10 +449,10 @@ violation recommends only a scoped spark capture following Paper's
 [profiling guidance](https://docs.papermc.io/paper/profiling/).
 
 The CLI checks the 4 MiB UTF-8 byte and 4,194,304 UTF-16-code-unit ceilings before analysis and
-rejects unstable same-handle reads, malformed UTF-8, duplicate JSON object keys, more than 16
-nested containers, or more than `12 * maxSamples + 256` JSON value nodes before parsing. Invalid or
-insufficient input and threshold violations exit 1. Only an analyzed result with no violations exits
-0.
+rejects path or same-handle identity changes during positioned reads, malformed UTF-8, duplicate
+JSON object keys, more than 16 nested containers, or more than `12 * maxSamples + 256` JSON value
+nodes before parsing. Invalid or insufficient input and threshold violations exit 1. Only an
+analyzed result with no violations exits 0.
 
 ## Data Sources
 

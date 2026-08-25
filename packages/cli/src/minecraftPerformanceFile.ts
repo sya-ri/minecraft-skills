@@ -1,7 +1,54 @@
-import { closeSync, constants, fstatSync, lstatSync, openSync, readSync } from "node:fs";
+import {
+  type BigIntStats,
+  closeSync,
+  constants,
+  fstatSync,
+  lstatSync,
+  openSync,
+  readSync,
+} from "node:fs";
 import type { MinecraftPerformanceAnalysisLimits } from "@minecraft-skills/catalog";
 
 class MinecraftPerformanceFileError extends Error {}
+
+type MinecraftPerformanceFileIo = {
+  close: (handle: number) => void;
+  fstat: (handle: number) => BigIntStats;
+  lstat: (path: string) => BigIntStats | undefined;
+  open: (path: string, flags: number) => number;
+  read: (
+    handle: number,
+    buffer: Buffer,
+    offset: number,
+    length: number,
+    position: number,
+  ) => number;
+};
+
+type MinecraftPerformanceFileOpenFlags = {
+  readonly: number;
+  noFollow: number | undefined;
+  nonBlock: number | undefined;
+};
+
+/** Test-only filesystem seams; production callers should leave this argument omitted. */
+export type MinecraftPerformanceFileIoOverrides = Partial<MinecraftPerformanceFileIo> & {
+  openFlags?: MinecraftPerformanceFileOpenFlags;
+};
+
+const defaultMinecraftPerformanceFileIo: MinecraftPerformanceFileIo = {
+  close: closeSync,
+  fstat: (handle) => fstatSync(handle, { bigint: true }),
+  lstat: (path) => lstatSync(path, { bigint: true, throwIfNoEntry: false }),
+  open: openSync,
+  read: readSync,
+};
+
+const defaultMinecraftPerformanceFileOpenFlags: MinecraftPerformanceFileOpenFlags = {
+  readonly: constants.O_RDONLY,
+  noFollow: typeof constants.O_NOFOLLOW === "number" ? constants.O_NOFOLLOW : undefined,
+  nonBlock: typeof constants.O_NONBLOCK === "number" ? constants.O_NONBLOCK : undefined,
+};
 
 const maximumJsonDepth = 16;
 const jsonNodesPerSampleBudget = 12;
@@ -9,6 +56,45 @@ const fixedJsonNodeBudget = 256;
 
 function inputError(message: string): MinecraftPerformanceFileError {
   return new MinecraftPerformanceFileError(message);
+}
+
+function sameFileSnapshot(left: BigIntStats, right: BigIntStats): boolean {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.mode === right.mode &&
+    left.nlink === right.nlink &&
+    left.size === right.size &&
+    left.mtimeNs === right.mtimeNs &&
+    left.ctimeNs === right.ctimeNs
+  );
+}
+
+function pathMatchesSnapshot(
+  filePath: string,
+  snapshot: BigIntStats,
+  io: MinecraftPerformanceFileIo,
+): boolean {
+  try {
+    const status = io.lstat(filePath);
+    return Boolean(
+      status?.isFile() && !status.isSymbolicLink() && sameFileSnapshot(status, snapshot),
+    );
+  } catch {
+    return false;
+  }
+}
+
+function safeOpenFlags(flags: MinecraftPerformanceFileOpenFlags): number {
+  return flags.readonly | (flags.noFollow ?? 0) | (flags.nonBlock ?? 0);
+}
+
+function closeSafely(file: number, io: MinecraftPerformanceFileIo): void {
+  try {
+    io.close(file);
+  } catch {
+    // Reading has already completed or failed with a path-free diagnostic.
+  }
 }
 
 class BoundedJsonScanner {
@@ -247,38 +333,45 @@ class BoundedJsonScanner {
   }
 }
 
+/** Reads one stable, bounded, non-symlink JSON file and rejects duplicate source keys. */
 export function readMinecraftPerformanceFile(
   filePath: string,
   limits: Pick<
     MinecraftPerformanceAnalysisLimits,
     "maxInputBytes" | "maxInputCharacters" | "maxSamples"
   >,
+  overrides: MinecraftPerformanceFileIoOverrides = {},
 ): unknown {
-  let pathStatus: ReturnType<typeof lstatSync>;
+  const { openFlags = defaultMinecraftPerformanceFileOpenFlags, ...ioOverrides } = overrides;
+  const io = { ...defaultMinecraftPerformanceFileIo, ...ioOverrides };
+  let pathStatus: BigIntStats | undefined;
   try {
-    pathStatus = lstatSync(filePath, { bigint: true });
+    pathStatus = io.lstat(filePath);
   } catch {
     throw inputError("minecraft analyze-performance could not inspect the input file");
   }
-  if (pathStatus.isSymbolicLink() || !pathStatus.isFile()) {
+  if (!pathStatus?.isFile() || pathStatus.isSymbolicLink()) {
     throw inputError("minecraft analyze-performance requires a regular non-symlink file");
+  }
+  if (BigInt(limits.maxInputBytes) < pathStatus.size) {
+    throw inputError("minecraft analyze-performance input exceeds the fixed byte limit");
   }
 
   let file: number;
   try {
-    const noFollowFlag = constants.O_NOFOLLOW ?? 0;
-    file = openSync(filePath, constants.O_RDONLY | constants.O_NONBLOCK | noFollowFlag);
+    file = io.open(filePath, safeOpenFlags(openFlags));
   } catch {
     throw inputError("minecraft analyze-performance could not open the input file");
   }
 
   try {
-    const before = fstatSync(file, { bigint: true });
-    if (!before.isFile()) {
-      throw inputError("minecraft analyze-performance requires a regular file");
-    }
-    if (before.dev !== pathStatus.dev || before.ino !== pathStatus.ino) {
-      throw inputError("minecraft analyze-performance input changed before it was opened");
+    const before = io.fstat(file);
+    if (
+      !before.isFile() ||
+      !sameFileSnapshot(pathStatus, before) ||
+      !pathMatchesSnapshot(filePath, pathStatus, io)
+    ) {
+      throw inputError("minecraft analyze-performance input changed before it could be read");
     }
     if (BigInt(limits.maxInputBytes) < before.size) {
       throw inputError("minecraft analyze-performance input exceeds the fixed byte limit");
@@ -287,20 +380,24 @@ export function readMinecraftPerformanceFile(
     const contents = Buffer.allocUnsafe(Number(before.size));
     let offset = 0;
     while (offset < contents.byteLength) {
-      const bytesRead = readSync(file, contents, offset, contents.byteLength - offset, null);
+      const remaining = contents.byteLength - offset;
+      const bytesRead = io.read(file, contents, offset, remaining, offset);
+      if (!Number.isSafeInteger(bytesRead) || bytesRead < 0 || remaining < bytesRead) {
+        throw inputError(
+          "minecraft analyze-performance received an invalid local file read length",
+        );
+      }
       if (bytesRead === 0) {
         break;
       }
       offset += bytesRead;
     }
-    const after = fstatSync(file, { bigint: true });
+    const after = io.fstat(file);
     if (
       offset !== contents.byteLength ||
-      after.size !== before.size ||
-      after.dev !== before.dev ||
-      after.ino !== before.ino ||
-      after.mtimeNs !== before.mtimeNs ||
-      after.ctimeNs !== before.ctimeNs
+      !after.isFile() ||
+      !sameFileSnapshot(before, after) ||
+      !pathMatchesSnapshot(filePath, pathStatus, io)
     ) {
       throw inputError("minecraft analyze-performance input changed while it was being read");
     }
@@ -327,10 +424,6 @@ export function readMinecraftPerformanceFile(
     }
     throw inputError("minecraft analyze-performance could not safely read the input file");
   } finally {
-    try {
-      closeSync(file);
-    } catch {
-      // Reading has already completed or failed with a path-free diagnostic.
-    }
+    closeSafely(file, io);
   }
 }

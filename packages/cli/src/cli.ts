@@ -170,12 +170,12 @@ import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabric
 import { readFabricModJarFile } from "./fabricModJarFile.js";
 import { readBoundedPngFile } from "./filePrefix.js";
 import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
+import { readMinecraftPerformanceFile } from "./minecraftPerformanceFile.js";
 import { readMixinConfigCliFiles } from "./mixinConfigFiles.js";
 import {
   validateNewPlayerTexturePngPath,
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
-import { readMinecraftPerformanceFile } from "./minecraftPerformanceFile.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";

@@ -1,9 +1,43 @@
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  type BigIntStats,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { defaultMinecraftPerformanceAnalysisLimits } from "@minecraft-skills/catalog";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
+import { readMinecraftPerformanceFile } from "./minecraftPerformanceFile.js";
+
+type FakeFileKind = "file" | "symlink" | "fifo" | "device";
+
+function fakeBigIntStats(kind: FakeFileKind, identity: bigint, size = 0n): BigIntStats {
+  return {
+    dev: 1n,
+    ino: identity,
+    mode: 0o100644n,
+    nlink: 1n,
+    size,
+    ctimeNs: identity * 10n,
+    mtimeNs: identity * 10n,
+    isFile: () => kind === "file",
+    isSymbolicLink: () => kind === "symlink",
+  } as unknown as BigIntStats;
+}
+
+function changedSnapshot(status: BigIntStats, field: "mode" | "nlink"): BigIntStats {
+  return { ...status, [field]: status[field] + 1n } as BigIntStats;
+}
+
+const fileLimits = {
+  maxInputBytes: defaultMinecraftPerformanceAnalysisLimits.maxInputBytes,
+  maxInputCharacters: defaultMinecraftPerformanceAnalysisLimits.maxInputCharacters,
+  maxSamples: defaultMinecraftPerformanceAnalysisLimits.maxSamples,
+};
 
 async function capture(argv: string[]) {
   const stdout: string[] = [];
@@ -26,6 +60,142 @@ function validInput() {
 }
 
 describe("minecraft performance CLI", () => {
+  it("uses safe numeric flags, positioned bounded reads, and best-effort close", () => {
+    const contents = Buffer.from(JSON.stringify(validInput()), "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const positions: number[] = [];
+    const open = vi.fn(() => 7);
+    const close = vi.fn(() => {
+      throw new Error("private close failure");
+    });
+
+    const result = readMinecraftPerformanceFile("performance.json", fileLimits, {
+      lstat: () => expected,
+      open,
+      fstat: () => expected,
+      read: (_handle, buffer, offset, length, position) => {
+        positions.push(position);
+        const bytesRead = Math.min(7, length);
+        contents.copy(buffer, offset, position, position + bytesRead);
+        return bytesRead;
+      },
+      close,
+      openFlags: { readonly: 1, noFollow: 2, nonBlock: 4 },
+    });
+
+    expect(result).toEqual(validInput());
+    expect(open).toHaveBeenCalledWith("performance.json", 7);
+    expect(positions[0]).toBe(0);
+    expect(positions.at(-1)).toBeLessThan(contents.byteLength);
+    expect(positions).toEqual([...positions].sort((left, right) => left - right));
+    expect(close).toHaveBeenCalledWith(7);
+  });
+
+  it("rejects special files and path replacement before or during the read", () => {
+    for (const kind of ["symlink", "fifo", "device"] as const) {
+      const open = vi.fn(() => 7);
+      expect(() =>
+        readMinecraftPerformanceFile("performance.json", fileLimits, {
+          lstat: () => fakeBigIntStats(kind, 1n),
+          open,
+        }),
+      ).toThrow("requires a regular non-symlink file");
+      expect(open).not.toHaveBeenCalled();
+    }
+
+    const contents = Buffer.from(JSON.stringify(validInput()), "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const replacement = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    const closeBefore = vi.fn();
+    expect(() =>
+      readMinecraftPerformanceFile("performance.json", fileLimits, {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => replacement,
+        close: closeBefore,
+      }),
+    ).toThrow("changed before it could be read");
+    expect(closeBefore).toHaveBeenCalledWith(7);
+
+    let pathChecks = 0;
+    const closeDuring = vi.fn();
+    expect(() =>
+      readMinecraftPerformanceFile("performance.json", fileLimits, {
+        lstat: () => {
+          pathChecks += 1;
+          return pathChecks < 3 ? expected : replacement;
+        },
+        open: () => 7,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length, position) => {
+          contents.copy(buffer, offset, position, position + length);
+          return length;
+        },
+        close: closeDuring,
+      }),
+    ).toThrow("changed while it was being read");
+    expect(closeDuring).toHaveBeenCalledWith(7);
+
+    for (const field of ["mode", "nlink"] as const) {
+      let descriptorChecks = 0;
+      expect(() =>
+        readMinecraftPerformanceFile("performance.json", fileLimits, {
+          lstat: () => expected,
+          open: () => 7,
+          fstat: () => {
+            descriptorChecks += 1;
+            return descriptorChecks === 1 ? expected : changedSnapshot(expected, field);
+          },
+          read: (_handle, buffer, offset, length, position) => {
+            contents.copy(buffer, offset, position, position + length);
+            return length;
+          },
+          close: () => undefined,
+        }),
+      ).toThrow("changed while it was being read");
+    }
+  });
+
+  it("rejects invalid read lengths and sanitizes low-level failures", () => {
+    const expected = fakeBigIntStats("file", 1n, 2n);
+    const privateDetail = "C:\\private\\performance.json";
+    for (const read of [() => 3, () => -1, () => Number.NaN]) {
+      expect(() =>
+        readMinecraftPerformanceFile("performance.json", fileLimits, {
+          lstat: () => expected,
+          open: () => 7,
+          fstat: () => expected,
+          read,
+          close: () => undefined,
+        }),
+      ).toThrow("invalid local file read length");
+    }
+    expect(() =>
+      readMinecraftPerformanceFile("performance.json", fileLimits, {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => expected,
+        read: () => {
+          throw new Error(privateDetail);
+        },
+        close: () => undefined,
+      }),
+    ).toThrow("could not safely read the input file");
+    try {
+      readMinecraftPerformanceFile("performance.json", fileLimits, {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => expected,
+        read: () => {
+          throw new Error(privateDetail);
+        },
+        close: () => undefined,
+      });
+    } catch (error) {
+      expect(error instanceof Error ? error.message : String(error)).not.toContain(privateDetail);
+    }
+  });
+
   it("analyzes a bounded JSON file without returning the local path", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-performance-cli-"));
     const file = join(root, "metrics.json");
