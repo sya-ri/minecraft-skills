@@ -1519,6 +1519,170 @@
       "failureMode": "A UUID-only session map or event-only cleanup path can leak resources, let old callbacks mutate a replacement connection, retain stale Player references, or lose and reorder durable state during reconnect, transfer, reload, and shutdown."
     },
     {
+      "id": "paper-mob-navigation-ownership",
+      "domains": ["paper-plugin"],
+      "title": "Own Paper mob navigation and bound recovery",
+      "when": [
+        "a Paper plugin selects targets, calculates or starts mob paths, stops navigation, or temporarily replaces vanilla goals",
+        "multiple plugin systems can request control of the same mob or target",
+        "navigation must recover from a missing, partial, unreachable, stalled, expired, removed, or world-mismatched target",
+        "reload, entity removal, death, or plugin disable can overlap a queued path result or active navigation"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-navigation-semantics",
+          "action": "Resolve the exact Paper target and verify Mob, Entity, Pathfinder, Pathfinder.PathResult, EntityTargetEvent, and EntityPathfindEvent behavior in current official Javadocs. Record that findPath can return null or a closest point, canReachFinalPoint describes reachability, moveTo only reports that pathfinding started, hasPath only reports an active attempt, and EntityPathfindEvent reports the choice to start rather than movement or arrival. Do not infer behavior, nullability, thread safety, or event ordering from indexed member names.",
+          "tools": {
+            "cli": [
+              "plugin paper info",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper events",
+              "plugin paper claim-policy"
+            ],
+            "mcp": [
+              "get_paper_plugin_data",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "search_paper_events",
+              "get_claim_policy"
+            ],
+            "packageApis": [
+              "getPaperPluginData",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "searchPaperEvents",
+              "getClaimPolicy"
+            ]
+          },
+          "evidence": [
+            "Target-version type and member evidence for every referenced navigation API",
+            "Official behavior and nullability evidence for path calculation, path activation, reachability, and events",
+            "An explicit statement that a start signal, active path, or EntityPathfindEvent is not arrival proof"
+          ],
+          "stopIfMissing": "Do not invent a path-completion event, treat moveTo or EntityPathfindEvent as arrival, or call an unverified navigation member."
+        },
+        {
+          "id": "model-one-navigation-owner",
+          "action": "Model one mutually exclusive controller phase per mob: VANILLA_GOALS, PLUGIN_TARGET, PLUGIN_PATH, or STOPPED. Give each plugin request a stable controller identity, monotonically increasing generation, target or destination lease, eligibility result, deterministic priority and tie-breaker, deadline, and typed terminal outcome. PLUGIN_PATH retains the same target lease and target rights acquired in PLUGIN_TARGET; it is a later phase of one owner, not a second owner. A target lease alone does not grant ownership of an unknown current path. Reject lower-priority or ineligible requests explicitly, and increment the generation on preemption or release so old work cannot publish. Treat VANILLA_GOALS as abstention, and enter STOPPED only under an explicit navigation-coordinator contract that proves what the plugin may stop.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A state and transition table with exactly one controller phase per mob and PLUGIN_PATH retaining the same target lease",
+            "Typed acquisition outcomes for accepted, lower-priority, ineligible, invalid, expired, conflicting, stale, and released requests",
+            "A deterministic priority and tie-break rule plus a generation change on every ownership replacement"
+          ],
+          "stopIfMissing": "Do not combine independent target, path, stopped, and vanilla booleans that allow two systems to believe they own the same mob."
+        },
+        {
+          "id": "validate-before-calculation-and-publication",
+          "action": "At the last responsible moment before path calculation, activation, target mutation, progress publication, or cleanup, verify the plugin lifecycle epoch, controller generation, lease and deadline, mob identity, mob validity and death state, target or destination validity, expected world, and target eligibility. Reacquire live entities through a target-verified lookup appropriate to the architecture rather than retaining them in long-lived work. Reject stale generations without mutation. Pathfinder calls are synchronous server-state operations and remain on the verified target-compatible entity context; queue, admission, concurrency, and per-pass budgets limit how much work reaches that context rather than moving Paper pathfinding to an arbitrary worker thread. Route scheduler or event execution mechanics to their dedicated guidance instead of duplicating them here.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policy"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_claim_policy"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getClaimPolicy"
+            ]
+          },
+          "evidence": [
+            "A last-moment validation fence covering plugin, generation, entity, target, lease, and world identity",
+            "A stale-generation test in which an old calculation completes after preemption and cannot mutate navigation",
+            "A documented target-compatible context for every Paper-facing validation and mutation"
+          ],
+          "stopIfMissing": "Do not apply a result whose generation, mob, target, world, lease, or plugin lifecycle was checked only when work was queued."
+        },
+        {
+          "id": "classify-path-and-progress-outcomes",
+          "action": "Separate calculation, invocation, observable post-state, and runtime outcomes. Classify null findPath as NO_PATH and a non-reachable or policy-insufficient closest point as PARTIAL_OR_UNREACHABLE. Treat setTarget as target intent and moveTo false as START_REJECTED or moveTo true as STARTED only, then re-observe getTarget and the verified path state in the same entity context. Classify cancellation, rejection, clearing, or retargeting as TARGET_REJECTED, TARGET_CLEARED, or TARGET_RETARGETED, and a missing or replaced post-path state as PATH_REJECTED or FOREIGN_INTERVENTION. Observable target or path equality is not ownership proof. During active navigation classify PROGRESSING, ARRIVED, STALLED, TARGET_GONE, WORLD_CHANGED, LEASE_EXPIRED, STALE_GENERATION, CANCELLED, BUDGET_EXHAUSTED, and RELEASED. Prove ARRIVED from current valid entity state meeting an explicit destination tolerance, never from a path-start event, moveTo, hasPath, getCurrentPath, or path-point exhaustion alone.",
+          "tools": {
+            "cli": ["plugin paper members", "plugin paper events", "plugin paper diagnostic"],
+            "mcp": ["search_paper_members", "search_paper_events", "get_authoring_diagnostic"],
+            "packageApis": ["searchPaperMembers", "searchPaperEvents", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A table mapping every API invocation and observed post-state to a typed calculation, target, path, or runtime outcome",
+            "Separate arrival and meaningful-progress tolerances with an observation window",
+            "Tests showing that a started path, EntityPathfindEvent, and loss of an active path do not by themselves prove arrival"
+          ],
+          "stopIfMissing": "Do not collapse null, partial, start-rejected, stalled, and arrived paths into one boolean success or failure."
+        },
+        {
+          "id": "bound-replan-and-recovery",
+          "action": "Define a bounded recovery matrix for NO_PATH, PARTIAL_OR_UNREACHABLE, START_REJECTED, TARGET_REJECTED, TARGET_RETARGETED, PATH_REJECTED, FOREIGN_INTERVENTION, STALLED, TARGET_GONE, WORLD_CHANGED, lease expiry, and stale generation. Measure meaningful progress over a stated tolerance and window rather than exact position or one tick. Enforce a minimum replan interval, maximum attempts per lease, terminal timeout, bounded backoff, bounded admission and queue capacity, a maximum number of controllers or calculations admitted per pass, and a per-pass work or CPU budget on the verified entity context. On exhaustion return a terminal typed outcome or release to vanilla policy; never spin every tick, resubmit without a generation check, scan all mobs unboundedly, move synchronous Paper pathfinding off-thread, or use teleport as navigation recovery.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A recovery table with retryable, terminal, release, and no-mutation decisions for every outcome",
+            "Explicit progress tolerance, observation window, minimum interval, attempt, admission, per-pass, queue, work, and timeout budgets on the verified entity context",
+            "Tests distinguishing slow but meaningful progress from a true stall and proving budget exhaustion stops replanning"
+          ],
+          "stopIfMissing": "Do not add an unbounded per-tick replan loop or teleport fallback for a navigation failure."
+        },
+        {
+          "id": "preserve-foreign-state-and-converge-lifecycle",
+          "action": "Record the plugin controller generation, lease, target intent, path intent, observed post-state, and every pathfinder setting the controller changed. Paper exposes no plugin owner token for a current path, so matching a destination, PathResult, or current path is not proof that the plugin still owns it. Require an explicit exclusive coordinator or cooperative adapter contract covering every navigation writer before calling stopPathfinding, clearing a target, or restoring pathfinder settings; current-value and generation matches are necessary but not sufficient. Without that contract, fail closed, release internal ownership, and preserve unknown current Paper state. Under the contract, preemption, hot reload, target loss, mob death or despawn, world change, and disable cancel queued work and conditionally clean only the exact old generation. Hot reload builds a validated immutable policy generation, rejects old publications, and reconciles controllers within a bound; invalid candidates retain the last known good generation. Disable closes admission before bounded cleanup. Keep combat balance, specific mobs, assets or ModelEngine, behavior trees, teleport recovery, broad performance tuning, and generic scheduler, event, configuration, world, or region policy outside this concern.",
+          "tools": {
+            "cli": ["plugin paper members", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["search_paper_members", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["searchPaperMembers", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "An explicit exclusive coordinator or cooperative writer contract for every stop, target clear, or setting restore, with fail-closed preservation when ownership is ambiguous",
+            "Reload, target-gone, world-change, death, despawn, and repeated-disable tests that converge without stale publication",
+            "Foreign-intervention tests in which another writer replaces or coincidentally matches the target or path and unknown Paper state survives cleanup",
+            "A scope statement excluding combat, specific mobs, assets, behavior trees, teleport recovery, and generic infrastructure guidance"
+          ],
+          "stopIfMissing": "Do not infer path ownership from a matching destination or PathResult, and do not clear targets, stop paths, remove goals, disable awareness, or restore settings without an exclusive writer contract."
+        },
+        {
+          "id": "prove-deterministic-policy-and-paper-semantics",
+          "action": "Test ownership arbitration, eligibility, priority, generations, progress windows, retry budgets, and recovery decisions as deterministic domain logic. Add target-version loaded Paper server evidence for plugin load, Mob and Pathfinder access, null and partial path behavior where the fixture can produce it, moveTo start semantics, EntityPathfindEvent observation, entity removal or death cleanup, hot reload, and disable. State fixture limitations instead of simulating undocumented server navigation behavior in mocks.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper output-requirements"],
+            "mcp": ["get_authoring_recipe", "list_output_requirements"],
+            "packageApis": ["getAuthoringRecipe", "listOutputRequirements"]
+          },
+          "evidence": [
+            "Table-driven deterministic tests for competing owners, post-call cancellation or retargeting, foreign intervention, and every calculation, progress, recovery, and lifecycle outcome",
+            "A loaded target-version Paper fixture proving the actual navigation APIs and lifecycle boundaries used",
+            "Exact commands, target build, passed and failed counts, and explicit unverified runtime cases"
+          ],
+          "stopIfMissing": "Do not claim Paper navigation behavior from pure mocks or deterministic policy tests alone."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-mob-navigation-ownership-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Overlapping navigation owners, ambiguous API success, stale path results, and unbounded replanning can fight vanilla or foreign behavior, consume server work, and mutate removed or replacement entities after lifecycle transitions."
+    },
+    {
       "id": "paper-bossbar-audience-lifecycle",
       "domains": ["paper-plugin"],
       "title": "Own, arbitrate, and reconcile Paper BossBar audiences",

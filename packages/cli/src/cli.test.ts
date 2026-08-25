@@ -4993,6 +4993,72 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"query": "日本語プロジェクト"');
   });
 
+  it("prints and routes Paper mob navigation ownership guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-mob-navigation-ownership"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("classify-path-and-progress-outcomes");
+    expect(recipe.stdout.join("\n")).toContain("moveTo true as STARTED only");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-mob-navigation-ownership-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-mob-navigation-ownership-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "Paper Mob Pathfinder stalled unreachable target EntityPathfindEvent",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-mob-navigation-ownership-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-mob-navigation-ownership-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-mob-navigation-ownership"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-mob-navigation-ownership-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-mob-navigation-ownership-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("mutually exclusive controller phases");
+    expect(guardrail.stdout.join("\n")).toContain("no current-path owner token");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-mob-navigation-ownership-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("replanning can happen every tick");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "mob navigation path ownership bounded replan stalled target",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-mob-navigation-ownership"');
+  });
+
   it("prints and routes Paper attribute and effect ownership guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-attribute-effect-ownership"]);
     expect(recipe.code).toBe(0);

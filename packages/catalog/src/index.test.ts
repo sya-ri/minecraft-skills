@@ -6753,6 +6753,79 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper mob navigation ownership guidance", () => {
+    const recipe = getAuthoringRecipe("paper-mob-navigation-ownership");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "model-one-navigation-owner",
+        "classify-path-and-progress-outcomes",
+        "bound-replan-and-recovery",
+        "preserve-foreign-state-and-converge-lifecycle",
+      ]),
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "moveTo true as STARTED only",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain("never spin every tick");
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "coincidentally matches",
+    );
+    expect(recipe.finalChecks).toContain("paper-mob-navigation-ownership-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-mob-navigation-ownership-safety");
+    expect(guardrail.rules.join("\n")).toContain("mutually exclusive controller phases");
+    expect(guardrail.rules.join("\n")).toContain("EntityPathfindEvent");
+    expect(guardrail.rules.join("\n")).toContain("no current-path owner token");
+
+    const diagnostic = getAuthoringDiagnostic("paper-mob-navigation-ownership-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("reported as arrival");
+    expect(diagnostic.failIf.join("\n")).toContain("replanning can happen every tick");
+
+    const scenario = getAuthoringScenario("paper-mob-navigation-ownership-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-mob-navigation-ownership"]);
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-mob-navigation-ownership-unsafe");
+    expect(scenario.mustAvoid.join("\n")).toContain("teleport as path recovery");
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("bound-mob-navigation-and-recovery");
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "Paper Mob Pathfinder stalled unreachable target EntityPathfindEvent",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-mob-navigation-ownership-review");
+
+    const catalogSearch = searchCatalog({
+      query: "mob navigation path ownership bounded replan stalled target",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]?.id).toBe("paper-mob-navigation-ownership");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-mob-navigation-ownership-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-mob-navigation-ownership");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-mob-navigation-ownership-unsafe",
+    );
+    expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-event-search");
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "bound Paper mob path retries and reject stale Pathfinder results",
+      domain: "paper-plugin",
+    });
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-mob-navigation-ownership",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-mob-navigation-ownership-review",
+    );
+  });
+
   it("routes generic Paper region protection policy reviews", () => {
     const checklist = getAuthoringChecklist("paper-plugin");
     expect(checklist.steps.map((step) => step.id)).toContain("design-region-protection-policy");

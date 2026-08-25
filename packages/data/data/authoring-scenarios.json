@@ -887,6 +887,72 @@
       "failureMode": "A scoreboard implementation can destroy foreign UI ownership, restore stale state, collide with registrations, produce unstable lines, accept late updates, or leak resources across player and plugin lifecycle transitions."
     },
     {
+      "id": "paper-mob-navigation-ownership-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper mob navigation ownership and bounded recovery",
+      "userPrompt": "Create or review Paper mob navigation that assigns one owner, validates every path publication, distinguishes start from arrival, and stops bounded recovery without overwriting vanilla or foreign state.",
+      "useWhen": [
+        "a plugin chooses a Mob target, calculates or starts a Pathfinder path, stops navigation, or temporarily replaces vanilla navigation",
+        "two plugin features can request target or path control for the same mob",
+        "navigation retries after no path, a partial path, start rejection, no progress, target loss, or world change",
+        "queued or active navigation can overlap hot reload, mob death or despawn, or plugin disable"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-mob-navigation-ownership"],
+        "intents": [
+          "prepare-generation",
+          "discover-paper-event-candidates",
+          "verify-paper-type-or-member"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-threading-assumption",
+          "paper-mob-navigation-ownership-unsafe"
+        ],
+        "claimPolicies": [
+          "paper-type-or-member-exists",
+          "paper-event-candidate",
+          "folia-or-thread-safety"
+        ],
+        "factSurfaces": [
+          "paper-builds",
+          "paper-api-index",
+          "paper-api-surface",
+          "paper-event-search"
+        ],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "each mob is in exactly one VANILLA_GOALS, PLUGIN_TARGET, PLUGIN_PATH, or STOPPED controller phase, and PLUGIN_PATH retains the same target lease and rights rather than creating a second owner",
+        "target leases carry stable controller identity, generation, eligibility, deterministic priority and tie-break, deadline, attempt budget, and typed acquisition outcome",
+        "path calculation, target or path invocation, observed post-state, progress, arrival, release, and failure use separate typed outcomes, including cancellation, retargeting, rejection, and foreign intervention",
+        "plugin epoch, controller generation, mob and target validity, world identity, lease, and eligibility are rechecked immediately before every Paper mutation or publication",
+        "arrival is proved from current valid entity state within a declared destination tolerance; moveTo, hasPath, current-path state, path-point exhaustion, and EntityPathfindEvent are not treated as arrival",
+        "meaningful progress has a tolerance and observation window, while synchronous pathfinding stays on the verified entity context and admission, per-pass work, minimum interval, attempts, queue, backoff, and timeout are bounded",
+        "no-path, partial or unreachable, start-rejected, stalled, target-gone, world-change, lease-expired, stale-generation, and budget-exhausted outcomes have explicit retry, release, or terminal decisions",
+        "reload, death, despawn, world change, and disable reject stale work and clean Paper navigation only through an explicit exclusive coordinator or cooperative writer contract",
+        "matching a destination or path is not treated as Paper ownership proof, and ambiguous vanilla or foreign targets, paths, goals, awareness, and pathfinder settings survive fail-closed cleanup",
+        "deterministic table-driven tests prove policy and recovery, while a loaded target-version Paper server proves the actual APIs and lifecycle semantics used"
+      ],
+      "mustAvoid": [
+        "independent booleans that allow target, path, stopped, vanilla, or multiple plugin systems to overlap, or a PLUGIN_PATH phase that loses the target lease it depends on",
+        "using entity identity alone without a controller generation and bounded lease",
+        "retaining live entities in long-lived work or applying a result validated only when queued",
+        "treating setTarget or moveTo invocation as accepted final state without re-observing cancellation, rejection, retargeting, or replacement",
+        "treating findPath non-null, canReachFinalPoint, moveTo true, hasPath, a current path, exhausted points, or EntityPathfindEvent as proof of arrival",
+        "collapsing null path, partial path, start rejection, stall, target loss, world change, expiry, and stale completion into one failure",
+        "replanning every tick, scanning all mobs without a work budget, retrying without admission, per-pass, interval, attempt, queue, backoff, and timeout bounds, or moving synchronous Pathfinder calls to an arbitrary worker thread",
+        "using teleport as path recovery",
+        "inferring path ownership from a matching destination or PathResult, or calling setTarget(null), stopPathfinding, setAware(false), goal removal, or setting restore without an exclusive coordinator or cooperative writer contract",
+        "letting reload or disable publish queued old-generation navigation",
+        "testing Paper path semantics only through mocks or claiming loaded-server behavior from deterministic policy tests",
+        "mixing combat balance, specific mobs, assets, ModelEngine, behavior-tree validation, teleport recovery, broad performance work, or generic scheduler, event, configuration, world, or region guidance into this concern"
+      ],
+      "failureMode": "A mob can oscillate between competing controllers, accept stale paths, misreport starts as arrivals, consume unbounded pathfinding work, or lose vanilla and foreign behavior during reload and cleanup."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",

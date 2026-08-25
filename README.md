@@ -74,6 +74,7 @@ minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.2
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
 minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
 minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
+minecraft-skills plugin paper plan paper-mob-navigation-ownership-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
@@ -218,6 +219,16 @@ temporary state must converge without replay across duplicate callbacks, quit, r
 and disable. Because final event cancellation does not identify its owner, downed side effects stay
 staged until a cooperative ownership contract proves the outcome; ambiguous cancellation fails
 closed.
+
+`paper-mob-navigation-ownership-review` assigns each mob one controller phase and keeps the
+plugin-path phase under the same generation-scoped target lease. It separates null, partial,
+start-rejected, retargeted, foreign-intervened, progressing, arrived, and stalled outcomes; a
+successful `moveTo`, active path, or `EntityPathfindEvent` is never arrival proof. Synchronous
+Pathfinder calls remain on the verified entity context under admission, per-pass work, interval,
+attempt, queue, backoff, and timeout bounds. Because Paper exposes no current-path owner token,
+cleanup requires an explicit exclusive coordinator or cooperative writer contract; otherwise it
+fails closed and preserves unknown vanilla or foreign navigation through reload, removal, and
+disable.
 
 `paper-plugin-testing-evidence-review` builds a claim-to-observation test plan. It distinguishes
 pure logic and owned test doubles from MockBukkit-supported behavior, loaded target-version Paper

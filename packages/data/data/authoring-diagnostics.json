@@ -957,6 +957,95 @@
       "failureMode": "Old connection work can act on a replacement player session, leak resources, retain Player objects, or reorder durable state across reconnect and shutdown."
     },
     {
+      "id": "paper-mob-navigation-ownership-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper mob navigation ownership or recovery is unsafe",
+      "severity": "error",
+      "detectWhen": [
+        "a Paper plugin changes a Mob target, starts or stops a Pathfinder path, or suppresses vanilla navigation",
+        "multiple plugin features can control the same mob without one arbitration record",
+        "a path calculation or retry can complete after preemption, reload, entity removal, or disable",
+        "navigation retries after a null, partial, unreachable, rejected, or stalled path",
+        "arrival or failure is inferred from moveTo, hasPath, current path, path points, or EntityPathfindEvent",
+        "cleanup clears targets, stops paths, removes goals, disables awareness, or restores settings"
+      ],
+      "requiredChecks": [
+        "verify one mutually exclusive VANILLA_GOALS, PLUGIN_TARGET, PLUGIN_PATH, or STOPPED controller phase per mob and that PLUGIN_PATH retains its target lease and rights",
+        "verify stable controller identity, monotonic generation, bounded target lease, eligibility, deterministic priority and tie-break, deadline, and typed acquisition outcome",
+        "verify target ownership and active-path ownership are distinct and every preemption or release invalidates old work",
+        "verify target-version Mob, Entity, Pathfinder, PathResult, target-event, pathfinding-event, and lifecycle semantics in official documentation",
+        "verify plugin epoch, generation, lease, mob, target, validity, death state, world, and eligibility immediately before every mutation or publication",
+        "verify setTarget and moveTo post-state is re-observed and target cancellation, rejection, clearing, retargeting, path replacement, and foreign intervention are typed separately",
+        "verify null path, partial or unreachable, start rejected, started, progressing, arrived, stalled, target gone, world changed, expired, stale, cancelled, exhausted, and released are distinguishable",
+        "verify arrival uses current valid state and a destination tolerance rather than a path-start or active-path signal",
+        "verify progress uses a meaningful tolerance and observation window",
+        "verify synchronous Pathfinder calls remain on the verified entity context with bounded admission, calculations or controllers per pass, minimum replan interval, attempts, backoff, timeout, queue, and per-pass work or CPU",
+        "verify an explicit exclusive coordinator or cooperative adapter contract covers every navigation writer before stop, clear, or restore; otherwise preserve unknown current state because Paper has no current-path owner token",
+        "verify reload, death, despawn, world change, and disable reject stale work and converge repeated cleanup",
+        "verify deterministic policy tests and loaded target-version Paper server evidence",
+        "confirm teleport recovery and unrelated combat, mob-design, asset, ModelEngine, behavior-tree, performance, scheduler, event, configuration, world, and region concerns remain separate"
+      ],
+      "evidence": [
+        "A one-owner state and transition table plus a stable lease and generation schema",
+        "Official target-version navigation API and event evidence",
+        "A typed invocation, post-state, path, and recovery matrix with explicit arrival, progress, and all admission or retry budgets",
+        "Stale-result, competing-owner, target cancellation or retargeting, same-path and different-path foreign-intervention, reload, removal, and disable tests",
+        "Loaded target-version Paper results and stated harness limitations"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper events",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "search_paper_events",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "searchPaperEvents",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "two controllers, target and path flags, or stopped and vanilla behavior can overlap for one mob, or PLUGIN_PATH does not retain its target lease",
+        "a request lacks stable controller identity, generation, eligibility, deterministic priority, deadline, or typed outcome",
+        "a queued result can mutate after preemption, reload, target replacement, mob removal, world change, or plugin disable",
+        "live entity references are retained across long-lived work without last-moment reacquisition and validation",
+        "setTarget or moveTo is treated as accepted final state without re-observing cancellation, rejection, retargeting, or replacement",
+        "a non-null path, moveTo true, hasPath, current path, path-point exhaustion, or EntityPathfindEvent is reported as arrival",
+        "null, partial or unreachable, start rejected, stalled, target gone, world changed, expired, stale, cancelled, and exhausted outcomes collapse into one boolean",
+        "progress has no tolerance or observation window",
+        "replanning can happen every tick, synchronous Pathfinder calls move to an arbitrary worker, or admission, per-pass, interval, attempt, backoff, timeout, queue, and work bounds are missing",
+        "failure recovery teleports the entity",
+        "a matching destination, PathResult, or current path is treated as a Paper owner token",
+        "cleanup clears a target, stops a path, removes goals, changes awareness, or restores settings without an exclusive coordinator or cooperative writer contract",
+        "reload publishes an invalid candidate or old-generation work, or disable admits new work",
+        "death, despawn, target loss, world change, and repeated disable cannot converge on idempotent conditional cleanup",
+        "mocks or policy tests are the only evidence for Paper navigation semantics"
+      ],
+      "safeResponse": [
+        "Introduce one navigation owner state and a generation-scoped bounded target lease per mob.",
+        "Map each verified Paper API invocation and observed post-state to a typed target, path, progress, recovery, or terminal outcome.",
+        "Fence every Paper mutation with current lifecycle, generation, entity, target, world, lease, and eligibility checks.",
+        "Bound progress observation and replanning, and terminate or release when the lease budget is exhausted.",
+        "Use an exclusive coordinator or cooperative writer contract for cleanup; without one, fail closed and preserve unknown Paper navigation state.",
+        "Add deterministic race and budget tests plus loaded target-version server evidence."
+      ],
+      "failureMode": "The plugin can fight other controllers, spin on impossible routes, publish stale results, report false arrival, or erase navigation behavior it no longer owns."
+    },
+    {
       "id": "paper-bossbar-audience-lifecycle-unsafe",
       "domains": ["paper-plugin"],
       "title": "Paper BossBar ownership, audience reconciliation, or terminal cleanup is unsafe",

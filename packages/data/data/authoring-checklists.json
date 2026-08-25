@@ -720,6 +720,44 @@
             "Plugin-owned temporary state and pending receipts converge without replay across duplicate callbacks, quit, reconnect, reload, and disable."
           ],
           "failureMode": "Do not approve death or respawn handling without target-version event evidence, an exclusive state machine, coherent settlement, explicit destination precedence, and lifecycle recovery tests."
+        },
+        {
+          "id": "bound-mob-navigation-and-recovery",
+          "reason": "Paper path APIs report calculation and start state, while safe navigation also requires one owner, current-entity validation, explicit arrival and progress rules, bounded recovery, and lifecycle convergence.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper scenario",
+              "plugin paper guardrail",
+              "plugin paper diagnostic",
+              "plugin paper members",
+              "plugin paper events"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_scenario",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic",
+              "search_paper_members",
+              "search_paper_events"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringScenario",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic",
+              "searchPaperMembers",
+              "searchPaperEvents"
+            ]
+          },
+          "evidence": [
+            "Each mob has one VANILLA_GOALS, PLUGIN_TARGET, PLUGIN_PATH, or STOPPED controller phase with a generation-scoped bounded lease, and PLUGIN_PATH retains its target lease.",
+            "Null, partial or unreachable, target cancellation or retargeting, start rejected, path replacement, foreign intervention, progress, arrival, stall, target loss, world change, expiry, stale completion, and budget exhaustion are typed separately after observing post-state.",
+            "Arrival and meaningful progress use explicit tolerances and a window, while synchronous pathfinding remains on the verified entity context under admission, per-pass, interval, attempt, backoff, timeout, queue, and work bounds.",
+            "Every mutation revalidates lifecycle, generation, entity, target, world, lease, and eligibility; stop, clear, or restore requires an exclusive coordinator or cooperative writer contract because a matching path is not ownership proof.",
+            "Deterministic race and budget tests are paired with loaded target-version Paper evidence."
+          ],
+          "failureMode": "Do not treat path start as arrival, run an unbounded retry loop, or clear navigation state whose current owner cannot be proven."
         }
       ]
     }

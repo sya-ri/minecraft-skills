@@ -2036,6 +2036,91 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf.join("\n")).toContain("hidden effect");
   });
 
+  it("loads complete Paper mob navigation ownership guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-mob-navigation-ownership");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "model-one-navigation-owner",
+        "validate-before-calculation-and-publication",
+        "classify-path-and-progress-outcomes",
+        "bound-replan-and-recovery",
+        "preserve-foreign-state-and-converge-lifecycle",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "VANILLA_GOALS, PLUGIN_TARGET, PLUGIN_PATH, or STOPPED",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "moveTo true as STARTED only",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "minimum replan interval",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "Paper exposes no plugin owner token",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "coincidentally matches",
+    );
+    expect(recipe?.finalChecks).toContain("paper-mob-navigation-ownership-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-mob-navigation-ownership-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-mob-navigation-ownership"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-mob-navigation-ownership-unsafe",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("replanning every tick");
+    expect(scenario?.mustAvoid.join("\n")).toContain("EntityPathfindEvent");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-mob-navigation-ownership-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("mutually exclusive controller phases");
+    expect(guardrail?.rules.join("\n")).toContain("minimum replan interval");
+    expect(guardrail?.rules.join("\n")).toContain("no current-path owner token");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-mob-navigation-ownership-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("reported as arrival");
+    expect(diagnostic?.failIf.join("\n")).toContain("replanning can happen every tick");
+    expect(diagnostic?.failIf.join("\n")).toContain(
+      "current path is treated as a Paper owner token",
+    );
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string }> }>;
+    }>("authoring-checklists.json");
+    expect(
+      checklists.checklists
+        .find((entry) => entry.domain === "paper-plugin")
+        ?.steps.map((step) => step.id),
+    ).toContain("bound-mob-navigation-and-recovery");
+  });
+
   it("bundles generic Paper region protection policy guidance", () => {
     const checklists = readDataJson<{
       checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;

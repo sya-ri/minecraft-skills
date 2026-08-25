@@ -468,6 +468,38 @@
       "failureMode": "A scoreboard owner without identity, generations, bounded registrations, deterministic snapshots, conditional restoration, and complete teardown can overwrite foreign state, publish stale lines, or leak UI resources."
     },
     {
+      "id": "paper-mob-navigation-ownership-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper mob navigation single-owned and recovery bounded",
+      "rules": [
+        "Resolve and document the exact target Paper version before naming Mob, Pathfinder, PathResult, target, pathfinding, removal, or lifecycle APIs.",
+        "Represent VANILLA_GOALS, PLUGIN_TARGET, PLUGIN_PATH, and STOPPED as mutually exclusive controller phases; PLUGIN_PATH retains the same target lease and rights from PLUGIN_TARGET rather than creating a second owner.",
+        "Identify every plugin controller and request with a stable identity, monotonic generation, bounded lease, eligibility result, deterministic priority and tie-breaker, and typed outcome.",
+        "Increment the generation on acquire, preempt, release, reload, and terminal teardown so queued or delayed old work cannot publish.",
+        "Immediately before every target or path mutation, verify plugin epoch, controller generation, lease and deadline, mob and target identity, validity, death state, world, and current eligibility in a target-compatible execution context.",
+        "Treat a null findPath result as NO_PATH, an insufficient or non-reachable result as PARTIAL_OR_UNREACHABLE, moveTo false as START_REJECTED, and moveTo true as STARTED only.",
+        "Treat setTarget and moveTo as intent or start operations, re-observe target and path state in the same verified entity context, and type cancellation, rejection, retargeting, clearing, replacement, and foreign intervention separately.",
+        "Prove ARRIVED from current valid entity state within an explicit destination tolerance; moveTo, hasPath, getCurrentPath, path-point exhaustion, and EntityPathfindEvent are not completion signals.",
+        "Measure meaningful progress with a stated tolerance and observation window, then distinguish slow progress from STALLED without exact-position or one-tick assumptions.",
+        "Keep synchronous Pathfinder calls on the verified entity context, and bound admission, controllers or calculations per pass, minimum replan interval, attempts per lease, backoff, timeout, queue capacity, and per-pass work or CPU budget; terminate or release on exhaustion and never spin every tick.",
+        "Give no-path, partial or unreachable, start-rejected, stalled, target-gone, world-change, lease-expired, stale-generation, cancellation, and budget-exhausted outcomes explicit retry, release, or terminal decisions.",
+        "Paper exposes no current-path owner token: a matching destination, PathResult, or observable path is not ownership proof. Require an explicit exclusive coordinator or cooperative adapter contract covering all writers before stopping a path, clearing a target, or restoring settings; otherwise fail closed and preserve unknown Paper state.",
+        "On hot reload, publish a validated immutable policy generation, reject old results, reconcile controllers within a bound, and keep the last known good generation when the candidate is invalid.",
+        "On target loss, world change, mob death or despawn, and disable, close admission, cancel queued work, invalidate generations, and converge repeated cleanup under the writer contract without teleport recovery or new post-disable work.",
+        "Prove deterministic ownership and recovery with table-driven tests, and prove referenced Paper navigation and lifecycle semantics on a loaded target-version server.",
+        "Keep combat balance, specific mob design, assets, ModelEngine, behavior trees, teleport recovery, broad performance analysis, and generic scheduler, event, configuration, world, and region policy outside this concern."
+      ],
+      "requiredEvidence": [
+        "A target-version API and behavior evidence table for Mob, Entity, Pathfinder, PathResult, target events, pathfinding events, and lifecycle observations actually used",
+        "A one-owner phase and transition table in which PLUGIN_PATH retains its target lease, with deterministic arbitration, generation changes, and typed acquisition outcomes",
+        "A calculation, invocation, observed-post-state, progress, and recovery matrix covering null, partial, unreachable, target cancellation or retargeting, start rejection, foreign intervention, progress, arrival, stall, target loss, world change, expiry, stale completion, cancellation, and budget exhaustion",
+        "Explicit arrival and progress tolerances, observation window, replan interval, attempts, backoff, timeout, queue, admission, per-pass, and work budgets on the verified entity context",
+        "An exclusive coordinator or cooperative writer contract plus fail-closed evidence proving same-destination and different-destination foreign intervention survives reload, preemption, death, despawn, world change, and disable",
+        "Table-driven deterministic tests plus loaded target-version server evidence with exact commands and limitations"
+      ],
+      "failureMode": "Ambiguous ownership and unbounded recovery can make controllers fight, mistake intent for arrival, repeatedly calculate impossible paths, and destroy behavior another system now owns."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",

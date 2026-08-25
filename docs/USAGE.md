@@ -116,6 +116,10 @@ minecraft-skills plugin paper search-scenarios "sidebar prior foreign scoreboard
 minecraft-skills plugin paper plan paper-scoreboard-ownership-lifecycle-review 1.21.11
 minecraft-skills plugin paper guardrail paper-scoreboard-ownership-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-scoreboard-ownership-lifecycle-unsafe
+minecraft-skills plugin paper search-scenarios "Paper Mob Pathfinder stalled unreachable target"
+minecraft-skills plugin paper plan paper-mob-navigation-ownership-review 1.21.11
+minecraft-skills plugin paper guardrail paper-mob-navigation-ownership-safety
+minecraft-skills plugin paper diagnostic paper-mob-navigation-ownership-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -951,6 +955,19 @@ delayed updates cover publication. Mid-session
 eligibility, join, quit, reconnect, world change, rapid replacement, reload, disable, and
 restoration failure all have explicit test and cleanup outcomes. Numeric limits and event behavior
 must come from the selected target-version Paper evidence rather than copied constants.
+
+For Paper mob target and path control, resolve
+`plugin paper plan paper-mob-navigation-ownership-review <version>`. The plan makes vanilla goals,
+plugin target, plugin path, and stopped mutually exclusive controller phases, with the plugin-path
+phase retaining the same generation-scoped target lease. It separates null and partial paths,
+target cancellation or retargeting, start rejection, foreign intervention, meaningful progress,
+actual arrival, and stalls. `moveTo`, `hasPath`, current path state, and `EntityPathfindEvent` do
+not prove arrival. Synchronous Pathfinder work stays on the verified entity context under bounded
+admission, per-pass work, intervals, attempts, queues, backoff, and timeouts. Paper has no current-
+path owner token, so an equal destination is not ownership evidence: stop, clear, and restore need
+an explicit exclusive coordinator or cooperative writer contract, and otherwise fail closed while
+preserving unknown vanilla or foreign state through reload, death, despawn, world change, and
+disable.
 
 ## Source Policy
 

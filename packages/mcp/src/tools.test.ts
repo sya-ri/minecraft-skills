@@ -1739,6 +1739,49 @@ describe("MCP tools", () => {
     expect(paperIndex === -1 || datapackIndex < paperIndex).toBe(true);
   });
 
+  it("calls Paper mob navigation ownership guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-mob-navigation-ownership",
+    });
+    expect(recipe.content[0]?.text).toContain("classify-path-and-progress-outcomes");
+    expect(recipe.content[0]?.text).toContain("Paper exposes no plugin owner token");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-mob-navigation-ownership-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-mob-navigation-ownership-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper Mob Pathfinder stalled unreachable target EntityPathfindEvent",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-mob-navigation-ownership-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-mob-navigation-ownership-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-mob-navigation-ownership"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-mob-navigation-ownership-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-mob-navigation-ownership-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("no current-path owner token");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-mob-navigation-ownership-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("replanning can happen every tick");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "mob navigation path ownership bounded replan stalled target",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-mob-navigation-ownership"');
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",
