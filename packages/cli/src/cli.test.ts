@@ -2434,6 +2434,69 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("validates explicit resource-pack translation files without exposing values or local paths", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-translation-cli-"));
+    const directory = join(root, "assets", "example", "lang");
+    mkdirSync(directory, { recursive: true });
+    const english = join(directory, "en_us.json");
+    const japanese = join(directory, "ja_jp.json");
+    writeFileSync(english, '{"example.key":"secret-one","example.key":"secret-two"}');
+    writeFileSync(japanese, "{}");
+
+    try {
+      const result = await capture([
+        "resourcepack",
+        "validate-translations",
+        "26.2",
+        english,
+        japanese,
+        "--pack-root",
+        root,
+        "--required-locale",
+        "ja_jp",
+      ]);
+      const output = result.stdout.join("\n");
+
+      expect(result.code).toBe(0);
+      expect(output).toContain('"parsedTextFiles": 2');
+      expect(output).toContain('"code": "duplicate-source-key"');
+      expect(output).toContain('"code": "translation-key-missing"');
+      expect(output).not.toContain("secret-one");
+      expect(output).not.toContain("secret-two");
+      expect(output).not.toContain(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects unknown or repeated translation-validator options", async () => {
+    const unknown = await capture([
+      "resourcepack",
+      "validate-translations",
+      "26.2",
+      "file.json",
+      "--pack-root",
+      ".",
+      "--unknown",
+      "value",
+    ]);
+    const repeated = await capture([
+      "resourcepack",
+      "validate-translations",
+      "26.2",
+      "file.json",
+      "--pack-root",
+      ".",
+      "--pack-root",
+      ".",
+    ]);
+
+    expect(unknown.code).toBe(1);
+    expect(unknown.stderr.join("\n")).toContain("Unknown option: --unknown");
+    expect(repeated.code).toBe(1);
+    expect(repeated.stderr.join("\n")).toContain("option must not repeat: --pack-root");
+  });
+
   it("fills a bounded sound prefix across short reads and rejects non-regular handles", () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-prefix-read-"));
     const file = join(root, "sound.ogg");

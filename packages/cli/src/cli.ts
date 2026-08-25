@@ -152,6 +152,7 @@ import {
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
+  validateResourcepackTranslations,
   validateServerAccessList,
   validateServerProperties,
   validateVelocityPluginJar,
@@ -177,6 +178,7 @@ import {
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
+import { readResourcepackTranslationFiles } from "./resourcepackTranslationFiles.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
 
@@ -905,6 +907,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "resourcepack inspect-png-alpha": "inspect-resourcepack-png-alpha",
     "resourcepack validate-png": "validate-resourcepack-png",
     "resourcepack validate-project": "validate-resourcepack-project",
+    "resourcepack validate-translations": "validate-resourcepack-translations",
     "resourcepack migration-plan": "migration-plan",
     "resourcepack search-models": "search-models",
     "player-skin validate-layout": "validate-player-skin-layout",
@@ -1115,6 +1118,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "validate-player-skin-layout": "player-skin validate-layout",
   "download-player-texture": "player-texture download",
   "analyze-minecraft-log": "minecraft analyze-log",
+  "validate-resourcepack-translations": "resourcepack validate-translations",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
@@ -1407,6 +1411,7 @@ Grouped commands:
   minecraft-skills player-skin validate-layout <file> [--base-rect x,y,width,height] [--hat-rect x,y,width,height] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n] [--max-diagnostics n]
   minecraft-skills player-texture download <64-lowercase-hex> --kind skin|cape|elytra --output <new.png>
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
+  minecraft-skills resourcepack validate-translations <version> <file...> --pack-root dir [--reference-locale en_us] [--required-locale locale]... [--limit 100]
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills resourcepack assets status [version]
@@ -2528,6 +2533,34 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         files: readDatapackProjectFiles(directory),
         limit: Number(readOption(args, "--limit", "100")),
         assumeLocalNamespacesComplete: !args.includes("--allow-merged-namespace-dependencies"),
+      });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
+    }
+
+    if (command === "validate-resourcepack-translations") {
+      const singularOptions = ["--pack-root", "--reference-locale", "--limit"];
+      for (const option of singularOptions) {
+        if (args.filter((value) => value === option).length > 1) {
+          throw new Error(`resourcepack validate-translations option must not repeat: ${option}`);
+        }
+      }
+      const [version, ...filePaths] = positionalArgsWithOptions(args, {
+        values: [...singularOptions, "--required-locale"],
+      });
+      const packRoot = readOption(args, "--pack-root", "");
+      if (!version || filePaths.length === 0 || !packRoot) {
+        throw new Error(
+          "resourcepack validate-translations requires <version>, at least one <file>, and --pack-root <dir>",
+        );
+      }
+      const result = validateResourcepackTranslations({
+        edition,
+        version,
+        referenceLocale: readOption(args, "--reference-locale", "en_us"),
+        requiredLocales: readRepeatedOption(args, "--required-locale"),
+        files: readResourcepackTranslationFiles(packRoot, filePaths),
+        limit: Number(readOption(args, "--limit", "100")),
       });
       printJson(output, result);
       return result.valid ? 0 : 1;

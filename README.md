@@ -96,6 +96,7 @@ minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --ha
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
+minecraft-skills resourcepack validate-translations 26.2 ./my-resource-pack/assets/example/lang/en_us.json ./my-resource-pack/assets/example/lang/ja_jp.json --pack-root ./my-resource-pack --required-locale ja_jp
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills fabric toolchain 1.21.11
@@ -238,6 +239,12 @@ be supplied explicitly. Associations and deltas are descriptive, never root-caus
 threshold is violated, the only automated next step is a scoped spark profile while the issue is
 occurring. See [Performance analysis](docs/USAGE.md#performance-time-series-analysis) for the input
 contract, privacy constraints, bounds, and Paper source links.
+
+`resourcepack validate-translations` compares exact translation keys in Minecraft's locale-wide
+global map, detects duplicate keys from raw JSON, and compares normalized placeholder argument
+references across only the caller-selected reference and required locales. Missing, extra,
+placeholder, and unknown pack-order findings are warnings rather than loader-invalid claims.
+Translation values and local file paths are never returned.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

@@ -9,6 +9,7 @@ import {
   defaultMinecraftLogAnalysisLimits,
   defaultMinecraftPerformanceAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
+  defaultResourcepackTranslationValidationLimits,
   defaultServerAccessListValidationLimits,
   defaultServerPropertiesValidationLimits,
   getVersionDetail,
@@ -259,6 +260,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_server_access_list");
     expect(tools.map((tool) => tool.name)).toContain("inspect_blockbench_project");
     expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_performance");
+    expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_translations");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -1955,6 +1957,144 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"inspectedPngFiles": 1');
     expect(result.content[0]?.text).toContain('"pngValidationComplete": true');
     expect(result.content[0]?.text).toContain('"validationComplete": true');
+  });
+
+  it("calls validate_resourcepack_translations without returning translation values", async () => {
+    const result = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/lang/en_us.json",
+          content: '{"example.key":"secret-one","example.key":"secret-two %s"}',
+        },
+        {
+          path: "assets/example/lang/ja_jp.json",
+          content: "{}",
+        },
+      ],
+      requiredLocales: ["ja_jp"],
+      argumentCounts: { "example.key": 1 },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"code": "duplicate-source-key"');
+    expect(output).toContain('"code": "translation-key-missing"');
+    expect(output).not.toContain("secret-one");
+    expect(output).not.toContain("secret-two");
+  });
+
+  it("marks parsed MCP translation objects as source-uniqueness unknown", async () => {
+    const result = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      version: "26.2",
+      files: [
+        {
+          path: "assets/example/lang/en_us.json",
+          content: { "example.key": "private-value" },
+        },
+      ],
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain("parsed-source-key-uniqueness-unavailable");
+    expect(output).not.toContain("private-value");
+  });
+
+  it("publishes bounded translation-validator MCP request limits", () => {
+    const tool = tools.find((candidate) => candidate.name === "validate_resourcepack_translations");
+    const schema = tool?.inputSchema;
+    const files = schema?.properties.files as
+      | {
+          maxItems?: number;
+          items?: {
+            additionalProperties?: boolean;
+            properties?: Record<string, unknown>;
+          };
+        }
+      | undefined;
+    const requiredLocales = schema?.properties.requiredLocales as { maxItems?: number } | undefined;
+
+    expect(schema?.additionalProperties).toBe(false);
+    expect(files?.maxItems).toBe(defaultResourcepackTranslationValidationLimits.maxFiles);
+    expect(files?.items?.additionalProperties).toBe(false);
+    expect(requiredLocales?.maxItems).toBe(
+      defaultResourcepackTranslationValidationLimits.maxRequiredLocales,
+    );
+  });
+
+  it("rejects translation-validator unknowns and unsafe objects without invoking code", async () => {
+    const unknown = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      files: [],
+      unknown: true,
+    });
+    const nestedUnknown = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      files: [{ path: "assets/example/lang/en_us.json", content: "{}", unknown: true }],
+    });
+    let accessorInvoked = false;
+    const accessorFile = {} as Record<string, unknown>;
+    Object.defineProperty(accessorFile, "path", {
+      enumerable: true,
+      get: () => {
+        accessorInvoked = true;
+        return "assets/example/lang/en_us.json";
+      },
+    });
+    Object.defineProperty(accessorFile, "content", { enumerable: true, value: "{}" });
+    const accessor = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      files: [accessorFile],
+    });
+    let contentAccessorInvoked = false;
+    const accessorContent = {} as Record<string, unknown>;
+    Object.defineProperty(accessorContent, "example.key", {
+      enumerable: true,
+      get: () => {
+        contentAccessorInvoked = true;
+        return "private-value";
+      },
+    });
+    const contentAccessor = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      files: [
+        {
+          path: "assets/example/lang/en_us.json",
+          content: accessorContent,
+        },
+      ],
+    });
+    let proxyTrapInvoked = false;
+    const proxy = new Proxy(
+      {},
+      {
+        ownKeys: () => {
+          proxyTrapInvoked = true;
+          throw new Error("must not run");
+        },
+      },
+    );
+    const proxied = await callMinecraftSkillsTool("validate_resourcepack_translations", proxy);
+    const symbolFile = {
+      path: "assets/example/lang/en_us.json",
+      content: "{}",
+      [Symbol("hidden")]: true,
+    };
+    const symbol = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      files: [symbolFile],
+    });
+    const nonPlain = await callMinecraftSkillsTool("validate_resourcepack_translations", {
+      files: [Object.create({ path: "assets/example/lang/en_us.json", content: "{}" })],
+    });
+
+    expect(unknown.isError).toBe(true);
+    expect(unknown.content[0]?.text).toContain("unknown argument");
+    expect(nestedUnknown.isError).toBe(true);
+    expect(accessor.isError).toBe(true);
+    expect(accessorInvoked).toBe(false);
+    expect(contentAccessor.isError).toBe(true);
+    expect(contentAccessorInvoked).toBe(false);
+    expect(proxied.isError).toBe(true);
+    expect(proxyTrapInvoked).toBe(false);
+    expect(symbol.isError).toBe(true);
+    expect(nonPlain.isError).toBe(true);
   });
 
   it("publishes bounded resource-pack request schema limits", () => {

@@ -60,6 +60,10 @@ All notable changes to this project are documented here.
 - Bounded Minecraft performance time-series analysis across Catalog, CLI, and MCP, including
   coverage, quantiles, threshold intervals, before/after comparisons, trends, exact-timestamp MSPT
   associations, and scoped spark follow-up without causal claims.
+- Bounded resource-pack translation catalog validation across Catalog, CLI, and MCP, including raw
+  duplicate-key evidence, exact global locale-key comparison, source-accurate Mojang placeholder
+  normalization, caller-selected locale parity, unknown override-order reporting, stable-file CLI
+  reads, and value-private output.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.
