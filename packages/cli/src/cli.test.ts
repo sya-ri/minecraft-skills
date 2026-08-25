@@ -143,7 +143,7 @@ async function capture(argv: string[]) {
   return { code, stdout, stderr };
 }
 
-function createStoredZip(entries: Record<string, string>): Buffer {
+function createStoredZip(entries: Record<string, string | Uint8Array>): Buffer {
   const localParts: Buffer[] = [];
   const centralParts: Buffer[] = [];
   let offset = 0;
@@ -198,6 +198,50 @@ function createStoredZip(entries: Record<string, string>): Buffer {
   end.writeUInt32LE(offset, 16);
   end.writeUInt16LE(0, 20);
   return Buffer.concat([...localParts, centralDirectory, end]);
+}
+
+function javaU2(value: number): Buffer {
+  const result = Buffer.alloc(2);
+  result.writeUInt16BE(value);
+  return result;
+}
+
+function javaU4(value: number): Buffer {
+  const result = Buffer.alloc(4);
+  result.writeUInt32BE(value);
+  return result;
+}
+
+function javaUtf8(value: string): Buffer {
+  const bytes = Buffer.from(value, "utf8");
+  return Buffer.concat([Buffer.from([1]), javaU2(bytes.length), bytes]);
+}
+
+function javaClass(nameIndex: number): Buffer {
+  return Buffer.concat([Buffer.from([7]), javaU2(nameIndex)]);
+}
+
+function createMinimalVelocityEntrypointClass(majorVersion = 65): Buffer {
+  const pool = [
+    javaUtf8("dev/example/ExamplePlugin"),
+    javaClass(1),
+    javaUtf8("java/lang/Object"),
+    javaClass(3),
+  ];
+  return Buffer.concat([
+    javaU4(0xcafebabe),
+    javaU2(0),
+    javaU2(majorVersion),
+    javaU2(pool.length + 1),
+    ...pool,
+    javaU2(0x0021),
+    javaU2(2),
+    javaU2(4),
+    javaU2(0),
+    javaU2(0),
+    javaU2(0),
+    javaU2(0),
+  ]);
 }
 
 describe("minecraft-skills CLI", () => {
@@ -1726,6 +1770,71 @@ describe("minecraft-skills CLI", () => {
         close: () => undefined,
       }),
     ).toThrow("changed while it was being read");
+  });
+
+  it("validates a bounded local Velocity plugin JAR without network access", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-velocity-jar-cli-"));
+    const jarPath = join(root, "example.jar");
+    const descriptor = JSON.stringify({
+      id: "example",
+      main: "dev.example.ExamplePlugin",
+    });
+    try {
+      writeFileSync(
+        jarPath,
+        createStoredZip({
+          "velocity-plugin.json": descriptor,
+          "dev/example/ExamplePlugin.class": createMinimalVelocityEntrypointClass(),
+        }),
+      );
+      const valid = await capture(["plugin", "velocity", "validate-jar", jarPath]);
+      expect(valid.code).toBe(0);
+      expect(valid.stderr).toEqual([]);
+      expect(valid.stdout.join("\n")).toContain('"validationStrength": "binary"');
+      expect(valid.stdout.join("\n")).toContain('"classFileHeaderValidated": true');
+      expect(valid.stdout.join("\n")).toContain('"targetJavaRelease": 25');
+
+      const belowFloor = await capture([
+        "plugin",
+        "velocity",
+        "validate-jar",
+        jarPath,
+        "--target-java",
+        "24",
+      ]);
+      expect(belowFloor.code).toBe(1);
+      expect(belowFloor.stderr.join("\n")).toContain("--target-java must be between 25 and 100");
+
+      writeFileSync(
+        jarPath,
+        createStoredZip({
+          "velocity-plugin.json": descriptor,
+          "dev/example/ExamplePlugin.class": createMinimalVelocityEntrypointClass(70),
+        }),
+      );
+      const tooNew = await capture(["plugin", "velocity", "validate-jar", jarPath]);
+      expect(tooNew.code).toBe(1);
+      expect(tooNew.stdout.join("\n")).toContain('"code": "class.target-too-new"');
+
+      const overLimit = await capture([
+        "plugin",
+        "velocity",
+        "validate-jar",
+        jarPath,
+        "--max-archive-bytes",
+        "1",
+      ]);
+      expect(overLimit.code).toBe(1);
+      expect(overLimit.stderr.join("\n")).toContain("larger than 1 bytes");
+
+      const wrongExtension = join(root, "example.zip");
+      writeFileSync(wrongExtension, createStoredZip({ "velocity-plugin.json": descriptor }));
+      const wrong = await capture(["plugin", "velocity", "validate-jar", wrongExtension]);
+      expect(wrong.code).toBe(1);
+      expect(wrong.stderr.join("\n")).toContain(".jar extension");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 
   it("prints Paper API references", async () => {
@@ -3425,12 +3534,14 @@ describe("minecraft-skills CLI", () => {
     );
     expect(output).toContain("minecraft-skills plugin paper search <query>");
     expect(output).toContain("minecraft-skills plugin paper validate-jar <file.jar>");
+    expect(output).toContain("minecraft-skills plugin velocity validate-jar <file.jar>");
     expect(output).toContain("Grouped commands:");
     expect(output).toContain("minecraft-skills minecraft analyze-log <file>");
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");
     expect(output).toContain("fabric validate-mod <file.jar>");
+    expect(output).toContain("Velocity JAR validation checks bounded archive");
     expect(output).toContain("docs/USAGE.md");
   });
 

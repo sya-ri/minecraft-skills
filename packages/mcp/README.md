@@ -115,6 +115,7 @@ aliases or reject Unicode query values.
 - `get_modrinth_resource`
 - `validate_modrinth_pack`
 - `validate_paper_plugin_jar`
+- `validate_velocity_plugin_jar`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `inspect_resourcepack_png_alpha_bounds`
@@ -249,6 +250,17 @@ currently unlisted Paper API release values also remain unknown. The result alwa
 metadata-only strength and leaves ZIP structure, descriptor CRC integrity, class bytecode and
 resolution, exact runtime YAML parity, and server loading unproven. Use the CLI command for binary
 JAR validation.
+
+`validate_velocity_plugin_jar` accepts bounded `velocity-plugin.json` text or a parsed JSON object,
+JAR entry metadata, and an explicit completeness flag. It validates current descriptor structure,
+plugin IDs, and entrypoint-path evidence without accepting binary uploads. The result is always
+metadata-only: ZIP central/local headers, CRC integrity, entrypoint classfile identity and Java
+target, runtime-visible `@Plugin` contents, dependency satisfaction, JVM linkage, Guice injection,
+Velocity loading, runtime behavior, and security remain unproven. Missing-entry errors require a
+complete list whose entries all pass normalization; otherwise absence remains unknown. Use the CLI
+command when binary evidence is required. Descriptor strings are checked for duplicate JSON object
+keys before parsing. Parsed object input cannot represent duplicates, so the result exposes
+`duplicateKeysChecked: false` and keeps source-key uniqueness incomplete.
 
 `compare_registry_entries` emits entry and protocol ID changes only for registries indexed in both
 versions. Its `outcome` and bounded `excludedRegistries` fields expose incomplete coverage without

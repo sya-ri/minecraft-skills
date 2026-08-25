@@ -100,6 +100,7 @@ minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host d
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 minecraft-skills server validate-properties ./server.properties --version 1.21.11
 minecraft-skills plugin paper validate-jar ./build/libs/example.jar
+minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills plugin paper intents
@@ -340,6 +341,34 @@ releases also remain unknown. For MCP clients,
 `validate_paper_plugin_jar` accepts descriptor text plus `archiveEntries`; set
 `archiveEntriesComplete` true only for a complete central-directory listing because descriptor
 absence claims depend on a complete, fully normalized list. MCP cannot claim binary integrity.
+
+Velocity plugin artifacts:
+
+```sh
+minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
+minecraft-skills plugin velocity validate-jar ./build/libs/example.jar --target-java 26
+```
+
+`plugin velocity validate-jar` is a bounded, offline artifact preflight for root
+`velocity-plugin.json`. It validates ZIP central/local structure, descriptor and entrypoint CRC,
+fatal UTF-8 JSON, current Velocity descriptor fields and plugin IDs, the exact declared entrypoint
+class path, bounded classfile identity, selected Java target, and runtime-visible `@Plugin`
+annotation evidence for that entrypoint. Other classfiles are not scanned for their Java target.
+The default target is Java 25, the current Velocity 4 minimum; `--target-java` may select a newer
+runtime but cannot go below 25. This surface intentionally does not model older Velocity lines.
+Missing or different annotation metadata is reported as evidence, not as proof that the loader will
+reject the plugin.
+
+The validator does not resolve dependency predicates or satisfaction, verify complete class
+bytecode or JVM linkage, reproduce every Gson runtime coercion, check classpath/shaded dependencies
+or Velocity API compatibility, prove constructor/Guice injection, start Velocity, or establish
+runtime behavior or security.
+`validate_velocity_plugin_jar` accepts descriptor JSON plus bounded `archiveEntries` metadata only.
+It cannot prove ZIP headers, CRC, entrypoint classfile/Java target, or annotation contents; set
+`archiveEntriesComplete` true only for a complete, fully normalized central-directory listing.
+Descriptor text is scanned for duplicate object keys before parsing. A parsed descriptor object
+cannot preserve that source-level evidence, so its result reports `duplicateKeysChecked: false` and
+an explicit incomplete reason.
 
 `modrinth search` queries Modrinth's public v2 search API without authentication. Optional filters
 include `--version`, `--type`, `--loader`, and `--category`; `--index` accepts `relevance`,

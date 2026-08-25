@@ -264,6 +264,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_modrinth_resource");
     expect(tools.map((tool) => tool.name)).toContain("validate_modrinth_pack");
     expect(tools.map((tool) => tool.name)).toContain("validate_paper_plugin_jar");
+    expect(tools.map((tool) => tool.name)).toContain("validate_velocity_plugin_jar");
     expect(tools.map((tool) => tool.name)).toContain("find_datapack_entries");
     expect(tools.map((tool) => tool.name)).toContain("find_resourcepack_assets");
     expect(tools.map((tool) => tool.name)).toContain("explain_pack_path");
@@ -325,6 +326,20 @@ describe("MCP tools", () => {
       expect(property).not.toHaveProperty("pattern");
       expect(property).not.toHaveProperty("enum");
     }
+  });
+
+  it("publishes bounded metadata-only Velocity validator input", () => {
+    const tool = tools.find((candidate) => candidate.name === "validate_velocity_plugin_jar");
+    const descriptor = tool?.inputSchema.properties.descriptor as
+      | { oneOf?: Array<{ type?: string; maxLength?: number }> }
+      | undefined;
+    const archiveEntries = tool?.inputSchema.properties.archiveEntries as
+      | { maxItems?: number }
+      | undefined;
+
+    expect(descriptor?.oneOf).toEqual([{ type: "string", maxLength: 262_144 }, { type: "object" }]);
+    expect(archiveEntries?.maxItems).toBe(16_384);
+    expect(tool?.description).toContain("does not accept binary JARs");
   });
 
   it("exposes domain discovery and domain-specific entrypoints", () => {
@@ -2944,6 +2959,135 @@ describe("MCP tools", () => {
         .map((result) => result.content[0]?.text)
         .join("\n"),
     ).not.toContain("do-not-return");
+  });
+
+  it("validates Velocity descriptor data against complete JAR entry metadata", async () => {
+    const descriptor = {
+      id: "example",
+      main: "dev.example.ExamplePlugin",
+    };
+    const result = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor,
+      archiveEntries: [
+        { path: "velocity-plugin.json", size: 64, compressedSize: 50 },
+        { path: "dev/example/ExamplePlugin.class", size: 100, compressedSize: 80 },
+      ],
+      archiveEntriesComplete: true,
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"valid": true');
+    expect(output).toContain('"validationStrength": "metadata"');
+    expect(output).toContain('"zipStructureValidated": false');
+    expect(output).toContain('"classFileHeaderValidated": false');
+    expect(output).toContain('"entryPresenceProven": true');
+    expect(output).toContain('"duplicateKeysChecked": false');
+    expect(output).toContain("parsed-descriptor-cannot-prove-original-json-key-uniqueness");
+  });
+
+  it("keeps missing Velocity entrypoints unknown for incomplete metadata", async () => {
+    const result = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: JSON.stringify({ id: "example", main: "dev.example.ExamplePlugin" }),
+      archiveEntries: [{ path: "velocity-plugin.json", size: 64 }],
+      archiveEntriesComplete: false,
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"valid": true');
+    expect(output).toContain('"code": "class.entry-not-observed"');
+    expect(output).toContain('"validationComplete": false');
+  });
+
+  it("preserves duplicate-key evidence for Velocity descriptor text", async () => {
+    const result = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: '{"id":"example","\\u0069d":"shadowed","main":"dev.example.ExamplePlugin"}',
+      archiveEntries: [
+        { path: "velocity-plugin.json", size: 80 },
+        { path: "dev/example/ExamplePlugin.class", size: 1 },
+      ],
+      archiveEntriesComplete: true,
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"valid": false');
+    expect(output).toContain('"duplicateKeysChecked": true');
+    expect(output).toContain('"code": "descriptor.duplicate-key"');
+    expect(output).not.toContain("shadowed");
+  });
+
+  it("preflights bounded Velocity MCP input without invoking accessors", async () => {
+    let getterCalls = 0;
+    const accessorEntry = { size: 1 } as { path?: string; size: number };
+    Object.defineProperty(accessorEntry, "path", {
+      enumerable: true,
+      get() {
+        getterCalls += 1;
+        return "velocity-plugin.json";
+      },
+    });
+    const namedEntries = [{ path: "velocity-plugin.json", size: 1 }];
+    Object.defineProperty(namedEntries, "token", {
+      enumerable: true,
+      value: "do-not-return",
+    });
+    const symbolDescriptor = {
+      id: "example",
+      main: "dev.example.ExamplePlugin",
+      [Symbol("token")]: "do-not-return",
+    };
+
+    const accessorResult = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: { id: "example", main: "dev.example.ExamplePlugin" },
+      archiveEntries: [accessorEntry],
+      archiveEntriesComplete: true,
+    });
+    const namedResult = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: { id: "example", main: "dev.example.ExamplePlugin" },
+      archiveEntries: namedEntries,
+      archiveEntriesComplete: true,
+    });
+    const symbolResult = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: symbolDescriptor,
+      archiveEntries: [],
+      archiveEntriesComplete: false,
+    });
+
+    expect(getterCalls).toBe(0);
+    expect(accessorResult.isError).toBe(true);
+    expect(accessorResult.content[0]?.text).toContain("enumerable data fields");
+    expect(namedResult.isError).toBe(true);
+    expect(namedResult.content[0]?.text).toContain("named fields");
+    expect(symbolResult.isError).toBe(true);
+    expect(symbolResult.content[0]?.text).toContain("symbol fields");
+    expect(
+      [accessorResult, namedResult, symbolResult]
+        .map((candidate) => candidate.content[0]?.text)
+        .join("\n"),
+    ).not.toContain("do-not-return");
+  });
+
+  it("rejects oversized Velocity metadata before catalog validation", async () => {
+    const tooManyEntries = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: { id: "example", main: "dev.example.ExamplePlugin" },
+      archiveEntries: Array.from({ length: 16_385 }, (_, index) => ({
+        path: `classes/C${index}.class`,
+        size: 0,
+      })),
+      archiveEntriesComplete: true,
+    });
+    const oversizedDescriptor = await callMinecraftSkillsTool("validate_velocity_plugin_jar", {
+      descriptor: "x".repeat(262_145),
+      archiveEntries: [],
+      archiveEntriesComplete: false,
+    });
+
+    expect(tooManyEntries.isError).toBe(true);
+    expect(tooManyEntries.content[0]?.text).toContain("bounded item limit");
+    expect(oversizedDescriptor.isError).toBe(true);
+    expect(oversizedDescriptor.content[0]?.text).toContain("bounded text limit");
   });
 
   it("calls list_modrinth_project_versions", async () => {

@@ -143,6 +143,8 @@ import {
   validateResourcepackPng,
   validateResourcepackProject,
   validateServerProperties,
+  validateVelocityPluginArchiveMetadata,
+  velocityPluginJarValidationLimits,
   vorbisIdentificationPageBytes,
 } from "@minecraft-skills/catalog";
 import {
@@ -152,6 +154,7 @@ import {
   runRconCommand,
 } from "@minecraft-skills/rcon";
 import { fabricModArchivePathMaxLength, preflightFabricModInput } from "./fabricModInput.js";
+import { preflightVelocityPluginMcpInput } from "./velocityPluginInput.js";
 
 export type ToolContent = {
   type: "text";
@@ -1657,6 +1660,60 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "validate_velocity_plugin_jar",
+    description:
+      "Validate bounded velocity-plugin.json data plus Velocity plugin JAR entry metadata offline. MCP does not accept binary JARs, so ZIP structure, CRC integrity, entrypoint classfile/Java target, and runtime-visible @Plugin evidence remain explicitly unverified.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        descriptor: {
+          oneOf: [
+            {
+              type: "string",
+              maxLength: velocityPluginJarValidationLimits.maxDescriptorCharacters,
+            },
+            { type: "object" },
+          ],
+          description: "velocity-plugin.json text or its parsed JSON object.",
+        },
+        archiveEntries: {
+          type: "array",
+          maxItems: velocityPluginJarValidationLimits.maxArchiveEntries,
+          items: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                minLength: 1,
+                maxLength: velocityPluginJarValidationLimits.maxEntryPathCharacters,
+              },
+              size: {
+                type: "integer",
+                minimum: 0,
+                maximum: velocityPluginJarValidationLimits.maxEntryUncompressedBytes,
+              },
+              compressedSize: {
+                type: "integer",
+                minimum: 0,
+                maximum: velocityPluginJarValidationLimits.maxArchiveBytes,
+              },
+              directory: { type: "boolean" },
+            },
+            required: ["path", "size"],
+            additionalProperties: false,
+          },
+        },
+        archiveEntriesComplete: {
+          type: "boolean",
+          description:
+            "True only for a complete JAR central-directory listing. Missing-entry errors require this evidence.",
+        },
+      },
+      required: ["descriptor", "archiveEntries", "archiveEntriesComplete"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_fabric_toolchain",
     description:
       "Look up bounded Fabric Loader, Intermediary, and Yarn candidate tuples for a Minecraft game version from the official live Fabric Meta v2 API. Stable flags are selection metadata, not a full compatibility guarantee.",
@@ -2887,6 +2944,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     return inspectResourcepackPngAlphaBoundsTool(input);
   }
   try {
+    if (name === "validate_velocity_plugin_jar") {
+      return text(validateVelocityPluginArchiveMetadata(preflightVelocityPluginMcpInput(input)));
+    }
     if (name === "validate_player_skin_layout") {
       return text(validatePlayerSkinLayout(input));
     }

@@ -142,6 +142,8 @@ import {
   validateResourcepackPng,
   validateResourcepackProject,
   validateServerProperties,
+  validateVelocityPluginJar,
+  velocityPluginJarValidationLimits,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -942,6 +944,12 @@ function normalizeSubcommands(argv: string[]): string[] {
       return [paperCommand, ...paperRest];
     }
   }
+  if (group === "plugin" && subcommand === "velocity") {
+    const [velocitySubcommand, ...velocityRest] = rest;
+    if (velocitySubcommand === "validate-jar") {
+      return ["velocity-validate-jar", ...velocityRest];
+    }
+  }
   const command = aliases[groupedCommand];
   return command ? [command, ...rest] : argv;
 }
@@ -1036,6 +1044,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "compare-paper-api-surface": "plugin paper compare-api-surface",
   "paper-events": "plugin paper events",
   "paper-validate-jar": "plugin paper validate-jar",
+  "velocity-validate-jar": "plugin velocity validate-jar",
   "fabric-toolchain": "fabric toolchain",
   "velocity-toolchain": "velocity toolchain",
   "server-validate-properties": "server validate-properties",
@@ -1182,6 +1191,8 @@ Domains:
                   and observed item/model shapes.
   plugin paper    Paper-first plugins: Paper support, Javadocs indexes/surfaces, API names,
                   event candidates, and Folia/threading caveats. Domain id: paper-plugin.
+  plugin velocity Bounded offline validation of Velocity plugin descriptors, entrypoint
+                  classfiles, Java targets, and annotation evidence inside local JARs.
 
 Utilities:
   player-skin     Java player skins: bounded PNG structure, accepted dimensions, and canonical
@@ -1230,6 +1241,9 @@ Safety notes:
     ceilings are 10000 entries, 512 JARs, 256 MiB per JAR, 1 GiB accounted bytes, 200 diagnostics,
     and 100 duplicate groups. Diff separates ambiguous/unidentified entries; comparisonComplete
     and hasDifferences drive its exit status.
+  - Velocity JAR validation checks bounded archive, descriptor, entrypoint classfile, Java target,
+    and runtime-visible annotation evidence. It does not load Velocity, resolve dependencies,
+    prove JVM linkage or injection, or establish runtime behavior or security.
   - Minecraft Wiki pages are human-only background: do not fetch, crawl, summarize, or cite them in
     AI workflows.
 
@@ -1299,6 +1313,7 @@ Grouped commands:
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills plugin paper validate-jar <file.jar> [--max-archive-bytes bytes]
+  minecraft-skills plugin velocity validate-jar <file.jar> [--target-java 25] [--max-archive-bytes bytes]
   minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
   minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
   minecraft-skills fabric mods inventory <directory>
@@ -1492,7 +1507,7 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     output.error(`Use subcommands: minecraft-skills ${flatSuggestion}`);
     return 1;
   }
-  if (argv[0] === "plugin" && argv[1] && argv[1] !== "paper") {
+  if (argv[0] === "plugin" && argv[1] && argv[1] !== "paper" && argv[1] !== "velocity") {
     const suggestion = pluginPaperSuggestions[argv[1]];
     if (suggestion) {
       output.error(`Use subcommands: minecraft-skills ${suggestion}`);
@@ -1503,6 +1518,10 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
   if (commandGroups.has(argv[0] ?? "") && hasSubcommand && normalizedArgv === argv) {
     if (argv[0] === "plugin" && argv[1] === "paper" && argv[2] && !argv[2].startsWith("-")) {
       output.error(`Unknown subcommand: plugin paper ${argv[2]}`);
+      return 1;
+    }
+    if (argv[0] === "plugin" && argv[1] === "velocity" && argv[2] && !argv[2].startsWith("-")) {
+      output.error(`Unknown subcommand: plugin velocity ${argv[2]}`);
       return 1;
     }
     output.error(`Unknown subcommand: ${argv[0]} ${argv[1]}`);
@@ -2769,6 +2788,54 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         extension: ".jar",
       });
       const result = validatePaperPluginJar({ archive });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
+    }
+
+    if (command === "velocity-validate-jar") {
+      const jarPaths = positionalArgsWithOptions(args, {
+        values: ["--max-archive-bytes", "--target-java"],
+      });
+      const jarPath = jarPaths[0];
+      if (jarPaths.length !== 1 || !jarPath) {
+        throw new Error("plugin velocity validate-jar requires exactly one local .jar file");
+      }
+      if (!jarPath.toLowerCase().endsWith(".jar")) {
+        throw new Error("plugin velocity validate-jar requires a file with the .jar extension");
+      }
+      const maxArchiveBytes = readIntegerArg(
+        args.includes("--max-archive-bytes")
+          ? readOption(args, "--max-archive-bytes", "")
+          : String(velocityPluginJarValidationLimits.maxArchiveBytes),
+        "plugin velocity validate-jar --max-archive-bytes",
+      );
+      if (
+        maxArchiveBytes < 1 ||
+        maxArchiveBytes > velocityPluginJarValidationLimits.maxArchiveBytes
+      ) {
+        throw new Error(
+          `plugin velocity validate-jar --max-archive-bytes must be between 1 and ${velocityPluginJarValidationLimits.maxArchiveBytes}`,
+        );
+      }
+      const targetJavaRelease = readIntegerArg(
+        args.includes("--target-java")
+          ? readOption(args, "--target-java", "")
+          : String(velocityPluginJarValidationLimits.defaultTargetJavaRelease),
+        "plugin velocity validate-jar --target-java",
+      );
+      if (
+        targetJavaRelease < velocityPluginJarValidationLimits.minTargetJavaRelease ||
+        targetJavaRelease > velocityPluginJarValidationLimits.maxTargetJavaRelease
+      ) {
+        throw new Error(
+          `plugin velocity validate-jar --target-java must be between ${velocityPluginJarValidationLimits.minTargetJavaRelease} and ${velocityPluginJarValidationLimits.maxTargetJavaRelease}`,
+        );
+      }
+      const archive = readBoundedArchiveFile(jarPath, maxArchiveBytes, {
+        command: "plugin velocity validate-jar",
+        extension: ".jar",
+      });
+      const result = validateVelocityPluginJar({ archive, targetJavaRelease });
       printJson(output, result);
       return result.valid ? 0 : 1;
     }
