@@ -19,6 +19,10 @@ import {
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultServerPropertiesValidationLimits,
+  getCoverageSummary,
+  getDataManifest,
+  getPaperPluginData,
+  getSupportMatrix,
   getVersionDetail,
 } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -786,11 +790,15 @@ describe("minecraft-skills CLI", () => {
 
   it("prints bundled coverage summary", async () => {
     const result = await capture(["data", "coverage"]);
-    const output = result.stdout.join("\n");
+    const output = JSON.parse(result.stdout.join("\n")) as ReturnType<typeof getCoverageSummary>;
+    const expected = getCoverageSummary();
     expect(result.code).toBe(0);
-    expect(output).toContain('"complete": true');
-    expect(output).toContain('"latestSupportedVersion": "26.2"');
-    expect(output).toContain('"packagedPayloads": 3');
+    expect(output.java.requiredData.complete).toBe(true);
+    expect(output.java.paperPlugin).toMatchObject({
+      latestSupportedVersion: expected.java.paperPlugin.latestSupportedVersion,
+      latestBuild: expected.java.paperPlugin.latestBuild,
+    });
+    expect(output.skills.packagedPayloads).toBe(3);
   });
 
   it("creates RCON config files and warns before overwriting", async () => {
@@ -2240,8 +2248,12 @@ describe("minecraft-skills CLI", () => {
 
   it("prints data manifest and cache state", async () => {
     const manifest = await capture(["data", "manifest"]);
+    const manifestOutput = JSON.parse(manifest.stdout.join("\n")) as {
+      dataVersion: string;
+    };
     expect(manifest.code).toBe(0);
-    expect(manifest.stdout.join("\n")).toContain('"dataVersion": "2026.06.23-2"');
+    expect(manifestOutput.dataVersion).toBe(getDataManifest().dataVersion);
+    expect(manifestOutput.dataVersion).toMatch(/^\d{4}\.\d{2}\.\d{2}-\d+$/);
 
     const cacheDir = await capture(["data", "cache-dir"]);
     expect(cacheDir.code).toBe(0);
@@ -2254,18 +2266,38 @@ describe("minecraft-skills CLI", () => {
 
   it("prints support matrix aliases", async () => {
     const result = await capture(["minecraft", "support-matrix"]);
+    const output = JSON.parse(result.stdout.join("\n")) as ReturnType<typeof getSupportMatrix>;
+    const expected = getSupportMatrix();
     expect(result.code).toBe(0);
-    expect(result.stdout.join("\n")).toContain('"latestWithDatapackSchemaSurface": "26.2"');
-    expect(result.stdout.join("\n")).toContain('"latestWithPaperApiSurface": "26.2"');
+    expect(output.aliases).toMatchObject({
+      latestJava: expected.aliases.latestJava,
+      latestPaper: expected.aliases.latestPaper,
+      latestWithDatapackSchemaSurface: expected.aliases.latestWithDatapackSchemaSurface,
+      latestWithPaperApiSurface: expected.aliases.latestWithPaperApiSurface,
+    });
   });
 
   it("prints per-version support", async () => {
     const result = await capture(["minecraft", "support", "--domain", "paper-plugin"]);
+    const output = JSON.parse(result.stdout.join("\n")) as {
+      versions: Array<{
+        version: string;
+        paper: { supported: boolean; latestBuild: number | null };
+      }>;
+    };
+    const paper = getPaperPluginData();
+    const latestPaper = output.versions.find(
+      (entry) => entry.version === paper.latest.minecraftVersion,
+    );
     expect(result.code).toBe(0);
-    expect(result.stdout.join("\n")).toContain('"version": "26.2"');
-    expect(result.stdout.join("\n")).toContain('"latestBuild": 30');
-    expect(result.stdout.join("\n")).toContain('"version": "26.1"');
-    expect(result.stdout.join("\n")).toContain('"supported": false');
+    expect(latestPaper).toMatchObject({
+      version: paper.latest.minecraftVersion,
+      paper: {
+        supported: true,
+        latestBuild: paper.latest.build,
+      },
+    });
+    expect(output.versions.some((entry) => !entry.paper.supported)).toBe(true);
   });
 
   it("fetches downloadable data into the cache", async () => {

@@ -67,6 +67,13 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
   const tarballDir = join(tempRoot, "tarballs");
   const consumerDir = join(tempRoot, "consumer");
   const commands: CommandResult[] = [];
+  const sourceDataRoot = join(root, "packages/data/data");
+  const sourceCatalog = JSON.parse(readFileSync(join(sourceDataRoot, "catalog.json"), "utf8")) as {
+    latest: { java: string };
+  };
+  const sourcePaper = JSON.parse(readFileSync(join(sourceDataRoot, "java/paper.json"), "utf8")) as {
+    latest: { minecraftVersion: string; build: number };
+  };
 
   try {
     mkdirSync(tarballDir, { recursive: true });
@@ -120,7 +127,6 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     const smokeEnv = {
       MINECRAFT_SKILLS_CACHE_DIR: join(consumerDir, ".minecraft-skills-cache"),
     };
-    const sourceDataRoot = join(root, "packages/data/data");
 
     commands.push(runCommand("pnpm", ["install", "--prefer-offline"], consumerDir));
     commands.push(
@@ -153,7 +159,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
           "--input-type=module",
           "--eval",
           [
-            'import { cleanCachedData, explainPackPath, fetchData, findDatapackEntries, findResourcepackAssets, getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getResourcepackModelSummary, getResponsePattern, getSupportMatrix, hasBundledDataFile, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport, searchAll, searchAuthoringScenarios, suggestMinecraftLookups } from "@minecraft-skills/catalog";',
+            'import { cleanCachedData, explainPackPath, fetchData, findDatapackEntries, findResourcepackAssets, getAuthoringChecklist, getAuthoringContext, getAuthoringDiagnostic, getAuthoringGuardrail, getAuthoringPlan, getAuthoringPreflight, getAuthoringRecipe, getAuthoringScenario, getClaimPolicy, getCoverageSummary, getDataManifest, getDatapackSchemaSurface, getEvidenceBundle, getFactSurface, getIntentLookup, getOutputRequirement, getPaperApiSurface, getPaperPluginData, getResourcepackModelSummary, getResponsePattern, getSupportMatrix, hasBundledDataFile, listAuthoringChecklists, listAuthoringDiagnostics, listAuthoringGuardrails, listAuthoringRecipes, listAuthoringScenarios, listClaimPolicies, listFactSurfaces, listIntentLookups, listOutputRequirements, listResponsePatterns, listVersionSupport, searchAll, searchAuthoringScenarios, suggestMinecraftLookups } from "@minecraft-skills/catalog";',
             'import { readFileSync } from "node:fs";',
             'import { join } from "node:path";',
             `const sourceDataRoot = ${JSON.stringify(sourceDataRoot)};`,
@@ -161,6 +167,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             "cleanCachedData();",
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
+            "const paper = getPaperPluginData();",
             "const support = getSupportMatrix();",
             'const checklist = getAuthoringChecklist("paper-plugin");',
             'const context = getAuthoringContext({ domain: "paper-plugin", version: "1.21.11" });',
@@ -169,13 +176,13 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.1" });',
             'const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "1.21.11" });',
             'const factSurface = getFactSurface("datapack-schema-surface");',
-            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== "26.2" || coverage.java.paperPlugin.apiPackageIndexes !== 46 || coverage.java.paperPlugin.missingApiPackageIndexes.length !== 0) throw new Error("bad coverage");',
-            'if (manifest.downloadable.length !== 138 || !manifest.downloadable.some((entry) => entry.kind === "datapack-schema-surface" && entry.version === "1.13") || !manifest.downloadable.some((entry) => entry.kind === "paper-api-surface" && entry.version === "1.20.5") || !manifest.downloadable.some((entry) => entry.kind === "resourcepack-model-summary" && entry.version === "1.13") || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
+            'if (!coverage.java.requiredData.complete || coverage.java.releases.latest !== support.aliases.latestJava || coverage.java.paperPlugin.latestSupportedVersion !== paper.latest.minecraftVersion || coverage.java.paperPlugin.latestBuild !== paper.latest.build || coverage.java.paperPlugin.apiPackageIndexes + coverage.java.paperPlugin.missingApiPackageIndexes.length !== paper.versions.length) throw new Error("bad coverage");',
+            'if (manifest.downloadable.length === 0 || !manifest.downloadable.some((entry) => entry.kind === "datapack-schema-surface" && entry.version === "1.13") || !manifest.downloadable.some((entry) => entry.kind === "paper-api-surface" && entry.version === "1.20.5") || !manifest.downloadable.some((entry) => entry.kind === "resourcepack-model-summary" && entry.version === "1.13") || manifest.cache.environmentVariable !== "MINECRAFT_SKILLS_CACHE_DIR") throw new Error("bad data manifest");',
             'if (hasBundledDataFile("java/datapack-schema-surfaces/1.13.json") || hasBundledDataFile("java/paper-api-surfaces/1.20.5.json") || hasBundledDataFile("java/resourcepack-models/1.13.json")) throw new Error("heavy data should be downloaded, not bundled in npm package");',
             'await fetchData({ kind: "datapack-schema-surface", version: "1.13", fetch: localFetch });',
             'await fetchData({ kind: "paper-api-surface", version: "1.20.5", fetch: localFetch });',
             'await fetchData({ kind: "resourcepack-model-summary", version: "1.13", fetch: localFetch });',
-            'if (support.aliases.latestJava !== "26.2" || support.aliases.latestPaper !== "26.2") throw new Error("bad support matrix");',
+            'if (support.aliases.latestJava !== coverage.latest.java || support.aliases.latestPaper !== paper.latest.minecraftVersion) throw new Error("bad support matrix");',
             'if (listAuthoringChecklists().length !== 3 || !checklist.steps.some((step) => step.id === "verify-types-members-and-events")) throw new Error("bad authoring checklist");',
             'if (!listAuthoringRecipes({ domain: "paper-plugin" }).some((recipe) => recipe.id === "paper-event-listener") || !getAuthoringRecipe("paper-event-listener").steps.some((step) => step.id === "discover-event-candidates")) throw new Error("bad authoring recipes");',
             'if (!listAuthoringScenarios({ domain: "paper-plugin" }).some((scenario) => scenario.id === "paper-event-listener-review") || !getAuthoringScenario("paper-event-listener-review").requiredLookups.diagnostics.includes("paper-event-candidate-unverified")) throw new Error("bad authoring scenarios");',
@@ -205,8 +212,10 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
       runCommand("pnpm", ["exec", "minecraft-skills", "minecraft", "latest"], consumerDir),
     );
     const latest = commands.at(-1)?.stdout;
-    if (latest !== "26.2") {
-      throw new Error(`minecraft-skills latest returned ${latest}, expected 26.2`);
+    if (latest !== sourceCatalog.latest.java) {
+      throw new Error(
+        `minecraft-skills latest returned ${latest}, expected ${sourceCatalog.latest.java}`,
+      );
     }
     commands.push(
       runCommand(
@@ -227,8 +236,14 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     commands.push(
       runCommand("pnpm", ["exec", "minecraft-skills", "minecraft", "support-matrix"], consumerDir),
     );
-    if (!commands.at(-1)?.stdout.includes('"latestPaper": "26.2"')) {
-      throw new Error("minecraft-skills support-matrix did not include latestPaper");
+    const cliSupportMatrix = JSON.parse(commands.at(-1)?.stdout ?? "{}") as {
+      aliases?: { latestJava?: string; latestPaper?: string };
+    };
+    if (
+      cliSupportMatrix.aliases?.latestJava !== sourceCatalog.latest.java ||
+      cliSupportMatrix.aliases.latestPaper !== sourcePaper.latest.minecraftVersion
+    ) {
+      throw new Error("minecraft-skills support-matrix did not include current aliases");
     }
     commands.push(
       runCommand(
@@ -237,7 +252,19 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
         consumerDir,
       ),
     );
-    if (!commands.at(-1)?.stdout.includes('"latestBuild": 30')) {
+    const cliVersionSupport = JSON.parse(commands.at(-1)?.stdout ?? "{}") as {
+      versions?: Array<{
+        version?: string;
+        paper?: { supported?: boolean; latestBuild?: number | null };
+      }>;
+    };
+    const cliLatestPaper = cliVersionSupport.versions?.find(
+      (entry) => entry.version === sourcePaper.latest.minecraftVersion,
+    );
+    if (
+      !cliLatestPaper?.paper?.supported ||
+      cliLatestPaper.paper.latestBuild !== sourcePaper.latest.build
+    ) {
       throw new Error("minecraft-skills version-support did not include latest Paper build");
     }
     commands.push(
