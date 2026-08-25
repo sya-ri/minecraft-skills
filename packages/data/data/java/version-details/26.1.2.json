@@ -63,8 +63,8 @@
       "facts": [
         "paper_supported=true",
         "paper_minecraft_version=26.1.2",
-        "paper_latest_build=72",
-        "paper_build_count=69",
+        "paper_latest_build=74",
+        "paper_build_count=71",
         "paper_api_dependency=io.papermc.paper:paper-api:26.1.2-R0.1-SNAPSHOT",
         "paper_javadocs=https://jd.papermc.io/paper/26.1.2/",
         "paper_api_package_index=26.1.2",
