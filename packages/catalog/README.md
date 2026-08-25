@@ -176,6 +176,10 @@ const customRecipePlan = getAuthoringPlan({
   scenario: "paper-custom-recipe-review",
   version: "1.21.11",
 });
+const attributeEffectPlan = getAuthoringPlan({
+  scenario: "paper-attribute-effect-ownership-review",
+  version: "1.21.11",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -196,6 +200,7 @@ const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence"
 const customRecipeRegistrationRecipe = getAuthoringRecipe(
   "paper-custom-recipe-registration",
 );
+const attributeEffectRecipe = getAuthoringRecipe("paper-attribute-effect-ownership");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -222,6 +227,9 @@ const testingEvidenceScenario = getAuthoringScenario(
 );
 const customRecipeScenario = getAuthoringScenario("paper-custom-recipe-review");
 const persistenceScenario = getAuthoringScenario("paper-high-frequency-persistence-review");
+const attributeEffectScenario = getAuthoringScenario(
+  "paper-attribute-effect-ownership-review",
+);
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const eventListenerGuardrail = getAuthoringGuardrail("paper-event-listener-semantics-safety");
@@ -238,6 +246,9 @@ const displayInteractionGuardrail = getAuthoringGuardrail("paper-display-interac
 const persistenceGuardrail = getAuthoringGuardrail("paper-high-frequency-persistence-safety");
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const customRecipeGuardrail = getAuthoringGuardrail("paper-custom-recipe-ownership");
+const attributeEffectGuardrail = getAuthoringGuardrail(
+  "paper-attribute-effect-ownership-safety",
+);
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const eventListenerDiagnostic = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
@@ -260,6 +271,9 @@ const displayInteractionDiagnostic = getAuthoringDiagnostic(
   "paper-display-interaction-contract-unsafe",
 );
 const persistenceDiagnostic = getAuthoringDiagnostic("paper-high-frequency-persistence-unsafe");
+const attributeEffectDiagnostic = getAuthoringDiagnostic(
+  "paper-attribute-effect-ownership-unsafe",
+);
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",
 );

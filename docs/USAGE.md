@@ -109,6 +109,10 @@ minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
 minecraft-skills plugin paper recipe paper-world-operation-safety
 minecraft-skills plugin paper plan paper-world-operation-safety-review 26.2
+minecraft-skills plugin paper recipe paper-attribute-effect-ownership
+minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
+minecraft-skills plugin paper guardrail paper-attribute-effect-ownership-safety
+minecraft-skills plugin paper diagnostic paper-attribute-effect-ownership-unsafe
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -848,6 +852,17 @@ as one unit and documents rollback before restarting failed work in its
 [`SQLTransactionRollbackException`](https://docs.oracle.com/en/java/javase/26/docs/api/java.sql/java/sql/SQLTransactionRollbackException.html)
 also requires consulting the driver vendor's documented conditions, so the bundled workflow does
 not hard-code one database product's retry codes or exception layout.
+
+For Paper equipment attributes, transient session attributes, and potion effects, resolve
+`plugin paper plan paper-attribute-effect-ownership-review <version>`. Attribute contributions use
+stable plugin-owned keys and a deterministic desired-state reconcile that preserves foreign
+modifiers. Equipment checks distinguish absent ItemMeta attributes from explicit overrides and
+prove effective vanilla `ItemType` defaults. Potion effects have no per-source owner key, so the
+plan requires an explicit type-collision policy and preserves unexpected active or hidden chains
+rather than deleting by type. Capacity modifiers are applied before finite nonnegative health and
+absorption clamps, and tests cover multiple sources, weaker reapply, expiry, death, quit,
+reconnect, reload, and repeated cleanup. Logical ItemStack identity, persistent-data schema,
+scheduling, and combat-balance values remain separate concerns.
 
 ## Source Policy
 

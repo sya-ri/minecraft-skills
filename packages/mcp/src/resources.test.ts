@@ -849,4 +849,36 @@ describe("MCP resources", () => {
     );
     expect(diagnostic.contents[0]?.text).toContain("screenshots are the only proof");
   });
+
+  it("reads Paper attribute and effect ownership resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-attribute-effect-ownership.json",
+        "minecraft-skills://data/authoring-scenarios/paper-attribute-effect-ownership-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-attribute-effect-ownership-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-attribute-effect-ownership-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-attribute-effect-ownership.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("treat-potion-effect-type-as-a-collision-domain");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-attribute-effect-ownership-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-attribute-effect-ownership-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-attribute-effect-ownership-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("exclusive type lease");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-attribute-effect-ownership-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("weaker reapply");
+  });
 });

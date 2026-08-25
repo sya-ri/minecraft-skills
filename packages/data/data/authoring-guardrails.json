@@ -601,6 +601,37 @@
         "A bounded shutdown contract, actionable observability, and explicit routing to paper-player-session-lifecycle for connection cleanup"
       ],
       "failureMode": "An unmeasured or unbounded persistence path can stall ticks, exhaust memory, lose or duplicate partial batches, retry non-retryable failures, repeat side effects, and misstate durability under contention or shutdown."
+    },
+    {
+      "id": "paper-attribute-effect-ownership-safety",
+      "domains": ["paper-plugin"],
+      "title": "Rebuild Paper attribute and effect contributions without claiming foreign state",
+      "rules": [
+        "Derive a complete desired contribution set from authoritative plugin state before mutating ItemMeta, AttributeInstance, or potion effects.",
+        "Give every plugin-owned attribute contribution a stable NamespacedKey based on logical source, surface, attribute, and slot grouping where relevant; never generate a fresh identity during reapply.",
+        "Keep a bounded registry of current and retired owned attribute keys; do not treat every key in the plugin namespace as owned cleanup scope.",
+        "Partition existing modifiers into exact known owned keys and preserved foreign keys, then remove or replace only the owned partition.",
+        "Do not rewrite an AttributeInstance base value to represent a session contribution; use the verified transient-modifier contract when the contribution must not persist.",
+        "Treat absent ItemMeta modifiers, an explicit empty map, foreign explicit modifiers, and implicit ItemType defaults as distinct states, and prove the effective equipped result.",
+        "Do not use attribute-wide, slot-wide, type-wide, or whole-map removal unless an explicit contract owns that entire scope.",
+        "Aggregate multiple plugin sources deterministically so retries, reload, and reconnect converge rather than append.",
+        "PotionEffectType identifies a collision domain, not a plugin owner; matching effect fields do not establish ownership.",
+        "Preserve unexpected active and hidden potion chains by default. Replace or remove a type only while a documented exclusive type lease is valid and observed state still matches it.",
+        "Check potion-effect add results and inspect active and hidden chains, including weaker reapply and repeated refresh behavior.",
+        "Use bounded effect durations or an explicit recovery contract when a restart can lose the in-memory ownership ledger.",
+        "Apply Attribute.MAX_HEALTH and Attribute.MAX_ABSORPTION modifiers before reading capacity and clamping current values; keep zero health at zero and reject non-finite or negative setter inputs.",
+        "Reconcile expiry, death, quit, reconnect, reload, disable, and repeated cleanup signals idempotently while preserving vanilla and foreign state.",
+        "Keep ItemStack identity, persistent-data schema, scheduler design, and combat-balance values outside this ownership concern."
+      ],
+      "requiredEvidence": [
+        "A source, lifetime, surface, stable-key, aggregation, and collision-policy table",
+        "Three-way reconciliation tests for desired, existing-owned, and existing-foreign attribute state",
+        "Loaded target-version equipment evidence for implicit ItemType defaults and foreign ItemMeta modifiers",
+        "Loaded target-version potion evidence for add results, active and hidden chains, weaker reapply, and safe collision handling",
+        "Capacity-before-clamp tests for raised and lowered maximum health and absorption, zero health, and invalid numeric inputs",
+        "Table-driven lifecycle tests for multiple sources, expiry, death, quit, reconnect, reload, disable, and repeated cleanup"
+      ],
+      "failureMode": "Anonymous stacking and broad cleanup can outlive a session, delete vanilla or foreign contributions, manufacture ownership for an indistinguishable potion effect, and leave current values invalid after capacity changes."
     }
   ]
 }

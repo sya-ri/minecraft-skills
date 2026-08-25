@@ -4652,4 +4652,68 @@ describe("minecraft-skills CLI", () => {
     expect(result.stderr).toEqual([]);
     expect(result.stdout.join("\n")).toContain('"query": "日本語プロジェクト"');
   });
+
+  it("prints and routes Paper attribute and effect ownership guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-attribute-effect-ownership"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("treat-potion-effect-type-as-a-collision-domain");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-attribute-effect-ownership-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-attribute-effect-ownership-unsafe");
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-attribute-effect-ownership-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("exclusive type lease");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-attribute-effect-ownership-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("weaker reapply");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "ItemMeta attribute modifier potion effect ownership hidden weaker reapply",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-attribute-effect-ownership-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-attribute-effect-ownership-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-attribute-effect-ownership"');
+    expect(plan.stdout.join("\n")).toContain("paper-attribute-effect-ownership-safety");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "attribute effect ownership ItemMeta NamespacedKey",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-attribute-effect-ownership"');
+  });
 });

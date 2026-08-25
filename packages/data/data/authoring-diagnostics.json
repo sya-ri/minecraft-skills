@@ -1776,6 +1776,87 @@
         "Use paper-player-session-lifecycle for connection-scoped ownership and teardown."
       ],
       "failureMode": "A hot database path can block server ticks, consume unbounded memory, lose or double-apply accepted changes, repeat external effects, or fail indefinitely under contention and shutdown."
+    },
+    {
+      "id": "paper-attribute-effect-ownership-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper attribute modifiers or potion effects have ambiguous ownership",
+      "severity": "error",
+      "detectWhen": [
+        "attribute modifiers are appended during equipment refresh, session apply, reload, or reconnect",
+        "modifier identities are random, deprecated UUID-based, name-based, or unrelated to a stable logical source",
+        "ItemMeta or AttributeInstance modifiers are removed by broad attribute, slot, or collection scope",
+        "custom ItemMeta attributes are added without checking effective vanilla ItemType defaults",
+        "a plugin removes PotionEffect values by type to clean up its own contribution",
+        "multiple sources reapply a weaker or equal potion effect independently",
+        "maximum health or absorption capacity is reduced without ordering and clamping current values",
+        "expiry, death, quit, reconnect, reload, or disable can repeat or skip cleanup"
+      ],
+      "requiredChecks": [
+        "derive one authoritative desired set for every equipment modifier, session modifier, and managed potion-effect type",
+        "verify stable NamespacedKey ownership for each attribute contribution and reject collisions outside the owned registry",
+        "retain a bounded registry of retired owned keys needed to remove stale reload or migration state without namespace-wide cleanup",
+        "partition and preserve foreign modifiers and verify effective implicit ItemType defaults",
+        "use exact key-based session reconciliation without changing AttributeInstance base values",
+        "document why a session modifier is persistent or transient using target-version evidence",
+        "aggregate multiple plugin potion sources before applying and define a safe same-type collision policy",
+        "confirm PotionEffect type and visible fields are not treated as owner identity",
+        "inspect effect add results plus active and hidden chains and prevent weaker reapply accumulation",
+        "apply Attribute.MAX_HEALTH and Attribute.MAX_ABSORPTION capacity before finite nonnegative current-value clamps without resurrecting zero health",
+        "test multiple sources, reapply, expiry, death, quit, reconnect, reload, disable, and duplicate cleanup on a loaded target version where Paper behavior is claimed",
+        "confirm ItemStack identity, persistent-data schema, scheduler mechanics, and balance values remain separately scoped"
+      ],
+      "evidence": [
+        "A stable-key registry and source-to-surface desired-state table",
+        "Desired, owned-existing, and foreign-existing reconciliation tests",
+        "Target-version Paper Javadocs for modifier identity, ItemMeta defaults, potion chains, transient persistence, and current-value bounds",
+        "Loaded-server evidence for effective equipment behavior, potion collisions and weaker reapply, reconnect or reload, and capacity clamping",
+        "A lifecycle table proving owned-only cleanup remains idempotent"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper api",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "search_paper_types",
+          "search_paper_members",
+          "get_paper_api_reference",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getPaperApiReference",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "repeating the same logical source creates another modifier identity or potion-chain entry",
+        "existing entity state is the only desired-state source",
+        "cleanup removes a vanilla or foreign modifier, changes a base value, or clears an entire metadata map",
+        "an explicit ItemMeta override silently suppresses expected vanilla equipment defaults",
+        "a matching potion type, amplifier, duration, ambient, particle, or icon field is used as proof of plugin ownership",
+        "a type-wide potion removal runs without a currently valid exclusive lease",
+        "an unexpected active or hidden effect is overwritten instead of preserved or rejected",
+        "weaker reapply ignores the add result or accumulated hidden chain",
+        "health or absorption is written before its reduced capacity or receives a negative or non-finite value",
+        "cleanup can resurrect zero health or differs after a duplicate expiry, death, quit, reload, or disable signal",
+        "tests omit multiple sources, foreign state, repeated apply, weaker reapply, expiry, death, quit, reconnect, reload, or capacity reduction"
+      ],
+      "safeResponse": [
+        "Build a deterministic desired-state model and assign stable keys only to attribute contributions the plugin owns.",
+        "Reconcile exact owned keys while preserving foreign modifiers and verifying effective ItemType defaults.",
+        "Treat each potion type as a shared collision domain and preserve unexpected state unless an exclusive lease remains valid.",
+        "Apply capacity changes before safe current-value clamps and cover every lifecycle transition with table-driven tests.",
+        "Verify runtime semantics on the loaded target Paper version and state any remaining evidence gap."
+      ],
+      "failureMode": "Ambiguous identities and broad cleanup can accumulate effects, erase unrelated mechanics, or violate entity value bounds across lifecycle transitions."
     }
   ]
 }
