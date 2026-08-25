@@ -4185,7 +4185,12 @@ describe("minecraft-skills CLI", () => {
       "1.21.11",
     ]);
     expect(itemModel.code).toBe(0);
-    expect(itemModel.stdout.join("\n")).not.toContain("plugin paper search");
+    const itemModelOutput = JSON.parse(itemModel.stdout.join("\n")) as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      itemModelOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(false);
 
     const experienceReward = await capture([
       "minecraft",

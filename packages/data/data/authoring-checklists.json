@@ -580,9 +580,9 @@
           "tools": {
             "cli": [
               "plugin paper context",
-              "plugin paper recipe paper-modelengine-runtime-binding",
-              "plugin paper scenario paper-modelengine-runtime-binding-review",
-              "plugin paper diagnostic paper-modelengine-runtime-binding-unsafe"
+              "plugin paper recipe",
+              "plugin paper scenario",
+              "plugin paper diagnostic"
             ],
             "mcp": [
               "get_authoring_context",

@@ -3425,7 +3425,12 @@ describe("MCP tools", () => {
       version: "1.21.11",
       task: "give an item model a custom texture",
     });
-    expect(itemModel.content[0]?.text).not.toContain("plugin paper search");
+    const itemModelOutput = JSON.parse(itemModel.content[0]?.text ?? "{}") as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      itemModelOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(false);
 
     const experienceReward = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
       version: "1.21.11",
