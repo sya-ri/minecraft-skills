@@ -45,6 +45,11 @@ All notable changes to this project are documented here.
   `banned-players.json`, and `banned-ips.json` across Catalog, CLI, MCP, and English discovery.
   Results detect duplicate identities and ban expiration state without returning player names,
   UUIDs, IP addresses, ban reasons, ban sources, or local paths.
+- Bounded Java player name-to-profile resolution and signed texture-metadata verification across
+  Catalog, CLI, and MCP. Requests use only fixed Mojang services, reject redirects, bound decoded
+  responses and timeouts, distinguish profile/key/signature failure outcomes, and expose only
+  canonical identity, texture references derived from verified signed metadata, and model evidence
+  without downloading PNG data.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

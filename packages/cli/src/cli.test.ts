@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import {
   type BigIntStats,
   existsSync,
@@ -247,7 +247,122 @@ function createMinimalVelocityEntrypointClass(majorVersion = 65): Buffer {
 describe("minecraft-skills CLI", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+  });
+
+  it("resolves Java profile identity and verified texture metadata through fixed requests", async () => {
+    const playerName = "jeb_";
+    const uuid = "853c80ef-3c37-49fd-aa49-938b674adae6";
+    const undashedUuid = "853c80ef3c3749fdaa49938b674adae6";
+    const skinHash = "a".repeat(64);
+    const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2_048 });
+    const texturePayload = {
+      timestamp: 1_777_777_777_777,
+      profileId: undashedUuid,
+      profileName: playerName,
+      signatureRequired: true,
+      textures: {
+        SKIN: { url: `http://textures.minecraft.net/texture/${skinHash}` },
+      },
+    };
+    const propertyValue = Buffer.from(JSON.stringify(texturePayload), "utf8").toString("base64");
+    const propertySignature = sign(
+      "sha1",
+      Buffer.from(propertyValue, "ascii"),
+      privateKey,
+    ).toString("base64");
+    const publicKeyValue = (publicKey.export({ format: "der", type: "spki" }) as Buffer).toString(
+      "base64",
+    );
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      if (typeof input !== "string") {
+        throw new Error("test expected a fixed string URL");
+      }
+      requests.push({ url: input, ...(init === undefined ? {} : { init }) });
+      const json = (value: unknown) =>
+        new Response(JSON.stringify(value), { headers: { "Content-Type": "application/json" } });
+      if (input.includes("/lookup/name/")) {
+        return json({ id: undashedUuid, name: playerName });
+      }
+      if (input === "https://api.minecraftservices.com/publickeys") {
+        return json({ profilePropertyKeys: [{ publicKey: publicKeyValue }] });
+      }
+      return json({
+        id: undashedUuid,
+        name: playerName,
+        properties: [{ name: "textures", value: propertyValue, signature: propertySignature }],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const lookup = await capture(["player-profile", "lookup-name", playerName]);
+    const textures = await capture(["player-profile", "textures", uuid]);
+    expect(lookup.code).toBe(0);
+    expect(textures.code).toBe(0);
+    expect(lookup.stderr).toEqual([]);
+    expect(textures.stderr).toEqual([]);
+    expect(JSON.parse(lookup.stdout.join("\n"))).toMatchObject({
+      status: "found",
+      profile: { uuid, name: playerName },
+    });
+    expect(JSON.parse(textures.stdout.join("\n"))).toMatchObject({
+      status: "verified",
+      data: { textures: { skin: { hash: skinHash, model: "wide" } } },
+    });
+    expect(requests.map(({ url }) => url)).toEqual([
+      `https://api.mojang.com/minecraft/profile/lookup/name/${playerName}`,
+      `https://sessionserver.mojang.com/session/minecraft/profile/${undashedUuid}?unsigned=false`,
+      "https://api.minecraftservices.com/publickeys",
+    ]);
+    expect(requests.every(({ init }) => init?.redirect === "manual")).toBe(true);
+    expect(
+      requests.every(({ init }) => new Headers(init?.headers).get("authorization") === null),
+    ).toBe(true);
+    expect(requests.every(({ init }) => !Object.hasOwn(init ?? {}, "body"))).toBe(true);
+    const serializedOutput = [...lookup.stdout, ...textures.stdout].join("\n");
+    expect(serializedOutput).not.toContain(propertyValue);
+    expect(serializedOutput).not.toContain(propertySignature);
+    expect(serializedOutput).not.toContain(publicKeyValue);
+  });
+
+  it("prints non-success player-profile outcomes as JSON with exit code one", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const missing = await capture(["player-profile", "lookup-name", "MissingPlayer"]);
+    expect(missing.code).toBe(1);
+    expect(missing.stderr).toEqual([]);
+    expect(JSON.parse(missing.stdout.join("\n"))).toEqual({
+      status: "not-found",
+      endpoint: "name-lookup",
+    });
+
+    const invalidUuid = await capture(["player-profile", "textures", "not-a-uuid"]);
+    expect(invalidUuid.code).toBe(1);
+    expect(invalidUuid.stderr).toEqual([]);
+    expect(JSON.parse(invalidUuid.stdout.join("\n"))).toEqual({
+      status: "invalid-input",
+      field: "uuid",
+      code: "unsupported-format",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const callerControlled = await capture([
+      "player-profile",
+      "lookup-name",
+      "jeb_",
+      "--endpoint",
+      "https://attacker.invalid/profile",
+    ]);
+    expect(callerControlled.code).toBe(1);
+    expect(callerControlled.stdout).toEqual([]);
+    expect(callerControlled.stderr).toEqual([
+      "player-profile lookup-name requires exactly one Java player name",
+    ]);
+    expect(callerControlled.stderr.join("\n")).not.toContain("attacker.invalid");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("prints domains", async () => {

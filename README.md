@@ -13,8 +13,8 @@ The project helps AI check real versioned data before it writes code or pack fil
 
 - Skill folders for datapack, resourcepack, and Paper plugin authoring.
 - CLI/API/MCP lookups for versions, pack formats, commands, registry entries, vanilla paths,
-  JSON/model shapes, server.properties validation, Paper API indexes/events, and bounded offline
-  plugin JAR descriptor checks.
+  JSON/model shapes, server.properties validation, Paper API indexes/events, bounded offline plugin
+  JAR descriptor checks, and Java player profile/signed texture metadata.
 - Authoring guidance for what to verify, what evidence is required, and how to phrase unknowns.
 - Bundled Java 1.13+ data, with cache downloads for heavier generated surfaces.
 
@@ -106,6 +106,8 @@ minecraft-skills modrinth compatibility sodium iris --game-version 1.21.11 --loa
 minecraft-skills modrinth get project simple-voice-chat
 minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills server validate-properties ./server.properties --version 1.21.11
+minecraft-skills player-profile lookup-name jeb_
+minecraft-skills player-profile textures 853c80ef-3c37-49fd-aa49-938b674adae6
 ```
 
 For intent-based discovery, translate non-English user wording into concise English canonical
@@ -128,6 +130,17 @@ conservative set of stable scalar checks, and correlations that can be proven wi
 Property values are never returned. Unknown keys, target-version membership, and runtime encoding
 remain explicit coverage gaps, so `validationComplete` stays conservatively false without official
 generated defaults for the requested version.
+
+The player-profile commands send the supplied name or UUID only to fixed Mojang services and do not
+write a disk cache or application log. Their exact endpoints and response shapes come from the
+official Authlib 9.0.75 artifact shipped for Minecraft 26.2 and are version-specific, undocumented
+service behavior. A `verified` texture result proves only the textures-property signature and
+profile/session UUID-name binding. The 64-hex reference is extracted from verified signed metadata;
+the canonical HTTPS URL is derived by placing that reference into the fixed official URL shape and
+is not itself a signed string. Neither proves downloaded PNG bytes, a content digest, current skin
+selection, ownership, or licensing. The profile resolver does not download images; pass a returned
+hash to the separate [`player-texture download`](./packages/cli/README.md#examples) command when PNG
+bytes are needed. Layout inspection and face cropping remain separate.
 
 `resourcepack validate-project` also validates `sounds.json` file/event references and local event
 cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification

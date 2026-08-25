@@ -129,6 +129,8 @@ minecraft-skills modrinth validate-pack ./example.mrpack
 minecraft-skills modrinth validate-pack ./example.mrpack --allow-download-host downloads.example.org
 minecraft-skills modrinth validate-pack ./example.mrpack --max-archive-bytes 104857600
 minecraft-skills server validate-properties ./server.properties --version 1.21.11
+minecraft-skills player-profile lookup-name jeb_
+minecraft-skills player-profile textures 853c80ef-3c37-49fd-aa49-938b674adae6
 ```
 
 For intent-based discovery searches, translate non-English user wording into concise English
@@ -136,6 +138,21 @@ canonical Minecraft terms before passing the query. Keep exact identifiers, name
 paths, project titles, and content literals unchanged. Use the English terms only for the lookup and
 keep the user's requested response language. The CLI does not expand language-specific aliases or
 reject Unicode query values.
+
+`player-profile lookup-name` and `player-profile textures` send the supplied Java name or UUID to
+fixed Mojang services. They do not accept caller endpoints, headers, bodies, or cache paths and do
+not write a disk cache or application log. Only `found` and `verified` return exit code 0; every
+other structured JSON outcome returns 1.
+
+The exact service paths and response shapes are derived from the official Minecraft 26.2 Authlib
+9.0.75 artifact and are version-specific, undocumented behavior. `verified` means only that the
+textures property signature and UUID/name binding passed. The 64-hex reference is extracted from
+verified signed metadata; the returned canonical HTTPS URL is derived by placing that reference
+into the fixed official URL shape and is not itself a signed string. Neither proves PNG bytes, a
+content digest, freshness/current selection, account ownership, or a license. This profile command
+does not download the PNG; pass a returned hash to the separate `player-texture download <hash>
+--kind skin|cape|elytra --output <new.png>` command when bytes are needed. Skin layout inspection and
+face cropping remain separate operations.
 
 Registry comparisons emit entry and protocol ID changes only for registries indexed in both
 versions. `outcome` reports whether the requested scope was fully, partially, or not comparable;

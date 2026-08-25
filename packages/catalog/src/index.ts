@@ -161,6 +161,8 @@ import {
 export * from "./fabricMeta.js";
 export * from "./fabricMod.js";
 export * from "./javaClassArchive.js";
+export * from "./javaPlayerProfile.js";
+export * from "./javaPlayerProfileNetwork.js";
 export {
   downloadJavaPlayerTexture,
   inspectJavaPlayerTextureBytes,

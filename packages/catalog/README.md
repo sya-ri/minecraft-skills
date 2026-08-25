@@ -54,6 +54,7 @@ import {
   getPaperApiSurface,
   getPaperPluginData,
   paperPluginJarValidationLimits,
+  getVerifiedJavaPlayerTextures,
   getResourcepackModelSummary,
   getResponsePattern,
   resolveVelocityToolchain,
@@ -71,6 +72,7 @@ import {
   listSkills,
   listSourceTiers,
   listVersionSupport,
+  lookupJavaPlayerProfileByName,
   listFactSurfaces,
   listIntentLookups,
   listModrinthProjectVersions,
@@ -193,6 +195,10 @@ const coverage = getCoverageSummary();
 const support = getSupportMatrix();
 const versionSupport = listVersionSupport({ domain: "paper-plugin" });
 const manifest = getDataManifest();
+const profile = await lookupJavaPlayerProfileByName("jeb_");
+const textures = await getVerifiedJavaPlayerTextures(
+  "853c80ef-3c37-49fd-aa49-938b674adae6",
+);
 await fetchData({ kind: "paper-api-surface", version: "26.2" });
 const reports = getJavaReportsSummary("java", "26.2");
 const packFormat = getPackFormat("java", "26.2", "datapack");
@@ -494,6 +500,23 @@ check archive paths and referenced-file presence. `validateFabricModJar` adds bo
 the actual ZIP bytes and reports binary evidence. Neither API validates dependency predicates or
 satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR
 metadata, or icon pixels.
+
+`lookupJavaPlayerProfileByName` and `getVerifiedJavaPlayerTextures` use only fixed Mojang service
+URLs and send the supplied name or UUID to those services. They accept an injected fetch function
+for deterministic testing, but no caller endpoint, headers, request body, or cache path. They write
+no disk cache or application log. Pure normalization, session inspection, and signature helpers are
+also exported for offline validation of already-supplied data.
+
+The exact paths, schemas, and SHA1withRSA compatibility behavior are pinned to the official
+Minecraft 26.2 Authlib 9.0.75 artifact and are version-specific, undocumented service behavior. A
+`verified` result proves only the textures-property signature and session/payload UUID-name binding.
+The 64-hex references are extracted from verified signed metadata; canonical HTTPS URLs are derived
+by placing those references into the fixed official URL shape and are not themselves signed
+strings. Neither API claims that a reference proves PNG bytes, a content digest, current skin
+selection, ownership, or licensing. `getVerifiedJavaPlayerTextures` does not download images; use
+the separate `downloadJavaPlayerTexture` API or CLI
+[`player-texture download`](../cli/README.md#examples) command when bytes are needed. Layout
+inspection and face cropping remain separate operations.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function
