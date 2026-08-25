@@ -518,7 +518,11 @@ function normalizeIpAddress(value: string): string | null {
     return value;
   }
   try {
-    return new URL(`http://[${value}]/`).hostname.slice(1, -1).toLowerCase();
+    const scopeIndex = value.lastIndexOf("%");
+    const address = scopeIndex === -1 ? value : value.slice(0, scopeIndex);
+    const scope = scopeIndex === -1 ? "" : value.slice(scopeIndex);
+    const normalizedAddress = new URL(`http://[${address}]/`).hostname.slice(1, -1).toLowerCase();
+    return `${normalizedAddress}${scope}`;
   } catch {
     return null;
   }
@@ -996,7 +1000,7 @@ export function validateServerAccessList(
     if (expirations !== null) {
       validateBanFields(entry, index, diagnostics, expirations, now);
     }
-    if (diagnostics.getErrorCount() === errorsBefore) {
+    if (duplicateJsonKeyCount === 0 && diagnostics.getErrorCount() === errorsBefore) {
       validEntries += 1;
     }
   }

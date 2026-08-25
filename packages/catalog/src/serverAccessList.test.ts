@@ -170,6 +170,24 @@ describe("server access-list validation", () => {
     );
   });
 
+  it("accepts scoped IPv6 literals and normalizes only their address portion", () => {
+    const result = validateServerAccessList({
+      kind: "banned-ips",
+      content: JSON.stringify([
+        { ip: "fe80:0:0:0:0:0:0:1%3", ...banFields() },
+        { ip: "fe80::1%3", ...banFields() },
+      ]),
+    });
+
+    expect(result.duplicateIdentityCount).toBe(1);
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "invalid-ip-address" }),
+    );
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "duplicate-ip-address", path: "$[1].ip" }),
+    );
+  });
+
   it("rejects invalid field types while warning on noncanonical extensions", () => {
     const result = validateServerAccessList({
       kind: "ops",
@@ -202,6 +220,7 @@ describe("server access-list validation", () => {
 
     expect(result.duplicateJsonKeyCount).toBe(1);
     expect(result.valid).toBe(false);
+    expect(result.validEntries).toBe(0);
     expect(result.diagnostics).toContainEqual(
       expect.objectContaining({ code: "duplicate-json-key", path: "$" }),
     );
