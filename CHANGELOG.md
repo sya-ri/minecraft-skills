@@ -2,10 +2,36 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.1.6 - 2026-08-26
 
 ### Added
 
+- Bounded offline Paper and Bukkit plugin JAR descriptor validation across Catalog, CLI, and MCP,
+  covering stable archive reads, root `paper-plugin.yml` and `plugin.yml` parsing, Paper-first
+  descriptor selection, documented fields and dependency metadata, and declared Java binary names
+  without loading classes or claiming runtime or dependency compatibility.
+- Bounded JVM class-loading failure evidence in Minecraft Java log and crash-report analysis,
+  extracting explicit missing-class and initialization-failed cases from `ClassNotFoundException`
+  and `NoClassDefFoundError`, normalizing slash and dot class symbols, coalescing matching evidence
+  within one exception chain, and retaining only explicit evidence plus at most the first directly
+  associated frame or artifact without inferring dependency, ownership, blame, or root cause.
+- Bounded Paper block and entity world-operation guidance for work spanning chunks or Folia
+  ownership boundaries, with pre-enumerated target chunks, explicit generation and ticket policy,
+  per-tick and per-region caps, immutable-coordinate and `EntityScheduler` ownership handoffs,
+  typed partial outcomes, idempotent reconciliation, and terminal ticket cleanup.
+- Fabric client UI scaling and clipping guidance across Catalog, CLI, and MCP, using one immutable
+  scaled-viewport layout for drawing, clipping, and hit testing, with pre-clip bounds, localized
+  text, minimum viewport, GUI-scale and `Auto` window variants, target-mapping verification,
+  deterministic geometry assertions, and rendered client or screenshot evidence.
+- Reproducible Fabric Client GameTest visual-evidence guidance across data, Catalog, CLI, and MCP,
+  including stable semantic case IDs, bounded readiness barriers, phase-aware full-frame and crop
+  artifacts, explicit comparison and baseline-update runs, selection and completeness
+  reconciliation, idempotent cleanup, causal failure phases, and explicit evidence limits for
+  non-render, virtual-framebuffer, and interactive-client runs.
+- Paper plugin configuration lifecycle guidance across data, Catalog, CLI, and MCP, modeling startup
+  and hot reload as immutable prepare, commit, and retire generations with last-known-good
+  preservation, revision ordering, owned resources, typed restart or degraded outcomes,
+  conflict-safe writes, and disable cleanup.
 - Paper ItemStack semantic-identity and presentation-update guidance across data, Catalog, CLI, and
   MCP. It requires stable namespaced logical IDs with separate schema versions, distinguishes
   identity from similarity and rendering, clones or owns stacks before mutation, preserves all
@@ -224,6 +250,9 @@ All notable changes to this project are documented here.
   selected entry extraction while preserving total and filtered result counts.
 - Paper API searches now reuse up to two parsed and validated version surfaces in the same process
   while public surface results remain independent mutable values.
+- Bundled Mojang and PaperMC source data is refreshed for this release: the latest Java release is
+  26.2, Paper 26.2 records build 119, and the Paper API indexes, derived version coverage, and data
+  manifest have been regenerated from the current source snapshot.
 
 ### Fixed
 
@@ -233,6 +262,13 @@ All notable changes to this project are documented here.
   `datapack.json` is unavailable and merges registry IDs from both reports when both are present.
 - Java report refreshes now detect and repair incomplete registry summaries, download one official
   server jar at a time, and run correctly with platform-native classpaths.
+- Data Refresh now builds every workspace package before source audits, validates generated
+  `YYYY.MM.DD-run-number` manifest versions by contract, and derives current Paper version, build,
+  coverage, and support-matrix expectations from bundled data, preventing valid refreshes from
+  failing because of missing build artifacts or stale hard-coded values.
+- Current-source audit tests now inject bundled-source baselines instead of loading generated
+  catalog data, isolating deterministic fixtures while production audits continue to compare
+  checked-in values with live Mojang and PaperMC sources.
 
 ## 0.1.5 - 2026-06-24
 

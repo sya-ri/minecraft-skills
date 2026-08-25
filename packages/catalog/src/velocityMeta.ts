@@ -4,7 +4,7 @@ const velocityDevelopmentDocsUrl =
   "https://docs.papermc.io/velocity/dev/creating-your-first-plugin/";
 const velocityFaqUrl = "https://docs.papermc.io/velocity/faq/";
 const velocityJavadocsUrl = "https://jd.papermc.io/velocity/";
-const velocityMetaUserAgent = "sya-ri/minecraft-skills/0.1.5 (github.com/sya-ri/minecraft-skills)";
+const velocityMetaUserAgent = "sya-ri/minecraft-skills/0.1.6 (github.com/sya-ri/minecraft-skills)";
 const maxMetadataBytes = 128 * 1024;
 const maxDocumentationBytes = 512 * 1024;
 const maxExtractedDocumentationCharacters = 256 * 1024;

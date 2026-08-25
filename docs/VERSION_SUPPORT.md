@@ -1,6 +1,6 @@
 # Version Support
 
-This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.5. It is
+This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.6. It is
 derived from the same catalog data used by the CLI, package API, and MCP server.
 
 Use this page to decide whether an AI agent can safely target a Minecraft version before generating
@@ -14,7 +14,7 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 - Datapack coverage: server reports, command paths, vanilla datapack paths, and observed schema
   surfaces for 50/50 releases.
 - Resourcepack coverage: vanilla asset paths and model summaries for 50/50 releases.
-- Paper support metadata: 46 Minecraft versions, latest 26.2 build 30.
+- Paper support metadata: 46 Minecraft versions, latest 26.2 build 119.
 - Paper API package indexes: 46/46 supported Paper versions.
 - Paper API type/member surfaces: 38/46 supported Paper versions.
 - Downloadable heavy surfaces: datapack schema surfaces, Paper API surfaces, and resourcepack model
@@ -48,8 +48,8 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 | Version | Released | Data PF | Resource PF | Datapack | Resourcepack | Paper | Paper build | Paper API surface | Heavy data |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 26.2 | 2026-06-16 | 107.1 | 88.0 | ✅ | ✅ | ✅ | 30 | ✅ | ✅ |
-| 26.1.2 | 2026-04-09 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 72 | ✅ | ✅ |
+| 26.2 | 2026-06-16 | 107.1 | 88.0 | ✅ | ✅ | ✅ | 119 | ✅ | ✅ |
+| 26.1.2 | 2026-04-09 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 74 | ✅ | ✅ |
 | 26.1.1 | 2026-04-01 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 29 | ✅ | ✅ |
 | 26.1 | 2026-03-24 | 101.1 | 84.0 | ✅ | ✅ |  |  |  | ✅ |
 | 1.21.11 | 2025-12-09 | 94.1 | 75.0 | ✅ | ✅ | ✅ | 132 | ✅ | ✅ |

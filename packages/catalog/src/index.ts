@@ -9366,7 +9366,7 @@ export function validateModrinthPackArchive(
 }
 
 const modrinthApiBaseUrl = "https://api.modrinth.com/v2/search";
-const modrinthUserAgent = "sya-ri/minecraft-skills/0.1.5 (github.com/sya-ri/minecraft-skills)";
+const modrinthUserAgent = "sya-ri/minecraft-skills/0.1.6 (github.com/sya-ri/minecraft-skills)";
 
 export function buildModrinthProjectSearchUrl(options: ModrinthProjectSearchOptions): string {
   const query = options.query.trim();
