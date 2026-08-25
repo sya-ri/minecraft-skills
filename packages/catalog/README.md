@@ -14,6 +14,7 @@ Node.js 22.12 or newer is required.
 
 ```ts
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import {
   analyzeMinecraftLog,
   analyzeMinecraftPerformance,
@@ -64,6 +65,7 @@ import {
   getSupportMatrix,
   getVersionDetail,
   inspectBlockbenchProject,
+  inspectWaveAudio,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -387,6 +389,10 @@ const translations = validateResourcepackTranslations({
   ],
   argumentCounts: { "example.greeting": 1 },
 });
+const waveSource = inspectWaveAudio(await readFile("./source.wav"));
+// Reports bounded RIFF/WAVE PCM or IEEE-float structure, SHA-256, duration, sample peak dBFS,
+// unweighted sample RMS dBFS, and a factual integer-endpoint/float-magnitude count. It does not
+// convert or normalize audio, measure LUFS, or prove clipping or decoder compatibility.
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
 // Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
 // PNG files may also be supplied as Uint8Array content for bounded structural validation.
