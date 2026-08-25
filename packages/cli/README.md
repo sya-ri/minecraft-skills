@@ -146,10 +146,13 @@ other structured JSON outcome returns 1.
 
 The exact service paths and response shapes are derived from the official Minecraft 26.2 Authlib
 9.0.75 artifact and are version-specific, undocumented behavior. `verified` means only that the
-textures property signature and UUID/name binding passed. The returned canonical HTTPS URL and
-64-hex reference are signed metadata; this command does not download the PNG or prove its bytes,
-content digest, freshness/current selection, account ownership, or license. PNG download, skin
-layout inspection, and face cropping are separate, out-of-scope operations.
+textures property signature and UUID/name binding passed. The 64-hex reference is extracted from
+verified signed metadata; the returned canonical HTTPS URL is derived by placing that reference
+into the fixed official URL shape and is not itself a signed string. Neither proves PNG bytes, a
+content digest, freshness/current selection, account ownership, or a license. This profile command
+does not download the PNG; pass a returned hash to the separate `player-texture download <hash>
+--kind skin|cape|elytra --output <new.png>` command when bytes are needed. Skin layout inspection and
+face cropping remain separate operations.
 
 Registry comparisons emit entry and protocol ID changes only for registries indexed in both
 versions. `outcome` reports whether the requested scope was fully, partially, or not comparable;

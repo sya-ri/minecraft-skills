@@ -135,9 +135,12 @@ The player-profile commands send the supplied name or UUID only to fixed Mojang 
 write a disk cache or application log. Their exact endpoints and response shapes come from the
 official Authlib 9.0.75 artifact shipped for Minecraft 26.2 and are version-specific, undocumented
 service behavior. A `verified` texture result proves only the textures-property signature and
-profile/session UUID-name binding. Its canonical URL and 64-hex reference do not prove downloaded
-PNG bytes, a content digest, current skin selection, ownership, or licensing. Image download,
-layout inspection, and face cropping are out of scope.
+profile/session UUID-name binding. The 64-hex reference is extracted from verified signed metadata;
+the canonical HTTPS URL is derived by placing that reference into the fixed official URL shape and
+is not itself a signed string. Neither proves downloaded PNG bytes, a content digest, current skin
+selection, ownership, or licensing. The profile resolver does not download images; pass a returned
+hash to the separate [`player-texture download`](./packages/cli/README.md#examples) command when PNG
+bytes are needed. Layout inspection and face cropping remain separate.
 
 `resourcepack validate-project` also validates `sounds.json` file/event references and local event
 cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification

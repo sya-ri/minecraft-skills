@@ -171,10 +171,12 @@ or application log. Their exact endpoints and response shapes are version-specif
 behavior pinned to the official Minecraft 26.2 Authlib 9.0.75 artifact.
 
 `get_verified_java_player_textures` returns metadata only. `verified` establishes the signed
-textures-property signature and UUID/name binding; it does not download a PNG or prove that PNG
-bytes match a content digest represented by the 64-hex reference. It also does not establish
-current skin selection, account ownership, or licensing. Image download, skin layout inspection,
-and face cropping are outside this tool.
+textures-property signature and UUID/name binding. Its 64-hex reference is extracted from verified
+signed metadata; its canonical HTTPS URL is derived from that reference and is not itself a signed
+string. Neither proves PNG bytes or a content digest, current skin selection, account ownership, or
+licensing. The MCP tool does not download images; pass a returned hash to the separate CLI
+[`player-texture download`](../cli/README.md#examples) command when bytes are needed. Skin layout
+inspection and face cropping remain outside this tool.
 
 `validate_resourcepack_png` accepts canonical padded Base64 for one complete PNG, rejects malformed
 or oversized input before decoding, and returns bounded structural and CRC diagnostics. It does not

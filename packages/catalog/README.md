@@ -510,9 +510,13 @@ also exported for offline validation of already-supplied data.
 The exact paths, schemas, and SHA1withRSA compatibility behavior are pinned to the official
 Minecraft 26.2 Authlib 9.0.75 artifact and are version-specific, undocumented service behavior. A
 `verified` result proves only the textures-property signature and session/payload UUID-name binding.
-Canonical HTTPS URLs and 64-hex references are signed metadata; no PNG is downloaded and no claim
-is made about PNG bytes, a content digest, current skin selection, ownership, or licensing. Image
-download, layout inspection, and face cropping are out of scope.
+The 64-hex references are extracted from verified signed metadata; canonical HTTPS URLs are derived
+by placing those references into the fixed official URL shape and are not themselves signed
+strings. Neither API claims that a reference proves PNG bytes, a content digest, current skin
+selection, ownership, or licensing. `getVerifiedJavaPlayerTextures` does not download images; use
+the separate `downloadJavaPlayerTexture` API or CLI
+[`player-texture download`](../cli/README.md#examples) command when bytes are needed. Layout
+inspection and face cropping remain separate operations.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function

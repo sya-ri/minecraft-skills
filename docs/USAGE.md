@@ -533,9 +533,13 @@ The exact endpoints and response shapes are derived from the official Minecraft 
 [Authlib 9.0.75 artifact](https://libraries.minecraft.net/com/mojang/authlib/9.0.75/authlib-9.0.75.jar)
 (SHA-1 `d61056a234d5e4b272e09d59b0713f80d6c0b6af`) and are version-specific,
 undocumented service behavior. `verified` establishes only the textures-property signature and
-session/payload UUID-name binding. A canonical HTTPS URL and 64-hex reference are signed metadata;
-the resolver does not fetch PNG bytes or establish a content digest, current skin selection,
-ownership, or licensing. PNG download, skin layout inspection, and face cropping are out of scope.
+session/payload UUID-name binding. The 64-hex reference is extracted from verified signed metadata;
+the canonical HTTPS URL is derived by placing that reference into the fixed official URL shape and
+is not itself a signed string. Neither establishes PNG bytes, a content digest, current skin
+selection, ownership, or licensing. The profile resolver does not fetch PNG bytes; pass a returned
+hash to the separate [`player-texture download`](../packages/cli/README.md#examples) command as
+`player-texture download <hash> --kind skin|cape|elytra --output <new.png>` when bytes are needed.
+Skin layout inspection and face cropping remain separate operations.
 
 Paper API package indexes are available for every bundled Paper-supported Minecraft version from
 1.13 onward. Type/member API surfaces use the modern Javadocs `type-search-index.js` and

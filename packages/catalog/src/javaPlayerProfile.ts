@@ -45,6 +45,7 @@ export const javaPlayerProfileSourceEvidence = {
     "Exact service paths and response shapes are pinned to the official Minecraft 26.2 Authlib artifact, not a documented stable public API.",
     "Current signed payloads can contain signatureRequired while Authlib 9.0.75 models isPublic; neither boolean is exposed as a stable semantic claim.",
     "SHA1withRSA is the compatibility algorithm used by the pinned Authlib artifact, not a claim of account authentication or modern protocol negotiation.",
+    "The 64-hex texture reference is extracted from verified signed metadata; its canonical HTTPS URL is derived by placing that reference into the fixed official URL shape and is not itself a signed string.",
   ],
   nonClaims: [
     "Microsoft or Xbox authentication",
@@ -134,6 +135,7 @@ export type JavaPlayerInvalidResponseOutcome = {
     | "unsupported-content-encoding"
     | "invalid-content-length"
     | "oversized-response"
+    | "response-chunk-limit-exceeded"
     | "truncated-response"
     | "missing-body"
     | "body-read-failed"
@@ -535,7 +537,7 @@ export function parseJavaPlayerProfileLookupResponse(
 }
 
 function parseProfileActions(value: unknown): boolean {
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     return true;
   }
   const actions = readJsonArray(value, maxProfileActions);

@@ -27,6 +27,7 @@ const requestTimeoutMs = 5_000;
 const maxProfileLookupResponseBytes = 8 * 1_024;
 const maxSessionProfileResponseBytes = 64 * 1_024;
 const maxPublicKeysResponseBytes = 64 * 1_024;
+const maxResponseChunks = 4_096;
 const maxRetryAfterSeconds = 3_600;
 
 export type JavaPlayerProfileFetch = (url: string, init?: RequestInit) => Promise<Response>;
@@ -72,6 +73,7 @@ type JsonReadFailureCode =
   | "unsupported-content-encoding"
   | "invalid-content-length"
   | "oversized-response"
+  | "response-chunk-limit-exceeded"
   | "truncated-response"
   | "missing-body"
   | "body-read-failed"
@@ -84,6 +86,67 @@ type JsonRequestResult =
   | { kind: "timeout" }
   | { kind: "http"; status: number; retryAfterSeconds: number | null }
   | { kind: "invalid-response"; code: JsonReadFailureCode };
+
+function runBestEffortCleanup(cleanup: () => PromiseLike<unknown> | unknown): void {
+  try {
+    void Promise.resolve(cleanup()).catch(() => undefined);
+  } catch {
+    // Cleanup is best-effort and never replaces the bounded structured outcome.
+  }
+}
+
+type ResponseCleanup = {
+  cancel: () => void;
+  complete: () => void;
+  useReader: (reader: ReadableStreamDefaultReader<Uint8Array>) => boolean;
+};
+
+function createResponseCleanup(response: Response, signal: AbortSignal): ResponseCleanup {
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  let settled = false;
+
+  const removeAbortListener = (): void => {
+    signal.removeEventListener("abort", cancel);
+  };
+  const cancel = (): void => {
+    if (settled) {
+      return;
+    }
+    settled = true;
+    removeAbortListener();
+    if (reader === undefined) {
+      runBestEffortCleanup(() => response.body?.cancel());
+    } else {
+      const activeReader = reader;
+      runBestEffortCleanup(() => activeReader.cancel());
+    }
+  };
+  const complete = (): void => {
+    if (settled) {
+      return;
+    }
+    settled = true;
+    removeAbortListener();
+    if (reader !== undefined) {
+      const activeReader = reader;
+      runBestEffortCleanup(() => activeReader.releaseLock());
+    }
+  };
+  const useReader = (nextReader: ReadableStreamDefaultReader<Uint8Array>): boolean => {
+    if (settled) {
+      runBestEffortCleanup(() => nextReader.cancel());
+      return false;
+    }
+    reader = nextReader;
+    return true;
+  };
+
+  signal.addEventListener("abort", cancel, { once: true });
+  if (signal.aborted) {
+    cancel();
+  }
+  return { cancel, complete, useReader };
+}
 
 function parseRetryAfter(value: unknown): number | null {
   if (typeof value !== "string") {
@@ -107,6 +170,7 @@ function parseRetryAfter(value: unknown): number | null {
 async function readBoundedJson(
   response: Response,
   maxBytes: number,
+  cleanup: ResponseCleanup,
 ): Promise<
   { kind: "ok"; value: unknown } | { kind: "invalid-response"; code: JsonReadFailureCode }
 > {
@@ -149,21 +213,31 @@ async function readBoundedJson(
     }
 
     const reader = response.body.getReader();
+    if (!cleanup.useReader(reader)) {
+      return { kind: "invalid-response", code: "body-read-failed" };
+    }
     const chunks: Uint8Array[] = [];
     let totalBytes = 0;
+    let responseChunks = 0;
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
         break;
       }
-      totalBytes += value.byteLength;
-      if (totalBytes > maxBytes) {
-        try {
-          await reader.cancel();
-        } catch {
-          // The decoded-size outcome remains authoritative even if cleanup fails.
-        }
+      responseChunks += 1;
+      if (responseChunks > maxResponseChunks) {
+        return { kind: "invalid-response", code: "response-chunk-limit-exceeded" };
+      }
+      if (
+        !Number.isSafeInteger(value.byteLength) ||
+        value.byteLength < 0 ||
+        maxBytes - totalBytes < value.byteLength
+      ) {
         return { kind: "invalid-response", code: "oversized-response" };
+      }
+      totalBytes += value.byteLength;
+      if (value.byteLength === 0) {
+        continue;
       }
       chunks.push(value);
     }
@@ -214,6 +288,8 @@ async function requestJson(
   });
 
   const request = (async (): Promise<JsonRequestResult> => {
+    let cleanup: ResponseCleanup | undefined;
+    let completed = false;
     try {
       const response = await fetchImpl(url, {
         headers: {
@@ -223,6 +299,10 @@ async function requestJson(
         redirect: "manual",
         signal: controller.signal,
       });
+      cleanup = createResponseCleanup(response, controller.signal);
+      if (controller.signal.aborted) {
+        return { kind: "timeout" };
+      }
       const status = response.status;
       if (typeof status !== "number" || !Number.isInteger(status) || status < 100 || status > 599) {
         return { kind: "invalid-response", code: "invalid-status" };
@@ -234,9 +314,17 @@ async function requestJson(
           retryAfterSeconds: parseRetryAfter(response.headers.get("retry-after")),
         };
       }
-      return await readBoundedJson(response, maxBytes);
+      const result = await readBoundedJson(response, maxBytes, cleanup);
+      completed = result.kind === "ok";
+      return result;
     } catch {
       return timedOut ? { kind: "timeout" } : { kind: "network" };
+    } finally {
+      if (completed) {
+        cleanup?.complete();
+      } else {
+        cleanup?.cancel();
+      }
     }
   })();
 

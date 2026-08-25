@@ -212,6 +212,21 @@ describe("Java player profile pure validation", () => {
     });
   });
 
+  it("treats Authlib's nullable profileActions field as an empty action set", () => {
+    const { sessionResponse } = signedSession();
+    sessionResponse.profileActions = null;
+
+    expect(inspectJavaPlayerSessionResponse(sessionResponse, uuid)).toEqual({
+      status: "ready-for-verification",
+      profile: { uuid, name: profileName },
+    });
+    expect(
+      verifyFixture(payload(), {
+        sessionOverrides: { profileActions: null },
+      }),
+    ).toMatchObject({ status: "verified" });
+  });
+
   it("verifies signed metadata and exposes only canonical bounded references", () => {
     const result = verifyFixture();
     expect(result).toEqual({

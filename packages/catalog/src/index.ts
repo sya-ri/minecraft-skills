@@ -161,6 +161,8 @@ import {
 export * from "./fabricMeta.js";
 export * from "./fabricMod.js";
 export * from "./javaClassArchive.js";
+export * from "./javaPlayerProfile.js";
+export * from "./javaPlayerProfileNetwork.js";
 export {
   downloadJavaPlayerTexture,
   inspectJavaPlayerTextureBytes,
@@ -178,8 +180,6 @@ export {
   javaPlayerTextureDownloadLimits,
   javaPlayerTextureSourceEvidence,
 } from "./javaPlayerTexture.js";
-export * from "./javaPlayerProfile.js";
-export * from "./javaPlayerProfileNetwork.js";
 export * from "./minecraftLog.js";
 export {
   type ModrinthCompatibilityFetch,

@@ -55,6 +55,43 @@ function jsonResponse(value: unknown, init: ResponseInit = {}): Response {
   });
 }
 
+type ControlledReadResult = {
+  done: boolean;
+  value: Uint8Array | undefined;
+};
+
+function controlledResponse(
+  options: {
+    status?: number;
+    headers?: ConstructorParameters<typeof Headers>[0];
+    read?: () => Promise<ControlledReadResult>;
+    cancelBody?: () => Promise<void>;
+    cancelReader?: () => Promise<void>;
+  } = {},
+): {
+  response: Response;
+  bodyCancel: ReturnType<typeof vi.fn>;
+  readerCancel: ReturnType<typeof vi.fn>;
+} {
+  const bodyCancel = vi.fn(options.cancelBody ?? (async () => undefined));
+  const readerCancel = vi.fn(options.cancelReader ?? (async () => undefined));
+  const reader = {
+    cancel: readerCancel,
+    read: options.read ?? (async () => ({ done: true, value: undefined })),
+    releaseLock: vi.fn(),
+  } as unknown as ReadableStreamDefaultReader<Uint8Array>;
+  const body = {
+    cancel: bodyCancel,
+    getReader: () => reader,
+  } as unknown as ReadableStream<Uint8Array>;
+  const response = {
+    body,
+    headers: new Headers(options.headers ?? { "Content-Type": "application/json" }),
+    status: options.status ?? 200,
+  } as unknown as Response;
+  return { response, bodyCancel, readerCancel };
+}
+
 function profileFetch(options: {
   lookup?: Response | (() => Response);
   session?: Response | (() => Response);
@@ -182,6 +219,30 @@ describe("Java player profile fixed-endpoint network boundary", () => {
     expect(result).toMatchObject(expected);
   });
 
+  it.each([
+    [302, "redirect-rejected"],
+    [503, "service-unavailable"],
+  ])("cancels HTTP %i response bodies before returning %s", async (status, code) => {
+    const nonSuccess = controlledResponse({ status });
+    await expect(
+      lookupJavaPlayerProfileByName(profileName, profileFetch({ lookup: nonSuccess.response })),
+    ).resolves.toMatchObject({ status: "upstream-error", code });
+    expect(nonSuccess.bodyCancel).toHaveBeenCalledTimes(1);
+    expect(nonSuccess.readerCancel).not.toHaveBeenCalled();
+  });
+
+  it("cancels a malformed-header response body before returning", async () => {
+    const malformedHeader = controlledResponse({ headers: { "Content-Type": "text/plain" } });
+    await expect(
+      lookupJavaPlayerProfileByName(
+        profileName,
+        profileFetch({ lookup: malformedHeader.response }),
+      ),
+    ).resolves.toMatchObject({ status: "invalid-response", code: "invalid-content-type" });
+    expect(malformedHeader.bodyCancel).toHaveBeenCalledTimes(1);
+    expect(malformedHeader.readerCancel).not.toHaveBeenCalled();
+  });
+
   it("bounds numeric Retry-After without accepting date or injected text", async () => {
     const bounded = await lookupJavaPlayerProfileByName(
       profileName,
@@ -275,6 +336,27 @@ describe("Java player profile fixed-endpoint network boundary", () => {
       profileFetch({ lookup: jsonResponse(`"${"x".repeat(8 * 1_024)}"`) }),
     );
     expect(result).toMatchObject({ status: "invalid-response", code: "oversized-response" });
+  });
+
+  it("bounds zero-progress response chunks and cancels their reader", async () => {
+    let reads = 0;
+    const zeroProgress = controlledResponse({
+      read: async () => {
+        reads += 1;
+        return { done: false, value: new Uint8Array() };
+      },
+    });
+    const result = await lookupJavaPlayerProfileByName(
+      profileName,
+      profileFetch({ lookup: zeroProgress.response }),
+    );
+
+    expect(result).toMatchObject({
+      status: "invalid-response",
+      code: "response-chunk-limit-exceeded",
+    });
+    expect(reads).toBe(4_097);
+    expect(zeroProgress.readerCancel).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the oversize outcome when stream cancellation throws", async () => {
@@ -402,6 +484,79 @@ describe("Java player profile fixed-endpoint network boundary", () => {
     });
     await vi.advanceTimersByTimeAsync(5_000);
     await result;
+  });
+
+  it("cancels a stalled response reader when the fixed timeout expires", async () => {
+    vi.useFakeTimers();
+    let finishRead: ((result: ControlledReadResult) => void) | undefined;
+    let markReadStarted: (() => void) | undefined;
+    const readStarted = new Promise<void>((resolve) => {
+      markReadStarted = resolve;
+    });
+    const stalled = controlledResponse({
+      read: () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+          markReadStarted?.();
+        }),
+      cancelReader: async () => {
+        finishRead?.({ done: true, value: undefined });
+      },
+    });
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    const lookup = lookupJavaPlayerProfileByName(
+      profileName,
+      profileFetch({ lookup: stalled.response, requests }),
+    );
+    const result = expect(lookup).resolves.toEqual({
+      status: "upstream-error",
+      endpoint: "name-lookup",
+      code: "timeout",
+    });
+
+    await readStarted;
+    await vi.advanceTimersByTimeAsync(5_000);
+    await result;
+    expect(stalled.readerCancel).toHaveBeenCalledTimes(1);
+    expect(stalled.bodyCancel).not.toHaveBeenCalled();
+    expect(requests[0]?.init?.signal?.aborted).toBe(true);
+  });
+
+  it("cancels a response that arrives after the caller has observed the timeout", async () => {
+    vi.useFakeTimers();
+    let releaseResponse: ((response: Response) => void) | undefined;
+    let markFetchStarted: (() => void) | undefined;
+    let markBodyCancelled: (() => void) | undefined;
+    const fetchStarted = new Promise<void>((resolve) => {
+      markFetchStarted = resolve;
+    });
+    const bodyCancelled = new Promise<void>((resolve) => {
+      markBodyCancelled = resolve;
+    });
+    const late = controlledResponse({
+      cancelBody: async () => {
+        markBodyCancelled?.();
+      },
+    });
+    const fetchImpl: JavaPlayerProfileFetch = async () =>
+      new Promise((resolve) => {
+        releaseResponse = resolve;
+        markFetchStarted?.();
+      });
+
+    const lookup = lookupJavaPlayerProfileByName(profileName, fetchImpl);
+    await fetchStarted;
+    await vi.advanceTimersByTimeAsync(5_000);
+    await expect(lookup).resolves.toEqual({
+      status: "upstream-error",
+      endpoint: "name-lookup",
+      code: "timeout",
+    });
+
+    releaseResponse?.(late.response);
+    await bodyCancelled;
+    expect(late.bodyCancel).toHaveBeenCalledTimes(1);
+    expect(late.readerCancel).not.toHaveBeenCalled();
   });
 
   it("never includes thrown transport details, input identity, or a request URL in failures", async () => {
