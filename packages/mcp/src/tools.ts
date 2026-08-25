@@ -103,6 +103,7 @@ import {
   type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
+  mixinConfigValidationLimits,
   modrinthCompatibilityLimits,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
@@ -142,6 +143,7 @@ import {
   type VanillaPathSearchOptions,
   validateDatapackProject,
   validateFabricMod,
+  validateMixinConfig,
   validateModrinthPack,
   validatePackFilesContent,
   validatePaperPluginArchiveMetadata,
@@ -1496,6 +1498,45 @@ export const tools: ToolDefinition[] = [
         limit: { type: "number", default: 50 },
       },
       required: ["domain", "from", "to"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_mixin_config",
+    description:
+      "Validate bounded SpongePowered Mixin config JSON and optional supplied-archive entry paths offline. String input preserves raw duplicate-key evidence; parsed object input cannot prove source-key uniqueness. Missing entries from one supplied archive do not prove absence from dependencies, the runtime classpath, or plugin-generated mixins.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        config: {
+          oneOf: [
+            {
+              type: "string",
+              maxLength: mixinConfigValidationLimits.maxConfigCharacters,
+            },
+            { type: "object" },
+          ],
+          description:
+            "Raw Mixin config JSON text or an already-parsed JSON object. Prefer raw text when duplicate-key source evidence matters.",
+        },
+        archiveEntries: {
+          type: "array",
+          maxItems: mixinConfigValidationLimits.maxArchiveEntries,
+          items: {
+            type: "string",
+            maxLength: mixinConfigValidationLimits.maxEntryPathCharacters,
+          },
+          description:
+            "Logical paths from one supplied archive only; binary archives and local filesystem paths are not accepted.",
+        },
+        archiveEntriesComplete: {
+          type: "boolean",
+          default: false,
+          description:
+            "Caller claim that archiveEntries is complete for the supplied archive, never for the runtime classpath.",
+        },
+      },
+      required: ["config"],
       additionalProperties: false,
     },
   },
@@ -3124,6 +3165,9 @@ function inspectResourcepackPngAlphaBoundsTool(input: unknown): ToolResult {
 }
 
 export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
+  if (name === "validate_mixin_config") {
+    return text(validateMixinConfig(input));
+  }
   if (name === "inspect_resourcepack_png_alpha_bounds") {
     return inspectResourcepackPngAlphaBoundsTool(input);
   }
