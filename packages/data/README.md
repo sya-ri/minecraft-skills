@@ -27,6 +27,9 @@ Redistributable canonical data for Minecraft Skills consumers.
   visual and hit-target semantics, input-unavailable pending hit targets, registered pair
   publication, bounded reconciliation, event deduplication, explicit cleanup, and client-visible
   alignment evidence.
+- Paper high-frequency persistence guidance for measured write-path selection, bounded per-key
+  delta coalescing, exact partial-flush accounting, verified whole-transaction retries, shutdown
+  recovery, and real-adapter contention evidence.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor

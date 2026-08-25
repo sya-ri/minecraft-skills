@@ -3042,6 +3042,156 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "A display-backed control can look correct while its independent Interaction target is offset or stale, execute twice, leak generations, or delete another plugin's entities when geometry and ownership are not one explicit contract."
+    },
+    {
+      "id": "paper-high-frequency-persistence",
+      "domains": ["paper-plugin"],
+      "title": "Bound high-frequency Paper persistence under contention",
+      "when": [
+        "a Paper event, task, command, or callback can produce database mutations repeatedly or in bursts",
+        "multiple plugin instances, workers, or callbacks can contend on the same durable key or transaction",
+        "the implementation considers direct atomic writes, write-behind batching, or per-key delta coalescing",
+        "serialization failures, deadlocks, ambiguous commits, partial flushes, queue growth, shutdown durability, or lost updates are possible",
+        "the request claims database contention safety or retry correctness"
+      ],
+      "steps": [
+        {
+          "id": "model-rate-durability-and-ordering",
+          "action": "Inventory every persistence producer before choosing a write path. Record steady and peak events per second, burst duration, active and maximum key cardinality, approximate bytes per pending entry, acceptable durability-loss window, required visibility latency, and ordering or conflict semantics. Classify each mutation as an atomic state transition, mergeable delta, latest-value replacement, ordered append, set-like merge, or external side effect; state whether it is associative, commutative, idempotent, and safe to replay.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A producer matrix with measured or explicitly bounded steady rate, peak rate, burst duration, key cardinality, and pending bytes",
+            "A durability and visibility budget for each producer, including the maximum acknowledged-but-not-durable window",
+            "An ordering and algebra table showing which values can be combined, reordered, replayed, or deduplicated"
+          ],
+          "stopIfMissing": "Do not select per-event writes, batching, or coalescing from intuition alone when event rate, key growth, durability, or ordering requirements are unknown."
+        },
+        {
+          "id": "choose-direct-or-coalesced-writes",
+          "action": "Use a database-side atomic mutation or compare-and-set style transition when each event must become durable promptly, the operation has strict order or preconditions, or measured contention is acceptable. Use bounded per-key delta coalescing only for deltas whose combination is proven associative and commutative under the domain's overflow and range rules. Define the coalescing key, accumulator type, flush trigger, maximum age, maximum keys, maximum bytes, maximum delta magnitude, and admission result. Keep ordered appends, state-machine transitions, latest-value updates, and non-idempotent effects on paths that preserve their distinct semantics instead of forcing them into a delta accumulator.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A decision for each producer between direct atomic mutation and bounded per-key coalescing, tied to the rate and durability matrix",
+            "Database-adapter evidence that the direct mutation is atomic under the claimed isolation and conflict model",
+            "Property or table-driven tests proving the selected delta merge law, range behavior, and equivalence to the accepted event sequence"
+          ],
+          "stopIfMissing": "Do not coalesce a mutation whose result depends on event order, an intermediate state, a read-time precondition, or a non-idempotent side effect."
+        },
+        {
+          "id": "isolate-io-and-bound-admission",
+          "action": "Capture immutable plugin-owned input in the event context, then perform connection acquisition, statements, commits, rollbacks, retries, and journal I/O off the Paper server or region tick context. Publish any Bukkit-facing result only through the target-version-compatible execution context after revalidating the target. Bound pending keys, estimated bytes, oldest age, in-flight flushes, retry attempts, and total retry time. Define explicit non-blocking admission outcomes such as accepted, coalesced, deferred to a bounded durable journal, rejected, or degraded; never turn a full queue into an unbounded map, a silent durable-data drop, or a database wait on the server thread.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper claim-policy",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "get_claim_policy",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "getClaimPolicy",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "Target-version Paper scheduling documentation for every tick-context capture and Bukkit-facing publication boundary",
+            "Configured and tested limits for pending keys, approximate bytes, oldest age, concurrent flushes, retry attempts, and retry deadline",
+            "A backpressure table stating the caller-visible outcome and durability implication at each limit"
+          ],
+          "stopIfMissing": "Do not execute database work or wait for queue capacity in a Paper event or tick context, and do not describe a queue as bounded without key, memory, age, and in-flight limits."
+        },
+        {
+          "id": "flush-with-exact-accounting",
+          "action": "Flush an immutable snapshot with a stable batch identity while new events accumulate separately. Track the exact accepted amount, the exact durable amount, and the exact uncommitted remainder for every key. After a known rollback or per-key partial result, merge only the uncommitted remainder back into the live accumulator atomically with concurrently accepted deltas. After an unknown commit outcome, reconcile through an idempotency key, durable batch ledger, revision, or adapter-supported outcome check before reapplying; never blindly requeue the whole snapshot. Cap requeue age and attempts, preserve the original durability budget, and surface terminal recovery work instead of losing or double-applying it.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A per-key accounting invariant showing accepted equals durable plus live pending plus explicit terminal or rejected outcomes",
+            "Tests for full success, known rollback, a partial per-key flush, failure while new deltas arrive, duplicate acknowledgement, and unknown commit outcome",
+            "An idempotency, revision, or durable batch-ledger design that prevents ambiguous requeue from applying a snapshot twice"
+          ],
+          "stopIfMissing": "Do not clear live accumulators before snapshot ownership is recorded, requeue already durable entries, or retry an unknown commit outcome without reconciliation or idempotency."
+        },
+        {
+          "id": "retry-only-verified-whole-transactions",
+          "action": "Classify a retryable serialization or deadlock conflict only from the actual database and driver contract, including documented typed exceptions, codes, cause chains, and transaction state. Do not infer retryability from generic transient categories or message text. On a verified retryable conflict, roll back and discard the failed transaction, start a fresh whole transaction, reacquire current state, and rerun every statement in the unit with bounded attempts, jitter, and an overall deadline. Propagate constraint violations, connectivity failures, timeouts, cancellation, unknown commit outcomes, and unclassified failures to their explicit recovery paths unless the selected adapter documents otherwise. Keep messages, commands, HTTP calls, item grants, and other external side effects outside the retryable transaction; publish them after a known commit or through an idempotent outbox-style boundary.",
+          "tools": {
+            "cli": ["plugin paper diagnostic", "plugin paper guardrail"],
+            "mcp": ["get_authoring_diagnostic", "get_authoring_guardrail"],
+            "packageApis": ["getAuthoringDiagnostic", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "Official database and driver documentation plus real-adapter tests for every exception, code, and cause-chain classified as retryable",
+            "A transaction wrapper test proving rollback, fresh transaction state, complete unit replay, attempt and deadline limits, and cancellation propagation",
+            "A side-effect ledger showing that retrying a transaction cannot repeat a player-visible, network, command, or item-delivery effect"
+          ],
+          "stopIfMissing": "Do not retry one failed statement inside a damaged transaction, retry every SQLException, parse localized messages, or run non-idempotent external side effects inside a retryable unit."
+        },
+        {
+          "id": "shut-down-recover-and-observe",
+          "action": "Define a lifecycle state that closes admission before shutdown, stops periodic scheduling, waits behind a bounded in-flight barrier, performs only host-permitted final flush work, and then closes executors, journals, and database resources in dependency order. If the durability budget cannot be met, persist a bounded recovery journal or expose an explicit undurable remainder and restart reconciliation contract. Observe accepted, coalesced, deferred, rejected, and terminal events; pending keys and estimated bytes; oldest age; flush size, latency, and failures; retry classification and attempt; saturation duration; ambiguous commits; recovery lag; and shutdown outcome without logging sensitive payloads or unbounded key labels.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": [
+              "get_paper_api_reference",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A bounded stop sequence with admission closure, scheduler stop, in-flight barrier, final flush or recovery handoff, and dependency-ordered close",
+            "Restart tests for a clean shutdown, deadline expiry, interrupted flush, recovery replay, and an ambiguous prior commit",
+            "Metrics or structured logs for rate, bounds, age, flushes, classified retries, saturation, recovery, and shutdown with controlled cardinality and redaction"
+          ],
+          "stopIfMissing": "Do not start fire-and-forget database work after disable, wait without a deadline, silently discard an undurable remainder, or expose raw keys and values as metric labels."
+        },
+        {
+          "id": "prove-contention-and-route-session-cleanup",
+          "action": "Use controlled clocks, retry-delay sources, executors, barriers, and scripted adapter outcomes to deterministically exercise interleavings without sleeps. Also run contention tests against the real database adapter and driver used by the project so the claimed isolation, atomic mutation, rollback exception classification, ambiguous-commit handling, and retry behavior are observed rather than mocked. Record adapter and isolation configuration, concurrent writer count, repetitions, invariant checks, failures, and limitations. When pending writes, tasks, callbacks, or cleanup are owned by a player connection, route connection generations, stale publication, reconnect, quit, and teardown to the existing paper-player-session-lifecycle recipe instead of duplicating session ownership rules here.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Deterministic tests for writer interleavings, backpressure, flush races, partial results, retry jitter and deadlines, shutdown, and recovery using controlled time, retry delays, and execution",
+            "Real-adapter contention evidence for every atomicity, isolation, conflict-classification, and whole-transaction retry claim",
+            "A scope statement routing player-connection ownership and teardown to paper-player-session-lifecycle"
+          ],
+          "stopIfMissing": "Do not cite a memory fake as proof of database contention behavior, use wall-clock sleeps as ordering evidence, or reimplement player-session cleanup inside this persistence concern."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-high-frequency-persistence-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Unmeasured per-event writes or unbounded coalescing can stall the server thread, exhaust memory, lose or duplicate partial flushes, replay unsafe side effects, amplify contention, and report durability that shutdown and real-adapter tests do not prove."
     }
   ]
 }

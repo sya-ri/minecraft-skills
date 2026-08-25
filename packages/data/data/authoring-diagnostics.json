@@ -1708,6 +1708,74 @@
         "Add loaded-server lifecycle evidence and target-client visual or click evidence before claiming alignment or cleanup."
       ],
       "failureMode": "A misaligned or ambiguously owned display surface can accept clicks in the wrong place, duplicate actions, leak entities, or damage unrelated in-world UI during recovery."
+    },
+    {
+      "id": "paper-high-frequency-persistence-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper high-frequency persistence can block, grow, lose updates, or retry unsafely",
+      "severity": "error",
+      "detectWhen": [
+        "a Paper event, task, command, or callback performs or enqueues repeated database mutations",
+        "a pending map, write-behind queue, batcher, delta accumulator, retry loop, or shutdown flush exists",
+        "multiple callbacks, workers, servers, or plugin instances can update the same durable key",
+        "the code catches transaction exceptions, deadlocks, serialization conflicts, or unknown commit outcomes",
+        "a flush can partially succeed or overlap newly accepted deltas",
+        "the implementation claims loss-free, exactly-once, contention-safe, or durable behavior"
+      ],
+      "requiredChecks": [
+        "inventory steady and peak event rate, burst duration, key cardinality, pending bytes, durability window, visibility latency, ordering, and conflict semantics",
+        "verify each producer deliberately uses a database-side atomic mutation or bounded per-key delta coalescing appropriate to its semantics",
+        "prove every coalesced delta is associative and commutative under range and overflow rules",
+        "verify explicit limits and admission outcomes for keys, bytes, age, delta magnitude, in-flight flushes, retry attempts, and total retry time",
+        "trace all database and journal I/O away from the Paper tick context and verify target-compatible Bukkit-facing publication",
+        "prove immutable snapshot ownership and the accepted equals durable plus live pending plus rejected or terminal invariant for every key",
+        "verify a partial result requeues only the uncommitted remainder and an unknown commit outcome reconciles before reapplication",
+        "verify serialization and deadlock retry classification against the selected database and driver's documented contract",
+        "verify a retry rolls back and reruns the complete transaction from fresh state within attempt, jitter, deadline, and cancellation bounds",
+        "verify external side effects cannot repeat across transaction retries",
+        "verify shutdown closes admission, waits behind a bounded barrier, preserves or exposes the undurable remainder, and supports restart recovery",
+        "verify bounded-cardinality metrics or structured logs expose producer outcomes, memory and age, flushes, retries, saturation, recovery, and shutdown",
+        "run controlled deterministic time, retry-delay, execution, and interleaving tests plus real-adapter contention tests for every claimed database guarantee",
+        "route player-session ownership and teardown to paper-player-session-lifecycle"
+      ],
+      "evidence": [
+        "A measured or explicitly bounded producer and durability matrix",
+        "A direct-versus-coalesced decision table with delta-law tests and configured bounds",
+        "Paper scheduling evidence plus queue, partial-flush, ambiguous-commit, retry, shutdown, and recovery tests",
+        "Official database and driver retry documentation and real-adapter contention results",
+        "An external side-effect safety design and bounded-cardinality observability output"
+      ],
+      "tools": {
+        "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper api"],
+        "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_paper_api_reference"],
+        "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getPaperApiReference"]
+      },
+      "failIf": [
+        "the write strategy has no event-rate, key-cardinality, memory, durability, visibility, or ordering model",
+        "an order-dependent transition or non-idempotent effect is folded into a per-key delta accumulator",
+        "pending keys, approximate bytes, oldest age, concurrent flushes, attempts, or retry time can grow without a configured bound",
+        "a Paper server or region tick context waits for database work or queue capacity",
+        "a flush clears mutable live state without first establishing immutable snapshot ownership",
+        "a partial flush requeues already durable entries or loses the uncommitted remainder arriving alongside new deltas",
+        "an unknown commit outcome is blindly retried without idempotency, revision, a durable batch ledger, or adapter-supported reconciliation",
+        "generic transient exceptions, all SQL failures, or message text are treated as retryable serialization or deadlock conflicts",
+        "a retry continues the failed transaction or reruns only one statement instead of the complete unit from fresh state",
+        "a retry loop has no attempt limit, overall deadline, jitter policy, or cancellation path",
+        "a player-visible, network, command, item-delivery, or other non-idempotent side effect can repeat with a transaction",
+        "plugin shutdown accepts new writes, starts unowned persistence, waits without a deadline, or drops an undurable remainder silently",
+        "observability omits queue memory and age, retry classification, saturation, ambiguous commits, recovery, or shutdown outcome",
+        "contention safety is claimed from a memory fake without the real database adapter and driver",
+        "player reconnect, quit, stale publication, or teardown rules are duplicated instead of routed to paper-player-session-lifecycle"
+      ],
+      "safeResponse": [
+        "Measure and classify each producer, then choose direct atomic writes or bounded per-key delta coalescing explicitly.",
+        "Move database work off the tick context and define queue, age, memory, admission, flush, and retry bounds.",
+        "Track immutable snapshots and exact uncommitted remainders; reconcile unknown commits before reapplying them.",
+        "Retry only documented serialization or deadlock conflicts by rerunning the complete transaction without external side effects.",
+        "Add bounded shutdown and restart recovery, controlled race tests, real-adapter contention evidence, and actionable observability.",
+        "Use paper-player-session-lifecycle for connection-scoped ownership and teardown."
+      ],
+      "failureMode": "A hot database path can block server ticks, consume unbounded memory, lose or double-apply accepted changes, repeat external effects, or fail indefinitely under contention and shutdown."
     }
   ]
 }

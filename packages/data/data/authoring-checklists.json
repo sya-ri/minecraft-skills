@@ -510,6 +510,38 @@
             "Recipe-list resend and recipe-book discovery policies are separately verified when recipes change with players online."
           ],
           "failureMode": "Do not clear shared recipes, ignore partial registration, weaken metadata identity, let declaration order hide equal-input collisions, or assume server registration proves client visibility."
+        },
+        {
+          "id": "bound-high-frequency-persistence",
+          "reason": "Frequent or contended database writes need an explicit rate, durability, ordering, queue, retry, and recovery contract so they cannot block ticks, grow without bound, or lose and duplicate accepted changes.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper search-scenarios",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "search_authoring_scenarios",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "searchAuthoringScenarios",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "Every high-frequency producer has a rate, key-cardinality, pending-memory, durability, visibility, and ordering row.",
+            "Direct atomic mutation or bounded per-key delta coalescing is selected deliberately, with exact queue, age, memory, admission, partial-flush, idempotency, and recovery rules.",
+            "Only database-and-driver-verified serialization or deadlock conflicts retry as fresh whole transactions without repeated external side effects.",
+            "Controlled deterministic interleavings and real-adapter contention tests support the claimed atomicity, isolation, flush, retry, and shutdown behavior.",
+            "Connection-owned cleanup is routed to paper-player-session-lifecycle."
+          ],
+          "failureMode": "Do not approve a frequent or contended persistence path without bounded resource use, exact accepted-to-durable accounting, verified retry classification, safe shutdown, and real-adapter evidence."
         }
       ]
     }

@@ -71,6 +71,7 @@ minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
+minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack

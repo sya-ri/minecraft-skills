@@ -126,6 +126,10 @@ All notable changes to this project are documented here.
   pair generations, input-unavailable pending hit targets, serialized registered publication,
   bounded reconciliation, explicit cleanup, event and hand deduplication, and target-client
   alignment evidence without duplicating generic lifecycle rules.
+- Paper high-frequency persistence and transaction-contention guidance across data, Catalog, CLI,
+  and MCP, covering measured rate/durability/ordering decisions, direct atomic writes versus
+  bounded per-key delta coalescing, exact partial-flush accounting, verified fresh whole-transaction
+  retries, side-effect safety, shutdown recovery, observability, and real-adapter evidence.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.

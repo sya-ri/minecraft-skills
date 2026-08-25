@@ -713,6 +713,44 @@ describe("MCP resources", () => {
     expect(diagnostic.contents[0]?.text).toContain("foreign Display or Interaction entities");
   });
 
+  it("reads Paper high-frequency persistence contention resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-high-frequency-persistence.json",
+        "minecraft-skills://data/authoring-scenarios/paper-high-frequency-persistence-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-high-frequency-persistence-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-high-frequency-persistence-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-high-frequency-persistence.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("retry-only-verified-whole-transactions");
+    expect(recipe.contents[0]?.text).toContain("paper-player-session-lifecycle");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-high-frequency-persistence-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-high-frequency-persistence-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-high-frequency-persistence-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("real-adapter contention tests");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-high-frequency-persistence-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("unknown commit outcome");
+
+    const checklist = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-checklists/paper-plugin.json",
+    );
+    expect(checklist.contents[0]?.text).toContain("bound-high-frequency-persistence");
+  });
+
   it("reads Paper plugin testing evidence resources", () => {
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",
