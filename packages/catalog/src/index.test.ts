@@ -1847,6 +1847,72 @@ describe("catalog", () => {
     }
   });
 
+  it("routes Paper custom recipe ownership and reload guidance", () => {
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("own-custom-recipe-keys-and-matching");
+
+    const recipe = getAuthoringRecipe("paper-custom-recipe-registration");
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "resolve-recipe-api-and-runtime-contract",
+      "define-owned-keys-and-ingredient-identity",
+      "validate-patterns-counts-and-match-collisions",
+      "reconcile-only-plugin-owned-recipes",
+      "define-client-visibility-and-lifecycle-tests",
+    ]);
+    expect(recipe.finalChecks).toContain("paper-custom-recipe-ownership");
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "RecipeChoice.ExactChoice",
+    );
+    expect(recipe.steps.map((step) => step.stopIfMissing).join("\n")).toContain("clearRecipes");
+
+    const guardrail = getAuthoringGuardrail("paper-custom-recipe-ownership");
+    expect(guardrail.rules.join("\n")).toContain("stable NamespacedKey");
+    expect(guardrail.rules.join("\n")).toContain("last-known-good");
+    expect(guardrail.rules.join("\n")).toContain("recipe-book discovery");
+    expect(guardrail.rules.join("\n")).toContain("counted ingredient-identity multisets");
+
+    const diagnostic = getAuthoringDiagnostic("paper-custom-recipe-registration-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("partial replacement");
+    expect(diagnostic.failIf.join("\n")).toContain("server-only tests");
+    expect(diagnostic.failIf.join("\n")).toContain("colliding recipe outputs");
+
+    const scenario = getAuthoringScenario("paper-custom-recipe-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-custom-recipe-registration"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-custom-recipe-registration-unsafe",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("resetRecipes");
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "Paper custom recipe NamespacedKey ExactChoice partial reload recipe book",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-custom-recipe-review");
+
+    const catalogSearch = searchCatalog({
+      query: "custom recipe ExactChoice owned key client resend",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        kind: "authoring-recipe",
+        id: "paper-custom-recipe-registration",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-custom-recipe-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-custom-recipe-registration"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-custom-recipe-registration-unsafe",
+    );
+    expect(plan.preflight?.resolvedVersion).toBe("1.21.11");
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

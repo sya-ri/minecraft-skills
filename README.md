@@ -69,6 +69,7 @@ minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
+minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
@@ -218,6 +219,12 @@ key/type/bounds registry, holder-lifetime and publication plan, cross-holder cop
 failure-safe schema migrations. It distinguishes key existence from primitive type matching and
 complex payload validity, preserves foreign and unsupported-future data, and requires loaded
 target-version evidence for claimed snapshot, update, unload, reload, or restart behavior.
+
+`paper-custom-recipe-review` keeps recipe lifecycle mutation within stable plugin-owned
+`NamespacedKey`s. It validates the desired set before reconciling only owned keys, records every
+add/remove result with an explicit partial-recovery outcome, chooses material matching or
+`RecipeChoice.ExactChoice` by intent, detects equal-input shaped or shapeless recipe collisions,
+and treats online-client recipe-list resend separately from recipe-book discovery.
 
 `minecraft analyze-log` structures Minecraft Java logs, Java stack traces, and crash reports before
 diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,

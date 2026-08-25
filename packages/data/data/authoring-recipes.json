@@ -2743,6 +2743,120 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "A cross-chunk operation can block the owning tick, pin unbounded chunks, cross scheduler ownership, reuse unloaded targets, repeat partial side effects, or leak resources unless target discovery, acquisition, batches, outcomes, reconciliation, and cleanup share one bounded lifecycle."
+    },
+    {
+      "id": "paper-custom-recipe-registration",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review lifecycle-safe Paper custom recipes",
+      "when": [
+        "the request adds shaped or shapeless recipes from code or configuration",
+        "recipe definitions can change while the plugin or server remains running",
+        "custom ItemStack metadata determines which ingredients are valid",
+        "online players must receive or discover recipes registered after enable",
+        "the request diagnoses duplicate keys, stale recipes, false registration results, or recipe-book visibility"
+      ],
+      "steps": [
+        {
+          "id": "resolve-recipe-api-and-runtime-contract",
+          "action": "Resolve the target Paper version and verify every referenced recipe, key, ingredient-choice, registration, removal, and player-discovery type or member against target-version Paper Javadocs. Read the official recipe behavior documentation before deciding when registration and client resends occur.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version matches for NamespacedKey, recipe types, RecipeChoice variants, addRecipe, removeRecipe, and any discovery methods used",
+            "Official Paper recipe documentation for registration timing and client resends",
+            "An explicit runtime context for every global recipe-registry mutation"
+          ],
+          "stopIfMissing": "Do not invent recipe overloads, ingredient semantics, discovery behavior, or a safe mutation context from type names alone."
+        },
+        {
+          "id": "define-owned-keys-and-ingredient-identity",
+          "action": "Give every recipe a stable plugin-owned NamespacedKey and declare whether each ingredient uses material identity, exact stack identity, or a separately verified custom matching flow. RecipeChoice.ExactChoice matches the complete stack aside from amount; use it only when that is the intended contract, and do not weaken an unrepresentable custom identity to material-only matching.",
+          "tools": {
+            "cli": ["plugin paper types", "plugin paper members", "plugin paper guardrail"],
+            "mcp": ["search_paper_types", "search_paper_members", "get_authoring_guardrail"],
+            "packageApis": ["searchPaperTypes", "searchPaperMembers", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A stable key and owning plugin for every desired recipe",
+            "An ingredient-identity matrix naming material, exact-stack, or custom-flow semantics per slot",
+            "Positive and negative matching examples including amount and metadata differences"
+          ],
+          "stopIfMissing": "Do not register a recipe until key ownership and ingredient identity are unambiguous."
+        },
+        {
+          "id": "validate-patterns-counts-and-match-collisions",
+          "action": "Validate keys, results, shaped patterns, ingredient symbols, and shapeless counts against target-version recipe contracts before mutation. Build canonical match signatures for the desired plugin-owned set: shaped signatures preserve normalized occupied bounds, slot positions, and ingredient identity while including only target-verified symmetry behavior; shapeless signatures use a counted multiset of ingredient identities. Reject duplicate keys and report distinct recipes whose signatures can match the same crafting input, even when their outputs differ.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "A fully validated desired definition set with no duplicate NamespacedKeys",
+            "Canonical shaped and shapeless match signatures derived from the declared ingredient-identity contract",
+            "A collision report covering equal inputs with equal or different outputs",
+            "Target-version evidence for any assumed mirroring, symmetry, tag, or choice behavior"
+          ],
+          "stopIfMissing": "Do not choose a winner by declaration order or assume rotations, mirroring, tags, or custom-choice behavior that target-version evidence does not establish."
+        },
+        {
+          "id": "reconcile-only-plugin-owned-recipes",
+          "action": "Parse and validate all desired definitions before mutation, diff them against the last applied plugin-owned key set, and reconcile unchanged, added, changed, and removed recipes without clearing or resetting the global recipe registry. Observe every addRecipe and removeRecipe result, record partial progress, and recover toward the last-known-good owned definitions when replacement fails.",
+          "tools": {
+            "cli": ["plugin paper members", "plugin paper diagnostic", "plugin paper guardrail"],
+            "mcp": ["search_paper_members", "get_authoring_diagnostic", "get_authoring_guardrail"],
+            "packageApis": ["searchPaperMembers", "getAuthoringDiagnostic", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A staged desired definition set and an owned-key diff",
+            "Typed outcomes for added, unchanged, replaced, removed, rejected, restored, and partially reconciled recipes",
+            "Per-key add and remove results plus recovery and observability for partial failure"
+          ],
+          "stopIfMissing": "Do not report reload success after an ignored false result, partial mutation, global clearRecipes, or resetRecipes."
+        },
+        {
+          "id": "define-client-visibility-and-lifecycle-tests",
+          "action": "Define recipe-list resend and recipe-book discovery as separate policies. Use target-version resend controls when online clients must observe late additions or removals, and use discover or undiscover operations only when the product requires recipe-book state. Test enable, unchanged reload, add, change, remove, duplicate or conflicting key, equal-input collision, partial failure, disable, re-enable, online-player visibility, discovery retention, ingredient mismatches, consumption, and output on a loaded target-version server and client where visibility is claimed.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper members", "plugin paper recipe"],
+            "mcp": ["get_paper_api_reference", "search_paper_members", "get_authoring_recipe"],
+            "packageApis": ["getPaperApiReference", "searchPaperMembers", "getAuthoringRecipe"]
+          },
+          "evidence": [
+            "A separate resend policy and recipe-book discovery policy",
+            "Loaded-server results for registry reconciliation, matching, consumption, output, reload, disable, and re-enable",
+            "Client evidence for late recipe-list visibility and recipe-book behavior when those outcomes are claimed"
+          ],
+          "stopIfMissing": "Do not treat successful server registration as proof that an online client received or discovered the recipe."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-custom-recipe-ownership",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Custom recipes can overwrite unrelated registry entries, disappear or duplicate across reload, match the wrong items, leave clients stale, or report success after a partial global mutation."
     }
   ]
 }

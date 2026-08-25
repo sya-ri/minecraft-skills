@@ -1545,6 +1545,91 @@
         "Track ticket claims and partial side effects in one lifecycle owner, reconcile idempotently, and release each owned resource exactly once."
       ],
       "failureMode": "An unbounded or ownerless world operation can block ticks, leak chunk residency, race unloaded state, mutate from the wrong region, and repeat non-idempotent side effects after partial completion."
+    },
+    {
+      "id": "paper-custom-recipe-registration-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper custom recipe registration can mutate unowned state or apply only part of a reload",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code registers, replaces, removes, reloads, or disables custom recipes",
+        "recipe definitions are loaded from configuration or another fallible source",
+        "clearRecipes or resetRecipes appears in plugin lifecycle code",
+        "addRecipe or removeRecipe results are ignored",
+        "custom item metadata affects ingredient validity",
+        "recipes change while players are online"
+      ],
+      "requiredChecks": [
+        "enumerate stable plugin-owned NamespacedKeys and reject duplicate desired keys before mutation",
+        "parse and validate every desired definition before changing the global registry",
+        "diff unchanged, added, changed, and removed owned keys without touching unrelated namespaces",
+        "capture every addRecipe and removeRecipe boolean result and model partial progress",
+        "define recovery toward last-known-good owned definitions after failed replacement",
+        "classify every ingredient as material-only, exact-stack aside from amount, or separately verified custom matching",
+        "verify RecipeChoice.ExactChoice is not being used for subset or amount-sensitive matching",
+        "validate recipe keys, results, shaped patterns, ingredient symbols, and shapeless counts before mutation",
+        "derive shaped positional or shapeless counted-multiset match signatures from declared ingredient identity",
+        "detect distinct definitions that can match the same crafting input and verify any assumed symmetry behavior for the target version",
+        "separate online recipe-list resends from recipe-book discover and undiscover behavior",
+        "verify target-version server mutation context and API overloads",
+        "exercise duplicate or conflicting keys, equal-input collisions with different outputs, false results, partial failure, reload diffs, matching negatives, online visibility, disable, and re-enable"
+      ],
+      "evidence": [
+        "A desired and applied owned-key snapshot",
+        "Target-version Paper recipe documentation and Javadocs matches",
+        "Per-key reconciliation and recovery outcomes",
+        "Ingredient identity tests covering amount and metadata differences",
+        "Canonical match signatures and collision tests for shaped and shapeless recipes",
+        "Loaded-server and client results for the lifecycle and visibility claims in scope"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "recipe reload or disable clears or resets the global recipe registry",
+        "a removed key is not proven to belong to the plugin",
+        "registry mutation starts before the desired set fully validates",
+        "a false addRecipe or removeRecipe result is ignored or reported as success",
+        "partial replacement has no explicit outcome, recovery, or observability",
+        "material-only matching accepts items whose metadata should be part of identity",
+        "RecipeChoice.ExactChoice is expected to match a metadata subset or enforce stack amount",
+        "collision detection checks only NamespacedKeys while distinct recipes accept the same input",
+        "declaration or iteration order silently chooses between colliding recipe outputs",
+        "shaped rotation, mirroring, tag, or custom-choice behavior is assumed without target-version evidence",
+        "late registration or removal assumes online clients update without a verified resend policy",
+        "registration is treated as recipe-book discovery",
+        "server-only tests are used to claim client recipe-list or recipe-book behavior",
+        "tests omit reload diffs, duplicate keys, false results, partial failure, ingredient negatives, disable, or re-enable"
+      ],
+      "safeResponse": [
+        "Stage the complete desired set and reconcile only stable plugin-owned keys.",
+        "Record boolean mutation results and surface a partial outcome with recovery toward last-known-good definitions.",
+        "Choose material or exact-stack matching deliberately and route unsupported identity to a separately verified flow.",
+        "Canonicalize desired match signatures and reject or explicitly resolve equal-input collisions before mutation.",
+        "Define client resend and recipe-book discovery independently, then verify both on the target version.",
+        "Run loaded-server lifecycle and crafting tests before claiming the recipe change works."
+      ],
+      "failureMode": "Recipe mutation can corrupt shared registry state, silently leave a mixed configuration, craft from unintended ingredients, or diverge between server and online clients."
     }
   ]
 }

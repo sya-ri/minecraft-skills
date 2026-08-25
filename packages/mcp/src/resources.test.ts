@@ -162,6 +162,33 @@ describe("MCP resources", () => {
     );
   });
 
+  it("exposes and reads Paper custom recipe guidance resources", () => {
+    const resources = new Set(listMinecraftSkillsResources().map((resource) => resource.uri));
+    const expected = [
+      "minecraft-skills://data/authoring-recipes/paper-custom-recipe-registration.json",
+      "minecraft-skills://data/authoring-scenarios/paper-custom-recipe-review.json",
+      "minecraft-skills://data/authoring-guardrails/paper-custom-recipe-ownership.json",
+      "minecraft-skills://data/authoring-diagnostics/paper-custom-recipe-registration-unsafe.json",
+    ];
+    for (const uri of expected) {
+      expect(resources).toContain(uri);
+    }
+
+    const recipe = readMinecraftSkillsResource(expected[0] ?? "");
+    expect(recipe.contents[0]?.text).toContain("reconcile-only-plugin-owned-recipes");
+    expect(recipe.contents[0]?.text).toContain("RecipeChoice.ExactChoice");
+    expect(recipe.contents[0]?.text).toContain("validate-patterns-counts-and-match-collisions");
+
+    const scenario = readMinecraftSkillsResource(expected[1] ?? "");
+    expect(scenario.contents[0]?.text).toContain("paper-custom-recipe-registration-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(expected[2] ?? "");
+    expect(guardrail.contents[0]?.text).toContain("last-known-good");
+
+    const diagnostic = readMinecraftSkillsResource(expected[3] ?? "");
+    expect(diagnostic.contents[0]?.text).toContain("partial replacement");
+  });
+
   it("exposes every catalog skill payload as resources", () => {
     const resources = listMinecraftSkillsResources();
     const uris = new Set(resources.map((resource) => resource.uri));

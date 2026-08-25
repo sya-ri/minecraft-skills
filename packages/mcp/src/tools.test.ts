@@ -1505,6 +1505,55 @@ describe("MCP tools", () => {
     expect(diagnostic.content[0]?.text).toContain("loaded-plugin evidence");
   });
 
+  it("calls Paper custom recipe ownership guidance tools", async () => {
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("own-custom-recipe-keys-and-matching");
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-custom-recipe-registration",
+    });
+    expect(recipe.content[0]?.text).toContain("reconcile-only-plugin-owned-recipes");
+    expect(recipe.content[0]?.text).toContain("RecipeChoice.ExactChoice");
+    expect(recipe.content[0]?.text).toContain("validate-patterns-counts-and-match-collisions");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-custom-recipe-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-custom-recipe-registration-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "custom recipe NamespacedKey ExactChoice reload recipe book",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-custom-recipe-review"');
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "custom recipe ExactChoice owned key client resend",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-custom-recipe-registration"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-custom-recipe-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-custom-recipe-registration"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-custom-recipe-registration-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-custom-recipe-ownership",
+    });
+    expect(guardrail.content[0]?.text).toContain("last-known-good");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-custom-recipe-registration-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("partial replacement");
+  });
+
   it("calls claim policy tools", async () => {
     const list = await callMinecraftSkillsTool("list_claim_policies", {
       domain: "paper-plugin",

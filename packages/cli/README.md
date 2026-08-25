@@ -44,6 +44,8 @@ minecraft-skills plugin paper search-scenarios "transactional config hot reload 
 minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
 minecraft-skills plugin paper recipe paper-persistent-data-contract
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
+minecraft-skills plugin paper recipe paper-custom-recipe-registration
+minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
@@ -57,6 +59,7 @@ minecraft-skills plugin paper guardrail paper-scheduled-task-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-plugin-configuration-lifecycle-safety
+minecraft-skills plugin paper guardrail paper-custom-recipe-ownership
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -66,6 +69,7 @@ minecraft-skills plugin paper diagnostic paper-scheduled-task-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-plugin-configuration-lifecycle-unsafe
+minecraft-skills plugin paper diagnostic paper-custom-recipe-registration-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements
@@ -499,6 +503,11 @@ exact primitive and complex data types, payload bounds, holder publication and t
 copy/remove behavior, and failure-safe schema migrations. It separates key presence from type and
 payload validity, preserves foreign and unsupported-future data, and requires matching loaded-
 server evidence for claimed snapshot, update, unload, reload, or restart behavior.
+
+`plugin paper plan paper-custom-recipe-review [version]` separates stable owned recipe keys,
+owned-key-only reconciliation, per-key add/remove results and partial recovery, material versus
+`RecipeChoice.ExactChoice` ingredient semantics, shaped/shapeless equal-input collision detection,
+and online-client recipe-list resend versus recipe-book discovery.
 
 ## Performance Time-Series Analysis
 

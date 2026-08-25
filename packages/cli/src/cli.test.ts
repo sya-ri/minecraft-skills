@@ -1620,6 +1620,71 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("loaded-plugin evidence");
   });
 
+  it("prints Paper custom recipe ownership guidance", async () => {
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("own-custom-recipe-keys-and-matching");
+
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-custom-recipe-registration"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("reconcile-only-plugin-owned-recipes");
+    expect(recipe.stdout.join("\n")).toContain("RecipeChoice.ExactChoice");
+    expect(recipe.stdout.join("\n")).toContain("validate-patterns-counts-and-match-collisions");
+
+    const scenario = await capture(["plugin", "paper", "scenario", "paper-custom-recipe-review"]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-custom-recipe-registration-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "custom recipe NamespacedKey ExactChoice reload recipe book",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-custom-recipe-review"');
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "custom recipe ExactChoice owned key client resend",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-custom-recipe-registration"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-custom-recipe-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-custom-recipe-registration"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-custom-recipe-registration-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-custom-recipe-ownership",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("last-known-good");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-custom-recipe-registration-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("partial replacement");
+  });
+
   it("prints claim policies", async () => {
     const list = await capture(["plugin", "paper", "claim-policies"]);
     expect(list.code).toBe(0);

@@ -438,6 +438,41 @@
             "Controlled cancellation and disable tests plus any required loaded-plugin or Folia evidence match the final runtime claim."
           ],
           "failureMode": "Do not approve scheduled work that can duplicate after reload, call APIs from an unsafe thread, leak non-scheduler resources, or publish after its generation closes."
+        },
+        {
+          "id": "own-custom-recipe-keys-and-matching",
+          "reason": "Custom recipes share a global registry, while key ownership, ingredient identity, online-client resends, and recipe-book discovery are separate contracts.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper scenario",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_scenario",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringScenario",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "Every desired recipe has a stable plugin-owned NamespacedKey.",
+            "Reload reconciles only owned keys and observes every add or remove result.",
+            "Material, exact-stack, and custom-flow ingredient identity are explicit.",
+            "Canonical shaped or shapeless match signatures detect equal-input collisions before mutation.",
+            "Recipe-list resend and recipe-book discovery policies are separately verified when recipes change with players online."
+          ],
+          "failureMode": "Do not clear shared recipes, ignore partial registration, weaken metadata identity, let declaration order hide equal-input collisions, or assume server registration proves client visibility."
         }
       ]
     }

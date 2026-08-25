@@ -94,6 +94,10 @@ minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper recipe paper-persistent-data-contract
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
+minecraft-skills plugin paper recipe paper-custom-recipe-registration
+minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
+minecraft-skills plugin paper guardrail paper-custom-recipe-ownership
+minecraft-skills plugin paper diagnostic paper-custom-recipe-registration-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -202,6 +206,13 @@ conflict-safe writes, redacted status, and idempotent disable cleanup. The workf
 plugin-owned configuration reload from deprecated server-wide reload and Paper server-
 configuration reload commands, and requires both deterministic race tests and loaded-server
 lifecycle evidence.
+
+The `paper-custom-recipe-review` scenario requires stable plugin-owned `NamespacedKey`s and a staged
+desired set before reconciling only owned keys. It records each `addRecipe` and `removeRecipe`
+result, surfaces partial recovery toward the last-known-good set, distinguishes material matching
+from `RecipeChoice.ExactChoice` full-stack matching aside from amount, detects equal-input shaped
+or shapeless signatures before mutation, and keeps online-client recipe-list resend separate from
+recipe-book discover/undiscover state.
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
 support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).
