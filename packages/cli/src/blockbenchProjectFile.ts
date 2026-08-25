@@ -1,10 +1,20 @@
-import { type BigIntStats, closeSync, fstatSync, lstatSync, openSync, readSync } from "node:fs";
+import {
+  type BigIntStats,
+  closeSync,
+  constants,
+  fstatSync,
+  lstatSync,
+  openSync,
+  readSync,
+} from "node:fs";
 import { extname } from "node:path";
 import { blockbenchProjectInspectionLimits } from "@minecraft-skills/catalog";
 
 export type BlockbenchProjectFileStats = {
   dev: bigint;
   ino: bigint;
+  mode: bigint;
+  nlink: bigint;
   size: bigint;
   mtimeNs: bigint;
   ctimeNs: bigint;
@@ -14,7 +24,12 @@ export type BlockbenchProjectFileStats = {
 
 export type BlockbenchProjectFileOperations = {
   lstat: (path: string) => BlockbenchProjectFileStats;
-  open: (path: string) => number;
+  open: (path: string, flags: number) => number;
+  openFlags?: {
+    readonly: number;
+    noFollow?: number;
+    nonBlock?: number;
+  };
   fstat: (file: number) => BlockbenchProjectFileStats;
   read: (file: number, buffer: Buffer, offset: number, length: number, position: number) => number;
   close: (file: number) => void;
@@ -26,6 +41,8 @@ function projectFileStats(stats: BigIntStats): BlockbenchProjectFileStats {
   return {
     dev: stats.dev,
     ino: stats.ino,
+    mode: stats.mode,
+    nlink: stats.nlink,
     size: stats.size,
     mtimeNs: stats.mtimeNs,
     ctimeNs: stats.ctimeNs,
@@ -36,7 +53,12 @@ function projectFileStats(stats: BigIntStats): BlockbenchProjectFileStats {
 
 const defaultOperations: BlockbenchProjectFileOperations = {
   lstat: (path) => projectFileStats(lstatSync(path, { bigint: true })),
-  open: (path) => openSync(path, "r"),
+  open: (path, flags) => openSync(path, flags),
+  openFlags: {
+    readonly: constants.O_RDONLY,
+    ...(typeof constants.O_NOFOLLOW === "number" ? { noFollow: constants.O_NOFOLLOW } : {}),
+    ...(typeof constants.O_NONBLOCK === "number" ? { nonBlock: constants.O_NONBLOCK } : {}),
+  },
   fstat: (file) => projectFileStats(fstatSync(file, { bigint: true })),
   read: (file, buffer, offset, length, position) =>
     readSync(file, buffer, offset, length, position),
@@ -56,6 +78,8 @@ function sameSnapshot(
 ): boolean {
   return (
     sameIdentity(left, right) &&
+    left.mode === right.mode &&
+    left.nlink === right.nlink &&
     left.size === right.size &&
     left.mtimeNs === right.mtimeNs &&
     left.ctimeNs === right.ctimeNs
@@ -107,13 +131,29 @@ export function readBlockbenchProjectFile(
       );
     }
 
-    const file = operations.open(filePath);
+    const openFlags = operations.openFlags ?? defaultOperations.openFlags;
+    if (!openFlags) {
+      throw new BlockbenchProjectFileError(
+        "blockbench inspect-project could not construct safe local file open flags",
+      );
+    }
+    const file = operations.open(
+      filePath,
+      openFlags.readonly | (openFlags.noFollow ?? 0) | (openFlags.nonBlock ?? 0),
+    );
     try {
       const fileBefore = operations.fstat(file);
       requireRegularStableIdentity(pathBefore, fileBefore);
       if (fileBefore.size < 0n || maxBytes < fileBefore.size) {
         throw new BlockbenchProjectFileError(
           `blockbench inspect-project refuses project files larger than ${blockbenchProjectInspectionLimits.maxProjectBytes} bytes`,
+        );
+      }
+      const pathOpened = operations.lstat(filePath);
+      requireRegularStableIdentity(pathOpened, fileBefore);
+      if (!sameSnapshot(pathBefore, pathOpened)) {
+        throw new BlockbenchProjectFileError(
+          "blockbench inspect-project project file changed before it could be read",
         );
       }
 

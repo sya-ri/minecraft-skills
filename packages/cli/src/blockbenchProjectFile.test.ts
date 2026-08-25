@@ -22,6 +22,8 @@ function stats(overrides: Partial<BlockbenchProjectFileStats> = {}): BlockbenchP
   return {
     dev: 1n,
     ino: 2n,
+    mode: 0o100644n,
+    nlink: 1n,
     size: 4n,
     mtimeNs: 10n,
     ctimeNs: 11n,
@@ -37,7 +39,7 @@ function operations(options: {
   reads?: number[];
   content?: string;
 }): BlockbenchProjectFileOperations {
-  const pathStats = [...(options.pathStats ?? [stats(), stats()])];
+  const pathStats = [...(options.pathStats ?? [stats(), stats(), stats()])];
   const fileStats = [...(options.fileStats ?? [stats(), stats()])];
   const reads = [...(options.reads ?? [4])];
   const content = Buffer.from(options.content ?? "test");
@@ -107,6 +109,39 @@ describe("Blockbench project file reader", () => {
     ).toThrow("requires a stable regular local .bbmodel file");
   });
 
+  it("opens with no-follow and non-blocking flags before rejecting a raced special file", () => {
+    let observedFlags = 0;
+    const raced = operations({
+      fileStats: [stats({ isFile: false }), stats({ isFile: false })],
+    });
+    raced.openFlags = { readonly: 1, noFollow: 2, nonBlock: 4 };
+    raced.open = (_path, flags) => {
+      observedFlags = flags;
+      return 10;
+    };
+
+    expect(() => readBlockbenchProjectFile("model.bbmodel", raced)).toThrow(
+      "requires a stable regular local .bbmodel file",
+    );
+    expect(observedFlags).toBe(7);
+  });
+
+  it("rejects a path replaced with a link immediately after opening", () => {
+    let readCalled = false;
+    const raced = operations({
+      pathStats: [stats(), stats({ isFile: false, isSymbolicLink: true })],
+    });
+    raced.read = () => {
+      readCalled = true;
+      return 0;
+    };
+
+    expect(() => readBlockbenchProjectFile("model.bbmodel", raced)).toThrow(
+      "requires a stable regular local .bbmodel file",
+    );
+    expect(readCalled).toBe(false);
+  });
+
   it("rejects size and timestamp changes while reading", () => {
     expect(() =>
       readBlockbenchProjectFile(
@@ -117,7 +152,7 @@ describe("Blockbench project file reader", () => {
     expect(() =>
       readBlockbenchProjectFile(
         "model.bbmodel",
-        operations({ pathStats: [stats(), stats({ ctimeNs: 13n })] }),
+        operations({ pathStats: [stats(), stats(), stats({ ctimeNs: 13n })] }),
       ),
     ).toThrow("changed while it was being read");
   });
