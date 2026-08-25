@@ -346,6 +346,8 @@ describe("MCP tools", () => {
     expect(descriptor?.oneOf).toEqual([{ type: "string", maxLength: 262_144 }, { type: "object" }]);
     expect(archiveEntries?.maxItems).toBe(16_384);
     expect(tool?.description).toContain("does not accept binary JARs");
+  });
+
   it("publishes bounded Blockbench project inspection arguments", () => {
     const tool = tools.find((candidate) => candidate.name === "inspect_blockbench_project");
 

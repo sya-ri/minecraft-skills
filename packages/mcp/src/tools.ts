@@ -77,8 +77,8 @@ import {
   getVanillaInventory,
   getVerifiedJavaPlayerTextures,
   getVersionDetail,
-  inspectResourcepackPngAlphaBounds,
   inspectBlockbenchProject,
+  inspectResourcepackPngAlphaBounds,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -1435,6 +1435,10 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["kind", "content"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "inspect_blockbench_project",
     description:
       "Inspect bounded raw JSON text or structured .bbmodel data for metadata and exact case-sensitive animation/group names. This is not a complete Blockbench, animation, rendering, plugin-format, or ModelEngine validator.",
@@ -3004,28 +3008,6 @@ function resourcepackPngAlphaLimitsArg(value: unknown): Partial<ResourcepackPngA
   }
   return limits;
 }
-export async function callMinecraftSkillsTool(name: string, input: unknown): Promise<ToolResult> {
-  if (name === "inspect_blockbench_project") {
-    try {
-      const result = inspectBlockbenchProject(input as BlockbenchProjectInspectionOptions);
-      return {
-        ...text(result),
-        ...(result.outcome === "invalid-input" ? { isError: true } : {}),
-      };
-    } catch {
-      return {
-        content: [
-          {
-            type: "text",
-            text: "inspect_blockbench_project could not safely inspect the supplied data",
-          },
-        ],
-        isError: true,
-      };
-    }
-  }
-  const args = asRecord(input);
-  const edition = typeof args.edition === "string" ? args.edition : "java";
 
 const minecraftLogLimitNames = [
   "maxInputBytes",
@@ -3152,6 +3134,25 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
   if (name === "get_verified_java_player_textures") {
     const parsed = readPlayerProfileToolInput(input, "uuid");
     return text(parsed.ok ? await getVerifiedJavaPlayerTextures(parsed.value) : parsed.outcome);
+  }
+  if (name === "inspect_blockbench_project") {
+    try {
+      const result = inspectBlockbenchProject(input as BlockbenchProjectInspectionOptions);
+      return {
+        ...text(result),
+        ...(result.outcome === "invalid-input" ? { isError: true } : {}),
+      };
+    } catch {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "inspect_blockbench_project could not safely inspect the supplied data",
+          },
+        ],
+        isError: true,
+      };
+    }
   }
   try {
     if (name === "validate_velocity_plugin_jar") {

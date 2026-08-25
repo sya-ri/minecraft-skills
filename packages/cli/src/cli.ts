@@ -81,9 +81,9 @@ import {
   getVerifiedJavaPlayerTextures,
   getVersionDetail,
   inferServerAccessListKind,
+  inspectBlockbenchProject,
   inspectResourcepackPngAlphaBounds,
   type JavaPlayerTextureKind,
-  inspectBlockbenchProject,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -160,6 +160,7 @@ import {
   type RconPermissionPreset,
   runRconCommand,
 } from "@minecraft-skills/rcon";
+import { readBlockbenchProjectFile } from "./blockbenchProjectFile.js";
 import { readBoundedArchiveFile } from "./boundedArchiveFile.js";
 import { readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabricModDirectory.js";
@@ -170,7 +171,6 @@ import {
   validateNewPlayerTexturePngPath,
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
-import { readBlockbenchProjectFile } from "./blockbenchProjectFile.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
@@ -3169,6 +3169,7 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
     if (command === "blockbench-inspect-project") {
       const parsedArgs = parseBlockbenchInspectionArgs(args);
       const result = inspectBlockbenchProject({
