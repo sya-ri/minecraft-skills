@@ -37,8 +37,8 @@ jobs:
       - name: Install dependencies
         run: mise exec -- pnpm install --frozen-lockfile
 
-      - name: Build maintainer tools
-        run: mise exec -- pnpm --filter @minecraft-skills/maintainer build
+      - name: Build workspace packages
+        run: mise exec -- pnpm build
 
       - name: Audit current sources and generated indexes
         id: audit
