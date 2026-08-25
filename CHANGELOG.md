@@ -18,6 +18,9 @@ All notable changes to this project are documented here.
   execution contexts, Folia state ownership, admission-first idempotent teardown, cancellation of
   pending versus already-running work, separately owned executors and child resources, late-
   publication fences, and deterministic plus loaded-plugin runtime evidence.
+- Paper event-listener execution and registration guidance covering priority ordering,
+  `ignoreCancelled`, MONITOR observation, asynchronous dispatch, feature-owned unregistration,
+  in-flight callback fences, and deterministic lifecycle evidence.
 - Bounded static PNG alpha inspection across the Catalog API, CLI, and MCP, including every legal
   color-type/bit-depth combination, filters 0-4, Adam7, PLTE/tRNS semantics, nonzero-alpha counts,
   zero-based half-open content bounds, four-side transparent margins, optional nonempty/minimum-

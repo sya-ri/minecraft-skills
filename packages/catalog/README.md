@@ -202,6 +202,7 @@ const testingEvidenceScenario = getAuthoringScenario(
 );
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
+const eventListenerGuardrail = getAuthoringGuardrail("paper-event-listener-semantics-safety");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
 const itemStackIdentityGuardrail = getAuthoringGuardrail("paper-itemstack-semantic-identity");
 const scheduledTaskGuardrail = getAuthoringGuardrail("paper-scheduled-task-lifecycle-safety");
@@ -214,6 +215,7 @@ const persistentDataGuardrail = getAuthoringGuardrail("paper-persistent-data-con
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
+const eventListenerDiagnostic = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
 const testingEvidenceDiagnostic = getAuthoringDiagnostic("paper-plugin-test-evidence-gap");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
 const itemStackIdentityDiagnostic = getAuthoringDiagnostic(

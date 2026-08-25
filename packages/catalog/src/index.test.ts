@@ -797,6 +797,7 @@ describe("catalog", () => {
 
     const paper = getAuthoringChecklist("paper-plugin");
     expect(paper.steps.map((step) => step.id)).toContain("verify-types-members-and-events");
+    expect(paper.steps.map((step) => step.id)).toContain("design-event-dispatch-and-registration");
     expect(paper.steps.flatMap((step) => step.tools.packageApis)).toContain("searchPaperMembers");
 
     expect(() => getAuthoringChecklist("missing")).toThrow("missing");
@@ -810,7 +811,10 @@ describe("catalog", () => {
     const paper = getAuthoringRecipe("paper-event-listener");
     expect(paper.domains).toEqual(["paper-plugin"]);
     expect(paper.steps.map((step) => step.id)).toContain("discover-event-candidates");
+    expect(paper.steps.map((step) => step.id)).toContain("define-event-dispatch-contract");
+    expect(paper.steps.map((step) => step.id)).toContain("own-listener-registration-lifecycle");
     expect(paper.finalChecks).toContain("paper-event-candidate");
+    expect(paper.finalChecks).toContain("paper-event-listener-semantics-safety");
 
     const itemDelivery = getAuthoringRecipe("paper-safe-item-delivery");
     expect(itemDelivery.steps.map((step) => step.id)).toContain(
@@ -833,6 +837,7 @@ describe("catalog", () => {
     const scenario = getAuthoringScenario("paper-event-listener-review");
     expect(scenario.requiredLookups.recipes).toContain("paper-event-listener");
     expect(scenario.requiredLookups.diagnostics).toContain("paper-event-candidate-unverified");
+    expect(scenario.requiredLookups.diagnostics).toContain("paper-event-listener-semantics-unsafe");
     expect(scenario.mustAvoid).toContain(
       "generating listener code for an event candidate that was not API-verified",
     );
@@ -956,6 +961,9 @@ describe("catalog", () => {
     expect(plan.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
       "paper-event-candidate-unverified",
     );
+    expect(plan.diagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-event-listener-semantics-unsafe",
+    );
     expect(plan.claimPolicies.map((policy) => policy.id)).toContain("paper-event-candidate");
     expect(plan.factSurfaces.map((surface) => surface.id)).toContain("paper-event-search");
     expect(plan.responsePatterns.map((pattern) => pattern.id)).toContain("paper-api-answer");
@@ -984,6 +992,9 @@ describe("catalog", () => {
     expect(guardrails.map((guardrail) => guardrail.id)).toContain(
       "paper-inventory-delivery-outcomes",
     );
+    expect(guardrails.map((guardrail) => guardrail.id)).toContain(
+      "paper-event-listener-semantics-safety",
+    );
 
     const paper = getAuthoringGuardrail("paper-api-surface-limits");
     expect(paper.rules).toContain(
@@ -994,6 +1005,10 @@ describe("catalog", () => {
     const itemDelivery = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
     expect(itemDelivery.rules.join("\n")).toContain("uninserted stacks");
     expect(itemDelivery.rules.join("\n")).toContain("Player.give");
+
+    const eventListener = getAuthoringGuardrail("paper-event-listener-semantics-safety");
+    expect(eventListener.rules.join("\n")).toContain("ignoreCancelled = true");
+    expect(eventListener.rules.join("\n")).toContain("in-flight handler snapshot");
 
     expect(() => getAuthoringGuardrail("missing")).toThrow("Unknown authoring guardrail: missing");
   });
@@ -1009,6 +1024,9 @@ describe("catalog", () => {
     expect(paperDiagnostics.map((diagnostic) => diagnostic.id)).toContain(
       "paper-inventory-leftovers-unhandled",
     );
+    expect(paperDiagnostics.map((diagnostic) => diagnostic.id)).toContain(
+      "paper-event-listener-semantics-unsafe",
+    );
 
     const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
     expect(diagnostic.severity).toBe("error");
@@ -1021,6 +1039,11 @@ describe("catalog", () => {
     expect(itemDelivery.severity).toBe("error");
     expect(itemDelivery.failIf.join("\n")).toContain("original requested stack");
     expect(itemDelivery.tools.packageApis).toContain("getPaperApiReference");
+
+    const eventListener = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
+    expect(eventListener.severity).toBe("error");
+    expect(eventListener.failIf.join("\n")).toContain("global HandlerList.unregisterAll()");
+    expect(eventListener.safeResponse.join("\n")).toContain("MONITOR read-only");
 
     expect(() => getAuthoringDiagnostic("missing")).toThrow(
       "Unknown authoring diagnostic: missing",

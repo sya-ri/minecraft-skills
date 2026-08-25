@@ -347,6 +347,73 @@
       "failureMode": "Generated listener code can target nonexistent event classes or unsupported event behavior."
     },
     {
+      "id": "paper-event-listener-semantics-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper event dispatch or listener ownership is implicit",
+      "severity": "error",
+      "detectWhen": [
+        "listener code uses a non-default EventPriority, ignoreCancelled, MONITOR, Cancellable event, or asynchronous event",
+        "the handler mutates event, Bukkit, Paper, world, entity, player, inventory, or plugin state",
+        "listeners are registered dynamically, conditionally, per feature, per session, during reload, or after partial initialization",
+        "a handler can still be running while its feature or plugin is replaced, reloaded, or disabled"
+      ],
+      "requiredChecks": [
+        "verify official target-version priority, cancellation, asynchronous-dispatch, registration, and unregistration behavior",
+        "record each handler's mutation or observation role, exact priority, prior-cancellation policy, and execution context",
+        "verify MONITOR handlers do not cancel or mutate the event",
+        "verify asynchronous handlers do not infer Bukkit or Paper thread safety from Event.isAsynchronous alone",
+        "trace every registration to a plugin and feature or session owner, including partial-enable rollback and replacement",
+        "verify listener- or plugin-scoped teardown never uses global unregisterAll and does not claim to stop an in-flight callback",
+        "gate in-flight side effects against current owner state and route spawned tasks or session state to their dedicated lifecycle review",
+        "exercise deterministic dispatch and loaded-plugin lifecycle tests proportional to the claim"
+      ],
+      "evidence": [
+        "Official Paper listener documentation plus target-version Javadocs for EventHandler, EventPriority, Event.isAsynchronous, PluginManager.registerEvents, HandlerList, and the selected event",
+        "A handler dispatch matrix and listener ownership ledger",
+        "Priority, cancellation, ignoreCancelled, MONITOR, duplicate registration, teardown, and in-flight callback test results"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper recipe",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_recipe",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringRecipe",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "priority or ignoreCancelled is chosen without an explicit handler role and prior-cancellation decision",
+        "same-priority ordering is assumed without documentation or cancellation is assumed to stop later listeners",
+        "a MONITOR handler cancels or mutates the event",
+        "an asynchronous event handler touches Bukkit or Paper state based only on its async flag or name",
+        "a dynamic listener has no retained instance, owner, idempotent rollback, replacement, reload, or stop path",
+        "feature teardown calls global HandlerList.unregisterAll() or removes another plugin's registrations",
+        "unregistration is treated as proof that an in-flight callback cannot publish side effects",
+        "tests cover only one uncancelled listener invocation with no registration lifecycle"
+      ],
+      "safeResponse": [
+        "State the handler role, exact priority, ignoreCancelled decision, and documented execution context.",
+        "Keep MONITOR read-only and test both prior-cancelled and mutable-event paths.",
+        "Retain and unregister the exact dynamic listener owned by the feature, then gate any in-flight callback against current owner state.",
+        "Review spawned tasks, futures, and player-session state under their dedicated lifecycle guidance."
+      ],
+      "failureMode": "Implicit dispatch and ownership semantics can cause duplicate handlers, missed or forbidden mutations, unsafe async access, and side effects after feature teardown."
+    },
+    {
       "id": "paper-threading-assumption",
       "domains": ["paper-plugin"],
       "title": "Threading, scheduler, or Folia behavior is assumed without documentation evidence",

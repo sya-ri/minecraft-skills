@@ -851,6 +851,7 @@ describe("minecraft-skills CLI", () => {
     expect(list.code).toBe(0);
     expect(list.stdout.join("\n")).toContain('"domain": "paper-plugin"');
     expect(list.stdout.join("\n")).toContain("verify-types-members-and-events");
+    expect(list.stdout.join("\n")).toContain("design-event-dispatch-and-registration");
 
     const single = await capture(["datapack", "checklist"]);
     expect(single.code).toBe(0);
@@ -865,6 +866,12 @@ describe("minecraft-skills CLI", () => {
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-or-scheduler-code"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-safe-item-delivery"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-gui-interactions"');
+
+    const eventListener = await capture(["plugin", "paper", "recipe", "paper-event-listener"]);
+    expect(eventListener.code).toBe(0);
+    expect(eventListener.stdout.join("\n")).toContain("define-event-dispatch-contract");
+    expect(eventListener.stdout.join("\n")).toContain("own-listener-registration-lifecycle");
+    expect(eventListener.stdout.join("\n")).toContain("ignoreCancelled = true");
 
     const single = await capture(["datapack", "recipe", "datapack-function-command"]);
     expect(single.code).toBe(0);
@@ -889,6 +896,7 @@ describe("minecraft-skills CLI", () => {
     expect(single.code).toBe(0);
     expect(single.stdout.join("\n")).toContain('"paper-event-listener"');
     expect(single.stdout.join("\n")).toContain("paper-event-candidate-unverified");
+    expect(single.stdout.join("\n")).toContain("paper-event-listener-semantics-unsafe");
 
     const itemDelivery = await capture([
       "plugin",
@@ -976,6 +984,7 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener"');
     expect(result.stdout.join("\n")).toContain('"diagnostics"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-event-candidate-unverified"');
+    expect(result.stdout.join("\n")).toContain('"id": "paper-event-listener-semantics-unsafe"');
     expect(result.stdout.join("\n")).toContain('"preflight"');
     expect(result.stdout.join("\n")).toContain('"resolvedVersion": "1.21.11"');
     expect(result.stdout.join("\n")).toContain('"id": "paper-javadocs"');
@@ -1047,6 +1056,7 @@ describe("minecraft-skills CLI", () => {
     expect(list.stdout.join("\n")).toContain('"id": "paper-api-surface-limits"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-delivery-outcomes"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-gui-interaction-safety"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener-semantics-safety"');
 
     const single = await capture(["plugin", "paper", "guardrail", "paper-api-surface-limits"]);
     expect(single.code).toBe(0);
@@ -1062,6 +1072,16 @@ describe("minecraft-skills CLI", () => {
     expect(itemDelivery.code).toBe(0);
     expect(itemDelivery.stdout.join("\n")).toContain("uninserted stacks");
     expect(itemDelivery.stdout.join("\n")).toContain("Player.give");
+
+    const eventListener = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-event-listener-semantics-safety",
+    ]);
+    expect(eventListener.code).toBe(0);
+    expect(eventListener.stdout.join("\n")).toContain("MONITOR only to observe");
+    expect(eventListener.stdout.join("\n")).toContain("in-flight handler snapshot");
   });
 
   it("prints authoring diagnostics", async () => {
@@ -1071,6 +1091,7 @@ describe("minecraft-skills CLI", () => {
     expect(list.stdout.join("\n")).toContain('"id": "paper-threading-assumption"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-leftovers-unhandled"');
     expect(list.stdout.join("\n")).toContain('"id": "paper-inventory-gui-interaction-unbounded"');
+    expect(list.stdout.join("\n")).toContain('"id": "paper-event-listener-semantics-unsafe"');
 
     const single = await capture(["plugin", "paper", "diagnostic", "paper-api-member-unverified"]);
     expect(single.code).toBe(0);
@@ -1086,6 +1107,16 @@ describe("minecraft-skills CLI", () => {
     expect(itemDelivery.code).toBe(0);
     expect(itemDelivery.stdout.join("\n")).toContain('"severity": "error"');
     expect(itemDelivery.stdout.join("\n")).toContain("original requested stack");
+
+    const eventListener = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-event-listener-semantics-unsafe",
+    ]);
+    expect(eventListener.code).toBe(0);
+    expect(eventListener.stdout.join("\n")).toContain("global HandlerList.unregisterAll()");
+    expect(eventListener.stdout.join("\n")).toContain("in-flight callback");
   });
 
   it("prints Paper player identity and display guidance", async () => {

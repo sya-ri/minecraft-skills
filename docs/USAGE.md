@@ -81,6 +81,7 @@ minecraft-skills plugin paper diagnostic paper-scheduled-task-lifecycle-unsafe
 minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
+minecraft-skills plugin paper guardrail paper-event-listener-semantics-safety
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper search-scenarios "transactional config hot reload last known good"
 minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
@@ -92,6 +93,7 @@ minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper recipe paper-persistent-data-contract
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
+minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -141,6 +143,13 @@ minecraft-skills rcon init --config ./.minecraft-skills/rcon.json --preset reado
 minecraft-skills rcon status --config ./.minecraft-skills/rcon.json
 minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
+
+The `paper-event-listener-review` scenario verifies more than event and member names. Its recipe,
+checklist, guardrail, and diagnostic require an explicit handler role, priority,
+`ignoreCancelled` decision, MONITOR read-only behavior, documented synchronous or asynchronous
+execution context, and registration owner. Dynamic listeners must retain their exact instance for
+scoped teardown, while in-flight callbacks still gate side effects because unregistration cannot
+change the handler snapshot of a dispatch that has already started.
 
 `minecraft analyze-log <file>` structures a Minecraft Java log, stack trace, or crash report into
 bounded events, exception chains, explicit Mixin failure facts, explicit class-loading failure

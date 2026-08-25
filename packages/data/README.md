@@ -12,6 +12,9 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Machine-readable authoring diagnostics for pre-finalization pass/fail checks.
 - Paper scheduled-task lifecycle guidance for task ownership, lifecycle generations, execution
   contexts, cancellation fences, plugin teardown, external-resource cleanup, and runtime evidence.
+- Paper event-listener execution guidance for priority ordering, prior cancellation,
+  `ignoreCancelled`, MONITOR observation, asynchronous dispatch, registration ownership, and
+  in-flight teardown behavior.
 - Paper player-session lifecycle guidance for connection generations, idempotent teardown,
   stale-callback fences, bounded durable flushes, reconciliation, and leak observability.
 - Paper BossBar audience-lifecycle guidance for owner generations, explicit viewer gates, stable

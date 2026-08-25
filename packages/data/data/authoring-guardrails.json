@@ -103,6 +103,32 @@
       "failureMode": "Unowned scheduled and background work can duplicate across generations, block or mutate the wrong thread, leak external resources, and publish after cancellation or plugin teardown."
     },
     {
+      "id": "paper-event-listener-semantics-safety",
+      "domains": ["paper-plugin"],
+      "title": "Make Paper event dispatch and listener ownership explicit",
+      "rules": [
+        "Use official target-version event documentation for behavior; API type and member indexes prove names only.",
+        "Give every handler an explicit mutation or observation role, EventPriority, prior-cancellation policy, and execution context.",
+        "Respect the documented priority order LOWEST, LOW, NORMAL, HIGH, HIGHEST, then MONITOR, and do not depend on an undocumented order among handlers at the same priority.",
+        "Cancellation does not stop later listener dispatch. Set ignoreCancelled = true only when an already-cancelled event must skip the handler; otherwise inspect current cancellation and mutable fields before acting.",
+        "Use MONITOR only to observe the final outcome. Do not cancel the event or mutate event state at MONITOR.",
+        "Inspect Event.isAsynchronous and event-specific documentation before Bukkit or Paper access. Asynchronous events may overlap and arrive in any order; asynchronous dispatch is not blanket API thread-safety evidence.",
+        "Bind every registration to a plugin and a narrower feature or session owner when applicable. Retain dynamic listener instances so their owner can unregister them during replacement, rollback, reload, or early stop.",
+        "Use listener-scoped removal for a feature-owned registration and plugin-scoped removal only for that plugin; never use global HandlerList.unregisterAll() from feature teardown.",
+        "Registration changes made after asynchronous dispatch begins do not alter its in-flight handler snapshot. Gate side effects against current owner state and do not treat unregistration as cancellation of an already-running callback.",
+        "Review tasks, futures, and per-player state created by a handler under their dedicated scheduled-work or player-session lifecycle concern instead of extending listener lifetime implicitly.",
+        "Test priority-visible mutation, prior cancellation with both ignoreCancelled decisions, MONITOR observation, duplicate registration, replacement or partial-enable rollback, teardown, and an in-flight asynchronous callback when applicable."
+      ],
+      "requiredEvidence": [
+        "Official Paper listener and target-version Javadocs evidence for EventHandler, EventPriority, Event.isAsynchronous, PluginManager.registerEvents, HandlerList removal, and the selected event",
+        "A per-handler dispatch contract and listener ownership table",
+        "Deterministic multi-listener tests for priority, cancellation, ignoreCancelled, and MONITOR behavior",
+        "Loaded-plugin evidence for registration, replacement or rollback, and disable when listener lifecycle changes",
+        "A controlled in-flight callback test when asynchronous dispatch or teardown overlap is possible"
+      ],
+      "failureMode": "A listener can run at the wrong phase, act on cancelled input, mutate at MONITOR, access unsafe state from asynchronous dispatch, execute twice after replacement, or publish after its owner stopped."
+    },
+    {
       "id": "paper-inventory-delivery-outcomes",
       "domains": ["paper-plugin"],
       "title": "Preserve every item across partial inventory delivery",

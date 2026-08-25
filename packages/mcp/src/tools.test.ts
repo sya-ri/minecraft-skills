@@ -860,6 +860,7 @@ describe("MCP tools", () => {
       domain: "paper-plugin",
     });
     expect(single.content[0]?.text).toContain("verify-types-members-and-events");
+    expect(single.content[0]?.text).toContain("design-event-dispatch-and-registration");
     expect(single.content[0]?.text).toContain("Folia");
   });
 
@@ -871,6 +872,12 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain('"id": "paper-api-or-scheduler-code"');
     expect(list.content[0]?.text).toContain('"id": "paper-safe-item-delivery"');
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interactions"');
+
+    const eventListener = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-event-listener",
+    });
+    expect(eventListener.content[0]?.text).toContain("define-event-dispatch-contract");
+    expect(eventListener.content[0]?.text).toContain("own-listener-registration-lifecycle");
 
     const single = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "datapack-function-command",
@@ -905,6 +912,7 @@ describe("MCP tools", () => {
     });
     expect(single.content[0]?.text).toContain('"paper-event-listener"');
     expect(single.content[0]?.text).toContain("paper-event-candidate-unverified");
+    expect(single.content[0]?.text).toContain("paper-event-listener-semantics-unsafe");
 
     const itemDelivery = await callMinecraftSkillsTool("get_authoring_scenario", {
       id: "paper-item-delivery-review",
@@ -1015,6 +1023,7 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"id": "paper-event-listener"');
     expect(result.content[0]?.text).toContain('"diagnostics"');
     expect(result.content[0]?.text).toContain('"id": "paper-event-candidate-unverified"');
+    expect(result.content[0]?.text).toContain('"id": "paper-event-listener-semantics-unsafe"');
     expect(result.content[0]?.text).toContain('"preflight"');
     expect(result.content[0]?.text).toContain('"resolvedVersion": "1.21.11"');
 
@@ -1082,6 +1091,7 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain("unsupported Paper versions");
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-delivery-outcomes"');
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-safety"');
+    expect(list.content[0]?.text).toContain('"id": "paper-event-listener-semantics-safety"');
 
     const single = await callMinecraftSkillsTool("get_authoring_guardrail", {
       id: "paper-api-surface-limits",
@@ -1099,6 +1109,12 @@ describe("MCP tools", () => {
     });
     expect(inventory.content[0]?.text).toContain("InventoryCloseEvent handlers");
     expect(inventory.content[0]?.text).toContain("exactly once");
+
+    const eventListener = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-event-listener-semantics-safety",
+    });
+    expect(eventListener.content[0]?.text).toContain("MONITOR only to observe");
+    expect(eventListener.content[0]?.text).toContain("in-flight handler snapshot");
   });
 
   it("calls authoring diagnostic tools", async () => {
@@ -1109,6 +1125,7 @@ describe("MCP tools", () => {
     expect(list.content[0]?.text).toContain('"id": "paper-threading-assumption"');
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-leftovers-unhandled"');
     expect(list.content[0]?.text).toContain('"id": "paper-inventory-gui-interaction-unbounded"');
+    expect(list.content[0]?.text).toContain('"id": "paper-event-listener-semantics-unsafe"');
 
     const single = await callMinecraftSkillsTool("get_authoring_diagnostic", {
       id: "paper-api-member-unverified",
@@ -1128,6 +1145,12 @@ describe("MCP tools", () => {
     expect(inventory.content[0]?.text).toContain('"severity": "error"');
     expect(inventory.content[0]?.text).toContain("deprecated InventoryClickEvent.setCursor");
     expect(inventory.content[0]?.text).toContain("repeated callbacks");
+
+    const eventListener = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-event-listener-semantics-unsafe",
+    });
+    expect(eventListener.content[0]?.text).toContain("global HandlerList.unregisterAll()");
+    expect(eventListener.content[0]?.text).toContain("in-flight callback");
   });
 
   it("calls Paper player identity and display guidance tools", async () => {

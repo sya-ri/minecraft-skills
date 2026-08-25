@@ -128,6 +128,11 @@ IDs, file paths, project titles, and content literals unchanged. Translation bel
 use the English terms only for the lookup and keep the user's requested response language.
 minecraft-skills does not expand language-specific aliases or reject Unicode query values.
 
+The Paper event-listener recipe and review plan require an explicit handler role, priority,
+`ignoreCancelled` decision, MONITOR read-only behavior, documented execution context, and
+plugin/feature registration owner. Dynamic teardown removes only owned listeners and cannot be
+used as proof that an already-running asynchronous callback stopped.
+
 `datapack validate-project` performs a bounded directory scan and checks safe portable paths,
 `pack.mcmeta`, version-correct directories and file contents, command-position function and
 function-tag calls, tag entries, advancement parents, and local tag/advancement cycles. The CLI
