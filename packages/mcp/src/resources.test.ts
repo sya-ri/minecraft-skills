@@ -384,6 +384,41 @@ describe("MCP resources", () => {
     expect(diagnostic.contents[0]?.text).toContain("only persistent player key");
   });
 
+  it("reads Paper ItemStack semantic identity resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-itemstack-semantic-identity.json",
+        "minecraft-skills://data/authoring-scenarios/paper-itemstack-semantic-identity-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-itemstack-semantic-identity.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-itemstack-identity-or-state-loss.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-itemstack-semantic-identity.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("migrate-deterministically-and-idempotently");
+    expect(recipe.contents[0]?.text).toContain("unknown items must be returned untouched");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-itemstack-semantic-identity-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-itemstack-identity-or-state-loss");
+    expect(scenario.contents[0]?.text).toContain("duplicate lore");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-itemstack-semantic-identity.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("all unowned PDC entries");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-itemstack-identity-or-state-loss.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("possibly aliased ItemStack");
+    expect(diagnostic.contents[0]?.text).toContain("unrelated-state preservation");
+  });
+
   it("reads Paper plugin protocol safety resources", () => {
     const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
     expect(uris).toEqual(

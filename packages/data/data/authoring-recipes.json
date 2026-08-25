@@ -1505,6 +1505,137 @@
       "failureMode": "Unowned or independently updated BossBars can oscillate, accumulate viewers, publish stale state into a replacement, and survive reconnect, transfer, owner completion, or plugin shutdown."
     },
     {
+      "id": "paper-itemstack-semantic-identity",
+      "domains": ["paper-plugin"],
+      "title": "Preserve semantic identity and unrelated state when updating Paper ItemStacks",
+      "when": [
+        "the request recognizes, compares, refreshes, or migrates a plugin-defined ItemStack",
+        "custom items currently rely on material, custom name, lore, item model, custom model data, or rendered appearance for identity",
+        "display text or model data must change without erasing enchantments, attributes, damage, persistent data, data components, or another system's state",
+        "an item schema changes and older inventory, container, entity, or persisted stacks must be upgraded safely"
+      ],
+      "steps": [
+        {
+          "id": "define-logical-identity-and-version",
+          "action": "Define one stable plugin-owned namespaced or domain item identifier and a separate explicit schema or migration version. Store them in target-version-supported custom persistent data rather than deriving identity from Material, custom or display name, item name, lore, item model, custom model data, tooltip styling, or client rendering. Material may be an invariant checked after identity is known, but material alone is not a logical custom-item key. Treat a missing, malformed, foreign-namespace, or unknown identifier as an unknown item with an explicit unchanged outcome.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "A stable logical item-ID registry with a plugin-owned namespace and no presentation-derived keys",
+            "A separate current schema version plus typed outcomes for known-current, known-old, unknown, malformed, unsupported-future, and failed migration",
+            "Target-version Paper or Bukkit type/member evidence for ItemStack, ItemMeta, NamespacedKey, PersistentDataHolder or PersistentDataContainer, and the exact accessors used",
+            "Official Paper documentation evidence that persistent custom data is namespaced and that lore or display-name storage is collision-prone"
+          ],
+          "stopIfMissing": "Do not recognize or migrate a custom item until its stable logical ID, version key, unknown-item outcome, and target-version storage APIs are explicit."
+        },
+        {
+          "id": "separate-identity-similarity-and-visual-equality",
+          "action": "Define three independent questions: whether two stacks carry the same logical item ID, whether they are eligible for the application's stack, merge, grouping, or comparison operation, and whether a particular client/resource-pack context renders them alike. Current ItemStack.isSimilar documentation describes equals without amount, so use it only when that complete metadata comparison matches the required decision; never substitute it for logical identity or visual equality. Conversely, matching logical IDs do not prove similar gameplay state or identical presentation.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Separate predicates or typed decisions for logical identity, application stackability or similarity, and visual comparison",
+            "Target-version documentation for ItemStack.equals, ItemStack.isSimilar, amount handling, and every other comparison API used",
+            "Tests where equal logical IDs have different damage or presentation, different logical IDs render alike, and amount-only differences exercise the chosen similarity rule",
+            "A statement that server-side metadata cannot prove client-rendered visual equality"
+          ],
+          "stopIfMissing": "Do not use ItemStack.isSimilar, Material equality, or apparent rendering as a universal custom-item identity predicate."
+        },
+        {
+          "id": "refresh-only-owned-presentation",
+          "action": "Acquire ownership before mutation: clone the ItemStack or otherwise prove the caller owns the instance when another inventory, cache, template, event, or subsystem may share it. Mutate the owned copy in place through target-version-supported meta APIs instead of reconstructing it from Material. Replace only a documented presentation allowlist owned by this feature, such as the chosen custom or item name, lore, item model or custom model data, tooltip style, or render flags. For a list-valued field such as lore, declare whole-field ownership or a persisted structural composition contract that identifies an owned segment without rendered-text matching; if neither exists, leave that field unchanged. Preserve amount, enchantments, attribute modifiers, damage, unbreakable and other gameplay state, every unowned PDC key, identity and version keys, custom or unknown data components, subtype-specific metadata, and all unlisted state unless a named migration explicitly transforms it. When getItemMeta returns a copy, apply it back; when an API returns a component snapshot, set the changed component back; inside editMeta, interact only with the provided meta as its Javadocs require.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "An ownership boundary showing when an ItemStack is cloned and when the updated copy replaces the original reference",
+            "A closed presentation-component allowlist, explicit whole-field or structural ownership for list-valued presentation, and a default-preserve rule for every field outside it",
+            "Target-version Javadocs evidence for ItemStack cloning or copying, getItemMeta or editMeta, setItemMeta, custom or item name, lore, item model or custom model data, and component snapshot behavior actually used",
+            "Before-and-after structural tests proving enchantments, attributes, damage, amount, unowned PDC keys, owned identity, unrelated data components, subtype metadata, and unknown state remain equal"
+          ],
+          "stopIfMissing": "Do not refresh presentation by constructing a new stack or selectively copying remembered fields, mutate a possibly aliased ItemStack in place, or edit lore when line ownership would have to be inferred from rendered text."
+        },
+        {
+          "id": "migrate-deterministically-and-idempotently",
+          "action": "Dispatch migration by the stable logical ID and stored schema version. Run deterministic one-version steps on a private working copy, reject unsupported future or malformed versions, validate the result, and write each new version only after its transformation succeeds. Publish the migrated copy only after the full requested chain succeeds, leaving the original unchanged on failure. A current-version item must be a no-op, repeating migration must produce the same state, unknown items must be returned untouched, and presentation refresh must canonically replace owned lore or other fields instead of appending on every run or deleting lines by duplicate display text.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper diagnostic", "plugin paper members"],
+            "mcp": ["get_authoring_recipe", "get_authoring_diagnostic", "search_paper_members"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringDiagnostic", "searchPaperMembers"]
+          },
+          "evidence": [
+            "An ordered migration registry keyed by logical item ID and exact from-version",
+            "A private-copy commit boundary that leaves the source unchanged after exceptions, rejected validation, unknown ID, malformed version, or unsupported future version",
+            "Tests proving current-version and repeat migration are idempotent, every supported old version reaches the same canonical current state, and version markers never advance after a failed step",
+            "A duplicate-lore test set proving canonical whole-field-owned lore does not accumulate and, when structured sharing is supported, an identical unowned line outside the owned segment survives without text matching"
+          ],
+          "stopIfMissing": "Do not mark an item current before its migration succeeds, mutate unknown items speculatively, or make display-text replacement the migration selector."
+        },
+        {
+          "id": "test-semantic-boundaries-and-state-preservation",
+          "action": "Test the identity and update functions as value transformations with exact structural snapshots. Cover duplicate and visually identical lore, repeated presentation refresh, repeated migration, missing or malformed identity, unknown and unsupported-future items, failed intermediate migration, alias isolation, amount differences, same-ID but nonsimilar stacks, different-ID but visually identical stacks, and preservation of every unrelated state category. Add a target-version loaded-server test when correctness depends on Paper applying ItemMeta, PDC, subtype metadata, or data-component behavior rather than only plugin-owned pure logic.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Pure tests for ID and version dispatch, no-op current state, repeat migration, unknown untouched, failure rollback, duplicate lore, and comparison decisions",
+            "Structural preservation assertions for amount, enchantments, attributes, damage, unbreakable state, unowned PDC, custom data components, subtype metadata, and all out-of-scope state represented by fixtures",
+            "An aliasing test showing updating one clone or owned copy does not mutate a template, cache entry, or separate holder",
+            "Loaded target-version Paper evidence for API semantics not fully observable in pure code, with exact version and limitations"
+          ],
+          "stopIfMissing": "Do not approve the updater from a single freshly-created item whose only metadata is the expected name and lore."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-itemstack-semantic-identity",
+        "paper-plugin-testing-evidence"
+      ],
+      "failureMode": "A presentation refresh or migration can misrecognize an item, erase unrelated gameplay or third-party state, mutate aliased templates, duplicate lore, or advance a schema marker after partial failure when ItemStack identity and ownership are implicit."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",
@@ -1862,6 +1993,173 @@
       ],
       "finalChecks": ["fabric-client-ui-scale-clipping-safety"],
       "failureMode": "Independent scale, render, clip, and input calculations can pass a single screenshot while producing clipped content or misaligned controls in other resolved viewport cases."
+    },
+    {
+      "id": "paper-world-operation-safety",
+      "domains": ["paper-plugin"],
+      "title": "Generate or review bounded Paper world operations across chunk boundaries",
+      "when": [
+        "the request loads, generates, pins, scans, or mutates multiple chunks from a Paper or Bukkit plugin",
+        "block edits, drops, entity movement or removal, or teleportation can cross a chunk, tick, unload, or Folia region boundary",
+        "the implementation uses async chunk loading, plugin chunk tickets, repeated world batches, RegionScheduler, EntityScheduler, or chunk lifecycle events",
+        "the review must prevent tick-thread blocking, stale references, ticket leaks, duplicate partial side effects, or shutdown races"
+      ],
+      "steps": [
+        {
+          "id": "verify-version-and-pre-enumerate-targets",
+          "action": "Resolve the target Paper version and verify the exact World, Chunk, Block, Entity, teleport, RegionScheduler, EntityScheduler, and event APIs from official Paper sources. Convert the complete requested selection into deduplicated world-and-chunk coordinates, define generation allowed or forbidden, and reject unknown, unbounded, or over-limit work before loading or mutation begins.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version Javadocs matches for every overload and callback or completion context used",
+            "A bounded target manifest containing world identities, chunk coordinates, generation policy, maximum chunks, maximum targets, timeout, and rejection rules"
+          ],
+          "stopIfMissing": "Do not begin loading or mutation until the complete chunk set, generation policy, target-version APIs, and hard limits are known."
+        },
+        {
+          "id": "acquire-chunks-without-blocking",
+          "action": "Acquire only the bounded target chunks through target-version-supported asynchronous APIs. Never wait or block via Future.get or Future.join on a server main, tick, or region thread. Treat isChunkLoaded as a snapshot, and if residency is required, let one lifecycle owner track exact plugin-ticket claims, shared references, deadlines, and release responsibility.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Target-version evidence for async chunk acquisition, generation flags, callback or Future completion context, isChunkLoaded, and plugin-ticket add and remove behavior",
+            "A bounded acquisition queue and ticket ledger that distinguishes claims added by this operation from same-plugin shared residency"
+          ],
+          "stopIfMissing": "Do not synchronously wait on chunk acquisition or treat a loaded snapshot as a lease; reject the design until asynchronous continuation and owned residency are explicit."
+        },
+        {
+          "id": "schedule-by-owner-and-re-resolve",
+          "action": "Never dereference a retained world target outside its verified owner or treat it as current after lifecycle changes without owner-local revalidation. Carry immutable world identity plus coordinates for block and location work, then re-resolve and validate them on the owning region. For entity work, use that entity's scheduler as the handoff mechanism and validate the entity's identity, validity, lifecycle state, operation generation, plugin state, and preconditions inside the owned callback instead of requiring a cross-region World.getEntity lookup. Keep EntityScheduler retired callbacks minimal: record or forward terminal intent only, then perform entity, chunk, world, or ticket cleanup in a verified safe context.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policies"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_claim_policies"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listClaimPolicies"
+            ]
+          },
+          "evidence": [
+            "A scheduler-ownership map for Paper and any claimed Folia support",
+            "Tests proving retained Chunk, Block, BlockState, mutable Location, and Entity values are never dereferenced outside their verified owner or treated as current after lifecycle changes without owner-local revalidation",
+            "An entity-scheduler handoff that revalidates the entity inside the owned callback without requiring cross-region World.getEntity lookup, plus a location-region path for block and location mutation",
+            "A retired or scheduling-failure path whose critical retired callback only records or forwards minimal terminal intent and defers entity, chunk, world, and ticket-level cleanup"
+          ],
+          "stopIfMissing": "Async completion is not mutation ownership; do not touch block or location state until it is re-resolved in its owning region, or entity state until the entity-scheduler callback revalidates it."
+        },
+        {
+          "id": "apply-bounded-resumable-batches",
+          "action": "Process a fixed maximum of targets and elapsed work per tick and per region, recording a resumable cursor and bounded diagnostics. Stop when cancelled, timed out, stale, unloaded, or disabled, and emit complete, partial, rejected, timeout, stale, or unloaded with attempted, applied, skipped, failed, and remaining counts.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Explicit item and time budgets for each tick and region plus an upper bound on queued callbacks and diagnostics",
+            "Typed progress and terminal outcomes that do not equate Future or callback completion with full mutation success"
+          ],
+          "stopIfMissing": "Do not run an unbounded chunk, block, drop, or entity loop in one callback or report unconditional success without per-target progress."
+        },
+        {
+          "id": "revalidate-racy-side-effects",
+          "action": "Before every side effect and resumed batch, recheck assumptions affected by neighboring physics, drops, entity movement or removal, teleport completion, chunk unload, cancellation, and plugin disable. Inspect teleport Boolean results, treat entity retirement or unload separately from death or despawn, and never use applyPhysics=false as a general safety or persistence guarantee.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper types", "plugin paper members"],
+            "mcp": ["get_paper_api_reference", "search_paper_types", "search_paper_members"],
+            "packageApis": ["getPaperApiReference", "searchPaperTypes", "searchPaperMembers"]
+          },
+          "evidence": [
+            "Target-version Paper Javadocs for block physics flags, teleport results, entity scheduler retirement, and chunk or entity lifecycle events used",
+            "Race tests in which physics changes neighbors, a dropped or moved entity disappears, teleport returns false, a chunk unloads, or plugin disable begins between acquisition and apply"
+          ],
+          "stopIfMissing": "Do not infer a final world state from scheduling, event delivery, applyPhysics=false, an unloaded entity, or a completed teleport Future; inspect the actual result and current target."
+        },
+        {
+          "id": "reconcile-idempotently",
+          "action": "Give the operation a stable identity and record per-target compare-before-apply progress. On retry or recovery, reconcile observed postconditions and resume only unapplied work so drops, entity removals, teleports, and other non-idempotent effects cannot repeat after partial completion.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A per-target progress model and compare-before-apply rule",
+            "Tests that interrupt after partial mutation and prove retries neither repeat committed side effects nor skip remaining work"
+          ],
+          "stopIfMissing": "Do not retry a partially applied world operation until committed effects can be distinguished from remaining work."
+        },
+        {
+          "id": "terminate-and-release-exactly-once",
+          "action": "Use one lifecycle owner to accept exactly one terminal transition, stop new work, reconcile committed effects, settle the typed outcome, and release every owned ticket or scheduled resource once. Cover complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and plugin disable independently of whether lifecycle events arrive.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A ticket ledger and terminal-state transition that release only owned claims and handle shared same-plugin residency",
+            "Assertions that every terminal and plugin-disable path leaves no operation-owned tickets, batches, or unresolved completion",
+            "Tests proving duplicate events, callbacks, cancellation, and shutdown cleanup are idempotent"
+          ],
+          "stopIfMissing": "Do not rely on automatic ticket release or events alone; the lifecycle owner must independently release every owned claim exactly once."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-world-operation-safety",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A cross-chunk operation can block the owning tick, pin unbounded chunks, cross scheduler ownership, reuse unloaded targets, repeat partial side effects, or leak resources unless target discovery, acquisition, batches, outcomes, reconciliation, and cleanup share one bounded lifecycle."
     }
   ]
 }

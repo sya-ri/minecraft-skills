@@ -260,6 +260,35 @@
       "failureMode": "A BossBar can flicker between candidates, retain ineligible viewers, accept stale updates, survive its owner or owning player session, or leak across reconnect, transfer, replacement, and plugin shutdown."
     },
     {
+      "id": "paper-itemstack-semantic-identity",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper ItemStack identity stable and presentation updates state-preserving",
+      "rules": [
+        "Give every plugin-defined item a stable plugin-owned namespaced or domain logical ID and store an explicit schema or migration version separately.",
+        "Never use Material, custom or display name, item name, lore, item model, custom model data, tooltip styling, render flags, or client appearance as the only logical item identity; lore and names are collision-prone presentation.",
+        "Treat missing, malformed, foreign-namespace, unknown, and unsupported-future IDs or versions as explicit outcomes; leave unknown items byte-for-byte or structurally untouched rather than guessing a repair.",
+        "Keep logical identity, application stackability or similarity, and client-rendered visual equality as different decisions. ItemStack.isSimilar is equals without amount in the checked Javadocs, not a semantic identity or visual-equivalence contract.",
+        "Clone an ItemStack or otherwise prove exclusive ownership before mutation whenever a template, cache, inventory, event, holder, or another subsystem may share the object.",
+        "Refresh presentation on the owned copy by replacing only a closed feature-owned allowlist; preserve amount and every field not explicitly owned or migrated.",
+        "Preserve enchantments, attribute modifiers, damage, unbreakable and other gameplay state, identity and version keys, all unowned PDC entries, custom and unknown data components, subtype-specific metadata, and other out-of-scope state unless a named migration explicitly transforms that exact field.",
+        "Mutate existing metadata rather than reconstructing a stack from Material. Apply copied ItemMeta back to the ItemStack, set changed component snapshots back when required, and obey editMeta's provided-meta-only contract for the verified target version.",
+        "Build owned custom or item name, lore, item model or custom model data, tooltip style, and render flags canonically. Treat lore as whole-field-owned or use a persisted structural composition contract for an owned segment; otherwise leave it unchanged. Never append on each refresh or infer line ownership from duplicate rendered text.",
+        "Dispatch deterministic one-version migration steps by logical ID and exact stored version on a private copy. Reject gaps, malformed versions, and unsupported future versions.",
+        "Write a new version only after its transformation and validation succeed, publish only after the requested chain succeeds, and leave the original unchanged on failure.",
+        "Require current-version refresh and migration to be no-ops when already canonical, and require repeated migration to produce the same structural state.",
+        "Verify every ItemStack, ItemMeta, PersistentDataContainer, comparison, name, lore, model, and data-component API used against the target Paper version; do not generalize current accessors to every supported version.",
+        "Test duplicate lore, repeated refresh, repeated migration, missing and malformed identity, unknown and future items, failed intermediate steps, alias isolation, similarity decisions, visual collisions, and preservation of unrelated state."
+      ],
+      "requiredEvidence": [
+        "a logical item-ID registry and separate schema-version contract",
+        "target-version Paper or Bukkit Javadocs for every referenced ItemStack, ItemMeta, PDC, comparison, presentation, and data-component member",
+        "an ownership and commit boundary plus a closed presentation and migration allowlist, including whole-field or structural ownership for list-valued presentation",
+        "structural before-and-after fixtures covering amount, enchantments, attributes, damage, gameplay state, PDC, data components, subtype metadata, and unknown state",
+        "idempotency, rollback, unknown-item, duplicate-lore, comparison-purpose, aliasing, and loaded-server tests appropriate to the claims"
+      ],
+      "failureMode": "An implicit identity or broad metadata rewrite can corrupt custom items, erase unrelated state, mutate shared templates, merge semantically different stacks, or leave partially migrated items marked current."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",
@@ -338,6 +367,36 @@
         "Current official Fabric custom-screen and GUI-rendering documentation plus target-version mappings for every Minecraft client API named by the implementation"
       ],
       "failureMode": "Applying GUI scale twice or deriving render, clip, and input geometry separately can shrink, offset, clip, or misalign otherwise plausible client UI while screenshot-only checks hide the broken layout contract."
+    },
+    {
+      "id": "paper-world-operation-safety",
+      "domains": ["paper-plugin"],
+      "title": "Bound chunk-spanning world operations and own their lifecycle",
+      "rules": [
+        "Resolve the target Paper version before choosing chunk, scheduler, entity, teleport, block, or event APIs; verify every referenced type, overload, completion context, and lifecycle callback against that version's official Paper Javadocs and documentation.",
+        "Convert the complete block, location, or entity selection into a deduplicated set of world-and-chunk coordinates before loading or mutating anything; reject an unbounded or over-limit request before partial world changes begin.",
+        "Choose generation policy explicitly for every target chunk and distinguish already generated, allowed to generate, rejected because generation is forbidden, load failure, timeout, and plugin shutdown; do not let a convenience overload choose generation implicitly.",
+        "Treat isChunkLoaded as a point-in-time observation, not a lease. If the operation requires a chunk to remain loaded, acquire a plugin-owned chunk ticket through a lifecycle owner that tracks exact coordinates, successful acquisition, sharing or reference counts, and release responsibility.",
+        "Do not assume plugin chunk tickets are low-cost or automatically released. Bound the ticket set and lifetime, release only claims owned by the operation, and release or drain every owned claim on complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and plugin-disable paths.",
+        "Use asynchronous chunk acquisition without waiting or blocking via Future.get or Future.join on a server main, tick, or region thread. API availability and callback or completion context vary by target version, so verify them instead of assuming that an async name implies an arbitrary worker thread.",
+        "Async completion proves only that the load request completed; it does not make arbitrary-thread block or entity mutation safe. Transfer each mutation to the target-compatible owning execution context and revalidate the world, chunk, operation generation, and plugin lifecycle there.",
+        "Never dereference a retained Chunk, Block, BlockState, mutable Location, or Entity outside its verified owning context. After unload, teleport, region-handoff, or another asynchronous lifecycle change, do not treat it as current until it has been revalidated in its owner. Carry immutable world identity plus coordinates for location work, then re-resolve and validate them in the owning region immediately before use.",
+        "On Folia-compatible paths, schedule block and location work on the region that owns that location. Use the entity scheduler as the handoff mechanism for entity work because it follows the entity, then validate the entity's identity, validity, lifecycle state, and operation preconditions inside that owned callback; do not require an unsafe cross-region World.getEntity lookup as the only entity handoff path. A single global main-thread assumption is not a Folia safety model, and separately scheduled regions do not form an atomic multi-region transaction.",
+        "Treat an EntityScheduler retired callback as critical code. It must not remove the entity or other entities, load chunks or worlds, or modify ticket levels; record or forward only minimal terminal intent and perform cleanup later in a verified safe execution context.",
+        "Apply work in bounded per-tick and per-region batches with explicit item and time budgets, a resumable cursor, cancellation checks, and bounded diagnostics; never process an unbounded chunk, block, or entity selection in one callback.",
+        "Represent terminal and resumable results explicitly as complete, partial, rejected, timeout, stale, or unloaded, including attempted, applied, skipped, failed, and remaining counts. A completed Future or callback is not itself proof that every mutation succeeded.",
+        "Before each batch and each side effect, recheck preconditions affected by physics, drops, entity movement or removal, teleport, chunk unload, cancellation, and plugin disable. teleportAsync may complete false, and an entity that is unloaded or retired is not thereby proven dead or naturally despawned.",
+        "Do not claim that applyPhysics=false makes arbitrary block placement safe; Paper Javadocs warn that it is not generally safe. Model neighboring effects and cross-chunk consequences, and reconcile actual postconditions rather than assuming suppressed physics guarantees persistence.",
+        "Make retries and recovery idempotent with operation identity, compare-before-apply checks, per-target progress, and a reconciliation pass that can resume partial work without repeating drops, entity removal, teleports, or other non-idempotent effects.",
+        "Treat chunk, entity, teleport, and plugin lifecycle events as race signals that trigger revalidation, not as a complete cleanup or atomicity mechanism. A lifecycle owner must independently reach one terminal state, stop new batches, reconcile committed effects, and release resources exactly once."
+      ],
+      "requiredEvidence": [
+        "an exact target-version Paper API reference plus official World, Block, Entity, EntityScheduler, RegionScheduler, chunk-event, and Folia documentation for every API and execution-context claim used",
+        "a preflight target manifest with world identities, chunk coordinates, generation policy, maximum chunks, maximum targets, per-tick and per-region batch budgets, timeout, and cancellation policy",
+        "a lifecycle state model covering chunk acquisition, ticket ownership or sharing, scheduling, mutation progress, typed outcomes, reconciliation, and exactly-once release across every terminal path",
+        "tests for loaded and unloaded chunks, generation allowed and denied, chunk boundaries, ticket sharing and release, main-thread wait rejection, stale references, physics and drop side effects, entity movement and removal, teleport false, unload and disable races, partial retry, timeout, Folia ownership boundaries, and idempotent reconciliation"
+      ],
+      "failureMode": "A chunk-spanning operation can stall a tick thread, generate or pin an unbounded area, mutate from the wrong owner, reuse stale block or entity references, leak tickets, or duplicate partial side effects when loading, unloading, teleportation, physics, and plugin shutdown race its batches."
     }
   ]
 }
