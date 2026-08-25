@@ -1408,6 +1408,71 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("older slow reload");
   });
 
+  it("prints and routes Paper scheduled-task lifecycle safety guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-scheduled-task-lifecycle"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("assign-task-ownership-and-generation");
+    expect(recipe.stdout.join("\n")).toContain("cancel-and-fence-teardown");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-scheduled-task-lifecycle-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-scheduled-task-lifecycle-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "repeating scheduler cancellation plugin disable custom executor teardown",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-scheduled-task-lifecycle-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-scheduled-task-lifecycle-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-scheduled-task-lifecycle"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-scheduled-task-lifecycle-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-scheduled-task-lifecycle-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("already-running callback");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-scheduled-task-lifecycle-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("prohibited scheduler Future wait");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "repeating task cancellation generation custom executor teardown",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-scheduled-task-lifecycle"');
+  });
+
   it("prints Paper plugin testing evidence guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
     expect(recipe.code).toBe(0);

@@ -384,6 +384,87 @@
       "failureMode": "Generated plugins can compile but be unsafe for threading, scheduling, or Folia contexts."
     },
     {
+      "id": "paper-scheduled-task-lifecycle-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper scheduled work has no complete owner, teardown, or publication fence",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code creates delayed, repeating, self-cancelling, or plugin-wide scheduled work",
+        "background I/O, computation, futures, callbacks, or executors publish through Bukkit or Paper APIs",
+        "reload, reconfiguration, feature stop, partial startup failure, or plugin disable can invalidate work",
+        "custom executors, timers, subscriptions, child operations, or resources are started alongside scheduler tasks",
+        "cancellation is used while a callback or child operation can already be running",
+        "the implementation claims Folia support or selects a global, location-region, entity, or async scheduler"
+      ],
+      "requiredChecks": [
+        "verify every scheduler, task-handle, cancellation, plugin-state, lifecycle, Future, and Folia member against the target Paper version and official behavior documentation",
+        "map each one-shot, delayed, repeating, and child operation to one plugin owner, one feature owner, and an early-stop or terminal path",
+        "give replaceable work a lifecycle generation and separately own custom executors, futures, timers, subscriptions, child operations, and resources",
+        "classify capture, background work, API publication, and cleanup by execution context",
+        "keep blocking I/O and expensive computation off the standard main thread and Folia tick regions",
+        "treat async Bukkit or Paper access as unsafe unless the target documentation explicitly permits it",
+        "re-enter the correct main, location-region, entity, or global context before publication and then revalidate lifecycle generation, plugin admission, and target validity",
+        "make teardown idempotent and close admission before invalidation, cancellation, separately owned cleanup, and reference clearing",
+        "treat cancellation as an attempt rather than proof that running work stopped, and fence every late side effect",
+        "test cancellation, replacement, repeated teardown, disable, late async completion, and cleanup with controlled ordering plus the runtime evidence required by the claim",
+        "keep per-player connection generations and durable flushes in the dedicated player-session lifecycle guidance"
+      ],
+      "evidence": [
+        "Target-version Paper scheduler and lifecycle documentation plus type/member results",
+        "A task ownership table, lifecycle-generation model, execution-context table, and teardown sequence",
+        "Publication-fence and separately owned resource cleanup tests",
+        "Controlled scheduler tests and the smallest loaded-plugin or Folia evidence needed for runtime claims",
+        "paper-scheduled-task-lifecycle-safety guardrail and folia-or-thread-safety claim policy"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "a delayed or repeating task has no feature owner, retained handle or task-group entry when early stop is required, or terminal path",
+        "reload or reconfiguration starts replacement work without invalidating the prior lifecycle generation",
+        "custom executors, futures, timers, subscriptions, child operations, or resources are assumed to be covered by Paper scheduler task ownership",
+        "blocking I/O, expensive computation, or a prohibited scheduler Future wait runs on the standard main thread or a Folia tick region",
+        "asynchronous work calls an unverified Bukkit or Paper API or publishes without re-entering the required execution context",
+        "publication checks lifecycle state only before background work starts rather than immediately before side effects",
+        "teardown cancels work before closing admission or is unsafe when called more than once",
+        "calling cancel is treated as proof that an already-running callback or child operation has stopped",
+        "a callback finishing after replacement, reload, cancellation, or disable can schedule or perform a Bukkit, Paper, durable, messaging, or state side effect",
+        "task, executor, child-resource, or callback references remain reachable after teardown",
+        "Folia support uses a global scheduler for location- or entity-owned state or omits entity-retirement outcomes",
+        "tests omit cancellation before first execution, repeating self-cancellation, replacement, double teardown, queued work at disable, late async completion, publication rejection, or separately owned cleanup",
+        "compilation, wall-clock sleeps, or a normal repeating-task happy path are reported as runtime lifecycle evidence"
+      ],
+      "safeResponse": [
+        "Give every task one plugin and feature owner, retain stoppable handles, and invalidate replaceable work with a lifecycle generation.",
+        "Split background work from API publication and re-enter the correct execution context before revalidating generation, admission, and target state.",
+        "Close admission before idempotent cancellation and separately shut down executors, child operations, and resources.",
+        "Assume running work may finish after cancellation and make late publication a no-op.",
+        "Verify Folia scheduler ownership and entity retirement only when Folia support is in scope.",
+        "Use controlled ordering tests and narrow runtime claims to the loaded-server evidence actually completed."
+      ],
+      "failureMode": "Scheduled and background work can survive replacement or teardown, mutate Bukkit state from an unsafe context, leak resources, or publish after cancellation when ownership and lifecycle fencing are incomplete."
+    },
+    {
       "id": "paper-inventory-leftovers-unhandled",
       "domains": ["paper-plugin"],
       "title": "Paper inventory delivery can leave items unaccounted for",

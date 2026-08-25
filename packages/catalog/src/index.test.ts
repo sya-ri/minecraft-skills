@@ -5650,6 +5650,90 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper scheduled-task lifecycle safety guidance", () => {
+    const recipe = getAuthoringRecipe("paper-scheduled-task-lifecycle");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "verify-scheduler-and-lifecycle-surfaces",
+        "assign-task-ownership-and-generation",
+        "separate-background-work-from-api-publication",
+        "cancel-and-fence-teardown",
+        "test-ordering-cancellation-and-disable",
+      ]),
+    );
+    expect(recipe.steps.find((step) => step.id === "cancel-and-fence-teardown")?.action).toContain(
+      "not as proof that an already-running callback",
+    );
+    expect(recipe.finalChecks).toContain("paper-scheduled-task-lifecycle-safety");
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("own-scheduled-work-through-teardown");
+
+    const guardrail = getAuthoringGuardrail("paper-scheduled-task-lifecycle-safety");
+    expect(guardrail.rules.join("\n")).toContain("custom executors");
+    expect(guardrail.rules.join("\n")).toContain("already-running callback");
+    expect(guardrail.rules.join("\n")).toContain("select schedulers by state ownership");
+
+    const diagnostic = getAuthoringDiagnostic("paper-scheduled-task-lifecycle-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("prohibited scheduler Future wait");
+    expect(diagnostic.failIf.join("\n")).toContain("already-running callback");
+    expect(diagnostic.failIf.join("\n")).toContain("wall-clock sleeps");
+
+    const scenario = getAuthoringScenario("paper-scheduled-task-lifecycle-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-scheduled-task-lifecycle"]);
+    expect(scenario.requiredLookups.diagnostics).toEqual(
+      expect.arrayContaining([
+        "paper-scheduled-task-lifecycle-unsafe",
+        "paper-plugin-test-evidence-gap",
+      ]),
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("custom executors");
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "Paper repeating scheduler cancellation plugin disable custom executor teardown",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-scheduled-task-lifecycle-review");
+    expect(scenarioSearch.results[0]?.matches.flatMap((match) => match.matchedTokens)).toEqual(
+      expect.arrayContaining(["repeating", "cancellation", "disable", "executor"]),
+    );
+
+    const catalogSearch = searchCatalog({
+      query: "repeating task cancellation generation custom executor teardown",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-scheduled-task-lifecycle",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-scheduled-task-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-scheduled-task-lifecycle"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-scheduled-task-lifecycle-unsafe",
+    );
+
+    const task = "Paper repeating scheduler task survives disable and leaks a custom executor";
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task,
+      domain: "paper-plugin",
+    });
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-scheduled-task-lifecycle",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-scheduled-task-lifecycle-review",
+    );
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",

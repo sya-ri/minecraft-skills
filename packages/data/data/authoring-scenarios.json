@@ -183,6 +183,59 @@
       "failureMode": "Generated Paper plugin code can compile against invented APIs or hide unsafe threading assumptions."
     },
     {
+      "id": "paper-scheduled-task-lifecycle-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper scheduled-task ownership and teardown",
+      "userPrompt": "Create or review delayed, repeating, or asynchronous Paper plugin work so reload, reconfiguration, cancellation, and plugin disable cannot leave duplicate loops, unsafe API access, leaked executors, or late publication.",
+      "useWhen": [
+        "the request creates delayed, repeating, self-cancelling, or plugin-wide scheduled tasks",
+        "background I/O or computation publishes results through Bukkit or Paper APIs",
+        "reload, reconfiguration, feature stop, partial startup failure, or plugin disable can invalidate work",
+        "the implementation uses custom executors, futures, timers, subscriptions, or child operations alongside a Paper scheduler",
+        "the request claims Folia support or chooses a global, location-region, entity, or async scheduler",
+        "the request diagnoses duplicate loops, orphaned tasks, unsafe async access, or callbacks that run after teardown"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-scheduled-task-lifecycle"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-scheduled-task-lifecycle-unsafe",
+          "paper-plugin-test-evidence-gap"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "target-version scheduler, task-handle, cancellation, plugin-state, and lifecycle members are verified before code is emitted",
+        "every scheduled unit has one plugin owner, one feature owner, and an early-stop or terminal path",
+        "replaceable work carries a lifecycle generation and custom executors or child operations have separate ownership",
+        "blocking work stays off tick contexts while Bukkit or Paper publication re-enters the correct main, region, entity, or global context",
+        "late publication revalidates lifecycle generation, plugin admission, and target validity after returning to the API context",
+        "one idempotent teardown closes admission before cancellation, invalidates stale work, closes separately owned resources, and clears references",
+        "cancellation is not treated as proof that an already-running callback or child operation stopped",
+        "deterministic and loaded-plugin evidence cover cancellation, replacement, repeated teardown, disable, late async completion, and cleanup at the claimed boundary",
+        "Folia support, when claimed, uses state ownership and target-version Folia evidence rather than a standard global scheduler assumption",
+        "per-player connection generations and durable player flushes remain in the dedicated player-session lifecycle concern"
+      ],
+      "mustAvoid": [
+        "creating an untracked repeating task or replacing a loop without invalidating the old generation",
+        "assuming plugin scheduler ownership also cancels custom executors, futures, timers, subscriptions, or child operations",
+        "moving an entire workflow asynchronous and calling unverified Bukkit or Paper APIs from the background phase",
+        "blocking the standard main thread or a Folia tick region on I/O, expensive computation, or a scheduler Future",
+        "checking plugin or target state only before background work starts",
+        "calling cancel and immediately treating teardown or running async work as complete",
+        "scheduling new publication after reload, replacement, or plugin disable closes admission",
+        "using the Folia global scheduler for location- or entity-owned state",
+        "claiming runtime lifecycle safety from compilation, wall-clock sleeps, or a normal repeating-task happy path",
+        "duplicating per-player session ownership or durable persistence rules inside this plugin-wide scheduled-work concern"
+      ],
+      "failureMode": "Implicit task ownership and cancellation can leave duplicate loops, wrong-thread Bukkit access, leaked external resources, and stale callbacks that publish after a feature or plugin generation has stopped."
+    },
+    {
       "id": "paper-item-delivery-review",
       "domains": ["paper-plugin"],
       "title": "Review or generate loss-safe Paper item delivery",

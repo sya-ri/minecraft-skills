@@ -34,6 +34,8 @@ minecraft-skills plugin paper plan paper-administrative-command-operability-revi
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
 minecraft-skills plugin paper recipe paper-itemstack-semantic-identity
 minecraft-skills plugin paper plan paper-itemstack-semantic-identity-review 26.2
+minecraft-skills plugin paper recipe paper-scheduled-task-lifecycle
+minecraft-skills plugin paper plan paper-scheduled-task-lifecycle-review 1.21.11
 minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
@@ -48,6 +50,7 @@ minecraft-skills plugin paper guardrails
 minecraft-skills plugin paper guardrail paper-api-surface-limits
 minecraft-skills plugin paper guardrail paper-player-identity-and-display
 minecraft-skills plugin paper guardrail paper-itemstack-semantic-identity
+minecraft-skills plugin paper guardrail paper-scheduled-task-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-plugin-configuration-lifecycle-safety
@@ -55,6 +58,7 @@ minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-player-identity-display-confusion
 minecraft-skills plugin paper diagnostic paper-itemstack-identity-or-state-loss
+minecraft-skills plugin paper diagnostic paper-scheduled-task-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-plugin-configuration-lifecycle-unsafe

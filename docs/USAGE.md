@@ -74,6 +74,10 @@ minecraft-skills plugin paper plan paper-itemstack-semantic-identity-review 26.2
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "chunked upload request correlation"
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
+minecraft-skills plugin paper recipe paper-scheduled-task-lifecycle
+minecraft-skills plugin paper plan paper-scheduled-task-lifecycle-review 1.21.11
+minecraft-skills plugin paper guardrail paper-scheduled-task-lifecycle-safety
+minecraft-skills plugin paper diagnostic paper-scheduled-task-lifecycle-unsafe
 minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
@@ -766,6 +770,15 @@ shared bar. The workflow includes stale-update and viewer-leak tests. Cross-serv
 an explicit plugin policy, not a guarantee of the Paper BossBar API. Boss AI, encounter mechanics,
 custom mobs, ModelEngine, scoreboards, action bars, and vanilla `/bossbar` command authoring are
 outside this workflow.
+For delayed, repeating, or asynchronous Paper work, resolve
+`plugin paper plan paper-scheduled-task-lifecycle-review <version>`. The plan verifies the
+target-version scheduler and lifecycle surfaces, gives each task a plugin and feature owner, and
+uses a lifecycle generation for work replaced by reload or reconfiguration. It separates
+background work from Bukkit or Paper publication, selects Folia schedulers by state ownership when
+Folia is in scope, closes admission before idempotent teardown, and treats cancellation as an
+attempt rather than proof that an already-running callback stopped. Custom executors and child
+operations require their own bounded cleanup. Controlled cancellation, disable, late-completion,
+and publication-fence tests keep the final runtime claim aligned with its evidence.
 
 ## Source Policy
 

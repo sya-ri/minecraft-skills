@@ -38,6 +38,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-administrative-command-operability.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails/paper-scheduled-task-lifecycle-safety.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-guardrails/paper-player-identity-and-display.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -57,6 +60,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-administrative-command-incomplete.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics/paper-scheduled-task-lifecycle-unsafe.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-player-identity-display-confusion.json",
@@ -80,6 +86,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/paper-administrative-command-operability.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes/paper-scheduled-task-lifecycle.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-recipes/paper-player-identity-and-display.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -99,6 +108,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-administrative-command-operability-review.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios/paper-scheduled-task-lifecycle-review.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-player-identity-and-display-review.json",
@@ -549,6 +561,38 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-diagnostics/paper-plugin-configuration-lifecycle-unsafe.json",
     );
     expect(diagnostic.contents[0]?.text).toContain("older slow reload");
+  });
+
+  it("reads Paper scheduled-task lifecycle safety resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-scheduled-task-lifecycle.json",
+        "minecraft-skills://data/authoring-scenarios/paper-scheduled-task-lifecycle-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-scheduled-task-lifecycle-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-scheduled-task-lifecycle-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-scheduled-task-lifecycle.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("cancel-and-fence-teardown");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-scheduled-task-lifecycle-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-scheduled-task-lifecycle-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-scheduled-task-lifecycle-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("already-running callback");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-scheduled-task-lifecycle-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("prohibited scheduler Future wait");
   });
 
   it("reads Paper plugin testing evidence resources", () => {

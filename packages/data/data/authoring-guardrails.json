@@ -73,6 +73,36 @@
       "failureMode": "Generated plugins can compile against nonexistent APIs, target unsupported Paper versions, or hide unsafe threading assumptions."
     },
     {
+      "id": "paper-scheduled-task-lifecycle-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep scheduled work inside one owned plugin generation",
+      "rules": [
+        "Verify target-version scheduler, task-handle, cancellation, plugin-state, and lifecycle behavior before naming APIs or making guarantees.",
+        "Give every scheduled unit one plugin owner and one feature or component owner; retain a handle or task-group entry when work must stop early.",
+        "Use a lifecycle generation to invalidate replaceable loops and asynchronous publication after reload, reconfiguration, feature stop, partial startup failure, or disable.",
+        "Own and close custom executors, futures, timers, subscriptions, child operations, and resources separately because Paper scheduler task ownership does not describe their lifecycle.",
+        "Keep blocking I/O and expensive thread-safe computation off the standard main thread and Folia tick regions.",
+        "Treat Bukkit or Paper access from asynchronous work as unsafe unless target-version behavior documentation explicitly permits it.",
+        "Publish immutable background results in the correct standard main-thread, Folia location-region, entity, or global context, then revalidate generation, plugin admission, and target validity immediately before side effects.",
+        "Do not block a tick context on a scheduler Future when target-version Javadocs prohibit the wait.",
+        "Order teardown idempotently: close admission, invalidate the generation, cancel owned task handles or groups, cancel or close separately owned resources, and clear references.",
+        "Cancellation can prevent pending or future execution without proving that an already-running callback or child operation stopped; fence every late side effect.",
+        "Do not schedule replacement publication after admission closes for reload, replacement, or plugin disable.",
+        "When Folia support is claimed, select schedulers by state ownership and verify entity-retirement behavior instead of applying a global scheduler pattern.",
+        "Test cancellation and teardown ordering with controlled time, then add loaded-plugin or Folia evidence for runtime claims.",
+        "Route per-player connection generations and durable player flush semantics to the dedicated player-session lifecycle guidance."
+      ],
+      "requiredEvidence": [
+        "Target-version Paper documentation and type/member results for every scheduler, task handle, cancellation path, plugin-state check, lifecycle method, and Future behavior used",
+        "A task ownership table, lifecycle-generation model, execution-context table, and idempotent teardown order",
+        "Separate cancellation or close ownership for custom executors, futures, timers, subscriptions, child operations, and resources",
+        "Publication-fence tests that reject a callback completing after replacement, reload, cancellation, or disable",
+        "Deterministic tests for cancellation before first execution, repeating self-cancellation, replacement, double teardown, queued work at disable, running async completion, and cleanup",
+        "When claimed, target-version loaded-server or Folia evidence for scheduler ownership, lifecycle ordering, and entity retirement"
+      ],
+      "failureMode": "Unowned scheduled and background work can duplicate across generations, block or mutate the wrong thread, leak external resources, and publish after cancellation or plugin teardown."
+    },
+    {
       "id": "paper-inventory-delivery-outcomes",
       "domains": ["paper-plugin"],
       "title": "Preserve every item across partial inventory delivery",

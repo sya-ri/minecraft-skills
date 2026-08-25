@@ -12,6 +12,12 @@ All notable changes to this project are documented here.
   non-allowlisted metadata and components, migrates deterministically and idempotently, leaves
   unknown items untouched, and tests duplicate lore, rollback, aliasing, comparisons, and unrelated
   state preservation.
+- Searchable Paper scheduled-task lifecycle guidance across recipes, scenarios, checklists,
+  guardrails, diagnostics, CLI, Catalog, MCP tools/resources, and the Paper skill. It covers plugin
+  and feature ownership, lifecycle generations for replacement and reload, background-to-API
+  execution contexts, Folia state ownership, admission-first idempotent teardown, cancellation of
+  pending versus already-running work, separately owned executors and child resources, late-
+  publication fences, and deterministic plus loaded-plugin runtime evidence.
 - Bounded static PNG alpha inspection across the Catalog API, CLI, and MCP, including every legal
   color-type/bit-depth combination, filters 0-4, Adam7, PLTE/tRNS semantics, nonzero-alpha counts,
   zero-based half-open content bounds, four-side transparent margins, optional nonempty/minimum-

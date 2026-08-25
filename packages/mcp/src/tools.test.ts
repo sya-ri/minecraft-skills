@@ -1353,6 +1353,48 @@ describe("MCP tools", () => {
     );
   });
 
+  it("calls Paper scheduled-task lifecycle safety guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-scheduled-task-lifecycle",
+    });
+    expect(recipe.content[0]?.text).toContain("cancel-and-fence-teardown");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-scheduled-task-lifecycle-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-scheduled-task-lifecycle-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper repeating scheduler cancellation plugin disable custom executor teardown",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-scheduled-task-lifecycle-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-scheduled-task-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-scheduled-task-lifecycle"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-scheduled-task-lifecycle-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-scheduled-task-lifecycle-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("already-running callback");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-scheduled-task-lifecycle-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("prohibited scheduler Future wait");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "repeating task cancellation generation custom executor teardown",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-scheduled-task-lifecycle"');
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",
