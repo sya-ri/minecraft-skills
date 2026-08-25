@@ -112,6 +112,10 @@ minecraft-skills plugin paper search-scenarios "PlayerDeathEvent respawn keepInv
 minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
 minecraft-skills plugin paper guardrail paper-death-respawn-handoff-safety
 minecraft-skills plugin paper diagnostic paper-death-respawn-handoff-unsafe
+minecraft-skills plugin paper search-scenarios "sidebar prior foreign scoreboard late hide"
+minecraft-skills plugin paper plan paper-scoreboard-ownership-lifecycle-review 1.21.11
+minecraft-skills plugin paper guardrail paper-scoreboard-ownership-lifecycle-safety
+minecraft-skills plugin paper diagnostic paper-scoreboard-ownership-lifecycle-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -934,6 +938,19 @@ and records the actual post-reset outcome separately. Only plugin-owned temporar
 restored or cleared. Duplicate callbacks, invalid or unavailable worlds, quit, reconnect, reload,
 and disable must
 converge without an extra teleport or guessed fallback world.
+
+For Paper scoreboards and sidebars, resolve
+`plugin paper plan paper-scoreboard-ownership-lifecycle-review <version>`. The plan captures the
+exact scoreboard visible before installation and restores it only while the same owner still
+controls the installed board, so a foreign replacement is never overwritten. It requires either a
+private board per viewer or a shared-board group owner whose objectives and teams remain registered
+until the last member stops displaying it; a shared group owns one compatible snapshot, so
+viewer-specific content requires a private board or another group. Stable target-bounded
+identifiers, deterministic tie-broken snapshot diffs, explicit truncation, and generation-fenced
+delayed updates cover publication. Mid-session
+eligibility, join, quit, reconnect, world change, rapid replacement, reload, disable, and
+restoration failure all have explicit test and cleanup outcomes. Numeric limits and event behavior
+must come from the selected target-version Paper evidence rather than copied constants.
 
 ## Source Policy
 

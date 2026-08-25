@@ -1677,6 +1677,68 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-server-backed-paged-ui"');
   });
 
+  it("calls Paper scoreboard ownership lifecycle guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-scoreboard-ownership-lifecycle",
+    });
+    expect(recipe.content[0]?.text).toContain("fence-delayed-updates-and-restore-conditionally");
+    expect(recipe.content[0]?.text).toContain("shared-board group owner");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-scoreboard-ownership-lifecycle-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-scoreboard-ownership-lifecycle-unsafe");
+    expect(scenario.content[0]?.text).toContain("last-member cleanup");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper sidebar prior foreign scoreboard rapid replacement late hide",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain(
+      '"id": "paper-scoreboard-ownership-lifecycle-review"',
+    );
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-scoreboard-ownership-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-scoreboard-ownership-lifecycle"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-scoreboard-ownership-lifecycle-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-scoreboard-ownership-lifecycle-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("exact scoreboard installed by that owner");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-scoreboard-ownership-lifecycle-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("foreign scoreboard");
+
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("preserve-scoreboard-ownership-lifecycle");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "scoreboard owner objective team restoration",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-scoreboard-ownership-lifecycle"');
+
+    const commandSearch = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "use /scoreboard players set in a datapack",
+    });
+    const commandSearchText = commandSearch.content[0]?.text ?? "";
+    const datapackIndex = commandSearchText.indexOf('"id": "datapack-function-command-review"');
+    const paperIndex = commandSearchText.indexOf(
+      '"id": "paper-scoreboard-ownership-lifecycle-review"',
+    );
+    expect(datapackIndex).toBeGreaterThanOrEqual(0);
+    expect(paperIndex === -1 || datapackIndex < paperIndex).toBe(true);
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",

@@ -140,6 +140,10 @@ All notable changes to this project are documented here.
   respawn-anchor, world, and plugin destination precedence; separate post-respawn application
   outcomes; owned temporary-state restoration; and duplicate, unavailable-world, reconnect, reload,
   and disable recovery tests.
+- Paper scoreboard and sidebar ownership lifecycle guidance across data, Catalog, CLI, and MCP,
+  covering exact prior-board restoration, private or shared-board ownership, collision-safe
+  objectives and teams, deterministic bounded snapshot diffs, stale-update fences, foreign
+  takeover preservation, and complete viewer and plugin cleanup.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.

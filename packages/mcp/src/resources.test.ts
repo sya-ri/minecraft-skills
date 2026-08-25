@@ -835,6 +835,45 @@ describe("MCP resources", () => {
     expect(diagnostic.contents[0]?.text).toContain("replay settlement");
   });
 
+  it("reads Paper scoreboard ownership lifecycle resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-scoreboard-ownership-lifecycle.json",
+        "minecraft-skills://data/authoring-scenarios/paper-scoreboard-ownership-lifecycle-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-scoreboard-ownership-lifecycle-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-scoreboard-ownership-lifecycle-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-scoreboard-ownership-lifecycle.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("fence-delayed-updates-and-restore-conditionally");
+    expect(recipe.contents[0]?.text).toContain("shared-board group owner");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-scoreboard-ownership-lifecycle-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-scoreboard-ownership-lifecycle-unsafe");
+    expect(scenario.contents[0]?.text).toContain("last-member cleanup");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-scoreboard-ownership-lifecycle-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("exact scoreboard installed by that owner");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-scoreboard-ownership-lifecycle-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("foreign scoreboard");
+
+    const checklist = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-checklists/paper-plugin.json",
+    );
+    expect(checklist.contents[0]?.text).toContain("preserve-scoreboard-ownership-lifecycle");
+  });
+
   it("reads Paper plugin testing evidence resources", () => {
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",

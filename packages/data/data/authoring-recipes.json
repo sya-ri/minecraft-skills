@@ -2346,6 +2346,155 @@
       "failureMode": "A list can appear paged while silently dropping records, repeatedly loading the full result set, skipping tied rows, duplicating or reversing pages, publishing stale responses into a replacement viewer, looping after data shrink, or prefetching without bounds."
     },
     {
+      "id": "paper-scoreboard-ownership-lifecycle",
+      "domains": ["paper-plugin"],
+      "title": "Own and restore Paper scoreboards without clobbering foreign state",
+      "when": [
+        "the request creates, replaces, updates, hides, or restores a Paper scoreboard or sidebar for one or more viewers",
+        "objective, team, or entry registrations can collide, leak, flicker, or be mutated by more than one feature or plugin",
+        "a delayed refresh or hide can run after rapid replacement, reconnect, world transfer, reload, or disable",
+        "sidebar rows need deterministic ordering, tied-rank handling, truncation, or incremental updates",
+        "the player's prior scoreboard may belong to another feature or plugin and must not be overwritten during cleanup"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-scoreboard-and-lifecycle-surfaces",
+          "action": "Resolve the exact target Minecraft and Paper build, then verify ScoreboardManager, Scoreboard, Objective, Team, Score, Player scoreboard accessors, display-slot behavior, registration and unregistration members, lifecycle event candidates, and execution-context requirements against the matching official Paper API and behavior documentation. Record the target-version limits and units for every objective, team, entry, display name, rendered line, and visible-row surface used. Treat type or member indexes as existence evidence only, and do not copy numeric limits or event ordering from another release.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper events"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "search_paper_events"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "searchPaperEvents"
+            ]
+          },
+          "evidence": [
+            "The exact target Minecraft and Paper build plus official Javadocs for every scoreboard member used",
+            "A target-version limit table naming the source, measurement unit, lower product bound when chosen, and client-visible behavior still requiring runtime verification",
+            "Verified lifecycle event candidates and execution context without assuming an undocumented firing order"
+          ],
+          "stopIfMissing": "Do not emit scoreboard code, identifiers, truncation constants, or lifecycle claims until the target-version API and applicable limits are verified."
+        },
+        {
+          "id": "define-viewer-owner-and-restore-policy",
+          "action": "Represent each active viewer as one scoreboard owner containing the viewer-session generation, plugin lifecycle epoch, owner generation, installed scoreboard identity, the exact scoreboard observed immediately before first installation, an explicit restore-or-leave policy, private desired and applied revisions or a shared-group reference, and close state. Choose scoreboard scope explicitly: either require a private board that is never installed for another viewer, or introduce a separate shared-board group owner with its own generation, membership ledger or reference count, registration ledger, desired and applied snapshot revisions, and last-member cleanup. One shared board exposes one scoreboard state to all members, so reject viewer-specific desired content or move that viewer to a private board or a distinct compatible group instead of letting viewers overwrite each other. Capture each viewer's prior scoreboard once for its ownership chain. When generation A is replaced by B, invalidate A before publishing B and carry the original restore target forward rather than capturing A as B's prior board. Define typed restore outcomes such as restored, superseded by foreign ownership, viewer unavailable, or failed, and choose any fallback before runtime instead of silently assuming the main scoreboard is the prior owner.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "An owner record and state diagram with distinct viewer-session, plugin, scoreboard-owner, and update generations",
+            "A documented replace policy proving rapid replacement preserves the scoreboard that preceded the whole ownership chain",
+            "A private-board invariant or shared-board group owner proving members share one compatible snapshot and one viewer's close cannot unregister state still displayed by another viewer",
+            "Typed restore outcomes and an explicit fallback or no-fallback decision for invalid or unavailable prior state"
+          ],
+          "stopIfMissing": "Do not replace the displayed scoreboard if the design cannot identify which exact board may be restored and which generation owns the replacement."
+        },
+        {
+          "id": "allocate-owned-identifiers-without-collisions",
+          "action": "Derive stable objective, team, and entry identifiers from plugin, feature, private viewer owner or shared-board group owner, and stable logical line identity, then validate and bound them using the target-version evidence before registration. Keep the registration ledger at the owner of the board because a matching name alone does not prove ownership. Look up an existing objective or team before registering: reuse only when the ledger proves the same live owner and schema; otherwise allocate a collision-free bounded identifier or fail without mutation. A private viewer close may clean its board after conditional restore; a shared viewer close removes membership only after that viewer no longer displays the shared board or is unavailable, and the group unregisters owned state only when no remaining live viewer displays that board. Never unregister, reset, reuse, or mutate a same-name object or entry owned by the prior scoreboard, another feature, or another plugin. Keep display text separate from unique entry identity so duplicate labels remain representable.",
+          "tools": {
+            "cli": ["plugin paper types", "plugin paper members", "plugin paper diagnostic"],
+            "mcp": ["search_paper_types", "search_paper_members", "get_authoring_diagnostic"],
+            "packageApis": ["searchPaperTypes", "searchPaperMembers", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A stable identifier scheme with collision handling and target-version bounds for objectives, teams, and entries",
+            "An ownership ledger that distinguishes same-owner reuse from foreign same-name registrations",
+            "Tests for duplicate objective and team registration, duplicate display labels, identifier boundaries, and cleanup that touches only owned registrations",
+            "A two-viewer shared-board test where the first close preserves objectives and teams and only last-member cleanup unregisters them"
+          ],
+          "stopIfMissing": "Do not register or clean by name alone, and do not use broad score resets on a shared or foreign scoreboard without proving that every affected entry is owned."
+        },
+        {
+          "id": "publish-deterministic-snapshot-diffs",
+          "action": "Build an immutable desired sidebar snapshot before touching Paper. Give each logical line a stable ID, display payload, business rank when applicable, and a total deterministic presentation key with a unique tie-breaker. Preserve tied business ranks as data while assigning a verified unique presentation order; never rely on equal score values or Set or Map iteration to determine client line order. Apply the target-version and product bounds before publication, returning an explicit visible subset plus omitted result when truncation is required. Diff desired against the last applied revision owned by the private viewer or shared-board group to remove stale owned lines, update changed owned lines, and add new owned lines in a deterministic sequence instead of tearing down and re-registering the whole board. A shared group accepts only a snapshot compatible with its current group query or content identity. Treat an unchanged snapshot as idempotent.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper claim-policies"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "list_claim_policies"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "listClaimPolicies"]
+          },
+          "evidence": [
+            "A pure snapshot and diff contract with stable logical IDs, deterministic tie-breaking, explicit truncation, and an applied revision",
+            "Tests for tied ranks, duplicate labels, deterministic line order, exact and over-limit inputs, removals, minimal updates, and repeated identical snapshots",
+            "Loaded target-version server and client-visible evidence for the chosen ordering, display-slot, text, and row-limit behavior"
+          ],
+          "stopIfMissing": "Do not claim deterministic sidebar order or safe truncation from numeric guesses, equal scores, collection iteration order, or a server-only assertion that cannot observe the client result."
+        },
+        {
+          "id": "fence-delayed-updates-and-restore-conditionally",
+          "action": "Attach viewer-session generation, plugin lifecycle epoch, private or shared scoreboard-owner generation, update revision, and expected installed scoreboard identity to every delayed build, update, or hide. Immediately before mutation, reacquire the live viewer and require every token to remain current. On hide or close, restore the captured prior scoreboard only when the same live viewer session is API-valid for display mutation, the owner generation is current, and the player still displays the exact board installed by that owner; revoked feature eligibility is a reason to hide, not a reason to suppress restoration. If another feature or plugin has replaced it, report the superseded outcome and leave the foreign scoreboard untouched. If restoration fails while ownership is still current, expose the failure, recheck ownership before any preselected fallback, continue only independent cleanup that cannot invalidate a board still displayed by this or another live viewer, and apply an explicit bounded retry, quarantine, or terminal-disable policy for the minimal retained owner, prior-board reference, and registrations. Never pretend restoration or full cleanup succeeded. Cancellation is cleanup, not the publication fence.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A last-moment generation and installed-board identity check shared by update, hide, replacement, and restore",
+            "A rapid A-to-B replacement test where A's late update and hide cannot mutate B or restore over it",
+            "Tests where a foreign scoreboard wins ownership and where restoring the captured prior board fails without overwriting foreign state or hiding the failure",
+            "A bounded retry or terminal policy and observable quarantined-owner outcome when a live viewer still displays the failed owner board"
+          ],
+          "stopIfMissing": "Do not let delayed work mutate or restore a scoreboard using only player UUID, task cancellation, or a stale Player reference."
+        },
+        {
+          "id": "close-lifecycle-paths-and-test-races",
+          "action": "Define one idempotent close path and its admission fence for initial enable, a player becoming eligible mid-session, join, quit or disconnect, reconnect, world transfer or world change, feature replacement, reload, partial initialization, and plugin disable. Verify the exact target-version event surfaces rather than assuming their order. On quit, invalidate first and do not call a player display mutation after the API no longer considers the viewer logged in. On world change, explicitly retain, replace, or hide according to policy. On reload or disable, stop new owners, invalidate all generations, cancel and fence work, conditionally restore live viewers only while still owner, detach a viewer from a shared-board group only after it no longer displays that board or is unavailable, clean ledger-owned registrations only when their private owner or final shared display closes, clear safely releasable references, quarantine or report any still-displayed restoration failure according to the terminal policy, and continue remaining cleanup. Test mid-session join, rapid replacement, late callback, world transition, quit and reconnect, reload and disable, foreign replacement, two viewers sharing and replacing one board, incompatible per-viewer snapshots, duplicate registration, and restoration failure. Route BossBar lifecycle, player identity or display-name resolution, vanilla command-file syntax, ranking calculation, and business-specific sidebar design to separate concerns.",
+          "tools": {
+            "cli": [
+              "plugin paper search-scenarios",
+              "plugin paper recipe",
+              "plugin paper checklist"
+            ],
+            "mcp": [
+              "search_authoring_scenarios",
+              "get_authoring_recipe",
+              "get_authoring_checklist"
+            ],
+            "packageApis": [
+              "searchAuthoringScenarios",
+              "getAuthoringRecipe",
+              "getAuthoringChecklist"
+            ]
+          },
+          "evidence": [
+            "An idempotent lifecycle matrix covering mid-session eligibility, join, quit, reconnect, world change, replacement, reload, partial initialization, and disable",
+            "Controlled race tests for rapid replacement, a late task or callback, foreign takeover, and restoration failure",
+            "A shared-board membership test proving one viewer's replacement or close cannot unregister content still used by another viewer",
+            "Cleanup assertions proving every safely releasable owned registration and prior-board reference is released while foreign scoreboards are preserved, with an observable quarantined or unrecovered outcome and bounded retry or terminal policy for any live viewer that still displays the owner board",
+            "A scope statement excluding BossBars, player-name resolution, vanilla command-file authoring, ranking calculation, and business display design"
+          ],
+          "stopIfMissing": "Do not approve a scoreboard lifecycle tested only by one install and normal hide path."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-scoreboard-ownership-lifecycle-safety",
+        "paper-player-session-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A sidebar can overwrite a foreign scoreboard, restore the wrong board after rapid replacement, collide with another registration, publish stale rows, flicker or reorder ties, or leak objectives and teams across disconnect, world change, reload, and disable."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",

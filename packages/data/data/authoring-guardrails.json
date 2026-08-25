@@ -434,6 +434,40 @@
       "failureMode": "A list that only looks paged can silently omit records, load the complete collection, skip ties, duplicate or reverse pages, append stale results to a replacement viewer, or run unbounded requests and memory after data changes."
     },
     {
+      "id": "paper-scoreboard-ownership-lifecycle-safety",
+      "domains": ["paper-plugin"],
+      "title": "Preserve foreign scoreboard ownership across sidebar lifecycle changes",
+      "rules": [
+        "Verify every scoreboard type, member, event candidate, display behavior, identifier bound, text bound, and visible-row bound against the exact target Paper and client version; do not reuse numeric constants or lifecycle assumptions from another release.",
+        "Give each viewer one explicit scoreboard owner containing viewer-session, plugin, owner, and update generations, the installed scoreboard identity, exact prior scoreboard, restore policy, desired and applied revisions, and close state.",
+        "Require each installed board to be private to one viewer, or model a separate shared-board group generation with a membership ledger or reference count, one compatible desired and applied snapshot, and a registration ledger; reject or isolate viewer-specific content, and never let one viewer's close unregister content still displayed by another member.",
+        "Capture the prior scoreboard only before first installation; rapid replacement must invalidate the old generation and carry the original prior board forward.",
+        "Restore only when the live viewer still belongs to the current generation and still displays the exact scoreboard installed by that owner; preserve any foreign replacement.",
+        "Represent restored, foreign-superseded, viewer-unavailable, and restoration-failed outcomes explicitly, and recheck ownership before any documented fallback.",
+        "Treat revoked feature eligibility as a hide trigger while requiring the same API-valid live viewer session for restoration; do not require the feature to remain eligible before restoring its prior scoreboard.",
+        "Derive stable bounded objective, team, and entry identifiers, look before registration, and reuse or unregister a same-name object only when a ledger proves the same owner and schema.",
+        "Never broadly reset, unregister, or mutate registrations on a prior, shared, or foreign scoreboard; clean only entries recorded by the active owner.",
+        "Separate unique entry identity from display text so duplicate labels remain valid without registration collisions.",
+        "Build immutable desired snapshots with stable logical line IDs and a total deterministic presentation key; preserve tied business ranks as data but use a unique verified presentation order.",
+        "Apply target-version bounds before mutation and return an explicit visible subset plus omitted result instead of silently clipping or relying on guessed fixed values.",
+        "Diff desired against the applied revision, make unchanged publication idempotent, and update only owned stale, changed, or new registrations in a deterministic sequence.",
+        "Fence every delayed build, update, and hide with viewer-session, plugin, owner, update, and installed-scoreboard tokens checked immediately before publication; cancellation alone is insufficient.",
+        "Use one idempotent close path for mid-session eligibility, join, quit, reconnect, world change, replacement, partial initialization, reload, and disable, without assuming target event order; shared-board membership and registration cleanup wait until that viewer or the final live member no longer displays the board.",
+        "Invalidate before cleanup, avoid display mutation after logout, conditionally restore only while still owner, continue only safely independent cleanup after failure, and give any still-displayed owner board an observable bounded retry, quarantine, or terminal-disable outcome instead of claiming all registrations and prior references were released.",
+        "Test rapid replacement, old update and hide callbacks, mid-session join, foreign takeover, restoration failure, two viewers sharing and replacing a board, incompatible shared snapshots, duplicate registration, duplicate labels, tied ranks, deterministic ordering, exact and over-limit values, world change, reconnect, reload, and disable.",
+        "Keep BossBars, player-name resolution, vanilla command-file authoring, ranking calculation, and business-specific display design outside this concern."
+      ],
+      "requiredEvidence": [
+        "Target-version Paper Javadocs and client-visible evidence for the scoreboard surfaces and limits used",
+        "A viewer owner state machine, exact prior-board restore policy, and ledger for objective, team, and entry ownership",
+        "A private-board invariant or shared-board group membership and last-member cleanup test",
+        "A pure deterministic snapshot and diff contract with explicit ties, truncation, duplicate-label, and idempotency outcomes",
+        "Generation-fence and conditional-restore race tests including foreign takeover and restoration failure",
+        "A lifecycle matrix and cleanup assertions for mid-session eligibility, join, quit, reconnect, world change, reload, and disable"
+      ],
+      "failureMode": "A scoreboard owner without identity, generations, bounded registrations, deterministic snapshots, conditional restoration, and complete teardown can overwrite foreign state, publish stale lines, or leak UI resources."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",

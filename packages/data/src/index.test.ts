@@ -88,6 +88,9 @@ describe("@minecraft-skills/data", () => {
     );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-persistent-data-contract");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-server-backed-paged-ui");
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-scoreboard-ownership-lifecycle",
+    );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-custom-recipe-registration",
@@ -114,6 +117,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-plugin-configuration-lifecycle-review");
     expect(scenarioIds).toContain("paper-persistent-data-contract-review");
     expect(scenarioIds).toContain("paper-server-backed-paged-ui-review");
+    expect(scenarioIds).toContain("paper-scoreboard-ownership-lifecycle-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
     expect(scenarioIds).toContain("paper-custom-recipe-review");
     expect(scenarioIds).toContain("paper-death-respawn-handoff-review");
@@ -143,6 +147,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-plugin-configuration-lifecycle-safety");
     expect(guardrailIds).toContain("paper-persistent-data-contract");
     expect(guardrailIds).toContain("paper-server-backed-paged-ui-safety");
+    expect(guardrailIds).toContain("paper-scoreboard-ownership-lifecycle-safety");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
     expect(guardrailIds).toContain("paper-custom-recipe-ownership");
     expect(guardrailIds).toContain("paper-death-respawn-handoff-safety");
@@ -167,6 +172,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-plugin-configuration-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-persistent-data-contract-unsafe");
     expect(diagnosticIds).toContain("paper-server-backed-paged-ui-unsafe");
+    expect(diagnosticIds).toContain("paper-scoreboard-ownership-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
     expect(diagnosticIds).toContain("paper-custom-recipe-registration-unsafe");
     expect(diagnosticIds).toContain("paper-death-respawn-handoff-unsafe");
@@ -1055,6 +1061,104 @@ describe("@minecraft-skills/data", () => {
     }>("authoring-checklists.json");
     const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
     expect(paperChecklist?.steps.map((step) => step.id)).toContain("bound-server-backed-paged-ui");
+  });
+
+  it("loads Paper scoreboard ownership lifecycle guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "paper-scoreboard-ownership-lifecycle",
+    );
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-viewer-owner-and-restore-policy",
+        "allocate-owned-identifiers-without-collisions",
+        "publish-deterministic-snapshot-diffs",
+        "fence-delayed-updates-and-restore-conditionally",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "carry the original restore target forward",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "leave the foreign scoreboard untouched",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "shared-board group owner",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "reject viewer-specific desired content",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "revoked feature eligibility is a reason to hide",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "A rapid A-to-B replacement test",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "A two-viewer shared-board test",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "observable quarantined-owner outcome",
+    );
+    expect(recipe?.finalChecks).toContain("paper-scoreboard-ownership-lifecycle-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-scoreboard-ownership-lifecycle-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-scoreboard-ownership-lifecycle"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-scoreboard-ownership-lifecycle-unsafe",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("total deterministic order");
+    expect(scenario?.successCriteria.join("\n")).toContain("restoration failure");
+    expect(scenario?.successCriteria.join("\n")).toContain("last-member cleanup");
+    expect(scenario?.successCriteria.join("\n")).toContain(
+      "compatible desired and applied snapshot",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("hardcoding identifier, text, line");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-scoreboard-ownership-lifecycle-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("exact scoreboard installed by that owner");
+    expect(guardrail?.rules.join("\n")).toContain("visible subset plus omitted result");
+    expect(guardrail?.rules.join("\n")).toContain("mid-session eligibility");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-scoreboard-ownership-lifecycle-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("foreign scoreboard");
+    expect(diagnostic?.failIf.join("\n")).toContain("restoration failure is swallowed");
+    expect(diagnostic?.failIf.join("\n")).toContain("neither bounded retry");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "preserve-scoreboard-ownership-lifecycle",
+    );
   });
 
   it("loads complete Paper plugin testing evidence guidance", () => {

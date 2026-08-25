@@ -56,6 +56,8 @@ minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
 minecraft-skills plugin paper search-scenarios "PlayerDeathEvent respawn keepInventory itemsToKeep"
 minecraft-skills plugin paper recipe paper-death-respawn-handoff
 minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
+minecraft-skills plugin paper recipe paper-scoreboard-ownership-lifecycle
+minecraft-skills plugin paper plan paper-scoreboard-ownership-lifecycle-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper recipe paper-attribute-effect-ownership
@@ -82,6 +84,7 @@ minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
 minecraft-skills plugin paper guardrail paper-region-protection-policy-safety
 minecraft-skills plugin paper guardrail paper-server-backed-paged-ui-safety
 minecraft-skills plugin paper guardrail paper-death-respawn-handoff-safety
+minecraft-skills plugin paper guardrail paper-scoreboard-ownership-lifecycle-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -98,6 +101,7 @@ minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsaf
 minecraft-skills plugin paper diagnostic paper-region-protection-policy-incomplete
 minecraft-skills plugin paper diagnostic paper-server-backed-paged-ui-unsafe
 minecraft-skills plugin paper diagnostic paper-death-respawn-handoff-unsafe
+minecraft-skills plugin paper diagnostic paper-scoreboard-ownership-lifecycle-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements

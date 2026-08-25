@@ -176,6 +176,10 @@ const deathRespawnPlan = getAuthoringPlan({
   scenario: "paper-death-respawn-handoff-review",
   version: "1.21.11",
 });
+const scoreboardPlan = getAuthoringPlan({
+  scenario: "paper-scoreboard-ownership-lifecycle-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -221,6 +225,7 @@ const customRecipeRegistrationRecipe = getAuthoringRecipe(
 const attributeEffectRecipe = getAuthoringRecipe("paper-attribute-effect-ownership");
 const modelEngineBindingRecipe = getAuthoringRecipe("paper-modelengine-runtime-binding");
 const regionProtectionRecipe = getAuthoringRecipe("paper-region-protection-policy");
+const scoreboardRecipe = getAuthoringRecipe("paper-scoreboard-ownership-lifecycle");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -244,6 +249,9 @@ const displayInteractionScenario = getAuthoringScenario(
 );
 const pagedUiScenario = getAuthoringScenario("paper-server-backed-paged-ui-review");
 const deathRespawnScenario = getAuthoringScenario("paper-death-respawn-handoff-review");
+const scoreboardScenario = getAuthoringScenario(
+  "paper-scoreboard-ownership-lifecycle-review",
+);
 const testingEvidenceScenario = getAuthoringScenario(
   "paper-plugin-testing-evidence-review",
 );
@@ -285,6 +293,9 @@ const modelEngineBindingGuardrail = getAuthoringGuardrail(
 const regionProtectionGuardrail = getAuthoringGuardrail(
   "paper-region-protection-policy-safety",
 );
+const scoreboardGuardrail = getAuthoringGuardrail(
+  "paper-scoreboard-ownership-lifecycle-safety",
+);
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const eventListenerDiagnostic = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
@@ -318,6 +329,9 @@ const attributeEffectDiagnostic = getAuthoringDiagnostic(
   "paper-attribute-effect-ownership-unsafe",
 );
 const deathRespawnDiagnostic = getAuthoringDiagnostic("paper-death-respawn-handoff-unsafe");
+const scoreboardDiagnostic = getAuthoringDiagnostic(
+  "paper-scoreboard-ownership-lifecycle-unsafe",
+);
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",
 );

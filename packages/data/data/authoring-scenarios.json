@@ -10,6 +10,7 @@
       "useWhen": [
         "the request contains .mcfunction output",
         "the request asks for execute, scoreboard, summon, data, function, or similar command syntax",
+        "the request contains a /scoreboard players command such as a set operation in a datapack or function file",
         "the request asks whether a command changed between versions"
       ],
       "requiredLookups": {
@@ -814,6 +815,76 @@
         "mixing inventory click safety, rendering geometry, screen-specific design, persistence flush logic, or a business-specific fixed page size into this concern"
       ],
       "failureMode": "A visually paged list can still hide data, issue unbounded backend work, skip tied rows, duplicate or reverse pages, publish stale results after reset, or loop forever after the data set shrinks."
+    },
+    {
+      "id": "paper-scoreboard-ownership-lifecycle-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper scoreboard and sidebar ownership lifecycle",
+      "userPrompt": "Create or review a Paper sidebar that replaces and restores per-viewer scoreboards without clobbering foreign ownership, leaking registrations, reordering tied lines, or accepting stale delayed work.",
+      "useWhen": [
+        "the request installs, replaces, updates, hides, or restores a Paper scoreboard or sidebar",
+        "the prior scoreboard may be owned by another feature or plugin",
+        "objectives, teams, entries, line ordering, tied ranks, text limits, or truncation need a stable contract",
+        "a delayed update or hide can outlive rapid replacement, reconnect, world transfer, reload, or disable",
+        "the request diagnoses duplicate registration, flicker, leaked sidebar state, or restoration failure"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-scoreboard-ownership-lifecycle"],
+        "intents": [
+          "prepare-generation",
+          "discover-paper-event-candidates",
+          "verify-paper-type-or-member"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-threading-assumption",
+          "paper-scoreboard-ownership-lifecycle-unsafe",
+          "paper-player-session-lifecycle-unsafe",
+          "paper-plugin-test-evidence-gap"
+        ],
+        "claimPolicies": [
+          "paper-type-or-member-exists",
+          "paper-event-candidate",
+          "folia-or-thread-safety"
+        ],
+        "factSurfaces": [
+          "paper-builds",
+          "paper-api-index",
+          "paper-api-surface",
+          "paper-event-search"
+        ],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "every viewer has a distinct session and scoreboard-owner generation, installed-board identity, captured prior scoreboard, explicit restore policy, and desired and applied revisions",
+        "each installed board is explicitly private to one viewer or owned by a separate shared-board group generation with membership, one compatible desired and applied snapshot, registration ledger, and last-member cleanup only after no live member displays it",
+        "rapid replacement invalidates the old owner before publishing the new one and preserves the scoreboard captured before the ownership chain",
+        "restoration occurs only while the same API-valid live viewer session and owner still control the exact installed scoreboard; revoked feature eligibility triggers rather than suppresses hide, foreign replacement is preserved, and restoration failure is explicit",
+        "objective, team, and entry identifiers are stable, collision-safe, ledger-owned, and bounded by exact target-version evidence rather than copied constants",
+        "sidebar snapshots use stable logical line IDs and a total deterministic order with a unique tie-breaker while preserving tied business ranks as data",
+        "truncation returns an explicit visible subset and omitted result, duplicate display labels retain unique entries, and unchanged snapshots apply no mutation",
+        "delayed build, update, and hide paths verify viewer-session, plugin, owner, update, and installed-scoreboard tokens immediately before mutation",
+        "mid-session eligibility, join, quit, reconnect, world change, replacement, partial initialization, reload, and disable converge on one idempotent cleanup path",
+        "tests cover rapid replacement, late task or callback, mid-session join, foreign takeover, restoration failure, two viewers sharing and replacing a board, rejection or isolation of incompatible viewer snapshots, duplicate registrations, tied lines, deterministic diffing, and exact and over-limit inputs",
+        "BossBars, player-name resolution, vanilla command-file authoring, ranking calculation, and business display design remain outside this concern"
+      ],
+      "mustAvoid": [
+        "restoring the main scoreboard unconditionally instead of the exact captured prior scoreboard or an explicit fallback",
+        "restoring or hiding after another feature or plugin has replaced the installed scoreboard",
+        "capturing generation A as generation B's prior scoreboard during rapid replacement",
+        "sharing one scoreboard across viewers without a group owner and allowing one viewer close to unregister objectives or teams still displayed by another viewer",
+        "letting members of one shared-board group publish incompatible viewer-specific snapshots into the same scoreboard state",
+        "registering, reusing, resetting, or unregistering objectives, teams, or entries by name without a same-owner ledger",
+        "hardcoding identifier, text, line, or visible-row limits from another Minecraft or Paper version",
+        "using equal scores, collection iteration, or display text as the only presentation-order or entry-identity contract",
+        "tearing down and rebuilding every registration for an unchanged or minimally changed snapshot",
+        "treating task cancellation as sufficient protection from late publication",
+        "mutating a logged-out player or depending on an assumed join, quit, world-change, reload, or disable event order",
+        "mixing BossBar behavior, identity lookup, vanilla command-file syntax, ranking business logic, or screen-specific design into this lifecycle contract"
+      ],
+      "failureMode": "A scoreboard implementation can destroy foreign UI ownership, restore stale state, collide with registrations, produce unstable lines, accept late updates, or leak resources across player and plugin lifecycle transitions."
     },
     {
       "id": "paper-plugin-testing-evidence-review",

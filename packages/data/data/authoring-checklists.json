@@ -432,6 +432,21 @@
           "failureMode": "Do not approve protection implemented as one region check or blanket cancellation without a complete policy matrix, explicit precedence and defaults, and preserved-mechanics tests."
         },
         {
+          "id": "preserve-scoreboard-ownership-lifecycle",
+          "reason": "A Paper sidebar can overwrite a foreign scoreboard, collide with objective or team registrations, accept a late update, or restore stale state unless viewer ownership and cleanup are explicit.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "The exact prior and installed scoreboards, restore policy, viewer and owner generations, private-or-shared board ownership, and foreign-takeover behavior are explicit.",
+            "Objective, team, entry, ordering, tie, truncation, delayed-work, and lifecycle contracts use target-version evidence and tests.",
+            "Join or mid-session eligibility, quit, reconnect, world change, replacement, reload, disable, and restoration failure clean only owned state."
+          ],
+          "failureMode": "Do not install or restore a scoreboard when exact ownership, collision handling, deterministic publication, and complete teardown are unspecified."
+        },
+        {
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {

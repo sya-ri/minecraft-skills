@@ -36,6 +36,9 @@ Redistributable canonical data for Minecraft Skills consumers.
   experience settlement, vanilla-first destination precedence, post-respawn outcome observation,
   fail-closed cancellation ambiguity, staged downed side effects, and reconnect, reload, or disable
   recovery without replay.
+- Paper scoreboard/sidebar ownership guidance for exact prior-board restoration, private or shared
+  board ledgers, bounded registration IDs, deterministic snapshot diffs, stale-work rejection, and
+  viewer/plugin lifecycle cleanup that preserves foreign scoreboards.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor
