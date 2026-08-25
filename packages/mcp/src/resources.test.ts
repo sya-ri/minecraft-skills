@@ -50,6 +50,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-plugin-testing-evidence.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails/paper-death-respawn-handoff-safety.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -72,6 +75,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-plugin-test-evidence-gap.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics/paper-death-respawn-handoff-unsafe.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-recipes.json",
@@ -98,6 +104,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes/paper-death-respawn-handoff.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -120,6 +129,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-plugin-testing-evidence-review.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios/paper-death-respawn-handoff-review.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/claim-policies.json",
@@ -789,6 +801,38 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-checklists/paper-plugin.json",
     );
     expect(checklist.contents[0]?.text).toContain("bound-server-backed-paged-ui");
+  });
+
+  it("reads Paper death and respawn handoff resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-death-respawn-handoff.json",
+        "minecraft-skills://data/authoring-scenarios/paper-death-respawn-handoff-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-death-respawn-handoff-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-death-respawn-handoff-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-death-respawn-handoff.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("settle-death-items-and-experience-once");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-death-respawn-handoff-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-death-respawn-handoff-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-death-respawn-handoff-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("PLUGIN_OWNED_DOWNED");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-death-respawn-handoff-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("replay settlement");
   });
 
   it("reads Paper plugin testing evidence resources", () => {

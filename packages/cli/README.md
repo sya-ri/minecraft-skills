@@ -53,6 +53,9 @@ minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.
 minecraft-skills plugin paper search-scenarios "opaque cursor stale response duplicate page"
 minecraft-skills plugin paper recipe paper-server-backed-paged-ui
 minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
+minecraft-skills plugin paper search-scenarios "PlayerDeathEvent respawn keepInventory itemsToKeep"
+minecraft-skills plugin paper recipe paper-death-respawn-handoff
+minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper recipe paper-attribute-effect-ownership
@@ -78,6 +81,7 @@ minecraft-skills plugin paper guardrail paper-attribute-effect-ownership-safety
 minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
 minecraft-skills plugin paper guardrail paper-region-protection-policy-safety
 minecraft-skills plugin paper guardrail paper-server-backed-paged-ui-safety
+minecraft-skills plugin paper guardrail paper-death-respawn-handoff-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -93,6 +97,7 @@ minecraft-skills plugin paper diagnostic paper-attribute-effect-ownership-unsafe
 minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsafe
 minecraft-skills plugin paper diagnostic paper-region-protection-policy-incomplete
 minecraft-skills plugin paper diagnostic paper-server-backed-paged-ui-unsafe
+minecraft-skills plugin paper diagnostic paper-death-respawn-handoff-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements
@@ -514,6 +519,15 @@ defaults, operator input, generated state, immutable effective snapshots, and de
 requires validated startup readiness, revisioned prepare/commit/retire reloads, last-known-good
 preservation, explicit restart or degraded outcomes, conflict-safe writes, generation-fenced
 consumers, redacted status, disable cleanup, and deterministic plus loaded-server lifecycle tests.
+
+`plugin paper plan paper-death-respawn-handoff-review [version]` resolves target-version death and
+respawn checks into one exclusive state machine and exactly-once item and experience settlement.
+It preserves Paper's server-selected bed, respawn-anchor, or world destination by default, treats a
+plugin destination as an explicit policy decision rather than proof of arrival, observes the post-
+respawn outcome separately, and reconciles only plugin-owned temporary state and pending receipts
+across duplicate callbacks, unavailable worlds, quit, reconnect, reload, and disable. Final event
+cancellation alone never proves ownership: ambiguous competing-listener sequences fail closed and
+downed side effects stay staged until an explicit ownership contract succeeds.
 
 `plugin paper plan paper-plugin-testing-evidence-review [version]` maps runtime claims to pure
 tests, plugin-owned fakes, explicitly supported MockBukkit behavior, a loaded target-version Paper

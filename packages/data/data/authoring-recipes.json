@@ -3779,6 +3779,152 @@
         "paper-plugin-testing-evidence"
       ],
       "failureMode": "An incomplete protection policy can allow indirect or cross-boundary mutations, over-cancel public and environmental behavior, apply exceptions inconsistently, or mistake one event listener for complete authorization coverage."
+    },
+    {
+      "id": "paper-death-respawn-handoff",
+      "domains": ["paper-plugin"],
+      "title": "Own Paper death settlement and respawn handoff exactly once",
+      "when": [
+        "the plugin changes player death drops, experience, keep-inventory, keep-level, or items-to-keep behavior",
+        "the plugin can replace a vanilla death with a plugin-owned temporary downed state",
+        "the plugin selects a death respawn destination or restores state after respawn",
+        "quit, reconnect, reload, disable, duplicate callbacks, or an unavailable world can interrupt the death-to-respawn handoff"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-death-and-respawn-contracts",
+          "action": "Resolve the exact Paper version and verify the target Javadocs for PlayerDeathEvent and its EntityDeathEvent cancellation contract, revive health, drops, dropped experience, should-drop-experience, keep-inventory, items-to-keep, keep-level, and post-respawn experience fields. Verify PlayerRespawnEvent, AbstractRespawnEvent reason and bed or anchor signals, PlayerPostRespawnEvent, Location world-loaded and finite checks, and nullable Server world lookup before naming or using them. Paper 1.21.11 documents that items added to getItemsToKeep must also be removed from getDrops, setKeepInventory does not itself stop drops, setKeepLevel does not itself stop dropped experience, and state changed in PlayerRespawnEvent can be reset before PlayerPostRespawnEvent; re-check these semantics for the selected target rather than generalizing them.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_reference"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiReference"
+            ]
+          },
+          "evidence": [
+            "Target-version type and member evidence for every death, cancellation, revive, respawn, location, and world-lookup API used",
+            "Official behavior documentation for drops versus items-to-keep, keep-inventory versus drops, keep-level versus dropped experience, and pre- versus post-respawn state mutation",
+            "An explicit unsupported or fallback outcome for every API or behavior the target evidence does not establish"
+          ],
+          "stopIfMissing": "Do not copy death or respawn behavior from another Paper version, infer cancellability from an event name, or invent a respawn API when target-version evidence is missing."
+        },
+        {
+          "id": "model-exclusive-handoff-states",
+          "action": "Model VANILLA_DEATH, PLUGIN_OWNED_DOWNED, and RESPAWN_PENDING as mutually exclusive states under a plugin-generated death epoch. VANILLA_DEATH means an uncancelled death whose settlement is being decided; PLUGIN_OWNED_DOWNED requires this plugin's recorded cancellation decision, a target-valid revive-health value, a later non-mutating observation, and an explicit cancellation-ownership contract such as a cooperative owner token or reviewed exclusive deployment policy; RESPAWN_PENDING begins only after an uncancelled death settlement is committed. A final isCancelled value cannot identify its owner: cancel, later uncancel, and later recancel is indistinguishable from uninterrupted plugin cancellation through the event API alone. Without that contract, fail closed and enter none of the three owned states for a cancelled or ambiguous outcome. Stage or defer downed side effects until ownership is proven; if any owned effect was applied provisionally, compare-and-roll-back only that effect when ownership becomes ambiguous. Use a normal mutating event phase for decisions and a later observation phase without mutating at MONITOR.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper events", "plugin paper members"],
+            "mcp": ["get_authoring_recipe", "search_paper_events", "search_paper_members"],
+            "packageApis": ["getAuthoringRecipe", "searchPaperEvents", "searchPaperMembers"]
+          },
+          "evidence": [
+            "A state-transition table proving that one death epoch cannot be vanilla-death, plugin-owned downed, and respawn-pending at the same time",
+            "A cancellation-ownership contract that distinguishes plugin intent, cooperating owners, another listener's change, and the later observed outcome instead of relying on final isCancelled",
+            "A staged-side-effect ledger whose publish or rollback transition follows proven ownership",
+            "Tests for external cancel, external uncancel, cancel to uncancel to recancel, competing owners, and ambiguous final cancellation in which the plugin neither steals ownership nor enters two states"
+          ],
+          "stopIfMissing": "Do not represent downed state as a boolean beside an independent respawn flag, treat final cancellation as owner identity, or publish downed side effects before an explicit ownership contract proves the outcome."
+        },
+        {
+          "id": "settle-death-items-and-experience-once",
+          "action": "For an uncancelled death, compute one immutable settlement plan and commit it once for the death epoch. Account for every original item as exactly one of inventory-retained, event drop, items-to-keep with the matching drop removed, deliberately removed, or explicitly deferred to plugin custody. Reconcile keep-inventory, drops, items-to-keep, keep-level, new experience, new level, new total experience, dropped experience, and should-drop-experience as one tuple; no field may silently duplicate or erase another. Record a settlement receipt before entering RESPAWN_PENDING so duplicate callbacks, reconnect reconciliation, and reload recovery observe completion instead of replaying drops, experience, or grants. A cancelled plugin-owned downed outcome is not a death settlement.",
+          "tools": {
+            "cli": ["plugin paper members", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["search_paper_members", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["searchPaperMembers", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "An item-disposition ledger with no item both kept and dropped, deferred, removed, or re-granted",
+            "One coherent experience settlement tuple covering retained and dropped experience",
+            "An idempotent receipt keyed by death epoch and tests for duplicate death processing, partial application, and recovery"
+          ],
+          "stopIfMissing": "Do not edit keep flags, drops, items-to-keep, or experience fields independently, and do not create respawn-pending state without a committed settlement receipt."
+        },
+        {
+          "id": "separate-respawn-decision-from-applied-outcome",
+          "action": "On a matching death handoff, first capture PlayerRespawnEvent's server-selected location and its target-verified reason, bed, respawn-anchor, and missing-respawn-block classification. Default to preserving that vanilla decision. Define an explicit policy table for whether a valid plugin-owned destination may override a bed, anchor, or world fallback; resolve any stored world identity through a nullable target-version world lookup, require a finite location in a present and loaded world, and leave the original event location unchanged when the plugin candidate is invalid, unavailable, or disallowed. Treat setRespawnLocation as a selection decision, not proof of application. Observe the actual post-reset location and owned state in PlayerPostRespawnEvent, record confirmed, changed, or unavailable as a separate outcome, and consume only a matching death epoch with a verified death respawn reason. Do not load chunks, issue a separate teleport, reimplement bed or anchor validity, or guess a fixed fallback world in this concern.",
+          "tools": {
+            "cli": [
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api"
+            ],
+            "mcp": [
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_reference"
+            ],
+            "packageApis": [
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiReference"
+            ]
+          },
+          "evidence": [
+            "A precedence table covering vanilla bed, respawn anchor, missing block or depleted anchor, world fallback, and an optional plugin candidate",
+            "Typed destination decisions for preserved-vanilla, selected-plugin, invalid, world-unavailable, policy-denied, and not-owned outcomes",
+            "A distinct post-respawn application result that does not equate event mutation or teleport invocation with success"
+          ],
+          "stopIfMissing": "Do not overwrite the server-selected bed, anchor, or world destination implicitly, call getWorld before proving it is loaded, or mark a respawn applied from setRespawnLocation alone."
+        },
+        {
+          "id": "reconcile-owned-state-through-lifecycle",
+          "action": "Keep a narrow ownership ledger for temporary state introduced by the downed or respawn handoff, such as plugin-owned restrictions, UI, effects, modifiers, or tasks. Clear only exact owned entries; when restoring a captured value, compare the current value with the plugin-applied value and preserve foreign or vanilla changes. Select the destination in PlayerRespawnEvent but restore post-reset owned state only at the target-verified post-respawn boundary. Persist or otherwise durably reconcile the death epoch, settlement receipt, destination decision, and observed application result across quit, reconnect, and reload. On disable, stop accepting new transitions, remove only safe plugin-owned temporary state, durably record or explicitly resolve pending handoffs within a bounded barrier, and never replay settlement or start a teleport or fire-and-forget recovery after disable.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "An ownership ledger and compare-and-restore rule for every temporary mutation",
+            "A narrow durable handoff record containing player identity, death epoch, settlement receipt, destination decision, and applied outcome without retaining Player, World, or Location objects",
+            "Quit, reconnect, reload, and disable tests proving settlement is never replayed and foreign state is preserved"
+          ],
+          "stopIfMissing": "Do not blanket-reset player state, retain live Bukkit objects in durable records, or call quit or disable cleanup complete while a pending handoff can replay settlement."
+        },
+        {
+          "id": "test-handoff-outcomes-and-boundaries",
+          "action": "Extract the transition, settlement, and destination precedence rules into deterministic domain tests, then use target-version loaded-server evidence for event cancellation, revive, respawn reset, location, world lookup, and lifecycle behavior that a pure test or unsupported mock cannot prove. Cover duplicate death, respawn, and post-respawn callbacks; external cancel, uncancel, cancel to uncancel to recancel, competing owners, and ambiguous final cancellation; staged downed-side-effect publication and rollback; keep and drop combinations; invalid and unavailable destinations; bed, anchor, missing-block, and world-policy precedence; non-death respawn reasons; quit and reconnect; disable and reload; and foreign temporary-state changes. Keep generic teleport and chunk loading, region policy, full connection-session ownership, and game-specific revive mechanics outside this concern.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper plan", "plugin paper guardrail"],
+            "mcp": ["get_authoring_recipe", "get_authoring_plan", "get_authoring_guardrail"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringPlan", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "Table-driven unit tests for all state transitions, item and experience dispositions, destination decisions, and duplicate callbacks",
+            "Target-version loaded-server evidence for every runtime claim made about Paper death and respawn ordering or reset behavior",
+            "An explicit scope and limitations report for teleport, chunk, region, session, and game-specific mechanics not tested here"
+          ],
+          "stopIfMissing": "Do not report the handoff safe from one normal death and respawn path or from mocks that cannot observe the claimed Paper behavior."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-death-respawn-handoff-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Death drops or experience can duplicate, a foreign cancellation can be mistaken for plugin-owned downed state, an invalid destination can replace a valid vanilla spawn, pre-respawn mutations can be reset, and quit or reload can replay settlement unless the handoff is owned and reconciled exactly once."
     }
   ]
 }

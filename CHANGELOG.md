@@ -134,6 +134,12 @@ All notable changes to this project are documented here.
   source queries, stable unique ordering, server-owned cursors or explicit revisions, page and UI
   states, generation-fenced response acceptance, changed-payload deduplication semantics, shrink
   recovery, bounded prefetch, and deterministic boundary and mutation tests.
+- Paper death and respawn handoff guidance across data, Catalog, CLI, and MCP, with exclusive
+  vanilla-death, plugin-owned downed, and respawn-pending states; exactly-once item and experience
+  settlement; fail-closed cancellation ambiguity and staged downed side effects; explicit bed,
+  respawn-anchor, world, and plugin destination precedence; separate post-respawn application
+  outcomes; owned temporary-state restoration; and duplicate, unavailable-world, reconnect, reload,
+  and disable recovery tests.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.

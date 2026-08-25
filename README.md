@@ -73,6 +73,7 @@ minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
 minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
+minecraft-skills plugin paper plan paper-death-respawn-handoff-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
@@ -206,6 +207,16 @@ request internally, rejects redirects or non-PNG/encoded/oversized responses, an
 new exact-`.png` regular file with exclusive creation. Success JSON omits downloaded bytes and the
 filesystem path. The reference hash and downloaded SHA-256 are separate evidence; neither proves
 profile signatures, provenance, ownership, freshness, or licensing.
+
+`paper-death-respawn-handoff-review` coordinates one target-verified death epoch from event
+cancellation through post-respawn observation. It keeps vanilla death, plugin-owned downed, and
+respawn-pending states mutually exclusive; settles every item and experience unit once; preserves
+the server-selected bed, respawn-anchor, or world destination by default; and records destination
+selection separately from the applied post-respawn outcome. Pending receipts and plugin-owned
+temporary state must converge without replay across duplicate callbacks, quit, reconnect, reload,
+and disable. Because final event cancellation does not identify its owner, downed side effects stay
+staged until a cooperative ownership contract proves the outcome; ambiguous cancellation fails
+closed.
 
 `paper-plugin-testing-evidence-review` builds a claim-to-observation test plan. It distinguishes
 pure logic and owned test doubles from MockBukkit-supported behavior, loaded target-version Paper

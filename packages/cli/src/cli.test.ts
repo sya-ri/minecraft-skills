@@ -1312,6 +1312,71 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("prints and routes Paper death and respawn handoff guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-death-respawn-handoff"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("settle-death-items-and-experience-once");
+    expect(recipe.stdout.join("\n")).toContain("setRespawnLocation as a selection decision");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-death-respawn-handoff-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-death-respawn-handoff-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "PlayerDeathEvent respawn keepInventory itemsToKeep unavailable world",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-death-respawn-handoff-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-death-respawn-handoff-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-death-respawn-handoff"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-death-respawn-handoff-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-death-respawn-handoff-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("mutually exclusive states");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-death-respawn-handoff-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("replay settlement");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "death respawn handoff keep inventory experience",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-death-respawn-handoff"');
+  });
+
   it("prints and routes Paper high-frequency persistence contention guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-high-frequency-persistence"]);
     expect(recipe.code).toBe(0);

@@ -92,6 +92,7 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-custom-recipe-registration",
     );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-death-respawn-handoff");
   });
 
   it("loads bundled authoring scenario JSON", () => {
@@ -115,6 +116,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-server-backed-paged-ui-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
     expect(scenarioIds).toContain("paper-custom-recipe-review");
+    expect(scenarioIds).toContain("paper-death-respawn-handoff-review");
   });
 
   it("loads bundled intent lookup JSON", () => {
@@ -143,6 +145,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-server-backed-paged-ui-safety");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
     expect(guardrailIds).toContain("paper-custom-recipe-ownership");
+    expect(guardrailIds).toContain("paper-death-respawn-handoff-safety");
   });
 
   it("loads bundled authoring diagnostic JSON", () => {
@@ -166,6 +169,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-server-backed-paged-ui-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
     expect(diagnosticIds).toContain("paper-custom-recipe-registration-unsafe");
+    expect(diagnosticIds).toContain("paper-death-respawn-handoff-unsafe");
   });
 
   it("bundles Paper event dispatch and listener ownership safety guidance", () => {
@@ -610,6 +614,81 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf).toEqual(
       expect.arrayContaining([expect.stringContaining("fire-and-forget persistence")]),
     );
+  });
+
+  it("loads complete Paper death and respawn handoff guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-death-respawn-handoff");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "model-exclusive-handoff-states",
+        "settle-death-items-and-experience-once",
+        "separate-respawn-decision-from-applied-outcome",
+        "reconcile-owned-state-through-lifecycle",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "getItemsToKeep must also be removed from getDrops",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "setRespawnLocation as a selection decision, not proof of application",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "cancel, later uncancel, and later recancel",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "Stage or defer downed side effects",
+    );
+    expect(recipe?.finalChecks).toContain("paper-death-respawn-handoff-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-death-respawn-handoff-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-death-respawn-handoff"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain("paper-death-respawn-handoff-unsafe");
+    expect(scenario?.mustAvoid.join("\n")).toContain("fixed fallback world");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-death-respawn-handoff-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("mutually exclusive states");
+    expect(guardrail?.rules.join("\n")).toContain("preserve it by default");
+    expect(guardrail?.rules.join("\n")).toContain("fail closed");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-death-respawn-handoff-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("replay settlement");
+    expect(diagnostic?.failIf.join("\n")).toContain("cancel to uncancel to recancel");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string }> }>;
+    }>("authoring-checklists.json");
+    expect(
+      checklists.checklists
+        .find((entry) => entry.domain === "paper-plugin")
+        ?.steps.map((step) => step.id),
+    ).toContain("design-death-respawn-handoff");
   });
 
   it("loads Paper high-frequency persistence contention guidance", () => {
