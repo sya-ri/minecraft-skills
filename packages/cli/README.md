@@ -66,6 +66,7 @@ minecraft-skills data fetch paper-api-surface --version 26.2
 minecraft-skills minecraft list
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
+minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills minecraft pack-formats
 minecraft-skills minecraft pack-format 26.2 datapack
@@ -131,6 +132,19 @@ versions. `outcome` reports whether the requested scope was fully, partially, or
 `excludedRegistries` contains bounded per-version coverage statuses. Protocol changes require
 numeric IDs in both versions; null-to-number and number-to-null observations are not classified as
 changes.
+
+`minecraft analyze-log <file>` accepts a regular file or a symlink to a regular file, reads it from
+one stable file handle, rejects a size/timestamp change during the read, and requires valid UTF-8.
+The default ceilings are 2 MiB of UTF-8 input and 2 Mi decoded characters. `--max-input-bytes` and
+every analysis option (`--max-characters`, `--max-lines`, `--max-line-characters`, `--max-events`,
+`--max-exception-chains`, `--max-exception-depth`,
+`--max-exception-entries`, `--max-stack-frames`, `--max-platforms`, `--max-artifacts`,
+`--max-components`, `--max-text-characters`, and `--max-retained-text-characters`) may lower but
+never raise the published Catalog limits. Output distinguishes primary, cause, and suppressed
+branches; `deepestCause` follows only the explicit primary `Caused by` chain. Credentials, IP
+addresses, absolute paths, ANSI/OSC controls, unsafe controls, bidi overrides, and malformed
+Unicode are sanitized before parsing or retention. JAR, mod, and plugin labels remain evidence,
+not attribution.
 
 The Modrinth command uses the public v2 search API and supports `--category`, sorting with
 `--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.

@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { deflateSync } from "node:zlib";
 import {
+  defaultMinecraftLogAnalysisLimits,
   defaultServerPropertiesValidationLimits,
   getVersionDetail,
 } from "@minecraft-skills/catalog";
@@ -23,11 +24,26 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
 import { classifyDatapackProjectEntry, readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { readFilePrefix } from "./filePrefix.js";
+import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
 import {
   classifyResourcepackProjectEntry,
   readResourcepackProjectFiles,
 } from "./resourcepackProjectFiles.js";
 import { readBoundedServerProperties } from "./serverPropertiesFile.js";
+
+type FakeFileKind = "file" | "symlink" | "fifo" | "device";
+
+function fakeBigIntStats(kind: FakeFileKind, identity: bigint, size = 0n): BigIntStats {
+  return {
+    dev: 1n,
+    ino: identity,
+    size,
+    ctimeNs: identity * 10n,
+    mtimeNs: identity * 10n,
+    isFile: () => kind === "file",
+    isSymbolicLink: () => kind === "symlink",
+  } as unknown as BigIntStats;
+}
 
 function crc32(value: Uint8Array): number {
   let crc = 0xffffffff;
@@ -2846,6 +2862,245 @@ describe("minecraft-skills CLI", () => {
     expect(url).toContain("version=1.21.11");
   });
 
+  it("analyzes a bounded UTF-8 Minecraft log file", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-log-"));
+    const logPath = join(root, "latest.log");
+    try {
+      writeFileSync(
+        logPath,
+        [
+          "[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper",
+          "at example-plugin.jar//example.Plugin.run(Plugin.java:1)",
+          "Caused by: java.lang.IllegalStateException: root",
+        ].join("\r\n"),
+      );
+      const result = await capture([
+        "minecraft",
+        "analyze-log",
+        logPath,
+        "--max-input-bytes",
+        "4096",
+        "--max-events",
+        "1",
+        "--max-exception-depth",
+        "8",
+        "--max-stack-frames",
+        "8",
+      ]);
+      const output = JSON.parse(result.stdout.join("\n")) as Record<string, unknown>;
+
+      expect(result.code).toBe(0);
+      expect(output.format).toBe("minecraft-log");
+      expect(output.exceptionChainTotal).toBe(1);
+      expect(output.appliedLimits).toMatchObject({
+        maxInputBytes: 4096,
+        maxEvents: 1,
+        maxExceptionDepth: 8,
+        maxStackFrames: 8,
+      });
+      expect(result.stdout.join("\n")).toContain("java.lang.IllegalStateException");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("accepts a symlink only when its opened target is a bounded regular file", async () => {
+    if (process.platform === "win32") {
+      return;
+    }
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-log-symlink-"));
+    const target = join(root, "target.log");
+    const link = join(root, "linked.log");
+    try {
+      writeFileSync(target, "java.lang.RuntimeException: linked");
+      symlinkSync("target.log", link);
+
+      const result = await capture(["minecraft", "analyze-log", link]);
+
+      expect(result.code).toBe(0);
+      expect(result.stdout.join("\n")).toContain("java.lang.RuntimeException");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects FIFO and device entries before attempting to open them", () => {
+    for (const kind of ["fifo", "device"] as const) {
+      const open = vi.fn(() => 7);
+
+      expect(() =>
+        readBoundedMinecraftLog("special.log", 1_024, {
+          lstat: () => fakeBigIntStats(kind, 1n),
+          open,
+        }),
+      ).toThrow("requires a regular file");
+      expect(open).not.toHaveBeenCalled();
+    }
+  });
+
+  it("rejects a symlink to a FIFO before attempting to open its target", () => {
+    const open = vi.fn(() => 7);
+
+    expect(() =>
+      readBoundedMinecraftLog("linked.log", 1_024, {
+        lstat: (path) =>
+          path === "linked.log" ? fakeBigIntStats("symlink", 1n) : fakeBigIntStats("fifo", 2n),
+        realpath: () => "fifo-target",
+        open,
+      }),
+    ).toThrow("requires a regular file");
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it("opens a preclassified regular symlink target safely when O_NONBLOCK is unavailable", () => {
+    const contents = Buffer.from("java.lang.RuntimeException: linked", "utf8");
+    const link = fakeBigIntStats("symlink", 1n, 10n);
+    const target = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    const open = vi.fn(() => 7);
+    const close = vi.fn();
+
+    const result = readBoundedMinecraftLog("linked.log", 1_024, {
+      lstat: (path) => (path === "linked.log" ? link : target),
+      realpath: () => "regular-target.log",
+      open,
+      fstat: () => target,
+      read: (_handle, buffer, offset, length) => {
+        contents.copy(buffer, offset, 0, length);
+        return length;
+      },
+      close,
+      openFlags: { readonly: 1, noFollow: 4, nonBlock: undefined },
+    });
+
+    expect(result).toBe("java.lang.RuntimeException: linked");
+    expect(open).toHaveBeenCalledWith("regular-target.log", 5);
+    expect(close).toHaveBeenCalledWith(7);
+  });
+
+  it("rejects an opened handle that does not match the preclassified file", () => {
+    const expected = fakeBigIntStats("file", 1n);
+    const replacement = fakeBigIntStats("file", 2n);
+
+    expect(() =>
+      readBoundedMinecraftLog("latest.log", 1_024, {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => replacement,
+        close: () => undefined,
+      }),
+    ).toThrow("file identity changed before it could be read");
+  });
+
+  it("rejects a log path whose regular-file identity changes after reading", () => {
+    const contents = Buffer.from("java.lang.RuntimeException: changed", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const replacement = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    let pathChecks = 0;
+
+    expect(() =>
+      readBoundedMinecraftLog("latest.log", 1_024, {
+        lstat: () => {
+          pathChecks += 1;
+          return pathChecks < 3 ? expected : replacement;
+        },
+        open: () => 7,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length) => {
+          contents.copy(buffer, offset, 0, length);
+          return length;
+        },
+        close: () => undefined,
+      }),
+    ).toThrow("file identity changed while it was being read");
+  });
+
+  it("rejects a regular symlink whose target identity changes after reading", () => {
+    const contents = Buffer.from("java.lang.RuntimeException: changed", "utf8");
+    const link = fakeBigIntStats("symlink", 1n, 10n);
+    const expected = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    const replacement = fakeBigIntStats("file", 3n, BigInt(contents.byteLength));
+    let targetChecks = 0;
+
+    expect(() =>
+      readBoundedMinecraftLog("linked.log", 1_024, {
+        lstat: (path) => {
+          if (path === "linked.log") return link;
+          targetChecks += 1;
+          return targetChecks < 3 ? expected : replacement;
+        },
+        realpath: () => "regular-target.log",
+        open: () => 7,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length) => {
+          contents.copy(buffer, offset, 0, length);
+          return length;
+        },
+        close: () => undefined,
+      }),
+    ).toThrow("file identity changed while it was being read");
+  });
+
+  it("rejects non-files, oversized logs, and malformed UTF-8 before analysis", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-log-invalid-"));
+    const oversized = join(root, "oversized.log");
+    const malformed = join(root, "malformed.log");
+    try {
+      writeFileSync(oversized, "12345");
+      writeFileSync(malformed, Buffer.from([0xc3, 0x28]));
+
+      const directory = await capture(["minecraft", "analyze-log", root]);
+      const tooLarge = await capture([
+        "minecraft",
+        "analyze-log",
+        oversized,
+        "--max-input-bytes",
+        "4",
+      ]);
+      const invalidUtf8 = await capture(["minecraft", "analyze-log", malformed]);
+
+      expect(directory).toMatchObject({ code: 1 });
+      expect(directory.stderr.join("\n")).toContain("requires a regular file");
+      expect(tooLarge).toMatchObject({ code: 1 });
+      expect(tooLarge.stderr).toEqual(["minecraft analyze-log refuses files larger than 4 bytes"]);
+      expect(invalidUtf8).toMatchObject({ code: 1 });
+      expect(invalidUtf8.stderr).toEqual(["minecraft analyze-log requires valid UTF-8 input"]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects unsafe Minecraft log analysis arguments", async () => {
+    const missing = await capture(["minecraft", "analyze-log"]);
+    const repeated = await capture([
+      "minecraft",
+      "analyze-log",
+      "latest.log",
+      "--max-lines",
+      "1",
+      "--max-lines",
+      "2",
+    ]);
+    const unknown = await capture([
+      "minecraft",
+      "analyze-log",
+      "latest.log",
+      "--unbounded",
+      "true",
+    ]);
+    const raised = await capture([
+      "minecraft",
+      "analyze-log",
+      "latest.log",
+      "--max-events",
+      String(defaultMinecraftLogAnalysisLimits.maxEvents + 1),
+    ]);
+
+    expect(missing.stderr).toEqual(["minecraft analyze-log requires exactly one <file>"]);
+    expect(repeated.stderr.join("\n")).toContain("option must not be repeated");
+    expect(unknown.stderr.join("\n")).toContain("received unknown option");
+    expect(raised.stderr.join("\n")).toContain("must not exceed");
+  });
+
   it("reports unknown commands", async () => {
     const result = await capture(["nope"]);
     expect(result.code).toBe(1);
@@ -2884,6 +3139,7 @@ describe("minecraft-skills CLI", () => {
     );
     expect(output).toContain("minecraft-skills plugin paper search <query>");
     expect(output).toContain("Grouped commands:");
+    expect(output).toContain("minecraft-skills minecraft analyze-log <file>");
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { deflateSync } from "node:zlib";
 import {
   defaultDatapackProjectValidationLimits,
+  defaultMinecraftLogAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
   defaultServerPropertiesValidationLimits,
   getVersionDetail,
@@ -250,6 +251,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_png");
     expect(tools.map((tool) => tool.name)).toContain("validate_datapack_project");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
+    expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_log");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
@@ -2745,5 +2747,78 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"projects": 123');
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.modrinth.com/v2/statistics");
+  });
+
+  it("analyzes bounded Minecraft logs while redacting retained sensitive values", async () => {
+    const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: [
+        "[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: password=hunter2 peer=203.0.113.8",
+        "\tSuppressed: java.io.IOException: close failed",
+        "\tCaused by: java.lang.IllegalStateException: suppressed root",
+        "Caused by: java.lang.IllegalArgumentException: primary root",
+        "\tat example-plugin.jar//example.Plugin.run(Plugin.java:1)",
+      ].join("\n"),
+      limits: {
+        maxEvents: 1,
+        maxExceptionDepth: 8,
+        maxStackFrames: 8,
+      },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).not.toBe(true);
+    expect(output).toContain('"format": "minecraft-log"');
+    expect(output).toContain('"branch": "suppressed"');
+    expect(output).toContain('"message": "primary root"');
+    expect(output).toContain('"maxExceptionDepth": 8');
+    expect(output).toContain("[REDACTED]");
+    expect(output).toContain("[IP_REDACTED]");
+    expect(output).not.toContain("hunter2");
+    expect(output).not.toContain("203.0.113.8");
+  });
+
+  it("enforces Minecraft log MCP input and nested limit boundaries", async () => {
+    const byteLimited = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "éé",
+      limits: { maxInputBytes: 3 },
+    });
+    const tooLong = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "x".repeat(defaultMinecraftLogAnalysisLimits.maxCharacters + 1),
+    });
+    const raised = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: { maxEvents: defaultMinecraftLogAnalysisLimits.maxEvents + 1 },
+    });
+    const raisedBytes = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: { maxInputBytes: defaultMinecraftLogAnalysisLimits.maxInputBytes + 1 },
+    });
+    const unknownLimit = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: { unbounded: true },
+    });
+    const unknownArgument = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      raw: true,
+    });
+    const nonObjectLimits = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: [],
+    });
+
+    expect(byteLimited.isError).not.toBe(true);
+    expect(byteLimited.content[0]?.text).toContain('"processedBytes": 2');
+    expect(byteLimited.content[0]?.text).toContain('"maxInputBytes"');
+    expect(tooLong.isError).toBe(true);
+    expect(tooLong.content[0]?.text).toContain("must be at most");
+    expect(raised.isError).toBe(true);
+    expect(raised.content[0]?.text).toContain("must be an integer from 1");
+    expect(raisedBytes.isError).toBe(true);
+    expect(unknownLimit.isError).toBe(true);
+    expect(unknownLimit.content[0]?.text).toContain("unknown argument");
+    expect(unknownArgument.isError).toBe(true);
+    expect(unknownArgument.content[0]?.text).toContain("unknown argument");
+    expect(nonObjectLimits.isError).toBe(true);
+    expect(nonObjectLimits.content[0]?.text).toContain("limits must be an object");
   });
 });

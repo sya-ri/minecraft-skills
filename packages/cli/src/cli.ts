@@ -13,6 +13,7 @@ import {
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  analyzeMinecraftLog,
   type CatalogSearchKind,
   type CommandComparisonOptions,
   type CommandSearchOptions,
@@ -28,6 +29,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultMinecraftLogAnalysisLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
@@ -106,6 +108,7 @@ import {
   listSourceTiers,
   listVersionSupport,
   listVersions,
+  type MinecraftLogAnalysisLimits,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type PlayerSkinSourceRectangleInput,
@@ -154,6 +157,7 @@ import {
 } from "@minecraft-skills/rcon";
 import { readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { readBoundedPngFile } from "./filePrefix.js";
+import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
 import {
   validateNewPlayerTexturePngPath,
   writeNewPlayerTexturePng,
@@ -206,6 +210,76 @@ function readBoundedRegularFile(filePath: string, maxBytes: number): Buffer {
   } finally {
     closeSync(file);
   }
+}
+
+const minecraftLogLimitOptions: Readonly<Record<string, keyof MinecraftLogAnalysisLimits>> = {
+  "--max-input-bytes": "maxInputBytes",
+  "--max-characters": "maxCharacters",
+  "--max-lines": "maxLines",
+  "--max-line-characters": "maxLineCharacters",
+  "--max-events": "maxEvents",
+  "--max-exception-chains": "maxExceptionChains",
+  "--max-exception-depth": "maxExceptionDepth",
+  "--max-exception-entries": "maxExceptionEntries",
+  "--max-stack-frames": "maxStackFrames",
+  "--max-platforms": "maxPlatforms",
+  "--max-artifacts": "maxArtifacts",
+  "--max-components": "maxComponents",
+  "--max-text-characters": "maxTextCharacters",
+  "--max-retained-text-characters": "maxRetainedTextCharacters",
+};
+
+function parseMinecraftLogArgs(args: string[]): {
+  filePath: string;
+  maxInputBytes: number;
+  limits: Partial<MinecraftLogAnalysisLimits>;
+} {
+  const files: string[] = [];
+  const seenOptions = new Set<string>();
+  const values = new Map<string, number>();
+  const allowedOptions = new Set(Object.keys(minecraftLogLimitOptions));
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (!arg) continue;
+    if (!arg.startsWith("--")) {
+      files.push(arg);
+      continue;
+    }
+    if (!allowedOptions.has(arg)) {
+      throw new Error(`minecraft analyze-log received unknown option: ${arg}`);
+    }
+    if (seenOptions.has(arg)) {
+      throw new Error(`minecraft analyze-log option must not be repeated: ${arg}`);
+    }
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`minecraft analyze-log ${arg} requires a value`);
+    }
+    const parsed = readIntegerArg(value, `minecraft analyze-log ${arg}`);
+    if (parsed < 1) {
+      throw new Error(`minecraft analyze-log ${arg} must be at least 1`);
+    }
+    values.set(arg, parsed);
+    seenOptions.add(arg);
+    index += 1;
+  }
+  if (files.length !== 1) {
+    throw new Error("minecraft analyze-log requires exactly one <file>");
+  }
+
+  const limits: Partial<MinecraftLogAnalysisLimits> = {};
+  for (const [option, name] of Object.entries(minecraftLogLimitOptions)) {
+    const value = values.get(option);
+    if (value === undefined) continue;
+    if (value > defaultMinecraftLogAnalysisLimits[name]) {
+      throw new Error(
+        `minecraft analyze-log ${option} must not exceed ${defaultMinecraftLogAnalysisLimits[name]}`,
+      );
+    }
+    limits[name] = value;
+  }
+  const maxInputBytes = limits.maxInputBytes ?? defaultMinecraftLogAnalysisLimits.maxInputBytes;
+  return { filePath: files[0] ?? "", maxInputBytes, limits };
 }
 
 function readOption(args: string[], name: string, fallback: string): string {
@@ -732,6 +806,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft compare-registry-entries": "compare-registry-entries",
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
+    "minecraft analyze-log": "analyze-minecraft-log",
     "fabric toolchain": "fabric-toolchain",
     "velocity toolchain": "velocity-toolchain",
     "modrinth search": "modrinth-search",
@@ -956,6 +1031,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "validate-resourcepack-project": "resourcepack validate-project",
   "validate-player-skin-layout": "player-skin validate-layout",
   "download-player-texture": "player-texture download",
+  "analyze-minecraft-log": "minecraft analyze-log",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
   commands: "datapack commands",
   "compare-commands": "datapack compare-commands",
@@ -1141,6 +1217,9 @@ Common workflows:
     minecraft-skills plugin paper members 1.21.11 --type org.bukkit.entity.Player --contains sendMessage
     minecraft-skills plugin paper events "player join" --version 26.2
 
+  Structure a Minecraft Java log or crash report before diagnosing it:
+    minecraft-skills minecraft analyze-log ./logs/latest.log
+
 Safety notes:
   - Command paths prove parser shape, not gameplay success, permissions, or runtime behavior.
   - Vanilla path matches prove bundled vanilla file presence, not custom content validity.
@@ -1233,6 +1312,8 @@ Grouped commands:
   minecraft-skills minecraft search-all <query...> [--version latest] [--domain datapack|resourcepack|paper-plugin] [--limit 20]
   minecraft-skills minecraft explain-path [version] <path> [--domain datapack|resourcepack]
   minecraft-skills minecraft suggest-lookups <task...> [--version latest] [--domain datapack|resourcepack|paper-plugin]
+  minecraft-skills minecraft analyze-log <file> [--max-input-bytes bytes] [--max-characters chars] [--max-lines count] [--max-line-characters chars] [--max-events count] [--max-exception-chains count] [--max-exception-depth count] [--max-exception-entries count] [--max-stack-frames count]
+    [--max-platforms count] [--max-artifacts count] [--max-components count] [--max-text-characters chars] [--max-retained-text-characters chars]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
   minecraft-skills skill list|show|write
@@ -3015,6 +3096,18 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           task,
           ...(domain ? { domain } : {}),
           limit: Number(readOption(args, "--limit", "8")),
+        }),
+      );
+      return 0;
+    }
+
+    if (command === "analyze-minecraft-log") {
+      const parsed = parseMinecraftLogArgs(args);
+      printJson(
+        output,
+        analyzeMinecraftLog({
+          text: readBoundedMinecraftLog(parsed.filePath, parsed.maxInputBytes),
+          limits: parsed.limits,
         }),
       );
       return 0;

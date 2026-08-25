@@ -15,6 +15,7 @@ Node.js 22.12 or newer is required.
 ```ts
 import { readFileSync } from "node:fs";
 import {
+  analyzeMinecraftLog,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -325,6 +326,10 @@ const serverProperties = validateServerProperties({
 // `serverProperties` never contains property values. Java Properties syntax validation is
 // complete within the published bounds, while exact target-version keys/defaults and the
 // Minecraft runtime reader/encoding remain explicit unknowns.
+const logAnalysis = analyzeMinecraftLog({
+  text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
+Caused by: java.lang.IllegalStateException: root`,
+});
 // Add assets/<namespace>/sounds.json as JSON content and local .ogg files as Uint8Array content.
 // Supply at most the first 58 bytes needed for each Ogg/Vorbis identification page. Complete local
 // PNG files may also be supplied as Uint8Array content for bounded structural validation.
@@ -427,6 +432,13 @@ excess chunk counts are closed outcomes. Successful Catalog results retain bound
 callers; the CLI deliberately omits them from JSON. The requested reference hash is not required to
 equal the downloaded SHA-256 and neither value proves profile signatures, provenance, account or
 texture ownership, freshness, licensing, rendered pixels, or cape/elytra layout.
+
+`analyzeMinecraftLog` is a pure bounded parser for Minecraft Java log text, Java stack traces, and
+crash reports. It separates primary cause and suppressed branches, records only explicit
+platform/version and mod/plugin statements, and never infers ownership from Java package names.
+All limits may be lowered but not raised. Credentials, IP addresses, absolute paths, ANSI/OSC and
+unsafe Unicode controls are sanitized before values are retained or deduplicated; no raw input
+line is returned.
 
 `validateModrinthPack` is a pure, offline validator for parsed index JSON plus optional archive
 entry metadata. `validateModrinthPackArchive` accepts local `.mrpack` bytes; neither function
