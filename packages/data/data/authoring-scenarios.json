@@ -1031,6 +1031,60 @@
         "redefining generic scheduler, persistent-data, event-priority, ItemStack identity, or cross-chunk operation guidance inside this geometry and ownership concern"
       ],
       "failureMode": "A world-space control can render at one pose while accepting input at another, retain orphaned generations, double-run actions, or remove foreign entities when its visual, hit-target, and ownership specifications diverge."
+    },
+    {
+      "id": "paper-high-frequency-persistence-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper high-frequency persistence and transaction contention",
+      "userPrompt": "Create or review high-frequency Paper persistence that keeps database I/O off the server thread, chooses direct atomic writes or bounded per-key delta coalescing from measured requirements, survives contention and partial flushes without loss or duplication, and shuts down with explicit durability and recovery evidence.",
+      "useWhen": [
+        "a Paper event, scheduled task, command, or callback can generate frequent or bursty database writes",
+        "the same durable key can be updated by concurrent callbacks, workers, servers, or plugin instances",
+        "the design uses direct atomic updates, write-behind batching, or per-key delta coalescing",
+        "serialization conflicts, deadlocks, partial flushes, retries, backpressure, shutdown, or restart recovery are in scope",
+        "the request needs evidence that a database adapter is safe under contention"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-high-frequency-persistence"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-threading-assumption",
+          "paper-plugin-test-evidence-gap",
+          "paper-high-frequency-persistence-unsafe"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "an event-rate, key-cardinality, pending-byte, durability, visibility, and ordering matrix exists for every producer",
+        "each producer deliberately selects a database-side atomic mutation or bounded per-key delta coalescing according to its semantics and measured load",
+        "coalescing is limited to proven mergeable deltas and has explicit key, byte, age, magnitude, admission, and in-flight bounds",
+        "database work runs outside the server or region tick context and Bukkit-facing publication revalidates its target in a compatible context",
+        "snapshot ownership and per-key accounting preserve accepted, durable, live-pending, rejected, and terminal recovery amounts across partial and concurrent flushes",
+        "unknown commit outcomes reconcile through idempotency, revisions, a durable batch ledger, or an adapter-supported outcome check before reapplication",
+        "only database-and-driver-verified serialization or deadlock conflicts retry, and each retry rolls back and reruns the complete transaction from fresh state within bounded attempts and time",
+        "non-idempotent player, network, command, and item-delivery side effects cannot repeat when a transaction retries",
+        "shutdown closes admission, waits behind a bounded barrier, hands off any undurable remainder to explicit recovery, and closes resources in order",
+        "bounded-cardinality observability exposes rate, queue size and age, memory estimate, flushes, retry classification, saturation, recovery, and shutdown outcome",
+        "controlled time, retry delays, execution, and interleavings plus real-adapter contention tests support the claimed guarantees",
+        "player-connection generations and teardown are routed to paper-player-session-lifecycle"
+      ],
+      "mustAvoid": [
+        "choosing per-event writes or batching without a rate, durability, visibility, and ordering model",
+        "coalescing ordered state transitions, latest-value replacements, or non-idempotent effects as if they were mergeable deltas",
+        "letting pending key count, approximate bytes, oldest age, in-flight flushes, or retries grow without explicit bounds",
+        "blocking a Paper server or region tick context on database work or queue capacity",
+        "clearing a flush snapshot without exact ownership and remainder accounting",
+        "blindly requeueing a whole batch after a partial result or unknown commit outcome",
+        "retrying a single statement, every SQL exception, a generic transient category, or message text instead of a verified serialization or deadlock contract",
+        "running player-visible, network, command, or item-delivery side effects inside a retryable transaction",
+        "claiming contention safety from a memory fake without the real database adapter and driver",
+        "launching fire-and-forget persistence after plugin disable or silently dropping the undurable remainder",
+        "duplicating player-session generation, reconnect, quit, or teardown guidance in this persistence workflow"
+      ],
+      "failureMode": "A hot persistence path can block ticks, grow without bound, lose or double-apply deltas, repeat side effects, or exhaust retries when its rate model, transaction classifier, flush accounting, shutdown contract, and real-adapter evidence are incomplete."
     }
   ]
 }

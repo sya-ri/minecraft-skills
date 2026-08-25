@@ -5241,7 +5241,7 @@ describe("catalog", () => {
 
     const paper = searchAll({
       version: "26.2",
-      query: "listener for Paper Plugin Player Join Event",
+      query: "org.bukkit.event.player.PlayerJoinEvent",
       domain: "paper-plugin",
       limit: 80,
     });
@@ -6060,6 +6060,111 @@ describe("catalog", () => {
     );
     expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
       "paper-scheduled-task-lifecycle-review",
+    );
+  });
+
+  it("exposes and routes Paper high-frequency persistence contention guidance", () => {
+    const recipe = getAuthoringRecipe("paper-high-frequency-persistence");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "model-rate-durability-and-ordering",
+        "choose-direct-or-coalesced-writes",
+        "isolate-io-and-bound-admission",
+        "flush-with-exact-accounting",
+        "retry-only-verified-whole-transactions",
+        "shut-down-recover-and-observe",
+        "prove-contention-and-route-session-cleanup",
+      ]),
+    );
+    expect(
+      recipe.steps.find((step) => step.id === "choose-direct-or-coalesced-writes")?.action,
+    ).toContain("bounded per-key delta coalescing");
+    expect(
+      recipe.steps.find((step) => step.id === "flush-with-exact-accounting")?.action,
+    ).toContain("unknown commit outcome");
+    expect(
+      recipe.steps.find((step) => step.id === "retry-only-verified-whole-transactions")
+        ?.stopIfMissing,
+    ).toContain("Do not retry one failed statement");
+    expect(
+      recipe.steps.find((step) => step.id === "prove-contention-and-route-session-cleanup")?.action,
+    ).toContain("paper-player-session-lifecycle");
+    expect(recipe.finalChecks).toContain("paper-high-frequency-persistence-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-high-frequency-persistence-safety");
+    expect(guardrail.rules.join("\n")).toContain("server or region tick context");
+    expect(guardrail.rules.join("\n")).toContain("fresh transaction");
+    expect(guardrail.requiredEvidence.join("\n")).toContain("real-adapter contention tests");
+
+    const diagnostic = getAuthoringDiagnostic("paper-high-frequency-persistence-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("partial flush");
+    expect(diagnostic.failIf.join("\n")).toContain("generic transient exceptions");
+    expect(diagnostic.failIf.join("\n")).toContain("memory fake");
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    const checklistStep = checklist.steps.find(
+      (step) => step.id === "bound-high-frequency-persistence",
+    );
+    expect(checklistStep?.evidence.join("\n")).toContain("real-adapter contention tests");
+
+    const scenario = getAuthoringScenario("paper-high-frequency-persistence-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-high-frequency-persistence"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-high-frequency-persistence-unsafe",
+    );
+    expect(scenario.successCriteria.join("\n")).toContain(
+      "database-and-driver-verified serialization or deadlock conflicts",
+    );
+
+    for (const query of [
+      "high-frequency database persistence transaction contention",
+      "bounded per-key delta coalescing partial flush",
+      "serialization deadlock whole transaction retry",
+    ]) {
+      const scenarioSearch = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarioSearch.results[0]?.scenario.id, query).toBe(
+        "paper-high-frequency-persistence-review",
+      );
+    }
+
+    const catalogSearch = searchCatalog({
+      query: "delta coalescing partial flush transaction retry",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-high-frequency-persistence",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-high-frequency-persistence-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-high-frequency-persistence");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-high-frequency-persistence-unsafe",
+    );
+    expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-api-surface");
+
+    const task =
+      "Review a Paper high-frequency counter with delta coalescing, partial flushes, and transaction contention";
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task,
+      domain: "paper-plugin",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      `plugin paper search ${JSON.stringify(task)}`,
+    );
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-high-frequency-persistence",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-high-frequency-persistence-review",
     );
   });
 

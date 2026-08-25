@@ -1287,6 +1287,54 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("calls Paper high-frequency persistence contention guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-high-frequency-persistence",
+    });
+    expect(recipe.content[0]?.text).toContain("retry-only-verified-whole-transactions");
+    expect(recipe.content[0]?.text).toContain("paper-player-session-lifecycle");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-high-frequency-persistence-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-high-frequency-persistence-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "bounded per-key delta coalescing partial flush transaction contention",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-high-frequency-persistence-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-high-frequency-persistence-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-high-frequency-persistence"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-high-frequency-persistence-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-high-frequency-persistence-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("real-adapter contention tests");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-high-frequency-persistence-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("unknown commit outcome");
+
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("bound-high-frequency-persistence");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "delta coalescing partial flush transaction retry",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-high-frequency-persistence"');
+  });
+
   it("calls and routes Paper persistent data contract guidance tools", async () => {
     const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
       domain: "paper-plugin",

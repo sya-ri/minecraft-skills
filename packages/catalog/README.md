@@ -164,6 +164,10 @@ const displayInteractionPlan = getAuthoringPlan({
   scenario: "paper-display-interaction-contract-review",
   version: "1.21.11",
 });
+const persistencePlan = getAuthoringPlan({
+  scenario: "paper-high-frequency-persistence-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -187,6 +191,7 @@ const configurationLifecycleRecipe = getAuthoringRecipe("paper-plugin-configurat
 const bossBarRecipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
 const persistentDataRecipe = getAuthoringRecipe("paper-persistent-data-contract");
 const displayInteractionRecipe = getAuthoringRecipe("paper-display-interaction-contract");
+const persistenceRecipe = getAuthoringRecipe("paper-high-frequency-persistence");
 const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
 const customRecipeRegistrationRecipe = getAuthoringRecipe(
   "paper-custom-recipe-registration",
@@ -216,6 +221,7 @@ const testingEvidenceScenario = getAuthoringScenario(
   "paper-plugin-testing-evidence-review",
 );
 const customRecipeScenario = getAuthoringScenario("paper-custom-recipe-review");
+const persistenceScenario = getAuthoringScenario("paper-high-frequency-persistence-review");
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const eventListenerGuardrail = getAuthoringGuardrail("paper-event-listener-semantics-safety");
@@ -229,6 +235,7 @@ const configurationLifecycleGuardrail = getAuthoringGuardrail(
 const bossBarGuardrail = getAuthoringGuardrail("paper-bossbar-audience-lifecycle-safety");
 const persistentDataGuardrail = getAuthoringGuardrail("paper-persistent-data-contract");
 const displayInteractionGuardrail = getAuthoringGuardrail("paper-display-interaction-contract");
+const persistenceGuardrail = getAuthoringGuardrail("paper-high-frequency-persistence-safety");
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const customRecipeGuardrail = getAuthoringGuardrail("paper-custom-recipe-ownership");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
@@ -252,6 +259,7 @@ const customRecipeDiagnostic = getAuthoringDiagnostic(
 const displayInteractionDiagnostic = getAuthoringDiagnostic(
   "paper-display-interaction-contract-unsafe",
 );
+const persistenceDiagnostic = getAuthoringDiagnostic("paper-high-frequency-persistence-unsafe");
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",
 );

@@ -100,6 +100,10 @@ minecraft-skills plugin paper guardrail paper-custom-recipe-ownership
 minecraft-skills plugin paper diagnostic paper-custom-recipe-registration-unsafe
 minecraft-skills plugin paper recipe paper-display-interaction-contract
 minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
+minecraft-skills plugin paper search-scenarios "bounded per-key delta coalescing contention"
+minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
+minecraft-skills plugin paper guardrail paper-high-frequency-persistence-safety
+minecraft-skills plugin paper diagnostic paper-high-frequency-persistence-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -819,6 +823,31 @@ one serialized transition. It then applies bounded reconciliation and explicit r
 right-click event path and hand policy, then requires pure layout, loaded-server lifecycle, and
 target-client visual and click-boundary evidence. Generic scheduler, PDC, event-priority,
 ItemStack-identity, and cross-chunk behavior stays in dedicated guidance.
+
+For frequent or contended Paper database writes, resolve
+`plugin paper plan paper-high-frequency-persistence-review <version>`. Start with a producer matrix
+covering steady and peak rate, burst duration, key cardinality, pending memory, durability and
+visibility budgets, and ordering semantics. The workflow then selects either a database-side atomic
+mutation or bounded per-key delta coalescing, keeps database I/O outside the server or region tick
+context, and requires explicit key, byte, age, in-flight, admission, and retry bounds.
+
+Flushes use immutable batch snapshots and exact accepted-to-durable accounting. A known partial
+result requeues only its uncommitted remainder, while an unknown commit outcome must be reconciled
+through idempotency, a revision, a durable batch ledger, or a supported adapter check before any
+reapplication. Only serialization or deadlock conflicts verified against the selected database and
+driver may retry, and each retry starts a fresh whole transaction without external side effects.
+Shutdown closes admission before a bounded barrier and either reaches the durability budget or
+hands an explicit remainder to restart recovery. Deterministic interleaving tests are necessary but
+do not replace contention tests against the real adapter and driver. Player connection generations,
+reconnect, quit, stale publication, and teardown remain in `paper-player-session-lifecycle`.
+
+The off-thread boundary follows Paper's official [scheduling guidance](https://docs.papermc.io/paper/dev/scheduler/)
+and [database guidance](https://docs.papermc.io/paper/dev/using-databases/). JDBC defines a transaction
+as one unit and documents rollback before restarting failed work in its
+[transaction guide](https://docs.oracle.com/javase/tutorial/jdbc/basics/transactions.html). Its
+[`SQLTransactionRollbackException`](https://docs.oracle.com/en/java/javase/26/docs/api/java.sql/java/sql/SQLTransactionRollbackException.html)
+also requires consulting the driver vendor's documented conditions, so the bundled workflow does
+not hard-code one database product's retry codes or exception layout.
 
 ## Source Policy
 

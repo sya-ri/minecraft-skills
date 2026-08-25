@@ -608,6 +608,80 @@ describe("@minecraft-skills/data", () => {
     );
   });
 
+  it("loads Paper high-frequency persistence contention guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-high-frequency-persistence");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "model-rate-durability-and-ordering",
+        "choose-direct-or-coalesced-writes",
+        "isolate-io-and-bound-admission",
+        "flush-with-exact-accounting",
+        "retry-only-verified-whole-transactions",
+        "shut-down-recover-and-observe",
+        "prove-contention-and-route-session-cleanup",
+      ]),
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "Real-adapter contention evidence",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "paper-player-session-lifecycle",
+    );
+    expect(recipe?.finalChecks).toContain("paper-high-frequency-persistence-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-high-frequency-persistence-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-high-frequency-persistence"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-high-frequency-persistence-unsafe",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("real-adapter contention tests");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-high-frequency-persistence-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("fresh transaction");
+    expect(guardrail?.requiredEvidence.join("\n")).toContain("real-adapter contention tests");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-high-frequency-persistence-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("unknown commit outcome");
+    expect(diagnostic?.failIf.join("\n")).toContain("real database adapter and driver");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const checklistStep = checklists.checklists
+      .find((entry) => entry.domain === "paper-plugin")
+      ?.steps.find((step) => step.id === "bound-high-frequency-persistence");
+    expect(checklistStep?.evidence.join("\n")).toContain(
+      "database-and-driver-verified serialization or deadlock conflicts",
+    );
+  });
+
   it("loads complete Paper BossBar audience lifecycle guidance", () => {
     const recipes = readDataJson<{
       recipes: Array<{

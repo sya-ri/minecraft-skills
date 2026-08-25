@@ -1312,6 +1312,75 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("prints and routes Paper high-frequency persistence contention guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-high-frequency-persistence"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("retry-only-verified-whole-transactions");
+    expect(recipe.stdout.join("\n")).toContain("paper-player-session-lifecycle");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-high-frequency-persistence-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-high-frequency-persistence-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "bounded per-key delta coalescing partial flush transaction contention",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-high-frequency-persistence-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-high-frequency-persistence-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-high-frequency-persistence"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-high-frequency-persistence-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-high-frequency-persistence-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("real-adapter contention tests");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-high-frequency-persistence-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("unknown commit outcome");
+
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("bound-high-frequency-persistence");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "delta coalescing partial flush transaction retry",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-high-frequency-persistence"');
+  });
+
   it("prints and routes Paper persistent data contract guidance", async () => {
     const checklist = await capture(["plugin", "paper", "checklist"]);
     expect(checklist.code).toBe(0);

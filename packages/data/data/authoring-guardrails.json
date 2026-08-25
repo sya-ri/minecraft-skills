@@ -570,6 +570,37 @@
         "target-client visual and input evidence for subtype or custom-model pivots, transformations, billboard behavior, interpolation policy, debug hitboxes, and click boundaries"
       ],
       "failureMode": "An independently positioned visual and hit target can drift, duplicate, execute more than once, leak across lifecycle transitions, or cause broad cleanup to remove another owner's entities."
+    },
+    {
+      "id": "paper-high-frequency-persistence-safety",
+      "domains": ["paper-plugin"],
+      "title": "Bound Paper persistence and retry whole transactions safely",
+      "rules": [
+        "Build a per-producer matrix of steady and peak rate, burst duration, key cardinality, pending bytes, durability-loss window, visibility latency, ordering, and conflict semantics before choosing a write path.",
+        "Prefer a database-side atomic mutation or compare-and-set transition when strict durability, ordering, or preconditions require distinct writes and measured contention is acceptable.",
+        "Use per-key delta coalescing only when the domain proves the delta merge associative and commutative, including overflow and range behavior.",
+        "Bound pending keys, approximate bytes, oldest age, delta magnitude, concurrent flushes, retry attempts, and total retry time; define a non-blocking admission and durability result at every limit.",
+        "Run connection acquisition, statements, commits, rollbacks, retries, and journal I/O outside the Paper server or region tick context, and publish Bukkit-facing results only in a target-compatible context after revalidation.",
+        "Flush immutable, stably identified snapshots while new deltas accumulate separately; maintain an invariant that every accepted amount is durable, live pending, explicitly rejected, or in explicit terminal recovery exactly once.",
+        "After a known partial result, requeue only the exact uncommitted remainder and merge it atomically with concurrent arrivals; after an unknown commit outcome, reconcile through idempotency, revision, a durable batch ledger, or an adapter-supported outcome check before reapplication.",
+        "Retry only serialization or deadlock conflicts identified by documented behavior of the selected database and driver, not by generic exception categories or message text.",
+        "A verified retry must roll back and discard the failed transaction, open a fresh transaction, reacquire current state, and rerun the complete unit within bounded attempts, jitter, and an overall deadline.",
+        "Keep player-visible, network, command, item-delivery, and other non-idempotent external side effects outside retryable transactions; publish after a known commit or through an idempotent outbox-style boundary.",
+        "Close admission before shutdown, stop scheduling, wait behind a bounded in-flight barrier, flush or hand off an explicit undurable remainder, reconcile on restart, and close resources in dependency order.",
+        "Observe producer outcomes, pending keys and bytes, oldest age, flush size and latency, retry classification, saturation, ambiguous commits, recovery lag, and shutdown outcome with bounded cardinality and redacted values.",
+        "Use controlled clocks, retry-delay sources, executors, barriers, and scripted failures for deterministic races, then verify claimed atomicity, isolation, conflict classification, and retries against the real database adapter and driver.",
+        "Route player-connection ownership, generations, reconnect, stale publication, quit, and teardown to paper-player-session-lifecycle instead of duplicating session cleanup rules."
+      ],
+      "requiredEvidence": [
+        "An event-rate, durability, visibility, ordering, key-cardinality, and pending-memory matrix for every persistence producer",
+        "A per-producer direct-versus-coalesced decision plus proven delta merge laws and configured queue, age, memory, in-flight, and retry bounds",
+        "Paper scheduling documentation and tests showing database I/O off the tick context and safe Bukkit-facing publication",
+        "Snapshot ownership, exact partial-flush accounting, idempotency or reconciliation, and restart-recovery tests",
+        "Official database and driver documentation for retry classification and tests proving fresh whole-transaction retry without repeated external side effects",
+        "Deterministic race tests and real-adapter contention tests with adapter, isolation, concurrency, repetitions, invariants, and limitations recorded",
+        "A bounded shutdown contract, actionable observability, and explicit routing to paper-player-session-lifecycle for connection cleanup"
+      ],
+      "failureMode": "An unmeasured or unbounded persistence path can stall ticks, exhaust memory, lose or duplicate partial batches, retry non-retryable failures, repeat side effects, and misstate durability under contention or shutdown."
     }
   ]
 }
