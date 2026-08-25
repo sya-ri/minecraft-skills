@@ -1,5 +1,5 @@
 const fabricMetaBaseUrl = "https://meta.fabricmc.net/v2/versions";
-const fabricMetaUserAgent = "sya-ri/minecraft-skills/0.1.5 (github.com/sya-ri/minecraft-skills)";
+const fabricMetaUserAgent = "sya-ri/minecraft-skills/0.1.6 (github.com/sya-ri/minecraft-skills)";
 const maxGameVersionLength = 128;
 const maxVersionLength = 256;
 const maxMavenCoordinateLength = 512;

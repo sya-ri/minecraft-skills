@@ -12,7 +12,7 @@ import {
 const textureHost = "textures.minecraft.net";
 const textureHashPattern = /^[0-9a-f]{64}$/;
 const textureKinds = new Set<JavaPlayerTextureKind>(["skin", "cape", "elytra"]);
-const userAgent = "sya-ri/minecraft-skills/0.1.5 (github.com/sya-ri/minecraft-skills)";
+const userAgent = "sya-ri/minecraft-skills/0.1.6 (github.com/sya-ri/minecraft-skills)";
 
 /** Fixed network and inspection limits for Java player texture downloads. */
 export const javaPlayerTextureDownloadLimits = Object.freeze({

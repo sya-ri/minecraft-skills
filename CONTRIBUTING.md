@@ -30,6 +30,7 @@ The publish job uses npm provenance via GitHub OIDC and publishes:
 
 - `@minecraft-skills/data`
 - `@minecraft-skills/catalog`
+- `@minecraft-skills/rcon`
 - `minecraft-skills`
 - `@minecraft-skills/mcp`
 
