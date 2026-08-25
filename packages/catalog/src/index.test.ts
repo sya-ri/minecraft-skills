@@ -1310,6 +1310,98 @@ describe("catalog", () => {
     );
   });
 
+  it("routes complete Fabric Client GameTest visual evidence guidance through the catalog", () => {
+    const recipe = getAuthoringRecipe("fabric-client-gametest-visual-evidence");
+    expect(recipe.domains).toEqual(["resourcepack"]);
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "define-stable-cases-and-readiness",
+      "record-selection-without-overclaiming",
+      "capture-full-frames-and-verified-crops",
+      "separate-compare-and-baseline-update-runs",
+      "reconcile-artifacts-and-failure-phases",
+      "report-environment-and-evidence-limits",
+    ]);
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "suite-complete only when every expected case",
+    );
+    expect(recipe.steps.at(-1)?.tools.packageApis).toContain("getFabricToolchainCompatibility");
+
+    const scenario = getAuthoringScenario("fabric-client-gametest-visual-evidence-review");
+    expect(scenario.domains).toEqual(["resourcepack"]);
+    expect(scenario.requiredLookups.recipes).toEqual(["fabric-client-gametest-visual-evidence"]);
+    expect(scenario.requiredLookups.factSurfaces).toEqual(["java-version-metadata"]);
+    expect(scenario.requiredLookups.responsePatterns).toEqual(["verified-authoring-answer"]);
+    expect(scenario.successCriteria.join("\n")).toContain("virtual-framebuffer client");
+
+    const plan = getAuthoringPlan({
+      scenario: "fabric-client-gametest-visual-evidence-review",
+      version: "1.21.11",
+    });
+    expect(plan.domain).toBe("resourcepack");
+    expect(plan.recipes.map((entry) => entry.id)).toEqual([
+      "fabric-client-gametest-visual-evidence",
+    ]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toEqual([
+      "fabric-client-gametest-visual-evidence-gap",
+    ]);
+    expect(plan.factSurfaces.map((entry) => entry.id)).toEqual(["java-version-metadata"]);
+    expect(plan.responsePatterns.map((entry) => entry.id)).toEqual(["verified-authoring-answer"]);
+
+    const guardrail = getAuthoringGuardrail("fabric-client-gametest-visual-evidence-integrity");
+    expect(guardrail.domains).toEqual(["resourcepack"]);
+    expect(guardrail.rules.join("\n")).toContain("full client frame");
+    expect(guardrail.rules.join("\n")).toContain("phase-aware expected absence");
+    expect(guardrail.rules.join("\n")).toContain("missing, stale, duplicate, or unexpected");
+
+    const diagnostic = getAuthoringDiagnostic("fabric-client-gametest-visual-evidence-gap");
+    expect(diagnostic.domains).toEqual(["resourcepack"]);
+    expect(diagnostic.failIf.join("\n")).toContain("fixed project-specific crop dimensions");
+    expect(diagnostic.failIf.join("\n")).toContain("Paper GameTest");
+
+    const intent = getIntentLookup("verify-fabric-client-visual-evidence");
+    expect(intent.domains).toEqual(["resourcepack"]);
+    expect(intent.lookups.flatMap((lookup) => lookup.evidence).join("\n")).toContain(
+      "Allowed wording for complete, selected-only, virtual-framebuffer, and baseline-update results",
+    );
+
+    const policy = getClaimPolicy("fabric-client-visual-evidence-claim");
+    expect(policy.domains).toEqual(["resourcepack"]);
+    expect(policy.allowedWording.join("\n")).toContain("not a complete-suite result");
+    expect(policy.disallowedWording.join("\n")).toContain("update run completed");
+
+    const requirement = getOutputRequirement("fabric-client-visual-evidence-report");
+    expect(requirement.domains).toEqual(["resourcepack"]);
+    expect(requirement.mustInclude.join("\n")).toContain("artifact-manifest");
+    expect(requirement.mustNotInclude.join("\n")).toContain("crop-only proof");
+
+    const searches = [
+      ["authoring-recipe", "Fabric Client GameTest full frame baseline update"],
+      ["authoring-scenario", "Fabric visual regression selected range resume"],
+      ["authoring-guardrail", "Fabric screenshot stale unexpected artifacts"],
+      ["authoring-diagnostic", "Fabric visual evidence fixed crop Paper GameTest"],
+      ["intent-lookup", "verify Fabric Client GameTest visual evidence"],
+      ["claim-policy", "Fabric visual suite baseline claim"],
+      ["output-requirement", "Fabric visual evidence report completeness"],
+    ] as const;
+    const expectedIds = [
+      "fabric-client-gametest-visual-evidence",
+      "fabric-client-gametest-visual-evidence-review",
+      "fabric-client-gametest-visual-evidence-integrity",
+      "fabric-client-gametest-visual-evidence-gap",
+      "verify-fabric-client-visual-evidence",
+      "fabric-client-visual-evidence-claim",
+      "fabric-client-visual-evidence-report",
+    ];
+
+    for (const [[kind, query], expectedId] of searches.map(
+      (entry, index) => [entry, expectedIds[index]] as const,
+    )) {
+      const result = searchCatalog({ kind, query });
+      expect(result.results[0]?.id).toBe(expectedId);
+      expect(result.results[0]?.domains).toEqual(["resourcepack"]);
+    }
+  });
+
   it("lists claim policies for evidence-bounded wording", () => {
     const paperPolicies = listClaimPolicies({ domain: "paper-plugin" });
     expect(paperPolicies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

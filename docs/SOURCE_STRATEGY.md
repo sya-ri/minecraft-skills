@@ -66,6 +66,25 @@ response bytes and entry counts are bounded, required fields and numeric ranges 
 the Loader-provided Intermediary pairing is cross-checked when the Intermediary endpoint returns a
 candidate.
 
+## Fabric Client GameTest Visual Evidence
+
+The [official Fabric automated-testing guide](https://docs.fabricmc.net/develop/automatic-testing)
+is the primary documentation evidence that Fabric exposes client game tests, demonstrates a client
+screenshot path, documents a client test run task, and describes a virtual-framebuffer production
+run for CI. The [official Loom Fabric API DSL guide](https://docs.fabricmc.net/develop/loom/fabric-api)
+is primary evidence for the current documented test-configuration surface. Exact entrypoint,
+context, wait, screenshot, and Gradle API names remain version-specific and must be checked against
+the target Fabric API Javadocs or selected mappings before implementation code names them.
+
+The bundled visual-evidence records are human-reviewed workflow guidance, not facts imported from
+those pages. Official documentation does not prove that a project's case matrix is deterministic,
+that its readiness barriers reached the intended frame, that crop bounds match runtime layout, that
+a selected range covers the suite, or that baseline and artifact reconciliation is sound. Those
+claims require a versioned suite definition, full-frame and manifest digests, explicit run mode,
+set reconciliation, causal failure phases, and environment-specific results. A virtual framebuffer
+can exercise a client render path in its recorded environment, but does not establish physical
+display, GPU and driver, native input, accessibility, shader, or complete modpack behavior.
+
 ## Stable Format Specifications
 
 Container validators may use the format publisher's stable specification for format-level facts.

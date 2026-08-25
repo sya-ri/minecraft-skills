@@ -1445,6 +1445,122 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "A green compiler or convenient mock can be mistaken for runtime proof, leaving plugin load, Paper semantics, lifecycle ordering, persistence, or client-visible behavior untested while the result is reported as working."
+    },
+    {
+      "id": "fabric-client-gametest-visual-evidence",
+      "domains": ["resourcepack"],
+      "title": "Build reproducible Fabric Client GameTest visual evidence",
+      "when": [
+        "A Fabric client screen, HUD, overlay, widget, visual layer, or rendered state needs repeatable visual regression evidence.",
+        "Client GameTest screenshots must remain attributable across a case matrix, partial reruns, CI, and baseline review.",
+        "A visual suite needs to distinguish layout assertions, renderer readiness, capture, and image comparison failures instead of reporting one ambiguous screenshot failure."
+      ],
+      "steps": [
+        {
+          "id": "define-stable-cases-and-readiness",
+          "action": "Define the complete ordered case matrix before execution. Give every case a stable semantic ID derived from named dimensions such as screen, state, viewport class, resolved GUI scale, locale, and fixture rather than array position, time, or a random value. Store those dimensions with target Minecraft, resolved Fabric stack releases and mappings, test-bundle revision, renderer, asset-revision, and environment metadata. For each case, name bounded readiness barriers for the state it needs, such as world creation, chunk rendering, asset loading, screen opening, layout completion, and deterministic animation advancement; a sleep or screenshot delay is not a readiness contract.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_authoring_guardrail", "get_intent_lookup"],
+            "packageApis": ["searchCatalog", "getAuthoringGuardrail", "getIntentLookup"]
+          },
+          "evidence": [
+            "A versioned suite definition containing the complete ordered case list and stable case IDs",
+            "Per-case semantic dimensions and target/runtime metadata without project-specific fixed dimensions",
+            "Named readiness barriers, bounded timeouts, and deterministic state or animation controls for every case"
+          ],
+          "stopIfMissing": "Do not capture a baseline while case identity, runtime metadata, or the condition that makes the frame ready is implicit."
+        },
+        {
+          "id": "record-selection-without-overclaiming",
+          "action": "Resolve selected case IDs or an inclusive stable-ID range against the frozen suite definition and reject unknown or ambiguous endpoints. Record expected, selected, executed, passed, failed, skipped, and not-selected sets separately in the run manifest. Resume only into a fresh staging area or after reconciling prior artifacts by case ID and metadata. A selected-case or range run may report results for that selection, but it is suite-complete only when every expected case is eligible, executed, reconciled, and passed in the same declared evidence set.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_claim_policy", "get_output_requirement"],
+            "packageApis": ["searchCatalog", "getClaimPolicy", "getOutputRequirement"]
+          },
+          "evidence": [
+            "The immutable expected case-ID set and the exact selected-case or range expression",
+            "Separate expected, selected, executed, passed, failed, skipped, and not-selected sets",
+            "A completeness value derived from set reconciliation rather than process exit alone"
+          ],
+          "stopIfMissing": "Do not call a selected-case, shard, resumed range, or filtered run a passing complete suite when any expected case lacks eligible evidence."
+        },
+        {
+          "id": "capture-full-frames-and-verified-crops",
+          "action": "For every case that reaches successful capture, retain one full client frame before producing a crop, comparison, or visual-pass result. A case whose primary failure occurs before or during capture may have no frame; record that phase-aware expected absence in the manifest instead of generating an independent missing-artifact failure. Optional focused crops must be derived from the case's runtime layout bounds, intersected with and verified against the captured frame, and recorded as zero-based half-open rectangles; do not bake one fixed crop size into generic guidance. Keep the full frame as the contextual source, bind every crop to its source-frame digest and bounds, and treat an empty, clipped, out-of-frame, or stale bounds result as a capture failure rather than silently comparing a convenient region.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_authoring_diagnostic"],
+            "packageApis": ["searchCatalog", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A full-frame artifact and digest for each case that reaches successful capture, comparison, or visual pass",
+            "A phase-aware expected-absence record for an earlier readiness or assertion, render, or capture failure",
+            "Optional runtime-derived zero-based half-open crop bounds proven to lie within the source frame",
+            "A crop artifact linked to the exact source-frame digest, bounds, viewport metadata, and case ID"
+          ],
+          "stopIfMissing": "Do not use a crop as standalone proof, infer bounds from a stale baseline, or hide surrounding rendering failures outside the crop."
+        },
+        {
+          "id": "separate-compare-and-baseline-update-runs",
+          "action": "Make compare and baseline-update explicit mutually exclusive run types. A compare run reads reviewed immutable baselines and never rewrites them. A baseline-update run writes candidate baselines and review metadata to a separate staging location, preserves prior baselines, and does not turn changed pixels into a passing comparison. Record the comparator identity and version, exact or declared bounded policy, baseline digest, actual digest, difference summary, and review disposition per case; require deliberate promotion outside the test run.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_claim_policy", "get_authoring_guardrail"],
+            "packageApis": ["searchCatalog", "getClaimPolicy", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "An explicit compare or baseline-update run type in command output and the run manifest",
+            "Immutable reviewed baseline, actual, and candidate digests plus comparator version and policy",
+            "A human-reviewable difference and deliberate promotion record for every candidate baseline"
+          ],
+          "stopIfMissing": "Do not overwrite a reviewed baseline during comparison or report baseline generation as a successful visual assertion."
+        },
+        {
+          "id": "reconcile-artifacts-and-failure-phases",
+          "action": "Write artifacts to a run-scoped staging directory, finalize them only after digesting and manifesting them, and clean run-owned temporary state in a finally-equivalent path. Derive each case's expected artifact roles from its primary phase: require a full frame when capture succeeded, but record an expected absence when readiness or assertion, render, or capture failed first. Before reporting, reconcile the manifest against those phase-aware expectations and the expected and selected sets, then fail on a manifest-expected missing artifact, stale metadata, duplicates, or unexpected artifacts. Make cleanup idempotent so an interrupted run can be retried without inheriting evidence. Classify the primary result for each case as readiness or assertion, render, capture, compare, or infrastructure failure, preserve secondary diagnostics, and never replace the first causal phase with a later missing-file error.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_authoring_diagnostic", "get_output_requirement"],
+            "packageApis": ["searchCatalog", "getAuthoringDiagnostic", "getOutputRequirement"]
+          },
+          "evidence": [
+            "A run-scoped artifact manifest with case IDs, primary phases, expected or absent artifact roles, metadata digests, paths or logical names, byte sizes, and content digests",
+            "Reconciliation results for missing, stale, duplicate, and unexpected artifacts",
+            "Repeat-run evidence that cleanup is bounded, ownership-aware, and idempotent",
+            "Per-case primary failure phase plus preserved secondary diagnostics"
+          ],
+          "stopIfMissing": "Do not publish a green run while the artifact directory contains unowned files, an expected artifact is missing, metadata is stale, or the failure phase is ambiguous."
+        },
+        {
+          "id": "report-environment-and-evidence-limits",
+          "action": "Label whether evidence came from deterministic non-render assertions, a Fabric Client GameTest client under a virtual framebuffer, or an interactive client environment. A virtual-framebuffer run can exercise an actual client render-and-capture path in that declared environment, but it does not prove physical display, GPU and driver, window-manager, native input, accessibility, shader, or complete installed-extension-set behavior. Non-client headless assertions prove no rendered pixels. Interactive-client evidence is still specific to its recorded environment. Verify every concrete test entrypoint, screenshot, wait, and Loom configuration name against current official Fabric documentation and target-version Fabric API or mapping documentation instead of presenting one API spelling as universal.",
+          "tools": {
+            "cli": ["minecraft search", "fabric toolchain"],
+            "mcp": ["search_catalog", "get_fabric_toolchain", "get_output_requirement"],
+            "packageApis": [
+              "searchCatalog",
+              "getFabricToolchainCompatibility",
+              "getOutputRequirement"
+            ]
+          },
+          "evidence": [
+            "An environment class and recorded client, operating system, display, renderer, hardware or software graphics, window, GUI scale, locale, and relevant client-extension metadata",
+            "https://docs.fabricmc.net/develop/automatic-testing",
+            "https://docs.fabricmc.net/develop/loom/fabric-api",
+            "Target-version Fabric API Javadocs or selected mappings for every concrete client-test API named by an implementation",
+            "A limitations statement distinguishing non-render assertions, virtual-framebuffer client evidence, and interactive-client evidence"
+          ],
+          "stopIfMissing": "Do not describe non-client assertions as rendered evidence, virtual-framebuffer results as hardware or interaction proof, or target-specific Fabric API names as universal."
+        }
+      ],
+      "finalChecks": [
+        "fabric-client-gametest-visual-evidence-integrity",
+        "fabric-client-visual-evidence-claim",
+        "fabric-client-visual-evidence-report"
+      ],
+      "failureMode": "Screenshots can look authoritative while unstable case identity, early capture, partial selection, silent baseline replacement, stale artifacts, or an overstated headless environment makes the evidence incomplete or irreproducible."
     }
   ]
 }

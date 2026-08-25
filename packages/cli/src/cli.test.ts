@@ -3819,6 +3819,62 @@ describe("minecraft-skills CLI", () => {
     expect(result.stderr).toEqual(["Use subcommands: minecraft-skills plugin paper members"]);
   });
 
+  it("searches complete Fabric Client GameTest visual evidence guidance", async () => {
+    const cases = [
+      [
+        "authoring-recipe",
+        "Fabric Client GameTest full frame baseline update",
+        "fabric-client-gametest-visual-evidence",
+        "define-stable-cases-and-readiness",
+      ],
+      [
+        "authoring-scenario",
+        "Fabric visual regression selected range resume",
+        "fabric-client-gametest-visual-evidence-review",
+        "virtual-framebuffer client",
+      ],
+      [
+        "authoring-guardrail",
+        "Fabric screenshot stale unexpected artifacts",
+        "fabric-client-gametest-visual-evidence-integrity",
+        "runtime-derived zero-based half-open bounds",
+      ],
+      [
+        "authoring-diagnostic",
+        "Fabric visual evidence fixed crop Paper GameTest",
+        "fabric-client-gametest-visual-evidence-gap",
+        "fixed project-specific crop dimensions",
+      ],
+      [
+        "intent-lookup",
+        "verify Fabric Client GameTest visual evidence",
+        "verify-fabric-client-visual-evidence",
+        "final-report contract",
+      ],
+      [
+        "claim-policy",
+        "Fabric visual suite baseline claim",
+        "fabric-client-visual-evidence-claim",
+        "not a complete-suite result",
+      ],
+      [
+        "output-requirement",
+        "Fabric visual evidence report completeness",
+        "fabric-client-visual-evidence-report",
+        "artifact-manifest",
+      ],
+    ] as const;
+
+    for (const [kind, query, id, marker] of cases) {
+      const result = await capture(["minecraft", "search", query, "--kind", kind]);
+      const output = result.stdout.join("\n");
+      expect(result.code).toBe(0);
+      expect(output).toContain(`"id": "${id}"`);
+      expect(output).toMatch(/"domains": \[\s+"resourcepack"\s+\]/);
+      expect(output).toContain(marker);
+    }
+  });
+
   it("prints practical help with workflows and safety notes", async () => {
     const result = await capture(["--help"]);
     const output = result.stdout.join("\n");

@@ -316,6 +316,130 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf.join("\n")).toContain("loaded-plugin evidence");
   });
 
+  it("loads complete Fabric Client GameTest visual evidence guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        domains: string[];
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "fabric-client-gametest-visual-evidence",
+    );
+    expect(recipe?.domains).toEqual(["resourcepack"]);
+    expect(recipe?.steps.map((step) => step.id)).toEqual([
+      "define-stable-cases-and-readiness",
+      "record-selection-without-overclaiming",
+      "capture-full-frames-and-verified-crops",
+      "separate-compare-and-baseline-update-runs",
+      "reconcile-artifacts-and-failure-phases",
+      "report-environment-and-evidence-limits",
+    ]);
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "selected, executed, passed, failed, skipped, and not-selected sets",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain("full client frame");
+    expect(
+      recipe?.steps.find((step) => step.id === "capture-full-frames-and-verified-crops")?.action,
+    ).toContain("primary failure occurs before or during capture may have no frame");
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "phase-aware expected-absence record",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "mutually exclusive run types",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "https://docs.fabricmc.net/develop/automatic-testing",
+    );
+    expect(recipe?.finalChecks).toEqual([
+      "fabric-client-gametest-visual-evidence-integrity",
+      "fabric-client-visual-evidence-claim",
+      "fabric-client-visual-evidence-report",
+    ]);
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        domains: string[];
+        requiredLookups: {
+          recipes: string[];
+          intents: string[];
+          diagnostics: string[];
+          claimPolicies: string[];
+          factSurfaces: string[];
+          responsePatterns: string[];
+        };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "fabric-client-gametest-visual-evidence-review",
+    );
+    expect(scenario?.domains).toEqual(["resourcepack"]);
+    expect(scenario?.requiredLookups.recipes).toEqual(["fabric-client-gametest-visual-evidence"]);
+    expect(scenario?.requiredLookups.intents).toEqual(["verify-fabric-client-visual-evidence"]);
+    expect(scenario?.requiredLookups.diagnostics).toEqual([
+      "fabric-client-gametest-visual-evidence-gap",
+    ]);
+    expect(scenario?.requiredLookups.claimPolicies).toEqual([
+      "fabric-client-visual-evidence-claim",
+    ]);
+    expect(scenario?.requiredLookups.factSurfaces).toEqual(["java-version-metadata"]);
+    expect(scenario?.requiredLookups.responsePatterns).toEqual(["verified-authoring-answer"]);
+    expect(scenario?.mustAvoid.join("\n")).toContain("Paper or server GameTest");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; domains: string[]; rules: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "fabric-client-gametest-visual-evidence-integrity",
+    );
+    expect(guardrail?.domains).toEqual(["resourcepack"]);
+    expect(guardrail?.rules.join("\n")).toContain("runtime-derived zero-based half-open bounds");
+    expect(guardrail?.rules.join("\n")).toContain("missing, stale, duplicate, or unexpected");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; domains: string[]; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "fabric-client-gametest-visual-evidence-gap",
+    );
+    expect(diagnostic?.domains).toEqual(["resourcepack"]);
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("virtual-framebuffer output");
+
+    const intents = readDataJson<{
+      intents: Array<{ id: string; domains: string[]; lookups: Array<{ purpose: string }> }>;
+    }>("intent-lookups.json");
+    const intent = intents.intents.find(
+      (entry) => entry.id === "verify-fabric-client-visual-evidence",
+    );
+    expect(intent?.domains).toEqual(["resourcepack"]);
+    expect(intent?.lookups.map((lookup) => lookup.purpose).join("\n")).toContain(
+      "final-report contract",
+    );
+
+    const policies = readDataJson<{
+      policies: Array<{ id: string; domains: string[]; disallowedWording: string[] }>;
+    }>("claim-policies.json");
+    const policy = policies.policies.find(
+      (entry) => entry.id === "fabric-client-visual-evidence-claim",
+    );
+    expect(policy?.domains).toEqual(["resourcepack"]);
+    expect(policy?.disallowedWording.join("\n")).toContain("update run completed");
+
+    const requirements = readDataJson<{
+      requirements: Array<{ id: string; domains: string[]; mustInclude: string[] }>;
+    }>("output-requirements.json");
+    const requirement = requirements.requirements.find(
+      (entry) => entry.id === "fabric-client-visual-evidence-report",
+    );
+    expect(requirement?.domains).toEqual(["resourcepack"]);
+    expect(requirement?.mustInclude.join("\n")).toContain("explicit complete-suite value");
+  });
+
   it("loads bundled claim policy JSON", () => {
     const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

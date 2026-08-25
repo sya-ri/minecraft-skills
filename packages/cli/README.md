@@ -125,6 +125,7 @@ minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
+minecraft-skills minecraft search "Fabric Client GameTest visual evidence" --kind authoring-recipe
 minecraft-skills velocity toolchain --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -322,6 +323,15 @@ Meta v2 API. It prefers upstream `stable` entries without treating that flag as 
 compatibility guarantee. Generated tuples only combine entries listed for the same game version;
 they are not a separately published Fabric Meta guarantee. The command bounds returned candidates
 and reports versions without Yarn as incomplete instead of guessing.
+
+`minecraft search "Fabric Client GameTest visual evidence"` returns guidance for stable case IDs,
+bounded readiness, full-frame and runtime-bounds crop evidence, explicit compare versus
+baseline-update modes, and manifest reconciliation across selected or resumed cases. The records
+use the existing `resourcepack` client-asset authoring domain. Search the matching scenario,
+guardrail, diagnostic, intent, claim policy, and output requirement by kind for the complete
+contract. The records distinguish non-render assertions, virtual-framebuffer client runs, and
+interactive clients; concrete test APIs still require current official Fabric documentation and
+target-version API or mappings.
 
 `velocity toolchain` reads the current `com.velocitypowered:velocity-api` version from bounded
 official PaperMC Maven metadata and cross-checks the official development guide and Java FAQ. It

@@ -182,6 +182,15 @@ licensing. The MCP tool does not download images; pass a returned hash to the se
 [`player-texture download`](../cli/README.md#examples) command when bytes are needed. Skin layout
 inspection and face cropping remain outside this tool.
 
+Use `search_catalog` without a domain for `Fabric Client GameTest visual evidence`, then retrieve
+the matching recipe, scenario, guardrail, diagnostic, intent, claim policy, and output requirement
+with their direct getters or `get_authoring_plan`. The records use the existing `resourcepack`
+client-asset authoring domain and require stable case IDs and readiness,
+full-frame evidence before optional bounds-verified crops, explicit baseline-update mode, selected
+set and artifact reconciliation, causal failure phases, and separate limits for non-render,
+virtual-framebuffer client, and interactive-client evidence. They do not define a complete Fabric
+authoring domain or claim one concrete client-test API across versions.
+
 `validate_resourcepack_png` accepts canonical padded Base64 for one complete PNG, rejects malformed
 or oversized input before decoding, and returns bounded structural and CRC diagnostics. It does not
 decompress IDAT or claim the texture can be rendered.
@@ -386,6 +395,13 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-plugin-testing-evidence-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-plugin-testing-evidence.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-plugin-test-evidence-gap.json`
+- `minecraft-skills://data/authoring-recipes/fabric-client-gametest-visual-evidence.json`
+- `minecraft-skills://data/authoring-scenarios/fabric-client-gametest-visual-evidence-review.json`
+- `minecraft-skills://data/authoring-guardrails/fabric-client-gametest-visual-evidence-integrity.json`
+- `minecraft-skills://data/authoring-diagnostics/fabric-client-gametest-visual-evidence-gap.json`
+- `minecraft-skills://data/intent-lookups/verify-fabric-client-visual-evidence.json`
+- `minecraft-skills://data/claim-policies/fabric-client-visual-evidence-claim.json`
+- `minecraft-skills://data/output-requirements/fabric-client-visual-evidence-report.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
 - `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/response-patterns/paper-api-answer.json`

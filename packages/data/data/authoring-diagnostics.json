@@ -874,6 +874,75 @@
         "Narrow the final claim and list remaining verification when stronger evidence is unavailable."
       ],
       "failureMode": "A test suite can report success while the plugin does not load, violates Paper runtime semantics, loses state during lifecycle transitions, or fails for clients because the chosen evidence never observed those boundaries."
+    },
+    {
+      "id": "fabric-client-gametest-visual-evidence-gap",
+      "domains": ["resourcepack"],
+      "title": "Fabric Client GameTest visual evidence is incomplete or misattributed",
+      "severity": "error",
+      "detectWhen": [
+        "a Fabric client screenshot or visual-regression suite is described as passing, reproducible, complete, or baseline-approved",
+        "cases are filtered, ranged, sharded, resumed, retried, or run under a virtual framebuffer",
+        "baseline images or artifact directories can be updated or reused",
+        "only crops, image differences, or a process exit code are retained"
+      ],
+      "requiredChecks": [
+        "verify that a versioned suite definition contains stable semantic case IDs and all metadata required to judge comparability",
+        "verify bounded readiness barriers for world, render, asset, screen, layout, and deterministic animation state that each case actually needs",
+        "reconcile expected, selected, executed, passed, failed, skipped, and not-selected case sets and derive suite completeness from them",
+        "require a full-frame artifact for every case that reaches successful capture, comparison, or visual pass; record a phase-aware expected absence for earlier readiness or assertion, render, or capture failures; and verify any runtime-derived zero-based half-open crop bounds inside the linked source frame",
+        "confirm compare and baseline-update are explicit separate run types, prior baselines remain immutable during the run, and candidate promotion requires review",
+        "reconcile the artifact manifest against disk or uploaded output and reject missing, stale-metadata, duplicate, and unexpected artifacts",
+        "repeat cleanup and rerun checks to prove interrupted output cannot satisfy a later case",
+        "preserve primary readiness or assertion, render, capture, compare, and infrastructure failure phases",
+        "state whether the evidence is non-render, virtual-framebuffer client, or interactive-client evidence and list the environment-specific limitations",
+        "verify every named Fabric client-test and Loom API against current official documentation and target-version API or mappings"
+      ],
+      "evidence": [
+        "Suite-definition and run-manifest digests with stable expected and selected case sets",
+        "Per-case readiness, metadata, full-frame, optional bounds-verified crop, baseline, actual, comparison, and failure-phase records",
+        "Missing, stale, duplicate, and unexpected artifact reconciliation plus idempotent cleanup results",
+        "Environment classification and current official Fabric documentation or target-version API links"
+      ],
+      "tools": {
+        "cli": ["minecraft search", "fabric toolchain"],
+        "mcp": [
+          "search_catalog",
+          "get_authoring_recipe",
+          "get_authoring_guardrail",
+          "get_claim_policy",
+          "get_output_requirement",
+          "get_fabric_toolchain"
+        ],
+        "packageApis": [
+          "searchCatalog",
+          "getAuthoringRecipe",
+          "getAuthoringGuardrail",
+          "getClaimPolicy",
+          "getOutputRequirement",
+          "getFabricToolchainCompatibility"
+        ]
+      },
+      "failIf": [
+        "case identity depends on order, time, randomness, or an artifact name instead of stable semantic dimensions",
+        "capture readiness is represented only by a fixed delay or unbounded polling",
+        "a selected case, range, shard, or resumed subset is reported as a complete passing suite while expected cases are not selected or lack eligible evidence",
+        "a case proceeds to a crop, comparison, or visual pass without a full-frame artifact; an earlier failure lacks a phase-aware expected-absence record; or a crop is unbounded, out of frame, stale, empty without policy, or detached from its source-frame digest",
+        "a compare run can overwrite reviewed baselines, or a baseline-update run turns generated candidates into passing comparisons",
+        "missing, stale, duplicate, or unexpected artifacts do not fail manifest reconciliation",
+        "a retry can reuse unowned output from an interrupted or differently configured run",
+        "an assertion, render, or capture failure is replaced by a later generic comparison or missing-file failure",
+        "non-render headless assertions are called rendered proof, or virtual-framebuffer output is called proof of physical display, GPU, native input, shader, accessibility, or full installed-extension-set behavior",
+        "fixed project-specific crop dimensions, Paper GameTest behavior, or one target-version Fabric API spelling is presented as generic Client GameTest guidance"
+      ],
+      "safeResponse": [
+        "Freeze semantic case IDs and readiness barriers, then rerun into clean staging with a manifest bound to exact runtime metadata.",
+        "Report a filtered or resumed run only for its selected cases until every expected case is reconciled in one declared evidence set.",
+        "Restore immutable comparison execution and produce baseline candidates separately for deliberate review and promotion.",
+        "Retain full frames, verify any runtime-derived crops, classify the first failure phase, and narrow the final claim to the recorded display environment.",
+        "Verify concrete APIs for the target Fabric stack and otherwise keep the answer at the workflow-contract level."
+      ],
+      "failureMode": "A visual test can pass from the wrong frame, stale files, a partial selection, or a rewritten oracle while its report hides which client environment and failure phase were actually observed."
     }
   ]
 }

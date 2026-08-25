@@ -103,6 +103,7 @@ minecraft-skills fabric toolchain 1.21.11
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
+minecraft-skills minecraft search "Fabric Client GameTest visual evidence" --kind authoring-recipe
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -178,6 +179,15 @@ pure logic and owned test doubles from MockBukkit-supported behavior, loaded tar
 evidence, and client-visible checks. The guidance rejects compilation-only runtime claims,
 nondeterministic wall-clock waits, silent stubs for unsupported harness behavior, and conclusions
 that omit exact commands, versions, skipped checks, known baselines, or remaining manual work.
+
+Fabric Client GameTest visual-evidence guidance is available through catalog search and the existing
+`resourcepack` client-asset authoring domain.
+It freezes stable semantic cases and readiness barriers, retains a full frame before any verified
+runtime-bounds crop, separates comparison from candidate baseline updates, and reconciles selected
+cases with a digest-bound artifact manifest. Filtered or resumed runs remain explicitly partial;
+non-render, virtual-framebuffer client, and interactive-client evidence have separate claim limits.
+Concrete Client GameTest and Loom API names still require current official Fabric documentation and
+target-version API or mapping evidence.
 
 `minecraft analyze-log` structures Minecraft Java logs, Java stack traces, and crash reports before
 diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,

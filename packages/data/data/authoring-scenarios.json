@@ -525,6 +525,50 @@
         "reporting all tests passed without exact commands, version, failures, skips, baselines, and limitations"
       ],
       "failureMode": "A convenient harness can verify the wrong boundary, allowing runtime, lifecycle, persistence, or client failures to escape while the implementation is reported as fully tested."
+    },
+    {
+      "id": "fabric-client-gametest-visual-evidence-review",
+      "domains": ["resourcepack"],
+      "title": "Design or review Fabric Client GameTest visual evidence",
+      "userPrompt": "Create or review a reproducible Fabric Client GameTest screenshot workflow with stable cases, explicit baseline updates, artifact reconciliation, and evidence claims limited to the environment that actually ran.",
+      "useWhen": [
+        "a Fabric client UI or renderer needs automated screenshot or visual-regression evidence",
+        "the test suite supports selected cases, ranges, shards, resume, or baseline updates",
+        "CI runs under a virtual framebuffer or another non-interactive display environment",
+        "a report must prove which cases ran and distinguish test, render, capture, and compare failures"
+      ],
+      "requiredLookups": {
+        "recipes": ["fabric-client-gametest-visual-evidence"],
+        "intents": ["verify-fabric-client-visual-evidence"],
+        "diagnostics": ["fabric-client-gametest-visual-evidence-gap"],
+        "claimPolicies": ["fabric-client-visual-evidence-claim"],
+        "factSurfaces": ["java-version-metadata"],
+        "responsePatterns": ["verified-authoring-answer"]
+      },
+      "successCriteria": [
+        "the versioned suite definition has stable semantic case IDs, complete case metadata, and bounded readiness barriers",
+        "expected, selected, executed, passed, failed, skipped, and not-selected case sets are reconciled without treating a selected range as suite-complete",
+        "every case reported as captured, compared, or visually passed retains a full-frame artifact, earlier failures record a phase-aware expected absence, and optional crops use runtime-derived bounds verified within their source frame",
+        "compare and baseline-update are explicit separate run types and candidate baseline generation cannot satisfy a visual assertion",
+        "the manifest rejects missing, stale, duplicate, and unexpected artifacts and binds every artifact to a case, role, metadata digest, and content digest",
+        "cleanup is run-owned and idempotent, and retries cannot inherit evidence from an interrupted run",
+        "each failure preserves a primary readiness or assertion, render, capture, compare, or infrastructure phase",
+        "the final claim identifies whether evidence came from non-render assertions, a virtual-framebuffer client, or an interactive client and states what that environment does not prove",
+        "concrete Client GameTest and Loom API names are verified against current official Fabric documentation and target-version API or mappings"
+      ],
+      "mustAvoid": [
+        "using array positions, timestamps, or random values as durable case identity",
+        "waiting a fixed delay instead of a bounded state-specific readiness barrier",
+        "calling a selected-case, resumed range, or shard run a complete passing suite",
+        "keeping only focused crops or using one project-specific fixed crop rectangle as generic guidance",
+        "rewriting reviewed baselines during a compare run or treating a baseline-update run as a pass",
+        "ignoring stale, duplicate, unexpected, or missing artifacts in a reused output directory",
+        "reporting every failure as an image diff after an earlier assertion, render, or capture failure",
+        "calling non-render headless assertions screenshot proof or treating virtual-framebuffer evidence as physical display, hardware, input, shader, or installed-extension-set proof",
+        "substituting Paper or server GameTest guidance for the Fabric client concern",
+        "claiming one concrete Fabric client-test API spelling works across every target release"
+      ],
+      "failureMode": "A screenshot suite can silently bless partial or stale output, overwrite its own oracle, and overstate CI evidence when selection, readiness, artifact ownership, failure phases, and environment limits are not explicit."
     }
   ]
 }
