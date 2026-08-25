@@ -72,6 +72,7 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-administrative-command-operability",
     );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-scheduled-task-lifecycle");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-protocol-safety");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-bossbar-audience-lifecycle",
@@ -96,6 +97,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-item-delivery-review");
     expect(scenarioIds).toContain("paper-inventory-gui-interaction-review");
     expect(scenarioIds).toContain("paper-administrative-command-operability-review");
+    expect(scenarioIds).toContain("paper-scheduled-task-lifecycle-review");
     expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
     expect(scenarioIds).toContain("paper-bossbar-audience-lifecycle-review");
     expect(scenarioIds).toContain("paper-itemstack-semantic-identity-review");
@@ -119,6 +121,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-inventory-delivery-outcomes");
     expect(guardrailIds).toContain("paper-inventory-gui-interaction-safety");
     expect(guardrailIds).toContain("paper-administrative-command-operability");
+    expect(guardrailIds).toContain("paper-scheduled-task-lifecycle-safety");
     expect(guardrailIds).toContain("paper-plugin-protocol-safety");
     expect(guardrailIds).toContain("paper-bossbar-audience-lifecycle-safety");
     expect(guardrailIds).toContain("paper-itemstack-semantic-identity");
@@ -137,6 +140,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-inventory-leftovers-unhandled");
     expect(diagnosticIds).toContain("paper-inventory-gui-interaction-unbounded");
     expect(diagnosticIds).toContain("paper-administrative-command-incomplete");
+    expect(diagnosticIds).toContain("paper-scheduled-task-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
     expect(diagnosticIds).toContain("paper-bossbar-audience-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-itemstack-identity-or-state-loss");
@@ -513,6 +517,73 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.severity).toBe("error");
     expect(diagnostic?.failIf.join("\n")).toContain("older slow reload");
     expect(diagnostic?.failIf.join("\n")).toContain("stale in-memory state");
+  });
+
+  it("loads Paper scheduled-task lifecycle safety guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; stopIfMissing: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-scheduled-task-lifecycle");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "assign-task-ownership-and-generation",
+        "separate-background-work-from-api-publication",
+        "cancel-and-fence-teardown",
+        "test-ordering-cancellation-and-disable",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.stopIfMissing).join("\n")).toContain("already-running");
+    expect(recipe?.finalChecks).toContain("paper-scheduled-task-lifecycle-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-scheduled-task-lifecycle-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-scheduled-task-lifecycle"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-scheduled-task-lifecycle-unsafe",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("custom executors");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const checklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(checklist?.steps.map((step) => step.id)).toContain(
+      "own-scheduled-work-through-teardown",
+    );
+    expect(checklist?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "late-publication fence",
+    );
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-scheduled-task-lifecycle-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("already-running callback");
+    expect(guardrail?.rules.join("\n")).toContain("custom executors");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-scheduled-task-lifecycle-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("already-running callback");
+    expect(diagnostic?.failIf.join("\n")).toContain("prohibited scheduler Future wait");
   });
 
   it("loads complete Paper plugin testing evidence guidance", () => {

@@ -341,6 +341,40 @@
             "Race and retry tests prove retained targets are not dereferenced outside their owner or treated as current after lifecycle changes without owner-local revalidation, critical retired callbacks only forward minimal terminal intent, and physics, drops, entity movement or removal, teleport false, unload, and disable cannot repeat or lose committed effects."
           ],
           "failureMode": "Do not approve a multi-chunk world operation whose targets, generation, scheduler ownership, progress outcomes, ticket release, and idempotent reconciliation are implicit or unbounded."
+        },
+        {
+          "id": "own-scheduled-work-through-teardown",
+          "reason": "A scheduler member and a cancel call do not by themselves define feature ownership, disable ordering, external-resource cleanup, or what an already-running callback may still publish.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic",
+              "plugin paper api",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic",
+              "get_paper_api_reference",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic",
+              "getPaperApiReference",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Every delayed, repeating, and asynchronous unit has a plugin owner, feature owner, stop path, and lifecycle generation when it can be replaced.",
+            "Background work and Bukkit or Paper publication use documented execution contexts with a late-publication fence.",
+            "Teardown closes admission before cancellation, separately closes external resources, tolerates repeated calls, and rejects already-running late completion.",
+            "Controlled cancellation and disable tests plus any required loaded-plugin or Folia evidence match the final runtime claim."
+          ],
+          "failureMode": "Do not approve scheduled work that can duplicate after reload, call APIs from an unsafe thread, leak non-scheduler resources, or publish after its generation closes."
         }
       ]
     }

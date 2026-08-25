@@ -426,6 +426,168 @@
       "failureMode": "Generated plugin code can compile against invented API names or hide behavior and threading assumptions."
     },
     {
+      "id": "paper-scheduled-task-lifecycle",
+      "domains": ["paper-plugin"],
+      "title": "Own and stop Paper scheduled work safely",
+      "when": [
+        "the request creates delayed, repeating, self-cancelling, or plugin-wide scheduled work",
+        "asynchronous I/O, futures, callbacks, or executors must publish a result through Bukkit or Paper APIs",
+        "reload, reconfiguration, feature shutdown, or plugin disable can replace or stop scheduled work",
+        "the request chooses between the Bukkit scheduler and Folia global, region, entity, or async schedulers",
+        "the request investigates duplicate loops, orphaned tasks, late callbacks, unsafe async API access, or work that survives teardown"
+      ],
+      "steps": [
+        {
+          "id": "verify-scheduler-and-lifecycle-surfaces",
+          "action": "Resolve the target Paper version, inspect its official scheduler and lifecycle documentation, and search every scheduler, task-handle, cancellation, plugin-state, and lifecycle type or member used by the implementation. Verify BukkitScheduler, BukkitTask, Plugin lifecycle, and main-thread behavior for standard Paper. Inspect Folia scheduler documentation and target-version global, region, entity, async, ScheduledTask, cancellation, and retired-callback surfaces only when Folia support is in scope.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version type and member matches for every scheduler, task handle, cancellation call, plugin-state check, and lifecycle method named in generated code",
+            "Official Paper scheduler documentation for synchronous main-thread execution, asynchronous execution, tick timing, and async Bukkit-access limits",
+            "Target-version Javadocs for plugin ownership, returned task handles, cancellation semantics, and any main-thread executor or Future behavior used",
+            "When Folia is explicitly supported, official Paper Folia documentation and target-version Javadocs for the selected global, location-region, entity, or async scheduler plus ScheduledTask cancellation and entity retirement behavior"
+          ],
+          "stopIfMissing": "Do not invent a scheduler member, claim a cancellation or thread guarantee from a member label, or mark a plugin Folia-supported without target-version behavior evidence."
+        },
+        {
+          "id": "assign-task-ownership-and-generation",
+          "action": "Give every scheduled unit one plugin owner and one feature or component owner. Retain the returned task handle, or register it in an owned task group, whenever delayed or repeating work must stop before plugin-wide teardown. Give replaceable loops and async publication a lifecycle generation so reload or reconfiguration can invalidate earlier work. Treat custom executors, timers, futures, subscriptions, and child operations as separately owned resources because they are outside scheduler task ownership.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "An ownership table mapping each one-shot, delayed, repeating, and child operation to a plugin, feature owner, task handle or task group, and lifecycle generation",
+            "An explicit early-stop path for feature disable, replacement, reload, reconfiguration, and terminal task conditions",
+            "A separate ownership and close or cancellation path for custom executors, futures, timers, subscriptions, and resources not created by the Paper scheduler"
+          ],
+          "stopIfMissing": "Do not create untracked repeating work, replace a loop without invalidating its predecessor, or assume scheduler ownership also shuts down custom executors and child operations."
+        },
+        {
+          "id": "separate-background-work-from-api-publication",
+          "action": "Classify every task phase by execution context. Keep blocking I/O and expensive thread-safe computation out of the standard main thread or a Folia tick region. Treat Bukkit or Paper API access from asynchronous work as unsafe unless target-version behavior documentation explicitly permits it. Publish immutable results by re-entering the correct standard main-thread, Folia location-region, entity, or global context, then immediately revalidate the lifecycle generation, plugin admission state, and live target before side effects. Never wait on a scheduler Future from the main thread when the target Javadocs prohibit it.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policy"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_claim_policy"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getClaimPolicy"
+            ]
+          },
+          "evidence": [
+            "An execution-context table for input capture, background work, result publication, and cleanup",
+            "A target-compatible scheduler choice tied to the state being accessed rather than a blanket global scheduler",
+            "A publication fence that checks lifecycle generation, plugin admission state, and target validity after returning to the required API context",
+            "No blocking wait, file or network I/O, or expensive computation on the main thread or a Folia tick region"
+          ],
+          "stopIfMissing": "Do not move an entire workflow async, call world or entity state from an unverified thread, block a tick context waiting for completion, or publish after checking lifecycle state only when background work started."
+        },
+        {
+          "id": "cancel-and-fence-teardown",
+          "action": "Make teardown idempotent and order it explicitly: close admission, advance or invalidate the lifecycle generation, cancel owned scheduled handles or task groups, cancel and close separately owned resources, and clear references. Treat cancellation as an attempt to prevent pending or future execution, not as proof that an already-running callback or child operation has stopped. Running work must observe the closed generation before its next side effect, and late background completion must be discarded instead of scheduling new publication after reload, replacement, or disable.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "One idempotent teardown sequence shared by feature stop, replacement, reload or reconfiguration, partial startup failure, and plugin disable where applicable",
+            "Target-version cancellation evidence that distinguishes queued or future executions from a callback already running",
+            "A closed-generation or admission check immediately before every late publication or durable side effect",
+            "Bounded shutdown and reference cleanup for custom executors, futures, timers, subscriptions, and child resources"
+          ],
+          "stopIfMissing": "Do not claim teardown is complete merely because cancel was called, and do not let already-running or externally owned work publish into a disabled or replacement generation."
+        },
+        {
+          "id": "test-ordering-cancellation-and-disable",
+          "action": "Use a controlled scheduler or clock for unit-level ordering and cancellation tests, then add the smallest target-version loaded-plugin evidence required for lifecycle or scheduler behavior claims. Test cancellation before first execution, self-cancellation of repeating work, replacement-generation invalidation, repeated teardown, disable with queued work, an async callback that finishes after cancellation, rejected late publication, and cleanup of separately owned executors or resources. When Folia support is claimed, test the selected ownership scheduler and relevant entity-retirement outcome instead of treating standard Paper tests as Folia evidence. Route per-player connection generations and durable player flush semantics to the dedicated player-session lifecycle guidance.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "Deterministic tests for pending cancellation, repeating self-cancellation, generation replacement, double teardown, queued work at disable, and running async completion after cancellation",
+            "Assertions that late work performs no Bukkit, Paper, durable, messaging, or state side effect after its generation closes",
+            "Cleanup assertions for task handles, task groups, executors, child resources, and retained references",
+            "When claimed, target-version loaded-server or Folia evidence for lifecycle ordering, scheduler ownership, and entity retirement behavior"
+          ],
+          "stopIfMissing": "Do not claim scheduler lifecycle safety from compilation, sleeps, or a normal repeating-task happy path; narrow the claim and list the missing runtime evidence."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-scheduled-task-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Scheduled work can duplicate after reload, access Bukkit state from the wrong thread, outlive its feature or plugin generation, leak custom executors, or publish after cancellation because ownership and teardown were implicit."
+    },
+    {
       "id": "paper-safe-item-delivery",
       "domains": ["paper-plugin"],
       "title": "Generate or review loss-safe Paper item delivery",

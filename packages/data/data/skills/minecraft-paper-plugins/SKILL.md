@@ -67,6 +67,11 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
    event terms before searching; keep exact event class names unchanged.
 26. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
+27. For delayed, repeating, or asynchronous work, use
+   `minecraft-skills plugin paper recipe paper-scheduled-task-lifecycle` and
+   `minecraft-skills plugin paper diagnostic paper-scheduled-task-lifecycle-unsafe`. Give every
+   task an owner and stop path, keep background work separate from API publication, close admission
+   before idempotent teardown, and do not treat cancellation as proof that running work stopped.
 
 ## CLI Commands
 

@@ -152,6 +152,10 @@ const bossBarPlan = getAuthoringPlan({
   scenario: "paper-bossbar-audience-lifecycle-review",
   version: "26.2",
 });
+const scheduledTaskPlan = getAuthoringPlan({
+  scenario: "paper-scheduled-task-lifecycle-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -165,6 +169,7 @@ const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const inventoryRecipe = getAuthoringRecipe("paper-inventory-gui-interactions");
 const adminCommandRecipe = getAuthoringRecipe("paper-administrative-command-operability");
 const itemStackIdentityRecipe = getAuthoringRecipe("paper-itemstack-semantic-identity");
+const scheduledTaskRecipe = getAuthoringRecipe("paper-scheduled-task-lifecycle");
 const sessionRecipe = getAuthoringRecipe("paper-player-session-lifecycle");
 const configurationLifecycleRecipe = getAuthoringRecipe("paper-plugin-configuration-lifecycle");
 const bossBarRecipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
@@ -194,6 +199,7 @@ const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
 const itemStackIdentityGuardrail = getAuthoringGuardrail("paper-itemstack-semantic-identity");
+const scheduledTaskGuardrail = getAuthoringGuardrail("paper-scheduled-task-lifecycle-safety");
 const sessionGuardrail = getAuthoringGuardrail("paper-player-session-lifecycle-safety");
 const configurationLifecycleGuardrail = getAuthoringGuardrail(
   "paper-plugin-configuration-lifecycle-safety",
@@ -207,6 +213,7 @@ const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers
 const itemStackIdentityDiagnostic = getAuthoringDiagnostic(
   "paper-itemstack-identity-or-state-loss",
 );
+const scheduledTaskDiagnostic = getAuthoringDiagnostic("paper-scheduled-task-lifecycle-unsafe");
 const sessionDiagnostic = getAuthoringDiagnostic("paper-player-session-lifecycle-unsafe");
 const configurationLifecycleDiagnostic = getAuthoringDiagnostic(
   "paper-plugin-configuration-lifecycle-unsafe",
