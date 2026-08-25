@@ -3749,7 +3749,7 @@ describe("minecraft-skills CLI", () => {
         [
           "[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper",
           "at example-plugin.jar//example.Plugin.run(Plugin.java:1)",
-          "Caused by: java.lang.IllegalStateException: root",
+          "Caused by: java.lang.NoClassDefFoundError: com/example/MissingService",
         ].join("\r\n"),
       );
       const result = await capture([
@@ -3761,6 +3761,8 @@ describe("minecraft-skills CLI", () => {
         "--max-events",
         "1",
         "--max-mixin-failures",
+        "2",
+        "--max-class-loading-failures",
         "2",
         "--max-exception-depth",
         "8",
@@ -3776,10 +3778,11 @@ describe("minecraft-skills CLI", () => {
         maxInputBytes: 4096,
         maxEvents: 1,
         maxMixinFailures: 2,
+        maxClassLoadingFailures: 2,
         maxExceptionDepth: 8,
         maxStackFrames: 8,
       });
-      expect(result.stdout.join("\n")).toContain("java.lang.IllegalStateException");
+      expect(result.stdout.join("\n")).toContain('"category": "missing-class"');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -3982,12 +3985,20 @@ describe("minecraft-skills CLI", () => {
       "--max-mixin-failures",
       String(defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1),
     ]);
+    const raisedClassLoadingFailures = await capture([
+      "minecraft",
+      "analyze-log",
+      "latest.log",
+      "--max-class-loading-failures",
+      String(defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures + 1),
+    ]);
 
     expect(missing.stderr).toEqual(["minecraft analyze-log requires exactly one <file>"]);
     expect(repeated.stderr.join("\n")).toContain("option must not be repeated");
     expect(unknown.stderr.join("\n")).toContain("received unknown option");
     expect(raised.stderr.join("\n")).toContain("must not exceed");
     expect(raisedMixinFailures.stderr.join("\n")).toContain("must not exceed");
+    expect(raisedClassLoadingFailures.stderr.join("\n")).toContain("must not exceed");
   });
 
   it("reports unknown commands", async () => {
@@ -4088,6 +4099,7 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("Grouped commands:");
     expect(output).toContain("minecraft-skills minecraft analyze-log <file>");
     expect(output).toContain("--max-mixin-failures count");
+    expect(output).toContain("--max-class-loading-failures count");
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");

@@ -128,11 +128,13 @@ minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
 
 `minecraft analyze-log <file>` structures a Minecraft Java log, stack trace, or crash report into
-bounded events, exception chains, explicit Mixin failure facts, crash metadata, explicit platform
-versions, JAR artifacts, and explicitly named mods/plugins. It accepts a regular file or symlink
+bounded events, exception chains, explicit Mixin failure facts, explicit class-loading failure
+evidence, crash metadata, explicit platform versions, JAR artifacts, and explicitly named
+mods/plugins. It accepts a regular file or symlink
 target, uses one file handle, checks size and timestamps before and after the bounded read, and
 rejects malformed UTF-8. Analysis limits, including `--max-mixin-failures`, can be lowered with the
-documented `--max-*` flags but cannot exceed Catalog defaults.
+documented `--max-*` flags but cannot exceed Catalog defaults. Class-loading failure retention can
+be bounded independently with `--max-class-loading-failures`.
 Credentials, IP addresses, absolute paths, ANSI/OSC controls, unsafe C0/C1 controls, bidi
 overrides, and malformed Unicode are sanitized before parsing or retention. `deepestCause` follows
 only the explicit primary `Caused by` chain; suppressed branches and extracted component labels do
@@ -143,6 +145,11 @@ mappings, refmaps, Mixin configuration, target bytecode, a proposed fix, or runt
 `noRefmapReported` is true only for the explicit no-refmap statement in the same exception message;
 false is not evidence that a refmap was loaded or correct. Total, retained, and omitted Mixin
 failure counts expose `--max-mixin-failures` truncation.
+`classLoadingFailures` records only explicit `NoClassDefFoundError` and
+`ClassNotFoundException` symbols. Slash and dot forms are normalized, matching evidence within one
+exception chain is collapsed, and `initialization-failed` requires the exact
+`Could not initialize class` wording. These facts do not prove a dependency, classpath, JAR content,
+shading decision, owner, fix, or root cause.
 
 The `paper-inventory-gui-interaction-review` scenario routes custom inventory menus through a
 default-deny click-and-drag policy. Its recipe and guardrail explicitly cover top, bottom, and
@@ -872,8 +879,8 @@ import {
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
 const velocity = await resolveVelocityToolchain({ limit: 5, timeoutMs: 5000 });
 const logAnalysis = analyzeMinecraftLog({
-  text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
-Caused by: java.lang.IllegalStateException: root`,
+  text: `[12:00:00] [Server thread/ERROR]: java.lang.NoClassDefFoundError: com/example/api/MissingService
+Caused by: java.lang.ClassNotFoundException: com.example.api.MissingService`,
 });
 const performance = analyzeMinecraftPerformance({
   samples: [

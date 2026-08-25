@@ -5238,6 +5238,10 @@ describe("catalog", () => {
       "analyze this Minecraft server log",
       "find the deepest Caused by in this Java stack trace",
       "inspect a Mixin apply crash report",
+      "inspect a NoClassDefFoundError",
+      "compare ClassNotFoundException evidence",
+      "understand a Could not initialize class failure",
+      "triage class loading failures",
     ]) {
       const result = suggestMinecraftLookups({ version: "1.21.11", task });
       expect(result.suggestedTools.map((entry) => entry.tool)).toContain(

@@ -5681,13 +5681,13 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     "Start with a cross-domain search.",
   );
   if (
-    /\b(crash report|stack ?trace|latest\.log|debug\.log|server log|minecraft log|java exception|caused by|mixin apply)\b/.test(
+    /\b(crash report|stack ?trace|latest\.log|debug\.log|server log|minecraft log|java exception|caused by|mixin apply|noclassdeffounderror|classnotfoundexception|could not initialize class|class[ -]?loading failures?)\b/.test(
       lower,
     )
   ) {
     add(
       "minecraft analyze-log <log-file>",
-      "Extract bounded events, explicit exception branches, crash metadata, and referenced artifacts before diagnosing the log.",
+      "Extract bounded events, explicit exception branches and class-loading failure evidence, crash metadata, and referenced artifacts before diagnosing the log.",
     );
   }
   if (!options.domain && isServerAccessListValidationQuery(task)) {

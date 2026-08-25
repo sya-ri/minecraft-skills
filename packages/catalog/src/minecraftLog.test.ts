@@ -345,6 +345,156 @@ describe("Minecraft log analysis", () => {
     );
   });
 
+  it("collapses matching Paper NoClassDefFoundError and ClassNotFoundException evidence", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "[12:00:00] [Server thread/ERROR]: java.lang.NoClassDefFoundError: com/example/api/MissingService",
+        "\tat sample-plugin.jar//com.example.SamplePlugin.onEnable(SamplePlugin.java:12) ~[sample-plugin.jar:?]",
+        "Caused by: java.lang.ClassNotFoundException: com.example.api.MissingService",
+        "\tat org.bukkit.plugin.java.PluginClassLoader.loadClass(PluginClassLoader.java:150)",
+      ].join("\n"),
+    });
+
+    expect(result.classLoadingFailureTotal).toBe(1);
+    expect(result.retainedClassLoadingFailureCount).toBe(1);
+    expect(result.omittedClassLoadingFailureCount).toBe(0);
+    expect(result.classLoadingFailures).toEqual([
+      {
+        category: "missing-class",
+        symbol: "com.example.api.MissingService",
+        chainStartLine: 1,
+        evidence: [
+          {
+            line: 1,
+            relation: "thrown",
+            branch: "primary",
+            exceptionType: "java.lang.NoClassDefFoundError",
+          },
+          {
+            line: 3,
+            relation: "caused-by",
+            branch: "cause",
+            exceptionType: "java.lang.ClassNotFoundException",
+          },
+        ],
+        firstFrame: {
+          line: 2,
+          frame:
+            "sample-plugin.jar//com.example.SamplePlugin.onEnable(SamplePlugin.java:12) ~[sample-plugin.jar:?]",
+          artifact: "sample-plugin.jar",
+        },
+      },
+    ]);
+    expect(result.notes.join("\n")).toContain("not proof of a dependency");
+  });
+
+  it("distinguishes explicit Fabric class-initialization failure wording", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "java.lang.RuntimeException: Could not execute entrypoint stage 'client'",
+        "Caused by: java.lang.NoClassDefFoundError: Could not initialize class com/example/client/RenderHooks",
+        "\tat example-mod.jar//com.example.client.ExampleClient.onInitializeClient(ExampleClient.java:20)",
+        "Caused by: java.lang.ClassNotFoundException: com.example.client.RenderHooks",
+      ].join("\n"),
+    });
+
+    expect(result.classLoadingFailureTotal).toBe(1);
+    expect(result.classLoadingFailures[0]).toMatchObject({
+      category: "initialization-failed",
+      symbol: "com.example.client.RenderHooks",
+      chainStartLine: 1,
+      evidence: [
+        expect.objectContaining({ exceptionType: "java.lang.NoClassDefFoundError", line: 2 }),
+        expect.objectContaining({ exceptionType: "java.lang.ClassNotFoundException", line: 4 }),
+      ],
+      firstFrame: expect.objectContaining({ artifact: "example-mod.jar", line: 3 }),
+    });
+  });
+
+  it("does not turn other linkage, dependency, Mixin, wrapper, or malformed messages into class-loading failures", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "org.bukkit.plugin.UnknownDependencyException: Missing dependency ExampleAPI",
+        "java.lang.NoSuchMethodError: com.example.Api.run()V",
+        "java.lang.NoSuchFieldError: INSTANCE",
+        "java.lang.UnsupportedClassVersionError: com/example/NewPlugin",
+        "org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: java.lang.NoClassDefFoundError: com/example/MixinTarget",
+        "java.lang.RuntimeException: ClassNotFoundException: com.example.Wrapped",
+        "example.NoClassDefFoundError: com/example/Lookalike",
+        "java.lang.NoClassDefFoundError: com/example/Wrong (wrong name: other/example/Wrong)",
+        "java.lang.NoClassDefFoundError: Could not initialize class",
+      ].join("\n"),
+    });
+
+    expect(result.classLoadingFailureTotal).toBe(0);
+    expect(result.classLoadingFailures).toEqual([]);
+  });
+
+  it("bounds class-loading failures and only permits lowering their published limit", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "java.lang.NoClassDefFoundError: example/First",
+        "java.lang.ClassNotFoundException: example.Second",
+        "java.lang.NoClassDefFoundError: example/Third",
+      ].join("\n"),
+      limits: { maxClassLoadingFailures: 2 },
+    });
+    const resolved = resolveMinecraftLogAnalysisLimits({
+      maxClassLoadingFailures: defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures + 1,
+    });
+
+    expect(result.classLoadingFailureTotal).toBe(3);
+    expect(result.retainedClassLoadingFailureCount).toBe(2);
+    expect(result.omittedClassLoadingFailureCount).toBe(1);
+    expect(result.exceededLimits).toContain("maxClassLoadingFailures");
+    expect(result.analysisComplete).toBe(false);
+    expect(resolved.maxClassLoadingFailures).toBe(
+      defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures,
+    );
+  });
+
+  it("does not retain partial class symbols or frames from line-bounded input", () => {
+    const exception = "java.lang.NoClassDefFoundError: com/example/PartialSymbol";
+    const partialSymbol = analyzeMinecraftLog({
+      text: [
+        exception,
+        `\tat private-plugin.jar//com.example.${"A".repeat(100)}.run(Test.java:1)`,
+      ].join("\n"),
+      limits: { maxLineCharacters: exception.length - 4 },
+    });
+    const completeException = "java.lang.NoClassDefFoundError: com/example/CompleteSymbol";
+    const partialFrame = analyzeMinecraftLog({
+      text: [
+        completeException,
+        `\tat private-plugin.jar//com.example.${"B".repeat(100)}.run(Test.java:1)`,
+      ].join("\n"),
+      limits: { maxLineCharacters: completeException.length },
+    });
+
+    expect(partialSymbol.exceededLimits).toContain("maxLineCharacters");
+    expect(partialSymbol.classLoadingFailureTotal).toBe(0);
+    expect(partialFrame.classLoadingFailureTotal).toBe(1);
+    expect(partialFrame.classLoadingFailures[0]?.firstFrame).toBeNull();
+  });
+
+  it("redacts and bounds the first directly associated class-loading frame", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "java.lang.NoClassDefFoundError: com/example/VeryLongMissingServiceName",
+        "\tat C:\\Users\\Private User\\server\\plugins\\private-plugin.jar//com.example.Plugin.load(Plugin.java:7)",
+      ].join("\n"),
+      limits: { maxTextCharacters: 32 },
+    });
+    const serialized = JSON.stringify(result);
+    const failure = result.classLoadingFailures[0];
+
+    expect(failure?.symbol.length).toBeLessThanOrEqual(32);
+    expect(failure?.firstFrame?.frame.length).toBeLessThanOrEqual(32);
+    expect(failure?.firstFrame?.artifact).toBe("private-plugin.jar");
+    expect(serialized).not.toContain("Private User");
+    expect(serialized).toContain("[USER_PATH]");
+  });
+
   it("redacts credentials, IP addresses, and absolute user paths before retaining output", () => {
     const result = analyzeMinecraftLog({
       text: [

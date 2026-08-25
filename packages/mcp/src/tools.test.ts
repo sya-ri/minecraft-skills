@@ -270,6 +270,11 @@ describe("MCP tools", () => {
       minimum: 1,
       maximum: defaultMinecraftLogAnalysisLimits.maxMixinFailures,
     });
+    expect(minecraftLogLimits?.properties?.maxClassLoadingFailures).toEqual({
+      type: "integer",
+      minimum: 1,
+      maximum: defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures,
+    });
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -3938,6 +3943,7 @@ describe("MCP tools", () => {
       limits: {
         maxEvents: 1,
         maxMixinFailures: 2,
+        maxClassLoadingFailures: 2,
         maxExceptionDepth: 8,
         maxStackFrames: 8,
       },
@@ -3950,6 +3956,7 @@ describe("MCP tools", () => {
     expect(output).toContain('"message": "primary root"');
     expect(output).toContain('"maxExceptionDepth": 8');
     expect(output).toContain('"maxMixinFailures": 2');
+    expect(output).toContain('"maxClassLoadingFailures": 2');
     expect(output).toContain("[REDACTED]");
     expect(output).toContain("[IP_REDACTED]");
     expect(output).not.toContain("hunter2");
@@ -3971,6 +3978,23 @@ describe("MCP tools", () => {
     expect(output).toContain('"selector": "mouseClicked"');
     expect(output).toContain('"noRefmapReported": true');
     expect(output).not.toContain('"category": "mixin-transformer-error"');
+  });
+
+  it("returns only explicit bounded class-loading failure evidence", async () => {
+    const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: [
+        "java.lang.NoClassDefFoundError: com/example/MissingApi",
+        "Caused by: java.lang.ClassNotFoundException: com.example.MissingApi",
+      ].join("\n"),
+      limits: { maxClassLoadingFailures: 1 },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).not.toBe(true);
+    expect(output).toContain('"category": "missing-class"');
+    expect(output).toContain('"symbol": "com.example.MissingApi"');
+    expect(output.match(/"symbol": "com\.example\.MissingApi"/g)).toHaveLength(1);
+    expect(output).not.toContain('"category": "dependency-missing"');
   });
 
   it("enforces Minecraft log MCP input and nested limit boundaries", async () => {
@@ -3995,6 +4019,12 @@ describe("MCP tools", () => {
         maxMixinFailures: defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1,
       },
     });
+    const raisedClassLoadingFailures = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: {
+        maxClassLoadingFailures: defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures + 1,
+      },
+    });
     const unknownLimit = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: "log",
       limits: { unbounded: true },
@@ -4017,6 +4047,7 @@ describe("MCP tools", () => {
     expect(raised.content[0]?.text).toContain("must be an integer from 1");
     expect(raisedBytes.isError).toBe(true);
     expect(raisedMixinFailures.isError).toBe(true);
+    expect(raisedClassLoadingFailures.isError).toBe(true);
     expect(unknownLimit.isError).toBe(true);
     expect(unknownLimit.content[0]?.text).toContain("unknown argument");
     expect(unknownArgument.isError).toBe(true);

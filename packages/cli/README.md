@@ -175,7 +175,8 @@ changes.
 one stable file handle, rejects a size/timestamp change during the read, and requires valid UTF-8.
 The default ceilings are 2 MiB of UTF-8 input and 2 Mi decoded characters. `--max-input-bytes` and
 every analysis option (`--max-characters`, `--max-lines`, `--max-line-characters`, `--max-events`,
-`--max-exception-chains`, `--max-mixin-failures`, `--max-exception-depth`,
+`--max-exception-chains`, `--max-mixin-failures`, `--max-class-loading-failures`,
+`--max-exception-depth`,
 `--max-exception-entries`, `--max-stack-frames`, `--max-platforms`, `--max-artifacts`,
 `--max-components`, `--max-text-characters`, and `--max-retained-text-characters`) may lower but
 never raise the published Catalog limits. Output distinguishes primary, cause, and suppressed
@@ -186,6 +187,9 @@ not attribution. `mixinFailures` records bounded facts from five explicit Mixin 
 missing shadow targets, missing injection targets, failed injection checks, direct class loads from
 a defined mixin package, and non-private static members. It does not identify responsibility or
 validate mappings, refmaps, configuration, target bytecode, fixes, or runtime compatibility.
+Explicit `NoClassDefFoundError` and `ClassNotFoundException` symbols are normalized
+and grouped only within the same exception chain; they do not establish a dependency, classpath,
+JAR content, shading decision, owner, fix, or root cause.
 
 The Modrinth command uses the public v2 search API and supports `--category`, sorting with
 `--index`, and pagination with `--offset` and `--limit` in addition to the filters shown above.

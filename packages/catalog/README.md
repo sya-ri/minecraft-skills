@@ -372,9 +372,9 @@ const serverProperties = validateServerProperties({
 // complete within the published bounds, while exact target-version keys/defaults and the
 // Minecraft runtime reader/encoding remain explicit unknowns.
 const logAnalysis = analyzeMinecraftLog({
-  text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
-Caused by: java.lang.IllegalStateException: root`,
-  limits: { maxMixinFailures: 50 },
+  text: `[12:00:00] [Server thread/ERROR]: java.lang.NoClassDefFoundError: com/example/api/MissingService
+Caused by: java.lang.ClassNotFoundException: com.example.api.MissingService`,
+  limits: { maxMixinFailures: 50, maxClassLoadingFailures: 50 },
 });
 const blockbenchProject = inspectBlockbenchProject({
   project:
@@ -553,6 +553,12 @@ message did not contain the recognized no-refmap statement; it does not prove th
 loaded or correct. Category-specific evidence fields are null when the message does not state them;
 counts that cannot be represented as safe integers are also null. `mixinFailureTotal`, retained and
 omitted counts, `maxMixinFailures`, and `exceededLimits` expose truncation explicitly.
+It also groups explicit `NoClassDefFoundError` and
+`ClassNotFoundException` symbols within each exception chain. Slash and dot symbol forms normalize
+to one dotted value; `initialization-failed` requires explicit `Could not initialize class` wording.
+The result does not infer dependencies, classpaths, JAR contents, shading, ownership, fixes, or root
+causes. `classLoadingFailureTotal`, retained and omitted counts, `maxClassLoadingFailures`, and
+`exceededLimits` expose truncation explicitly.
 
 `validateFabricMod` checks bounded structural rules for current `fabric.mod.json` schema v1 data.
 Without `archiveEntries` it proves metadata structure only; caller-supplied entries additionally
