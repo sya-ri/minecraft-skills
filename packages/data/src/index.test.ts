@@ -79,6 +79,9 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-itemstack-semantic-identity",
     );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-plugin-configuration-lifecycle",
+    );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-testing-evidence");
   });
 
@@ -96,6 +99,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
     expect(scenarioIds).toContain("paper-bossbar-audience-lifecycle-review");
     expect(scenarioIds).toContain("paper-itemstack-semantic-identity-review");
+    expect(scenarioIds).toContain("paper-plugin-configuration-lifecycle-review");
     expect(scenarioIds).toContain("paper-plugin-testing-evidence-review");
   });
 
@@ -118,6 +122,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-plugin-protocol-safety");
     expect(guardrailIds).toContain("paper-bossbar-audience-lifecycle-safety");
     expect(guardrailIds).toContain("paper-itemstack-semantic-identity");
+    expect(guardrailIds).toContain("paper-plugin-configuration-lifecycle-safety");
     expect(guardrailIds).toContain("paper-plugin-testing-evidence");
   });
 
@@ -135,6 +140,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
     expect(diagnosticIds).toContain("paper-bossbar-audience-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-itemstack-identity-or-state-loss");
+    expect(diagnosticIds).toContain("paper-plugin-configuration-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
   });
 
@@ -447,6 +453,66 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf.join("\n")).toContain("repeatedly adds viewers");
     expect(diagnostic?.failIf.join("\n")).toContain("rapid reconnect");
     expect(diagnostic?.failIf.join("\n")).toContain("only bar handle");
+  });
+
+  it("loads complete Paper plugin configuration lifecycle guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; evidence: string[]; stopIfMissing: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "paper-plugin-configuration-lifecycle",
+    );
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "stage-and-validate-startup-state",
+        "reload-through-prepare-commit-and-retire",
+        "persist-without-clobbering-operator-input",
+      ]),
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "last-known-good test",
+    );
+    expect(recipe?.steps.map((step) => step.stopIfMissing).join("\n")).toContain("saveConfig");
+    expect(recipe?.finalChecks).toContain("paper-plugin-configuration-lifecycle-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-plugin-configuration-lifecycle-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-plugin-configuration-lifecycle"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-plugin-configuration-lifecycle-unsafe",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("deprecated server-wide reload");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-plugin-configuration-lifecycle-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("monotonic revisions");
+    expect(guardrail?.rules.join("\n")).toContain("last known good snapshot");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-plugin-configuration-lifecycle-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("older slow reload");
+    expect(diagnostic?.failIf.join("\n")).toContain("stale in-memory state");
   });
 
   it("loads complete Paper plugin testing evidence guidance", () => {

@@ -606,6 +606,55 @@
       "failureMode": "Display edits and schema upgrades can silently change identity, erase gameplay or third-party data, duplicate presentation, or partially commit when identity, ownership, comparison purpose, and migration state are not explicit."
     },
     {
+      "id": "paper-plugin-configuration-lifecycle-review",
+      "domains": ["paper-plugin"],
+      "title": "Review a Paper plugin configuration lifecycle and hot reload",
+      "userPrompt": "Create or review a Paper plugin configuration lifecycle that starts safely, publishes validated hot reloads transactionally, preserves the last known good state, and shuts down cleanly.",
+      "useWhen": [
+        "the request creates, loads, saves, migrates, reloads, or reviews Paper plugin configuration",
+        "a reload command replaces configuration-backed schedulers, listeners, caches, clients, repositories, or other resources",
+        "configuration can be edited externally while the plugin is running or can also be written by the plugin",
+        "startup, concurrent reload, invalid input, partial resource replacement, stale callbacks, or disable ordering is unclear"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-plugin-configuration-lifecycle"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-plugin-configuration-lifecycle-unsafe",
+          "paper-plugin-test-evidence-gap"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "defaults, operator files, generated state, secrets, schema versions, migrations, effective snapshots, and derived resources have explicit ownership and lifecycle rules",
+        "the design uses exact target-version Paper API evidence and the official plugin-configuration, command, and JavaPlugin lifecycle documentation",
+        "startup publishes only a fully parsed, migrated, semantically valid immutable snapshot and gates services until readiness is decided",
+        "reload serializes or revisions requests, prepares a detached candidate, commits one visible generation in a target-compatible context, retires old resources after commit, and preserves the last known good state on pre-commit failure",
+        "restart-only keys, non-atomic side effects, retirement failures, plugin disable, stale consumers, and recovery have explicit outcomes instead of being hidden behind a success message",
+        "programmatic writes cannot clobber newer operator edits and use the same validation and commit path or a separately owned state store",
+        "status exposes effective generation and lifecycle state without configuration values or secrets, and the invoker receives a typed result",
+        "deterministic tests cover startup, migration, concurrent and stale reloads, invalid input, preparation and retirement failure, file conflicts, disable, cleanup, and loaded-server lifecycle behavior"
+      ],
+      "mustAvoid": [
+        "using the deprecated server-wide reload or Paper server-configuration reload as a plugin configuration lifecycle",
+        "mutating a shared FileConfiguration or live resource while parsing and validating a candidate",
+        "publishing an empty or default configuration after unreadable, malformed, unsupported, or migration-failed operator input",
+        "letting an older slow reload overwrite a newer accepted generation",
+        "calling reload successful before configuration-backed tasks, caches, clients, repositories, and other resources reach the declared effective generation",
+        "claiming atomic rollback for external side effects without a prepare boundary, compensation, or degraded-state outcome",
+        "unconditionally saving stale cached configuration over an externally edited file",
+        "performing blocking configuration I/O on the server thread or publishing Bukkit-facing state from an unverified execution context",
+        "leaking candidate, retired, or live resources when reload races with plugin disable",
+        "printing configuration values, credentials, file contents, or unbounded parser errors in status, logs, or command feedback"
+      ],
+      "failureMode": "A plugin can report a successful reload while mixed configuration generations, stale operator writes, old tasks, failed resources, or shutdown races keep effective runtime state inconsistent and unrecoverable."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",

@@ -1307,6 +1307,52 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-bossbar-audience-lifecycle"');
   });
 
+  it("calls Paper plugin configuration lifecycle guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-plugin-configuration-lifecycle",
+    });
+    expect(recipe.content[0]?.text).toContain("reload-through-prepare-commit-and-retire");
+    expect(recipe.content[0]?.text).toContain("last-known-good test");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-plugin-configuration-lifecycle-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-plugin-configuration-lifecycle-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "transactional config hot reload last known good generation",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain(
+      '"id": "paper-plugin-configuration-lifecycle-review"',
+    );
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-plugin-configuration-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-plugin-configuration-lifecycle"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-plugin-configuration-lifecycle-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-plugin-configuration-lifecycle-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("monotonic revisions");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-plugin-configuration-lifecycle-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("older slow reload");
+
+    const suggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      task: "Review a Paper plugin config hot reload transaction",
+      version: "1.21.11",
+    });
+    expect(suggestions.content[0]?.text).toContain(
+      "plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11",
+    );
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",

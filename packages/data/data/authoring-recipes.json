@@ -1636,6 +1636,199 @@
       "failureMode": "A presentation refresh or migration can misrecognize an item, erase unrelated gameplay or third-party state, mutate aliased templates, duplicate lore, or advance a schema marker after partial failure when ItemStack identity and ownership are implicit."
     },
     {
+      "id": "paper-plugin-configuration-lifecycle",
+      "domains": ["paper-plugin"],
+      "title": "Design a lifecycle-safe Paper plugin configuration",
+      "when": [
+        "the request creates, loads, saves, migrates, reloads, or reviews Paper plugin configuration",
+        "a plugin exposes a configuration reload command or applies changed settings without a restart",
+        "configuration controls schedulers, listeners, caches, clients, repositories, files, credentials, or other runtime resources",
+        "startup, reload failure, concurrent reload, external file edits, or plugin disable could leave effective state unclear"
+      ],
+      "steps": [
+        {
+          "id": "map-config-files-ownership-and-lifecycle",
+          "action": "Inventory every default resource, operator-edited file, generated state file, secret source, schema version, migration, immutable effective snapshot, and runtime resource derived from configuration. Define the owner, source of truth, read and write path, mutability, startup behavior, hot-reload support, restart-only keys, redaction policy, and disable cleanup for each. Keep operator configuration separate from generated runtime state when they have different ownership or durability rules.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "A configuration inventory covering defaults, operator input, generated state, secrets, schema and migration ownership, effective snapshots, and derived resources",
+            "The exact target Paper version plus official plugin-configuration, command, and JavaPlugin Javadocs used for lifecycle semantics",
+            "A key-level decision for startup-required, safely hot-reloadable, and restart-required settings",
+            "A source-of-truth and write-ownership decision that prevents operator edits and plugin writes from silently overwriting each other"
+          ],
+          "stopIfMissing": "Do not add a reload path until file ownership, the effective-state boundary, and every derived runtime resource are known."
+        },
+        {
+          "id": "stage-and-validate-startup-state",
+          "action": "Extract packaged defaults only with non-replacing semantics, then read the operator file through a bounded path and distinguish missing, unreadable, malformed, unsupported-schema, migration-failed, and semantically invalid outcomes. Parse into a typed immutable candidate, apply explicit versioned migrations, validate all fields and cross-field invariants, and only then make the plugin ready. Keep blocking file work away from the server thread using a target-compatible lifecycle and scheduling design; gate commands, listeners, tasks, and publications until initialization has either committed a valid snapshot or failed closed with an actionable non-secret error.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policies"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_claim_policies"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listClaimPolicies"
+            ]
+          },
+          "evidence": [
+            "Target-version evidence for every JavaPlugin, configuration, lifecycle, and scheduler API named by the design",
+            "Typed startup outcomes that do not confuse an empty fallback configuration with a valid operator file",
+            "A readiness state machine that prevents partially initialized services from observing absent or mutable configuration",
+            "Tests for first run, an existing operator file, missing defaults, unreadable input, malformed syntax, semantic invalidity, unsupported schema, migration success, and migration failure"
+          ],
+          "stopIfMissing": "Do not publish a default, empty, partially parsed, or partially migrated configuration merely because the configuration API returned an object."
+        },
+        {
+          "id": "reload-through-prepare-commit-and-retire",
+          "action": "Provide an explicit plugin-owned reload operation instead of relying on the deprecated server-wide reload or Paper's own configuration reload. Serialize reload requests or assign monotonic revisions, read and fully validate a detached candidate off the server thread, then prepare replacement resources without exposing them. Recheck the source revision and plugin lifecycle epoch before one target-compatible commit swaps the immutable snapshot and prepared resource bundle. Retire old resources only after the commit; if preparation or commit fails, close the candidate resources, preserve the previous snapshot and resources, and report a typed failure. When side effects cannot be made atomic, define ordered compensation and a degraded-state outcome rather than claiming rollback that the implementation cannot perform.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A prepare, commit, retire, and compensation state machine with one visible configuration generation",
+            "A last-known-good test proving invalid input and candidate-resource failure cannot replace effective state",
+            "A concurrency test proving an older slow reload cannot publish after a newer accepted revision",
+            "A command contract distinguishing plugin configuration reload from the deprecated server-wide reload and Paper server-configuration reload"
+          ],
+          "stopIfMissing": "Do not call a reload transactional when validation mutates live state, readers can observe a partial update, or failed candidate resources can displace the last known good state."
+        },
+        {
+          "id": "fence-consumers-and-reconcile-derived-resources",
+          "action": "Have consumers capture one immutable configuration generation per operation rather than sharing a mutable FileConfiguration. For schedulers, listeners, caches, clients, repositories, and long-running callbacks, define whether they retain their starting snapshot, are recreated during commit, or reject stale publication by comparing generation and plugin epoch. Reject hot changes to restart-only keys before commit. Reconcile additions, removals, and changed limits as one ordered resource plan, and make disable or a concurrent reload cancel candidate work and close both prepared and retired resources exactly once.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "A consumer matrix for snapshot capture, recreation, stale-result rejection, and restart-only keys",
+            "An ownership ledger for tasks, listeners, caches, clients, repositories, files, and prepared or retired resources",
+            "Tests for disable during reload, late callback after reload, repeated close, partial preparation, retirement failure, and changed scheduler or cache settings",
+            "A bounded degraded-state and operator-recovery decision when retiring an old external resource fails after commit"
+          ],
+          "stopIfMissing": "Do not mutate one shared configuration tree in place or assume every existing task, cache, connection, and callback automatically adopts the new values safely."
+        },
+        {
+          "id": "persist-without-clobbering-operator-input",
+          "action": "Treat the on-disk operator file as desired input and the committed immutable snapshot as effective state. Do not save a stale cached configuration after an external edit. If the plugin must write operator configuration, require a known source revision or fingerprint, apply a typed change to that version, serialize without secrets or generated state leakage, write a temporary file in the same trusted directory, durably replace the destination where the platform supports it, and feed the resulting revision through the same validation and commit path. Otherwise keep runtime-generated state in a separately owned store and leave operator configuration read-only.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper members", "plugin paper diagnostic"],
+            "mcp": ["get_paper_api_reference", "search_paper_members", "get_authoring_diagnostic"],
+            "packageApis": ["getPaperApiReference", "searchPaperMembers", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A desired-versus-effective state model and a policy for external edits during programmatic saves",
+            "A compare-before-write or single-writer contract that prevents stale in-memory state from clobbering a newer operator file",
+            "Crash and conflict tests around temporary-file write, replacement, reload of the written revision, and recovery",
+            "A separate protected source and redaction policy for credentials and secret material"
+          ],
+          "stopIfMissing": "Do not use saveConfig as an unconditional persistence step when another actor can edit the file or the in-memory object may be stale."
+        },
+        {
+          "id": "expose-effective-state-and-test-transitions",
+          "action": "Expose a permission-protected status surface with readiness, effective schema and generation, non-secret source fingerprint, last attempt and successful commit times, restart-required differences, degraded resources, and a bounded redacted error summary. Return a typed reload result to the actual invoker. Test lifecycle and ordering with controlled I/O and task completion, then use a loaded target-version Paper server to verify bootstrap, command registration, scheduler integration, reload publication, and disable behavior that pure tests cannot prove.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic",
+              "plugin paper output-requirements"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic",
+              "list_output_requirements"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Status and reload-result assertions for success, invalid input, conflict, restart required, I/O failure, preparation failure, commit failure, degraded retirement, and plugin stopping",
+            "Deterministic tests for concurrent reload, older completion, file change during read, disable during preparation, stale consumers, and idempotent cleanup",
+            "Loaded-server evidence for target-version enable, readiness, command registration, reload commit, and disable transitions",
+            "Exact commands, target versions, results, known baselines, skipped checks, and limitations without config values or secrets"
+          ],
+          "stopIfMissing": "Do not report reload success from file parsing alone; prove which generation and derived resources became effective and disclose any degraded or restart-required state."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-plugin-configuration-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Configuration can appear to reload while partially updated services, stale cached writes, racing generations, leaked resources, or unreported restart-only settings leave runtime behavior different from the file and status output."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",
