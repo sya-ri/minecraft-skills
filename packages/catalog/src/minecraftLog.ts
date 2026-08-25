@@ -9,6 +9,7 @@ export type MinecraftLogAnalysisLimits = {
   maxLineCharacters: number;
   maxEvents: number;
   maxExceptionChains: number;
+  maxMixinFailures: number;
   maxExceptionDepth: number;
   maxExceptionEntries: number;
   maxStackFrames: number;
@@ -29,6 +30,7 @@ export const defaultMinecraftLogAnalysisLimits: Readonly<MinecraftLogAnalysisLim
     maxLineCharacters: 16_384,
     maxEvents: 500,
     maxExceptionChains: 100,
+    maxMixinFailures: 100,
     maxExceptionDepth: 64,
     maxExceptionEntries: 500,
     maxStackFrames: 2_000,
@@ -87,6 +89,33 @@ export type MinecraftExceptionChain = {
   entries: MinecraftExceptionEntry[];
 };
 
+export type MinecraftMixinFailureCategory =
+  | "shadow-target-not-found"
+  | "injection-target-not-found"
+  | "injection-check-failed"
+  | "mixin-package-class-load"
+  | "invalid-static-member";
+
+export type MinecraftMixinFailure = {
+  line: number;
+  relation: MinecraftExceptionRelation;
+  branch: MinecraftExceptionSummary["branch"];
+  exceptionType: string;
+  category: MinecraftMixinFailureCategory;
+  subject: string;
+  annotation: string | null;
+  memberKind: "field" | "method" | null;
+  targetClass: string | null;
+  targetMember: string | null;
+  selector: string | null;
+  mixinPackage: string | null;
+  mixinConfig: string | null;
+  succeeded: number | null;
+  required: number | null;
+  scannedTargets: number | null;
+  noRefmapReported: boolean;
+};
+
 export type MinecraftLogArtifact = {
   name: string;
   firstLine: number;
@@ -138,6 +167,9 @@ export type MinecraftLogAnalysisResult = {
   exceptionChainTotal: number;
   retainedExceptionChainCount: number;
   omittedExceptionChainCount: number;
+  mixinFailureTotal: number;
+  retainedMixinFailureCount: number;
+  omittedMixinFailureCount: number;
   exceptionEntryTotal: number;
   retainedExceptionEntryCount: number;
   omittedExceptionEntryCount: number;
@@ -150,6 +182,7 @@ export type MinecraftLogAnalysisResult = {
   components: MinecraftLogComponent[];
   events: MinecraftLogEvent[];
   exceptionChains: MinecraftExceptionChain[];
+  mixinFailures: MinecraftMixinFailure[];
   notes: string[];
 };
 
@@ -188,6 +221,7 @@ const exceptionPattern =
 const stackFramePattern = /^\s*at\s+(.+?)\s*$/;
 const collapsedFramesPattern = /^\s*\.\.\.\s+(\d+)\s+more\s*$/;
 const jarPattern = /\b([A-Za-z0-9][A-Za-z0-9._+@-]{0,127}\.jar)\b/gi;
+const mixinExceptionPrefix = "org.spongepowered.asm.mixin.";
 
 export function resolveMinecraftLogAnalysisLimits(
   limits: Partial<MinecraftLogAnalysisLimits> | undefined,
@@ -206,6 +240,7 @@ export function resolveMinecraftLogAnalysisLimits(
     maxLineCharacters: resolve("maxLineCharacters"),
     maxEvents: resolve("maxEvents"),
     maxExceptionChains: resolve("maxExceptionChains"),
+    maxMixinFailures: resolve("maxMixinFailures"),
     maxExceptionDepth: resolve("maxExceptionDepth"),
     maxExceptionEntries: resolve("maxExceptionEntries"),
     maxStackFrames: resolve("maxStackFrames"),
@@ -602,6 +637,135 @@ function parseExceptionHeader(value: string): ParsedExceptionHeader | null {
   };
 }
 
+type ParsedMixinFailure = Omit<
+  MinecraftMixinFailure,
+  "line" | "relation" | "branch" | "exceptionType"
+>;
+
+function safeEvidenceInteger(value: string): number | null {
+  if (!/^(?:0|[1-9]\d{0,14})$/.test(value)) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+function mixinFailure(
+  category: MinecraftMixinFailureCategory,
+  subject: string,
+  noRefmapReported: boolean,
+  evidence: Partial<ParsedMixinFailure> = {},
+): ParsedMixinFailure {
+  return {
+    category,
+    subject,
+    annotation: null,
+    memberKind: null,
+    targetClass: null,
+    targetMember: null,
+    selector: null,
+    mixinPackage: null,
+    mixinConfig: null,
+    succeeded: null,
+    required: null,
+    scannedTargets: null,
+    noRefmapReported,
+    ...evidence,
+  };
+}
+
+function parseMixinFailure(parsed: ParsedExceptionHeader): ParsedMixinFailure | null {
+  if (!parsed.type.startsWith(mixinExceptionPrefix) || parsed.message === null) {
+    return null;
+  }
+  const message = parsed.message;
+  const noRefmapReported = /\bNo refMap loaded\b/i.test(message);
+
+  if (parsed.type.endsWith(".InvalidMixinException")) {
+    const shadow =
+      /^@Shadow\s+(field|method)\s+(\S{1,16384})\s+was not located in (?:the )?target class\s+([A-Za-z0-9_.$/]{1,16384}?)(?:\.(?:\s|$)|$)/.exec(
+        message,
+      );
+    if (shadow?.[1] && shadow[2] && shadow[3]) {
+      return mixinFailure("shadow-target-not-found", shadow[2], noRefmapReported, {
+        memberKind: shadow[1] as "field" | "method",
+        targetClass: shadow[3],
+        targetMember: shadow[2],
+      });
+    }
+
+    const staticMember =
+      /^Mixin\s+(.{1,16384}?)\s+contains non-private static\s+(field|method)\s+(\S{1,16384})/.exec(
+        message,
+      );
+    if (staticMember?.[1] && staticMember[2] && staticMember[3]) {
+      return mixinFailure("invalid-static-member", staticMember[1], noRefmapReported, {
+        memberKind: staticMember[2] as "field" | "method",
+        targetMember: staticMember[3],
+      });
+    }
+    return null;
+  }
+
+  if (parsed.type.endsWith(".InvalidInjectionException")) {
+    const missingTarget =
+      /^(?:Critical injection failure:\s*)?@([A-Za-z][A-Za-z0-9_]{0,63})\s+annotation on\s+(.{1,16384}?)\s+could not find any targets matching\s+(['"])(.{1,16384}?)\3\s+in\s+([A-Za-z0-9_.$/]{1,16384}?)(?:\.(?:\s|$)|$)/.exec(
+        message,
+      );
+    if (missingTarget?.[1] && missingTarget[2] && missingTarget[4] && missingTarget[5]) {
+      return mixinFailure("injection-target-not-found", missingTarget[2], noRefmapReported, {
+        annotation: missingTarget[1],
+        targetClass: missingTarget[5],
+        selector: missingTarget[4],
+      });
+    }
+    return null;
+  }
+
+  if (parsed.type.endsWith(".InjectionError")) {
+    const failedCheck =
+      /^(?:Critical injection failure:\s*)?([A-Za-z][A-Za-z0-9_]{0,63})\s+(.{1,16384}?)\s+in\s+(\S{1,16384}?)(?:\s+from mod\s+\S{1,16384})?\s+failed injection check,\s*\((\d{1,16384})\/(\d{1,16384})\)\s+succeeded\.\s+Scanned\s+(\d{1,16384})\s+target\(s\)\./.exec(
+        message,
+      );
+    if (
+      failedCheck?.[1] &&
+      failedCheck[2] &&
+      failedCheck[3] &&
+      failedCheck[4] &&
+      failedCheck[5] &&
+      failedCheck[6]
+    ) {
+      return mixinFailure(
+        "injection-check-failed",
+        `${failedCheck[1]} ${failedCheck[2]}`,
+        noRefmapReported,
+        {
+          mixinConfig: failedCheck[3],
+          succeeded: safeEvidenceInteger(failedCheck[4]),
+          required: safeEvidenceInteger(failedCheck[5]),
+          scannedTargets: safeEvidenceInteger(failedCheck[6]),
+        },
+      );
+    }
+    return null;
+  }
+
+  if (parsed.type.endsWith(".IllegalClassLoadError")) {
+    const packageLoad =
+      /^(\S{1,16384})\s+is in a defined mixin package\s+(\S{1,16384})\s+owned by\s+(\S{1,16384})\s+and cannot be referenced directly(?:\.|$)/.exec(
+        message,
+      );
+    if (packageLoad?.[1] && packageLoad[2] && packageLoad[3]) {
+      return mixinFailure("mixin-package-class-load", packageLoad[1], noRefmapReported, {
+        mixinPackage: packageLoad[2],
+        mixinConfig: packageLoad[3],
+      });
+    }
+  }
+
+  return null;
+}
+
 function artifactFromFrame(frame: string): string | null {
   const direct = /(?:^|[\\/])([^/\\\s]+\.jar)\/\//i.exec(frame)?.[1];
   if (direct) {
@@ -804,6 +968,7 @@ export function analyzeMinecraftLog(
 
   const events: MinecraftLogEvent[] = [];
   const exceptionChains: MinecraftExceptionChain[] = [];
+  const mixinFailures: MinecraftMixinFailure[] = [];
   const artifacts = new Map<string, MinecraftLogArtifact>();
   const components = new Map<string, MinecraftLogComponent>();
   const platforms = new Map<string, MinecraftLogPlatform>();
@@ -818,6 +983,7 @@ export function analyzeMinecraftLog(
   let retainedTextCharacters = 0;
   let eventTotal = 0;
   let exceptionChainTotal = 0;
+  let mixinFailureTotal = 0;
   let exceptionEntryTotal = 0;
   let retainedExceptionEntryCount = 0;
   let stackFrameTotal = 0;
@@ -915,6 +1081,35 @@ export function analyzeMinecraftLog(
     }
   };
 
+  const addMixinFailure = (
+    parsed: ParsedMixinFailure,
+    exception: ParsedExceptionHeader,
+    branch: MinecraftExceptionSummary["branch"],
+    line: number,
+  ): void => {
+    mixinFailureTotal += 1;
+    if (mixinFailures.length >= limits.maxMixinFailures) {
+      exceeded.add("maxMixinFailures");
+      return;
+    }
+    const retainNullable = (value: string | null): string | null =>
+      value === null ? null : sanitize(value);
+    mixinFailures.push({
+      ...parsed,
+      line,
+      relation: exception.relation,
+      branch,
+      exceptionType: sanitize(exception.type),
+      subject: sanitize(parsed.subject),
+      annotation: retainNullable(parsed.annotation),
+      targetClass: retainNullable(parsed.targetClass),
+      targetMember: retainNullable(parsed.targetMember),
+      selector: retainNullable(parsed.selector),
+      mixinPackage: retainNullable(parsed.mixinPackage),
+      mixinConfig: retainNullable(parsed.mixinConfig),
+    });
+  };
+
   const addException = (
     parsed: ParsedExceptionHeader,
     line: number,
@@ -956,6 +1151,10 @@ export function analyzeMinecraftLog(
         : parsed.relation === "suppressed" || chain.suppressedBranchIndents.length > 0
           ? "suppressed"
           : "cause";
+    const mixinFailureEvidence = parseMixinFailure(parsed);
+    if (mixinFailureEvidence) {
+      addMixinFailure(mixinFailureEvidence, parsed, branch, line);
+    }
     if (branch === "cause") {
       chain.deepestCause = parsed;
       chain.deepestCauseLine = line;
@@ -1137,6 +1336,9 @@ export function analyzeMinecraftLog(
     exceptionChainTotal,
     retainedExceptionChainCount: exceptionChains.length,
     omittedExceptionChainCount: Math.max(0, exceptionChainTotal - exceptionChains.length),
+    mixinFailureTotal,
+    retainedMixinFailureCount: mixinFailures.length,
+    omittedMixinFailureCount: Math.max(0, mixinFailureTotal - mixinFailures.length),
     exceptionEntryTotal,
     retainedExceptionEntryCount,
     omittedExceptionEntryCount: Math.max(0, exceptionEntryTotal - retainedExceptionEntryCount),
@@ -1149,10 +1351,13 @@ export function analyzeMinecraftLog(
     components: [...components.values()],
     events,
     exceptionChains,
+    mixinFailures,
     notes: [
       "deepestCause is the last explicit Caused by entry on the primary branch, or null when no primary cause is present; suppressed branches never replace it.",
       "Exception ordering comes only from explicit thrown/Caused by/Suppressed text and does not prove which component is responsible.",
       "Artifacts and component IDs are extracted evidence labels, not blame attribution or compatibility claims.",
+      "Mixin failures are categories extracted only from explicit Mixin exception wording; they do not identify blame or validate mappings, refmaps, configuration, target bytecode, a fix, or runtime compatibility.",
+      "noRefmapReported is true only when the same exception message explicitly says that no refMap was loaded; false does not prove that a refmap was loaded or correct.",
       "Likely credentials, secret assignments, authentication headers, and sensitive URL values are redacted from retained output.",
       ...(exceededLimits.length > 0
         ? [

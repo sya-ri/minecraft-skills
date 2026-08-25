@@ -27,9 +27,10 @@ All notable changes to this project are documented here.
   unknown target-version/runtime-encoding coverage.
 - Bounded Minecraft Java log and crash-report analysis across Catalog, CLI, and MCP, including
   structured log events, explicit exception and suppressed branches, last explicit primary
-  causes, crash metadata, platform/version statements, JAR artifacts, and explicitly named
-  mod/plugin IDs. Credentials, IP addresses, absolute paths, terminal controls, and unsafe Unicode
-  are sanitized before retained output, and extracted labels are never presented as blame.
+  causes, bounded facts from five explicit Mixin runtime failure message shapes, crash metadata,
+  platform/version statements, JAR artifacts, and explicitly named mod/plugin IDs. Credentials, IP
+  addresses, absolute paths, terminal controls, and unsafe Unicode are sanitized before retained
+  output, and extracted labels are never presented as blame or Mixin validation.
 - Bounded CLI inventory and two-directory factual diff for direct Fabric mod JARs, including
   stable one-file reads, hashes, normalized metadata and validation status, duplicate-ID and
   ambiguity reporting, deterministic limits, and automation-friendly exit codes without exposing

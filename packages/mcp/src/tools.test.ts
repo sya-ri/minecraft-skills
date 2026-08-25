@@ -261,6 +261,15 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("inspect_blockbench_project");
     expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_performance");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_translations");
+    const minecraftLogTool = tools.find((tool) => tool.name === "analyze_minecraft_log");
+    const minecraftLogLimits = minecraftLogTool?.inputSchema.properties.limits as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+    expect(minecraftLogLimits?.properties?.maxMixinFailures).toEqual({
+      type: "integer",
+      minimum: 1,
+      maximum: defaultMinecraftLogAnalysisLimits.maxMixinFailures,
+    });
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -3885,6 +3894,7 @@ describe("MCP tools", () => {
       ].join("\n"),
       limits: {
         maxEvents: 1,
+        maxMixinFailures: 2,
         maxExceptionDepth: 8,
         maxStackFrames: 8,
       },
@@ -3896,10 +3906,28 @@ describe("MCP tools", () => {
     expect(output).toContain('"branch": "suppressed"');
     expect(output).toContain('"message": "primary root"');
     expect(output).toContain('"maxExceptionDepth": 8');
+    expect(output).toContain('"maxMixinFailures": 2');
     expect(output).toContain("[REDACTED]");
     expect(output).toContain("[IP_REDACTED]");
     expect(output).not.toContain("hunter2");
     expect(output).not.toContain("203.0.113.8");
+  });
+
+  it("returns only explicit bounded Mixin failure facts", async () => {
+    const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: [
+        "org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: wrapper",
+        "Caused by: org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: Critical injection failure: @Inject annotation on openMenu could not find any targets matching 'mouseClicked' in net/minecraft/client/gui/screens/Screen. No refMap loaded.",
+      ].join("\n"),
+      limits: { maxMixinFailures: 1 },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).not.toBe(true);
+    expect(output).toContain('"category": "injection-target-not-found"');
+    expect(output).toContain('"selector": "mouseClicked"');
+    expect(output).toContain('"noRefmapReported": true');
+    expect(output).not.toContain('"category": "mixin-transformer-error"');
   });
 
   it("enforces Minecraft log MCP input and nested limit boundaries", async () => {
@@ -3917,6 +3945,12 @@ describe("MCP tools", () => {
     const raisedBytes = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: "log",
       limits: { maxInputBytes: defaultMinecraftLogAnalysisLimits.maxInputBytes + 1 },
+    });
+    const raisedMixinFailures = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: {
+        maxMixinFailures: defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1,
+      },
     });
     const unknownLimit = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: "log",
@@ -3939,6 +3973,7 @@ describe("MCP tools", () => {
     expect(raised.isError).toBe(true);
     expect(raised.content[0]?.text).toContain("must be an integer from 1");
     expect(raisedBytes.isError).toBe(true);
+    expect(raisedMixinFailures.isError).toBe(true);
     expect(unknownLimit.isError).toBe(true);
     expect(unknownLimit.content[0]?.text).toContain("unknown argument");
     expect(unknownArgument.isError).toBe(true);

@@ -3694,6 +3694,8 @@ describe("minecraft-skills CLI", () => {
         "4096",
         "--max-events",
         "1",
+        "--max-mixin-failures",
+        "2",
         "--max-exception-depth",
         "8",
         "--max-stack-frames",
@@ -3707,6 +3709,7 @@ describe("minecraft-skills CLI", () => {
       expect(output.appliedLimits).toMatchObject({
         maxInputBytes: 4096,
         maxEvents: 1,
+        maxMixinFailures: 2,
         maxExceptionDepth: 8,
         maxStackFrames: 8,
       });
@@ -3906,11 +3909,19 @@ describe("minecraft-skills CLI", () => {
       "--max-events",
       String(defaultMinecraftLogAnalysisLimits.maxEvents + 1),
     ]);
+    const raisedMixinFailures = await capture([
+      "minecraft",
+      "analyze-log",
+      "latest.log",
+      "--max-mixin-failures",
+      String(defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1),
+    ]);
 
     expect(missing.stderr).toEqual(["minecraft analyze-log requires exactly one <file>"]);
     expect(repeated.stderr.join("\n")).toContain("option must not be repeated");
     expect(unknown.stderr.join("\n")).toContain("received unknown option");
     expect(raised.stderr.join("\n")).toContain("must not exceed");
+    expect(raisedMixinFailures.stderr.join("\n")).toContain("must not exceed");
   });
 
   it("reports unknown commands", async () => {
@@ -4010,6 +4021,7 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("minecraft-skills plugin velocity validate-jar <file.jar>");
     expect(output).toContain("Grouped commands:");
     expect(output).toContain("minecraft-skills minecraft analyze-log <file>");
+    expect(output).toContain("--max-mixin-failures count");
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");
