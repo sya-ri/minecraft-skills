@@ -1282,6 +1282,81 @@
       "failureMode": "An unchecked PDC path can lose or corrupt persistent state, overwrite another namespace, leak partial migrations, or silently fail at the holder's real save boundary."
     },
     {
+      "id": "paper-server-backed-paged-ui-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Server-backed Minecraft UI paging can truncate, reorder, duplicate, or publish stale data",
+      "severity": "error",
+      "detectWhen": [
+        "a Paper inventory, menu, protocol-driven client screen, or other Minecraft UI shows a server-backed collection",
+        "the implementation uses a fixed result limit, page number, load-more action, infinite scroll, cursor, or automatic prefetch",
+        "the repository returns all matching records before a caller slices them",
+        "the response omits continuation, exhausted, generation, query, or revision semantics",
+        "the client appends asynchronous page responses or reuses a cursor after query, viewer, or connection changes"
+      ],
+      "requiredChecks": [
+        "verify the database, repository, or service boundary fetches one bounded page instead of returning the complete result set",
+        "verify stable record identity and a total deterministic order with a unique tie-breaker and explicit null or collation behavior",
+        "verify every opaque cursor or explicit revision is server-owned and bound to viewer authorization, complete query, sort, direction, and consistency scope",
+        "verify items, nextCursor or equivalent continuation, exhausted, request generation or correlation, and any required revision have explicit semantics",
+        "verify initial loading, ready, loading more, empty, error, retrying, reset, and exhausted are distinct states",
+        "verify duplicate delivery is idempotent, accepted rows deduplicate by stable ID, changed payloads for the same ID are rejected under snapshot semantics or replaced by an explicit monotonic live version rule that repositions or resets on changed sort fields, and reversed, skipped, out-of-order, nonadvancing, cyclic, and late pages are rejected",
+        "verify query, authorization, reopen, reconnect, and stale revision changes reset the generation or validate an intentional resume token",
+        "verify data shrink resets or refreshes cursor state or clamps numbered state to a refreshed valid page",
+        "verify page size, lookahead, in-flight requests, queued pages, retained rows, retries, and prefetch distance are bounded",
+        "verify boundary, tie, insertion, deletion, shrink, identical, changed non-sort, and changed sort payload duplicate, stale, reset, reopen, reconnect, retry, cycle, and prefetch tests exist",
+        "confirm click handling, rendering, protocol framing, persistence flush, and project-specific sizing are routed or excluded rather than mixed into this concern"
+      ],
+      "evidence": [
+        "Repository or adapter query evidence for one bounded page and bounded related-field work",
+        "A total-order and cursor or revision contract with documented insertion and deletion guarantees",
+        "Page-envelope, UI-state, response-acceptance, reset, clamp, and prefetch definitions",
+        "Deterministic response-order and mutation tests plus adapter-level source-paging evidence"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper search-scenarios",
+          "plugin paper recipe",
+          "plugin paper guardrail",
+          "plugin paper diagnostic"
+        ],
+        "mcp": [
+          "search_authoring_scenarios",
+          "get_authoring_recipe",
+          "get_authoring_guardrail",
+          "get_authoring_diagnostic"
+        ],
+        "packageApis": [
+          "searchAuthoringScenarios",
+          "getAuthoringRecipe",
+          "getAuthoringGuardrail",
+          "getAuthoringDiagnostic"
+        ]
+      },
+      "failIf": [
+        "the backend fetches all matching records and the plugin or client takes, slices, or truncates a page afterward",
+        "a fixed maximum hides additional records with no continuation or explicit terminal outcome",
+        "the order is non-unique, unstable, or lacks a stable unique tie-breaker",
+        "a client-editable offset or opaque cursor is accepted without binding and validation for the complete query, viewer, direction, and revision scope",
+        "snapshot consistency is claimed from cursor opacity alone",
+        "a response has items but no unambiguous continuation, exhausted, generation or correlation, and revision semantics",
+        "loading, empty, error, and exhausted collapse into one nullable collection or boolean",
+        "a duplicate, reversed, skipped, out-of-order, nonadvancing, cyclic, or old-generation page can append or replace visible state",
+        "the same stable ID can reappear with changed payload and the UI silently keeps the first or last value without a snapshot rejection or monotonic live-version replacement rule",
+        "a changed filter, search, sort, authorization scope, reopened viewer, or replacement connection reuses the old continuation without validation",
+        "deleting the last page leaves the UI repeatedly requesting the same empty out-of-range page",
+        "automatic prefetch, retry, retained rows, queued pages, or concurrent page requests have no explicit bound",
+        "tests cover only an immediate successful first page"
+      ],
+      "safeResponse": [
+        "Move the page bound into the repository or service query and return an explicit continuation or terminal result.",
+        "Define stable identity, a total unique order, and a server-bound opaque cursor or explicit snapshot revision before loading further pages.",
+        "Fence publication with the current generation, query, expected predecessor, direction, correlation, and revision; make duplicates idempotent, define changed-payload behavior for repeated stable IDs, and reject stale or nonadvancing pages.",
+        "Reset on query or viewer changes, reconcile data shrink, expose distinct loading, empty, error, and exhausted states, and bound prefetch and retained state.",
+        "Add the full boundary, mutation, response-order, reset, and adapter paging test matrix before claiming the collection is completely reachable."
+      ],
+      "failureMode": "A page-shaped response can conceal unbounded data access and produce missing, repeated, reversed, or stale rows without any explicit UI error or recovery path."
+    },
+    {
       "id": "paper-plugin-test-evidence-gap",
       "domains": ["paper-plugin"],
       "title": "Paper plugin claim exceeds the completed test evidence",

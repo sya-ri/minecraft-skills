@@ -640,6 +640,36 @@
             "Deterministic adapter tests and exact-artifact loaded-server plus paired client evidence cover attachment, rendering, carrier suppression, animations, movement, reload or reimport, teleport, despawn, disable, and cleanup."
           ],
           "failureMode": "When Model Engine is in scope, do not approve its runtime binding from guessed external APIs, silent identifier fallback, partial publication, conflicting animation owners, stale generations, or fake-only evidence."
+        },
+        {
+          "id": "bound-server-backed-paged-ui",
+          "reason": "A Minecraft list UI can look paged while still fetching an unbounded source collection or accepting stale asynchronous pages.",
+          "tools": {
+            "cli": [
+              "plugin paper search-scenarios",
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "search_authoring_scenarios",
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchAuthoringScenarios",
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "The source query uses a stable identity, a unique total order, and an opaque cursor or explicit snapshot revision with documented consistency semantics.",
+            "The database, repository, or service returns one bounded page with items, nextCursor or equivalent continuation, exhaustion, and a request generation instead of a full collection or fixed prefix.",
+            "The UI rejects duplicate, reversed, and late responses; explicitly rejects snapshot payload conflicts or applies a monotonic live-version replace rule that repositions or resets repeated IDs when sort fields change; resets or clamps invalid navigation; bounds prefetch and retained state; and tests boundaries, ties, mutations, and stale responses."
+          ],
+          "failureMode": "Do not approve a list UI that fetches all records and slices or truncates them locally, or that appends responses without generation and cursor validation."
         }
       ]
     }

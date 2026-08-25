@@ -130,6 +130,10 @@ All notable changes to this project are documented here.
   and MCP, covering measured rate/durability/ordering decisions, direct atomic writes versus
   bounded per-key delta coalescing, exact partial-flush accounting, verified fresh whole-transaction
   retries, side-effect safety, shutdown recovery, observability, and real-adapter evidence.
+- Server-backed paged Minecraft UI guidance across data, Catalog, CLI, and MCP, covering bounded
+  source queries, stable unique ordering, server-owned cursors or explicit revisions, page and UI
+  states, generation-fenced response acceptance, changed-payload deduplication semantics, shrink
+  recovery, bounded prefetch, and deterministic boundary and mutation tests.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.

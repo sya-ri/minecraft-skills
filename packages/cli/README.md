@@ -50,6 +50,9 @@ minecraft-skills plugin paper recipe paper-display-interaction-contract
 minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded per-key delta coalescing contention"
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
+minecraft-skills plugin paper search-scenarios "opaque cursor stale response duplicate page"
+minecraft-skills plugin paper recipe paper-server-backed-paged-ui
+minecraft-skills plugin paper plan paper-server-backed-paged-ui-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper recipe paper-attribute-effect-ownership
@@ -74,6 +77,7 @@ minecraft-skills plugin paper guardrail paper-high-frequency-persistence-safety
 minecraft-skills plugin paper guardrail paper-attribute-effect-ownership-safety
 minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
 minecraft-skills plugin paper guardrail paper-region-protection-policy-safety
+minecraft-skills plugin paper guardrail paper-server-backed-paged-ui-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -88,6 +92,7 @@ minecraft-skills plugin paper diagnostic paper-high-frequency-persistence-unsafe
 minecraft-skills plugin paper diagnostic paper-attribute-effect-ownership-unsafe
 minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsafe
 minecraft-skills plugin paper diagnostic paper-region-protection-policy-incomplete
+minecraft-skills plugin paper diagnostic paper-server-backed-paged-ui-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements

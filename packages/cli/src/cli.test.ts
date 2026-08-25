@@ -1721,6 +1721,77 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("foreign Display or Interaction entities");
   });
 
+  it("prints and routes bounded server-backed paged Minecraft UI guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-server-backed-paged-ui"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("fetch-one-bounded-page-at-the-source");
+    expect(recipe.stdout.join("\n")).toContain("fence-duplicate-reversed-and-late-pages");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-server-backed-paged-ui-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-server-backed-paged-ui-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "opaque cursor stale response duplicate page",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-server-backed-paged-ui-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-server-backed-paged-ui-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-server-backed-paged-ui"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-server-backed-paged-ui-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-server-backed-paged-ui-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("unique tie-breaker");
+    expect(guardrail.stdout.join("\n")).toContain("prefetch distance");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-server-backed-paged-ui-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("fetches all matching records");
+    expect(diagnostic.stdout.join("\n")).toContain("old-generation page");
+
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("bound-server-backed-paged-ui");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "fetch all truncate cursor generation",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-server-backed-paged-ui"');
+  });
+
   it("prints Paper plugin testing evidence guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
     expect(recipe.code).toBe(0);
