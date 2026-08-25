@@ -1135,6 +1135,59 @@
         "mixing logical ItemStack identity, persistent-data schema, scheduling, or combat-balance values into this ownership concern"
       ],
       "failureMode": "Modifier and effect callbacks can stack across reconnect or reload, erase unrelated state during cleanup, suppress vanilla equipment defaults, or violate current-value bounds after capacity falls."
+    },
+    {
+      "id": "paper-modelengine-runtime-binding-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Model Engine binding and animation ownership",
+      "userPrompt": "Create or review a Paper integration that binds an existing Model Engine model to a carrier, arbitrates idle, locomotion, and action animations, and replaces or cleans runtime generations without exposing partial state.",
+      "useWhen": [
+        "Paper code configures a carrier and attaches or publishes an active Model Engine model",
+        "blueprint, model, animation, case, or alias identifiers need target-runtime verification",
+        "idle, locomotion, and action playback have owners, priorities, interruption, or end fallback",
+        "Model Engine reload or reimport, Paper teleport, despawn, a target-supported integration reload or disable-enable transition, or final plugin disable can invalidate active runtime objects",
+        "missing dependency, incompatible version, failed attachment, missing animation, or cleanup failure needs an explicit outcome",
+        "runtime or rendered-model confidence must be supported by an exact loaded-server fixture"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-modelengine-runtime-binding"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-plugin-test-evidence-gap",
+          "paper-modelengine-runtime-binding-unsafe"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the exact Paper build, immutable Model Engine plugin and integration artifact identities, supported version pair, dependency and load-order policy, and version-matched official API or source evidence are recorded",
+        "blueprint, model, required animation, optional animation, exact case, and any accepted alias mapping are verified against the selected runtime and assets",
+        "dependency absent, version or artifact mismatch, missing or ambiguous identifier, attachment failure, missing animation, replacement failure, and cleanup failure are distinct bounded outcomes",
+        "the already selected carrier has declared integration-owned or borrowed lifecycle, is fully configured for required silence, invisibility or base-entity visibility, and other verified properties before attachment, and attachment is positively verified before publication",
+        "idle, locomotion, and action channels each have one owner plus verified priority, masking, interruption, natural-end, forced-end, and deterministic fallback rules",
+        "a missing required animation never causes undeclared name normalization or silent substitution",
+        "reload or reimport uses a target-supported coexistence or fail-closed cutover transaction, publishes at one explicit point, fences old callbacks, and retires old model and animation ownership",
+        "teleport revalidation follows target Paper completion and entity-ownership rules while despawn and disable perform idempotent bounded cleanup that removes an integration-owned carrier or restores a borrowed carrier",
+        "deterministic adapter tests prove plugin-owned ordering and failures without inventing Model Engine semantics",
+        "loaded Paper fixtures prove the declared missing-plugin, safely constructible incompatible-version, and controlled attachment-rejection outcomes without an integration-published naked carrier, a deleted borrowed carrier, or unrestored borrowed properties",
+        "an exact supported Paper and Model Engine server plus paired target-client or captured-client evidence proves attachment, rendered model, required carrier suppression, required animations, movement, action-end fallback, reload or reimport, teleport, despawn, disable, and absence of retired runtime state"
+      ],
+      "mustAvoid": [
+        "inventing or freezing Model Engine class, method, event, artifact, or documentation names without evidence for the selected installed generation",
+        "using bundled Paper API indexes as proof of an external Model Engine surface",
+        "lowercasing, trimming, aliasing, or substituting model or animation identifiers without an authoritative target-runtime rule",
+        "publishing or reporting success before carrier configuration and positive attachment verification",
+        "assuming the old and candidate attachments can coexist without target evidence, or removing the last known-good generation early when the target does support staged candidate verification",
+        "letting idle, locomotion, and action controllers write the same channel without declared arbitration and end fallback",
+        "reusing cached runtime objects after reload or accepting callbacks from an old generation",
+        "calling a fake adapter, compilation, server counters, or a Paper-only harness proof of Model Engine API compatibility or client rendering",
+        "expanding this review into combat AI, balance, damage, hitboxes, loot, spawn policy, individual mob or asset authoring, display-interaction geometry or click routing, generic scheduler, event, or persistent-data design, or a full Model Engine project validator"
+      ],
+      "failureMode": "A superficially working binding can leak its base carrier, attach the wrong case-sensitive asset, substitute an undeclared animation, race channel owners, keep stale runtime generations after reload or teleport, and leave ghost models or carriers after teardown."
     }
   ]
 }

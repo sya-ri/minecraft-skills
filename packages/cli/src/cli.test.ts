@@ -1840,6 +1840,76 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("partial replacement");
   });
 
+  it("prints and routes Model Engine runtime binding guidance", async () => {
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-modelengine-runtime-binding",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("stage-carrier-attach-and-publication");
+    expect(recipe.stdout.join("\n")).toContain("Paper carrier surfaces only");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-modelengine-runtime-binding-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-modelengine-runtime-binding-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "ModelEngine carrier attach locomotion action reload cleanup",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-modelengine-runtime-binding-review"');
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "ModelEngine carrier animation runtime binding",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-modelengine-runtime-binding"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-modelengine-runtime-binding-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-modelengine-runtime-binding"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-modelengine-runtime-binding-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-modelengine-runtime-binding-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("positive attachment result");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-modelengine-runtime-binding-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("old-generation callbacks");
+  });
+
   it("prints claim policies", async () => {
     const list = await capture(["plugin", "paper", "claim-policies"]);
     expect(list.code).toBe(0);
@@ -4115,7 +4185,12 @@ describe("minecraft-skills CLI", () => {
       "1.21.11",
     ]);
     expect(itemModel.code).toBe(0);
-    expect(itemModel.stdout.join("\n")).not.toContain("plugin paper search");
+    const itemModelOutput = JSON.parse(itemModel.stdout.join("\n")) as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      itemModelOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(false);
 
     const experienceReward = await capture([
       "minecraft",

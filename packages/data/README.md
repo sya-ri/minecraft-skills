@@ -50,6 +50,9 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Paper attribute and effect ownership guidance for stable modifier keys, owned-only ItemMeta and
   AttributeInstance reconciliation, preserved vanilla defaults and foreign state, explicit
   potion-type collisions, safe capacity clamping, and lifecycle regression evidence.
+- Paper and Model Engine runtime-binding guidance for exact artifact and identifier evidence,
+  fail-closed carrier attachment, animation-channel ownership, generation replacement, and
+  loaded-server plus paired-client verification.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

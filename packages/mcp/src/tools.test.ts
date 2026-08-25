@@ -1669,6 +1669,49 @@ describe("MCP tools", () => {
     expect(diagnostic.content[0]?.text).toContain("partial replacement");
   });
 
+  it("calls Model Engine runtime binding guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-modelengine-runtime-binding",
+    });
+    expect(recipe.content[0]?.text).toContain("stage-carrier-attach-and-publication");
+    expect(recipe.content[0]?.text).toContain("Paper carrier surfaces only");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-modelengine-runtime-binding-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-modelengine-runtime-binding-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "ModelEngine carrier attach locomotion action reload cleanup",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-modelengine-runtime-binding-review"');
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "ModelEngine carrier animation runtime binding",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-modelengine-runtime-binding"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-modelengine-runtime-binding-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-modelengine-runtime-binding"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-modelengine-runtime-binding-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-modelengine-runtime-binding-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("positive attachment result");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-modelengine-runtime-binding-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("old-generation callbacks");
+  });
+
   it("calls claim policy tools", async () => {
     const list = await callMinecraftSkillsTool("list_claim_policies", {
       domain: "paper-plugin",
@@ -3382,7 +3425,12 @@ describe("MCP tools", () => {
       version: "1.21.11",
       task: "give an item model a custom texture",
     });
-    expect(itemModel.content[0]?.text).not.toContain("plugin paper search");
+    const itemModelOutput = JSON.parse(itemModel.content[0]?.text ?? "{}") as {
+      suggestedTools: Array<{ tool: string }>;
+    };
+    expect(
+      itemModelOutput.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper search")),
+    ).toBe(false);
 
     const experienceReward = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
       version: "1.21.11",

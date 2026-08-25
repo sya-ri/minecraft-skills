@@ -113,6 +113,10 @@ minecraft-skills plugin paper recipe paper-attribute-effect-ownership
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills plugin paper guardrail paper-attribute-effect-ownership-safety
 minecraft-skills plugin paper diagnostic paper-attribute-effect-ownership-unsafe
+minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
+minecraft-skills plugin paper plan paper-modelengine-runtime-binding-review 1.21.11
+minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
+minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsafe
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -223,6 +227,26 @@ result, surfaces partial recovery toward the last-known-good set, distinguishes 
 from `RecipeChoice.ExactChoice` full-stack matching aside from amount, detects equal-input shaped
 or shapeless signatures before mutation, and keeps online-client recipe-list resend separate from
 recipe-book discover/undiscover state.
+
+The `paper-modelengine-runtime-binding-review` scenario covers the runtime contract between an
+already selected Paper carrier and an existing Model Engine blueprint. It requires exact Paper,
+Model Engine plugin, and integration-artifact evidence; exact-case blueprint and animation
+identifiers; carrier configuration before attachment; positive attachment verification before
+publication; owned-carrier removal versus borrowed-carrier restoration; and one declared owner for
+each idle, locomotion, and action channel. Reload or
+reimport uses a target-supported coexistence or fail-closed cutover transaction with one publication
+point, then fences callbacks and retires the old generation. Teleport, despawn, and disable have
+explicit revalidation and idempotent cleanup. Deterministic fakes prove only the plugin-owned adapter
+contract. Missing-plugin, safely constructible incompatible-version, and attachment-rejection
+outcomes need loaded fixtures. External API compatibility, successful attachment, animation
+behavior, and cleanup need the exact supported loaded artifacts, while rendered-model and carrier-
+suppression claims also need a paired target client or captured client state. Resolve all external
+names against the selected installed generation and its
+[official Model Engine documentation](https://git.mythiccraft.io/mythiccraft/model-engine-4/-/wikis/home);
+use the [Paper plugin lifecycle](https://docs.papermc.io/paper/dev/how-do-plugins-work/) and
+[entity teleport](https://docs.papermc.io/paper/dev/entity-teleport/) documentation for the target
+Paper behavior. Combat, damage, hitboxes, loot, spawn policy, individual assets, interaction
+geometry, and generic scheduler, event, or persistent-data design remain separate concerns.
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
 support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).

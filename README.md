@@ -74,6 +74,8 @@ minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.2
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
+minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
+minecraft-skills plugin paper plan paper-modelengine-runtime-binding-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log

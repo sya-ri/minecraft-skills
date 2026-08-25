@@ -1264,6 +1264,97 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.failIf.join("\n")).toContain("colliding recipe outputs");
   });
 
+  it("loads complete Model Engine runtime binding guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "paper-modelengine-runtime-binding",
+    );
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "resolve-target-runtime-and-identifiers",
+        "stage-carrier-attach-and-publication",
+        "assign-animation-channel-ownership",
+        "replace-and-retire-runtime-generations",
+        "prove-the-contract-on-the-loaded-runtime",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "Paper type and member indexes can verify Paper carrier surfaces only",
+    );
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "configure carrier, attach model, verify attachment, then publish",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain("controlled rejection");
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "borrowed carrier without deleting it",
+    );
+    expect(recipe?.finalChecks).toContain("paper-modelengine-runtime-binding-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-modelengine-runtime-binding-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-modelengine-runtime-binding"]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-modelengine-runtime-binding-unsafe",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain(
+      "idle, locomotion, and action channels each have one owner",
+    );
+    expect(scenario?.mustAvoid.join("\n")).toContain("Paper API indexes");
+    expect(scenario?.mustAvoid.join("\n")).toContain("display-interaction geometry");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-modelengine-runtime-binding-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("positive attachment result");
+    expect(guardrail?.rules.join("\n")).toContain("never a silent default");
+    expect(guardrail?.rules.join("\n")).toContain("paired target client");
+    expect(guardrail?.rules.join("\n")).toContain(
+      "restoring rather than deleting a borrowed carrier",
+    );
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-modelengine-runtime-binding-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("Paper-only data");
+    expect(diagnostic?.failIf.join("\n")).toContain("old-generation callbacks");
+    expect(diagnostic?.failIf.join("\n")).toContain("deletes a borrowed carrier");
+    expect(JSON.stringify({ recipe, scenario, guardrail, diagnostic })).not.toContain("https://");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; reason: string }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "verify-modelengine-runtime-binding",
+    );
+    expect(
+      paperChecklist?.steps.find((step) => step.id === "verify-modelengine-runtime-binding")
+        ?.reason,
+    ).toContain("otherwise this task-specific step does not apply");
+  });
+
   it("loads bundled claim policy JSON", () => {
     const policies = readDataJson<{ policies: Array<{ id: string }> }>("claim-policies.json");
     expect(policies.policies.map((policy) => policy.id)).toContain("paper-type-or-member-exists");

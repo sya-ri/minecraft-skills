@@ -881,4 +881,36 @@ describe("MCP resources", () => {
     );
     expect(diagnostic.contents[0]?.text).toContain("weaker reapply");
   });
+
+  it("reads Model Engine runtime binding guidance resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-modelengine-runtime-binding.json",
+        "minecraft-skills://data/authoring-scenarios/paper-modelengine-runtime-binding-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-modelengine-runtime-binding-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-modelengine-runtime-binding-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-modelengine-runtime-binding.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("stage-carrier-attach-and-publication");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-modelengine-runtime-binding-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-modelengine-runtime-binding-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-modelengine-runtime-binding-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("positive attachment result");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-modelengine-runtime-binding-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("old-generation callbacks");
+  });
 });
