@@ -7,7 +7,7 @@ import {
   type FabricModValidationStrength,
   validateFabricModJar,
 } from "@minecraft-skills/catalog";
-import { readFabricModJarFile } from "./fabricModJarFile.js";
+import { type FabricModJarFileIoOverrides, readFabricModJarFile } from "./fabricModJarFile.js";
 
 export type FabricModDirectoryInventoryLimits = {
   maxDirectoryEntries: number;
@@ -95,6 +95,8 @@ export type FabricModDirectoryInventoryResult = {
 export type FabricModDirectoryInventoryOptions = {
   /** Tests and constrained callers may lower, but never raise, the public hard ceilings. */
   limits?: Partial<FabricModDirectoryInventoryLimits>;
+  /** Test-only stable-read seams; production callers should leave this argument omitted. */
+  jarFileIoOverrides?: Omit<FabricModJarFileIoOverrides, "expectedPathSnapshot">;
 };
 
 export type FabricModDiffEntry = FabricModInventoryEntry & {
@@ -536,6 +538,7 @@ export function inventoryFabricModsDirectory(
     let contents: Buffer;
     try {
       contents = readFabricModJarFile(filePath, limits.maxJarBytes, {
+        ...options.jarFileIoOverrides,
         expectedPathSnapshot: fileBefore,
       });
     } catch {
