@@ -18,6 +18,9 @@ All notable changes to this project are documented here.
 - Minecraft Java player-skin layout validation across Catalog, CLI, and MCP, including current
   64x64 and legacy 64x32 dimensions, canonical base-face and hat source rectangles, bounded
   structured inputs, pinned 26.2 client evidence, and explicit PNG/pixel/rendering claim boundaries.
+- Bounded datapack project validation across the catalog API, CLI, and MCP, including portable
+  paths, `pack.mcmeta`, version-aware file checks, function/tag/advancement-parent references,
+  registry evidence, cycle detection, external-reference uncertainty, and explicit completeness.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

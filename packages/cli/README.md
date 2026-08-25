@@ -84,6 +84,7 @@ minecraft-skills datapack vanilla-paths latest --contains recipe
 minecraft-skills datapack vanilla-json fetch 26.2
 minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe --scope values
 minecraft-skills datapack vanilla-json clean 26.2
+minecraft-skills datapack validate-project 26.2 ./my-data-pack
 minecraft-skills resourcepack vanilla-paths latest --contains models/block
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack assets status 26.2
@@ -147,6 +148,20 @@ file. Use `--max-inflated-bytes` to lower the filtered-image byte ceiling. Optio
 turning an unrequested empty image into an invalid PNG. Exit code 0 requires complete pixel
 inspection and a policy status of `met` or `not-requested`; structurally invalid, indeterminate,
 not-met, and not-checked results return exit code 1.
+
+`datapack validate-project` recursively scans a stable regular local directory tree. It rejects
+observed symbolic links and special entries, identity-binds every text-file handle, and aborts when
+captured ancestor or entry identities change. Node does not expose openat-style relative directory
+traversal, so callers handling a malicious local writer must quiesce the tree while validation runs.
+The command validates safe paths, version-correct plural/singular directories, duplicate/case
+collisions, root `pack.mcmeta`, version-aware file content, command-position function calls,
+function and registry tags, advancement parents, and local tag/advancement cycles. It bounds files,
+directory depth, paths, aggregate UTF-8 text, parsed JSON, graph work, and diagnostics. By default,
+submitted namespaces are treated as a closed project so missing references fail. Use
+`--allow-merged-namespace-dependencies` when another pack or mod may contribute to the same
+namespace; unresolved dependencies then make `validationComplete` false. Schema-unavailable JSON,
+macro-expanded commands, pack overlays, and unsupported graph kinds are likewise reported as
+incomplete rather than guessed.
 
 `resourcepack validate-project` recursively checks item-definition and legacy override model targets,
 model parents, textures, inherited texture variables, `sounds.json` file/event references, and local

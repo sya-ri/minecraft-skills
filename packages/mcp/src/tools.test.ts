@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { deflateSync } from "node:zlib";
 import {
+  defaultDatapackProjectValidationLimits,
   defaultResourcepackProjectValidationLimits,
   getVersionDetail,
   listDomains,
@@ -245,6 +246,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("inspect_resourcepack_png_alpha_bounds");
     expect(tools.map((tool) => tool.name)).toContain("validate_player_skin_layout");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_png");
+    expect(tools.map((tool) => tool.name)).toContain("validate_datapack_project");
     expect(tools.map((tool) => tool.name)).toContain("validate_resourcepack_project");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
@@ -1383,6 +1385,132 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain('"requestedDomain": "datapack"');
     expect(result.content[0]?.text).toContain('"validatedFiles": 1');
+  });
+
+  it("calls validate_datapack_project", async () => {
+    const result = await callMinecraftSkillsTool("validate_datapack_project", {
+      version: "1.21",
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: { pack: { pack_format: 48, description: "MCP fixture" } },
+        },
+        {
+          path: "data/example/function/root.mcfunction",
+          content: "function #example:load",
+        },
+        {
+          path: "data/example/function/child.mcfunction",
+          content: "say child",
+        },
+        {
+          path: "data/example/tags/function/load.json",
+          content: { values: ["example:child"] },
+        },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toContain('"valid": true');
+    expect(result.content[0]?.text).toContain('"validationComplete": true');
+    expect(result.content[0]?.text).toContain('"checkedReferences": 2');
+
+    const mergedNamespace = await callMinecraftSkillsTool("validate_datapack_project", {
+      version: "1.21",
+      assumeLocalNamespacesComplete: false,
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: { pack: { pack_format: 48, description: "MCP dependency fixture" } },
+        },
+        {
+          path: "data/example/function/root.mcfunction",
+          content: "function example:from_dependency",
+        },
+      ],
+    });
+    expect(mergedNamespace.isError).toBeUndefined();
+    expect(mergedNamespace.content[0]?.text).toContain('"valid": true');
+    expect(mergedNamespace.content[0]?.text).toContain('"validationComplete": false');
+    expect(mergedNamespace.content[0]?.text).toContain('"external-reference"');
+  });
+
+  it("publishes and enforces bounded datapack project requests", async () => {
+    const tool = tools.find((candidate) => candidate.name === "validate_datapack_project");
+    const files = tool?.inputSchema.properties.files as
+      | {
+          maxItems?: number;
+          items?: {
+            properties?: Record<
+              string,
+              { maxLength?: number; oneOf?: Array<{ maxLength?: number }> }
+            >;
+          };
+        }
+      | undefined;
+    expect(files?.maxItems).toBe(defaultDatapackProjectValidationLimits.maxFiles);
+    expect(files?.items?.properties?.path?.maxLength).toBe(
+      defaultDatapackProjectValidationLimits.maxPathLength,
+    );
+    expect(files?.items?.properties?.content?.oneOf?.[0]?.maxLength).toBe(
+      defaultDatapackProjectValidationLimits.maxTextContentCharacters,
+    );
+    const namespaceMode = tool?.inputSchema.properties.assumeLocalNamespacesComplete as
+      | { default?: boolean }
+      | undefined;
+    expect(namespaceMode?.default).toBe(true);
+
+    const invalidNamespaceMode = await callMinecraftSkillsTool("validate_datapack_project", {
+      assumeLocalNamespacesComplete: "yes",
+      files: [],
+    });
+    expect(invalidNamespaceMode.isError).toBe(true);
+    expect(invalidNamespaceMode.content[0]?.text).toContain("must be boolean");
+
+    const tooManyFiles = await callMinecraftSkillsTool("validate_datapack_project", {
+      files: Array.from(
+        { length: defaultDatapackProjectValidationLimits.maxFiles + 1 },
+        (_, index) => ({ path: `data/example/function/${index}.mcfunction` }),
+      ),
+    });
+    expect(tooManyFiles.isError).toBe(true);
+    expect(tooManyFiles.content[0]?.text).toContain("accepts at most");
+
+    const overlongPath = await callMinecraftSkillsTool("validate_datapack_project", {
+      files: [{ path: "x".repeat(defaultDatapackProjectValidationLimits.maxPathLength + 1) }],
+    });
+    expect(overlongPath.isError).toBe(true);
+    expect(overlongPath.content[0]?.text).toContain("file paths must contain at most");
+
+    const tooMuchText = await callMinecraftSkillsTool("validate_datapack_project", {
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: "x".repeat(defaultDatapackProjectValidationLimits.maxTextContentCharacters),
+        },
+        { path: "data/example/function/test.mcfunction", content: "x" },
+      ],
+    });
+    expect(tooMuchText.isError).toBe(true);
+    expect(tooMuchText.content[0]?.text).toContain("text content must total at most");
+
+    const sparseJson = await callMinecraftSkillsTool("validate_datapack_project", {
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: {
+            pack: {
+              description: "bounded sparse input",
+              pack_format: 48,
+              supported_formats: new Array(defaultDatapackProjectValidationLimits.maxContentNodes),
+            },
+          },
+        },
+      ],
+    });
+    expect(sparseJson.isError).toBeUndefined();
+    expect(sparseJson.content[0]?.text).toContain('"valid": false');
+    expect(sparseJson.content[0]?.text).toContain('"maxContentNodes"');
   });
 
   it("calls validate_resourcepack_project", async () => {

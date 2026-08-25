@@ -80,6 +80,7 @@ minecraft-skills resourcepack vanilla-paths 26.2 --contains models/item
 minecraft-skills datapack vanilla-json fetch 26.2
 minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe
 minecraft-skills datapack vanilla-json clean 26.2
+minecraft-skills datapack validate-project 26.2 ./my-data-pack
 minecraft-skills resourcepack assets find "diamond sword" --kind item-definition
 minecraft-skills resourcepack assets search 26.2 --contains models/item --fetch
 minecraft-skills resourcepack assets get 26.2 assets/minecraft/models/item/diamond_sword.json
@@ -104,6 +105,14 @@ Minecraft terms before calling search commands or MCP tools. Keep exact identifi
 IDs, file paths, project titles, and content literals unchanged. Translation belongs in the caller;
 use the English terms only for the lookup and keep the user's requested response language.
 minecraft-skills does not expand language-specific aliases or reject Unicode query values.
+
+`datapack validate-project` performs a bounded directory scan and checks safe portable paths,
+`pack.mcmeta`, version-correct directories and file contents, command-position function and
+function-tag calls, tag entries, advancement parents, and local tag/advancement cycles. The CLI
+treats submitted namespaces as closed unless `--allow-merged-namespace-dependencies` is set.
+References supplied by another pack or mod, JSON files without version-compatible schema coverage,
+dynamic macro commands, pack overlays, and graph kinds not yet interpreted are reported as
+incomplete rather than guessed.
 
 `resourcepack validate-project` also validates `sounds.json` file/event references and local event
 cycles. OGG inspection is intentionally bounded to the strict 58-byte Ogg/Vorbis identification
