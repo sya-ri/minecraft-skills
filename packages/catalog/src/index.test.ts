@@ -1339,6 +1339,64 @@ describe("catalog", () => {
     );
   });
 
+  it("routes Paper plugin configuration lifecycle guidance", () => {
+    const recipe = getAuthoringRecipe("paper-plugin-configuration-lifecycle");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "stage-and-validate-startup-state",
+        "reload-through-prepare-commit-and-retire",
+        "fence-consumers-and-reconcile-derived-resources",
+        "persist-without-clobbering-operator-input",
+      ]),
+    );
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "last-known-good test",
+    );
+    expect(recipe.finalChecks).toContain("paper-plugin-configuration-lifecycle-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-plugin-configuration-lifecycle-safety");
+    expect(guardrail.rules.join("\n")).toContain("monotonic revisions");
+    expect(guardrail.rules.join("\n")).toContain("restart-only changes");
+
+    const diagnostic = getAuthoringDiagnostic("paper-plugin-configuration-lifecycle-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("older slow reload");
+    expect(diagnostic.failIf.join("\n")).toContain("stale in-memory state");
+
+    const scenario = getAuthoringScenario("paper-plugin-configuration-lifecycle-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-plugin-configuration-lifecycle"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-plugin-configuration-lifecycle-unsafe",
+    );
+
+    const search = searchAuthoringScenarios({
+      query: "Paper plugin transactional configuration hot reload last known good generation",
+      domain: "paper-plugin",
+      limit: 3,
+    });
+    expect(search.results.map((entry) => entry.scenario.id)).toContain(
+      "paper-plugin-configuration-lifecycle-review",
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-plugin-configuration-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-plugin-configuration-lifecycle"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-plugin-configuration-lifecycle-unsafe",
+    );
+
+    const suggestions = suggestMinecraftLookups({
+      task: "Review a Paper plugin config hot reload transaction",
+      version: "1.21.11",
+    });
+    expect(suggestions.domain).toBe("paper-plugin");
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      "plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11",
+    );
+  });
+
   it("matches Paper plugin runtime claims to sufficient test evidence", () => {
     const recipe = getAuthoringRecipe("paper-plugin-testing-evidence");
     expect(recipe.steps.map((step) => step.id)).toEqual([
@@ -4502,6 +4560,10 @@ describe("catalog", () => {
     expect(reference.supported).toBe(true);
     expect(reference.apiDependency).toBe("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
     expect(reference.javadocsUrl).toBe("https://jd.papermc.io/paper/1.21.11/");
+    expect(reference.docs.pluginConfiguration).toBe(
+      "https://docs.papermc.io/paper/dev/plugin-configurations/",
+    );
+    expect(reference.docs.commands).toBe("https://docs.papermc.io/paper/reference/commands/");
     expect(reference.docs.foliaSupport).toBe("https://docs.papermc.io/paper/dev/folia-support/");
   });
 

@@ -890,6 +890,8 @@ export type PaperApiReference = {
   javadocsUrl: string | null;
   docs: {
     paperDev: string;
+    pluginConfiguration: string;
+    commands: string;
     scheduling: string;
     foliaSupport: string;
     foliaOverview: string;
@@ -2117,6 +2119,23 @@ function isPaperItemStackSemanticIdentityDiscoveryQuery(
     hasSemanticOrUpdateContext &&
     (domain === "paper-plugin" || hasExplicitPaperContext || hasBukkitItemApiContext)
   );
+}
+
+function isPaperPluginConfigurationLifecycleQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasPaperContext =
+    /\b(paper|bukkit|spigot|javaplugin|paper plugin|bukkit plugin|spigot plugin)\b/.test(
+      normalized,
+    );
+  const hasConfigurationContext =
+    /\b(config|configuration|config yml|yaml|reloadconfig|saveconfig|savedefaultconfig)\b/.test(
+      normalized,
+    );
+  const hasLifecycleContext =
+    /\b(startup|enable|disable|load|reload|hot reload|save|migration|migrate|atomic|transaction|rollback|last known good|generation|restart required)\b/.test(
+      normalized,
+    );
+  return hasPaperContext && hasConfigurationContext && hasLifecycleContext;
 }
 
 function isVelocityToolchainDiscoveryQuery(query: string): boolean {
@@ -3853,6 +3872,8 @@ function makePaperApiReference(
     javadocsUrl: supported ? `https://jd.papermc.io/paper/${minecraftVersion}/` : null,
     docs: {
       paperDev: "https://docs.papermc.io/paper/dev/",
+      pluginConfiguration: "https://docs.papermc.io/paper/dev/plugin-configurations/",
+      commands: "https://docs.papermc.io/paper/reference/commands/",
       scheduling: "https://docs.papermc.io/paper/dev/scheduler/",
       foliaSupport: "https://docs.papermc.io/paper/dev/folia-support/",
       foliaOverview: "https://docs.papermc.io/folia/reference/overview/",
@@ -5738,6 +5759,7 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     task,
     options.domain,
   );
+  const paperConfigurationLifecycleTask = isPaperPluginConfigurationLifecycleQuery(task);
   const explicitDatapackTask =
     /\b(data ?pack|mcfunction|advancement|loot table|predicate|worldgen)\b/.test(normalizedTask);
   const explicitResourcepackTask =
@@ -5888,7 +5910,8 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       paperApiTask ||
       administrativeCommandTask ||
       playerIdentityTask ||
-      isPaperProtocolTask
+      isPaperProtocolTask ||
+      paperConfigurationLifecycleTask
     ) {
       add(
         `plugin paper search ${JSON.stringify(task)}`,
@@ -5901,6 +5924,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       add(
         `plugin paper members ${version} --contains ${JSON.stringify(task)}`,
         "Search Paper API member names.",
+      );
+    }
+    if (paperConfigurationLifecycleTask) {
+      add(
+        `plugin paper plan paper-plugin-configuration-lifecycle-review ${version}`,
+        "Resolve lifecycle-safe startup, transactional reload, persistence, observability, and test guidance.",
       );
     }
   }

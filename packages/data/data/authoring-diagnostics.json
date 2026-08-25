@@ -978,6 +978,88 @@
       "failureMode": "A display-only change can become a destructive item rewrite or a false identity match, while failed migrations become unrecoverable if unknown state is overwritten or versions advance early."
     },
     {
+      "id": "paper-plugin-configuration-lifecycle-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper plugin configuration lifecycle can publish mixed, stale, or unrecoverable state",
+      "severity": "error",
+      "detectWhen": [
+        "Paper plugin code loads, saves, migrates, reloads, or exposes status for configuration",
+        "configuration changes tasks, listeners, caches, clients, repositories, credentials, limits, or other runtime resources",
+        "the implementation calls reloadConfig or saveConfig without an explicit desired-versus-effective state model",
+        "external file edits, concurrent reloads, invalid input, restart-only keys, partial resource replacement, or plugin disable are possible"
+      ],
+      "requiredChecks": [
+        "inventory defaults, operator files, generated state, secrets, schema versions, migrations, snapshots, and derived resources with explicit ownership",
+        "verify target-version configuration, JavaPlugin, lifecycle, scheduler, and publication API names and consult official Paper configuration and reload-command documentation",
+        "distinguish missing, unreadable, malformed, unsupported, migration-failed, and semantically invalid input before publishing a typed immutable snapshot",
+        "gate services until a valid startup generation commits or initialization fails closed",
+        "serialize or revision reloads and stage parsing, migration, validation, and resource preparation away from live state",
+        "commit one snapshot and prepared resource generation, retire the old generation afterward, and preserve the last known good state on pre-commit failure",
+        "define compensation, degraded state, and recovery for non-atomic side effects and retirement failures",
+        "fence tasks and callbacks by immutable snapshot, configuration generation, and plugin epoch",
+        "reject restart-only changes before commit and return a typed restart-required result",
+        "prevent stale programmatic saves from clobbering external edits and keep secrets or generated state under suitable separate ownership",
+        "stop reload admission and close candidate, live, and retired resources idempotently during disable",
+        "expose effective generation and lifecycle status without values or secrets, then test races and failures deterministically and on a loaded target-version server"
+      ],
+      "evidence": [
+        "a configuration ownership matrix and desired-versus-effective state model",
+        "target-version API and official documentation evidence for the lifecycle surfaces used",
+        "startup and prepare, commit, retire, compensation, save-conflict, and disable state machines",
+        "tests for invalid startup, migration, concurrent and stale reload, candidate and retirement failure, external edit conflict, restart-only keys, disable, and cleanup",
+        "status assertions that identify the effective generation and degraded state without exposing configuration values"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "packaged defaults overwrite an existing operator file or invalid operator input silently falls back to defaults or an empty configuration",
+        "commands, listeners, tasks, or publications can run before a valid startup generation is committed",
+        "blocking file work runs on the server thread or Bukkit-facing publication uses an unverified context",
+        "the server-wide reload or Paper server-configuration reload is presented as the plugin's configuration transaction",
+        "parsing, migration, or validation mutates the live configuration or derived resources",
+        "an older slow reload can publish after a newer accepted attempt",
+        "readers can observe fields or resources from different generations",
+        "candidate preparation failure displaces the last known good state or leaks prepared resources",
+        "external side effects are described as rolled back without a real prepare boundary, compensation, degraded state, or recovery path",
+        "tasks, caches, clients, repositories, or callbacks keep using invalidated state without a snapshot or generation rule",
+        "a restart-only change returns success while the effective state remains unchanged",
+        "saveConfig or another write can overwrite a newer external edit from stale in-memory state",
+        "reload or disable leaves candidate, live, or retired resources reachable or closes them more than once unsafely",
+        "reload success reports only parsing rather than the committed effective generation and resource state",
+        "status or errors expose configuration values, secrets, file contents, or unbounded parser output",
+        "tests omit invalid startup, migration, concurrent ordering, partial preparation, retirement failure, external-edit conflict, disable, or loaded-server lifecycle behavior"
+      ],
+      "safeResponse": [
+        "Separate desired files, immutable effective snapshots, and derived resource generations.",
+        "Stage parsing, migration, validation, and resource preparation before one revision-checked commit.",
+        "Keep the last known good generation on pre-commit failure and report degraded or restart-required outcomes explicitly.",
+        "Prevent stale saves, fence consumers by generation, and make disable cleanup idempotent.",
+        "Report and test the effective generation without returning values or secrets."
+      ],
+      "failureMode": "A configuration reload can claim success while runtime readers, resources, persisted input, and status disagree about which generation is effective."
+    },
+    {
       "id": "paper-plugin-test-evidence-gap",
       "domains": ["paper-plugin"],
       "title": "Paper plugin claim exceeds the completed test evidence",

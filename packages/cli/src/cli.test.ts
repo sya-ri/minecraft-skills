@@ -1347,6 +1347,67 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-bossbar-audience-lifecycle"');
   });
 
+  it("prints Paper plugin configuration lifecycle guidance", async () => {
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-plugin-configuration-lifecycle",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("reload-through-prepare-commit-and-retire");
+    expect(recipe.stdout.join("\n")).toContain("last-known-good test");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-plugin-configuration-lifecycle-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-plugin-configuration-lifecycle-unsafe");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "transactional config hot reload last known good",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain(
+      '"id": "paper-plugin-configuration-lifecycle-review"',
+    );
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-plugin-configuration-lifecycle-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-plugin-configuration-lifecycle"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-plugin-configuration-lifecycle-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-plugin-configuration-lifecycle-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("monotonic revisions");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-plugin-configuration-lifecycle-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("older slow reload");
+  });
+
   it("prints Paper plugin testing evidence guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
     expect(recipe.code).toBe(0);
@@ -3652,6 +3713,21 @@ describe("minecraft-skills CLI", () => {
     expect(itemDelivery.stdout.join("\n")).toContain("plugin paper search");
     expect(itemDelivery.stdout.join("\n")).toContain('"id": "paper-item-delivery-review"');
     expect(itemDelivery.stdout.join("\n")).not.toContain("resourcepack assets find");
+
+    const configurationLifecycle = await capture([
+      "minecraft",
+      "suggest-lookups",
+      "review a Paper plugin config hot reload transaction",
+      "--version",
+      "1.21.11",
+    ]);
+    expect(configurationLifecycle.code).toBe(0);
+    expect(configurationLifecycle.stdout.join("\n")).toContain(
+      "plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11",
+    );
+    expect(configurationLifecycle.stdout.join("\n")).toContain(
+      '"id": "paper-plugin-configuration-lifecycle-review"',
+    );
 
     const itemModel = await capture([
       "minecraft",

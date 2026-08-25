@@ -78,6 +78,10 @@ minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
+minecraft-skills plugin paper search-scenarios "transactional config hot reload last known good"
+minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
+minecraft-skills plugin paper guardrail paper-plugin-configuration-lifecycle-safety
+minecraft-skills plugin paper diagnostic paper-plugin-configuration-lifecycle-unsafe
 minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
@@ -174,6 +178,15 @@ pack application, and other client-visible outcomes need a real instrumented cli
 client state. The recipe also requires controlled time and task ordering, lifecycle and stale
 completion cases, isolated cleanup, and a final report of exact commands, versions, baselines,
 skips, unavailable environments, and manual checks.
+
+The `paper-plugin-configuration-lifecycle-review` scenario treats operator files as desired input,
+one immutable snapshot and resource bundle as effective state, and every reload as a revisioned
+prepare/commit/retire transition. It requires validated startup readiness, last-known-good
+preservation, explicit restart-required or degraded outcomes, generation-fenced consumers,
+conflict-safe writes, redacted status, and idempotent disable cleanup. The workflow distinguishes a
+plugin-owned configuration reload from deprecated server-wide reload and Paper server-
+configuration reload commands, and requires both deterministic race tests and loaded-server
+lifecycle evidence.
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
 support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).

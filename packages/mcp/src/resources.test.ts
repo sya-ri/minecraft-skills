@@ -41,6 +41,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-player-identity-and-display.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-guardrails/paper-plugin-configuration-lifecycle-safety.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-guardrails/paper-plugin-testing-evidence.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -57,6 +60,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-player-identity-display-confusion.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-diagnostics/paper-plugin-configuration-lifecycle-unsafe.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-diagnostics/paper-plugin-test-evidence-gap.json",
@@ -77,6 +83,9 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-recipes/paper-player-identity-and-display.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-recipes/paper-plugin-configuration-lifecycle.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
@@ -93,6 +102,9 @@ describe("MCP resources", () => {
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-player-identity-and-display-review.json",
+    );
+    expect(resources.map((resource) => resource.uri)).toContain(
+      "minecraft-skills://data/authoring-scenarios/paper-plugin-configuration-lifecycle-review.json",
     );
     expect(resources.map((resource) => resource.uri)).toContain(
       "minecraft-skills://data/authoring-scenarios/paper-plugin-testing-evidence-review.json",
@@ -515,6 +527,28 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-diagnostics/paper-bossbar-audience-lifecycle-unsafe.json",
     );
     expect(diagnostic.contents[0]?.text).toContain("zero-viewer leak assertions");
+  });
+
+  it("reads Paper plugin configuration lifecycle resources", () => {
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-plugin-configuration-lifecycle.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("reload-through-prepare-commit-and-retire");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-plugin-configuration-lifecycle-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-plugin-configuration-lifecycle-unsafe");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-plugin-configuration-lifecycle-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("monotonic revisions");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-plugin-configuration-lifecycle-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("older slow reload");
   });
 
   it("reads Paper plugin testing evidence resources", () => {

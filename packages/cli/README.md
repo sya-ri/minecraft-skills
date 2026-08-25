@@ -38,6 +38,8 @@ minecraft-skills plugin paper recipe paper-player-session-lifecycle
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
+minecraft-skills plugin paper search-scenarios "transactional config hot reload last known good"
+minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
@@ -48,12 +50,14 @@ minecraft-skills plugin paper guardrail paper-player-identity-and-display
 minecraft-skills plugin paper guardrail paper-itemstack-semantic-identity
 minecraft-skills plugin paper guardrail paper-player-session-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
+minecraft-skills plugin paper guardrail paper-plugin-configuration-lifecycle-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-player-identity-display-confusion
 minecraft-skills plugin paper diagnostic paper-itemstack-identity-or-state-loss
 minecraft-skills plugin paper diagnostic paper-player-session-lifecycle-unsafe
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
+minecraft-skills plugin paper diagnostic paper-plugin-configuration-lifecycle-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements
@@ -469,6 +473,12 @@ and rendering. It routes updates through an owned copy and a closed presentation
 preserves all other gameplay, PDC, component, and subtype state, leaves unknown items untouched,
 and requires deterministic idempotent migrations with duplicate-lore, rollback, aliasing,
 comparison-purpose, and unrelated-state preservation tests.
+
+`plugin paper plan paper-plugin-configuration-lifecycle-review [version]` separates packaged
+defaults, operator input, generated state, immutable effective snapshots, and derived resources. It
+requires validated startup readiness, revisioned prepare/commit/retire reloads, last-known-good
+preservation, explicit restart or degraded outcomes, conflict-safe writes, generation-fenced
+consumers, redacted status, disable cleanup, and deterministic plus loaded-server lifecycle tests.
 
 `plugin paper plan paper-plugin-testing-evidence-review [version]` maps runtime claims to pure
 tests, plugin-owned fakes, explicitly supported MockBukkit behavior, a loaded target-version Paper

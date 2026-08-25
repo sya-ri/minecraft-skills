@@ -65,6 +65,7 @@ minecraft-skills plugin paper plan paper-itemstack-semantic-identity-review 26.2
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
+minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
@@ -189,6 +190,13 @@ pure logic and owned test doubles from MockBukkit-supported behavior, loaded tar
 evidence, and client-visible checks. The guidance rejects compilation-only runtime claims,
 nondeterministic wall-clock waits, silent stubs for unsupported harness behavior, and conclusions
 that omit exact commands, versions, skipped checks, known baselines, or remaining manual work.
+
+`paper-plugin-configuration-lifecycle-review` designs plugin configuration as versioned desired
+input, one immutable effective generation, and an owned bundle of derived runtime resources. It
+requires validated startup readiness, revisioned prepare/commit/retire hot reloads,
+last-known-good preservation, explicit restart-required or degraded outcomes, conflict-safe saves,
+redacted status, generation-fenced consumers, disable cleanup, and loaded-server lifecycle
+evidence. Server-wide reload commands are not treated as a plugin configuration transaction.
 
 Fabric Client GameTest visual-evidence guidance is available through catalog search and the existing
 `resourcepack` client-asset authoring domain.

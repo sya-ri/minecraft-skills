@@ -289,6 +289,36 @@
       "failureMode": "An implicit identity or broad metadata rewrite can corrupt custom items, erase unrelated state, mutate shared templates, merge semantically different stacks, or leave partially migrated items marked current."
     },
     {
+      "id": "paper-plugin-configuration-lifecycle-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper plugin configuration generations valid, observable, and recoverable",
+      "rules": [
+        "Inventory packaged defaults, operator files, generated state, secrets, schema versions, migrations, immutable effective snapshots, and every configuration-derived runtime resource with one explicit owner and lifecycle.",
+        "Use non-replacing default extraction and distinguish missing, unreadable, malformed, unsupported-schema, migration-failed, and semantically invalid input; never treat an empty fallback object as successful loading.",
+        "Parse, migrate, and validate a detached typed candidate before making the plugin ready or mutating live state.",
+        "Keep blocking configuration I/O off the server thread, gate services until initialization commits, and verify the target-version lifecycle, scheduler, configuration, and publication APIs actually used.",
+        "Use a plugin-owned reload operation; the deprecated server-wide reload and Paper's server-configuration reload do not define a safe plugin configuration transaction.",
+        "Serialize reloads or assign monotonic revisions so an older slow attempt cannot publish after a newer accepted revision.",
+        "Prepare replacement tasks, listeners, caches, clients, repositories, and other resources without exposing them; commit one immutable snapshot and resource generation in a target-compatible context, then retire the old generation.",
+        "Preserve the last known good snapshot and live resources on parsing, validation, migration, preparation, conflict, or pre-commit failure; close candidate resources on every failed path.",
+        "For side effects that cannot be atomically swapped or rolled back, define ordered compensation, degraded state, observability, and operator recovery instead of reporting unconditional success.",
+        "Consumers must capture one immutable snapshot or verify configuration generation and plugin epoch before publishing; mutable configuration objects must not be shared as live cross-thread state.",
+        "Reject restart-only changes before commit and expose them as a typed restart-required result rather than silently leaving file and effective state different.",
+        "Do not save stale cached configuration over an externally edited file; use known-revision writes and safe replacement through the same validation path, or keep generated state in a separately owned store.",
+        "Cancel reload admission during disable and close prepared, live, and retired resources idempotently even when individual cleanup actions fail.",
+        "Expose readiness, effective schema and generation, non-secret fingerprint, attempt and commit status, restart-required differences, and degraded resources without values, credentials, file contents, or unbounded errors.",
+        "Use deterministic lifecycle tests plus a loaded target-version Paper server for bootstrap, registration, scheduler, reload publication, and disable claims."
+      ],
+      "requiredEvidence": [
+        "a configuration ownership inventory and startup, reload, save, and disable state machines",
+        "official Paper configuration and command documentation plus target-version JavaPlugin, configuration, lifecycle, and scheduler API evidence",
+        "a prepare, commit, retire, compensation, generation-fence, and last-known-good design for snapshots and derived resources",
+        "conflict-safe persistence and secret-redaction policies",
+        "deterministic race, failure, cleanup, and loaded-server lifecycle tests with observable effective-state assertions"
+      ],
+      "failureMode": "Mutable cached configuration, partial resource replacement, racing reloads, stale saves, or incomplete cleanup can make runtime state diverge from both the operator file and the reported reload result."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",
