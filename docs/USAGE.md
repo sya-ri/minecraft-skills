@@ -226,6 +226,8 @@ minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills resourcepack migration-plan 1.20.6 1.21 assets/example/items/widget.json
+minecraft-skills minecraft validate-access-list ./whitelist.json
+minecraft-skills minecraft validate-access-list ./custom.json --kind banned-ips
 ```
 
 `file-schema` returns the best available schema for known pack file kinds. For model/item JSON and
@@ -312,6 +314,21 @@ partially written targets never count as success. Exit code 0 means download val
 both succeeded. JSON omits the path and byte array. The requested reference and downloaded SHA-256
 are separate evidence, not authenticity, profile signature, provenance, identity, ownership,
 freshness, or licensing claims.
+
+`minecraft validate-access-list` validates the four canonical vanilla server files:
+`whitelist.json`, `ops.json`, `banned-players.json`, and `banned-ips.json`. Canonical filenames infer
+the kind; renamed files require `--kind`. The validator is offline and does not resolve accounts or
+verify UUID/name and IP ownership. Duplicate identities, canonical field types, operator levels,
+ban serializer dates, permanent versus dated bans, and already-expired dated bans are reported
+without copying player names, UUIDs, IPs, reasons, or sources into output. CLI reads require a
+stable regular-file target, strict UTF-8, and the same fixed request ceilings used by Catalog and
+MCP. Pass a 24-character canonical UTC `--evaluated-at` value to reproduce expiry classification;
+the effective instant is always returned.
+Field names, operator levels, and ban date syntax are grounded in the official Java 26.2 server
+serializers; unknown fork fields are warnings, and future serializer changes are not inferred.
+This is canonical-output validation, not a loader-acceptance oracle: current loaders default some
+missing or malformed ban data and operator fields and clamp operator levels, so `valid: false` does
+not prove that the server will reject the file.
 
 Paper plugin lookups:
 
@@ -632,6 +649,7 @@ Analysis and pack tools include:
 - `validate_resourcepack_png`
 - `validate_datapack_project`
 - `validate_resourcepack_project`
+- `validate_server_access_list`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
@@ -697,6 +715,7 @@ import {
   validateDatapackProject,
   validateResourcepackProject,
   resolveVelocityToolchain,
+  validateServerAccessList,
 } from "@minecraft-skills/catalog";
 
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
@@ -788,6 +807,11 @@ const datapackProject = validateDatapackProject({
 });
 // Set assumeLocalNamespacesComplete: false when another pack or mod may merge dependencies into
 // the same namespace. The default closed-project mode reports missing submitted-namespace targets.
+const accessList = validateServerAccessList({
+  kind: "whitelist",
+  content: "[]",
+  evaluatedAt: "2026-08-25T00:00:00.000Z",
+});
 
 // ResourcepackProjectFile.content accepts a Uint8Array for OGG files. Only the first 58 bytes are
 // needed; callers should avoid reading a complete audio file solely for validation.

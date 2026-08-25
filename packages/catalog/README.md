@@ -101,6 +101,7 @@ import {
   validateResourcepackPng,
   validatePlayerSkinLayout,
   validateServerProperties,
+  validateServerAccessList,
   validateModrinthPack,
   validateModrinthPackArchive,
   validatePaperPluginArchiveMetadata,
@@ -384,6 +385,16 @@ const downloadedPlayerTexture = await downloadJavaPlayerTexture(
   "0123456789abcdef".repeat(4),
   "skin",
 );
+const accessList = validateServerAccessList({
+  kind: "ops",
+  evaluatedAt: "2026-08-25T00:00:00.000Z",
+  content: '[{"uuid":"123e4567-e89b-42d3-a456-426614174000","name":"Player","level":4,"bypassesPlayerLimit":false}]',
+});
+// The result contains only bounded counts and fixed entry/field locations. It never returns input
+// names, UUIDs, IP addresses, ban reasons, or ban sources, and performs no network lookup. Its
+// evaluatedAt field records the canonical UTC instant used for expiration classification.
+// It checks canonical serializer output, not every defaulted or clamped shape the server loader
+// may accept, so `valid: false` does not guarantee loader rejection.
 const paths = searchVanillaPaths({
   version: "26.2",
   domain: "datapack",

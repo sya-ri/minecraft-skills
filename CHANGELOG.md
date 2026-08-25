@@ -41,6 +41,10 @@ All notable changes to this project are documented here.
 - Bounded offline Velocity plugin JAR validation across Catalog, CLI, MCP, and English discovery,
   separating binary ZIP/CRC/classfile/Java-target/annotation evidence from metadata-only MCP input
   and explicitly retaining dependency, linkage, injection, API-compatibility, and runtime limits.
+- Bounded offline validation for vanilla Java server `whitelist.json`, `ops.json`,
+  `banned-players.json`, and `banned-ips.json` across Catalog, CLI, MCP, and English discovery.
+  Results detect duplicate identities and ban expiration state without returning player names,
+  UUIDs, IP addresses, ban reasons, ban sources, or local paths.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.

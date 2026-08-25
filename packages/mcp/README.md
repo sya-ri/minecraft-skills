@@ -124,6 +124,7 @@ aliases or reject Unicode query values.
 - `validate_datapack_project`
 - `validate_resourcepack_project`
 - `validate_server_properties`
+- `validate_server_access_list`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`
@@ -217,6 +218,15 @@ It performs no filesystem or network access and never returns property values. R
 Java Properties syntax evidence, a conservative stable key/value subset, unknown keys, and
 unverified target-version/runtime-encoding coverage; therefore exact version support is never
 inferred from the caller's label.
+
+`validate_server_access_list` accepts a `kind` and JSON `content` for one canonical vanilla server
+access-list file. Character and byte size, entry count, per-entry fields, string length, JSON
+nodes/depth, and retained diagnostics all use fixed ceilings. It performs no network lookup and
+never returns player names, UUIDs, IP addresses, ban reasons, or ban sources from the request.
+An optional 24-character canonical UTC `evaluatedAt` makes ban-expiry classification reproducible;
+the effective instant is always returned.
+The tool checks canonical serializer output, not every defaulted or clamped shape accepted by the
+server loader; `valid: false` therefore does not guarantee loader rejection.
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,

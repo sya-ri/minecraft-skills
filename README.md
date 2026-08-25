@@ -92,6 +92,7 @@ minecraft-skills resourcepack validate-png ./pack.png
 minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
 minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --hat-rect 40,8,8,8
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
+minecraft-skills minecraft validate-access-list ./whitelist.json
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills fabric toolchain 1.21.11
@@ -198,6 +199,14 @@ entrypoint class presence, classfile identity and Java target, and runtime-visib
 evidence. It does not load Velocity, resolve dependency satisfaction, prove JVM linkage or Guice
 injection, or establish runtime behavior or security. MCP accepts descriptor and entry-list
 metadata only and therefore cannot claim binary, classfile, or annotation evidence.
+
+`minecraft validate-access-list` validates canonical `whitelist.json`, `ops.json`,
+`banned-players.json`, and `banned-ips.json` files without network lookups. It reports only bounded
+counts and fixed diagnostic locations: player names, UUIDs, IP addresses, ban reasons, and ban
+sources are never copied into the result. The CLI verifies a stable regular-file read and strict
+UTF-8 before parsing. Ban-expiry classification returns its UTC `evaluatedAt` instant. This checks
+canonical serializer output, not every shape the server loader may accept through defaults or
+operator-level clamping; a validation error does not prove that loading will fail.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded
