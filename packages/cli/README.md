@@ -50,6 +50,7 @@ minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
 minecraft-skills plugin paper guardrail paper-api-surface-limits
+minecraft-skills plugin paper guardrail paper-event-listener-semantics-safety
 minecraft-skills plugin paper guardrail paper-player-identity-and-display
 minecraft-skills plugin paper guardrail paper-itemstack-semantic-identity
 minecraft-skills plugin paper guardrail paper-scheduled-task-lifecycle-safety
@@ -58,6 +59,7 @@ minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper guardrail paper-plugin-configuration-lifecycle-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
+minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
 minecraft-skills plugin paper diagnostic paper-player-identity-display-confusion
 minecraft-skills plugin paper diagnostic paper-itemstack-identity-or-state-loss
 minecraft-skills plugin paper diagnostic paper-scheduled-task-lifecycle-unsafe

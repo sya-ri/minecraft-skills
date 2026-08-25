@@ -326,6 +326,39 @@
           "failureMode": "Do not treat key presence as type or payload validity, assume PDC moves between holders, clear foreign namespaces, or advance a schema marker before a complete validated migration is published."
         },
         {
+          "id": "design-event-dispatch-and-registration",
+          "reason": "Event type presence does not establish priority, cancellation, thread context, in-flight behavior, or registration teardown semantics.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "Official target-version documentation for priority, cancellation, asynchronous dispatch, and the selected event",
+            "An explicit handler role, priority, ignoreCancelled, owner, and teardown decision",
+            "Deterministic dispatch tests plus loaded-plugin registration and teardown evidence when registration lifecycle changes"
+          ],
+          "failureMode": "Do not approve event code that relies on implicit priority, cancelled-event behavior, MONITOR mutation, assumed thread safety, or unowned dynamic registration."
+        },
+        {
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {

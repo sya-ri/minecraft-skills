@@ -65,7 +65,12 @@ layers, and prefer Paper documentation when Paper-specific behavior matters.
 25. Use `sya-ri/spigot-event-list` search API for event discovery when the user describes an event
    by behavior, partial name, or localized text. Translate localized intent into concise English
    event terms before searching; keep exact event class names unchanged.
-26. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
+26. For listener code, use
+   `minecraft-skills plugin paper recipe paper-event-listener` and verify the handler's priority,
+   prior-cancellation behavior, MONITOR read-only role, event execution context, registration
+   owner, and teardown. Treat unregistration as affecting subsequent dispatch, not as proof that
+   an in-flight asynchronous handler stopped.
+27. Flag Folia-sensitive scheduling and threading assumptions instead of silently using global
    scheduler patterns.
 27. For delayed, repeating, or asynchronous work, use
    `minecraft-skills plugin paper recipe paper-scheduled-task-lifecycle` and

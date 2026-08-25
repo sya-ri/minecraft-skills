@@ -322,6 +322,67 @@
             "Paper Javadocs member search result for each referenced member label"
           ],
           "stopIfMissing": "Do not invent API names; name presence does not prove behavior, nullability, or thread safety."
+        },
+        {
+          "id": "define-event-dispatch-contract",
+          "action": "Inspect official target-version documentation for the selected event and define each handler's mutation role, EventPriority, cancellation policy, and execution context. Priorities run LOWEST, LOW, NORMAL, HIGH, HIGHEST, then MONITOR; do not depend on an undocumented order between handlers at the same priority. Cancellation does not stop dispatch, so use ignoreCancelled = true only when the handler must not run for an already-cancelled event; otherwise inspect the event's current cancellation and mutable state. MONITOR handlers are observation-only and must not cancel or mutate the event.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policy"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_claim_policy"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getClaimPolicy"
+            ]
+          },
+          "evidence": [
+            "Official target-version Paper event-listener documentation and Javadocs for EventHandler, EventPriority, and the selected event",
+            "A per-handler contract naming mutation or observation role, exact priority, prior-cancellation behavior, and execution context",
+            "Tests with an earlier listener that mutates or cancels the event before the handler under review"
+          ],
+          "stopIfMissing": "Do not approve a listener whose priority, cancelled-event behavior, MONITOR role, or event-specific execution context is implicit."
+        },
+        {
+          "id": "own-listener-registration-lifecycle",
+          "action": "Give every listener registration a plugin and feature owner. Register stable listeners once during enable. For a dynamically enabled, replaced, partially initialized, or independently stopped feature, retain the exact listener instance and remove that instance from all handler lists; use plugin-scoped removal only for that plugin and never global listener removal. Inspect Event.isAsynchronous and event-specific documentation before touching Bukkit or Paper state: asynchronous dispatch may overlap and arrive in any order, and registration changes after dispatch starts do not affect that in-flight handler snapshot. Therefore unregistration is not proof that an already-running handler stopped; gate its side effects against current owner state and review any spawned task or player-session work under its own lifecycle concern.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "Target-version member evidence for PluginManager.registerEvents, Event.isAsynchronous, and the selected HandlerList unregistration overload",
+            "An ownership table distinguishing plugin-wide, feature-scoped, and player-session-scoped listeners",
+            "Loaded-plugin tests for one-time enable registration, feature replacement or rollback, disable, and no invocation from subsequent dispatch after owned teardown",
+            "A controlled in-flight asynchronous callback test proving owner-state checks reject side effects after teardown"
+          ],
+          "stopIfMissing": "Do not treat listener unregistration as cancellation of an in-flight callback or leave dynamic listener instances without an idempotent owner and teardown path."
         }
       ],
       "finalChecks": [
@@ -329,9 +390,10 @@
         "paper-plugin-output-safety",
         "paper-type-or-member-exists",
         "paper-event-candidate",
+        "paper-event-listener-semantics-safety",
         "folia-or-thread-safety"
       ],
-      "failureMode": "Generated listener code can target unsupported Paper versions, unverified event classes, or invented API members."
+      "failureMode": "Generated listener code can target unsupported APIs, run at the wrong dispatch phase, mishandle prior cancellation, mutate at MONITOR, touch unsafe state from asynchronous dispatch, or remain active after its feature owner stops."
     },
     {
       "id": "paper-api-or-scheduler-code",

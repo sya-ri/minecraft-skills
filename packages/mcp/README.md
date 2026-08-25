@@ -383,8 +383,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json`
 - `minecraft-skills://data/authoring-scenarios/paper-item-delivery-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json`
+- `minecraft-skills://data/authoring-guardrails/paper-event-listener-semantics-safety.json`
 - `minecraft-skills://data/authoring-guardrails/paper-inventory-delivery-outcomes.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-api-member-unverified.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-event-listener-semantics-unsafe.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-inventory-leftovers-unhandled.json`
 - `minecraft-skills://data/authoring-recipes/paper-inventory-gui-interactions.json`
 - `minecraft-skills://data/authoring-scenarios/paper-inventory-gui-interaction-review.json`

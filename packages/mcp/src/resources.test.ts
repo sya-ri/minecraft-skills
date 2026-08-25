@@ -202,6 +202,7 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-checklists/paper-plugin.json",
     );
     expect(paperChecklist.contents[0]?.text).toContain("verify-types-members-and-events");
+    expect(paperChecklist.contents[0]?.text).toContain("design-event-dispatch-and-registration");
 
     const guardrails = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-guardrails.json",
@@ -216,6 +217,11 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-guardrails/paper-api-surface-limits.json",
     );
     expect(guardrail.contents[0]?.text).toContain("Javadocs package, type, and member indexes");
+
+    const eventListenerGuardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-event-listener-semantics-safety.json",
+    );
+    expect(eventListenerGuardrail.contents[0]?.text).toContain("MONITOR only to observe");
 
     const itemDeliveryGuardrail = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-guardrails/paper-inventory-delivery-outcomes.json",
@@ -255,10 +261,23 @@ describe("MCP resources", () => {
     );
     expect(inventoryDiagnostic.contents[0]?.text).toContain("repeated callbacks");
 
+    const eventListenerDiagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-event-listener-semantics-unsafe.json",
+    );
+    expect(eventListenerDiagnostic.contents[0]?.text).toContain(
+      "global HandlerList.unregisterAll()",
+    );
+
     const recipes = readMinecraftSkillsResource("minecraft-skills://data/authoring-recipes.json");
     expect(recipes.contents[0]?.text).toContain('"id": "paper-event-listener"');
     expect(recipes.contents[0]?.text).toContain('"id": "paper-safe-item-delivery"');
     expect(recipes.contents[0]?.text).toContain('"id": "paper-inventory-gui-interactions"');
+
+    const eventListenerRecipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-event-listener.json",
+    );
+    expect(eventListenerRecipe.contents[0]?.text).toContain("define-event-dispatch-contract");
+    expect(eventListenerRecipe.contents[0]?.text).toContain("own-listener-registration-lifecycle");
 
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/datapack-function-command.json",
@@ -287,6 +306,7 @@ describe("MCP resources", () => {
       "minecraft-skills://data/authoring-scenarios/paper-event-listener-review.json",
     );
     expect(scenario.contents[0]?.text).toContain("paper-event-candidate-unverified");
+    expect(scenario.contents[0]?.text).toContain("paper-event-listener-semantics-unsafe");
 
     const itemDeliveryScenario = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-scenarios/paper-item-delivery-review.json",

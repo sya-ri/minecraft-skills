@@ -130,7 +130,8 @@
         "diagnostics": [
           "target-version-missing",
           "paper-api-member-unverified",
-          "paper-event-candidate-unverified"
+          "paper-event-candidate-unverified",
+          "paper-event-listener-semantics-unsafe"
         ],
         "claimPolicies": ["paper-type-or-member-exists", "paper-event-candidate"],
         "factSurfaces": ["paper-builds", "paper-api-surface", "paper-event-search"],
@@ -139,14 +140,20 @@
       "successCriteria": [
         "Paper support is resolved before dependency coordinates are emitted",
         "event search results are treated as candidates",
-        "selected event classes and referenced members are verified against the target Paper API surface"
+        "selected event classes and referenced members are verified against the target Paper API surface",
+        "each handler has an explicit mutation or observation role, priority, prior-cancellation policy, and documented execution context",
+        "MONITOR handlers observe without mutating, and dynamic registrations have a plugin or feature owner with idempotent teardown",
+        "asynchronous and in-flight callbacks recheck owner state before side effects instead of relying on unregistration alone"
       ],
       "mustAvoid": [
         "generating listener code for an event candidate that was not API-verified",
         "inventing event methods or Paper/Bukkit member names",
-        "claiming event firing behavior from event name presence alone"
+        "claiming event firing behavior from event name presence alone",
+        "using priority as an undocumented same-priority ordering guarantee or assuming cancellation stops later handlers",
+        "mutating or cancelling at MONITOR, assuming asynchronous dispatch makes Bukkit access safe, or treating unregistration as cancellation of an in-flight handler",
+        "leaving dynamically registered listeners active after feature replacement, partial enable, reload, or disable"
       ],
-      "failureMode": "Generated listener code can target nonexistent event classes or unsupported event behavior."
+      "failureMode": "Generated listener code can target nonexistent events, violate dispatch and cancellation semantics, publish from an unsafe context, or outlive its registration owner."
     },
     {
       "id": "paper-api-scheduler-review",

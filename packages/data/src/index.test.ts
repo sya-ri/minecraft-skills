@@ -152,6 +152,56 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-plugin-test-evidence-gap");
   });
 
+  it("bundles Paper event dispatch and listener ownership safety guidance", () => {
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-event-listener");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-event-dispatch-contract",
+        "own-listener-registration-lifecycle",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain("ignoreCancelled = true");
+    expect(recipe?.finalChecks).toContain("paper-event-listener-semantics-safety");
+
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string }> }>;
+    }>("authoring-checklists.json");
+    expect(
+      checklists.checklists
+        .find((checklist) => checklist.domain === "paper-plugin")
+        ?.steps.map((step) => step.id),
+    ).toContain("design-event-dispatch-and-registration");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-event-listener-semantics-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("MONITOR only to observe");
+    expect(guardrail?.rules.join("\n")).toContain("in-flight handler snapshot");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-event-listener-semantics-unsafe",
+    );
+    expect(diagnostic?.failIf.join("\n")).toContain("global HandlerList.unregisterAll()");
+    expect(diagnostic?.failIf.join("\n")).toContain("in-flight callback");
+
+    expect(readDataText("skills/minecraft-paper-plugins/SKILL.md")).toContain(
+      "prior-cancellation behavior",
+    );
+  });
+
   it("bundles complete Paper inventory GUI lifecycle safety guidance", () => {
     const recipes = readDataJson<{
       recipes: Array<{
