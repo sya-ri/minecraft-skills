@@ -127,6 +127,7 @@ aliases or reject Unicode query values.
 - `validate_server_properties`
 - `validate_server_access_list`
 - `inspect_blockbench_project`
+- `analyze_minecraft_performance`
 - `explain_pack_path`
 - `suggest_minecraft_lookups`
 - `get_server_reports`
@@ -252,6 +253,20 @@ names. Newer formats, `<lz>` compression, unknown/custom formats, unsupported sh
 limits remain indeterminate, so requested absence is `unknown`. A present name does not validate
 animation playback, textures, rendering/export, plugin semantics, ModelEngine compatibility, or
 behavior associated with any group (including one named `seat`).
+
+`analyze_minecraft_performance` accepts 2-10,000 normalized, strictly ordered canonical UTC
+samples through a closed structured schema. It exposes only TPS, MSPT, CPU percent, heap used
+bytes, loaded chunks, entities, players, and GC pause milliseconds; identity, UUID, coordinate,
+host, and source-label fields are not accepted. Results cover missing data, min/p50/p95/max,
+bounded threshold intervals, trends, optional before/after evidence, and exact-timestamp MSPT
+associations with at least ten aligned non-constant observations.
+
+Only Paper's [20 TPS target and 50 ms tick budget](https://docs.papermc.io/paper/reference/commands/)
+are automatic thresholds. All other thresholds are explicit. Associations and changes are
+descriptive candidate signals, never causal conclusions. Threshold violations recommend only a
+scoped spark capture following Paper's [profiling guidance](https://docs.papermc.io/paper/profiling/)
+while the issue is active. MCP receives an already-parsed object, so it cannot detect duplicate
+keys that may have existed in source JSON; use the file CLI when source-level uniqueness matters.
 
 `validate_modrinth_pack` accepts index JSON and optional archive-entry metadata; MCP does not accept
 binary ZIP uploads. Supply optional compressed sizes, flags, compression methods, CRC-32 values,

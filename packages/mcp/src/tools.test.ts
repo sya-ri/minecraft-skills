@@ -7,6 +7,7 @@ import {
   defaultDatapackProjectValidationLimits,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
+  defaultMinecraftPerformanceAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
   defaultServerAccessListValidationLimits,
   defaultServerPropertiesValidationLimits,
@@ -257,6 +258,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_log");
     expect(tools.map((tool) => tool.name)).toContain("validate_server_access_list");
     expect(tools.map((tool) => tool.name)).toContain("inspect_blockbench_project");
+    expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_performance");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -2025,6 +2027,94 @@ describe("MCP tools", () => {
     });
     expect(unknown.isError).toBe(true);
     expect(unknown.content[0]?.text).toContain("received an unknown argument");
+  });
+
+  it("analyzes bounded performance samples without causal claims", async () => {
+    const samples = Array.from({ length: 10 }, (_, index) => ({
+      timestamp: new Date(Date.UTC(2026, 7, 25, 0, index)).toISOString(),
+      tps: index === 9 ? 18 : 20,
+      mspt: 40 + index,
+      cpuPercent: 20 + index * 2,
+    }));
+    const result = await callMinecraftSkillsTool("analyze_minecraft_performance", {
+      samples,
+      expectedIntervalSeconds: 60,
+      comparison: { splitAt: samples[5]?.timestamp },
+    });
+    const output = JSON.parse(result.content[0]?.text ?? "{}") as {
+      thresholdStatus?: string;
+      appliedThresholds?: Record<string, unknown>;
+      correlations?: Array<{ kind?: string; candidateMetric?: string; coefficient?: number }>;
+      nextSteps?: Array<{ kind?: string }>;
+    };
+
+    expect(result.isError).not.toBe(true);
+    expect(output.thresholdStatus).toBe("violations-detected");
+    expect(Object.keys(output.appliedThresholds ?? {})).toEqual(["tps", "mspt"]);
+    expect(output.correlations).toContainEqual(
+      expect.objectContaining({
+        kind: "association",
+        candidateMetric: "cpuPercent",
+        coefficient: 1,
+      }),
+    );
+    expect(output.nextSteps).toContainEqual(
+      expect.objectContaining({ kind: "scoped-spark-profile" }),
+    );
+    expect(result.content[0]?.text).not.toContain('"cause"');
+  });
+
+  it("publishes closed performance schemas and enforces the Catalog sample ceiling", async () => {
+    const tool = tools.find((candidate) => candidate.name === "analyze_minecraft_performance");
+    const properties = tool?.inputSchema.properties;
+    const samplesSchema = properties?.samples as
+      | {
+          minItems?: number;
+          maxItems?: number;
+          items?: { additionalProperties?: boolean; properties?: Record<string, unknown> };
+        }
+      | undefined;
+    const thresholdSchema = properties?.thresholds as
+      | {
+          properties?: Record<string, { anyOf?: Array<{ required?: string[] }> }>;
+        }
+      | undefined;
+
+    expect(samplesSchema?.minItems).toBe(2);
+    expect(samplesSchema?.maxItems).toBe(defaultMinecraftPerformanceAnalysisLimits.maxSamples);
+    expect(samplesSchema?.items?.additionalProperties).toBe(false);
+    expect(samplesSchema?.items?.properties).not.toHaveProperty("playerName");
+    expect(samplesSchema?.items?.properties).not.toHaveProperty("coordinates");
+    expect(properties).not.toHaveProperty("host");
+    expect(properties).not.toHaveProperty("sourceLabel");
+    expect(thresholdSchema?.properties?.cpuPercent?.anyOf).toEqual([
+      { required: ["minimum"] },
+      { required: ["maximum"] },
+    ]);
+
+    const oversized = await callMinecraftSkillsTool("analyze_minecraft_performance", {
+      samples: new Array(defaultMinecraftPerformanceAnalysisLimits.maxSamples + 1).fill({}),
+    });
+    expect(oversized.isError).not.toBe(true);
+    expect(oversized.content[0]?.text).toContain('"outcome": "limit-exceeded"');
+
+    const privateInput = await callMinecraftSkillsTool("analyze_minecraft_performance", {
+      samples: [],
+      host: "private.example.invalid",
+    });
+    expect(privateInput.isError).not.toBe(true);
+    expect(privateInput.content[0]?.text).toContain('"inputValid": false');
+    expect(privateInput.content[0]?.text).toContain('"code": "unknown-field"');
+    expect(privateInput.content[0]?.text).not.toContain("private.example.invalid");
+
+    const revoked = Proxy.revocable({}, {});
+    revoked.revoke();
+    const revokedInput = await callMinecraftSkillsTool(
+      "analyze_minecraft_performance",
+      revoked.proxy,
+    );
+    expect(revokedInput.isError).not.toBe(true);
+    expect(revokedInput.content[0]?.text).toContain('"code": "unsafe-object"');
   });
 
   it("rejects malformed or oversized resource-pack sound header base64", async () => {

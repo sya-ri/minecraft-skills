@@ -108,6 +108,7 @@ minecraft-skills player-profile textures 853c80ef-3c37-49fd-aa49-938b674adae6
 minecraft-skills blockbench inspect-project ./model.bbmodel --require-animation idle --require-group seat
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
+minecraft-skills minecraft analyze-performance ./performance-samples.json
 minecraft-skills plugin paper intents
 minecraft-skills plugin paper fact-surfaces
 minecraft-skills plugin paper claim-policies
@@ -586,6 +587,49 @@ covered with legacy `allclasses-noframe.html` and `index-all.html` extraction. T
 prove name presence only; they do not prove runtime behavior, nullability, overload semantics, or
 thread safety.
 
+## Performance Time-Series Analysis
+
+`minecraft analyze-performance <file>` reads normalized observations from a bounded local JSON
+file. It does not query a server, Grafana, Prometheus, logs, or a project-specific metric source.
+The accepted sample fields are `timestamp`, `tps`, `mspt`, `cpuPercent`, `heapUsedBytes`,
+`loadedChunks`, `entities`, `players`, and `gcPauseMs`; identity, UUID, coordinates, host, and
+source-label fields are rejected.
+
+```json
+{
+  "samples": [
+    { "timestamp": "2026-08-25T00:00:00.000Z", "tps": 20, "mspt": 41.5 },
+    { "timestamp": "2026-08-25T00:01:00.000Z", "tps": 19.7, "mspt": 48.2 }
+  ],
+  "expectedIntervalSeconds": 60,
+  "thresholds": { "cpuPercent": { "maximum": 85 } }
+}
+```
+
+Timestamps must be strictly increasing canonical UTC instants with millisecond precision. The
+result reports missing-data coverage, min/p50/p95/max, observed threshold violations and bounded
+consecutive intervals, linear trends, optional before/after evidence, and Pearson associations
+with MSPT for at least ten exact-timestamp, non-constant aligned observations. It does not
+interpolate values or perform a significance test, and association, trend, or before/after change
+must not be interpreted as causation.
+
+The only automatic thresholds are the [Paper command reference](https://docs.papermc.io/paper/reference/commands/)
+target of 20 TPS and 50 ms tick budget. Other metrics are evaluated only when an explicit threshold
+is supplied. A violation recommends only a scoped spark capture while the issue is occurring, in
+line with Paper's [profiling](https://docs.papermc.io/paper/profiling/) and
+[basic troubleshooting](https://docs.papermc.io/paper/basic-troubleshooting/) guidance; it does not
+name a root cause.
+
+Defaults cap normalized input at 4 MiB of UTF-8 and 4,194,304 UTF-16 code units, 10,000 samples, a
+366-day window, 500 retained diagnostics, eight fixed series, and 100 retained violation intervals
+per series. The CLI
+also rejects a non-regular or final symlink file, path or same-handle identity changes during
+positioned reads, malformed UTF-8, duplicate object keys, JSON deeper than 16 containers, and JSON
+beyond the fixed structural-node budget before `JSON.parse`. Invalid or insufficient input and
+threshold violations exit 1; only an analyzed result without violations exits 0. Catalog and MCP
+inputs are already parsed objects, so they cannot prove whether the original source JSON contained
+duplicate keys.
+
 ## Authoring Safety Data
 
 Use these together before writing or reviewing generated output:
@@ -711,6 +755,7 @@ Analysis and pack tools include:
 - `validate_server_access_list`
 - `inspect_blockbench_project`
 - `validate_mixin_config`
+- `analyze_minecraft_performance`
 - `get_pack_migration_plan`
 - `get_pack_format`
 - `find_versions_by_pack_format`
@@ -773,6 +818,7 @@ import {
   searchMinecraftAssets,
   searchPaperMembers,
   searchVanillaPaths,
+  analyzeMinecraftPerformance,
   validateResourcepackPng,
   validatePlayerSkinLayout,
   inspectJavaPlayerTextureBytes,
@@ -787,6 +833,13 @@ const velocity = await resolveVelocityToolchain({ limit: 5, timeoutMs: 5000 });
 const logAnalysis = analyzeMinecraftLog({
   text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
 Caused by: java.lang.IllegalStateException: root`,
+});
+const performance = analyzeMinecraftPerformance({
+  samples: [
+    { timestamp: "2026-08-25T00:00:00.000Z", tps: 20, mspt: 41.5 },
+    { timestamp: "2026-08-25T00:01:00.000Z", tps: 19.7, mspt: 48.2 },
+  ],
+  expectedIntervalSeconds: 60,
 });
 const diagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const recipe = getAuthoringRecipe("paper-event-listener");

@@ -68,6 +68,7 @@ minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
+minecraft-skills minecraft analyze-performance ./performance-samples.json
 minecraft-skills minecraft pack-formats
 minecraft-skills minecraft pack-format 26.2 datapack
 minecraft-skills minecraft versions-for-pack-format resourcepack 88
@@ -420,6 +421,38 @@ tests, plugin-owned fakes, explicitly supported MockBukkit behavior, a loaded ta
 server, or client-visible evidence. It also requires controlled time and task ordering, lifecycle
 and stale-completion cases, isolated cleanup, exact commands and versions, known baselines, and an
 explicit list of skipped, unavailable, or manual checks.
+
+## Performance Time-Series Analysis
+
+`minecraft analyze-performance <file>` accepts a regular, final non-symlink UTF-8 JSON file with
+2-10,000 strictly ordered canonical UTC samples. Each sample may contain only `timestamp` and the
+normalized `tps`, `mspt`, `cpuPercent`, `heapUsedBytes`, `loadedChunks`, `entities`, `players`, or
+`gcPauseMs` metrics. Player names, UUIDs, coordinates, hosts, and source labels are not accepted.
+
+```json
+{
+  "samples": [
+    { "timestamp": "2026-08-25T00:00:00.000Z", "tps": 20, "mspt": 41.5 },
+    { "timestamp": "2026-08-25T00:01:00.000Z", "tps": 19.7, "mspt": 48.2 }
+  ],
+  "expectedIntervalSeconds": 60,
+  "thresholds": { "cpuPercent": { "maximum": 85 } }
+}
+```
+
+Only Paper's [20 TPS target and 50 ms tick budget](https://docs.papermc.io/paper/reference/commands/)
+are default thresholds. Other thresholds must be explicit. Output includes missing-data coverage,
+min/p50/p95/max, bounded violation intervals, trends, optional before/after summaries, and
+exact-timestamp MSPT associations when there are at least ten aligned non-constant observations.
+These are descriptive candidate signals, not causal or statistically significant conclusions. A
+violation recommends only a scoped spark capture following Paper's
+[profiling guidance](https://docs.papermc.io/paper/profiling/).
+
+The CLI checks the 4 MiB UTF-8 byte and 4,194,304 UTF-16-code-unit ceilings before analysis and
+rejects path or same-handle identity changes during positioned reads, malformed UTF-8, duplicate
+JSON object keys, more than 16 nested containers, or more than `12 * maxSamples + 256` JSON value
+nodes before parsing. Invalid or insufficient input and threshold violations exit 1. Only an
+analyzed result with no violations exits 0.
 
 ## Data Sources
 

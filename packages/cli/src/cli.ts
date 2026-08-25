@@ -4,6 +4,7 @@ import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   analyzeMinecraftLog,
+  analyzeMinecraftPerformance,
   blockbenchProjectInspectionLimits,
   type CatalogSearchKind,
   type CommandComparisonOptions,
@@ -22,6 +23,7 @@ import {
   type DatapackSchemaSearchOptions,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
+  defaultMinecraftPerformanceAnalysisLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
@@ -168,6 +170,7 @@ import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabric
 import { readFabricModJarFile } from "./fabricModJarFile.js";
 import { readBoundedPngFile } from "./filePrefix.js";
 import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
+import { readMinecraftPerformanceFile } from "./minecraftPerformanceFile.js";
 import { readMixinConfigCliFiles } from "./mixinConfigFiles.js";
 import {
   validateNewPlayerTexturePngPath,
@@ -867,6 +870,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft search-all": "search-all",
     "minecraft registry-entries": "registry-entries",
     "minecraft compare-registry-entries": "compare-registry-entries",
+    "minecraft analyze-performance": "analyze-minecraft-performance",
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
     "minecraft analyze-log": "analyze-minecraft-log",
@@ -1096,6 +1100,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "compare-registry-entries": "minecraft compare-registry-entries",
   "validate-server-access-list": "minecraft validate-access-list",
   "validate-mixin-config": "minecraft validate-mixin-config",
+  "analyze-minecraft-performance": "minecraft analyze-performance",
   "server-reports": "datapack server-reports",
   "datapack-schema": "datapack schema",
   "search-datapack-schema": "datapack search-schema",
@@ -1374,6 +1379,7 @@ Grouped commands:
   minecraft-skills minecraft registry-entries [version] [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft compare-registry-entries <from> <to> [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips] [--evaluated-at UTC-timestamp]
+  minecraft-skills minecraft analyze-performance <file>
   minecraft-skills datapack schema [version] [--edition java]
   minecraft-skills datapack search-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
   minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
@@ -3440,6 +3446,24 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       });
       printJson(output, result);
       return result.valid ? 0 : 1;
+    }
+
+    if (command === "analyze-minecraft-performance") {
+      if (args.some((arg) => arg.startsWith("--"))) {
+        throw new Error("minecraft analyze-performance does not accept command options");
+      }
+      const inputPaths = args.filter((arg) => arg.length > 0);
+      const inputPath = inputPaths[0];
+      if (inputPaths.length !== 1 || !inputPath) {
+        throw new Error("minecraft analyze-performance requires exactly one local JSON file");
+      }
+      const result = analyzeMinecraftPerformance(
+        readMinecraftPerformanceFile(inputPath, defaultMinecraftPerformanceAnalysisLimits),
+      );
+      printJson(output, result);
+      return result.outcome === "analyzed" && result.thresholdStatus !== "violations-detected"
+        ? 0
+        : 1;
     }
 
     if (command === "explain-path") {

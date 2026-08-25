@@ -16,6 +16,7 @@ Node.js 22.12 or newer is required.
 import { readFileSync } from "node:fs";
 import {
   analyzeMinecraftLog,
+  analyzeMinecraftPerformance,
   compareCommands,
   compareDatapackSchema,
   comparePaperApi,
@@ -615,6 +616,42 @@ unknown because dependencies, the runtime classpath, and plugin-generated mixins
 The function does not inspect class bytecode, targets, injections, mappings, or launcher behavior.
 See [Mixin configuration validation](../../docs/MIXIN_CONFIG_VALIDATION.md) for the pinned Mixin and
 Gson sources, evidence levels, bounds, and non-goals.
+
+## Performance Time-Series Analysis
+
+`analyzeMinecraftPerformance(input, limits?)` is a deterministic, offline pure function for
+normalized Minecraft performance observations:
+
+```ts
+const performance = analyzeMinecraftPerformance({
+  samples: [
+    { timestamp: "2026-08-25T00:00:00.000Z", tps: 20, mspt: 41.5 },
+    { timestamp: "2026-08-25T00:01:00.000Z", tps: 19.7, mspt: 48.2 },
+  ],
+  expectedIntervalSeconds: 60,
+});
+```
+
+The fixed series are TPS, MSPT, CPU percent, heap used bytes, loaded chunks, entities, players, and
+GC pause milliseconds. Samples require strictly increasing canonical UTC timestamps and finite,
+non-negative values. The API accepts no identity, UUID, coordinate, host, or metric-source label.
+Only the [Paper-documented](https://docs.papermc.io/paper/reference/commands/) 20 TPS target and 50
+ms tick budget are defaults; every other threshold is caller-supplied.
+
+Results include coverage, min/p50/p95/max, bounded violation intervals, trends, optional
+before/after summaries, and exact-row MSPT associations when at least ten aligned observations are
+non-constant. Missing values are not interpolated. Associations, deltas, and trends are descriptive
+candidate evidence, never causal or statistically significant conclusions. Threshold violations
+only recommend a scoped spark profile using Paper's
+[profiling guidance](https://docs.papermc.io/paper/profiling/).
+
+The default ceilings are 4 MiB of UTF-8 and 4,194,304 UTF-16 code units for normalized input,
+10,000 samples, a 366-day window, 500 retained diagnostics, eight series, and 100 retained intervals
+per series. Limits may
+only be lowered. Inputs must be plain, dense data structures without proxies, accessors, symbols,
+sparse entries, or extra fields. Because this API receives an already-parsed object, it cannot
+detect duplicate keys that existed in source JSON; use the file CLI when source-level uniqueness
+must be checked.
 
 ## Coverage
 

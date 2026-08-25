@@ -1,6 +1,7 @@
 import { types as nodeTypes } from "node:util";
 import {
   analyzeMinecraftLog,
+  analyzeMinecraftPerformance,
   type BlockbenchProjectInspectionOptions,
   blockbenchProjectInspectionLimits,
   type CatalogSearchKind,
@@ -20,6 +21,7 @@ import {
   defaultDatapackProjectValidationLimits,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
+  defaultMinecraftPerformanceAnalysisLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
@@ -103,6 +105,8 @@ import {
   type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
+  minecraftPerformanceAnalysisRules,
+  minecraftPerformanceMetricNames,
   mixinConfigValidationLimits,
   modrinthCompatibilityLimits,
   type PaperMemberSearchOptions,
@@ -210,6 +214,38 @@ const resourcepackPngLimitSchemaProperties = Object.fromEntries(
       minimum: 1,
       maximum: defaultResourcepackPngValidationLimits[name],
       default: defaultResourcepackPngValidationLimits[name],
+    },
+  ]),
+);
+
+const performanceCountMetrics = new Set(["heapUsedBytes", "loadedChunks", "entities", "players"]);
+const performanceMetricSchemas = Object.fromEntries(
+  minecraftPerformanceMetricNames.map((metric) => [
+    metric,
+    {
+      type: performanceCountMetrics.has(metric) ? "integer" : "number",
+      minimum: 0,
+      maximum: metric === "cpuPercent" ? 100 : Number.MAX_SAFE_INTEGER,
+    },
+  ]),
+);
+const canonicalPerformanceTimestampSchema = {
+  type: "string",
+  minLength: 24,
+  maxLength: 24,
+  pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
+};
+const performanceThresholdSchemas = Object.fromEntries(
+  minecraftPerformanceMetricNames.map((metric) => [
+    metric,
+    {
+      type: "object",
+      properties: {
+        minimum: performanceMetricSchemas[metric],
+        maximum: performanceMetricSchemas[metric],
+      },
+      anyOf: [{ required: ["minimum"] }, { required: ["maximum"] }],
+      additionalProperties: false,
     },
   ]),
 );
@@ -1480,6 +1516,48 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["project"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "analyze_minecraft_performance",
+    description:
+      "Analyze bounded normalized Minecraft performance time series for coverage, summary statistics, threshold intervals, before/after changes, trends, and exact-timestamp MSPT associations. Results never claim causation; only TPS 20 and MSPT 50 ms use Paper-backed defaults.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        samples: {
+          type: "array",
+          minItems: minecraftPerformanceAnalysisRules.minimumSamples,
+          maxItems: defaultMinecraftPerformanceAnalysisLimits.maxSamples,
+          items: {
+            type: "object",
+            properties: {
+              timestamp: canonicalPerformanceTimestampSchema,
+              ...performanceMetricSchemas,
+            },
+            required: ["timestamp"],
+            additionalProperties: false,
+          },
+        },
+        thresholds: {
+          type: "object",
+          properties: performanceThresholdSchemas,
+          additionalProperties: false,
+        },
+        expectedIntervalSeconds: {
+          type: "number",
+          minimum: minecraftPerformanceAnalysisRules.minimumExpectedIntervalSeconds,
+          maximum: minecraftPerformanceAnalysisRules.maximumExpectedIntervalSeconds,
+        },
+        comparison: {
+          type: "object",
+          properties: { splitAt: canonicalPerformanceTimestampSchema },
+          required: ["splitAt"],
+          additionalProperties: false,
+        },
+      },
+      required: ["samples"],
       additionalProperties: false,
     },
   },
@@ -3204,6 +3282,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "validate_player_skin_layout") {
       return text(validatePlayerSkinLayout(input));
+    }
+    if (name === "analyze_minecraft_performance") {
+      return text(analyzeMinecraftPerformance(input));
     }
     const args = asRecord(input);
     const edition = typeof args.edition === "string" ? args.edition : "java";

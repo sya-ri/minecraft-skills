@@ -57,6 +57,9 @@ All notable changes to this project are documented here.
   metadata-only MCP tool, including raw duplicate-key evidence, audited VersionNumber/Gson field
   shapes, duplicate declaration checks, and optional supplied-archive presence evidence which does
   not infer runtime classpath absence.
+- Bounded Minecraft performance time-series analysis across Catalog, CLI, and MCP, including
+  coverage, quantiles, threshold intervals, before/after comparisons, trends, exact-timestamp MSPT
+  associations, and scoped spark follow-up without causal claims.
 - Loss-safe Paper item-delivery authoring guidance across recipes, scenarios, guardrails, and
   diagnostics, including partial inventory insertion, explicit overflow outcomes, retry safety,
   and target-version verification for convenience and fallback APIs.
