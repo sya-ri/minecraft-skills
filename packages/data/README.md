@@ -24,6 +24,9 @@ Redistributable canonical data for Minecraft Skills consumers.
   atomic reload rollback, observability, recovery, and failure tests.
 - Paper player identity and display guidance for stable persistence, offline resolution, explicit
   presentation sources, bounded profile lookup, and cross-server cache convergence.
+- Paper ItemStack semantic-identity guidance for namespaced logical IDs, separate schema versions,
+  purpose-specific similarity decisions, owned presentation refresh, state-preserving idempotent
+  migration, unknown-item pass-through, and duplicate-lore or rollback tests.
 - Paper plugin testing-evidence guidance that maps pure tests, owned fakes, MockBukkit, loaded
   target-version Paper servers, and client-visible verification to bounded runtime claims.
 - Machine-readable claim policies for evidence-bounded wording.

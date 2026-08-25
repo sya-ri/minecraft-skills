@@ -94,6 +94,12 @@ aliases or reject Unicode query values.
 - `get_coverage_summary`
 - `get_data_manifest`
 - `get_support_matrix`
+
+Use `search_catalog` without a domain for `Fabric GUI scale clipping`, then read
+`fabric-client-ui-scale-clipping`, `fabric-client-ui-scale-clipping-safety`, or
+`fabric-client-ui-scale-clipping-unsafe` with the matching authoring getter. These records are
+domain-neutral guidance; they do not claim a complete Fabric authoring context or target-version
+client API surface.
 - `list_version_support`
 - `get_cache_status`
 - `fetch_data`
@@ -221,16 +227,20 @@ unsupported graph kinds are returned as explicit completeness gaps.
 `analyze_minecraft_log` accepts Minecraft Java log, stack-trace, or crash-report text within both a
 2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. Its optional `limits` object can only lower the
 Catalog ceilings for input bytes, characters, lines, line
-length, events, exception chains/depth/entries, Mixin failure facts, stack frames, platforms,
-artifacts, components,
-per-value text, and aggregate retained text. The result keeps suppressed branches distinct and
-defines `deepestCause` as the last explicit `Caused by` on the primary chain. Credentials, IP
-addresses, absolute paths, terminal controls, and unsafe Unicode are sanitized before parsing or
-retention. Explicit JAR/mod/plugin labels are evidence only and do not assign responsibility.
+length, events, exception chains/depth/entries, Mixin failure facts, class-loading failures, stack
+frames, platforms, artifacts, components, per-value text, and aggregate retained text. The result
+keeps suppressed branches distinct and defines `deepestCause` as the last explicit `Caused by` on
+the primary chain. Credentials, IP addresses, absolute paths, terminal controls, and unsafe Unicode
+are sanitized before parsing or retention. Explicit JAR/mod/plugin labels are evidence only and do
+not assign responsibility.
 `mixinFailures` summarizes only five explicit Mixin exception message shapes: missing shadow or
 injection targets, failed injection checks, direct class loads from a defined mixin package, and
 non-private static members. The output does not validate mappings, refmaps, Mixin configuration,
 target bytecode, fixes, or runtime compatibility.
+It groups slash/dot forms from explicit `NoClassDefFoundError` and `ClassNotFoundException` evidence
+within one chain, while reserving `initialization-failed` for explicit `Could not initialize class`
+wording. Explicit class labels do not prove dependencies, classpaths, JAR contents, shading,
+ownership, fixes, or root causes.
 
 `validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects
@@ -388,6 +398,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-player-identity-and-display-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-player-identity-and-display.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-player-identity-display-confusion.json`
+- `minecraft-skills://data/authoring-recipes/paper-itemstack-semantic-identity.json`
+- `minecraft-skills://data/authoring-scenarios/paper-itemstack-semantic-identity-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-itemstack-semantic-identity.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-itemstack-identity-or-state-loss.json`
 - `minecraft-skills://data/authoring-recipes/paper-plugin-protocol-safety.json`
 - `minecraft-skills://data/authoring-scenarios/paper-plugin-protocol-safety-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-plugin-protocol-safety.json`
@@ -411,6 +425,13 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/intent-lookups/verify-fabric-client-visual-evidence.json`
 - `minecraft-skills://data/claim-policies/fabric-client-visual-evidence-claim.json`
 - `minecraft-skills://data/output-requirements/fabric-client-visual-evidence-report.json`
+- `minecraft-skills://data/authoring-recipes/fabric-client-ui-scale-clipping.json`
+- `minecraft-skills://data/authoring-guardrails/fabric-client-ui-scale-clipping-safety.json`
+- `minecraft-skills://data/authoring-diagnostics/fabric-client-ui-scale-clipping-unsafe.json`
+- `minecraft-skills://data/authoring-recipes/paper-world-operation-safety.json`
+- `minecraft-skills://data/authoring-scenarios/paper-world-operation-safety-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-world-operation-safety.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-world-operation-unbounded.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
 - `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/response-patterns/paper-api-answer.json`

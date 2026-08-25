@@ -900,6 +900,84 @@
       "failureMode": "An apparently functional bar can flicker, show to the wrong audience, leak Player or viewer state, mutate its replacement, or remain visible after its lifecycle ends."
     },
     {
+      "id": "paper-itemstack-identity-or-state-loss",
+      "domains": ["paper-plugin"],
+      "title": "Paper ItemStack identity is presentation-derived or an update can erase unrelated state",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code recognizes a custom item from Material, custom or display name, item name, lore, item model, custom model data, tooltip styling, or apparent rendering",
+        "ItemStack.equals or isSimilar is used without naming whether the decision is identity, stackability, grouping, deduplication, or visual comparison",
+        "presentation refresh creates a new ItemStack or copies only selected metadata onto a replacement",
+        "an ItemStack from a template, cache, inventory, event, entity, or holder is mutated without an ownership or clone boundary",
+        "migration reads or writes a schema version, appends lore, or edits PDC or data components",
+        "unknown item IDs or versions are coerced into a current known item"
+      ],
+      "requiredChecks": [
+        "verify a stable plugin-owned namespaced logical ID and separate explicit schema version exist",
+        "verify Material and all presentation or rendering fields are excluded as sole logical identity",
+        "define logical identity, application similarity or stackability, and visual equality independently",
+        "verify target-version ItemStack.isSimilar, equals, amount, ItemMeta copy or edit, PDC, presentation, and component snapshot semantics actually used",
+        "trace object ownership and clone or private-copy publication boundaries",
+        "enumerate the exact presentation and migration allowlists, define whole-field or structural ownership for list-valued presentation, and prove every unlisted state category is preserved",
+        "verify unknown, malformed, foreign, and unsupported-future items remain unchanged",
+        "verify one-version migrations are deterministic, idempotent, rollback-safe, and advance versions only after success",
+        "verify canonical lore replacement handles duplicates without append accumulation or text-based deletion",
+        "run duplicate-lore, repeat-migration, unknown-item, failure, aliasing, similarity-purpose, and unrelated-state preservation tests"
+      ],
+      "evidence": [
+        "A stable ID and version schema plus typed recognition and migration outcomes",
+        "Target-version Paper or Bukkit Javadocs and official PDC guidance for referenced APIs",
+        "An ItemStack ownership, allowlist, migration, and commit diagram",
+        "Structural before-and-after fixtures and idempotency or rollback assertions",
+        "Loaded target-version Paper evidence where real meta, PDC, subtype, or data-component application is claimed"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "Material, custom or display name, item name, lore, item model, custom model data, tooltip style, render flags, or client appearance is the only custom-item key",
+        "the logical ID and schema version share one ambiguous value or the version is inferred from current presentation",
+        "a missing, malformed, foreign, unknown, or unsupported-future item is mutated into a known current item",
+        "ItemStack.isSimilar or equals is called semantic identity or visual equality without a separately defined comparison contract",
+        "a possibly aliased ItemStack is mutated before cloning or proving exclusive ownership",
+        "presentation refresh reconstructs from Material or copies a remembered subset of metadata",
+        "amount, enchantments, attributes, damage, unbreakable or gameplay state, unowned PDC, identity keys, unrelated or unknown data components, subtype metadata, or other out-of-scope state can be cleared or overwritten",
+        "copied ItemMeta or a mutable component snapshot is changed without being applied back as the target-version API requires",
+        "lore is edited without whole-field or persisted structural ownership, appended on each refresh, or matched and deleted by rendered text",
+        "a schema marker advances before its migration step and validation succeed",
+        "migration failure can publish a partially changed stack or repeated migration changes a current item again",
+        "tests omit duplicate lore, repeat migration, unknown untouched, alias isolation, comparison decisions, failure rollback, or unrelated-state preservation"
+      ],
+      "safeResponse": [
+        "Introduce a stable namespaced logical ID and a separate explicit schema version.",
+        "Clone or own the stack, then replace only the feature-owned presentation allowlist on existing metadata.",
+        "Preserve every other field by default and publish only a fully successful deterministic migration.",
+        "Separate identity, stackability or similarity, and visual equality, then test their divergent cases.",
+        "Leave unknown items untouched and verify the target-version APIs before naming or calling them."
+      ],
+      "failureMode": "A display-only change can become a destructive item rewrite or a false identity match, while failed migrations become unrecoverable if unknown state is overwritten or versions advance early."
+    },
+    {
       "id": "paper-plugin-test-evidence-gap",
       "domains": ["paper-plugin"],
       "title": "Paper plugin claim exceeds the completed test evidence",
@@ -1034,6 +1112,135 @@
         "Verify concrete APIs for the target Fabric stack and otherwise keep the answer at the workflow-contract level."
       ],
       "failureMode": "A visual test can pass from the wrong frame, stale files, a partial selection, or a rewritten oracle while its report hides which client environment and failure phase were actually observed."
+    },
+    {
+      "id": "fabric-client-ui-scale-clipping-unsafe",
+      "domains": [],
+      "title": "Fabric client UI scale or clipping geometry is inconsistent",
+      "severity": "error",
+      "detectWhen": [
+        "Fabric client screen, overlay, widget, or custom UI code reads GUI scale, scaled dimensions, framebuffer dimensions, draw coordinates, clipping, or pointer coordinates",
+        "text, icons, images, controls, tooltips, or state layers are cut off, shifted, unexpectedly small, or clickable outside their visible bounds",
+        "the UI is accepted from screenshots without deterministic layout and hit-test assertions"
+      ],
+      "requiredChecks": [
+        "name the coordinate space of every viewport, draw, clip, glyph, image, and pointer value and verify that the runtime scaled viewport is resolved exactly once",
+        "capture configured GUI scale, resolved scale, window and framebuffer dimensions, and scaled viewport dimensions for every case, especially Auto",
+        "compute one layout result and verify that drawing, component and ancestor clip intersections, and hit testing consume its bounds",
+        "measure glyph and image bounds before clipping and compare them with component, parent, and effective clips under an explicit overflow policy",
+        "exercise long localized translations, the minimum supported scaled viewport, multiple resolved scales, Auto with multiple window sizes, and normal, hover, pressed, and disabled states",
+        "pair deterministic geometry assertions with actual-render or screenshot checks for the same matrix",
+        "verify every named Minecraft client API against current official Fabric documentation and target-version mappings"
+      ],
+      "evidence": [
+        "A coordinate-space and scale-resolution table",
+        "Serialized or asserted layout rectangles, clip intersections, pre-clip content bounds, and hit regions",
+        "A case matrix covering viewport, resolved scale, Auto, localized text length, and interaction state",
+        "Numeric test results paired with actual-render or screenshot artifacts",
+        "Official Fabric documentation and target-version mapping links for concrete API claims"
+      ],
+      "tools": {
+        "cli": ["minecraft search"],
+        "mcp": ["search_catalog", "get_authoring_recipe", "get_authoring_guardrail"],
+        "packageApis": ["searchCatalog", "getAuthoringRecipe", "getAuthoringGuardrail"]
+      },
+      "failIf": [
+        "already-scaled screen or viewport coordinates have GUI scale applied a second time",
+        "Auto is modeled as one fixed scale value without the resolved scale and current window dimensions",
+        "drawing, clipping, and hit testing recompute related rectangles instead of consuming one layout result",
+        "only post-clip pixels are checked while glyph or image pre-clip bounds exceed the intended component, parent, or effective clip without an explicit policy",
+        "the hit region differs from the rendered state geometry without a documented intentional reason",
+        "tests cover only the default language, one comfortable viewport, one resolved scale, or one interaction state",
+        "screenshots are the only proof and no deterministic geometry assertions cover bounds, clips, coordinate spaces, and hit tests",
+        "the implementation names version-specific Minecraft client APIs without current Fabric documentation or target-version mapping evidence"
+      ],
+      "safeResponse": [
+        "Capture the runtime scaled viewport tuple once and remove any second GUI-scale transform from UI geometry.",
+        "Return one layout result that owns content, clip, child, and hit-test rectangles, then consume it from every render and input path.",
+        "Assert pre-clip text and image bounds against the effective ancestor intersection and declare any intentional truncation policy.",
+        "Run the complete viewport, scale, Auto, translation, and interaction-state matrix with geometry assertions and paired actual renders.",
+        "Verify concrete client API names for the target version; otherwise keep the recommendation at the design-guidance level."
+      ],
+      "failureMode": "A UI can look acceptable in one screenshot while double scaling, stale clip geometry, or divergent hit bounds fail at another viewport, resolved scale, translation, or interaction state."
+    },
+    {
+      "id": "paper-world-operation-unbounded",
+      "domains": ["paper-plugin"],
+      "title": "Chunk-spanning world operation is unbounded or lacks lifecycle ownership",
+      "severity": "error",
+      "detectWhen": [
+        "Paper or Bukkit code loads, generates, pins, scans, or mutates more than one chunk",
+        "block, drop, entity, removal, movement, or teleport work crosses a chunk or scheduler boundary",
+        "the implementation dereferences a retained Chunk, Block, BlockState, mutable Location, or Entity outside its verified owner, or treats it as current after unload, teleport, region-handoff, or another asynchronous lifecycle change without owner-local revalidation",
+        "plugin chunk tickets, asynchronous chunk Futures, repeated batches, or plugin-disable cleanup have no single lifecycle owner"
+      ],
+      "requiredChecks": [
+        "resolve the target Paper version and verify every chunk, ticket, scheduler, entity, teleport, block, and event API plus its completion or callback context from official Paper sources",
+        "enumerate and deduplicate target world-and-chunk coordinates before mutation, then enforce chunk, target, generation, diagnostic, per-tick, per-region, and elapsed-time limits",
+        "choose generation allowed or forbidden explicitly and reject an over-limit or unbounded request before partial mutation",
+        "never wait or block via Future.get or Future.join on a server main, tick, or region thread, and never treat async completion as permission for arbitrary-thread world mutation",
+        "treat isChunkLoaded only as a snapshot; when residency is required, track bounded plugin-ticket ownership or sharing and exactly-once release for every terminal path",
+        "carry immutable world identity plus coordinates for location work and re-resolve them in the owning region; for entity work, use the entity scheduler as the handoff and revalidate the entity's identity, validity, state, and operation preconditions inside the owned callback rather than requiring cross-region World.getEntity lookup",
+        "keep EntityScheduler retired callbacks minimal because they run in critical code: only record or forward terminal intent there, and defer entity, chunk, world, and ticket-level cleanup to a verified safe context",
+        "return complete, partial, rejected, timeout, stale, or unloaded with bounded progress counts instead of collapsing callback completion into success",
+        "revalidate before physics, drops, entity movement or removal, teleport, each resumed batch, chunk unload, cancellation, and plugin disable",
+        "make partial retries idempotent and reconcile observed postconditions without assuming applyPhysics=false, a successful schedule, an event callback, or an unloaded entity proves the intended final state"
+      ],
+      "evidence": [
+        "a target-version Paper API reference and official Paper World, Block, Entity, RegionScheduler, EntityScheduler, chunk-event, scheduling, and Folia documentation links",
+        "a bounded target and generation manifest plus scheduler ownership map",
+        "a ticket and operation lifecycle state machine with complete, partial, rejected, timeout, stale, unloaded, cancellation, exception, and disable paths",
+        "race and retry tests with per-target progress and resource-release assertions"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "the target chunks, generation policy, or maximum work are discovered only while mutations are already in progress",
+        "isChunkLoaded is treated as a lease or residency guarantee",
+        "code waits or blocks via Future.get or Future.join on a server main, tick, or region thread",
+        "an async API exists or completes on a particular thread without target-version verification",
+        "an async chunk or teleport callback directly mutates blocks or entities without target-version completion-context and scheduler-ownership verification",
+        "plugin chunk tickets are assumed to be low-cost or automatically released",
+        "a chunk ticket has no bounded owner, sharing rule, timeout, or release path for partial, rejection, timeout, stale, unload, cancellation, exception, and plugin disable",
+        "a retained Chunk, Block, BlockState, mutable Location, or Entity is dereferenced outside its verified owner or treated as current after lifecycle change without owner-local revalidation, or entity work bypasses the entity scheduler in favor of an unsafe cross-region World.getEntity lookup",
+        "an EntityScheduler retired callback removes the entity or other entities, loads chunks or worlds, modifies ticket levels, or performs cleanup beyond recording or forwarding minimal terminal intent",
+        "one callback performs an unbounded number of chunk, block, drop, or entity operations",
+        "Paper main-thread code is claimed Folia-safe without location-region and entity ownership, or separately scheduled regions are presented as one atomic multi-region transaction",
+        "Future completion or teleportAsync completion is reported as unconditional success without inspecting per-target or Boolean results",
+        "applyPhysics=false is presented as a general safety or persistence guarantee",
+        "entity unload is treated as proof of death or despawn",
+        "events alone are the only cleanup path or are claimed to make multi-step world mutation atomic",
+        "a retry can repeat a drop, entity removal, teleport, or other non-idempotent side effect because committed progress is not reconciled"
+      ],
+      "safeResponse": [
+        "Pre-enumerate and cap target chunks, then choose generation policy before acquiring any chunk.",
+        "Chain asynchronous acquisition without blocking a tick owner, and reschedule mutation to the verified location or entity owner.",
+        "Re-resolve coordinates in their owning region; hand entity work through the entity scheduler and revalidate the entity inside the owned callback before each batch.",
+        "Keep retired callbacks minimal, forward terminal intent to a safe cleanup context, return typed progress outcomes, and stop on stale, unloaded, timeout, cancellation, or disable.",
+        "Track ticket claims and partial side effects in one lifecycle owner, reconcile idempotently, and release each owned resource exactly once."
+      ],
+      "failureMode": "An unbounded or ownerless world operation can block ticks, leak chunk residency, race unloaded state, mutate from the wrong region, and repeat non-idempotent side effects after partial completion."
     }
   ]
 }

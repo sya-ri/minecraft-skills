@@ -1710,7 +1710,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "analyze_minecraft_log",
     description:
-      "Structure a bounded Minecraft Java log, Java stack trace, or crash report into explicit log events, exception and suppressed branches, the last explicit primary cause, explicit Mixin runtime failure wording, crash metadata, platform/version statements, JAR artifacts, and explicitly named mod/plugin IDs. Sensitive values, IP addresses, and absolute paths are redacted before retained output; extracted labels are not blame attribution or validation of Mixin mappings, refmaps, configuration, target bytecode, fixes, or runtime compatibility.",
+      "Structure a bounded Minecraft Java log, Java stack trace, or crash report into explicit log events, exception and suppressed branches, the last explicit primary cause, explicit Mixin runtime failure wording, explicit missing-class and class-initialization failure evidence, crash metadata, platform/version statements, JAR artifacts, and explicitly named mod/plugin IDs. Sensitive values, IP addresses, and absolute paths are redacted before retained output; extracted evidence does not assign blame or validate Mixin mappings, refmaps, configuration, target bytecode, dependencies, classpaths, JAR contents, shading, fixes, root causes, or runtime compatibility.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1756,6 +1756,11 @@ export const tools: ToolDefinition[] = [
               type: "integer",
               minimum: 1,
               maximum: defaultMinecraftLogAnalysisLimits.maxMixinFailures,
+            },
+            maxClassLoadingFailures: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures,
             },
             maxExceptionDepth: {
               type: "integer",
@@ -3497,6 +3502,7 @@ const minecraftLogLimitNames = [
   "maxEvents",
   "maxExceptionChains",
   "maxMixinFailures",
+  "maxClassLoadingFailures",
   "maxExceptionDepth",
   "maxExceptionEntries",
   "maxStackFrames",

@@ -69,6 +69,8 @@ minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 26.2
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
+minecraft-skills plugin paper recipe paper-itemstack-semantic-identity
+minecraft-skills plugin paper plan paper-itemstack-semantic-identity-review 26.2
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "chunked upload request correlation"
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
@@ -82,6 +84,9 @@ minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
+minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
+minecraft-skills plugin paper recipe paper-world-operation-safety
+minecraft-skills plugin paper plan paper-world-operation-safety-review 26.2
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -128,11 +133,13 @@ minecraft-skills rcon run list --config ./.minecraft-skills/rcon.json
 ```
 
 `minecraft analyze-log <file>` structures a Minecraft Java log, stack trace, or crash report into
-bounded events, exception chains, explicit Mixin failure facts, crash metadata, explicit platform
-versions, JAR artifacts, and explicitly named mods/plugins. It accepts a regular file or symlink
+bounded events, exception chains, explicit Mixin failure facts, explicit class-loading failure
+evidence, crash metadata, explicit platform versions, JAR artifacts, and explicitly named
+mods/plugins. It accepts a regular file or symlink
 target, uses one file handle, checks size and timestamps before and after the bounded read, and
 rejects malformed UTF-8. Analysis limits, including `--max-mixin-failures`, can be lowered with the
-documented `--max-*` flags but cannot exceed Catalog defaults.
+documented `--max-*` flags but cannot exceed Catalog defaults. Class-loading failure retention can
+be bounded independently with `--max-class-loading-failures`.
 Credentials, IP addresses, absolute paths, ANSI/OSC controls, unsafe C0/C1 controls, bidi
 overrides, and malformed Unicode are sanitized before parsing or retention. `deepestCause` follows
 only the explicit primary `Caused by` chain; suppressed branches and extracted component labels do
@@ -143,6 +150,11 @@ mappings, refmaps, Mixin configuration, target bytecode, a proposed fix, or runt
 `noRefmapReported` is true only for the explicit no-refmap statement in the same exception message;
 false is not evidence that a refmap was loaded or correct. Total, retained, and omitted Mixin
 failure counts expose `--max-mixin-failures` truncation.
+`classLoadingFailures` records only explicit `NoClassDefFoundError` and
+`ClassNotFoundException` symbols. Slash and dot forms are normalized, matching evidence within one
+exception chain is collapsed, and `initialization-failed` requires the exact
+`Could not initialize class` wording. These facts do not prove a dependency, classpath, JAR content,
+shading decision, owner, fix, or root cause.
 
 The `paper-inventory-gui-interaction-review` scenario routes custom inventory menus through a
 default-deny click-and-drag policy. Its recipe and guardrail explicitly cover top, bottom, and
@@ -711,6 +723,16 @@ Player, OfflinePlayer, profile, and display APIs used, and requires rename, offl
 cross-server tests. The workflow also makes online-mode, offline-mode, and trusted proxy identity
 assumptions explicit before treating a UUID as authoritative.
 
+For plugin-defined Paper items, resolve
+`plugin paper plan paper-itemstack-semantic-identity-review <version>`. The plan uses a stable
+namespaced logical item ID plus a separate schema version, distinguishes semantic identity from
+`ItemStack.isSimilar` and client rendering, and refreshes only an explicit owned presentation
+allowlist on a cloned or otherwise owned stack. It preserves enchantments, attributes, damage,
+unowned PDC, data components, subtype metadata, and other out-of-scope state by default. Migrations
+are deterministic and idempotent, publish only after success, leave unknown items untouched, and
+require duplicate-lore, repeat-migration, comparison-purpose, aliasing, rollback, and unrelated-
+state preservation tests.
+
 For Paper connection-scoped state, resolve
 `plugin paper plan paper-player-session-lifecycle-review <version>`. The plan separates durable
 player records from one connection generation, requires target-version type/member evidence before
@@ -840,6 +862,7 @@ import {
   analyzeMinecraftLog,
   getAuthoringContext,
   getAuthoringDiagnostic,
+  getAuthoringGuardrail,
   getAuthoringPlan,
   getAuthoringRecipe,
   getAuthoringScenario,
@@ -872,8 +895,8 @@ import {
 const context = getAuthoringContext({ domain: "paper-plugin", version: "26.2" });
 const velocity = await resolveVelocityToolchain({ limit: 5, timeoutMs: 5000 });
 const logAnalysis = analyzeMinecraftLog({
-  text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
-Caused by: java.lang.IllegalStateException: root`,
+  text: `[12:00:00] [Server thread/ERROR]: java.lang.NoClassDefFoundError: com/example/api/MissingService
+Caused by: java.lang.ClassNotFoundException: com.example.api.MissingService`,
 });
 const performance = analyzeMinecraftPerformance({
   samples: [
@@ -888,6 +911,10 @@ const scenario = getAuthoringScenario("paper-event-listener-review");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
 const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const itemDeliveryScenario = getAuthoringScenario("paper-item-delivery-review");
+const worldOperationGuardrail = getAuthoringGuardrail("paper-world-operation-safety");
+const worldOperationDiagnostic = getAuthoringDiagnostic("paper-world-operation-unbounded");
+const worldOperationRecipe = getAuthoringRecipe("paper-world-operation-safety");
+const worldOperationScenario = getAuthoringScenario("paper-world-operation-safety-review");
 const matchingScenarios = searchAuthoringScenarios({
   query: "Paper event listener",
   domain: "paper-plugin",
@@ -1016,6 +1043,29 @@ It supports every legal PNG color-type/bit-depth combination, filters 0-4, and A
 keys, and exact 16-bit keys are validated before alpha facts are complete. Option, limit, and
 requirement objects are descriptor-preflighted; invalid public input becomes a diagnostic result
 instead of invoking accessors or throwing.
+The world-operation guidance is for bounded block and entity work that crosses chunk, tick,
+asynchronous, unload, teleport, or Folia region boundaries. It requires target chunks and generation
+policy to be fixed before mutation, forbids waiting or blocking a server tick owner via `Future.get()`
+or `Future.join()`, re-resolves location coordinates in their region owner, and hands entity work to
+the entity scheduler so the callback can revalidate the current entity. It returns typed partial
+outcomes, reconciles retries idempotently, and releases operation-owned chunk tickets on every
+terminal path. It does not require unsafe cross-region `World.getEntity()` lookup as the only entity
+handoff, treat `isChunkLoaded()` as a lease, async completion as arbitrary-thread mutation safety,
+`applyPhysics=false` as a general safety guarantee, entity unload as death, teleport completion as
+unconditional success, or lifecycle events as complete cleanup. An `EntityScheduler` retired callback
+runs in critical code, so it should only record or forward minimal terminal intent; entity, chunk,
+world, and ticket-level cleanup belongs in a verified safe execution context.
+
+Resolve the Javadocs URL for the requested version with `getPaperApiReference`; the current official
+primary references include Paper's [World Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/World.html),
+[Block Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/block/Block.html),
+[Entity Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/entity/Entity.html),
+[ChunkUnloadEvent Javadocs](https://jd.papermc.io/paper/26.2/org/bukkit/event/world/ChunkUnloadEvent.html),
+[RegionScheduler Javadocs](https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/RegionScheduler.html),
+[EntityScheduler Javadocs](https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/EntityScheduler.html),
+[Paper and Folia scheduler guidance](https://docs.papermc.io/paper/dev/folia-support/), and
+[Folia's region ownership overview](https://docs.papermc.io/folia/reference/overview/). API
+availability and callback or completion context must still be checked for the actual target version.
 
 Piston is Mojang's official metadata/download infrastructure, not a third-party dataset. Use
 `get_mojang_version_metadata` when an agent needs the official version metadata URL, client/server

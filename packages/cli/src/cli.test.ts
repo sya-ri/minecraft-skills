@@ -1147,6 +1147,75 @@ describe("minecraft-skills CLI", () => {
     expect(diagnostic.stdout.join("\n")).toContain("only persistent player key");
   });
 
+  it("prints and routes Paper ItemStack semantic identity guidance", async () => {
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain(
+      "separate-item-identity-presentation-and-migration",
+    );
+
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-itemstack-semantic-identity",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("define-logical-identity-and-version");
+    expect(recipe.stdout.join("\n")).toContain("migrate-deterministically-and-idempotently");
+    expect(recipe.stdout.join("\n")).toContain("unknown items must be returned untouched");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-itemstack-semantic-identity-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-itemstack-identity-or-state-loss");
+    expect(scenario.stdout.join("\n")).toContain("duplicate lore");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "ItemStack PDC identity migration preserve lore",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-itemstack-semantic-identity-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-itemstack-semantic-identity-review",
+      "26.2",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-itemstack-semantic-identity"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-itemstack-identity-or-state-loss"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-itemstack-semantic-identity",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("all unowned PDC entries");
+    expect(guardrail.stdout.join("\n")).toContain("ItemStack.isSimilar is equals without amount");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-itemstack-identity-or-state-loss",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("possibly aliased ItemStack");
+    expect(diagnostic.stdout.join("\n")).toContain("repeat migration");
+  });
+
   it("prints and routes Paper player-session lifecycle safety guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-player-session-lifecycle"]);
     expect(recipe.code).toBe(0);
@@ -3474,6 +3543,21 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain('"id": "prismarinejs-minecraft-assets"');
   });
 
+  it("searches domain-neutral Fabric client UI scale and clipping guidance", async () => {
+    const result = await capture([
+      "minecraft",
+      "search",
+      "Fabric GUI scale clipping",
+      "--kind",
+      "authoring-recipe",
+    ]);
+
+    expect(result.code).toBe(0);
+    expect(result.stdout.join("\n")).toContain('"id": "fabric-client-ui-scale-clipping"');
+    expect(result.stdout.join("\n")).toContain('"domains": []');
+    expect(result.stdout.join("\n")).toContain("establish-one-scaled-coordinate-space");
+  });
+
   it("compares command paths", async () => {
     const result = await capture([
       "datapack",
@@ -3749,7 +3833,7 @@ describe("minecraft-skills CLI", () => {
         [
           "[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper",
           "at example-plugin.jar//example.Plugin.run(Plugin.java:1)",
-          "Caused by: java.lang.IllegalStateException: root",
+          "Caused by: java.lang.NoClassDefFoundError: com/example/MissingService",
         ].join("\r\n"),
       );
       const result = await capture([
@@ -3761,6 +3845,8 @@ describe("minecraft-skills CLI", () => {
         "--max-events",
         "1",
         "--max-mixin-failures",
+        "2",
+        "--max-class-loading-failures",
         "2",
         "--max-exception-depth",
         "8",
@@ -3776,10 +3862,11 @@ describe("minecraft-skills CLI", () => {
         maxInputBytes: 4096,
         maxEvents: 1,
         maxMixinFailures: 2,
+        maxClassLoadingFailures: 2,
         maxExceptionDepth: 8,
         maxStackFrames: 8,
       });
-      expect(result.stdout.join("\n")).toContain("java.lang.IllegalStateException");
+      expect(result.stdout.join("\n")).toContain('"category": "missing-class"');
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -3982,12 +4069,20 @@ describe("minecraft-skills CLI", () => {
       "--max-mixin-failures",
       String(defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1),
     ]);
+    const raisedClassLoadingFailures = await capture([
+      "minecraft",
+      "analyze-log",
+      "latest.log",
+      "--max-class-loading-failures",
+      String(defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures + 1),
+    ]);
 
     expect(missing.stderr).toEqual(["minecraft analyze-log requires exactly one <file>"]);
     expect(repeated.stderr.join("\n")).toContain("option must not be repeated");
     expect(unknown.stderr.join("\n")).toContain("received unknown option");
     expect(raised.stderr.join("\n")).toContain("must not exceed");
     expect(raisedMixinFailures.stderr.join("\n")).toContain("must not exceed");
+    expect(raisedClassLoadingFailures.stderr.join("\n")).toContain("must not exceed");
   });
 
   it("reports unknown commands", async () => {
@@ -4088,6 +4183,7 @@ describe("minecraft-skills CLI", () => {
     expect(output).toContain("Grouped commands:");
     expect(output).toContain("minecraft-skills minecraft analyze-log <file>");
     expect(output).toContain("--max-mixin-failures count");
+    expect(output).toContain("--max-class-loading-failures count");
     expect(output).not.toContain("Compatibility:");
     expect(output).toContain("Safety notes:");
     expect(output).toContain("Paper Javadocs indexes prove API name presence");

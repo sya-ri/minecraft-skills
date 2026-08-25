@@ -270,6 +270,11 @@ describe("MCP tools", () => {
       minimum: 1,
       maximum: defaultMinecraftLogAnalysisLimits.maxMixinFailures,
     });
+    expect(minecraftLogLimits?.properties?.maxClassLoadingFailures).toEqual({
+      type: "integer",
+      minimum: 1,
+      maximum: defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures,
+    });
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
@@ -972,6 +977,33 @@ describe("MCP tools", () => {
     expect(suggestions.content[0]?.text).toContain('"id": "paper-plugin-protocol-safety-review"');
   });
 
+  it("serves domain-neutral Fabric client UI scale and clipping guidance", async () => {
+    const catalogSearch = await callMinecraftSkillsTool("search_catalog", {
+      query: "Fabric GUI scale clipping",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.content[0]?.text).toContain('"id": "fabric-client-ui-scale-clipping"');
+    expect(catalogSearch.content[0]?.text).toContain('"domains": []');
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "fabric-client-ui-scale-clipping",
+    });
+    expect(recipe.content[0]?.text).toContain("establish-one-scaled-coordinate-space");
+    expect(recipe.content[0]?.text).toContain("actual client renders or screenshots");
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "fabric-client-ui-scale-clipping-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("do not multiply or divide");
+    expect(guardrail.content[0]?.text).toContain("pre-clip bounds");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "fabric-client-ui-scale-clipping-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("screenshots are the only proof");
+    expect(diagnostic.content[0]?.text).toContain("normal, hover, pressed, and disabled states");
+  });
+
   it("calls authoring plan tool", async () => {
     const result = await callMinecraftSkillsTool("get_authoring_plan", {
       scenario: "paper-event-listener-review",
@@ -1131,6 +1163,63 @@ describe("MCP tools", () => {
       id: "paper-player-identity-display-confusion",
     });
     expect(diagnostic.content[0]?.text).toContain("only persistent player key");
+  });
+
+  it("calls and routes Paper ItemStack semantic identity guidance tools", async () => {
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain(
+      "separate-item-identity-presentation-and-migration",
+    );
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-itemstack-semantic-identity",
+    });
+    expect(recipe.content[0]?.text).toContain("define-logical-identity-and-version");
+    expect(recipe.content[0]?.text).toContain("migrate-deterministically-and-idempotently");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-itemstack-semantic-identity-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-itemstack-identity-or-state-loss");
+    expect(scenario.content[0]?.text).toContain("duplicate lore");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "ItemStack PDC identity migration preserve lore",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-itemstack-semantic-identity-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-itemstack-semantic-identity-review",
+      version: "26.2",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-itemstack-semantic-identity"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-itemstack-identity-or-state-loss"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-itemstack-semantic-identity",
+    });
+    expect(guardrail.content[0]?.text).toContain("all unowned PDC entries");
+    expect(guardrail.content[0]?.text).toContain("ItemStack.isSimilar is equals without amount");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-itemstack-identity-or-state-loss",
+    });
+    expect(diagnostic.content[0]?.text).toContain("possibly aliased ItemStack");
+    expect(diagnostic.content[0]?.text).toContain("unrelated-state preservation");
+
+    const suggestions = await callMinecraftSkillsTool("suggest_minecraft_lookups", {
+      task: "ItemStack PDC identity migration preserving enchantments and attributes",
+      version: "26.2",
+    });
+    expect(suggestions.content[0]?.text).toContain('"domain": "paper-plugin"');
+    expect(suggestions.content[0]?.text).toContain("plugin paper search");
+    expect(suggestions.content[0]?.text).toContain(
+      '"id": "paper-itemstack-semantic-identity-review"',
+    );
+    expect(suggestions.content[0]?.text).not.toContain("minecraft pack-format");
   });
 
   it("calls Paper player-session lifecycle safety guidance tools", async () => {
@@ -3938,6 +4027,7 @@ describe("MCP tools", () => {
       limits: {
         maxEvents: 1,
         maxMixinFailures: 2,
+        maxClassLoadingFailures: 2,
         maxExceptionDepth: 8,
         maxStackFrames: 8,
       },
@@ -3950,6 +4040,7 @@ describe("MCP tools", () => {
     expect(output).toContain('"message": "primary root"');
     expect(output).toContain('"maxExceptionDepth": 8');
     expect(output).toContain('"maxMixinFailures": 2');
+    expect(output).toContain('"maxClassLoadingFailures": 2');
     expect(output).toContain("[REDACTED]");
     expect(output).toContain("[IP_REDACTED]");
     expect(output).not.toContain("hunter2");
@@ -3971,6 +4062,23 @@ describe("MCP tools", () => {
     expect(output).toContain('"selector": "mouseClicked"');
     expect(output).toContain('"noRefmapReported": true');
     expect(output).not.toContain('"category": "mixin-transformer-error"');
+  });
+
+  it("returns only explicit bounded class-loading failure evidence", async () => {
+    const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: [
+        "java.lang.NoClassDefFoundError: com/example/MissingApi",
+        "Caused by: java.lang.ClassNotFoundException: com.example.MissingApi",
+      ].join("\n"),
+      limits: { maxClassLoadingFailures: 1 },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).not.toBe(true);
+    expect(output).toContain('"category": "missing-class"');
+    expect(output).toContain('"symbol": "com.example.MissingApi"');
+    expect(output.match(/"symbol": "com\.example\.MissingApi"/g)).toHaveLength(1);
+    expect(output).not.toContain('"category": "dependency-missing"');
   });
 
   it("enforces Minecraft log MCP input and nested limit boundaries", async () => {
@@ -3995,6 +4103,12 @@ describe("MCP tools", () => {
         maxMixinFailures: defaultMinecraftLogAnalysisLimits.maxMixinFailures + 1,
       },
     });
+    const raisedClassLoadingFailures = await callMinecraftSkillsTool("analyze_minecraft_log", {
+      text: "log",
+      limits: {
+        maxClassLoadingFailures: defaultMinecraftLogAnalysisLimits.maxClassLoadingFailures + 1,
+      },
+    });
     const unknownLimit = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: "log",
       limits: { unbounded: true },
@@ -4017,6 +4131,7 @@ describe("MCP tools", () => {
     expect(raised.content[0]?.text).toContain("must be an integer from 1");
     expect(raisedBytes.isError).toBe(true);
     expect(raisedMixinFailures.isError).toBe(true);
+    expect(raisedClassLoadingFailures.isError).toBe(true);
     expect(unknownLimit.isError).toBe(true);
     expect(unknownLimit.content[0]?.text).toContain("unknown argument");
     expect(unknownArgument.isError).toBe(true);

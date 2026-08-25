@@ -136,6 +136,10 @@ const playerIdentityPlan = getAuthoringPlan({
   scenario: "paper-player-identity-and-display-review",
   version: "1.21.11",
 });
+const itemStackIdentityPlan = getAuthoringPlan({
+  scenario: "paper-itemstack-semantic-identity-review",
+  version: "26.2",
+});
 const sessionPlan = getAuthoringPlan({
   scenario: "paper-player-session-lifecycle-review",
   version: "1.21.11",
@@ -156,6 +160,7 @@ const listenerRecipe = getAuthoringRecipe("paper-event-listener");
 const itemDeliveryRecipe = getAuthoringRecipe("paper-safe-item-delivery");
 const inventoryRecipe = getAuthoringRecipe("paper-inventory-gui-interactions");
 const adminCommandRecipe = getAuthoringRecipe("paper-administrative-command-operability");
+const itemStackIdentityRecipe = getAuthoringRecipe("paper-itemstack-semantic-identity");
 const sessionRecipe = getAuthoringRecipe("paper-player-session-lifecycle");
 const bossBarRecipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
 const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
@@ -171,12 +176,16 @@ const playerIdentityScenario = getAuthoringScenario(
   "paper-player-identity-and-display-review",
 );
 const bossBarScenario = getAuthoringScenario("paper-bossbar-audience-lifecycle-review");
+const itemStackIdentityScenario = getAuthoringScenario(
+  "paper-itemstack-semantic-identity-review",
+);
 const testingEvidenceScenario = getAuthoringScenario(
   "paper-plugin-testing-evidence-review",
 );
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const itemDeliveryGuardrail = getAuthoringGuardrail("paper-inventory-delivery-outcomes");
+const itemStackIdentityGuardrail = getAuthoringGuardrail("paper-itemstack-semantic-identity");
 const sessionGuardrail = getAuthoringGuardrail("paper-player-session-lifecycle-safety");
 const bossBarGuardrail = getAuthoringGuardrail("paper-bossbar-audience-lifecycle-safety");
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
@@ -184,6 +193,9 @@ const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const testingEvidenceDiagnostic = getAuthoringDiagnostic("paper-plugin-test-evidence-gap");
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
+const itemStackIdentityDiagnostic = getAuthoringDiagnostic(
+  "paper-itemstack-identity-or-state-loss",
+);
 const sessionDiagnostic = getAuthoringDiagnostic("paper-player-session-lifecycle-unsafe");
 const bossBarDiagnostic = getAuthoringDiagnostic("paper-bossbar-audience-lifecycle-unsafe");
 const adminCommandScenario = getAuthoringScenario(
@@ -372,9 +384,9 @@ const serverProperties = validateServerProperties({
 // complete within the published bounds, while exact target-version keys/defaults and the
 // Minecraft runtime reader/encoding remain explicit unknowns.
 const logAnalysis = analyzeMinecraftLog({
-  text: `[12:00:00] [Server thread/ERROR]: java.lang.RuntimeException: wrapper
-Caused by: java.lang.IllegalStateException: root`,
-  limits: { maxMixinFailures: 50 },
+  text: `[12:00:00] [Server thread/ERROR]: java.lang.NoClassDefFoundError: com/example/api/MissingService
+Caused by: java.lang.ClassNotFoundException: com.example.api.MissingService`,
+  limits: { maxMixinFailures: 50, maxClassLoadingFailures: 50 },
 });
 const blockbenchProject = inspectBlockbenchProject({
   project:
@@ -553,6 +565,12 @@ message did not contain the recognized no-refmap statement; it does not prove th
 loaded or correct. Category-specific evidence fields are null when the message does not state them;
 counts that cannot be represented as safe integers are also null. `mixinFailureTotal`, retained and
 omitted counts, `maxMixinFailures`, and `exceededLimits` expose truncation explicitly.
+It also groups explicit `NoClassDefFoundError` and
+`ClassNotFoundException` symbols within each exception chain. Slash and dot symbol forms normalize
+to one dotted value; `initialization-failed` requires explicit `Could not initialize class` wording.
+The result does not infer dependencies, classpaths, JAR contents, shading, ownership, fixes, or root
+causes. `classLoadingFailureTotal`, retained and omitted counts, `maxClassLoadingFailures`, and
+`exceededLimits` expose truncation explicitly.
 
 `validateFabricMod` checks bounded structural rules for current `fabric.mod.json` schema v1 data.
 Without `archiveEntries` it proves metadata structure only; caller-supplied entries additionally

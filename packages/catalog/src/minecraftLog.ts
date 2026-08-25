@@ -10,6 +10,7 @@ export type MinecraftLogAnalysisLimits = {
   maxEvents: number;
   maxExceptionChains: number;
   maxMixinFailures: number;
+  maxClassLoadingFailures: number;
   maxExceptionDepth: number;
   maxExceptionEntries: number;
   maxStackFrames: number;
@@ -31,6 +32,7 @@ export const defaultMinecraftLogAnalysisLimits: Readonly<MinecraftLogAnalysisLim
     maxEvents: 500,
     maxExceptionChains: 100,
     maxMixinFailures: 100,
+    maxClassLoadingFailures: 100,
     maxExceptionDepth: 64,
     maxExceptionEntries: 500,
     maxStackFrames: 2_000,
@@ -116,6 +118,23 @@ export type MinecraftMixinFailure = {
   noRefmapReported: boolean;
 };
 
+export type MinecraftClassLoadingFailureCategory = "missing-class" | "initialization-failed";
+
+export type MinecraftClassLoadingFailureEvidence = {
+  line: number;
+  relation: MinecraftExceptionRelation;
+  branch: MinecraftExceptionSummary["branch"];
+  exceptionType: string;
+};
+
+export type MinecraftClassLoadingFailure = {
+  category: MinecraftClassLoadingFailureCategory;
+  symbol: string;
+  chainStartLine: number;
+  evidence: MinecraftClassLoadingFailureEvidence[];
+  firstFrame: MinecraftStackFrame | null;
+};
+
 export type MinecraftLogArtifact = {
   name: string;
   firstLine: number;
@@ -170,6 +189,9 @@ export type MinecraftLogAnalysisResult = {
   mixinFailureTotal: number;
   retainedMixinFailureCount: number;
   omittedMixinFailureCount: number;
+  classLoadingFailureTotal: number;
+  retainedClassLoadingFailureCount: number;
+  omittedClassLoadingFailureCount: number;
   exceptionEntryTotal: number;
   retainedExceptionEntryCount: number;
   omittedExceptionEntryCount: number;
@@ -183,6 +205,7 @@ export type MinecraftLogAnalysisResult = {
   events: MinecraftLogEvent[];
   exceptionChains: MinecraftExceptionChain[];
   mixinFailures: MinecraftMixinFailure[];
+  classLoadingFailures: MinecraftClassLoadingFailure[];
   notes: string[];
 };
 
@@ -199,16 +222,32 @@ type MutableExceptionEntry = {
   output: MinecraftExceptionEntry | null;
   totalFrames: number;
   collapsedFrames: number;
+  classLoadingFailureKey: string | null;
+};
+
+type MutableClassLoadingFailure = {
+  category: MinecraftClassLoadingFailureCategory;
+  symbol: string;
+  chainStartLine: number;
+  evidenceKinds: Set<"NoClassDefFoundError" | "ClassNotFoundException">;
+  evidence: Array<
+    MinecraftClassLoadingFailureEvidence & {
+      kind: "NoClassDefFoundError" | "ClassNotFoundException";
+    }
+  >;
+  firstFrame: MinecraftStackFrame | null;
 };
 
 type MutableExceptionChain = {
   output: MinecraftExceptionChain | null;
   current: MutableExceptionEntry | null;
+  startLine: number;
   endLine: number;
   totalEntries: number;
   deepestCause: ParsedExceptionHeader | null;
   deepestCauseLine: number | null;
   suppressedBranchIndents: number[];
+  classLoadingFailures: Map<string, MutableClassLoadingFailure>;
 };
 
 const logLevels = "TRACE|DEBUG|INFO|WARN|ERROR|FATAL";
@@ -241,6 +280,7 @@ export function resolveMinecraftLogAnalysisLimits(
     maxEvents: resolve("maxEvents"),
     maxExceptionChains: resolve("maxExceptionChains"),
     maxMixinFailures: resolve("maxMixinFailures"),
+    maxClassLoadingFailures: resolve("maxClassLoadingFailures"),
     maxExceptionDepth: resolve("maxExceptionDepth"),
     maxExceptionEntries: resolve("maxExceptionEntries"),
     maxStackFrames: resolve("maxStackFrames"),
@@ -766,6 +806,45 @@ function parseMixinFailure(parsed: ParsedExceptionHeader): ParsedMixinFailure | 
   return null;
 }
 
+type ParsedClassLoadingFailure = {
+  category: MinecraftClassLoadingFailureCategory;
+  symbol: string;
+  kind: "NoClassDefFoundError" | "ClassNotFoundException";
+};
+
+const classSymbolPattern = /^[A-Za-z_$][A-Za-z0-9_$]*(?:[./][A-Za-z_$][A-Za-z0-9_$]*)*$/;
+
+function parseClassLoadingFailure(parsed: ParsedExceptionHeader): ParsedClassLoadingFailure | null {
+  if (parsed.message === null) {
+    return null;
+  }
+  const kind =
+    parsed.type === "NoClassDefFoundError" || parsed.type === "java.lang.NoClassDefFoundError"
+      ? "NoClassDefFoundError"
+      : parsed.type === "ClassNotFoundException" ||
+          parsed.type === "java.lang.ClassNotFoundException"
+        ? "ClassNotFoundException"
+        : null;
+  if (kind === null) {
+    return null;
+  }
+
+  const initializationPrefix = "Could not initialize class ";
+  const initializationFailed =
+    kind === "NoClassDefFoundError" && parsed.message.startsWith(initializationPrefix);
+  const explicitSymbol = initializationFailed
+    ? parsed.message.slice(initializationPrefix.length)
+    : parsed.message;
+  if (!classSymbolPattern.test(explicitSymbol)) {
+    return null;
+  }
+  return {
+    category: initializationFailed ? "initialization-failed" : "missing-class",
+    symbol: explicitSymbol.replaceAll("/", "."),
+    kind,
+  };
+}
+
 function artifactFromFrame(frame: string): string | null {
   const direct = /(?:^|[\\/])([^/\\\s]+\.jar)\/\//i.exec(frame)?.[1];
   if (direct) {
@@ -969,6 +1048,7 @@ export function analyzeMinecraftLog(
   const events: MinecraftLogEvent[] = [];
   const exceptionChains: MinecraftExceptionChain[] = [];
   const mixinFailures: MinecraftMixinFailure[] = [];
+  const classLoadingFailures: MinecraftClassLoadingFailure[] = [];
   const artifacts = new Map<string, MinecraftLogArtifact>();
   const components = new Map<string, MinecraftLogComponent>();
   const platforms = new Map<string, MinecraftLogPlatform>();
@@ -984,6 +1064,7 @@ export function analyzeMinecraftLog(
   let eventTotal = 0;
   let exceptionChainTotal = 0;
   let mixinFailureTotal = 0;
+  let classLoadingFailureTotal = 0;
   let exceptionEntryTotal = 0;
   let retainedExceptionEntryCount = 0;
   let stackFrameTotal = 0;
@@ -1024,6 +1105,36 @@ export function analyzeMinecraftLog(
     activeChain.current = null;
   };
 
+  const finishClassLoadingFailures = (chain: MutableExceptionChain): void => {
+    for (const failure of chain.classLoadingFailures.values()) {
+      classLoadingFailureTotal += 1;
+      if (classLoadingFailures.length >= limits.maxClassLoadingFailures) {
+        exceeded.add("maxClassLoadingFailures");
+        continue;
+      }
+      classLoadingFailures.push({
+        category: failure.category,
+        symbol: sanitize(failure.symbol),
+        chainStartLine: failure.chainStartLine,
+        evidence: failure.evidence.map(({ kind: _kind, ...evidence }) => ({
+          ...evidence,
+          exceptionType: sanitize(evidence.exceptionType),
+        })),
+        firstFrame:
+          failure.firstFrame === null
+            ? null
+            : {
+                line: failure.firstFrame.line,
+                frame: sanitize(failure.firstFrame.frame),
+                artifact:
+                  failure.firstFrame.artifact === null
+                    ? null
+                    : sanitize(failure.firstFrame.artifact),
+              },
+      });
+    }
+  };
+
   const finishChain = (): void => {
     if (!activeChain) {
       return;
@@ -1049,6 +1160,7 @@ export function analyzeMinecraftLog(
       }
       exceptionChains.push(activeChain.output);
     }
+    finishClassLoadingFailures(activeChain);
     activeChain = null;
   };
 
@@ -1070,11 +1182,13 @@ export function analyzeMinecraftLog(
             }
           : null,
       current: null,
+      startLine: line,
       endLine: line,
       totalEntries: 0,
       deepestCause: null,
       deepestCauseLine: null,
       suppressedBranchIndents: [],
+      classLoadingFailures: new Map(),
     };
     if (!activeChain.output) {
       exceeded.add("maxExceptionChains");
@@ -1114,6 +1228,7 @@ export function analyzeMinecraftLog(
     parsed: ParsedExceptionHeader,
     line: number,
     event: ParsedLogEvent | null,
+    retainClassLoadingEvidence: boolean,
   ): void => {
     if (parsed.relation === "thrown" || !activeChain) {
       startChain(line, event);
@@ -1155,6 +1270,38 @@ export function analyzeMinecraftLog(
     if (mixinFailureEvidence) {
       addMixinFailure(mixinFailureEvidence, parsed, branch, line);
     }
+    let classLoadingFailureKey: string | null = null;
+    const classLoadingEvidence = retainClassLoadingEvidence
+      ? parseClassLoadingFailure(parsed)
+      : null;
+    if (classLoadingEvidence) {
+      classLoadingFailureKey = classLoadingEvidence.symbol;
+      const existing = chain.classLoadingFailures.get(classLoadingFailureKey);
+      const failure: MutableClassLoadingFailure = existing ?? {
+        category: classLoadingEvidence.category,
+        symbol: classLoadingEvidence.symbol,
+        chainStartLine: chain.startLine,
+        evidenceKinds: new Set<"NoClassDefFoundError" | "ClassNotFoundException">(),
+        evidence: [],
+        firstFrame: null,
+      };
+      if (classLoadingEvidence.category === "initialization-failed") {
+        failure.category = "initialization-failed";
+      }
+      if (!failure.evidenceKinds.has(classLoadingEvidence.kind)) {
+        failure.evidenceKinds.add(classLoadingEvidence.kind);
+        failure.evidence.push({
+          kind: classLoadingEvidence.kind,
+          line,
+          relation: parsed.relation,
+          branch,
+          exceptionType: parsed.type,
+        });
+      }
+      if (!existing) {
+        chain.classLoadingFailures.set(classLoadingFailureKey, failure);
+      }
+    }
     if (branch === "cause") {
       chain.deepestCause = parsed;
       chain.deepestCauseLine = line;
@@ -1187,10 +1334,15 @@ export function analyzeMinecraftLog(
     if (chain.output) {
       chain.output.totalEntries = chain.totalEntries;
     }
-    chain.current = { output, totalFrames: 0, collapsedFrames: 0 };
+    chain.current = {
+      output,
+      totalFrames: 0,
+      collapsedFrames: 0,
+      classLoadingFailureKey,
+    };
   };
 
-  const addFrame = (frame: string, line: number): void => {
+  const addFrame = (frame: string, line: number, retainClassLoadingEvidence: boolean): void => {
     const chain = activeChain;
     if (!chain?.current) {
       return;
@@ -1199,6 +1351,13 @@ export function analyzeMinecraftLog(
     chain.endLine = line;
     chain.current.totalFrames += 1;
     const artifact = artifactFromFrame(frame);
+    const classLoadingFailure =
+      retainClassLoadingEvidence && chain.current.classLoadingFailureKey !== null
+        ? chain.classLoadingFailures.get(chain.current.classLoadingFailureKey)
+        : null;
+    if (classLoadingFailure && classLoadingFailure.firstFrame === null) {
+      classLoadingFailure.firstFrame = { line, frame, artifact };
+    }
     if (!chain.current.output) {
       return;
     }
@@ -1227,15 +1386,20 @@ export function analyzeMinecraftLog(
     );
   };
 
-  const processTrace = (value: string, line: number, event: ParsedLogEvent | null): boolean => {
+  const processTrace = (
+    value: string,
+    line: number,
+    event: ParsedLogEvent | null,
+    retainClassLoadingEvidence: boolean,
+  ): boolean => {
     const exception = parseExceptionHeader(value);
     if (exception) {
-      addException(exception, line, event);
+      addException(exception, line, event, retainClassLoadingEvidence);
       return true;
     }
     const frame = stackFramePattern.exec(value)?.[1];
     if (frame) {
-      addFrame(frame, line);
+      addFrame(frame, line, retainClassLoadingEvidence);
       return true;
     }
     const collapsed = collapsedFramesPattern.exec(value)?.[1];
@@ -1256,7 +1420,8 @@ export function analyzeMinecraftLog(
       newline === -1 && inputEndsMidLine ? "" : normalizeLine(processedText.slice(cursor, end));
     processedLines += 1;
     const lineNumber = processedLines;
-    if (originalLine.length > limits.maxLineCharacters) {
+    const lineComplete = originalLine.length <= limits.maxLineCharacters;
+    if (!lineComplete) {
       exceeded.add("maxLineCharacters");
     }
     // Redaction must see complete, globally bounded lines. Cutting the source first can turn an
@@ -1294,10 +1459,10 @@ export function analyzeMinecraftLog(
       } else {
         exceeded.add("maxEvents");
       }
-      if (!processTrace(event.message, lineNumber, event)) {
+      if (!processTrace(event.message, lineNumber, event, lineComplete)) {
         finishChain();
       }
-    } else if (!processTrace(line, lineNumber, null)) {
+    } else if (!processTrace(line, lineNumber, null, lineComplete)) {
       finishChain();
     }
 
@@ -1339,6 +1504,12 @@ export function analyzeMinecraftLog(
     mixinFailureTotal,
     retainedMixinFailureCount: mixinFailures.length,
     omittedMixinFailureCount: Math.max(0, mixinFailureTotal - mixinFailures.length),
+    classLoadingFailureTotal,
+    retainedClassLoadingFailureCount: classLoadingFailures.length,
+    omittedClassLoadingFailureCount: Math.max(
+      0,
+      classLoadingFailureTotal - classLoadingFailures.length,
+    ),
     exceptionEntryTotal,
     retainedExceptionEntryCount,
     omittedExceptionEntryCount: Math.max(0, exceptionEntryTotal - retainedExceptionEntryCount),
@@ -1352,12 +1523,15 @@ export function analyzeMinecraftLog(
     events,
     exceptionChains,
     mixinFailures,
+    classLoadingFailures,
     notes: [
       "deepestCause is the last explicit Caused by entry on the primary branch, or null when no primary cause is present; suppressed branches never replace it.",
       "Exception ordering comes only from explicit thrown/Caused by/Suppressed text and does not prove which component is responsible.",
       "Artifacts and component IDs are extracted evidence labels, not blame attribution or compatibility claims.",
       "Mixin failures are categories extracted only from explicit Mixin exception wording; they do not identify blame or validate mappings, refmaps, configuration, target bytecode, a fix, or runtime compatibility.",
       "noRefmapReported is true only when the same exception message explicitly says that no refMap was loaded; false does not prove that a refmap was loaded or correct.",
+      "Class-loading failures are grouped by normalized explicit class symbol within each exception chain; matching NoClassDefFoundError and ClassNotFoundException evidence is one event, not proof of a dependency, classpath, JAR-content, shading, ownership, fix, or root cause.",
+      "initialization-failed is reported only for the explicit NoClassDefFoundError wording 'Could not initialize class'; missing-class does not include other linkage or compatibility errors.",
       "Likely credentials, secret assignments, authentication headers, and sensitive URL values are redacted from retained output.",
       ...(exceededLimits.length > 0
         ? [
