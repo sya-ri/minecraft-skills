@@ -542,6 +542,37 @@
             "Connection-owned cleanup is routed to paper-player-session-lifecycle."
           ],
           "failureMode": "Do not approve a frequent or contended persistence path without bounded resource use, exact accepted-to-durable accounting, verified retry classification, safe shutdown, and real-adapter evidence."
+        },
+        {
+          "id": "design-attribute-effect-ownership",
+          "reason": "Paper exposes stable keys for attribute modifiers but not for individual potion-effect ownership, while custom ItemMeta modifiers can also change vanilla equipment defaults.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper recipe",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_recipe",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "Every equipment and session attribute contribution has a stable plugin-owned key and is rebuilt from authoritative desired state without deleting foreign modifiers.",
+            "Potion-effect type collisions have an explicit ownership policy that does not infer ownership from type, amplifier, duration, or display flags.",
+            "Effective vanilla equipment defaults and capacity-before-current-value clamping are covered by target-version tests.",
+            "Reapply, expiry, death, quit, reconnect, and reload tests prove idempotent cleanup for multiple sources."
+          ],
+          "failureMode": "Anonymous modifier stacking, broad removal, or false potion-effect ownership can erase vanilla or foreign state and leave invalid health or absorption values after capacity changes."
         }
       ]
     }

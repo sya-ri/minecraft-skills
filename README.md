@@ -73,6 +73,7 @@ minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-high-frequency-persistence-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
+minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log
@@ -135,6 +136,13 @@ The Paper event-listener recipe and review plan require an explicit handler role
 `ignoreCancelled` decision, MONITOR read-only behavior, documented execution context, and
 plugin/feature registration owner. Dynamic teardown removes only owned listeners and cannot be
 used as proof that an already-running asynchronous callback stopped.
+
+For Paper equipment attributes, session modifiers, and potion effects, resolve
+`plugin paper plan paper-attribute-effect-ownership-review <version>`. The plan rebuilds stable
+plugin-owned attribute keys from authoritative state while preserving vanilla and foreign
+modifiers. Because individual potion effects have no owner key, it treats each effect type as a
+collision domain instead of removing matching effects by type. It also requires capacity changes
+before safe health or absorption clamps and lifecycle regression evidence.
 
 `datapack validate-project` performs a bounded directory scan and checks safe portable paths,
 `pack.mcmeta`, version-correct directories and file contents, command-position function and

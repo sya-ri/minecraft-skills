@@ -138,6 +138,10 @@ All notable changes to this project are documented here.
   results and partial recovery, deliberate material versus `RecipeChoice.ExactChoice` matching,
   canonical shaped/shapeless collision detection, and separate online-client resend and recipe-book
   discovery policies.
+- Paper attribute-modifier and potion-effect ownership guidance across data, Catalog, CLI, and MCP,
+  covering stable keyed equipment and session reconciliation, implicit vanilla ItemType defaults,
+  non-keyed potion-effect collision policies, capacity-before-current-value clamping, and
+  table-driven reapply, expiry, death, quit, reconnect, and reload evidence.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

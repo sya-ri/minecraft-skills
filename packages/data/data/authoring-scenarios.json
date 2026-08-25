@@ -1085,6 +1085,56 @@
         "duplicating player-session generation, reconnect, quit, or teardown guidance in this persistence workflow"
       ],
       "failureMode": "A hot persistence path can block ticks, grow without bound, lose or double-apply deltas, repeat side effects, or exhaust retries when its rate model, transaction classifier, flush accounting, shutdown contract, and real-adapter evidence are incomplete."
+    },
+    {
+      "id": "paper-attribute-effect-ownership-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper attribute-modifier and potion-effect ownership",
+      "userPrompt": "Create or review Paper equipment attributes, session modifiers, and potion effects so multiple sources reapply and expire without stacking, deleting vanilla or foreign state, or leaving health and absorption outside a reduced capacity.",
+      "useWhen": [
+        "equipment ItemMeta receives custom AttributeModifier entries",
+        "session state applies AttributeInstance modifiers or PotionEffect values",
+        "multiple sources contribute to the same attribute or effect type",
+        "state is rebuilt on expiry, death, quit, reconnect, reload, or disable",
+        "maximum-health or maximum-absorption capacity can change"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-attribute-effect-ownership"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-attribute-effect-ownership-unsafe"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "each equipment and session attribute contribution has a stable plugin-owned NamespacedKey derived from its logical source and surface",
+        "authoritative desired state is aggregated deterministically before one idempotent reconcile",
+        "equipment reconciliation preserves foreign explicit modifiers and proves effective vanilla ItemType defaults after custom ItemMeta changes",
+        "session reconciliation removes and replaces only exact owned keys, preserves base values and foreign modifiers, and uses the verified transient contract for session-only state",
+        "each potion-effect type has an explicit collision policy that never treats the type key or matching visible fields as proof of ownership",
+        "unexpected active or hidden potion state is preserved unless a documented exclusive type lease is still valid",
+        "weaker reapply checks the API result and resulting active and hidden chain without accumulating hidden effects",
+        "Attribute.MAX_HEALTH and Attribute.MAX_ABSORPTION capacity are applied before finite nonnegative current values are safely clamped without resurrecting zero health",
+        "table-driven tests cover multiple sources, repeated apply, weaker reapply, expiry, death, quit, reconnect, reload, disable, foreign state, and duplicate cleanup",
+        "loaded target-version evidence covers ItemMeta defaults, keyed replacement, transient persistence, potion chains, and capacity setter behavior"
+      ],
+      "mustAvoid": [
+        "generating random modifier keys or UUIDs on each application",
+        "using current entity state as the authoritative desired-state model",
+        "clearing all ItemMeta or AttributeInstance modifiers to update one plugin-owned source",
+        "assuming an explicit ItemMeta modifier map automatically retains implicit vanilla defaults",
+        "rewriting AttributeInstance base values for a session-owned contribution",
+        "claiming a PotionEffect because its type, amplifier, duration, ambient, particles, or icon match",
+        "removing a potion effect by type as generic cleanup when vanilla or another plugin can contribute that type",
+        "ignoring the add result or hidden chain during weaker reapply",
+        "writing current health or absorption before reducing its capacity",
+        "mixing logical ItemStack identity, persistent-data schema, scheduling, or combat-balance values into this ownership concern"
+      ],
+      "failureMode": "Modifier and effect callbacks can stack across reconnect or reload, erase unrelated state during cleanup, suppress vanilla equipment defaults, or violate current-value bounds after capacity falls."
     }
   ]
 }

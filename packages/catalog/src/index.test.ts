@@ -6297,4 +6297,78 @@ describe("catalog", () => {
       "paper-bossbar-audience-lifecycle-review",
     );
   });
+
+  it("exposes and routes Paper attribute and effect ownership guidance", () => {
+    const recipe = getAuthoringRecipe("paper-attribute-effect-ownership");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "derive-one-authoritative-desired-state",
+        "reconcile-equipment-modifiers-without-erasing-defaults",
+        "reconcile-session-attribute-modifiers-by-key",
+        "treat-potion-effect-type-as-a-collision-domain",
+        "apply-capacity-before-clamping-current-values",
+      ]),
+    );
+    expect(recipe.finalChecks).toEqual(
+      expect.arrayContaining([
+        "paper-attribute-effect-ownership-safety",
+        "paper-plugin-testing-evidence",
+      ]),
+    );
+
+    const scenario = getAuthoringScenario("paper-attribute-effect-ownership-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-attribute-effect-ownership"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-attribute-effect-ownership-unsafe",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("PotionEffect");
+
+    const guardrail = getAuthoringGuardrail("paper-attribute-effect-ownership-safety");
+    expect(guardrail.rules.join("\n")).toContain("stable NamespacedKey");
+    expect(guardrail.rules.join("\n")).toContain("exclusive type lease");
+
+    const diagnostic = getAuthoringDiagnostic("paper-attribute-effect-ownership-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("vanilla or foreign modifier");
+    expect(diagnostic.failIf.join("\n")).toContain("weaker reapply");
+
+    const scenarioSearch = searchAuthoringScenarios({
+      query: "Paper ItemMeta attribute modifier potion effect ownership hidden weaker reapply",
+      domain: "paper-plugin",
+    });
+    expect(scenarioSearch.results[0]?.scenario.id).toBe("paper-attribute-effect-ownership-review");
+
+    const catalogSearch = searchCatalog({
+      query: "attribute effect ownership ItemMeta NamespacedKey",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-attribute-effect-ownership",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-attribute-effect-ownership-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-attribute-effect-ownership");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-attribute-effect-ownership-unsafe",
+    );
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "Paper attribute modifier and potion effect ownership after reload",
+      domain: "paper-plugin",
+    });
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-attribute-effect-ownership",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-attribute-effect-ownership-review",
+    );
+  });
 });

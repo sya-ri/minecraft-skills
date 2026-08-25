@@ -4465,4 +4465,46 @@ describe("MCP tools", () => {
     expect(nonObjectLimits.isError).toBe(true);
     expect(nonObjectLimits.content[0]?.text).toContain("limits must be an object");
   });
+
+  it("calls Paper attribute and effect ownership guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-attribute-effect-ownership",
+    });
+    expect(recipe.content[0]?.text).toContain("treat-potion-effect-type-as-a-collision-domain");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-attribute-effect-ownership-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-attribute-effect-ownership-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "Paper ItemMeta attribute modifier potion effect ownership weaker reapply",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-attribute-effect-ownership-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-attribute-effect-ownership-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-attribute-effect-ownership"');
+    expect(plan.content[0]?.text).toContain("paper-attribute-effect-ownership-safety");
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-attribute-effect-ownership-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("exclusive type lease");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-attribute-effect-ownership-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("weaker reapply");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "attribute effect ownership ItemMeta NamespacedKey",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-attribute-effect-ownership"');
+  });
 });

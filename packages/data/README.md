@@ -47,6 +47,9 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Paper custom-recipe lifecycle guidance for stable plugin-owned keys, owned-key reconciliation,
   observed registry mutation results, partial recovery, ingredient identity, shaped/shapeless
   collision detection, and independent client resend and recipe-book discovery policies.
+- Paper attribute and effect ownership guidance for stable modifier keys, owned-only ItemMeta and
+  AttributeInstance reconciliation, preserved vanilla defaults and foreign state, explicit
+  potion-type collisions, safe capacity clamping, and lifecycle regression evidence.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.

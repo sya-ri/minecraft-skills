@@ -3192,6 +3192,154 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "Unmeasured per-event writes or unbounded coalescing can stall the server thread, exhaust memory, lose or duplicate partial flushes, replay unsafe side effects, amplify contention, and report durability that shutdown and real-adapter tests do not prove."
+    },
+    {
+      "id": "paper-attribute-effect-ownership",
+      "domains": ["paper-plugin"],
+      "title": "Reconcile Paper attribute modifiers and potion effects by explicit ownership",
+      "when": [
+        "the request adds or refreshes equipment AttributeModifier entries through ItemMeta",
+        "a Paper plugin applies session AttributeInstance modifiers or PotionEffect values from one or more sources",
+        "attribute or effect state is rebuilt after reapply, expiry, death, quit, reconnect, plugin reload, or disable",
+        "maximum health or maximum absorption changes can make a current value exceed its new capacity",
+        "the request investigates duplicated modifiers, hidden weaker effects, lost vanilla equipment behavior, or foreign state removed during cleanup"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-attribute-and-effect-surfaces",
+          "action": "Resolve the target Paper version and verify the exact types and members used for AttributeModifier, AttributeInstance, Attribute, ItemMeta, ItemType, PotionEffect, PotionEffectType, LivingEntity, and Damageable. Read the target-version Javadocs for behavior that an index cannot prove. For Paper 1.21.11 after that exact verification, attribute modifiers are keyed, AttributeInstance has key-based lookup and removal plus transient modifiers, ItemMeta exposes copied modifier collections, and PotionEffect identifies a type and an active or hidden chain but has no plugin-owner key. Treat each statement as target-version evidence rather than a cross-version assumption.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper api"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "search_paper_types",
+              "search_paper_members",
+              "get_paper_api_reference"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getPaperApiReference"
+            ]
+          },
+          "evidence": [
+            "Target-version type and member matches for every attribute, item-meta, potion-effect, and current-value API named in generated code",
+            "Primary Javadocs evidence for modifier key identity, transient persistence, ItemMeta default override behavior, potion active and hidden chains, and current-value bounds",
+            "An explicit list of runtime semantics that still require a loaded target-version Paper test"
+          ],
+          "stopIfMissing": "Do not substitute deprecated UUID or name constructors, infer potion-effect ownership from a type key, or guess replacement and persistence behavior from member names."
+        },
+        {
+          "id": "derive-one-authoritative-desired-state",
+          "action": "Represent every contribution with a stable logical source identifier, lifetime, target surface, attribute or effect type, and the verified fields needed by that surface. Derive the complete desired contribution set from authoritative equipment and session state on every reconciliation; do not treat the entity's current modifiers or effects as the source of truth. Assign each owned attribute contribution a stable NamespacedKey based on logical source, attribute, surface, and slot grouping where relevant. Keep a bounded registry of current and retired owned keys so reload or migration can remove stale owned entries without claiming an entire namespace. Fold multiple plugin sources for the same potion-effect type into one deterministic desired result and declare tie, expiry, and collision policy without embedding combat-balance values in the ownership layer.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A source-to-surface table covering equipment metadata, session attributes, and potion-effect types",
+            "A deterministic current-and-retired key registry for all plugin-owned attribute contributions",
+            "A pure aggregation table for multiple sources, equal priority, weaker reapply, expiry, and empty desired state",
+            "An explicit separation between ownership mechanics and configurable balance amounts or durations"
+          ],
+          "stopIfMissing": "Do not generate a random key or UUID on each apply, append one modifier or effect per callback, or reconstruct desired state by copying whatever happens to be active."
+        },
+        {
+          "id": "reconcile-equipment-modifiers-without-erasing-defaults",
+          "action": "For equipment-owned contributions, read ItemMeta modifier copies, partition exact known plugin-owned keys from foreign entries, replace only owned entries, and publish the rebuilt metadata through the target-version ItemStack contract. Avoid attribute-wide, slot-wide, and whole-map removal unless the plugin explicitly owns that complete scope. Account for the distinction between absent custom metadata and an explicit empty modifier map: custom ItemMeta modifiers can override ItemType default attribute modifiers. When the final owned override disappears, return to the unset representation only when authoritative equipment state proves the plugin introduced that override; otherwise preserve the observed representation and report ambiguity. When foreign explicit entries remain, preserve them. Verify the effective equipped result, including vanilla defaults, rather than comparing only the explicit metadata map. Logical ItemStack identity, item migration, and persistent-data schema are separate concerns.",
+          "tools": {
+            "cli": ["plugin paper types", "plugin paper members", "plugin paper guardrail"],
+            "mcp": ["search_paper_types", "search_paper_members", "get_authoring_guardrail"],
+            "packageApis": ["searchPaperTypes", "searchPaperMembers", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A before-and-after partition of known owned keys, foreign explicit modifiers, and implicit ItemType defaults",
+            "Idempotence tests for repeated rebuild and removal of the final owned entry",
+            "A loaded-server equipment test proving effective vanilla defaults and foreign modifiers survive",
+            "A scope statement excluding logical ItemStack identity, item migration, and persistent-data schema"
+          ],
+          "stopIfMissing": "Do not call broad ItemMeta modifier clearing or assume preserving the explicit map automatically preserves implicit vanilla equipment behavior."
+        },
+        {
+          "id": "reconcile-session-attribute-modifiers-by-key",
+          "action": "For session contributions, compare the authoritative desired keyed set with AttributeInstance modifier copies. Remove stale or changed entries only by exact plugin-owned key, preserve vanilla and foreign keys, and add the desired replacement once. Use transient modifiers for session-only state when the verified target API and lifecycle require non-persistence, and do not rewrite the attribute base value to emulate an owned modifier. Reconcile on apply, source change, expiry, death policy, quit, reconnect, reload, and disable so repeated signals converge to the same result and an old session cannot stack into a replacement session.",
+          "tools": {
+            "cli": ["plugin paper members", "plugin paper recipe", "plugin paper guardrail"],
+            "mcp": ["search_paper_members", "get_authoring_recipe", "get_authoring_guardrail"],
+            "packageApis": ["searchPaperMembers", "getAuthoringRecipe", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A three-way desired, existing-owned, and existing-foreign reconciliation table",
+            "Tests for multiple sources, same-key replacement, stale-key removal, foreign preservation, deterministic ordering, and repeated application",
+            "Lifecycle tests for expiry, death, quit, reconnect, reload, disable, and duplicate cleanup signals",
+            "Loaded-server evidence that transient session modifiers have the intended save and reconnect behavior"
+          ],
+          "stopIfMissing": "Do not clear an AttributeInstance, mutate its base value, or remove a modifier whose exact stable key is outside the plugin's ownership registry."
+        },
+        {
+          "id": "treat-potion-effect-type-as-a-collision-domain",
+          "action": "Treat PotionEffectType as a collision domain, not an owner identity: PotionEffect has no per-source NamespacedKey, and another plugin or vanilla mechanic can produce an indistinguishable effect. Aggregate plugin sources to at most one desired contribution per type. By default, preserve an unexpected active or hidden chain and skip, reject, or choose a separately owned mechanic instead of claiming it. Only replace or remove a type under a documented exclusive type lease, and relinquish that lease when the observed chain no longer matches the plugin-controlled state. Because LivingEntity removal is type-wide, never use it as generic owned cleanup. Check add results and inspect the resulting active and hidden chain; specifically test weaker reapply so repeated refresh cannot accumulate hidden effects. Use bounded durations or another explicit recovery contract when a crash or restart loses the ownership ledger.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A collision policy for each managed effect type, including the safe action when foreign or unexpected state is present",
+            "A deterministic aggregation test for multiple plugin sources and weaker desired reapply",
+            "Target-version loaded-server observations of add return values plus active and hidden chains",
+            "Expiry, death, quit, reconnect, reload, and crash-recovery tests that never delete an unowned same-type effect"
+          ],
+          "stopIfMissing": "Do not infer potion-effect ownership from matching type, amplifier, duration, ambient, particle, or icon fields, and do not remove by type unless exclusive ownership is both declared and still observed."
+        },
+        {
+          "id": "apply-capacity-before-clamping-current-values",
+          "action": "When owned changes affect Attribute.MAX_HEALTH or Attribute.MAX_ABSORPTION on the verified target, first reconcile all capacity modifiers, then read the resulting capacity and clamp current values safely. Preserve a current value that is already within bounds, keep zero health at zero instead of resurrecting a dead entity, and reject or normalize non-finite and negative inputs before a setter can throw. Clamp health to the resulting maximum-health capacity and absorption to the resulting maximum-absorption capacity. Do not rely on undocumented automatic setter interaction, especially where target Javadocs say the effect of maximum absorption is unspecified. Exercise this ordering together with the ownership lifecycle and report loaded-server evidence separately from pure reconciliation tests.",
+          "tools": {
+            "cli": ["plugin paper members", "plugin paper recipe", "plugin paper guardrail"],
+            "mcp": ["search_paper_members", "get_authoring_recipe", "get_authoring_guardrail"],
+            "packageApis": ["searchPaperMembers", "getAuthoringRecipe", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "An operation sequence that reconciles capacity before reading and clamping current health and absorption",
+            "Pure tests for raising and lowering capacity, already-valid values, zero health, negative values, and non-finite inputs",
+            "Table-driven lifecycle tests covering multiple sources, weaker reapply, expiry, death, quit, reconnect, reload, and repeated cleanup",
+            "Loaded target-version Paper evidence for modifier replacement, effective equipment defaults, potion chains, transient persistence, and capacity setter behavior"
+          ],
+          "stopIfMissing": "Do not lower capacity after writing a now-out-of-range current value, resurrect an entity during cleanup, or report Paper runtime behavior from pure aggregation tests alone."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-attribute-effect-ownership-safety",
+        "paper-player-session-lifecycle-safety",
+        "paper-plugin-testing-evidence"
+      ],
+      "failureMode": "Unstable keys, broad removal, implicit ItemMeta default changes, or false potion-effect ownership can stack contributions across lifecycle transitions, erase vanilla or foreign state, and leave health or absorption outside a reduced capacity."
     }
   ]
 }

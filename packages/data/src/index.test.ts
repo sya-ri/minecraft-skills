@@ -1617,4 +1617,69 @@ describe("@minecraft-skills/data", () => {
       );
     });
   });
+
+  it("loads Paper attribute and effect ownership guidance", () => {
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "design-attribute-effect-ownership",
+    );
+
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[] }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find((entry) => entry.id === "paper-attribute-effect-ownership");
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "reconcile-equipment-modifiers-without-erasing-defaults",
+        "reconcile-session-attribute-modifiers-by-key",
+        "treat-potion-effect-type-as-a-collision-domain",
+        "apply-capacity-before-clamping-current-values",
+      ]),
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "PotionEffect has no per-source NamespacedKey",
+    );
+    expect(recipe?.steps.map((step) => step.action).join("\n")).toContain(
+      "Attribute.MAX_ABSORPTION",
+    );
+    expect(recipe?.finalChecks).toContain("paper-attribute-effect-ownership-safety");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-attribute-effect-ownership-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual(["paper-attribute-effect-ownership"]);
+    expect(scenario?.successCriteria.join("\n")).toContain("weaker reapply");
+
+    const guardrails = readDataJson<{ guardrails: Array<{ id: string; rules: string[] }> }>(
+      "authoring-guardrails.json",
+    );
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-attribute-effect-ownership-safety",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("implicit ItemType defaults");
+    expect(guardrail?.rules.join("\n")).toContain("keep zero health at zero");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{ id: string; severity: string; failIf: string[] }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-attribute-effect-ownership-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.failIf.join("\n")).toContain("hidden effect");
+  });
 });
