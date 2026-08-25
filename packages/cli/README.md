@@ -42,6 +42,8 @@ minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper search-scenarios "transactional config hot reload last known good"
 minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
+minecraft-skills plugin paper recipe paper-persistent-data-contract
+minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
@@ -490,6 +492,12 @@ server, or client-visible evidence. It also requires controlled time and task or
 and stale-completion cases, isolated cleanup, exact commands and versions, known baselines, and an
 explicit list of skipped, unavailable, or manual checks.
 
+`plugin paper plan paper-persistent-data-contract-review [version]` defines owned NamespacedKeys,
+exact primitive and complex data types, payload bounds, holder publication and transfer, selective
+copy/remove behavior, and failure-safe schema migrations. It separates key presence from type and
+payload validity, preserves foreign and unsupported-future data, and requires matching loaded-
+server evidence for claimed snapshot, update, unload, reload, or restart behavior.
+
 ## Performance Time-Series Analysis
 
 `minecraft analyze-performance <file>` accepts a regular, final non-symlink UTF-8 JSON file with
@@ -521,7 +529,6 @@ rejects path or same-handle identity changes during positioned reads, malformed 
 JSON object keys, more than 16 nested containers, or more than `12 * maxSamples + 256` JSON value
 nodes before parsing. Invalid or insufficient input and threshold violations exit 1. Only an
 analyzed result with no violations exits 0.
-
 ## Data Sources
 
 Bundled facts come from Mojang version metadata and downloads served through Piston endpoints,

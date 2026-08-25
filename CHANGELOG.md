@@ -113,6 +113,11 @@ All notable changes to this project are documented here.
   generation per logical slot, explicit eligibility gates, deterministic arbitration with
   hysteresis, authoritative viewer-set reconciliation, bounded revisioned writers, stale update
   rejection, idempotent terminal cleanup, backend handoff boundaries, and viewer-leak race tests.
+- Paper PersistentDataContainer contract guidance across data, Catalog, CLI, MCP, and English
+  discovery, covering NamespacedKey ownership, primitive-versus-complex type semantics, bounded
+  custom data, holder lifetime and publication, explicit cross-holder copy, selective replacement
+  and removal, failure-safe schema migration, foreign-key preservation, and restart evidence
+  without mixing in ItemStack identity or presentation policy.
 - Paper plugin testing-evidence guidance across data, Catalog, CLI, and MCP, mapping pure tests,
   owned fakes, MockBukkit, loaded target-version servers, and client-visible verification to the
   claims each layer can prove, with deterministic lifecycle testing and exact limitations reporting.

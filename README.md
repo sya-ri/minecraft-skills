@@ -68,6 +68,7 @@ minecraft-skills plugin paper plan paper-scheduled-task-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-player-session-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1.21.11
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
+minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
@@ -207,6 +208,11 @@ cases with a digest-bound artifact manifest. Filtered or resumed runs remain exp
 non-render, virtual-framebuffer client, and interactive-client evidence have separate claim limits.
 Concrete Client GameTest and Loom API names still require current official Fabric documentation and
 target-version API or mapping evidence.
+`paper-persistent-data-contract-review` routes PersistentDataContainer work through an explicit
+key/type/bounds registry, holder-lifetime and publication plan, cross-holder copy policy, and
+failure-safe schema migrations. It distinguishes key existence from primitive type matching and
+complex payload validity, preserves foreign and unsupported-future data, and requires loaded
+target-version evidence for claimed snapshot, update, unload, reload, or restart behavior.
 
 `minecraft analyze-log` structures Minecraft Java logs, Java stack traces, and crash reports before
 diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,

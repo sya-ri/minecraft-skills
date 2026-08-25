@@ -90,6 +90,8 @@ minecraft-skills plugin paper recipe paper-bossbar-audience-lifecycle
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper guardrail paper-bossbar-audience-lifecycle-safety
 minecraft-skills plugin paper diagnostic paper-bossbar-audience-lifecycle-unsafe
+minecraft-skills plugin paper recipe paper-persistent-data-contract
+minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -779,6 +781,13 @@ Folia is in scope, closes admission before idempotent teardown, and treats cance
 attempt rather than proof that an already-running callback stopped. Custom executors and child
 operations require their own bounded cleanup. Controlled cancellation, disable, late-completion,
 and publication-fence tests keep the final runtime claim aligned with its evidence.
+For Paper custom metadata storage, resolve
+`plugin paper plan paper-persistent-data-contract-review <version>`. The plan distinguishes
+NamespacedKey ownership, primitive type matching, complex payload validation, holder lifetime,
+snapshot publication, cross-holder transfer, `copyTo` replacement, selective removal, and bounded
+schema migration. It preserves foreign and unsupported-future records and requires target-version
+loaded-server evidence for holder save, unload, reload, or restart claims. ItemStack identity,
+similarity, and presentation refresh remain a separate concern.
 
 ## Source Policy
 

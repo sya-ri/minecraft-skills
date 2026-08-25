@@ -1141,6 +1141,80 @@
       "failureMode": "A configuration reload can claim success while runtime readers, resources, persisted input, and status disagree about which generation is effective."
     },
     {
+      "id": "paper-persistent-data-contract-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper persistent data contract is ambiguous, lossy, or unrecoverable",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code reads or writes PersistentDataContainer, NamespacedKey, PersistentDataType, PersistentDataHolder, or a read-only PDC view",
+        "custom data is copied, moved, removed, replaced, serialized, or migrated",
+        "a custom PersistentDataType converts arrays, strings, lists, or nested containers into domain values",
+        "persistent state crosses ItemMeta, ItemStack, TileState, entity, chunk, world, reload, restart, or another holder boundary",
+        "PDC data is missing, wrong-type, malformed, oversized, from an old version, or from an unsupported future version"
+      ],
+      "requiredChecks": [
+        "verify target-version holder, NamespacedKey, container, view, type, get, has, set, remove, copy, and publication members actually used against Paper surfaces and official documentation",
+        "inventory every key's namespace owner, holder scope, primitive and complex type, optionality, default, semantic validation, bounds, schema version, readers, and writers",
+        "distinguish absent keys, key-only presence, expected primitive, incompatible primitive, malformed complex payload, unknown values, old versions, and unsupported future versions",
+        "validate custom adapter payload lengths and contents independently of has(key, type)",
+        "bound arrays, strings, lists, nested containers, nesting depth, numeric ranges, and allocations",
+        "trace holder lifetime and the exact mutation-publication, save, unload, reload, replacement, and deletion boundaries required by the feature",
+        "verify cross-holder transfer has explicit selected keys, replace policy, source-retention or removal rule, retry semantics, and failure recovery",
+        "verify set overwrite, remove, copyTo replace, selective copy, foreign-key preservation, and unsupported-future preservation are intentional",
+        "verify each migration validates before publishing a new version marker and can safely repeat or recover after interruption",
+        "run pure codec and migration tests plus target-version loaded-server tests for holder behavior that the final claim requires"
+      ],
+      "evidence": [
+        "A target-version Paper API and documentation evidence record",
+        "A key/type/bounds/schema registry and holder-lifetime table",
+        "A staged migration and explicit copy, replacement, removal, and recovery contract",
+        "Tests for wrong primitive, malformed and oversized custom data, every supported old version, unsupported future version, repeated and failed migration, copy collisions, foreign-key preservation, holder publication, and restart"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "search_paper_types",
+          "search_paper_members",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "a key has no namespace owner or another plugin's namespace is read or written without an explicit contract",
+        "has(key) is treated as expected-type proof, or has(key, type) is treated as validation of a custom adapter's complex payload",
+        "get or getOrDefault assumes a present incompatible primitive behaves like an absent key",
+        "custom data is decoded or allocated without explicit byte, element, string, numeric, and nesting bounds",
+        "a detached ItemMeta or TileState snapshot is changed without a verified publication step, a read-only view is used as writable state, or an ItemStack edit container escapes its consumer",
+        "PDC is expected to copy automatically between holders, or source data is removed before destination publication is verified",
+        "copyTo is used to move selected owned keys without accounting for all custom keys and the replace flag",
+        "set receives null as deletion, or broad clearing, copy, or migration overwrites foreign namespaces",
+        "a schema marker advances before validation and migration complete, a failed migration exposes partial current data, or an unsupported-future record is downgraded speculatively",
+        "the implementation claims PDC transactions, save timing, thread safety, holder lifetime, reload, or restart persistence without evidence that can observe it",
+        "tests cover only successful set/get with one current value and omit wrong type, malformed, oversized, old, future, repeat, failure, copy-collision, holder-boundary, and recovery cases"
+      ],
+      "safeResponse": [
+        "Stop publication, preserve the original entry and foreign keys, and return a typed absent, incompatible, malformed, oversized, old, or future outcome.",
+        "Stage and validate the complete migrated record before replacing it and writing the new schema version.",
+        "Copy an explicit allowlist of owned keys unless whole-container copy with a deliberate replace policy is required.",
+        "Verify the target holder publication and persistence path on a loaded matching Paper version before claiming durability."
+      ],
+      "failureMode": "An unchecked PDC path can lose or corrupt persistent state, overwrite another namespace, leak partial migrations, or silently fail at the holder's real save boundary."
+    },
+    {
       "id": "paper-plugin-test-evidence-gap",
       "domains": ["paper-plugin"],
       "title": "Paper plugin claim exceeds the completed test evidence",

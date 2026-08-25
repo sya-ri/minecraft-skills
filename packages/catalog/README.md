@@ -156,6 +156,10 @@ const scheduledTaskPlan = getAuthoringPlan({
   scenario: "paper-scheduled-task-lifecycle-review",
   version: "1.21.11",
 });
+const persistentDataPlan = getAuthoringPlan({
+  scenario: "paper-persistent-data-contract-review",
+  version: "1.21.11",
+});
 const testingEvidencePlan = getAuthoringPlan({
   scenario: "paper-plugin-testing-evidence-review",
   version: "1.21.11",
@@ -173,6 +177,7 @@ const scheduledTaskRecipe = getAuthoringRecipe("paper-scheduled-task-lifecycle")
 const sessionRecipe = getAuthoringRecipe("paper-player-session-lifecycle");
 const configurationLifecycleRecipe = getAuthoringRecipe("paper-plugin-configuration-lifecycle");
 const bossBarRecipe = getAuthoringRecipe("paper-bossbar-audience-lifecycle");
+const persistentDataRecipe = getAuthoringRecipe("paper-persistent-data-contract");
 const testingEvidenceRecipe = getAuthoringRecipe("paper-plugin-testing-evidence");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
@@ -205,6 +210,7 @@ const configurationLifecycleGuardrail = getAuthoringGuardrail(
   "paper-plugin-configuration-lifecycle-safety",
 );
 const bossBarGuardrail = getAuthoringGuardrail("paper-bossbar-audience-lifecycle-safety");
+const persistentDataGuardrail = getAuthoringGuardrail("paper-persistent-data-contract");
 const testingEvidenceGuardrail = getAuthoringGuardrail("paper-plugin-testing-evidence");
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
@@ -219,6 +225,7 @@ const configurationLifecycleDiagnostic = getAuthoringDiagnostic(
   "paper-plugin-configuration-lifecycle-unsafe",
 );
 const bossBarDiagnostic = getAuthoringDiagnostic("paper-bossbar-audience-lifecycle-unsafe");
+const persistentDataDiagnostic = getAuthoringDiagnostic("paper-persistent-data-contract-unsafe");
 const adminCommandScenario = getAuthoringScenario(
   "paper-administrative-command-operability-review",
 );

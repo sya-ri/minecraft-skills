@@ -708,6 +708,57 @@
       "failureMode": "A plugin can report a successful reload while mixed configuration generations, stale operator writes, old tasks, failed resources, or shutdown races keep effective runtime state inconsistent and unrecoverable."
     },
     {
+      "id": "paper-persistent-data-contract-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper PersistentDataContainer storage and migration contracts",
+      "userPrompt": "Create or review a Paper PersistentDataContainer design whose namespaced keys, types, holder lifetime, copying, schema migration, and failure recovery preserve durable plugin data.",
+      "useWhen": [
+        "Paper code uses PersistentDataContainer, PersistentDataHolder, PersistentDataContainerView, PersistentDataType, or NamespacedKey",
+        "custom metadata is attached to an item, entity, block entity, chunk, world, structure, raid, player-related view, or another holder",
+        "a custom PersistentDataType, list, nested tag container, or serialized PDC record is introduced",
+        "persistent data must move between holders or survive unload, reload, restart, replacement, or plugin upgrades",
+        "PDC reads encounter missing, wrong-type, malformed, oversized, old-version, or unsupported-future data"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-persistent-data-contract"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-threading-assumption",
+          "paper-persistent-data-contract-unsafe"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "folia-or-thread-safety"],
+        "factSurfaces": ["paper-builds", "paper-api-index", "paper-api-surface"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "every key has an explicit plugin or cross-plugin namespace owner, exact primitive and complex type, holder scope, optionality, bounds, version, readers, and writers",
+        "has(key), has(key, type), get, and getOrDefault semantics are distinguished, and custom adapter payload validity is checked beyond primitive type matching",
+        "arrays, strings, lists, nested containers, custom payloads, numeric values, and allocations have application bounds",
+        "the selected holder lifetime and target-version snapshot, view, mutation-publication, save, unload, reload, replacement, and deletion paths are explicit",
+        "cross-holder data transfer is never implicit and defines selected keys, destination replacement, source removal, retries, and recovery",
+        "copyTo is limited to intentional whole-container copy with a deliberate replace flag, while selective operations preserve foreign namespaces",
+        "remove is used for deletion and set overwrite behavior is intentional",
+        "each independently evolved record has a bounded schema migration path that publishes the new version only after complete validation",
+        "missing, wrong-type, malformed, oversized, supported-old, and unsupported-future records have explicit recoverable outcomes",
+        "pure and loaded-server tests together prove the claimed holder and persistence boundaries without asserting unverified transactions or thread safety"
+      ],
+      "mustAvoid": [
+        "creating ad hoc keys repeatedly or reading and writing another namespace without a contract",
+        "treating key presence as expected primitive type or treating primitive type as semantic validity",
+        "using unbounded custom byte arrays, strings, lists, nested containers, or custom adapter allocations",
+        "mutating detached ItemMeta or TileState snapshots without publication, retaining a temporary ItemStack edit container, or trying to mutate a read-only view",
+        "assuming PDC follows an item-to-block, entity replacement, or other cross-holder transition",
+        "calling copyTo for a selective migration without accounting for every custom key and its replace policy",
+        "passing null to set as removal or clearing foreign keys during cleanup or migration",
+        "advancing schema version before successful migration, partially exposing a current record, or rewriting unsupported-future data",
+        "claiming atomic transactions, save timing, unload behavior, restart durability, thread safety, or Folia compatibility without target-version evidence",
+        "mixing ItemStack logical identity, similarity, or presentation-refresh policy into this generic storage concern"
+      ],
+      "failureMode": "Persistent data can be misclassified, truncated, stranded on a snapshot, lost during holder conversion, overwritten across namespaces, or left partially migrated when its typed storage and lifecycle contract is implicit."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",

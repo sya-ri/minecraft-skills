@@ -1281,6 +1281,68 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("prints and routes Paper persistent data contract guidance", async () => {
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("define-persistent-data-contract");
+
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-persistent-data-contract"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("define-owned-keys-types-and-bounds");
+    expect(recipe.stdout.join("\n")).toContain("migrate-replace-copy-and-remove-safely");
+    expect(recipe.stdout.join("\n")).toContain("copyTo copies custom keys");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-persistent-data-contract-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-persistent-data-contract-unsafe");
+    expect(scenario.stdout.join("\n")).toContain("unsupported-future");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "PersistentDataContainer NamespacedKey schema migration wrong type",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-persistent-data-contract-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-persistent-data-contract-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-persistent-data-contract"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-persistent-data-contract-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-persistent-data-contract",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("primitive-type matching only");
+    expect(guardrail.stdout.join("\n")).toContain("Use copyTo only");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-persistent-data-contract-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("set receives null as deletion");
+    expect(diagnostic.stdout.join("\n")).toContain("unsupported-future record");
+  });
+
   it("prints and routes Paper BossBar audience lifecycle guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-bossbar-audience-lifecycle"]);
     expect(recipe.code).toBe(0);

@@ -1991,6 +1991,172 @@
       "failureMode": "Configuration can appear to reload while partially updated services, stale cached writes, racing generations, leaked resources, or unreported restart-only settings leave runtime behavior different from the file and status output."
     },
     {
+      "id": "paper-persistent-data-contract",
+      "domains": ["paper-plugin"],
+      "title": "Design and evolve Paper persistent data contracts",
+      "when": [
+        "the request stores plugin data in PersistentDataContainer on an item, entity, block entity, chunk, world, structure, raid, player-related view, or another PersistentDataHolder",
+        "Paper code creates NamespacedKey values or custom PersistentDataType adapters",
+        "persistent data must be copied, moved, removed, replaced, serialized, or migrated between schema versions",
+        "a PDC read fails because a key is missing, uses a different primitive type, or contains malformed complex data",
+        "data appears to vanish after holder conversion, block-state mutation, unload, reload, restart, or plugin upgrade"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-persistent-data-surfaces",
+          "action": "Resolve the target Paper version, inspect the target Paper type and member surfaces for every holder and PDC method actually used, and read the current official PDC guide and matching Javadocs for behavior. Record version gates instead of copying the latest ItemStack APIs into older targets: the current Paper guide documents a read-only ItemStack PDC view from 1.21.1 and editPersistentDataContainer from 1.21.4, while older targets use ItemMeta paths. Treat API indexes as name evidence only and make no thread-safety or save-timing claim that the holder documentation does not establish.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper fact-surfaces"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "list_fact_surfaces"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listFactSurfaces"
+            ]
+          },
+          "evidence": [
+            "Target-version matches for NamespacedKey, PersistentDataHolder or PersistentDataViewHolder, PersistentDataContainer or its read-only view, PersistentDataType, and every holder-specific read or publication member used",
+            "The official Paper PDC guide for holder coverage, version-gated ItemStack access, read-only views, explicit cross-holder copying, and TileState update behavior: https://docs.papermc.io/paper/dev/pdc/",
+            "Matching target-version Javadocs for has, get, getOrDefault, set, remove, copyTo, and custom type behavior when those members are referenced",
+            "A statement of unverified holder lifetime, save, scheduler, or thread assumptions"
+          ],
+          "stopIfMissing": "Do not invent a writable OfflinePlayer PDC, retain the temporary container supplied to an ItemStack edit consumer, assume a latest-version convenience exists on an older target, or infer thread safety and persistence timing from a method name."
+        },
+        {
+          "id": "define-owned-keys-types-and-bounds",
+          "action": "Define a closed data dictionary before writing: one reusable plugin-owned NamespacedKey per field or record, an explicit cross-plugin namespace contract only when another plugin intentionally owns or consumes the key, the exact PersistentDataType primitive and complex representations, nullable or default behavior, semantic validation, size and nesting bounds, and compatibility policy. The current Paper guide lists byte and byte array, double, float, integer and integer array, long and long array, short, string, Boolean convenience, nested tag-container, list, and custom-adapter forms; verify the target supports every selected form instead of assuming the latest set. Distinguish has(key), which checks only key existence, from has(key, type), which checks only the stored primitive type. A custom type backed by BYTE_ARRAY still matches any byte array at that key, so validate length and contents after decoding; get and getOrDefault do not turn a present wrong-type entry into absence.",
+          "tools": {
+            "cli": [
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper claim-policies",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "search_paper_types",
+              "search_paper_members",
+              "list_claim_policies",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "listClaimPolicies",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "A key registry naming namespace owner, key path, holder scope, primitive type, complex type, optionality, default, bounds, schema version, and readers or writers",
+            "Explicit outcomes for absent key, present expected primitive, present incompatible primitive, malformed custom payload, unknown enum or identifier, and unsupported schema version",
+            "Custom PersistentDataType round-trip and malformed-input tests that validate payload shape rather than relying on has(key, type)",
+            "Documented maximum bytes, elements, nesting, string length, and accepted numeric range before allocation or domain publication"
+          ],
+          "stopIfMissing": "Do not use unnamespaced or foreign keys by accident, treat has(key) as type validation, treat primitive-type agreement as custom payload validity, or decode unbounded arrays, lists, strings, and nested containers."
+        },
+        {
+          "id": "match-holder-lifetime-and-publication",
+          "action": "Map each record's required lifetime and ownership to a verified holder, then document how mutations become authoritative. Prefer read-only PDC views for inspection. Keep an ItemMeta or holder snapshot inside its valid scope and publish through the target-version-supported write-back path; keep the container passed to ItemStack.editPersistentDataContainer inside its consumer; call the required TileState update after changing its snapshot. Treat OfflinePlayer PDC as read-only unless a separate documented writable owner exists. Do not expect PDC to transfer automatically when an item becomes a placed block, an entity is replaced, or data moves to another holder; copy only the intended owned keys and define source deletion, destination conflict, and retry outcomes.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A holder-lifetime table covering creation, read, mutation publication, save or unload boundary, replacement, deletion, and reload or restart",
+            "Target-version loaded-server evidence that the selected ItemStack, ItemMeta, TileState, Entity, Chunk, World, Structure, Raid, or other holder path persists through its required boundary",
+            "A transfer contract with selected owned keys, destination collision policy, source-retention or source-removal rule, retry or idempotency behavior, and failure recovery",
+            "Tests proving no implicit PDC copy is expected between distinct holders"
+          ],
+          "stopIfMissing": "Do not mutate a detached snapshot without publishing it, use a read-only view as a write path, hold an edit-consumer container after the callback, assume every block has a TileState, or delete source data before destination publication is verified."
+        },
+        {
+          "id": "migrate-replace-copy-and-remove-safely",
+          "action": "Store an explicit schema version with each independently evolved record. Parse and validate old data into an owned in-memory model, apply a bounded sequence of one-version migrations, validate the complete target state, then publish data and advance the version only after success. Preserve or reject unsupported-future data without speculative rewrites. Prefer one nested tag container for a record when replacement must avoid partially updated top-level fields; otherwise define a recovery marker or idempotent resume path because PDC is not a transaction. set overwrites the same key and rejects null, so remove with remove. copyTo copies custom keys and its replace flag controls destination collisions; use it only when whole-container copying is intentional, otherwise copy an explicit allowlist of owned keys and never clear or overwrite foreign namespaces.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic", "plugin paper recipe"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic", "get_authoring_recipe"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic", "getAuthoringRecipe"]
+          },
+          "evidence": [
+            "A finite migration table from every supported old version to the current schema, plus explicit missing, malformed, and future-version outcomes",
+            "A staged publication design in which validation and all migration steps succeed before the current version marker becomes visible",
+            "An owned-key copy, replace, and removal matrix that distinguishes same-key overwrite, replace=false collision preservation, replace=true overwrite, source retention, and foreign-key preservation",
+            "Repeat-run, partial-failure, and recovery tests proving migrations and transfers are deterministic and idempotent"
+          ],
+          "stopIfMissing": "Do not increment first and migrate later, coerce malformed data silently, downgrade an unsupported-future record, pass null to set as removal, or use whole-container copy or clearing when only the plugin's owned keys should change."
+        },
+        {
+          "id": "test-storage-contract-and-recovery",
+          "action": "Test the contract below Paper-facing code as pure codec and migration logic, then test the real target-version holder adapters. Cover every supported primitive and custom adapter used, wrong primitive under a known key, malformed and oversized payloads, absent optional and required fields, nested and list bounds, all supported old versions, unsupported future versions, repeated migration, failure before version publication, selective and whole-container copy collision policies, explicit removal, holder replacement, unload or save when relevant, reload or restart, and recovery after interrupted multi-key publication. Use a loaded target-version Paper server for holder snapshot, update, serialization, or lifecycle behavior that pure tests and API indexes cannot prove. ItemStack logical identity, comparison, and presentation refresh are outside this storage-contract concern.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper diagnostic",
+              "plugin paper output-requirements"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic",
+              "list_output_requirements"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Pure round-trip, compatibility, bound, migration, and copy-policy tests with exact structural assertions",
+            "Loaded target-version Paper tests for each holder-specific publication and persistence boundary actually claimed",
+            "Reload or restart fixtures containing current, supported-old, absent, wrong-type, malformed, oversized, and unsupported-future records",
+            "A recovery test that cannot expose a current schema marker with incomplete data and preserves unknown or foreign keys"
+          ],
+          "stopIfMissing": "Do not approve a persistent format from a single successful set/get test in memory or claim restart, holder-transfer, snapshot, update, or thread behavior that the completed evidence cannot observe."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-persistent-data-contract",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "An implicit PDC contract can misread a present value, erase another namespace, publish half a migration, lose data at a snapshot or holder boundary, or make malformed and future records unrecoverable."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",
