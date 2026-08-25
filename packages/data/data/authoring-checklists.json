@@ -266,6 +266,36 @@
           "failureMode": "If a type, member, or event is not found, do not invent an API; state that the surface did not verify it."
         },
         {
+          "id": "separate-item-identity-presentation-and-migration",
+          "reason": "ItemStack material, names, lore, models, similarity, and rendered appearance are mutable or purpose-specific observations; they are not interchangeable with a plugin-owned logical item identity.",
+          "tools": {
+            "cli": [
+              "plugin paper search-scenarios",
+              "plugin paper recipe",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "search_authoring_scenarios",
+              "get_authoring_recipe",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "searchAuthoringScenarios",
+              "getAuthoringRecipe",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Custom plugin items use a stable namespaced logical identifier and a separate explicit schema or migration version.",
+            "Presentation refresh and migration work on an owned copy and replace only an explicit allowlist while preserving out-of-scope item state.",
+            "Logical identity, stackability or ItemStack similarity, and client-rendered visual equality have separate decisions and tests."
+          ],
+          "failureMode": "Do not identify custom items by material, display text, lore, item-model data, or rendering, and do not rebuild an existing stack from presentation fields when unrelated state must survive."
+        },
+        {
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {

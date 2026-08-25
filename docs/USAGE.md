@@ -69,6 +69,8 @@ minecraft-skills plugin paper recipe paper-inventory-gui-interactions
 minecraft-skills plugin paper plan paper-inventory-gui-interaction-review 26.2
 minecraft-skills plugin paper plan paper-administrative-command-operability-review 26.2
 minecraft-skills plugin paper plan paper-player-identity-and-display-review 1.21.11
+minecraft-skills plugin paper recipe paper-itemstack-semantic-identity
+minecraft-skills plugin paper plan paper-itemstack-semantic-identity-review 26.2
 minecraft-skills plugin paper search "custom payload RPC codec" --kind authoring-recipe
 minecraft-skills plugin paper search-scenarios "chunked upload request correlation"
 minecraft-skills plugin paper plan paper-plugin-protocol-safety-review 1.21.11
@@ -720,6 +722,16 @@ stable identity separate from mutable account names and presentation labels, ver
 Player, OfflinePlayer, profile, and display APIs used, and requires rename, offline, cache, and
 cross-server tests. The workflow also makes online-mode, offline-mode, and trusted proxy identity
 assumptions explicit before treating a UUID as authoritative.
+
+For plugin-defined Paper items, resolve
+`plugin paper plan paper-itemstack-semantic-identity-review <version>`. The plan uses a stable
+namespaced logical item ID plus a separate schema version, distinguishes semantic identity from
+`ItemStack.isSimilar` and client rendering, and refreshes only an explicit owned presentation
+allowlist on a cloned or otherwise owned stack. It preserves enchantments, attributes, damage,
+unowned PDC, data components, subtype metadata, and other out-of-scope state by default. Migrations
+are deterministic and idempotent, publish only after success, leave unknown items untouched, and
+require duplicate-lore, repeat-migration, comparison-purpose, aliasing, rollback, and unrelated-
+state preservation tests.
 
 For Paper connection-scoped state, resolve
 `plugin paper plan paper-player-session-lifecycle-review <version>`. The plan separates durable

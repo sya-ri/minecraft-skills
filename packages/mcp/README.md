@@ -398,6 +398,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-player-identity-and-display-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-player-identity-and-display.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-player-identity-display-confusion.json`
+- `minecraft-skills://data/authoring-recipes/paper-itemstack-semantic-identity.json`
+- `minecraft-skills://data/authoring-scenarios/paper-itemstack-semantic-identity-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-itemstack-semantic-identity.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-itemstack-identity-or-state-loss.json`
 - `minecraft-skills://data/authoring-recipes/paper-plugin-protocol-safety.json`
 - `minecraft-skills://data/authoring-scenarios/paper-plugin-protocol-safety-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-plugin-protocol-safety.json`
