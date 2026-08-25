@@ -2063,6 +2063,17 @@ function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
   return hasDeliveryAction && hasItemContext && hasRecipientContext;
 }
 
+function isDatapackScoreboardCommandQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasScoreboardCommand = /\bscoreboard\b/.test(normalized);
+  const hasDatapackContext =
+    /\b(data ?pack|mcfunction|function file|vanilla command|command syntax)\b/.test(normalized);
+  const hasPaperContext = /\b(paper|bukkit|spigot|plugin|sidebar|scoreboard api)\b/.test(
+    normalized,
+  );
+  return hasScoreboardCommand && hasDatapackContext && !hasPaperContext;
+}
+
 function isPaperInventoryGuiDiscoveryQuery(query: string): boolean {
   const normalized = normalizeSearchText(query);
   const hasPaperContext =
@@ -2459,6 +2470,7 @@ export function searchAuthoringScenarios(
   const limit = normalizeLimit(options.limit, 10, 100);
   const domain = options.domain ? DomainId.assert(options.domain) : undefined;
   const tokens = tokenizeScenarioSearch(query);
+  const datapackScoreboardCommandQuery = isDatapackScoreboardCommandQuery(query);
   const paperItemDeliveryQuery = isPaperItemDeliveryDiscoveryQuery(query);
   const paperInventoryGuiQuery = isPaperInventoryGuiDiscoveryQuery(query);
   const paperDisplayInteractionContractQuery = isPaperDisplayInteractionContractDiscoveryQuery(
@@ -2497,6 +2509,7 @@ export function searchAuthoringScenarios(
         return { scenario, score: 0, matches: [] };
       }
       let score =
+        (datapackScoreboardCommandQuery && scenario.id === "datapack-function-command-review") ||
         (paperItemDeliveryQuery && scenario.id === "paper-item-delivery-review") ||
         (paperInventoryGuiQuery && scenario.id === "paper-inventory-gui-interaction-review") ||
         (paperDisplayInteractionContractQuery &&
@@ -3058,6 +3071,7 @@ export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResul
   const domain = options.domain ? DomainId.assert(options.domain) : undefined;
   const kind = options.kind ? parseCatalogSearchKind(options.kind) : undefined;
   const tokens = tokenizeScenarioSearch(query);
+  const datapackScoreboardCommandQuery = isDatapackScoreboardCommandQuery(query);
   const scored = collectCatalogSearchCandidates()
     .filter((candidate) => !kind || candidate.kind === kind)
     .filter(
@@ -3078,9 +3092,17 @@ export function searchCatalog(options: CatalogSearchOptions): CatalogSearchResul
         }
         matches.push({ field: field.field, text: field.text, matchedTokens });
       }
+      const routeBoost =
+        datapackScoreboardCommandQuery &&
+        ((candidate.kind === "authoring-recipe" && candidate.id === "datapack-function-command") ||
+          (candidate.kind === "authoring-scenario" &&
+            candidate.id === "datapack-function-command-review"))
+          ? 1_000
+          : 0;
       const score =
+        routeBoost +
         [...tokenWeights.values()].reduce((total, weight) => total + weight, 0) *
-        catalogSearchTokenScale;
+          catalogSearchTokenScale;
       return { candidate, score, matches };
     })
     .filter((result) => result.score > 0)

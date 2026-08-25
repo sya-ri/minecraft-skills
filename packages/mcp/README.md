@@ -444,6 +444,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-death-respawn-handoff-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-death-respawn-handoff-safety.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-death-respawn-handoff-unsafe.json`
+- `minecraft-skills://data/authoring-recipes/paper-scoreboard-ownership-lifecycle.json`
+- `minecraft-skills://data/authoring-scenarios/paper-scoreboard-ownership-lifecycle-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-scoreboard-ownership-lifecycle-safety.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-scoreboard-ownership-lifecycle-unsafe.json`
 - `minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json`
 - `minecraft-skills://data/authoring-scenarios/paper-plugin-testing-evidence-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-plugin-testing-evidence.json`

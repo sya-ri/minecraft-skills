@@ -1857,6 +1857,83 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-server-backed-paged-ui"');
   });
 
+  it("prints and routes Paper scoreboard ownership lifecycle guidance", async () => {
+    const recipe = await capture([
+      "plugin",
+      "paper",
+      "recipe",
+      "paper-scoreboard-ownership-lifecycle",
+    ]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("fence-delayed-updates-and-restore-conditionally");
+    expect(recipe.stdout.join("\n")).toContain("shared-board group owner");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-scoreboard-ownership-lifecycle-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-scoreboard-ownership-lifecycle-unsafe");
+    expect(scenario.stdout.join("\n")).toContain("last-member cleanup");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "sidebar prior foreign scoreboard rapid replacement late hide",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain(
+      '"id": "paper-scoreboard-ownership-lifecycle-review"',
+    );
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-scoreboard-ownership-lifecycle-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-scoreboard-ownership-lifecycle"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-scoreboard-ownership-lifecycle-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-scoreboard-ownership-lifecycle-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("exact scoreboard installed by that owner");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-scoreboard-ownership-lifecycle-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("foreign scoreboard");
+
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("preserve-scoreboard-ownership-lifecycle");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "scoreboard owner objective team restoration",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-scoreboard-ownership-lifecycle"');
+  });
+
   it("prints Paper plugin testing evidence guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
     expect(recipe.code).toBe(0);

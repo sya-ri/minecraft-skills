@@ -1357,6 +1357,97 @@
       "failureMode": "A page-shaped response can conceal unbounded data access and produce missing, repeated, reversed, or stale rows without any explicit UI error or recovery path."
     },
     {
+      "id": "paper-scoreboard-ownership-lifecycle-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Paper scoreboard lifecycle can clobber foreign ownership or accept stale updates",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code installs, replaces, updates, hides, or restores a player scoreboard or sidebar",
+        "the implementation assumes the main scoreboard is always the correct restore target",
+        "objectives, teams, or entries are registered or removed by name without an owner ledger",
+        "line order, tied ranks, duplicate display labels, truncation, or target-version limits are implicit",
+        "a delayed task or callback can run after replacement, disconnect, world change, reload, or disable",
+        "cleanup can run after another feature or plugin has installed a foreign scoreboard"
+      ],
+      "requiredChecks": [
+        "verify target-version scoreboard members, lifecycle events, identifier and text limits, display behavior, and execution context from official evidence",
+        "model viewer-session, plugin, scoreboard-owner, and update generations plus installed and exact prior scoreboard identities",
+        "require a private board per viewer or a separate shared-board group generation with membership, one compatible snapshot, registration ownership, and cleanup only after no live viewer displays it",
+        "define rapid replacement so the old owner is invalidated and the original prior scoreboard survives the chain",
+        "restore only while the current live viewer still displays the exact board installed by this owner",
+        "make foreign takeover, unavailable viewer, restoration failure, and any fallback distinct observable outcomes",
+        "treat feature ineligibility as a hide trigger while requiring the same API-valid live viewer session, not continued feature eligibility, for restore",
+        "validate stable bounded objective, team, and entry identifiers before registration and prove same-owner reuse from a ledger",
+        "separate unique entry identity from duplicate display labels and mutate only ledger-owned registrations",
+        "build immutable snapshots with stable line IDs, total tie-broken order, explicit truncation, and deterministic minimal diffs",
+        "fence delayed build, update, and hide work immediately before mutation with every owner token and installed-board identity",
+        "cover mid-session eligibility, join, quit, reconnect, world change, replacement, partial initialization, reload, and disable with one idempotent close path",
+        "test rapid replacement, late task and hide, foreign replacement, restoration failure, two viewers sharing and replacing a board, incompatible shared snapshots, duplicate registration, tied ranks, exact and over-limit inputs, and cleanup balance",
+        "confirm BossBars, player-name resolution, vanilla command-file authoring, ranking calculation, and business display design are routed elsewhere"
+      ],
+      "evidence": [
+        "Official target-version Paper Javadocs and loaded-server or client evidence for the behavior claimed",
+        "A viewer scoreboard owner state machine and registration ledger",
+        "Deterministic snapshot, diff, truncation, collision, and duplicate-label tests",
+        "Controlled generation and conditional-restoration lifecycle race tests",
+        "Cleanup logs or metrics distinguishing restored, foreign-superseded, unavailable, failed, and leaked outcomes"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper events",
+          "plugin paper types",
+          "plugin paper members",
+          "plugin paper api",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "search_paper_events",
+          "search_paper_types",
+          "search_paper_members",
+          "get_paper_api_reference",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "searchPaperEvents",
+          "searchPaperTypes",
+          "searchPaperMembers",
+          "getPaperApiReference",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "the implementation overwrites a player's scoreboard without capturing the exact prior scoreboard and an explicit restore policy",
+        "rapid replacement captures the prior feature generation instead of carrying forward the scoreboard that preceded the ownership chain",
+        "one Scoreboard instance is shared across viewers without a group owner, or one viewer's close unregisters objectives or teams still displayed by another viewer",
+        "members of one shared-board group can publish incompatible viewer-specific snapshots or race the group's applied revision",
+        "hide, close, reload, or disable restores over a foreign scoreboard or unconditionally assigns the main scoreboard",
+        "restoration failure is swallowed, reported as success, or triggers a fallback without rechecking current ownership",
+        "revoked feature eligibility suppresses restoration even though the same live viewer session still displays the owner board",
+        "objective, team, or entry names are unbounded, unstable, registered blindly, or treated as ownership proof",
+        "cleanup resets, unregisters, or mutates entries on a prior, shared, or foreign scoreboard",
+        "duplicate display labels reuse one entry identity or collide with another logical line",
+        "line order relies on tied scores, collection iteration, unstable business input, or an unverified client assumption",
+        "text or row limits are guessed, silently clipped, or copied from a different Paper version",
+        "every update tears down and recreates registrations without a stable snapshot revision and diff",
+        "delayed work checks only UUID or cancellation and can mutate after a new owner generation is published",
+        "quit cleanup calls player scoreboard mutation after logout without verified API validity",
+        "a restoration failure leaves a still-displayed board with neither bounded retry, quarantine observability, nor an explicit terminal-disable policy",
+        "world change, reconnect, reload, disable, partial initialization, or mid-session eligibility has no explicit path",
+        "tests omit rapid replacement, stale task or hide, foreign takeover, restoration failure, two-viewer shared-board cleanup, collisions, ties, boundaries, or cleanup balance"
+      ],
+      "safeResponse": [
+        "Introduce a per-viewer owner generation, exact installed and prior scoreboard identities, and a ledger of owned registrations.",
+        "Invalidate old work before replacement and restore only when the viewer still displays the current owner's board.",
+        "Build and diff a bounded deterministic snapshot with stable line IDs and an explicit tie and truncation policy.",
+        "Close every viewer and plugin lifecycle path idempotently while preserving foreign scoreboards and exposing restoration failures.",
+        "Verify every API member and limit for the target version, and narrow claims where loaded-server or client evidence is missing."
+      ],
+      "failureMode": "A seemingly simple sidebar can destroy another plugin's scoreboard, resurrect stale state, reorder or drop lines, and leak registrations because ownership and lifecycle boundaries are implicit."
+    },
+    {
       "id": "paper-plugin-test-evidence-gap",
       "domains": ["paper-plugin"],
       "title": "Paper plugin claim exceeds the completed test evidence",

@@ -6415,6 +6415,140 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper scoreboard ownership lifecycle guidance", () => {
+    const recipe = getAuthoringRecipe("paper-scoreboard-ownership-lifecycle");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "define-viewer-owner-and-restore-policy",
+        "allocate-owned-identifiers-without-collisions",
+        "publish-deterministic-snapshot-diffs",
+        "fence-delayed-updates-and-restore-conditionally",
+        "close-lifecycle-paths-and-test-races",
+      ]),
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "carry the original restore target forward",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "leave the foreign scoreboard untouched",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "shared-board group owner",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "reject viewer-specific desired content",
+    );
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "revoked feature eligibility is a reason to hide",
+    );
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "A rapid A-to-B replacement test",
+    );
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "A two-viewer shared-board test",
+    );
+    expect(recipe.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "observable quarantined-owner outcome",
+    );
+    expect(recipe.finalChecks).toContain("paper-scoreboard-ownership-lifecycle-safety");
+
+    const guardrail = getAuthoringGuardrail("paper-scoreboard-ownership-lifecycle-safety");
+    expect(guardrail.rules.join("\n")).toContain("exact scoreboard installed by that owner");
+    expect(guardrail.rules.join("\n")).toContain("visible subset plus omitted result");
+    expect(guardrail.rules.join("\n")).toContain("mid-session eligibility");
+
+    const diagnostic = getAuthoringDiagnostic("paper-scoreboard-ownership-lifecycle-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("foreign scoreboard");
+    expect(diagnostic.failIf.join("\n")).toContain("restoration failure is swallowed");
+    expect(diagnostic.failIf.join("\n")).toContain("neither bounded retry");
+    expect(diagnostic.failIf.join("\n")).toContain("different Paper version");
+
+    const scenario = getAuthoringScenario("paper-scoreboard-ownership-lifecycle-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-scoreboard-ownership-lifecycle"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-scoreboard-ownership-lifecycle-unsafe",
+    );
+    expect(scenario.successCriteria.join("\n")).toContain("total deterministic order");
+    expect(scenario.successCriteria.join("\n")).toContain("restoration failure");
+    expect(scenario.successCriteria.join("\n")).toContain("last-member cleanup");
+    expect(scenario.successCriteria.join("\n")).toContain(
+      "compatible desired and applied snapshot",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("vanilla command-file syntax");
+
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain(
+      "preserve-scoreboard-ownership-lifecycle",
+    );
+
+    for (const query of [
+      "Paper sidebar restore prior foreign scoreboard rapid replacement late hide",
+      "scoreboard objective team duplicate registration tied ranks deterministic line order",
+      "world change sidebar restoration failure stale callback",
+    ]) {
+      const scenarioSearch = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarioSearch.results[0]?.scenario.id, query).toBe(
+        "paper-scoreboard-ownership-lifecycle-review",
+      );
+    }
+
+    const catalogSearch = searchCatalog({
+      query: "Paper scoreboard owner foreign restore objective team late hide",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-scoreboard-ownership-lifecycle",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-scoreboard-ownership-lifecycle-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toContain("paper-scoreboard-ownership-lifecycle");
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-scoreboard-ownership-lifecycle-unsafe",
+    );
+    const task =
+      "Paper sidebar late hide restores over a foreign scoreboard after rapid replacement";
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task,
+      domain: "paper-plugin",
+    });
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-scoreboard-ownership-lifecycle",
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-scoreboard-ownership-lifecycle-review",
+    );
+
+    const commandQuery = "use /scoreboard players set in a datapack";
+    const commandScenarioSearch = searchAuthoringScenarios({ query: commandQuery });
+    expect(commandScenarioSearch.results[0]?.scenario.id).toBe("datapack-function-command-review");
+    const commandCatalogSearch = searchCatalog({
+      query: commandQuery,
+      kind: "authoring-recipe",
+    });
+    expect(commandCatalogSearch.results[0]?.id).toBe("datapack-function-command");
+
+    for (const paperQuery of [
+      "Paper plugin sidebar scoreboard objective lifecycle",
+      "Paper plugin sidebar mirrors a datapack scoreboard objective",
+    ]) {
+      expect(searchAuthoringScenarios({ query: paperQuery }).results[0]?.scenario.id).toBe(
+        "paper-scoreboard-ownership-lifecycle-review",
+      );
+      expect(searchCatalog({ query: paperQuery, kind: "authoring-recipe" }).results[0]?.id).toBe(
+        "paper-scoreboard-ownership-lifecycle",
+      );
+    }
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",
