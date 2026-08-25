@@ -93,6 +93,7 @@ minecraft-skills player-skin validate-layout ./skin.png --base-rect 8,8,8,8 --ha
 minecraft-skills player-texture download 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef --kind skin --output ./skin.png
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
 minecraft-skills fabric toolchain 1.21.11
+minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills velocity toolchain
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -161,6 +162,12 @@ diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppre
 retains only bounded events/frames/labels, and sanitizes credentials, IP addresses, absolute paths,
 terminal controls, and unsafe Unicode before returning JSON. Referenced JARs and explicitly named
 mods/plugins are evidence labels only, not automatic blame attribution.
+
+`fabric validate-mod` checks bounded structural rules for current `fabric.mod.json` schema v1 and
+bounded JAR structure offline. It does not validate dependency predicates or satisfaction,
+entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR metadata, or icon
+pixels. MCP clients use `validate_fabric_mod` with metadata and optional archive-entry metadata
+because binary JAR uploads are not accepted.
 
 Registry comparisons report entry and protocol ID changes only where both versions have an official
 entry index; protocol changes require numeric IDs on both sides. `outcome` and bounded

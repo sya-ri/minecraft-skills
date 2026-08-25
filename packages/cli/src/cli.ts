@@ -29,6 +29,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
@@ -142,6 +143,7 @@ import {
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validateDatapackProject,
+  validateFabricModJar,
   validateModrinthPackArchive,
   validatePackFilesContent,
   validatePlayerSkinLayout,
@@ -156,6 +158,7 @@ import {
   runRconCommand,
 } from "@minecraft-skills/rcon";
 import { readDatapackProjectFiles } from "./datapackProjectFiles.js";
+import { readFabricModJarFile } from "./fabricModJarFile.js";
 import { readBoundedPngFile } from "./filePrefix.js";
 import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
 import {
@@ -809,6 +812,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft analyze-log": "analyze-minecraft-log",
     "fabric toolchain": "fabric-toolchain",
     "velocity toolchain": "velocity-toolchain",
+    "fabric validate-mod": "fabric-validate-mod",
     "modrinth search": "modrinth-search",
     "modrinth versions": "modrinth-versions",
     "modrinth compatibility": "modrinth-compatibility",
@@ -1051,6 +1055,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "fabric-toolchain": "fabric toolchain",
   "velocity-toolchain": "velocity toolchain",
   "server-validate-properties": "server validate-properties",
+  "fabric-validate-mod": "fabric validate-mod",
   paper:
     "plugin paper info, plugin paper api, plugin paper types, plugin paper members, or plugin paper events",
   references: "reference list",
@@ -1229,6 +1234,9 @@ Safety notes:
   - Paper event search results are candidates until checked against Paper/Bukkit API surfaces.
   - server.properties validation does not prove target-version key membership, runtime encoding,
     proxy authentication, or fork-specific behavior; unknown keys remain explicit coverage gaps.
+  - Fabric mod validation checks bounded schema-v1 structure and archive evidence; it does not
+    validate dependency predicates, entrypoint/runtime loading, mixin/access-widener syntax,
+    nested JAR metadata, or icon pixels.
   - Minecraft Wiki pages are human-only background: do not fetch, crawl, summarize, or cite them in
     AI workflows.
 
@@ -1298,6 +1306,7 @@ Grouped commands:
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
+  minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
   minecraft-skills velocity toolchain [--limit 10] [--timeout-ms 5000]
   minecraft-skills modrinth search <query...> [--version version] [--type type] [--loader loader] [--category category] [--index relevance|downloads|follows|newest|updated] [--offset 0] [--limit 10]
   minecraft-skills modrinth versions <project-id-or-slug> [--game-version version] [--loader loader] [--featured true|false] [--include-changelog true|false]
@@ -1368,6 +1377,8 @@ Command reference:
                  Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
   fabric toolchain
                  Look up bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta.
+  fabric validate-mod
+                 Check bounded structural rules for current schema v1 and JAR evidence offline.
   velocity toolchain
                  Resolve the current official velocity-api coordinate, documentation, and applicable Java requirement.
   reference list Print generated skill references.
@@ -2863,6 +2874,36 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+
+    if (command === "fabric-validate-mod") {
+      const modPaths = positionalArgsWithOptions(args, { values: ["--max-archive-bytes"] });
+      const modPath = modPaths[0];
+      if (modPaths.length !== 1 || !modPath) {
+        throw new Error("fabric validate-mod requires exactly one local .jar file");
+      }
+      if (!modPath.toLowerCase().endsWith(".jar")) {
+        throw new Error("fabric validate-mod requires a file with the .jar extension");
+      }
+      const maxArchiveBytes = readIntegerArg(
+        args.includes("--max-archive-bytes")
+          ? readOption(args, "--max-archive-bytes", "")
+          : String(defaultFabricModValidationLimits.maxArchiveBytes),
+        "fabric validate-mod --max-archive-bytes",
+      );
+      if (
+        !Number.isSafeInteger(maxArchiveBytes) ||
+        maxArchiveBytes < 1 ||
+        defaultFabricModValidationLimits.maxArchiveBytes < maxArchiveBytes
+      ) {
+        throw new Error(
+          `fabric validate-mod --max-archive-bytes must be between 1 and ${defaultFabricModValidationLimits.maxArchiveBytes}`,
+        );
+      }
+      const archive = readFabricModJarFile(modPath, maxArchiveBytes);
+      const result = validateFabricModJar(archive, { limits: { maxArchiveBytes } });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
     }
 
     if (command === "fabric-toolchain") {

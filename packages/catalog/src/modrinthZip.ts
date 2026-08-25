@@ -56,11 +56,20 @@ export type InspectedModrinthArchiveEntry = {
 export type InspectModrinthArchiveOptions = {
   limits: InspectModrinthArchiveLimits;
   addDiagnostic: (diagnostic: ModrinthArchiveDiagnostic) => void;
+  /** Set false when reusing the structural ZIP inspector for a non-Modrinth archive. */
+  inspectModrinthIndex?: boolean;
+  /** Additional exact archive paths whose verified payloads should be retained for callers. */
+  capturePaths?: ReadonlySet<string>;
+  /** Per-entry bound for additional retained payloads. Defaults to `maxIndexBytes`. */
+  maxCapturedEntryBytes?: number;
+  /** Aggregate bound for additional retained payloads. Defaults to `maxIndexBytes`. */
+  maxCapturedTotalBytes?: number;
 };
 
 export type InspectModrinthArchiveResult = {
   entries: InspectedModrinthArchiveEntry[];
   indexBytes: Uint8Array | null;
+  capturedEntries: ReadonlyMap<string, Uint8Array>;
   /** Whether `entries` represents the complete parsed central directory. */
   entriesAuthoritative: boolean;
 };
@@ -85,6 +94,7 @@ type PendingExpansion = {
   entry: CentralEntry;
   dataOffset: number;
   isIndex: boolean;
+  capture: boolean;
 };
 
 const crcTable = new Uint32Array(256);
@@ -278,8 +288,9 @@ function inflateEntry(
 /**
  * Inspects a Modrinth archive without trusting ZIP sizes or expanding unbounded output.
  *
- * Only the root `modrinth.index.json` payload is retained. Other files are expanded only long
- * enough to verify their declared size and CRC-32, then released.
+ * By default the root `modrinth.index.json` payload is retained. Callers may disable that behavior
+ * and retain a bounded set of other exact paths. All remaining files are expanded only long enough
+ * to verify their declared size and CRC-32, then released.
  */
 export function inspectModrinthArchive(
   archive: Uint8Array,
@@ -288,6 +299,7 @@ export function inspectModrinthArchive(
   const emptyResult: InspectModrinthArchiveResult = {
     entries: [],
     indexBytes: null,
+    capturedEntries: new Map(),
     entriesAuthoritative: false,
   };
   let diagnosticCallbackAvailable = true;
@@ -346,7 +358,7 @@ export function inspectModrinthArchive(
     ) {
       addDiagnostic({
         code: "archive.zip64-unsupported",
-        message: "ZIP64 archives are not supported by the Modrinth archive validator.",
+        message: "ZIP64 archives are not supported by this archive validator.",
       });
       return emptyResult;
     }
@@ -382,7 +394,12 @@ export function inspectModrinthArchive(
           code: "archive.central-header-invalid",
           message: `Central-directory entry ${entryIndex} is missing or truncated.`,
         });
-        return { entries, indexBytes: null, entriesAuthoritative: false };
+        return {
+          entries,
+          indexBytes: null,
+          capturedEntries: new Map(),
+          entriesAuthoritative: false,
+        };
       }
 
       const versionMadeBy = readUInt16LE(archive, centralOffset + 4) ?? 0;
@@ -406,7 +423,12 @@ export function inspectModrinthArchive(
           code: "archive.central-header-truncated",
           message: `Central-directory entry ${entryIndex} extends past the central directory.`,
         });
-        return { entries, indexBytes: null, entriesAuthoritative: false };
+        return {
+          entries,
+          indexBytes: null,
+          capturedEntries: new Map(),
+          entriesAuthoritative: false,
+        };
       }
 
       const rawName = archive.subarray(centralOffset + 46, centralOffset + 46 + nameLength);
@@ -569,6 +591,7 @@ export function inspectModrinthArchive(
           }) => entry,
         ),
         indexBytes: null,
+        capturedEntries: new Map(),
         entriesAuthoritative: false,
       };
     }
@@ -584,6 +607,18 @@ export function inspectModrinthArchive(
     const ranges: ByteRange[] = [];
     const pendingExpansions: PendingExpansion[] = [];
     let indexBytes: Uint8Array | null = null;
+    const capturedEntries = new Map<string, Uint8Array>();
+    const maxCapturedEntryBytes = options.maxCapturedEntryBytes ?? options.limits.maxIndexBytes;
+    const maxCapturedTotalBytes = options.maxCapturedTotalBytes ?? options.limits.maxIndexBytes;
+    const captureLimitsValid =
+      isValidLimit(maxCapturedEntryBytes, true) && isValidLimit(maxCapturedTotalBytes, true);
+    if (!captureLimitsValid && options.capturePaths !== undefined) {
+      addDiagnostic({
+        code: "archive.capture-limits-invalid",
+        message: "Archive capture limits must be finite positive integers.",
+      });
+    }
+    let capturedDeclaredBytes = 0;
     let indexSeen = false;
     for (const entry of entries) {
       const localOffset = entry.localHeaderOffset;
@@ -726,7 +761,20 @@ export function inspectModrinthArchive(
       }
       ranges.push({ start: localOffset, end: rangeEnd, path: entry.path });
 
-      const isIndex = entry.path === INDEX_PATH && !entry.directory;
+      const isIndex =
+        options.inspectModrinthIndex !== false && entry.path === INDEX_PATH && !entry.directory;
+      const capture =
+        captureLimitsValid && !entry.directory && options.capturePaths?.has(entry.path) === true;
+      if (capture) {
+        capturedDeclaredBytes += entry.size;
+        if (maxCapturedEntryBytes < entry.size) {
+          addDiagnostic({
+            code: "archive.capture-entry-size-limit-exceeded",
+            path: entry.path,
+            message: `Captured entry ${displayArchivePath(entry.path)} declares ${entry.size} bytes, above the ${maxCapturedEntryBytes}-byte limit.`,
+          });
+        }
+      }
       if (isIndex && indexSeen) {
         addDiagnostic({
           code: "archive.index-duplicate",
@@ -752,7 +800,15 @@ export function inspectModrinthArchive(
       ) {
         continue;
       }
-      pendingExpansions.push({ entry, dataOffset, isIndex });
+      pendingExpansions.push({ entry, dataOffset, isIndex, capture });
+    }
+
+    const captureTotalLimitExceeded = maxCapturedTotalBytes < capturedDeclaredBytes;
+    if (captureTotalLimitExceeded) {
+      addDiagnostic({
+        code: "archive.capture-total-size-limit-exceeded",
+        message: `Captured entries declare ${capturedDeclaredBytes} total bytes, above the ${maxCapturedTotalBytes}-byte limit.`,
+      });
     }
 
     ranges.sort(
@@ -784,7 +840,7 @@ export function inspectModrinthArchive(
       }
     }
 
-    for (const { entry, dataOffset, isIndex } of pendingExpansions) {
+    for (const { entry, dataOffset, isIndex, capture } of pendingExpansions) {
       if (overlappingPaths.has(entry.path)) continue;
       const boundedLength = Math.max(
         1,
@@ -813,6 +869,14 @@ export function inspectModrinthArchive(
         continue;
       }
       if (isIndex && indexBytes === null) indexBytes = Uint8Array.from(expanded);
+      if (
+        capture &&
+        entry.size <= maxCapturedEntryBytes &&
+        !captureTotalLimitExceeded &&
+        !capturedEntries.has(entry.path)
+      ) {
+        capturedEntries.set(entry.path, Uint8Array.from(expanded));
+      }
     }
 
     return {
@@ -821,6 +885,7 @@ export function inspectModrinthArchive(
           entry,
       ),
       indexBytes,
+      capturedEntries,
       entriesAuthoritative: true,
     };
   } catch {

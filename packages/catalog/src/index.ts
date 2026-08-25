@@ -159,6 +159,7 @@ import {
 } from "./schemas.js";
 
 export * from "./fabricMeta.js";
+export * from "./fabricMod.js";
 export {
   downloadJavaPlayerTexture,
   inspectJavaPlayerTextureBytes,
@@ -1952,6 +1953,18 @@ function isServerPropertiesValidationQuery(query: string): boolean {
       query,
     );
   return hasPropertyKey && /\b(config|configuration|properties|server)\b/.test(normalized);
+}
+
+function isFabricModValidationDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  const hasFabricArtifact =
+    /\bfabric mod json\b/.test(normalized) ||
+    (/\bfabric\b/.test(normalized) && /\b(mod (?:artifact|jar|metadata)|jar)\b/.test(normalized));
+  const hasValidationIntent =
+    /\b(validat(?:e|es|ed|ing|ion)?|verif(?:y|ies|ied|ication)|check|inspect|lint)\b/.test(
+      normalized,
+    );
+  return hasFabricArtifact && hasValidationIntent;
 }
 
 function isPaperItemDeliveryDiscoveryQuery(query: string): boolean {
@@ -5718,6 +5731,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       "Validate bounded Java Properties syntax, duplicate effective values, stable value types, and file-local server property correlations without returning values.",
     );
   }
+  if (!searchDomain && isFabricModValidationDiscoveryQuery(task)) {
+    add(
+      "fabric validate-mod <file.jar>",
+      "Validate bounded Fabric Loader v1 metadata, JAR structure, and referenced-file presence offline.",
+    );
+  }
   const migrationTask =
     /\b(migrat(?:e|es|ed|ing|ion)?|upgrad(?:e|es|ed|ing)|port(?:s|ed|ing)?|version)\b/.test(
       lower,
@@ -6401,6 +6420,18 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       score: 250,
       matches: ["velocity-api", "PaperMC Maven", "Velocity development docs", "Java requirement"],
       lookup: "velocity toolchain",
+    });
+  }
+
+  if (!options.domain && isFabricModValidationDiscoveryQuery(query)) {
+    addCrossResult(results, {
+      surface: "fabric-mod-validation",
+      domain: "minecraft",
+      kind: "offline-artifact-validation",
+      title: "Fabric mod metadata and JAR validation",
+      score: 100,
+      matches: ["fabric.mod.json schemaVersion 1", "JAR paths", "referenced files"],
+      lookup: "fabric validate-mod <file.jar>",
     });
   }
 

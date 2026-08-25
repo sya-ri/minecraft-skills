@@ -88,6 +88,8 @@ import {
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
   suggestMinecraftLookups,
+  validateFabricMod,
+  validateFabricModJar,
   validateModrinthPack,
   validateModrinthPackArchive,
   validatePackFileContent,
@@ -242,6 +244,31 @@ function validModrinthIndex(): Record<string, unknown> {
     dependencies: {
       minecraft: "1.21.11",
       "fabric-loader": "0.18.4",
+    },
+  };
+}
+
+function validFabricModMetadata(): Record<string, unknown> {
+  return {
+    schemaVersion: 1,
+    id: "example-mod",
+    version: "1.0.0",
+    name: "Example Mod",
+    environment: "client",
+    icon: { "64": "assets/example-mod/icon.png" },
+    entrypoints: {
+      main: ["com.example.ExampleMod"],
+      client: [{ adapter: "default", value: "com.example.ExampleClient" }],
+    },
+    mixins: [
+      "example-mod.mixins.json",
+      { config: "example-mod.client.mixins.json", environment: "client" },
+    ],
+    accessWidener: "example-mod.accesswidener",
+    jars: [{ file: "META-INF/jars/shared.jar" }],
+    depends: {
+      fabricloader: ">=0.16.0",
+      minecraft: ["1.21.11", "1.21.10"],
     },
   };
 }
@@ -3378,6 +3405,324 @@ describe("catalog", () => {
     expect(result).toEqual({ projects: 123 });
   });
 
+  it("validates Fabric Loader v1 metadata and referenced JAR files offline", () => {
+    const metadata = validFabricModMetadata();
+    const metadataOnly = validateFabricMod({ metadata });
+    expect(metadataOnly.valid).toBe(true);
+    expect(metadataOnly.validationStrength).toBe("none");
+    expect(metadataOnly.coverage.checked).not.toContain(
+      "referenced-file presence against parsed metadata and authoritative archive entries",
+    );
+    expect(metadataOnly.mod).toMatchObject({
+      id: "example-mod",
+      version: "1.0.0",
+      environment: "client",
+      entrypointGroups: 2,
+      mixinConfigurations: 2,
+      nestedJars: 1,
+      referencedFiles: 5,
+    });
+
+    const archive = testJar({
+      "fabric.mod.json": JSON.stringify(metadata),
+      "assets/example-mod/icon.png": "png-placeholder",
+      "example-mod.mixins.json": "{}",
+      "example-mod.client.mixins.json": "{}",
+      "example-mod.accesswidener": "accessWidener v2 named",
+      "META-INF/jars/shared.jar": "nested-placeholder",
+    });
+    const binary = validateFabricModJar(archive);
+    expect(binary.valid).toBe(true);
+    expect(binary.validationStrength).toBe("binary");
+    expect(binary.coverage.checked).toContain("bounded ZIP archive structure");
+    expect(binary.coverage.checked).toContain(
+      "bounded archive-entry paths, duplicate paths, and file/directory layout",
+    );
+    expect(binary.coverage.checked).toContain(
+      "referenced-file presence against parsed metadata and authoritative archive entries",
+    );
+    expect(binary.archive).toEqual({ provided: true, entries: 6, missingReferencedFiles: 0 });
+  });
+
+  it("reports invalid Fabric metadata, unsafe paths, missing references, and bounded input", () => {
+    const invalid = validateFabricMod({
+      metadata: {
+        id: "bad id",
+        schemaVersion: 2,
+        version: "",
+        environment: "both",
+        mixins: ["../outside.mixins.json"],
+        jars: [{ file: "nested/not-a-jar.txt" }],
+        depends: { "bad id": 1 },
+      },
+      archiveEntries: [
+        { path: "fabric.mod.json", size: 10 },
+        { path: "Assets/Icon.png", size: 1 },
+        { path: "assets/icon.png", size: 1 },
+      ],
+    });
+    const codes = invalid.diagnostics.map((diagnostic) => diagnostic.code);
+    expect(invalid.valid).toBe(false);
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        "metadata.unsupported-schema-version",
+        "metadata.invalid-mod-id",
+        "metadata.invalid-string",
+        "metadata.invalid-environment",
+        "metadata.unsafe-reference-path",
+        "metadata.invalid-dependency-range",
+        "archive.normalized-path-conflict",
+        "archive.reference-missing",
+      ]),
+    );
+
+    const wrongOrder = validateFabricMod({
+      metadata: '{"id":"example-mod","schemaVersion":1,"version":"1.0.0"}',
+    });
+    expect(wrongOrder.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.schema-version-order" })]),
+    );
+
+    const uppercaseId = validateFabricMod({
+      metadata: { schemaVersion: 1, id: "Example-Mod", version: "1.0.0" },
+    });
+    expect(uppercaseId.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "metadata.invalid-mod-id", path: "$.id" }),
+      ]),
+    );
+
+    const bounded = validateFabricMod({
+      metadata: JSON.stringify(validFabricModMetadata()),
+      limits: { maxMetadataBytes: 8 },
+    });
+    expect(bounded.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.byte-limit" })]),
+    );
+
+    const malformedArchive = validateFabricModJar(Buffer.from("not a zip"));
+    expect(malformedArchive.valid).toBe(false);
+    expect(malformedArchive.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "archive.eocd-invalid" })]),
+    );
+    const malformedCodes = malformedArchive.diagnostics.map((diagnostic) => diagnostic.code);
+    expect(malformedCodes).not.toContain("archive.metadata-missing");
+    expect(malformedCodes).not.toContain("archive.reference-missing");
+    expect(malformedArchive.coverage.checked).toContain("bounded ZIP archive structure");
+    expect(malformedArchive.coverage.checked).not.toContain(
+      "bounded archive-entry paths, duplicate paths, and file/directory layout",
+    );
+    expect(malformedArchive.coverage.checked).not.toContain(
+      "referenced-file presence against parsed metadata and authoritative archive entries",
+    );
+    expect(malformedArchive.coverage.notChecked).toContain(
+      "archive-entry paths, duplicate paths, and file/directory layout because no usable archive-entry list was available",
+    );
+    expect(malformedArchive.coverage.notChecked).toContain(
+      "referenced-file presence because no authoritative archive-entry list was available",
+    );
+
+    const invalidJsonArchive = validateFabricModJar(
+      testJar({ "fabric.mod.json": "{", "declared-entrypoint.json": "{}" }),
+    );
+    expect(invalidJsonArchive.coverage.checked).toContain(
+      "bounded archive-entry paths, duplicate paths, and file/directory layout",
+    );
+    expect(invalidJsonArchive.coverage.checked).not.toContain(
+      "referenced-file presence against parsed metadata and authoritative archive entries",
+    );
+    expect(invalidJsonArchive.coverage.notChecked).toContain(
+      "referenced-file presence because metadata did not parse to an object",
+    );
+  });
+
+  it("ignores inherited Fabric metadata fields after bounded graph inspection", () => {
+    const inheritedFields = {
+      schemaVersion: Object.getOwnPropertyDescriptor(Object.prototype, "schemaVersion"),
+      id: Object.getOwnPropertyDescriptor(Object.prototype, "id"),
+      version: Object.getOwnPropertyDescriptor(Object.prototype, "version"),
+      value: Object.getOwnPropertyDescriptor(Object.prototype, "value"),
+    };
+    const [inheritedRoot, inheritedNested] = (() => {
+      try {
+        Object.defineProperties(Object.prototype, {
+          schemaVersion: { configurable: true, value: 1 },
+          id: { configurable: true, value: "x1" },
+          version: { configurable: true, value: "1" },
+          value: { configurable: true, value: "example.InheritedEntrypoint" },
+        });
+
+        return [
+          validateFabricMod({ metadata: {} }),
+          validateFabricMod({
+            metadata: {
+              schemaVersion: 1,
+              id: "x1",
+              version: "1",
+              entrypoints: { main: [{}] },
+            },
+          }),
+        ] as const;
+      } finally {
+        for (const [key, descriptor] of Object.entries(inheritedFields)) {
+          if (descriptor === undefined) Reflect.deleteProperty(Object.prototype, key);
+          else Object.defineProperty(Object.prototype, key, descriptor);
+        }
+      }
+    })();
+
+    expect(inheritedRoot.valid).toBe(false);
+    expect(inheritedRoot.mod).toMatchObject({ id: null, version: null });
+    expect(inheritedNested.valid).toBe(false);
+    expect(inheritedNested.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "metadata.invalid-type",
+          path: "$.entrypoints.main[0].value",
+        }),
+      ]),
+    );
+  });
+
+  it("matches current Loader v1 structural edge cases without claiming runtime evidence", () => {
+    const result = validateFabricMod({
+      metadata: {
+        schemaVersion: 1,
+        id: "x1",
+        version: "1",
+        name: "",
+        environment: "CLIENT",
+        contact: { homepage: "" },
+        authors: ["", { name: "", contact: {} }],
+        contributors: [],
+        license: [],
+        icon: { "2147483647": "icon.asset" },
+        entrypoints: { "": ["", { adapter: "", value: "" }, { value: "example.Entry" }] },
+        jars: [{ file: "nested.payload" }],
+        languageAdapters: { "": "" },
+        depends: { fabricloader: [] },
+        custom: {},
+      },
+      archiveEntries: [
+        { path: "fabric.mod.json" },
+        { path: "icon.asset" },
+        { path: "nested.payload" },
+      ],
+    });
+    const oversizedIcon = validateFabricMod({
+      metadata: {
+        schemaVersion: 1,
+        id: "x1",
+        version: "1",
+        icon: { "2147483648": "icon.png" },
+      },
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.mod).toMatchObject({ name: "", environment: "client" });
+    expect(oversizedIcon.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.invalid-icon-size" })]),
+    );
+  });
+
+  it("bounds Fabric metadata graphs and retained diagnostics", () => {
+    const sparse: unknown[] = [];
+    sparse.length = 2;
+    sparse[1] = "example-alias";
+    const sparseResult = validateFabricMod({
+      metadata: { schemaVersion: 1, id: "example-mod", version: "1", provides: sparse },
+    });
+    expect(sparseResult.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.sparse-array" })]),
+    );
+
+    const cycle: Record<string, unknown> = {};
+    cycle.self = cycle;
+    const cycleResult = validateFabricMod({
+      metadata: { schemaVersion: 1, id: "example-mod", version: "1", custom: cycle },
+    });
+    expect(cycleResult.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.cyclic-value" })]),
+    );
+
+    let getterRead = false;
+    const accessorMetadata = Object.defineProperty({ schemaVersion: 1, version: "1" }, "id", {
+      enumerable: true,
+      get: () => {
+        getterRead = true;
+        return "example-mod";
+      },
+    });
+    const accessorResult = validateFabricMod({ metadata: accessorMetadata });
+    const hiddenMetadata = Object.defineProperty({ schemaVersion: 1, version: "1" }, "id", {
+      value: "example-mod",
+      enumerable: false,
+    });
+    const hiddenResult = validateFabricMod({ metadata: hiddenMetadata });
+    const namedArray = ["example-alias"] as unknown[] & { hidden?: string };
+    Object.defineProperty(namedArray, "hidden", { value: "ignored", enumerable: false });
+    const namedArrayResult = validateFabricMod({
+      metadata: { schemaVersion: 1, id: "example-mod", version: "1", provides: namedArray },
+    });
+    expect(getterRead).toBe(false);
+    expect(accessorResult.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.accessor-property" })]),
+    );
+    expect(hiddenResult.diagnostics).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "metadata.accessor-property" })]),
+    );
+    expect(namedArrayResult.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "metadata.non-json-array-property" }),
+      ]),
+    );
+
+    const truncated = validateFabricMod({
+      metadata: {
+        schemaVersion: 1,
+        id: "example-mod",
+        version: "1",
+        provides: Array.from({ length: 20 }, (_, index) => `bad alias ${index}`),
+      },
+      limits: { maxDiagnostics: 3 },
+    });
+    expect(truncated.valid).toBe(false);
+    expect(truncated.errorCount).toBe(20);
+    expect(truncated.diagnostics).toHaveLength(3);
+    expect(truncated.diagnosticsTruncated).toBe(true);
+    expect(truncated.omittedDiagnosticCount).toBe(17);
+  });
+
+  it("keeps Fabric archive checks independent from Modrinth index semantics", () => {
+    const metadata = '{"schemaVersion":1,"id":"x1","version":"1"}';
+    const result = validateFabricModJar(
+      testJar({
+        "fabric.mod.json": metadata,
+        "modrinth.index.json": "x".repeat(256),
+      }),
+      { limits: { maxMetadataBytes: 128 } },
+    );
+    expect(result.valid).toBe(true);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.code)).not.toContain(
+      "archive.index-size-limit-exceeded",
+    );
+
+    const layout = validateFabricMod({
+      metadata,
+      archiveEntries: [
+        { path: "fabric.mod.json", size: 1 },
+        { path: "nested", size: 1 },
+        { path: "nested/child.jar", size: 1 },
+      ],
+    });
+    expect(layout.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "archive.metadata-size-mismatch" }),
+        expect.objectContaining({ code: "archive.path-conflict" }),
+      ]),
+    );
+  });
+
   it("validates a Modrinth pack index and archive offline", () => {
     const index = JSON.stringify(validModrinthIndex());
     const result = validateModrinthPackArchive(
@@ -4305,6 +4650,33 @@ describe("catalog", () => {
         false,
       );
     }
+  });
+
+  it("routes English Fabric artifact validation queries to the offline JAR validator", () => {
+    const search = searchAll({
+      version: "1.21.11",
+      query: "validate a Fabric mod JAR and fabric.mod.json",
+    });
+    expect(search.results[0]).toMatchObject({
+      surface: "fabric-mod-validation",
+      lookup: "fabric validate-mod <file.jar>",
+    });
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "check a Fabric mod artifact before publishing",
+    });
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      "fabric validate-mod <file.jar>",
+    );
+
+    const toolchain = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "select a Fabric Loader and Yarn toolchain",
+    });
+    expect(toolchain.suggestedTools.map((entry) => entry.tool)).not.toContain(
+      "fabric validate-mod <file.jar>",
+    );
   });
 
   it("finds resourcepack assets from all available indexes", () => {

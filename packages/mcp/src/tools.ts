@@ -16,6 +16,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultDatapackProjectValidationLimits,
+  defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultModrinthPackValidationLimits,
   defaultResourcepackPngAlphaBoundsLimits,
@@ -133,6 +134,7 @@ import {
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validateDatapackProject,
+  validateFabricMod,
   validateModrinthPack,
   validatePackFilesContent,
   validatePlayerSkinLayout,
@@ -147,6 +149,7 @@ import {
   isRconConfigured,
   runRconCommand,
 } from "@minecraft-skills/rcon";
+import { fabricModArchivePathMaxLength, preflightFabricModInput } from "./fabricModInput.js";
 
 export type ToolContent = {
   type: "text";
@@ -1532,6 +1535,88 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["index"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_fabric_mod",
+    description:
+      "Check bounded structural rules for current Fabric Loader fabric.mod.json schema v1 and optional JAR entry metadata offline. Pass parsed metadata or bounded JSON text plus entry metadata; binary JARs are not accepted. This does not validate dependency predicates or satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax, nested JAR metadata, or icon pixels.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        metadata: {
+          oneOf: [
+            {
+              type: "string",
+              maxLength: defaultFabricModValidationLimits.maxMetadataBytes,
+            },
+            { type: "object" },
+          ],
+          description:
+            "Parsed fabric.mod.json data or its UTF-8 JSON text. This tool supports the current schemaVersion 1 only.",
+        },
+        archiveEntries: {
+          type: "array",
+          maxItems: defaultFabricModValidationLimits.maxArchiveEntries,
+          items: {
+            type: "object",
+            properties: {
+              path: {
+                type: "string",
+                maxLength: fabricModArchivePathMaxLength,
+              },
+              size: {
+                type: "integer",
+                minimum: 0,
+                maximum: Number.MAX_SAFE_INTEGER,
+              },
+              directory: { type: "boolean" },
+            },
+            required: ["path"],
+            additionalProperties: false,
+          },
+          description:
+            "Optional central-directory-style metadata. Omit it for fabric.mod.json-only validation; do not send archive bytes.",
+        },
+        limits: {
+          type: "object",
+          properties: {
+            maxArchiveEntries: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultFabricModValidationLimits.maxArchiveEntries,
+            },
+            maxMetadataBytes: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultFabricModValidationLimits.maxMetadataBytes,
+            },
+            maxDiagnostics: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultFabricModValidationLimits.maxDiagnostics,
+            },
+            maxMetadataNodes: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultFabricModValidationLimits.maxMetadataNodes,
+            },
+            maxMetadataDepth: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultFabricModValidationLimits.maxMetadataDepth,
+            },
+            maxMetadataStringBytes: {
+              type: "integer",
+              minimum: 1,
+              maximum: defaultFabricModValidationLimits.maxMetadataStringBytes,
+            },
+          },
+          additionalProperties: false,
+        },
+      },
+      required: ["metadata"],
       additionalProperties: false,
     },
   },
@@ -3536,6 +3621,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
         }),
       );
+    }
+    if (name === "validate_fabric_mod") {
+      return text(validateFabricMod(preflightFabricModInput(args)));
     }
     if (name === "get_fabric_toolchain") {
       if (typeof args.gameVersion !== "string") {

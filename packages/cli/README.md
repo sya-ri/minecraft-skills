@@ -110,6 +110,8 @@ minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
+minecraft-skills fabric validate-mod ./example-mod.jar
+minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
 minecraft-skills velocity toolchain --limit 10 --timeout-ms 5000
 minecraft-skills modrinth search "voice chat" --version 1.21.11 --type mod --loader fabric
 minecraft-skills modrinth versions simple-voice-chat --game-version 1.21.11 --loader fabric
@@ -252,6 +254,14 @@ stable scalar checks, duplicate effective values, and file-local RCON/resource-p
 are reported separately from unknown keys, target-version membership, runtime encoding, proxy
 configuration, and fork behavior. Invalid or preflight-rejected files return exit code 1;
 warning-only files return 0.
+
+`fabric validate-mod` requires one regular local `.jar` file. It checks the configured byte ceiling
+before allocation and verifies the same file identity, size, and timestamps before and after the
+read. `--max-archive-bytes` can lower but never raise the 256 MiB default. Validation checks
+bounded structural rules for current `fabric.mod.json` schema v1, portable JAR paths, ZIP bounds,
+and referenced-file presence; invalid results return exit code 1. It does not validate dependency
+predicates or satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax,
+nested JAR metadata, or icon pixels.
 
 `minecraft support-matrix` shows the latest bundled aliases and which generated surfaces are bundled or
 downloadable. `data manifest`, `data cache-dir`, `data cache-list`, `data cache-clean`, and

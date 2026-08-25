@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { deflateSync } from "node:zlib";
 import {
   defaultDatapackProjectValidationLimits,
+  defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
   defaultServerPropertiesValidationLimits,
@@ -254,6 +255,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("analyze_minecraft_log");
     expect(tools.map((tool) => tool.name)).toContain("get_pack_migration_plan");
     expect(tools.map((tool) => tool.name)).toContain("search_all");
+    expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
     expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("resolve_velocity_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
@@ -2412,6 +2414,173 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("PlayerJoinEvent");
     expect(fetchMock.mock.calls[0]?.[0] ?? "").toContain("version=1.21.11");
+  });
+
+  it("validates Fabric v1 metadata and archive-entry evidence without binary input", async () => {
+    const result = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: {
+        schemaVersion: 1,
+        id: "example_mod",
+        version: "1.0.0",
+        name: "Example Mod",
+        icon: "assets/example_mod/icon.png",
+      },
+      archiveEntries: [
+        { path: "fabric.mod.json", size: 100 },
+        { path: "assets/example_mod/icon.png", size: 64 },
+      ],
+      limits: { maxDiagnostics: 10 },
+    });
+    const output = result.content[0]?.text ?? "";
+
+    expect(result.isError).toBeUndefined();
+    expect(output).toContain('"valid": true');
+    expect(output).toContain('"validationStrength": "metadata"');
+    expect(output).toContain('"schema": "fabric.mod.json-v1-structural"');
+    expect(output).toContain("dependency satisfaction");
+    expect(output).toContain("entrypoint classes");
+  });
+
+  it("reports unsupported Fabric metadata schema versions as validation errors", async () => {
+    const result = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: {
+        schemaVersion: 2,
+        id: "example_mod",
+        version: "1.0.0",
+      },
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(result.content[0]?.text).toContain('"valid": false');
+    expect(result.content[0]?.text).toContain('"metadata.unsupported-schema-version"');
+  });
+
+  it("preflights Fabric MCP arrays, strings, limits, and binary-shaped properties", async () => {
+    const metadata = { schemaVersion: 1, id: "example_mod", version: "1.0.0" };
+    const tooManyEntries = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata,
+      archiveEntries: Array.from(
+        { length: defaultFabricModValidationLimits.maxArchiveEntries + 1 },
+        (_, index) => ({ path: `entry-${index}.txt` }),
+      ),
+    });
+    const overlongPath = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata,
+      archiveEntries: [{ path: "x".repeat(4_097) }],
+    });
+    const oversizedMetadata = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: "x".repeat(defaultFabricModValidationLimits.maxMetadataBytes + 1),
+    });
+    const raisedLimit = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata,
+      limits: {
+        maxArchiveEntries: defaultFabricModValidationLimits.maxArchiveEntries + 1,
+      },
+    });
+    const binaryProperty = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata,
+      archiveBase64: "UEsDBA==",
+    });
+    const primitiveMetadata = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: 1,
+    });
+    const ineffectiveLimit = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata,
+      limits: { maxArchiveBytes: 1 },
+    });
+    const metadataGetter = vi.fn(() => metadata);
+    const accessorInput = Object.defineProperty({}, "metadata", {
+      enumerable: true,
+      get: metadataGetter,
+    });
+    const accessorProperty = await callMinecraftSkillsTool("validate_fabric_mod", accessorInput);
+    const namedArray: unknown[] = [];
+    Object.defineProperty(namedArray, "extra", { value: true });
+    const namedArrayProperty = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: { ...metadata, custom: { values: namedArray } },
+    });
+    const symbolArray: unknown[] = [];
+    Object.defineProperty(symbolArray, Symbol("extra"), { value: true });
+    const symbolArrayProperty = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: { ...metadata, custom: { values: symbolArray } },
+    });
+    const arrayGetter = vi.fn(() => "value");
+    const accessorArray: unknown[] = [];
+    Object.defineProperty(accessorArray, 0, {
+      enumerable: true,
+      get: arrayGetter,
+    });
+    const accessorArrayProperty = await callMinecraftSkillsTool("validate_fabric_mod", {
+      metadata: { ...metadata, custom: { values: accessorArray } },
+    });
+
+    expect(tooManyEntries.isError).toBe(true);
+    expect(tooManyEntries.content[0]?.text).toContain(
+      `must not exceed ${defaultFabricModValidationLimits.maxArchiveEntries} entries`,
+    );
+    expect(overlongPath.isError).toBe(true);
+    expect(overlongPath.content[0]?.text).toContain("must not exceed 4096 characters");
+    expect(oversizedMetadata.isError).toBe(true);
+    expect(oversizedMetadata.content[0]?.text).toContain(
+      `must not exceed ${defaultFabricModValidationLimits.maxMetadataBytes} UTF-8 bytes`,
+    );
+    expect(raisedLimit.isError).toBe(true);
+    expect(raisedLimit.content[0]?.text).toContain("maxArchiveEntries");
+    expect(binaryProperty.isError).toBe(true);
+    expect(binaryProperty.content[0]?.text).toContain("unknown properties");
+    expect(binaryProperty.content[0]?.text).not.toContain("archiveBase64");
+    expect(primitiveMetadata.isError).toBe(true);
+    expect(primitiveMetadata.content[0]?.text).toContain("JSON object or bounded JSON text");
+    expect(ineffectiveLimit.isError).toBe(true);
+    expect(ineffectiveLimit.content[0]?.text).toContain("unknown properties");
+    expect(ineffectiveLimit.content[0]?.text).not.toContain("maxArchiveBytes");
+    expect(accessorProperty.isError).toBe(true);
+    expect(accessorProperty.content[0]?.text).toContain("JSON data properties");
+    expect(metadataGetter).not.toHaveBeenCalled();
+    expect(namedArrayProperty.isError).toBe(true);
+    expect(namedArrayProperty.content[0]?.text).toContain("named own properties");
+    expect(symbolArrayProperty.isError).toBe(true);
+    expect(symbolArrayProperty.content[0]?.text).toContain("symbol properties");
+    expect(accessorArrayProperty.isError).toBe(true);
+    expect(accessorArrayProperty.content[0]?.text).toContain("JSON data properties");
+    expect(arrayGetter).not.toHaveBeenCalled();
+  });
+
+  it("publishes bounded metadata-only Fabric MCP input schema", () => {
+    const tool = tools.find((candidate) => candidate.name === "validate_fabric_mod");
+    const archiveEntries = tool?.inputSchema.properties.archiveEntries as
+      | { maxItems?: number; items?: { properties?: Record<string, { maxLength?: number }> } }
+      | undefined;
+    const metadata = tool?.inputSchema.properties.metadata as
+      | {
+          description?: string;
+          oneOf?: Array<{ type?: string; maxLength?: number }>;
+        }
+      | undefined;
+    const limits = tool?.inputSchema.properties.limits as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+
+    expect(tool?.description).toContain("binary JARs are not accepted");
+    expect(tool?.description).toContain("dependency predicates");
+    expect(archiveEntries?.maxItems).toBe(defaultFabricModValidationLimits.maxArchiveEntries);
+    expect(archiveEntries?.items?.properties?.path?.maxLength).toBe(4_096);
+    expect(metadata?.description).toContain("schemaVersion 1 only");
+    expect(metadata?.oneOf).toEqual([
+      {
+        type: "string",
+        maxLength: defaultFabricModValidationLimits.maxMetadataBytes,
+      },
+      { type: "object" },
+    ]);
+    expect(Object.keys(limits?.properties ?? {}).sort()).toEqual([
+      "maxArchiveEntries",
+      "maxDiagnostics",
+      "maxMetadataBytes",
+      "maxMetadataDepth",
+      "maxMetadataNodes",
+      "maxMetadataStringBytes",
+    ]);
   });
 
   it("calls get_fabric_toolchain", async () => {
