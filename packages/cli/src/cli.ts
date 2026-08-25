@@ -25,8 +25,8 @@ import {
   defaultResourcepackPngAlphaBoundsLimits,
   defaultResourcepackPngValidationLimits,
   defaultResourcepackProjectValidationLimits,
-  downloadJavaPlayerTexture,
   defaultServerAccessListValidationLimits,
+  downloadJavaPlayerTexture,
   explainPackPath,
   fetchData,
   fetchMinecraftAssetFile,
@@ -78,9 +78,9 @@ import {
   getVanillaDatapackJson,
   getVanillaInventory,
   getVersionDetail,
+  inferServerAccessListKind,
   inspectResourcepackPngAlphaBounds,
   type JavaPlayerTextureKind,
-  inferServerAccessListKind,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -145,10 +145,10 @@ import {
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
+  validateServerAccessList,
   validateServerProperties,
   validateVelocityPluginJar,
   velocityPluginJarValidationLimits,
-  validateServerAccessList,
 } from "@minecraft-skills/catalog";
 import {
   createRconConfig,
@@ -167,8 +167,8 @@ import {
   writeNewPlayerTexturePng,
 } from "./playerTextureOutput.js";
 import { readResourcepackProjectFiles } from "./resourcepackProjectFiles.js";
-import { readBoundedServerProperties } from "./serverPropertiesFile.js";
 import { readServerAccessListFile } from "./serverAccessListFile.js";
+import { readBoundedServerProperties } from "./serverPropertiesFile.js";
 
 type Output = {
   write: (value: string) => void;

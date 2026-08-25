@@ -8,8 +8,8 @@ import {
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultResourcepackProjectValidationLimits,
-  defaultServerPropertiesValidationLimits,
   defaultServerAccessListValidationLimits,
+  defaultServerPropertiesValidationLimits,
   getVersionDetail,
   listDomains,
 } from "@minecraft-skills/catalog";

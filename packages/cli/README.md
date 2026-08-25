@@ -222,10 +222,10 @@ or licensing.
 
 `minecraft validate-access-list` infers the list kind from the four canonical vanilla filenames or
 accepts an explicit `--kind whitelist|ops|banned-players|banned-ips`. It rejects symbolic links,
-reparse points, directories, and special files, then verifies a stable regular-file identity around
-the positioned bounded read and requires strict UTF-8. Results never contain input identities,
-addresses, reasons, sources, or local paths. Validation is offline; it does not resolve player names
-or verify UUID/IP ownership.
+directories, and special files, then verifies a stable regular-file identity around the positioned
+bounded read and requires strict UTF-8. Results never contain input identities, addresses, reasons,
+sources, or local paths. Validation is offline; it does not resolve player names or verify UUID/IP
+ownership.
 Pass canonical UTC `--evaluated-at 2026-08-25T00:00:00.000Z` to reproduce ban-expiry
 classification; otherwise the returned `evaluatedAt` records the instant chosen by the validator.
 This checks canonical serializer output; because current loaders default some fields and clamp
