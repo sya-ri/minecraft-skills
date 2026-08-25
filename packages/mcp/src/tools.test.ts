@@ -3816,6 +3816,64 @@ describe("MCP tools", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.modrinth.com/v2/statistics");
   });
 
+  it("serves complete Fabric Client GameTest visual evidence guidance", async () => {
+    const search = await callMinecraftSkillsTool("search_catalog", {
+      query: "Fabric Client GameTest full frame baseline update",
+      kind: "authoring-recipe",
+    });
+    expect(search.content[0]?.text).toContain('"id": "fabric-client-gametest-visual-evidence"');
+    expect(search.content[0]?.text).toContain('"resourcepack"');
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "fabric-client-gametest-visual-evidence",
+    });
+    expect(recipe.content[0]?.text).toContain("define-stable-cases-and-readiness");
+    expect(recipe.content[0]?.text).toContain("mutually exclusive run types");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "fabric-client-gametest-visual-evidence-review",
+    });
+    expect(scenario.content[0]?.text).toContain("selected-case, resumed range, or shard run");
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "fabric-client-gametest-visual-evidence-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"domain": "resourcepack"');
+    expect(plan.content[0]?.text).toContain('"id": "fabric-client-gametest-visual-evidence-gap"');
+    expect(plan.content[0]?.text).toContain('"id": "java-version-metadata"');
+    expect(plan.content[0]?.text).toContain('"id": "verified-authoring-answer"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "fabric-client-gametest-visual-evidence-integrity",
+    });
+    expect(guardrail.content[0]?.text).toContain("full client frame");
+    expect(guardrail.content[0]?.text).toContain("missing, stale, duplicate, or unexpected");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "fabric-client-gametest-visual-evidence-gap",
+    });
+    expect(diagnostic.content[0]?.text).toContain("fixed project-specific crop dimensions");
+    expect(diagnostic.content[0]?.text).toContain("Paper GameTest");
+
+    const intent = await callMinecraftSkillsTool("get_intent_lookup", {
+      id: "verify-fabric-client-visual-evidence",
+    });
+    expect(intent.content[0]?.text).toContain("final-report contract");
+
+    const policy = await callMinecraftSkillsTool("get_claim_policy", {
+      id: "fabric-client-visual-evidence-claim",
+    });
+    expect(policy.content[0]?.text).toContain("not a complete-suite result");
+    expect(policy.content[0]?.text).toContain("update run completed");
+
+    const requirement = await callMinecraftSkillsTool("get_output_requirement", {
+      id: "fabric-client-visual-evidence-report",
+    });
+    expect(requirement.content[0]?.text).toContain("artifact-manifest");
+    expect(requirement.content[0]?.text).toContain("crop-only proof");
+  });
+
   it("analyzes bounded Minecraft logs while redacting retained sensitive values", async () => {
     const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: [

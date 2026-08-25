@@ -86,6 +86,36 @@
         "listener code for unverified event class names"
       ],
       "failureMode": "Generated plugins can target unsupported Paper versions or compile against invented API names."
+    },
+    {
+      "id": "fabric-client-visual-evidence-report",
+      "domains": ["resourcepack"],
+      "title": "Report Fabric client visual evidence without hiding partial or stale results",
+      "mustInclude": [
+        "the suite-definition digest, run identifier, exact command or selection expression, and explicit compare or baseline-update run type",
+        "target Minecraft and Fabric stack plus the recorded non-render, virtual-framebuffer client, or interactive-client environment",
+        "expected, selected, executed, passed, failed, skipped, and not-selected case IDs or bounded counts with a manifest reference",
+        "artifact-manifest and reconciliation status with phase-aware expected or absent artifact roles and any missing, stale, duplicate, or unexpected output",
+        "per-case or bounded-summary readiness or assertion, render, capture, compare, and infrastructure failure phases",
+        "a conclusion limited to the selected and reconciled evidence and an explicit complete-suite value"
+      ],
+      "includeWhenRelevant": [
+        "full-frame artifact names and digests for capture-success cases, phase-aware expected-absence records for earlier failures, plus runtime-derived zero-based half-open bounds and source-frame digests for optional crops",
+        "reviewed baseline, actual, candidate, comparator, comparison policy, and difference-summary digests",
+        "readiness barrier and timeout results, cleanup result, retry or resume provenance, and candidate baseline promotion status",
+        "current official Fabric automated-testing and Loom documentation plus target-version API or mapping evidence for concrete names",
+        "remaining interactive-client, hardware renderer, window manager, native input, accessibility, shader, or installed-mod-set checks not covered by the recorded environment"
+      ],
+      "mustNotInclude": [
+        "a complete-suite pass inferred from a selected case, range, shard, resumed subset, or process exit alone",
+        "a passing comparison created by overwriting or immediately accepting candidate baselines",
+        "crop-only proof without a retained linked full frame and verified runtime bounds",
+        "silently ignored missing, stale, duplicate, unexpected, or prior-run artifacts",
+        "one generic screenshot failure that hides an earlier readiness, assertion, render, or capture cause",
+        "claims that non-render assertions prove pixels, or that a virtual framebuffer proves physical display, GPU, native input, shader, accessibility, or complete installed-extension-set behavior",
+        "fixed project-specific crop dimensions, Paper GameTest substitutions, or universal concrete Fabric API claims"
+      ],
+      "failureMode": "A report can conceal partial coverage, a changed oracle, contaminated artifacts, or environment gaps and make visual evidence appear complete when it is not."
     }
   ]
 }

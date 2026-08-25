@@ -469,4 +469,55 @@ describe("MCP resources", () => {
     );
     expect(diagnostic.contents[0]?.text).toContain("loaded-plugin evidence");
   });
+
+  it("reads complete Fabric Client GameTest visual evidence resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/fabric-client-gametest-visual-evidence.json",
+        "minecraft-skills://data/authoring-scenarios/fabric-client-gametest-visual-evidence-review.json",
+        "minecraft-skills://data/authoring-guardrails/fabric-client-gametest-visual-evidence-integrity.json",
+        "minecraft-skills://data/authoring-diagnostics/fabric-client-gametest-visual-evidence-gap.json",
+        "minecraft-skills://data/intent-lookups/verify-fabric-client-visual-evidence.json",
+        "minecraft-skills://data/claim-policies/fabric-client-visual-evidence-claim.json",
+        "minecraft-skills://data/output-requirements/fabric-client-visual-evidence-report.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/fabric-client-gametest-visual-evidence.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("define-stable-cases-and-readiness");
+    expect(recipe.contents[0]?.text).toContain("full client frame");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/fabric-client-gametest-visual-evidence-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("virtual-framebuffer client");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/fabric-client-gametest-visual-evidence-integrity.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("missing, stale, duplicate, or unexpected");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/fabric-client-gametest-visual-evidence-gap.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("Paper GameTest");
+
+    const intent = readMinecraftSkillsResource(
+      "minecraft-skills://data/intent-lookups/verify-fabric-client-visual-evidence.json",
+    );
+    expect(intent.contents[0]?.text).toContain("final-report contract");
+
+    const policy = readMinecraftSkillsResource(
+      "minecraft-skills://data/claim-policies/fabric-client-visual-evidence-claim.json",
+    );
+    expect(policy.contents[0]?.text).toContain("not a complete-suite result");
+
+    const requirement = readMinecraftSkillsResource(
+      "minecraft-skills://data/output-requirements/fabric-client-visual-evidence-report.json",
+    );
+    expect(requirement.contents[0]?.text).toContain("artifact-manifest");
+  });
 });

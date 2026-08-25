@@ -339,6 +339,45 @@
         "packageApis": ["getPaperApiReference", "getFactSurface", "listAuthoringGuardrails"]
       },
       "failureMode": "Generated plugins can hide unsafe threading assumptions or falsely claim Folia compatibility."
+    },
+    {
+      "id": "fabric-client-visual-evidence-claim",
+      "domains": ["resourcepack"],
+      "claim": "A Fabric client visual case or complete Client GameTest screenshot suite matches its reviewed baseline.",
+      "requiredEvidence": [
+        "a versioned suite-definition digest and stable expected case-ID set",
+        "the exact selected, executed, passed, failed, skipped, and not-selected sets",
+        "bounded readiness results and comparable runtime metadata for every executed case",
+        "a full-frame digest for every case claimed as captured, compared, or visually passed, a phase-aware expected-absence record for earlier failures, and source-bound verified bounds for any optional crop",
+        "an explicit compare run using immutable reviewed baseline, actual, comparator, policy, and difference metadata",
+        "a reconciled artifact manifest with no missing, stale, duplicate, or unexpected entries",
+        "per-case causal failure phases and a declared non-render, virtual-framebuffer client, or interactive-client environment"
+      ],
+      "allowedWording": [
+        "All expected case IDs in the recorded suite definition executed in a compare run and matched their reviewed baselines under the declared environment.",
+        "The selected case IDs matched; unselected and skipped cases were not verified by this run, so this is not a complete-suite result.",
+        "The Fabric client ran and captured these frames under the recorded virtual framebuffer; this does not verify physical-display, hardware-renderer, or native-input behavior.",
+        "The baseline-update run produced review candidates; it did not perform a passing comparison against those candidates.",
+        "Non-render assertions verified geometry or state only; rendered pixels remain unverified."
+      ],
+      "disallowedWording": [
+        "The visual suite passes when only selected, ranged, sharded, resumed, or otherwise incomplete cases ran.",
+        "The new baseline proves the changed rendering is correct because an update run completed.",
+        "The crop proves the full screen rendered correctly even though no linked full frame was retained.",
+        "A process exit code proves there are no missing, stale, duplicate, or unexpected artifacts.",
+        "Headless assertions or virtual-framebuffer screenshots prove every physical display, GPU, input mechanism, shader, accessibility setup, or installed extension set renders identically.",
+        "This Client GameTest API and behavior applies to every Fabric or Minecraft version."
+      ],
+      "tools": {
+        "cli": ["minecraft search", "fabric toolchain"],
+        "mcp": ["search_catalog", "get_authoring_diagnostic", "get_fabric_toolchain"],
+        "packageApis": [
+          "searchCatalog",
+          "getAuthoringDiagnostic",
+          "getFabricToolchainCompatibility"
+        ]
+      },
+      "failureMode": "Partial selection, self-updated baselines, crop-only output, stale artifacts, or an overstated display environment can make a passing visual claim stronger than the recorded evidence."
     }
   ]
 }

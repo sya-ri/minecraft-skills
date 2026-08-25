@@ -479,6 +479,70 @@
           "failureMode": "Do not fetch, quote, cite, or redistribute Minecraft Wiki text in AI workflows; use allowed machine-readable sources from source policy/source report."
         }
       ]
+    },
+    {
+      "id": "verify-fabric-client-visual-evidence",
+      "domains": ["resourcepack"],
+      "title": "Verify a Fabric Client GameTest visual-evidence workflow",
+      "when": [
+        "the task asks for Client GameTest screenshots, visual regression, golden images, or baseline comparison for a Fabric client implementation",
+        "the suite supports selected cases, ranges, shards, resume, retries, or baseline updates",
+        "the evidence may come from headless assertions, a virtual framebuffer, CI, or an interactive client"
+      ],
+      "lookups": [
+        {
+          "purpose": "Resolve the visual-evidence recipe, scenario, guardrail, and diagnostic before accepting screenshots or designing the harness.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": [
+              "search_catalog",
+              "get_authoring_recipe",
+              "get_authoring_scenario",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchCatalog",
+              "getAuthoringRecipe",
+              "getAuthoringScenario",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "Stable case, readiness, selection, capture, baseline, artifact, cleanup, and failure-phase requirements",
+            "The complete success and must-avoid matrix for Fabric client visual evidence"
+          ],
+          "failureMode": "A screenshot may be accepted without proving which deterministic case, ready frame, baseline run type, and owned artifact produced it."
+        },
+        {
+          "purpose": "Resolve the evidence claim and final-report contract so partial or environment-specific results are worded no more strongly than their manifest proves.",
+          "tools": {
+            "cli": ["minecraft search"],
+            "mcp": ["search_catalog", "get_claim_policy", "get_output_requirement"],
+            "packageApis": ["searchCatalog", "getClaimPolicy", "getOutputRequirement"]
+          },
+          "evidence": [
+            "Allowed wording for complete, selected-only, virtual-framebuffer, and baseline-update results",
+            "Required expected/selected/executed reconciliation, artifact manifest, failure phases, and environment limitations"
+          ],
+          "failureMode": "A filtered run, candidate baseline, or virtual-framebuffer result may be overstated as complete universal client behavior."
+        },
+        {
+          "purpose": "Verify the selected Fabric stack and current official documentation before naming concrete Client GameTest or Loom APIs.",
+          "tools": {
+            "cli": ["fabric toolchain", "minecraft search"],
+            "mcp": ["get_fabric_toolchain", "search_catalog"],
+            "packageApis": ["getFabricToolchainCompatibility", "searchCatalog"]
+          },
+          "evidence": [
+            "Resolved target Minecraft and Fabric stack releases with selected mapping metadata",
+            "Current official Fabric automated-testing and Loom test-configuration documentation",
+            "Target-version Fabric API Javadocs or selected mappings for each concrete API name"
+          ],
+          "failureMode": "General evidence guidance may be converted into code that names an unavailable or changed target-version client-test API."
+        }
+      ]
     }
   ]
 }

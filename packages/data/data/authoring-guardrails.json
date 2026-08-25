@@ -252,6 +252,35 @@
         "exact reproducible test commands and an explicit limitations report"
       ],
       "failureMode": "Tests can stay green while the deployed plugin fails when an evidence layer cannot observe the behavior being claimed or nondeterministic fixtures hide lifecycle and ordering defects."
+    },
+    {
+      "id": "fabric-client-gametest-visual-evidence-integrity",
+      "domains": ["resourcepack"],
+      "title": "Keep Fabric Client GameTest visual evidence attributable and reproducible",
+      "rules": [
+        "Freeze a versioned complete case matrix before execution and assign stable semantic case IDs from named dimensions; do not use list position, current time, random values, or artifact filenames as identity.",
+        "Record target Minecraft, resolved Fabric stack releases and mappings, test-bundle revision, asset revision, renderer, environment class, viewport, resolved GUI scale, locale, fixture, and visual state metadata needed to decide whether evidence is comparable.",
+        "Gate capture on bounded state-specific readiness barriers such as world creation, chunk rendering, asset loading, screen opening, layout completion, and deterministic animation advancement; a fixed sleep is not proof of readiness.",
+        "Resolve selected IDs and stable-ID ranges against the frozen suite definition, reject unknown or ambiguous selection, and report expected, selected, executed, passed, failed, skipped, and not-selected sets independently.",
+        "Never infer complete-suite success from a selected case, range, shard, resumed subset, or successful process exit. Completeness requires every expected eligible case to have reconciled passing evidence in the declared run set.",
+        "Capture and retain a full client frame for each case that reaches successful capture, comparison, or visual pass. When readiness or assertion, render, or capture fails first, record the phase-aware expected absence instead of replacing that cause with a missing-artifact failure. Optional crops must use runtime-derived zero-based half-open bounds verified inside that exact source frame and linked to its digest; generic guidance must not prescribe one fixed crop dimension.",
+        "Make compare and baseline-update mutually exclusive explicit run types. A compare run cannot rewrite baselines; an update run writes review candidates separately, preserves prior baselines, and cannot count changed output as a passing comparison.",
+        "Manifest each artifact with case ID, role, metadata digest, source relationship, byte size, content digest, comparator identity and policy where relevant. Fail reconciliation on missing, stale, duplicate, or unexpected artifacts.",
+        "Use run-scoped staging and ownership-aware cleanup that is safe to repeat after success, assertion failure, render failure, capture failure, comparison failure, timeout, and interruption. A retry must not inherit unmanifested evidence.",
+        "Preserve the first causal phase for each case and distinguish readiness or assertion, render, capture, compare, and infrastructure failures; later missing output may be a consequence and must not replace the root phase.",
+        "Label non-render assertions, virtual-framebuffer client runs, and interactive-client runs separately. A virtual framebuffer can exercise a client render path in its recorded environment, but it does not prove a physical display, GPU and driver, window manager, native input, accessibility, shader, or full installed-extension-set result.",
+        "Verify concrete Fabric Client GameTest, screenshot, readiness, and Loom configuration names against current official Fabric documentation and target-version Fabric API or mappings; keep the rest as workflow guidance rather than a universal API claim."
+      ],
+      "requiredEvidence": [
+        "A versioned suite-definition digest, stable expected case-ID set, and per-case semantic metadata",
+        "Bounded readiness results and separate expected, selected, executed, passed, failed, skipped, and not-selected sets",
+        "A full-frame artifact for every capture-success, comparison, or visual-pass case; a phase-aware expected-absence record for earlier failures; and bounds-verified, source-bound metadata for any optional crop",
+        "An explicit compare or baseline-update run type, immutable baseline and actual digests, comparator metadata, and candidate promotion review",
+        "An artifact manifest and reconciliation report covering missing, stale, duplicate, and unexpected output",
+        "Idempotent cleanup evidence and per-case causal failure-phase classification",
+        "A declared environment class, exact target/runtime metadata, current Fabric documentation evidence, and a bounded statement of what the run proves"
+      ],
+      "failureMode": "Unstable cases, early screenshots, partial reruns, self-updating baselines, stale files, and unlabeled display environments can produce a green visual suite whose images are neither attributable nor sufficient for its claim."
     }
   ]
 }
