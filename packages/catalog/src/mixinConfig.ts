@@ -23,6 +23,7 @@ const mixinSourceRoot = `https://github.com/SpongePowered/Mixin/blob/${auditedMi
 const auditedGsonVersion = "2.2.4";
 const auditedGsonCommit = "ca40a338de56871027f6c31b62f47f810f092bef";
 const gsonSourceRoot = `https://github.com/google/gson/blob/${auditedGsonCommit}`;
+const gsonCoreSource = `${gsonSourceRoot}/src/main/java/com/google/gson/Gson.java`;
 
 export type MixinConfigDiagnosticSeverity = "error" | "warning" | "unknown";
 
@@ -58,6 +59,7 @@ export type MixinConfigValidationResult = {
     mixinBuild: string;
     gsonAdapters: string;
     gsonReader: string;
+    gsonCore: string;
     auditedCommit: string;
     auditedDate: string;
     compatibilityLevelsCurrentThrough: string;
@@ -132,6 +134,18 @@ type DeclaredMixin = {
   value: string;
 };
 
+type ParsedStringField =
+  | { kind: "absent"; value: null }
+  | { kind: "mapped"; value: string }
+  | { kind: "unmapped"; value: null }
+  | { kind: "invalid"; value: null };
+
+type ParsedStringArray = {
+  values: string[];
+  entryCount: number;
+  unmappedEntries: number;
+};
+
 class BoundedInputError extends Error {}
 
 class DiagnosticCollector {
@@ -140,12 +154,29 @@ class DiagnosticCollector {
   warningCount = 0;
   unknownCount = 0;
 
+  private static severityRank(severity: MixinConfigDiagnosticSeverity): number {
+    if (severity === "error") return 0;
+    if (severity === "warning") return 1;
+    return 2;
+  }
+
   add(severity: MixinConfigDiagnosticSeverity, code: string, path: string, message: string): void {
     if (severity === "error") this.errorCount += 1;
     else if (severity === "warning") this.warningCount += 1;
     else this.unknownCount += 1;
+    const diagnostic = { severity, code, path, message };
     if (this.diagnostics.length < mixinConfigValidationLimits.maxDiagnostics) {
-      this.diagnostics.push({ severity, code, path, message });
+      this.diagnostics.push(diagnostic);
+      return;
+    }
+
+    const incomingRank = DiagnosticCollector.severityRank(severity);
+    for (let index = this.diagnostics.length - 1; index >= 0; index -= 1) {
+      const retained = this.diagnostics[index];
+      if (retained && DiagnosticCollector.severityRank(retained.severity) > incomingRank) {
+        this.diagnostics[index] = diagnostic;
+        return;
+      }
     }
   }
 
@@ -154,14 +185,10 @@ class DiagnosticCollector {
     diagnosticsTruncated: boolean;
     omittedDiagnosticCount: number;
   } {
-    const rank: Record<MixinConfigDiagnosticSeverity, number> = {
-      error: 0,
-      warning: 1,
-      unknown: 2,
-    };
     const diagnostics = [...this.diagnostics].sort(
       (left, right) =>
-        rank[left.severity] - rank[right.severity] ||
+        DiagnosticCollector.severityRank(left.severity) -
+          DiagnosticCollector.severityRank(right.severity) ||
         left.path.localeCompare(right.path) ||
         left.code.localeCompare(right.code),
     );
@@ -495,7 +522,7 @@ function parseConfig(value: unknown, collector: DiagnosticCollector): ParsedConf
         "error",
         "config.invalid-json",
         "/config",
-        "Mixin configuration is not valid JSON.",
+        "Mixin configuration is not valid strict JSON as required by the bounded offline profile.",
       );
       return { record: null, inputKind, jsonParsed, duplicateKeys };
     }
@@ -729,28 +756,47 @@ function optionalString(
   name: string,
   path: string,
   collector: DiagnosticCollector,
-): string | null {
+): ParsedStringField {
   const value = record[name];
-  if (value === undefined || value === null) return null;
-  if (typeof value !== "string") {
-    if (typeof value === "object") {
-      collector.add(
-        "error",
-        "config.invalid-string",
-        path,
-        "Current core Mixin cannot deserialize an object or array into this string field.",
-      );
-    } else {
-      collector.add(
-        "warning",
-        "config.noncanonical-scalar",
-        path,
-        "The audited Gson string adapter coerces number and boolean primitives, but the bounded offline profile does not map the coerced value.",
-      );
-    }
-    return null;
+  if (value === undefined || value === null) return { kind: "absent", value: null };
+  if (typeof value === "string") return { kind: "mapped", value };
+  if (typeof value === "boolean") {
+    collector.add(
+      "warning",
+      "config.noncanonical-scalar",
+      path,
+      "The audited Gson string adapter coerces this JSON boolean to a lower-case string.",
+    );
+    return { kind: "mapped", value: String(value) };
   }
-  return value;
+  if (typeof value === "number") {
+    collector.add(
+      "unknown",
+      "config.numeric-string-coercion-unmapped",
+      path,
+      "The audited Gson string adapter preserves the source number token, which is unavailable after bounded JSON parsing, so the coerced string is not mapped.",
+    );
+    return { kind: "unmapped", value: null };
+  }
+  collector.add(
+    "error",
+    "config.invalid-string",
+    path,
+    "Current core Mixin cannot deserialize an object or array into this string field.",
+  );
+  return { kind: "invalid", value: null };
+}
+
+function mappedString(field: ParsedStringField): string | null {
+  return field.kind === "mapped" ? field.value : null;
+}
+
+function hasCoercedString(field: ParsedStringField): boolean {
+  return field.kind === "mapped" || field.kind === "unmapped";
+}
+
+function hasNonEmptyCoercedString(field: ParsedStringField): boolean {
+  return field.kind === "unmapped" || (field.kind === "mapped" && field.value.length > 0);
 }
 
 function checkOptionalBoolean(
@@ -779,6 +825,34 @@ function checkOptionalBoolean(
   }
 }
 
+function trimJavaDoubleWhitespace(value: string): string {
+  let start = 0;
+  let end = value.length;
+  while (start < end && value.charCodeAt(start) <= 0x20) start += 1;
+  while (start < end && value.charCodeAt(end - 1) <= 0x20) end -= 1;
+  return value.slice(start, end);
+}
+
+function parseAuditedGsonDecimalInteger(value: string): number | "unmapped" | null {
+  const trimmed = trimJavaDoubleWhitespace(value);
+  if (/^[+-]?(?:NaN|Infinity)$/u.test(trimmed)) return null;
+  if (
+    /^[+-]?0[xX](?:[0-9a-fA-F]+(?:\.[0-9a-fA-F]*)?|\.[0-9a-fA-F]+)[pP][+-]?\d+[fFdD]?$/u.test(
+      trimmed,
+    )
+  ) {
+    return "unmapped";
+  }
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?[fFdD]?$/u.test(trimmed)) {
+    return null;
+  }
+  const withoutSuffix = /[fFdD]$/u.test(trimmed) ? trimmed.slice(0, -1) : trimmed;
+  const parsed = Number(withoutSuffix);
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) return null;
+  if (parsed < -2_147_483_648 || parsed > 2_147_483_647) return null;
+  return parsed;
+}
+
 function optionalInteger(
   record: SafeRecord,
   name: string,
@@ -800,22 +874,22 @@ function optionalInteger(
     return value;
   }
   if (typeof value === "string") {
-    if (!/^[+-]?\d+$/u.test(value)) {
+    const parsed = parseAuditedGsonDecimalInteger(value);
+    if (parsed === "unmapped") {
       collector.add(
-        "error",
-        "config.invalid-integer",
+        "unknown",
+        "config.integer-string-unmapped",
         path,
-        "The audited Gson integer adapter rejects non-integer strings in the bounded offline profile.",
+        "The audited Gson nextInt fallback parses Java hexadecimal floating-point syntax before its exact integer check, which the bounded offline profile does not evaluate.",
       );
       return null;
     }
-    const parsed = Number(value);
-    if (!Number.isInteger(parsed) || parsed < -2_147_483_648 || parsed > 2_147_483_647) {
+    if (parsed === null) {
       collector.add(
         "error",
         "config.invalid-integer",
         path,
-        "Current Gson integer decoding requires a signed 32-bit integer value.",
+        "The audited Gson integer adapter cannot decode this string as an exact signed 32-bit integer.",
       );
       return null;
     }
@@ -823,7 +897,7 @@ function optionalInteger(
       "warning",
       "config.noncanonical-scalar",
       path,
-      "The audited Gson integer adapter accepts signed 32-bit integer strings; the bounded offline profile prefers a JSON integer.",
+      "The audited Gson integer adapter accepts this exact signed 32-bit numeric string; the bounded offline profile prefers a JSON integer.",
     );
     return parsed;
   }
@@ -850,9 +924,12 @@ function stringArray(
   name: string,
   path: string,
   collector: DiagnosticCollector,
-): string[] {
+  nullEntries: "error" | "ignore" | "warning" = "error",
+): ParsedStringArray {
   const value = record[name];
-  if (value === undefined || value === null) return [];
+  if (value === undefined || value === null) {
+    return { values: [], entryCount: 0, unmappedEntries: 0 };
+  }
   if (!Array.isArray(value)) {
     collector.add(
       "error",
@@ -860,26 +937,50 @@ function stringArray(
       path,
       "Current core Mixin models this field as a JSON array.",
     );
-    return [];
+    return { values: [], entryCount: 0, unmappedEntries: 0 };
   }
   const strings: string[] = [];
+  let entryCount = 0;
+  let unmappedEntries = 0;
   for (let index = 0; index < value.length; index += 1) {
     const entry = value[index];
     if (typeof entry === "string") {
       strings.push(entry);
+      entryCount += 1;
     } else if (entry === null) {
-      collector.add(
-        "error",
-        "config.invalid-null-list-entry",
-        `${path}/${index}`,
-        "Current core Mixin does not provide a safe null-entry contract for this list.",
-      );
-    } else if (typeof entry === "number" || typeof entry === "boolean") {
+      entryCount += 1;
+      if (nullEntries === "error") {
+        collector.add(
+          "error",
+          "config.invalid-null-list-entry",
+          `${path}/${index}`,
+          "Current core Mixin does not provide a safe null-entry contract for this list.",
+        );
+      } else if (nullEntries === "warning") {
+        collector.add(
+          "warning",
+          "config.null-extension-entry",
+          `${path}/${index}`,
+          "Current core Mixin catches the failed null extension registration, so this entry has no effect.",
+        );
+      }
+    } else if (typeof entry === "boolean") {
+      strings.push(String(entry));
+      entryCount += 1;
       collector.add(
         "warning",
         "config.noncanonical-list-entry",
         `${path}/${index}`,
-        "The audited Gson string adapter coerces primitive list entries, but the bounded offline profile does not map the coerced value.",
+        "The audited Gson string adapter coerces this JSON boolean list entry to a lower-case string.",
+      );
+    } else if (typeof entry === "number") {
+      entryCount += 1;
+      unmappedEntries += 1;
+      collector.add(
+        "unknown",
+        "config.numeric-list-entry-unmapped",
+        `${path}/${index}`,
+        "The audited Gson string adapter preserves the source number token, which is unavailable after bounded JSON parsing, so this list entry is not mapped.",
       );
     } else {
       collector.add(
@@ -890,7 +991,7 @@ function stringArray(
       );
     }
   }
-  return strings;
+  return { values: strings, entryCount, unmappedEntries };
 }
 
 function nestedRecord(
@@ -1000,8 +1101,8 @@ function validateResourceReference(
   kind: "parent-config-resource" | "refmap-resource",
   addReference: (kind: MixinConfigReferenceKind, logicalName: string, archivePath: string) => void,
   collector: DiagnosticCollector,
-): void {
-  if (value === null || (kind === "parent-config-resource" && value.length === 0)) return;
+): number {
+  if (value === null || (kind === "parent-config-resource" && value.length === 0)) return 0;
   if (resourcePathProblem(value)) {
     collector.add(
       "error",
@@ -1009,9 +1110,10 @@ function validateResourceReference(
       path,
       "The bounded offline profile requires a normalized relative classpath resource path.",
     );
-    return;
+    return 1;
   }
   addReference(kind, value, value);
+  return 0;
 }
 
 function validateDirectClassReference(
@@ -1047,6 +1149,7 @@ function finishInvalidResult(collector: DiagnosticCollector): MixinConfigValidat
       mixinBuild: `${mixinSourceRoot}/build.gradle`,
       gsonAdapters: `${gsonSourceRoot}/src/main/java/com/google/gson/internal/bind/TypeAdapters.java`,
       gsonReader: `${gsonSourceRoot}/src/main/java/com/google/gson/stream/JsonReader.java`,
+      gsonCore: gsonCoreSource,
       auditedCommit: auditedMixinCommit,
       auditedDate: auditedMixinDate,
       compatibilityLevelsCurrentThrough: auditedCompatibilityLevel,
@@ -1158,26 +1261,38 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
     references.set(identity, { kind, logicalName, archivePath });
   };
 
-  const parent = optionalString(config, "parent", "/config/parent", collector);
-  const refmap = optionalString(config, "refmap", "/config/refmap", collector);
-  validateResourceReference(
-    parent,
-    "/config/parent",
-    "parent-config-resource",
-    addReference,
-    collector,
-  );
-  validateResourceReference(refmap, "/config/refmap", "refmap-resource", addReference, collector);
+  const parentField = optionalString(config, "parent", "/config/parent", collector);
+  const refmapField = optionalString(config, "refmap", "/config/refmap", collector);
+  unmappedReferences +=
+    parentField.kind === "unmapped"
+      ? 1
+      : validateResourceReference(
+          mappedString(parentField),
+          "/config/parent",
+          "parent-config-resource",
+          addReference,
+          collector,
+        );
+  unmappedReferences +=
+    refmapField.kind === "unmapped"
+      ? 1
+      : validateResourceReference(
+          mappedString(refmapField),
+          "/config/refmap",
+          "refmap-resource",
+          addReference,
+          collector,
+        );
 
-  const minVersion = optionalString(config, "minVersion", "/config/minVersion", collector);
-  const compatibility = optionalString(
+  const minVersionField = optionalString(config, "minVersion", "/config/minVersion", collector);
+  const compatibilityField = optionalString(
     config,
     "compatibilityLevel",
     "/config/compatibilityLevel",
     collector,
   );
-  validateMinVersion(minVersion, collector);
-  validateCompatibility(compatibility, collector);
+  validateMinVersion(mappedString(minVersionField), collector);
+  validateCompatibility(mappedString(compatibilityField), collector);
 
   checkOptionalBoolean(config, "required", "/config/required", collector);
   checkOptionalBoolean(config, "setSourceFile", "/config/setSourceFile", collector);
@@ -1192,8 +1307,8 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
     "/config/requiredFeatures",
     collector,
   );
-  const hasParent = parent !== null && parent.length > 0;
-  if (!hasParent && minVersion === null && requiredFeatures.length === 0) {
+  const hasParent = hasNonEmptyCoercedString(parentField);
+  if (!hasParent && !hasCoercedString(minVersionField) && requiredFeatures.entryCount === 0) {
     collector.add(
       "warning",
       "config.version-guard-missing",
@@ -1202,7 +1317,8 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
     );
   }
 
-  const packageValue = optionalString(config, "package", "/config/package", collector);
+  const packageField = optionalString(config, "package", "/config/package", collector);
+  const packageValue = mappedString(packageField);
   const mixinPackage = normalizedMixinPackage(packageValue);
   if (packageValue !== null && mixinPackage === null) {
     collector.add(
@@ -1213,15 +1329,17 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
     );
   }
 
-  const common = stringArray(config, "mixins", "/config/mixins", collector);
-  const client = stringArray(config, "client", "/config/client", collector);
-  const server = stringArray(config, "server", "/config/server", collector);
+  const common = stringArray(config, "mixins", "/config/mixins", collector, "ignore");
+  const client = stringArray(config, "client", "/config/client", collector, "ignore");
+  const server = stringArray(config, "server", "/config/server", collector, "ignore");
+  unmappedReferences += common.unmappedEntries + client.unmappedEntries + server.unmappedEntries;
   const declared: DeclaredMixin[] = [
-    ...common.map((value) => ({ collection: "mixins" as const, value })),
-    ...client.map((value) => ({ collection: "client" as const, value })),
-    ...server.map((value) => ({ collection: "server" as const, value })),
+    ...common.values.map((value) => ({ collection: "mixins" as const, value })),
+    ...client.values.map((value) => ({ collection: "client" as const, value })),
+    ...server.values.map((value) => ({ collection: "server" as const, value })),
   ];
-  if (declared.length > 0 && (packageValue === null || packageValue.length === 0)) {
+  const declaredEntryCount = common.entryCount + client.entryCount + server.entryCount;
+  if (declaredEntryCount > 0 && !hasNonEmptyCoercedString(packageField)) {
     collector.add(
       "error",
       "config.missing-package",
@@ -1260,6 +1378,8 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
         continue;
       }
       addReference("mixin-class", logicalName, `${logicalName.replaceAll(".", "/")}.class`);
+    } else {
+      unmappedReferences += 1;
     }
   }
 
@@ -1284,17 +1404,28 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
     );
   }
 
-  const plugin = optionalString(config, "plugin", "/config/plugin", collector);
-  unmappedReferences += validateDirectClassReference(
-    plugin,
-    "/config/plugin",
-    "plugin-class",
-    addReference,
+  const pluginField = optionalString(config, "plugin", "/config/plugin", collector);
+  unmappedReferences +=
+    pluginField.kind === "unmapped"
+      ? 1
+      : validateDirectClassReference(
+          mappedString(pluginField),
+          "/config/plugin",
+          "plugin-class",
+          addReference,
+          collector,
+        );
+
+  const refmapWrapperField = optionalString(
+    config,
+    "refmapWrapper",
+    "/config/refmapWrapper",
     collector,
   );
-
-  const refmapWrapper = optionalString(config, "refmapWrapper", "/config/refmapWrapper", collector);
-  if (refmapWrapper !== null) {
+  const refmapWrapper = mappedString(refmapWrapperField);
+  if (refmapWrapperField.kind === "unmapped") {
+    unmappedReferences += 1;
+  } else if (refmapWrapper !== null) {
     if (mixinPackage !== null && canonicalClassName(refmapWrapper)) {
       const logicalName = `${mixinPackage}.${refmapWrapper}`;
       addReference(
@@ -1341,8 +1472,15 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
       ["injectionPoints", "injection-point-class"],
       ["dynamicSelectors", "dynamic-selector-class"],
     ] as const) {
-      const classes = stringArray(injectors, field, `/config/injectors/${field}`, collector);
-      for (const className of classes) {
+      const classes = stringArray(
+        injectors,
+        field,
+        `/config/injectors/${field}`,
+        collector,
+        "warning",
+      );
+      unmappedReferences += classes.unmappedEntries;
+      for (const className of classes.values) {
         unmappedReferences += validateDirectClassReference(
           className,
           `/config/injectors/${field}`,
@@ -1418,6 +1556,7 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
       mixinBuild: `${mixinSourceRoot}/build.gradle`,
       gsonAdapters: `${gsonSourceRoot}/src/main/java/com/google/gson/internal/bind/TypeAdapters.java`,
       gsonReader: `${gsonSourceRoot}/src/main/java/com/google/gson/stream/JsonReader.java`,
+      gsonCore: gsonCoreSource,
       auditedCommit: auditedMixinCommit,
       auditedDate: auditedMixinDate,
       compatibilityLevelsCurrentThrough: auditedCompatibilityLevel,
@@ -1451,9 +1590,9 @@ export function validateMixinConfig(options: unknown): MixinConfigValidationResu
       notObservedReferences,
     },
     summary: {
-      commonMixins: common.length,
-      clientMixins: client.length,
-      serverMixins: server.length,
+      commonMixins: common.entryCount,
+      clientMixins: client.entryCount,
+      serverMixins: server.entryCount,
       uniqueDeclaredMixins,
       duplicateDeclarations,
       unknownTopLevelFields,

@@ -300,7 +300,8 @@ satisfaction, prove full JVM linkage or Guice injection, check classpath/API com
 Velocity, or establish runtime behavior or security. Annotation absence or mismatch is evidence,
 not a claim about loader rejection. Errors return 1; warnings and explicit unknowns return 0.
 
-`minecraft validate-mixin-config` reads one bounded, stable, regular UTF-8 config file. Optional
+`minecraft validate-mixin-config` reads one bounded, stable, non-symlink regular UTF-8 config file,
+rechecking both the named path and opened descriptor before and after positioned reads. Optional
 `--archive-entries` input is a JSON string array of logical paths from one supplied archive;
 `--archive-entries-complete` defaults to `false` and cannot be claimed without that array. Raw config
 text preserves duplicate-key evidence. Definitive config errors return exit code 1, while warnings

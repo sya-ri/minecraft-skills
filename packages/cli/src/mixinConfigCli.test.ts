@@ -1,11 +1,32 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { type BigIntStats, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { mixinConfigValidationLimits } from "@minecraft-skills/catalog";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { runCli } from "./cli.js";
+import { readMixinConfigCliFiles } from "./mixinConfigFiles.js";
 
 const temporaryRoots: string[] = [];
+
+type FakeFileKind = "file" | "symlink" | "fifo" | "device";
+
+function fakeBigIntStats(kind: FakeFileKind, identity: bigint, size = 0n): BigIntStats {
+  return {
+    dev: 1n,
+    ino: identity,
+    mode: 0o100644n,
+    nlink: 1n,
+    size,
+    ctimeNs: identity * 10n,
+    mtimeNs: identity * 10n,
+    isFile: () => kind === "file",
+    isSymbolicLink: () => kind === "symlink",
+  } as unknown as BigIntStats;
+}
+
+function changedSnapshot(status: BigIntStats, field: "mode" | "nlink"): BigIntStats {
+  return { ...status, [field]: status[field] + 1n } as BigIntStats;
+}
 
 function temporaryRoot(): string {
   const root = mkdtempSync(join(tmpdir(), "minecraft-skills-mixin-"));
@@ -27,6 +48,160 @@ describe("minecraft validate-mixin-config CLI", () => {
   afterEach(() => {
     for (const root of temporaryRoots.splice(0)) {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects symlink and special config inputs before opening them", () => {
+    for (const kind of ["symlink", "fifo", "device"] as const) {
+      const open = vi.fn(() => 7);
+      expect(() =>
+        readMixinConfigCliFiles(
+          { configPath: "config.json" },
+          { lstat: () => fakeBigIntStats(kind, 1n), open },
+        ),
+      ).toThrow("regular non-symbolic-link file");
+      expect(open).not.toHaveBeenCalled();
+    }
+  });
+
+  it("uses no-follow nonblocking flags and explicit bounded read positions", () => {
+    const contents = Buffer.from("{}", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const positions: number[] = [];
+    const open = vi.fn(() => 7);
+    const close = vi.fn(() => {
+      throw new Error("private close failure");
+    });
+
+    const result = readMixinConfigCliFiles(
+      { configPath: "config.json" },
+      {
+        lstat: () => expected,
+        open,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length, position) => {
+          positions.push(position);
+          const bytesRead = Math.min(1, length);
+          contents.copy(buffer, offset, position, position + bytesRead);
+          return bytesRead;
+        },
+        close,
+        openFlags: { readonly: 1, noFollow: 2, nonBlock: 4 },
+      },
+    );
+
+    expect(result).toEqual({ config: "{}" });
+    expect(open).toHaveBeenCalledWith("config.json", 7);
+    expect(positions).toEqual([0, 1]);
+    expect(close).toHaveBeenCalledWith(7);
+  });
+
+  it("rejects path, mode, and link-count replacement during a read", () => {
+    const contents = Buffer.from("{}", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const replacement = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    let openingPathChecks = 0;
+    expect(() =>
+      readMixinConfigCliFiles(
+        { configPath: "config.json" },
+        {
+          lstat: () => {
+            openingPathChecks += 1;
+            return openingPathChecks === 1 ? expected : replacement;
+          },
+          open: () => 7,
+          fstat: () => expected,
+          close: () => undefined,
+        },
+      ),
+    ).toThrow("changed identity while it was being opened");
+
+    let pathChecks = 0;
+
+    expect(() =>
+      readMixinConfigCliFiles(
+        { configPath: "config.json" },
+        {
+          lstat: () => {
+            pathChecks += 1;
+            return pathChecks < 3 ? expected : replacement;
+          },
+          open: () => 7,
+          fstat: () => expected,
+          read: (_handle, buffer, offset, length, position) => {
+            contents.copy(buffer, offset, position, position + length);
+            return length;
+          },
+          close: () => undefined,
+        },
+      ),
+    ).toThrow("changed while it was being read");
+
+    for (const field of ["mode", "nlink"] as const) {
+      let descriptorChecks = 0;
+      expect(() =>
+        readMixinConfigCliFiles(
+          { configPath: "config.json" },
+          {
+            lstat: () => expected,
+            open: () => 7,
+            fstat: () => {
+              descriptorChecks += 1;
+              return descriptorChecks === 1 ? expected : changedSnapshot(expected, field);
+            },
+            read: (_handle, buffer, offset, length, position) => {
+              contents.copy(buffer, offset, position, position + length);
+              return length;
+            },
+            close: () => undefined,
+          },
+        ),
+      ).toThrow("changed while it was being read");
+    }
+  });
+
+  it("sanitizes low-level inspection, open, and read failures", () => {
+    const privateDetail = "C:\\private\\mixin-config.json";
+    const expected = fakeBigIntStats("file", 1n, 2n);
+    const cases = [
+      {
+        lstat: () => {
+          throw new Error(privateDetail);
+        },
+      },
+      {
+        lstat: () => expected,
+        open: () => {
+          throw new Error(privateDetail);
+        },
+      },
+      {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => expected,
+        read: () => {
+          throw new Error(privateDetail);
+        },
+        close: () => undefined,
+      },
+      {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => expected,
+        read: () => 3,
+        close: () => undefined,
+      },
+    ];
+
+    for (const overrides of cases) {
+      let message = "";
+      try {
+        readMixinConfigCliFiles({ configPath: "config.json" }, overrides);
+      } catch (error) {
+        message = error instanceof Error ? error.message : String(error);
+      }
+      expect(message).not.toContain(privateDetail);
+      expect(message).toContain("Mixin configuration");
     }
   });
 

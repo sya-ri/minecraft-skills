@@ -85,6 +85,7 @@ describe("Mixin configuration validation", () => {
       auditedGsonVersion: "2.2.4",
     });
     expect(result.specification.configLoader).toContain(result.specification.auditedCommit);
+    expect(result.specification.gsonCore).toContain("ca40a338de56871027f6c31b62f47f810f092bef");
   });
 
   it("reports raw duplicate keys as last-wins source evidence without rejecting the config", () => {
@@ -242,7 +243,7 @@ describe("Mixin configuration validation", () => {
     expect(codes(result)).toContain("config.version-guard-missing");
   });
 
-  it("rejects null list entries which current core does not safely dereference", () => {
+  it("rejects null list entries only where current core dereferences them unsafely", () => {
     const result = validateMixinConfig({
       config: JSON.stringify({
         minVersion: "0.8.7",
@@ -255,17 +256,34 @@ describe("Mixin configuration validation", () => {
 
     expect(result.valid).toBe(false);
     expect(codes(result).filter((code) => code === "config.invalid-null-list-entry")).toHaveLength(
-      3,
+      1,
     );
+    expect(codes(result)).toContain("config.null-extension-entry");
   });
 
-  it("accepts only bounded integer strings through the audited Gson coercion path", () => {
+  it("allows null mixin entries which current core explicitly skips", () => {
+    const result = validateMixinConfig({
+      config: JSON.stringify({
+        minVersion: "0.8.7",
+        package: "example",
+        mixins: [null],
+      }),
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.summary.commonMixins).toBe(1);
+    expect(result.references).toEqual([]);
+    expect(codes(result)).not.toContain("config.invalid-null-list-entry");
+  });
+
+  it("models exact decimal integer strings through the audited Gson coercion path", () => {
     const accepted = validateMixinConfig({
       config: JSON.stringify({
         minVersion: "0.8.7",
         package: "example",
         priority: "+12",
-        injectors: { maxShiftBy: "6" },
+        mixinPriority: "1.0",
+        injectors: { defaultRequire: "1e0", maxShiftBy: "6" },
       }),
     });
     const rejected = validateMixinConfig({
@@ -273,10 +291,31 @@ describe("Mixin configuration validation", () => {
     });
 
     expect(accepted.valid).toBe(true);
-    expect(codes(accepted).filter((code) => code === "config.noncanonical-scalar")).toHaveLength(2);
+    expect(codes(accepted).filter((code) => code === "config.noncanonical-scalar")).toHaveLength(4);
     expect(codes(accepted)).toContain("config.max-shift-clamped");
     expect(rejected.valid).toBe(false);
     expect(codes(rejected)).toContain("config.invalid-integer");
+  });
+
+  it("keeps supported but unmapped scalar source lexemes indeterminate", () => {
+    const result = validateMixinConfig({
+      config: JSON.stringify({
+        parent: 1e3,
+        package: 12,
+        mixins: [34],
+        priority: "0x1p0",
+      }),
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.outcome).toBe("indeterminate");
+    expect(result.summary.commonMixins).toBe(1);
+    expect(result.summary.unmappedReferences).toBe(2);
+    expect(codes(result)).not.toContain("config.missing-package");
+    expect(codes(result)).not.toContain("config.version-guard-missing");
+    expect(codes(result)).toContain("config.numeric-string-coercion-unmapped");
+    expect(codes(result)).toContain("config.numeric-list-entry-unmapped");
+    expect(codes(result)).toContain("config.integer-string-unmapped");
   });
 
   it("rejects proxies and accessors without invoking their traps or getters", () => {
@@ -371,6 +410,18 @@ describe("Mixin configuration validation", () => {
     expect(noisyResult.validationComplete).toBe(false);
     expect(noisyResult.diagnosticsTruncated).toBe(true);
     expect(noisyResult.diagnostics).toHaveLength(mixinConfigValidationLimits.maxDiagnostics);
+
+    const prioritizedResult = validateMixinConfig({
+      config: JSON.stringify({
+        minVersion: "0.8.7",
+        package: "example",
+        mixins: noisyMixins,
+        plugin: { invalid: true },
+      }),
+    });
+    expect(prioritizedResult.valid).toBe(false);
+    expect(prioritizedResult.errorCount).toBe(1);
+    expect(codes(prioritizedResult)).toContain("config.invalid-string");
   });
 
   it("keeps forward compatibility fields indeterminate instead of rejecting them", () => {

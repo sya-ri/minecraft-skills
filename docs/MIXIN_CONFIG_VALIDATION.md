@@ -51,7 +51,8 @@ The validator checks:
 
 - bounded JSON data and the field shapes modeled by the audited core `MixinConfig`;
 - the audited `VersionNumber` grammar and its `32767` component ceiling;
-- signed 32-bit integer fields and source-backed Gson primitive coercions;
+- signed 32-bit integer fields and source-backed Gson primitive coercions, without inventing a
+  discarded numeric source lexeme;
 - package-relative mixin classes and refmap-wrapper classes;
 - direct plugin, injection-point, and dynamic-selector class names;
 - `parent` and `refmap` as classpath resource names, not class names;
@@ -80,6 +81,18 @@ loader-specific project metadata.
 
 Normalized relative resource paths are a conservative bounded offline profile. Their rejection by
 this tool is not a claim that every Mixin service or launcher rejects the same resource name.
+Likewise, raw input must be strict JSON. The audited `Gson#fromJson` temporarily enables its lenient
+reader and can accept non-standard forms such as comments, but this tool does not interpret those
+extensions as JSON. A strict-JSON rejection is therefore an offline-profile rejection, not proof
+that every audited or bundled Gson loader rejects the file.
+
+Gson's string adapter preserves the source spelling of JSON number tokens. Once a bounded parser
+has converted such a token to a JavaScript number, spellings such as `1000` and `1e3` cannot be
+distinguished. Number-to-string fields and list entries are therefore reported as unknown and are
+not mapped to archive paths. Boolean-to-string coercion is exact and is mapped with a warning.
+Integer strings accepted exactly by Gson's `nextInt` path are modeled, including decimal fallback
+forms such as `1.0` and `1e0`. Valid Java hexadecimal floating-point strings remain unknown rather
+than being incorrectly rejected.
 
 ## Audited sources
 
@@ -97,6 +110,7 @@ Gson commit `ca40a338de56871027f6c31b62f47f810f092bef`:
 
 - [TypeAdapters.java](https://github.com/google/gson/blob/ca40a338de56871027f6c31b62f47f810f092bef/src/main/java/com/google/gson/internal/bind/TypeAdapters.java)
 - [JsonReader.java](https://github.com/google/gson/blob/ca40a338de56871027f6c31b62f47f810f092bef/src/main/java/com/google/gson/stream/JsonReader.java)
+- [Gson.java](https://github.com/google/gson/blob/ca40a338de56871027f6c31b62f47f810f092bef/src/main/java/com/google/gson/Gson.java)
 
 Future core versions and launcher forks may add fields or compatibility levels. Those observations
 are reported as unknown rather than treated as definitive incompatibilities.
