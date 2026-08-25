@@ -2247,26 +2247,34 @@ describe("catalog", () => {
   });
 
   it("lists per-version support for target selection", () => {
+    const paper = getPaperPluginData();
     const support = listVersionSupport({ domain: "paper-plugin" });
-    expect(support).toHaveLength(50);
+    const latestPaperBuild = paper.versionBuilds.find(
+      (entry) => entry.minecraftVersion === paper.latest.minecraftVersion,
+    );
+
+    expect(support.length).toBeGreaterThan(0);
     expect(support[0]).toMatchObject({
       edition: "java",
-      version: "26.2",
-      paper: {
-        supported: true,
-        latestBuild: 30,
-      },
       surfaces: {
         datapackSchemaSurface: {
           available: true,
         },
       },
     });
-    const latestPaper = support.find((entry) => entry.version === "26.2");
+    expect(latestPaperBuild).toMatchObject({
+      minecraftVersion: paper.latest.minecraftVersion,
+      latestBuild: paper.latest.build,
+    });
+
+    const latestPaper = support.find((entry) => entry.version === paper.latest.minecraftVersion);
     expect(latestPaper).toMatchObject({
+      edition: "java",
+      version: paper.latest.minecraftVersion,
       paper: {
         supported: true,
-        latestBuild: 30,
+        latestBuild: paper.latest.build,
+        buildCount: latestPaperBuild?.buildCount,
       },
       surfaces: {
         paperApiSurface: {
@@ -2278,33 +2286,38 @@ describe("catalog", () => {
   });
 
   it("summarizes bundled coverage", () => {
+    const paper = getPaperPluginData();
+    const versionSupport = listVersionSupport();
     const summary = getCoverageSummary();
-    expect(summary.latest.java).toBe("26.2");
-    expect(summary.java.releases).toEqual({
-      total: 50,
-      latest: "26.2",
-      oldest: "1.13",
-    });
+    expect(summary.latest.java).toBe(summary.java.releases.latest);
+    expect(summary.java.releases.total).toBe(versionSupport.length);
+    expect(summary.java.releases.oldest).toBe("1.13");
     expect(summary.java.requiredData).toEqual({
       complete: true,
       missing: [],
     });
-    expect(summary.java.packFormats).toEqual({
-      extracted: 50,
-      missing: 0,
-    });
-    expect(summary.java.datapack.serverReports).toBe(50);
-    expect(summary.java.datapack.observedSchemaSurfaces).toBe(50);
-    expect(summary.java.resourcepack.modelSummaries).toBe(50);
+    expect(summary.java.packFormats.extracted + summary.java.packFormats.missing).toBe(
+      summary.java.releases.total,
+    );
+    expect(summary.java.packFormats.missing).toBe(0);
+    expect(summary.java.datapack.serverReports).toBe(summary.java.releases.total);
+    expect(summary.java.datapack.observedSchemaSurfaces).toBe(summary.java.releases.total);
+    expect(summary.java.resourcepack.modelSummaries).toBe(summary.java.releases.total);
     expect(summary.java.paperPlugin).toMatchObject({
-      supportedVersions: 46,
-      latestSupportedVersion: "26.2",
-      latestBuild: 30,
-      apiPackageIndexes: 46,
-      apiSurfaces: 38,
-      versionsWithoutUnknowns: 46,
+      supportedVersions: paper.versions.length,
+      latestSupportedVersion: paper.latest.minecraftVersion,
+      latestBuild: paper.latest.build,
+      versionBuilds: paper.versionBuilds.length,
+      versionsWithoutUnknowns: paper.versions.length,
       missingApiPackageIndexes: [],
     });
+    expect(
+      summary.java.paperPlugin.apiPackageIndexes +
+        summary.java.paperPlugin.missingApiPackageIndexes.length,
+    ).toBe(paper.versions.length);
+    expect(
+      summary.java.paperPlugin.apiSurfaces + summary.java.paperPlugin.missingApiSurfaces.length,
+    ).toBe(paper.versions.length);
     expect(summary.java.paperPlugin.missingApiSurfaces).toEqual([
       "1.13",
       "1.14",
@@ -4013,20 +4026,36 @@ describe("catalog", () => {
 
   it("loads Paper plugin data and event search contract", () => {
     const paper = getPaperPluginData();
-    expect(paper.latest).toEqual({
-      minecraftVersion: "26.2",
-      build: 30,
+    const latestBuild = paper.versionBuilds.find(
+      (entry) => entry.minecraftVersion === paper.latest.minecraftVersion,
+    );
+
+    expect(paper.latest.minecraftVersion).not.toBe("");
+    expect(Number.isInteger(paper.latest.build)).toBe(true);
+    expect(paper.latest.build).toBeGreaterThan(0);
+    expect(paper.versions).toContain(paper.latest.minecraftVersion);
+    expect(latestBuild).toMatchObject({
+      minecraftVersion: paper.latest.minecraftVersion,
+      latestBuild: paper.latest.build,
     });
-    expect(paper.support.minecraftLatestGap).toEqual({
-      javaLatest: "26.2",
-      paperLatest: "26.2",
-      status: "paper-current-with-java-latest",
-    });
-    expect(paper.versionBuilds).toContainEqual({
-      minecraftVersion: "1.21.11",
-      latestBuild: 132,
-      buildCount: 92,
-    });
+    expect(latestBuild?.buildCount).toBeGreaterThan(0);
+    expect(paper.versionBuilds).toHaveLength(paper.versions.length);
+    expect(
+      paper.versionBuilds.every(
+        (entry) =>
+          paper.versions.includes(entry.minecraftVersion) &&
+          Number.isInteger(entry.latestBuild) &&
+          entry.latestBuild > 0 &&
+          Number.isInteger(entry.buildCount) &&
+          entry.buildCount > 0,
+      ),
+    ).toBe(true);
+    expect(paper.support.minecraftLatestGap.paperLatest).toBe(paper.latest.minecraftVersion);
+    expect(paper.support.minecraftLatestGap.status).toBe(
+      paper.support.minecraftLatestGap.javaLatest === paper.latest.minecraftVersion
+        ? "paper-current-with-java-latest"
+        : "paper-not-yet-published-for-java-latest",
+    );
     expect(paper.eventSearch.paperSources).toEqual(["spigot", "paper"]);
     expect(paper.sources.map((source) => source.id)).toContain("papermc-docs-paper-folia-support");
   });

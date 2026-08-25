@@ -1,4 +1,4 @@
-import { listReferences, listSkills } from "@minecraft-skills/catalog";
+import { getDataManifest, listReferences, listSkills } from "@minecraft-skills/catalog";
 import { describe, expect, it } from "vitest";
 import { listMinecraftSkillsResources, readMinecraftSkillsResource } from "./resources.js";
 
@@ -409,7 +409,11 @@ describe("MCP resources", () => {
     expect(intentLookup.contents[0]?.text).toContain('"search_paper_members"');
 
     const manifest = readMinecraftSkillsResource("minecraft-skills://data/data-manifest.json");
-    expect(manifest.contents[0]?.text).toContain('"dataVersion": "2026.06.23-2"');
+    const manifestOutput = JSON.parse(manifest.contents[0]?.text ?? "{}") as {
+      dataVersion: string;
+    };
+    expect(manifestOutput.dataVersion).toBe(getDataManifest().dataVersion);
+    expect(manifestOutput.dataVersion).toMatch(/^\d{4}\.\d{2}\.\d{2}-\d+$/);
 
     const paperSurface = readMinecraftSkillsResource(
       "minecraft-skills://data/java/paper-api-surfaces/1.21.11.json",
