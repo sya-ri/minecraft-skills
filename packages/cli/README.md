@@ -54,6 +54,8 @@ minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test ev
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper recipe paper-attribute-effect-ownership
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
+minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
+minecraft-skills plugin paper plan paper-modelengine-runtime-binding-review 1.21.11
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills plugin paper guardrails
@@ -68,6 +70,7 @@ minecraft-skills plugin paper guardrail paper-plugin-configuration-lifecycle-saf
 minecraft-skills plugin paper guardrail paper-custom-recipe-ownership
 minecraft-skills plugin paper guardrail paper-high-frequency-persistence-safety
 minecraft-skills plugin paper guardrail paper-attribute-effect-ownership-safety
+minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
 minecraft-skills plugin paper diagnostics
 minecraft-skills plugin paper diagnostic paper-api-member-unverified
 minecraft-skills plugin paper diagnostic paper-event-listener-semantics-unsafe
@@ -80,6 +83,7 @@ minecraft-skills plugin paper diagnostic paper-plugin-configuration-lifecycle-un
 minecraft-skills plugin paper diagnostic paper-custom-recipe-registration-unsafe
 minecraft-skills plugin paper diagnostic paper-high-frequency-persistence-unsafe
 minecraft-skills plugin paper diagnostic paper-attribute-effect-ownership-unsafe
+minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsafe
 minecraft-skills plugin paper claim-policies
 minecraft-skills plugin paper claim-policy paper-type-or-member-exists
 minecraft-skills plugin paper output-requirements

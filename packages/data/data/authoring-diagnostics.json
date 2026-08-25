@@ -1857,6 +1857,81 @@
         "Verify runtime semantics on the loaded target Paper version and state any remaining evidence gap."
       ],
       "failureMode": "Ambiguous identities and broad cleanup can accumulate effects, erase unrelated mechanics, or violate entity value bounds across lifecycle transitions."
+    },
+    {
+      "id": "paper-modelengine-runtime-binding-unsafe",
+      "domains": ["paper-plugin"],
+      "title": "Model Engine runtime binding is unverified, partially published, or lifecycle-unsafe",
+      "severity": "error",
+      "detectWhen": [
+        "Paper code binds an existing Model Engine blueprint or active model to a carrier entity",
+        "carrier configuration, attachment, verification, and publication do not have an explicit order",
+        "blueprint, model, or animation identifiers are assumed, normalized, aliased, or substituted",
+        "idle, locomotion, and action animations can overlap without one owner and verified priority or fallback",
+        "reload or reimport, teleport, despawn, a target-supported integration reload or disable-enable transition, or final plugin disable can invalidate or orphan runtime state",
+        "external API compatibility or rendering is claimed from Paper-only indexes, fakes, compilation, or server state alone"
+      ],
+      "requiredChecks": [
+        "record the exact Paper build, immutable Model Engine plugin and adapter artifact identities, dependency and load-order policy, supported pairs, and version-matched official API or source evidence",
+        "verify exact-case blueprint, model, required animation, optional animation, and authoritative alias identifiers against the selected runtime and assets",
+        "separate dependency absent, version or artifact mismatch, identifier failure, carrier configuration failure, attachment failure, missing animation, replacement failure, and cleanup failure outcomes",
+        "declare integration-owned or borrowed carrier lifecycle, prove configuration precedes attachment and positive attachment verification precedes publication, and prove failure removes only owned carriers while restoring borrowed properties",
+        "assign one owner to idle, locomotion, and action with verified priority, masking, interruption, cancellation, end, and fallback behavior",
+        "resolve and verify a replacement as far as the target permits, use a target-supported coexistence or fail-closed cutover with one publication point, reject old-generation callbacks, and retire all old runtime state",
+        "follow target Paper completion and ownership rules for teleport and make despawn and disable cleanup idempotent and bounded",
+        "run deterministic adapter tests and exact-artifact loaded-server checks, then pair a target client or captured client state with the server fixture for rendering and carrier visual suppression",
+        "confirm retired models, carriers, owners, callbacks, and registry entries return to baseline"
+      ],
+      "evidence": [
+        "an exact runtime compatibility and external API evidence record",
+        "identifier, carrier-ownership and property, animation-ownership, and outcome matrices",
+        "a configure, attach, verify, publish trace and a generation replacement or retirement trace",
+        "deterministic failure and stale-generation tests",
+        "loaded-server results for missing-plugin, safely constructible incompatible-version, and controlled attachment-rejection outcomes",
+        "exact supported-artifact loaded-server plus paired target-client or captured-client results for attach, render, carrier suppression, required animations, movement, action fallback, reload or reimport, teleport, despawn, disable, and leak-free cleanup"
+      ],
+      "tools": {
+        "cli": [
+          "plugin paper context",
+          "plugin paper api",
+          "plugin paper recipe",
+          "plugin paper guardrail"
+        ],
+        "mcp": [
+          "get_authoring_context",
+          "get_paper_api_reference",
+          "get_authoring_recipe",
+          "get_authoring_guardrail"
+        ],
+        "packageApis": [
+          "getAuthoringContext",
+          "getPaperApiReference",
+          "getAuthoringRecipe",
+          "getAuthoringGuardrail"
+        ]
+      },
+      "failIf": [
+        "the exact Model Engine plugin or integration artifact identity is absent or its API evidence belongs to another generation",
+        "a Model Engine type, member, event, artifact, or documentation location is invented or treated as verified by Paper-only data",
+        "identifier case or alias behavior is guessed, or a missing required animation silently selects another animation",
+        "a carrier can be published before every required property and a positive attachment result",
+        "initial or replacement attachment failure leaves a newly published naked carrier, a partial candidate, or a modeled-success result instead of preserving the known-good generation where supported or staying explicitly unavailable",
+        "failure or teardown deletes a borrowed carrier or leaves binding-changed borrowed properties unrestored",
+        "idle, locomotion, and action have conflicting writers or no deterministic natural-end, forced-end, interruption, and cancellation fallback",
+        "pre-reload objects or old-generation callbacks can control the current model",
+        "teleport reattachment ignores target Paper completion or entity ownership rules",
+        "despawn or disable can leave active models, integration-owned carriers, animation owners, callbacks, registrations, or registry entries",
+        "a fake, compiler, MockBukkit-only path, or server counter is cited as proof of Model Engine runtime compatibility or client rendering",
+        "the proposed fix expands into combat, hitbox, loot, spawn, individual assets, display-interaction geometry, generic scheduler, event, persistent-data, or full-project validation concerns"
+      ],
+      "safeResponse": [
+        "Resolve the exact installed artifacts and version-matched official API or source evidence before naming adapter calls.",
+        "Verify identifiers and aliases, then stage carrier configuration, attachment, positive verification, and publication as a fail-closed state machine.",
+        "Give each animation channel one owner and define every priority, interruption, and end fallback explicitly.",
+        "Use a target-supported coexistence or fail-closed cutover with one publication point, fence old callbacks, and make lifecycle cleanup idempotent and observable.",
+        "Limit claims to deterministic adapter evidence until the exact loaded server and paired client evidence are complete."
+      ],
+      "failureMode": "A binding that lacks exact runtime evidence, ordered publication, animation ownership, generation fencing, or loaded-runtime proof can show the wrong entity, play the wrong state, or leak stale models and carriers."
     }
   ]
 }

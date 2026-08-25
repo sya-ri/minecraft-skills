@@ -6168,6 +6168,85 @@ describe("catalog", () => {
     );
   });
 
+  it("routes Model Engine runtime binding tasks to fail-closed ownership guidance", () => {
+    const recipe = getAuthoringRecipe("paper-modelengine-runtime-binding");
+    expect(recipe.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "resolve-target-runtime-and-identifiers",
+        "stage-carrier-attach-and-publication",
+        "assign-animation-channel-ownership",
+        "replace-and-retire-runtime-generations",
+        "prove-the-contract-on-the-loaded-runtime",
+      ]),
+    );
+    expect(recipe.finalChecks).toContain("paper-modelengine-runtime-binding-safety");
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "Paper type and member indexes can verify Paper carrier surfaces only",
+    );
+
+    const guardrail = getAuthoringGuardrail("paper-modelengine-runtime-binding-safety");
+    expect(guardrail.rules.join("\n")).toContain("positive attachment result");
+    expect(guardrail.rules.join("\n")).toContain("never a silent default");
+
+    const diagnostic = getAuthoringDiagnostic("paper-modelengine-runtime-binding-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("old-generation callbacks");
+    expect(diagnostic.failIf.join("\n")).toContain("Paper-only data");
+
+    const scenario = getAuthoringScenario("paper-modelengine-runtime-binding-review");
+    expect(scenario.requiredLookups.recipes).toEqual(["paper-modelengine-runtime-binding"]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-modelengine-runtime-binding-unsafe",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("display-interaction geometry");
+
+    for (const query of [
+      "ModelEngine active model attachment animation ownership",
+      "Model Engine blueprint carrier locomotion ownership",
+      "ModelEngine carrier silent invisible attach verify publish",
+      "ModelEngine reload reimport locomotion action fallback cleanup",
+    ]) {
+      const scenarioSearch = searchAuthoringScenarios({ query, domain: "paper-plugin" });
+      expect(scenarioSearch.results[0]?.scenario.id, query).toBe(
+        "paper-modelengine-runtime-binding-review",
+      );
+    }
+
+    const catalogSearch = searchCatalog({
+      query: "ModelEngine carrier animation runtime binding",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalogSearch.results[0]).toEqual(
+      expect.objectContaining({
+        id: "paper-modelengine-runtime-binding",
+        kind: "authoring-recipe",
+      }),
+    );
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "ModelEngine carrier attach animation ownership reload cleanup",
+      domain: "paper-plugin",
+    });
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-modelengine-runtime-binding-review",
+    );
+    expect(suggestions.catalog.results.map((entry) => entry.id)).toContain(
+      "paper-modelengine-runtime-binding",
+    );
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-modelengine-runtime-binding-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual(["paper-modelengine-runtime-binding"]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-modelengine-runtime-binding-unsafe",
+    );
+    expect(plan.factSurfaces.map((entry) => entry.id)).toContain("paper-api-surface");
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",

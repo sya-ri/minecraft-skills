@@ -573,6 +573,37 @@
             "Reapply, expiry, death, quit, reconnect, and reload tests prove idempotent cleanup for multiple sources."
           ],
           "failureMode": "Anonymous modifier stacking, broad removal, or false potion-effect ownership can erase vanilla or foreign state and leave invalid health or absorption values after capacity changes."
+        },
+        {
+          "id": "verify-modelengine-runtime-binding",
+          "reason": "When the Paper task integrates Model Engine, its API generations, case-sensitive asset identifiers, carrier publication order, animation ownership, and reload cleanup cannot be proven from Paper-only indexes or a fake adapter; otherwise this task-specific step does not apply.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper recipe paper-modelengine-runtime-binding",
+              "plugin paper scenario paper-modelengine-runtime-binding-review",
+              "plugin paper diagnostic paper-modelengine-runtime-binding-unsafe"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_authoring_recipe",
+              "get_authoring_scenario",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getAuthoringRecipe",
+              "getAuthoringScenario",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "For a Model Engine integration, the exact Paper and Model Engine artifacts, supported version pair, and version-matched external API or source evidence are recorded.",
+            "Blueprint, model, animation, case, and alias identifiers plus carrier properties and animation channel ownership are verified.",
+            "Carrier configuration, attachment, positive verification, publication, generation replacement, and old-state retirement are ordered and fail-closed.",
+            "Deterministic adapter tests and exact-artifact loaded-server plus paired client evidence cover attachment, rendering, carrier suppression, animations, movement, reload or reimport, teleport, despawn, disable, and cleanup."
+          ],
+          "failureMode": "When Model Engine is in scope, do not approve its runtime binding from guessed external APIs, silent identifier fallback, partial publication, conflicting animation owners, stale generations, or fake-only evidence."
         }
       ]
     }

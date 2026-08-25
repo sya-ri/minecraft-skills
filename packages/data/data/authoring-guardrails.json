@@ -632,6 +632,39 @@
         "Table-driven lifecycle tests for multiple sources, expiry, death, quit, reconnect, reload, disable, and repeated cleanup"
       ],
       "failureMode": "Anonymous stacking and broad cleanup can outlive a session, delete vanilla or foreign contributions, manufacture ownership for an indistinguishable potion effect, and leave current values invalid after capacity changes."
+    },
+    {
+      "id": "paper-modelengine-runtime-binding-safety",
+      "domains": ["paper-plugin"],
+      "title": "Keep Model Engine binding ordered, generation-safe, and evidence-backed",
+      "rules": [
+        "Record the exact Paper build, immutable installed Model Engine plugin and integration artifact identities, supported version pair, hard or soft dependency and load-order policy, and version-matched official API or source evidence before naming external API surfaces.",
+        "Use bundled Paper type and member indexes only for Paper carrier and lifecycle surfaces; they do not verify an external Model Engine artifact.",
+        "Verify blueprint, model, and animation identifiers with exact case against the selected runtime and exported assets; accept aliases only from an authoritative target-generation mapping and reject missing or ambiguous identifiers.",
+        "Distinguish required from optional animations. A missing required animation is an explicit failure, never a silent default, similar-name, normalized-name, or arbitrary substitution.",
+        "Declare an already selected carrier as integration-owned or borrowed; snapshot only binding-changed properties for a borrowed carrier, then apply every required target-verified silence, invisibility or other base-entity visibility, and safety property before attachment.",
+        "Require a positive attachment result and verify required initial state before publishing the generation. Fail closed when initial attachment fails by withholding publication, detaching partial model state, removing only an integration-owned carrier, and restoring rather than deleting a borrowed carrier. During replacement, retain the last known-good generation or retire all state explicitly; never publish a partial candidate.",
+        "Give idle, locomotion, and action channels exactly one logical owner each and document their target-verified priority, masking, loop, interruption, cancellation, natural-end, forced-end, and fallback behavior.",
+        "After an action ends or is interrupted, recompute locomotion or idle from current state for the same published generation; reject callbacks from older generations.",
+        "Treat Model Engine reload or reimport and any integration reload or disable-enable transition explicitly supported by the target deployment as generation changes; do not assume arbitrary server reload is safe. Use a target-supported coexistence or fail-closed cutover transaction with one publication point, fence old callbacks, then stop and release every old animation owner, active model, adapter reference, registration, and callback.",
+        "Follow target Paper completion and entity-ownership rules for teleport before revalidating, resynchronizing, or reattaching through version-matched adapter behavior.",
+        "Make despawn and disable cleanup idempotent, bounded, and failure-tolerant; close admission, fence stale callbacks, release model and animation state, remove integration-owned carriers, restore only binding-owned properties on borrowed carriers, and never rely on broad world scans.",
+        "Keep dependency absent, unsupported version pair, artifact mismatch, identifier failure, carrier configuration failure, attachment rejection or failure, missing animation, replacement failure, and incomplete cleanup distinct; use a bounded typed plugin outcome when loaded and a declared bootstrap or load-refusal outcome for a hard dependency.",
+        "Keep reason-code metrics bounded and separate server-observed binding state from client-observed rendering and carrier visual suppression.",
+        "Use deterministic fakes only for the plugin-owned adapter contract. Prove external API compatibility, attachment, animation semantics, reload behavior, and cleanup on the exact loaded artifacts, and prove rendering with a paired target client or captured client state.",
+        "Keep combat AI, balance, damage, hitboxes, loot, spawn policy, individual mob or asset authoring, display-interaction geometry and click routing, generic scheduler, event, or persistent-data design, and full Model Engine project validation outside this concern."
+      ],
+      "requiredEvidence": [
+        "an exact Paper and Model Engine compatibility row with immutable plugin and adapter artifact identities, dependency and load-order policy, and version-matched official API or source evidence",
+        "an exact-case blueprint, model, animation, and alias inventory plus required-versus-optional policy",
+        "a carrier ownership and property matrix plus a prepare, attach, verify, publish state machine with fail-closed initial and replacement outcomes",
+        "an idle, locomotion, and action ownership and priority matrix with every end and interruption fallback",
+        "a generation replacement and idempotent cleanup design for reload or reimport, teleport, despawn, and disable",
+        "deterministic adapter tests plus loaded missing-plugin, safely constructible incompatible-version, and controlled attachment-rejection fixtures",
+        "exact supported-artifact loaded-server and paired target-client or captured-client evidence",
+        "bounded observability proving retired generations, active models, carriers, animation owners, callbacks, and registry entries return to baseline"
+      ],
+      "failureMode": "An unverified or poorly ordered runtime binding can expose its carrier, attach the wrong asset, silently play a substitute animation, allow channel conflicts, resurrect stale generations, or leave ghost models and carriers after lifecycle transitions."
     }
   ]
 }

@@ -3340,6 +3340,158 @@
         "paper-plugin-testing-evidence"
       ],
       "failureMode": "Unstable keys, broad removal, implicit ItemMeta default changes, or false potion-effect ownership can stack contributions across lifecycle transitions, erase vanilla or foreign state, and leave health or absorption outside a reduced capacity."
+    },
+    {
+      "id": "paper-modelengine-runtime-binding",
+      "domains": ["paper-plugin"],
+      "title": "Bind Model Engine models and animation channels fail-closed",
+      "when": [
+        "a Paper plugin binds an existing Model Engine blueprint to an already selected carrier entity",
+        "carrier suppression, active-model attachment, animation playback, or publication order can expose a naked carrier or half-bound model",
+        "idle, locomotion, and action animations can compete, interrupt one another, or finish without a defined fallback",
+        "Model Engine reload or reimport, Paper teleport, despawn, a target-supported integration reload or disable-enable transition, or final plugin disable can leave an old active model, carrier, callback, or animation owner behind",
+        "the implementation must distinguish a missing dependency, unsupported integration version, missing identifier, rejected attachment, and cleanup failure"
+      ],
+      "steps": [
+        {
+          "id": "resolve-target-runtime-and-identifiers",
+          "action": "Record the exact Paper build, installed Model Engine plugin artifact version and checksum or equivalent immutable identity, resolved integration artifact coordinates and immutable identity, and version-matched official API or source evidence used by the adapter. Declare supported version pairs, hard or soft dependency and load-order policy, and explicit dependency-absent, version-mismatch, and artifact-mismatch outcomes. Verify the blueprint or model identifier and every required animation identifier with exact case against the selected runtime and exported assets. If that exact generation supports aliases, record the authoritative alias-to-canonical mapping and reject missing, ambiguous, or case-mismatched input. Bundled Paper type and member indexes can verify Paper carrier surfaces only; they do not prove an external Model Engine API. Do not copy unverified class, method, event, artifact, or latest-documentation names into the contract.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "An exact Paper and Model Engine compatibility row with immutable plugin and adapter artifact identities and version-matched official API or source evidence",
+            "A dependency, load-order, and compatibility outcome table covering hard or soft dependency, absent plugin, unsupported pair, artifact mismatch, and supported runtime",
+            "An exact-case inventory of blueprint, model, required animation, optional animation, and verified alias identifiers",
+            "Target-version Paper API evidence for only the carrier and lifecycle surfaces actually referenced"
+          ],
+          "stopIfMissing": "Do not generate adapter calls or accept model and animation identifiers from memory, an unrelated Model Engine generation, or Paper-only search results."
+        },
+        {
+          "id": "stage-carrier-attach-and-publication",
+          "action": "Model binding as an explicit generation state machine such as unavailable, carrier-prepared, attaching, attached-unpublished, current, retiring, and removed or failed. Declare whether the already selected carrier is integration-owned or borrowed and, for a borrowed carrier, snapshot only the properties this binding will change. Apply every required target-verified suppression and safety property, including silence, invisibility, or other base-entity visibility where required, before attachment. Resolve the blueprint, create and attach the active model, verify the adapter's positive attachment result and required initial state, then publish the generation to plugin behavior or viewers. An initial attach failure must leave no integration-published naked carrier or modeled-success state, detach partial model state, and either remove an integration-owned carrier or restore a borrowed carrier without deleting it. A replacement attach failure must keep the last known-good generation current when the verified adapter can stage both, or retire everything fail-closed when it cannot; it must never publish the candidate partially.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A state diagram with one atomic publication point after carrier configuration and verified attachment",
+            "An ordered trace proving configure carrier, attach model, verify attachment, then publish",
+            "Initial and replacement attach-failure tests proving partial state is cleaned and never advertised as current",
+            "A carrier ownership and property matrix plus tests proving integration-owned removal versus borrowed-property restoration",
+            "Client-visible proof that the base carrier does not leak when suppression is required"
+          ],
+          "stopIfMissing": "Do not make the carrier discoverable, visible through plugin behavior, or successful to callers before attachment is positively verified."
+        },
+        {
+          "id": "assign-animation-channel-ownership",
+          "action": "Define idle, locomotion, and action as explicit logical channels mapped to state machines, layers, or priorities that are verified for the selected Model Engine generation. Give each channel one owner, define whether higher-priority action masks or replaces locomotion and idle, and specify transitions for start, natural end, forced end, interruption, cancellation, model replacement, and stale completion. On action end, deterministically recompute the current locomotion or idle state for the same published generation. A missing required animation is an explicit binding or playback failure; never silently substitute a similarly named, default, or arbitrary animation. An optional animation may no-op or use a declared fallback only when that policy and target identifier were verified in advance.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper search-scenarios",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "search_authoring_scenarios",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "searchAuthoringScenarios",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "An animation matrix naming owner, verified target channel or state machine, priority, loop policy, interruption policy, and end fallback",
+            "Deterministic tests for idle-to-move, move-to-idle, action masking, natural end, forced end, interruption, and stale completion",
+            "A required-versus-optional animation table with explicit missing outcomes and no undeclared substitution",
+            "Loaded-runtime evidence that the configured priority and end behavior matches the selected Model Engine generation"
+          ],
+          "stopIfMissing": "Do not let multiple controllers write one animation channel or infer target-generation priority and fallback semantics from an older example."
+        },
+        {
+          "id": "replace-and-retire-runtime-generations",
+          "action": "Treat Model Engine reload or reimport and any integration reload or disable-enable transition explicitly supported by the target deployment as generation changes that invalidate cached blueprint, active-model, animation, and adapter references; do not assume arbitrary server reload is safe. Resolve and verify the candidate as far as the target adapter permits, then use a target-supported replacement transaction: attach and verify before switching when generations may coexist, or first unpublish and retire the old attachment and remain fail-closed if the new attach fails when they may not. Publish at one explicit point, fence old callbacks, and release every old runtime reference. For teleport, follow the target Paper completion and ownership rules, then revalidate the current generation and perform only the resync or reattach required by the verified adapter. Despawn and plugin disable use idempotent cleanup that closes admission, rejects old-generation callbacks, ends animation ownership, detaches or destroys models, releases registrations and references, and either removes an integration-owned carrier or restores only binding-owned properties on a borrowed carrier without deleting it. Cleanup continues through independent failures and leaves a bounded, authoritative registry rather than discovering owned state through broad world scans.",
+          "tools": {
+            "cli": ["plugin paper api", "plugin paper members", "plugin paper guardrail"],
+            "mcp": ["get_paper_api_reference", "search_paper_members", "get_authoring_guardrail"],
+            "packageApis": ["getPaperApiReference", "searchPaperMembers", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A target-supported generation-replacement diagram with candidate verification, one publication point, coexistence or fail-closed cutover policy, old-generation fencing, and ordered retirement",
+            "Target-version evidence for the Paper teleport, entity ownership, and plugin lifecycle surfaces actually used",
+            "Tests for reimport or reload success and failure, teleport completion ordering, duplicate despawn, partial cleanup failure, repeated disable, integration-owned removal, and borrowed-carrier restoration",
+            "A bounded ownership registry whose live and retired counts return to the expected baseline"
+          ],
+          "stopIfMissing": "Do not reuse pre-reload runtime objects, allow an old callback to control a replacement generation, or depend on a world scan to find integration-owned state."
+        },
+        {
+          "id": "make-binding-outcomes-observable",
+          "action": "Represent every failure distinctly: use bounded typed plugin outcomes when the integration remains loaded, and record the expected bootstrap or load-refusal result when a declared hard dependency prevents activation. Cover dependency absent, unsupported version pair, artifact mismatch, blueprint absent or ambiguous, identifier case mismatch, alias unresolved, required animation missing, carrier configuration failure, attachment rejected or failed, candidate publication rejected, generation replacement failed, and cleanup incomplete. Keep operational reason codes bounded; attach detailed identifiers only to rate-limited or sampled diagnostics rather than unbounded metric labels. Observe current and retiring generation counts, attach attempts and failures, rejected stale callbacks, missing animations, reload results, cleanup failures, and leaked model or carrier state without claiming client rendering from server counters alone.",
+          "tools": {
+            "cli": ["plugin paper diagnostic", "plugin paper output-requirements"],
+            "mcp": ["get_authoring_diagnostic", "list_output_requirements"],
+            "packageApis": ["getAuthoringDiagnostic", "listOutputRequirements"]
+          },
+          "evidence": [
+            "An outcome table for every bootstrap, preflight, attach, playback, replacement, and cleanup failure, distinguishing load refusal from plugin-owned typed outcomes",
+            "Bounded metrics or structured logs that distinguish dependency, version, identifier, attach, generation, and cleanup failures",
+            "An alert or operator procedure for nonzero leaked generations, models, or carriers",
+            "A statement separating server-observed binding state from client-observed rendering"
+          ],
+          "stopIfMissing": "Do not collapse dependency, identifier, attachment, playback, replacement, and cleanup failures into a generic unavailable state or success with a warning."
+        },
+        {
+          "id": "prove-the-contract-on-the-loaded-runtime",
+          "action": "Use deterministic tests around a plugin-owned adapter to prove ordering, generation fencing, channel arbitration, fail-closed outcomes, and idempotent cleanup without inventing Model Engine behavior. Then exercise the declared hard or soft dependency behavior on loaded Paper fixtures for a missing plugin and a safely constructible incompatible pair, and use a target-supported controlled rejection to prove real attachment failure stays closed. Load the exact supported Paper and Model Engine artifacts and verify blueprint and animation lookup, carrier configuration, attachment, required animation playback, movement-driven locomotion, action-end fallback, teleport, reload or reimport replacement, despawn, and disable cleanup. Include a target client or captured client state attached to the loaded-server fixture for rendered-model visibility and required carrier visual suppression; server state alone cannot prove rendering. A fake adapter, compilation, or a generic Paper harness cannot prove external API compatibility, attachment, animation semantics, or rendering.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper guardrail",
+              "plugin paper output-requirements"
+            ],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail", "list_output_requirements"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail", "listOutputRequirements"]
+          },
+          "evidence": [
+            "Deterministic adapter tests covering exact operation order, every plugin-owned typed failure and declared bootstrap outcome, channel transitions, replacement races, stale completion, and repeated cleanup",
+            "Loaded-server reports for the declared missing-dependency and safely constructible incompatible-version outcomes plus a target-supported controlled attachment rejection that leaves no newly published carrier",
+            "A loaded-server report naming exact supported Paper and Model Engine artifacts and proving attachment, required animation lookup and playback, movement, teleport, reload or reimport, despawn, and disable behavior",
+            "Target-client or captured-client evidence paired with the loaded server for the rendered model and required carrier visual suppression",
+            "Post-test evidence that no retired active model, carrier, callback, animation owner, or registry entry remains"
+          ],
+          "stopIfMissing": "Do not report runtime binding or rendering as verified from deterministic fakes, compilation, Paper-only indexes, or server counters that cannot observe the client."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-modelengine-runtime-binding-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "A Model Engine integration can publish a naked carrier or half-attached model, silently play the wrong animation, let competing channel owners fight, retain stale generations through reload or teleport, and leak models or carriers while tests prove only a fake adapter. Combat behavior, balance, damage, hitboxes, loot, spawn policy, individual model assets, display-interaction geometry, generic scheduler, event, or persistent-data design, and a full Model Engine project validator are outside this concern."
     }
   ]
 }

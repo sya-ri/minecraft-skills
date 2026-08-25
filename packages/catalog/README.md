@@ -180,6 +180,10 @@ const attributeEffectPlan = getAuthoringPlan({
   scenario: "paper-attribute-effect-ownership-review",
   version: "1.21.11",
 });
+const modelEngineBindingPlan = getAuthoringPlan({
+  scenario: "paper-modelengine-runtime-binding-review",
+  version: "1.21.11",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -201,6 +205,7 @@ const customRecipeRegistrationRecipe = getAuthoringRecipe(
   "paper-custom-recipe-registration",
 );
 const attributeEffectRecipe = getAuthoringRecipe("paper-attribute-effect-ownership");
+const modelEngineBindingRecipe = getAuthoringRecipe("paper-modelengine-runtime-binding");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -230,6 +235,9 @@ const persistenceScenario = getAuthoringScenario("paper-high-frequency-persisten
 const attributeEffectScenario = getAuthoringScenario(
   "paper-attribute-effect-ownership-review",
 );
+const modelEngineBindingScenario = getAuthoringScenario(
+  "paper-modelengine-runtime-binding-review",
+);
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const eventListenerGuardrail = getAuthoringGuardrail("paper-event-listener-semantics-safety");
@@ -249,10 +257,16 @@ const customRecipeGuardrail = getAuthoringGuardrail("paper-custom-recipe-ownersh
 const attributeEffectGuardrail = getAuthoringGuardrail(
   "paper-attribute-effect-ownership-safety",
 );
+const modelEngineBindingGuardrail = getAuthoringGuardrail(
+  "paper-modelengine-runtime-binding-safety",
+);
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const eventListenerDiagnostic = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
 const testingEvidenceDiagnostic = getAuthoringDiagnostic("paper-plugin-test-evidence-gap");
+const modelEngineBindingDiagnostic = getAuthoringDiagnostic(
+  "paper-modelengine-runtime-binding-unsafe",
+);
 const itemDeliveryDiagnostic = getAuthoringDiagnostic("paper-inventory-leftovers-unhandled");
 const itemStackIdentityDiagnostic = getAuthoringDiagnostic(
   "paper-itemstack-identity-or-state-loss",

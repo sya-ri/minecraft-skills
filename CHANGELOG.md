@@ -142,6 +142,11 @@ All notable changes to this project are documented here.
   covering stable keyed equipment and session reconciliation, implicit vanilla ItemType defaults,
   non-keyed potion-effect collision policies, capacity-before-current-value clamping, and
   table-driven reapply, expiry, death, quit, reconnect, and reload evidence.
+- Model Engine runtime-binding and animation-ownership guidance across data, Catalog, CLI, and MCP,
+  requiring exact Paper, plugin, adapter, blueprint, and animation evidence; carrier configuration
+  before verified attachment and publication; explicit idle, locomotion, and action ownership;
+  fail-closed generation replacement and cleanup; and exact-artifact loaded-server plus paired-client
+  evidence without embedding guessed external API names.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

@@ -462,6 +462,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-attribute-effect-ownership-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-attribute-effect-ownership-safety.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-attribute-effect-ownership-unsafe.json`
+- `minecraft-skills://data/authoring-recipes/paper-modelengine-runtime-binding.json`
+- `minecraft-skills://data/authoring-scenarios/paper-modelengine-runtime-binding-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-modelengine-runtime-binding-safety.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-modelengine-runtime-binding-unsafe.json`
 - `minecraft-skills://data/claim-policies/paper-type-or-member-exists.json`
 - `minecraft-skills://data/output-requirements/paper-plugin-output-safety.json`
 - `minecraft-skills://data/response-patterns/paper-api-answer.json`
