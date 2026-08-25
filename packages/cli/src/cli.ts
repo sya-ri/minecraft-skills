@@ -1,15 +1,5 @@
 #!/usr/bin/env node
-import {
-  closeSync,
-  existsSync,
-  fstatSync,
-  mkdirSync,
-  openSync,
-  readFileSync,
-  readSync,
-  realpathSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -113,6 +103,7 @@ import {
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type PlayerSkinSourceRectangleInput,
+  paperPluginJarValidationLimits,
   playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
@@ -146,6 +137,7 @@ import {
   validateFabricModJar,
   validateModrinthPackArchive,
   validatePackFilesContent,
+  validatePaperPluginJar,
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
@@ -157,6 +149,7 @@ import {
   type RconPermissionPreset,
   runRconCommand,
 } from "@minecraft-skills/rcon";
+import { readBoundedArchiveFile } from "./boundedArchiveFile.js";
 import { readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabricModDirectory.js";
 import { readFabricModJarFile } from "./fabricModJarFile.js";
@@ -184,37 +177,6 @@ const defaultOutput: Output = {
   write: (value) => console.log(value),
   error: (value) => console.error(value),
 };
-
-function readBoundedRegularFile(filePath: string, maxBytes: number): Buffer {
-  const file = openSync(filePath, "r");
-  try {
-    const before = fstatSync(file);
-    if (!before.isFile()) {
-      throw new Error("modrinth validate-pack requires a regular local .mrpack file");
-    }
-    if (before.size > maxBytes) {
-      throw new Error(`modrinth validate-pack refuses archives larger than ${maxBytes} bytes`);
-    }
-
-    const contents = Buffer.allocUnsafe(before.size);
-    let offset = 0;
-    while (offset < contents.byteLength) {
-      const bytesRead = readSync(file, contents, offset, contents.byteLength - offset, null);
-      if (bytesRead === 0) {
-        break;
-      }
-      offset += bytesRead;
-    }
-
-    const after = fstatSync(file);
-    if (offset !== before.size || after.size !== before.size) {
-      throw new Error("modrinth validate-pack archive changed while it was being read");
-    }
-    return contents;
-  } finally {
-    closeSync(file);
-  }
-}
 
 const minecraftLogLimitOptions: Readonly<Record<string, keyof MinecraftLogAnalysisLimits>> = {
   "--max-input-bytes": "maxInputBytes",
@@ -969,6 +931,7 @@ function normalizeSubcommands(argv: string[]): string[] {
       "compare-api-surface": "compare-paper-api-surface",
       events: "paper-events",
       info: "paper",
+      "validate-jar": "paper-validate-jar",
     };
     const command = normalizeDomainAuthoringSubcommand("paper-plugin", paperSubcommand, paperRest);
     if (command) {
@@ -1072,6 +1035,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "paper-members": "plugin paper members",
   "compare-paper-api-surface": "plugin paper compare-api-surface",
   "paper-events": "plugin paper events",
+  "paper-validate-jar": "plugin paper validate-jar",
   "fabric-toolchain": "fabric toolchain",
   "velocity-toolchain": "velocity toolchain",
   "server-validate-properties": "server validate-properties",
@@ -1334,6 +1298,7 @@ Grouped commands:
   minecraft-skills plugin paper types [version] [--package package.name] [--contains text] [--limit 50]
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
+  minecraft-skills plugin paper validate-jar <file.jar> [--max-archive-bytes bytes]
   minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
   minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
   minecraft-skills fabric mods inventory <directory>
@@ -2779,6 +2744,35 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return 0;
     }
 
+    if (command === "paper-validate-jar") {
+      const jarPaths = positionalArgs(args);
+      const jarPath = jarPaths[0];
+      if (jarPaths.length !== 1 || !jarPath) {
+        throw new Error("plugin paper validate-jar requires exactly one local .jar file");
+      }
+      if (!jarPath.toLowerCase().endsWith(".jar")) {
+        throw new Error("plugin paper validate-jar requires a file with the .jar extension");
+      }
+      const maxArchiveBytes = readIntegerArg(
+        args.includes("--max-archive-bytes")
+          ? readOption(args, "--max-archive-bytes", "")
+          : String(paperPluginJarValidationLimits.maxArchiveBytes),
+        "plugin paper validate-jar --max-archive-bytes",
+      );
+      if (maxArchiveBytes < 1 || maxArchiveBytes > paperPluginJarValidationLimits.maxArchiveBytes) {
+        throw new Error(
+          `plugin paper validate-jar --max-archive-bytes must be between 1 and ${paperPluginJarValidationLimits.maxArchiveBytes}`,
+        );
+      }
+      const archive = readBoundedArchiveFile(jarPath, maxArchiveBytes, {
+        command: "plugin paper validate-jar",
+        extension: ".jar",
+      });
+      const result = validatePaperPluginJar({ archive });
+      printJson(output, result);
+      return result.valid ? 0 : 1;
+    }
+
     if (command === "paper-api") {
       const requested = positionalArgs(args)[0] ?? "latest";
       printJson(output, getPaperApiReference(requested));
@@ -3150,7 +3144,10 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           `modrinth validate-pack --max-archive-bytes must be between 1 and ${defaultModrinthPackValidationLimits.maxArchiveBytes}`,
         );
       }
-      const archive = readBoundedRegularFile(packPath, maxArchiveBytes);
+      const archive = readBoundedArchiveFile(packPath, maxArchiveBytes, {
+        command: "modrinth validate-pack",
+        extension: ".mrpack",
+      });
       const result = validateModrinthPackArchive(archive, {
         additionalDownloadHosts: readRepeatedOption(args, "--allow-download-host"),
         limits: { maxArchiveBytes },

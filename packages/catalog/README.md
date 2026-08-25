@@ -53,6 +53,7 @@ import {
   getPaperApiReference,
   getPaperApiSurface,
   getPaperPluginData,
+  paperPluginJarValidationLimits,
   getResourcepackModelSummary,
   getResponsePattern,
   resolveVelocityToolchain,
@@ -102,6 +103,8 @@ import {
   validateServerProperties,
   validateModrinthPack,
   validateModrinthPackArchive,
+  validatePaperPluginArchiveMetadata,
+  validatePaperPluginJar,
 } from "@minecraft-skills/catalog";
 
 const version = getVersionDetail("java", "26.2");
@@ -408,6 +411,14 @@ const paperMembers = searchPaperMembers({
 });
 const paperSurfaceDiff = comparePaperApiSurface("26.2", "26.2");
 const paper = getPaperPluginData();
+const paperPluginMetadata = validatePaperPluginArchiveMetadata({
+  archiveEntries: [
+    { path: "plugin.yml", size: 96 },
+    { path: "dev/example/ExamplePlugin.class", size: 1 },
+  ],
+  archiveEntriesComplete: true,
+  pluginYml: "name: ExamplePlugin\nversion: '1'\nmain: dev.example.ExamplePlugin\napi-version: '26.2'",
+});
 const sources = getSourceReport({ domain: "datapack", version: "26.2" });
 const sourceTiers = listSourceTiers();
 const communityDatasets = listCommunityDatasets();
@@ -494,6 +505,22 @@ seeds, URL credentials/query strings, and token-like values are classified befor
 are retained for duplicate resolution or diagnostics.
 Because no generated target-version default set or runtime reader is bundled, recognized keys do
 not prove version membership and `validationComplete` remains false.
+
+`validatePaperPluginJar({ archive })` performs a bounded offline inspection of Paper/Bukkit plugin
+JAR bytes. It verifies ZIP central/local structure, selects root `paper-plugin.yml` before
+`plugin.yml` like Paper does, checks the active descriptor's CRC and UTF-8/YAML structure, and
+correlates declared entry-point classes with exact archive paths.
+`validatePaperPluginArchiveMetadata` performs the same active-versus-shadowed descriptor checks
+from caller-supplied text and entries without claiming binary integrity. An incomplete entry list
+that observes only `plugin.yml` cannot prove it is active, so semantic validation waits until
+`paper-plugin.yml` absence is established. A declared class absent
+from the plugin JAR produces a warning, not an incompatibility error, because Paper may resolve it
+through library or dependency classloaders; invalid or truncated metadata cannot even prove that
+archive-local absence. Syntactically valid `api-version` values outside current known Paper release
+identifiers remain unknown rather than being accepted or rejected speculatively. The result keeps
+Paper's experimental `paper-plugin.yml`, unknown keys, unchecked class bytecode and resolution,
+YAML runtime-parser parity, and unexecuted server loading in `incompleteReasons`. Hard ceilings are
+exported as `paperPluginJarValidationLimits`; no network is used.
 
 ## Coverage
 

@@ -114,6 +114,7 @@ aliases or reject Unicode query values.
 - `resolve_modrinth_compatibility`
 - `get_modrinth_resource`
 - `validate_modrinth_pack`
+- `validate_paper_plugin_jar`
 - `find_datapack_entries`
 - `find_resourcepack_assets`
 - `inspect_resourcepack_png_alpha_bounds`
@@ -235,6 +236,19 @@ not validate dependency predicates or satisfaction, entrypoint classes or runtim
 mixin/access-widener syntax, nested JAR metadata, or icon pixels. `limits` can lower only the
 archive-entry count, metadata byte/node/depth/string-byte, and retained-diagnostic ceilings that
 this metadata-only surface actually applies.
+
+`validate_paper_plugin_jar` accepts bounded `pluginYml` / `paperPluginYml` text and JAR entry
+metadata, not binary uploads. Callers must state whether the entry list is complete. Paper's
+`paper-plugin.yml`-first probing determines the active descriptor; a coexisting `plugin.yml` is
+reported as shadowed and is not treated as runtime configuration. An incomplete listing that only
+observes `plugin.yml` leaves descriptor selection unknown and skips semantic validation because an
+unobserved `paper-plugin.yml` could shadow it. A missing root descriptor becomes
+an error only for a complete, fully normalized listing. A declared class absent from that listing is
+only a warning because a library or dependency classloader may supply it. Syntactically valid but
+currently unlisted Paper API release values also remain unknown. The result always identifies
+metadata-only strength and leaves ZIP structure, descriptor CRC integrity, class bytecode and
+resolution, exact runtime YAML parity, and server loading unproven. Use the CLI command for binary
+JAR validation.
 
 `compare_registry_entries` emits entry and protocol ID changes only for registries indexed in both
 versions. Its `outcome` and bounded `excludedRegistries` fields expose incomplete coverage without

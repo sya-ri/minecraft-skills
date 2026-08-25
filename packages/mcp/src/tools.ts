@@ -100,6 +100,7 @@ import {
   modrinthCompatibilityLimits,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
+  paperPluginJarValidationLimits,
   playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
   type RegistryEntrySearchOptions,
@@ -137,6 +138,7 @@ import {
   validateFabricMod,
   validateModrinthPack,
   validatePackFilesContent,
+  validatePaperPluginArchiveMetadata,
   validatePlayerSkinLayout,
   validateResourcepackPng,
   validateResourcepackProject,
@@ -1621,6 +1623,40 @@ export const tools: ToolDefinition[] = [
     },
   },
   {
+    name: "validate_paper_plugin_jar",
+    description:
+      "Validate bounded plugin.yml/paper-plugin.yml text plus local Paper/Bukkit plugin JAR entry metadata offline. MCP does not accept binary JARs, so ZIP structure and CRC integrity remain explicitly unverified.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        archiveEntries: {
+          type: "array",
+          maxItems: 16384,
+          items: {
+            type: "object",
+            properties: {
+              path: { type: "string", minLength: 1, maxLength: 1024 },
+              size: { type: "integer", minimum: 0, maximum: 134217728 },
+              compressedSize: { type: "integer", minimum: 0, maximum: 67108864 },
+              directory: { type: "boolean" },
+            },
+            required: ["path", "size"],
+            additionalProperties: false,
+          },
+        },
+        archiveEntriesComplete: {
+          type: "boolean",
+          description:
+            "True only when archiveEntries is the complete JAR central-directory listing. Missing-entry errors require this evidence.",
+        },
+        pluginYml: { type: "string", maxLength: 262144 },
+        paperPluginYml: { type: "string", maxLength: 262144 },
+      },
+      required: ["archiveEntries", "archiveEntriesComplete"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "get_fabric_toolchain",
     description:
       "Look up bounded Fabric Loader, Intermediary, and Yarn candidate tuples for a Minecraft game version from the official live Fabric Meta v2 API. Stable flags are selection metadata, not a full compatibility guarantee.",
@@ -2322,6 +2358,39 @@ function assertToolArgs(
   if (Object.keys(args).some((name) => !allowedArgs.has(name))) {
     throw new Error(`${tool} received an unknown argument`);
   }
+}
+
+function plainDataRecord(
+  value: unknown,
+  tool: string,
+  label: string,
+  allowed: readonly string[],
+): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${tool} ${label} must be a plain object`);
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new Error(`${tool} ${label} must be a plain object`);
+  }
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  const keys = Reflect.ownKeys(descriptors);
+  if (keys.some((key) => typeof key === "symbol")) {
+    throw new Error(`${tool} ${label} must not contain symbol fields`);
+  }
+  const allowedFields = new Set(allowed);
+  const record: Record<string, unknown> = Object.create(null);
+  for (const key of keys as string[]) {
+    const descriptor = descriptors[key];
+    if (!descriptor || !("value" in descriptor) || !descriptor.enumerable) {
+      throw new Error(`${tool} ${label} must contain only enumerable data fields`);
+    }
+    if (!allowedFields.has(key)) {
+      throw new Error(`${tool} ${label} contains an unknown field`);
+    }
+    record[key] = descriptor.value;
+  }
+  return record;
 }
 
 function optionalStringArg(
@@ -3806,6 +3875,90 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
             ? { additionalDownloadHosts: args.additionalDownloadHosts as string[] }
             : {}),
           ...(limits ? { limits } : {}),
+        }),
+      );
+    }
+    if (name === "validate_paper_plugin_jar") {
+      assertToolArgs(input, args, name, [
+        "archiveEntries",
+        "archiveEntriesComplete",
+        "pluginYml",
+        "paperPluginYml",
+      ]);
+      if (!Array.isArray(args.archiveEntries)) {
+        throw new Error("validate_paper_plugin_jar requires archiveEntries metadata");
+      }
+      if (args.archiveEntries.length > paperPluginJarValidationLimits.maxArchiveEntries) {
+        throw new Error(
+          `validate_paper_plugin_jar archiveEntries must not exceed ${paperPluginJarValidationLimits.maxArchiveEntries} entries`,
+        );
+      }
+      if (typeof args.archiveEntriesComplete !== "boolean") {
+        throw new Error("validate_paper_plugin_jar requires boolean archiveEntriesComplete");
+      }
+      for (const field of ["pluginYml", "paperPluginYml"] as const) {
+        const value = args[field];
+        if (value !== undefined && typeof value !== "string") {
+          throw new Error(`validate_paper_plugin_jar ${field} must be a string`);
+        }
+        if (
+          typeof value === "string" &&
+          (value.length > paperPluginJarValidationLimits.maxDescriptorCharacters ||
+            Buffer.byteLength(value, "utf8") > paperPluginJarValidationLimits.maxDescriptorBytes)
+        ) {
+          throw new Error(
+            `validate_paper_plugin_jar ${field} exceeds the bounded descriptor input limit`,
+          );
+        }
+      }
+      const archiveEntries = args.archiveEntries.map((entry) => {
+        const archiveEntry = plainDataRecord(entry, "validate_paper_plugin_jar", "archive entry", [
+          "compressedSize",
+          "directory",
+          "path",
+          "size",
+        ]);
+        if (
+          typeof archiveEntry.path !== "string" ||
+          !archiveEntry.path ||
+          archiveEntry.path.length > paperPluginJarValidationLimits.maxEntryPathCharacters
+        ) {
+          throw new Error("validate_paper_plugin_jar archive entry path is invalid");
+        }
+        if (typeof archiveEntry.size !== "number" || !Number.isSafeInteger(archiveEntry.size)) {
+          throw new Error("validate_paper_plugin_jar archive entry size must be an integer");
+        }
+        if (
+          archiveEntry.compressedSize !== undefined &&
+          (typeof archiveEntry.compressedSize !== "number" ||
+            !Number.isSafeInteger(archiveEntry.compressedSize))
+        ) {
+          throw new Error(
+            "validate_paper_plugin_jar archive entry compressedSize must be an integer",
+          );
+        }
+        if (archiveEntry.directory !== undefined && typeof archiveEntry.directory !== "boolean") {
+          throw new Error("validate_paper_plugin_jar archive entry directory must be boolean");
+        }
+        return {
+          path: archiveEntry.path,
+          size: archiveEntry.size,
+          ...(typeof archiveEntry.compressedSize === "number"
+            ? { compressedSize: archiveEntry.compressedSize }
+            : {}),
+          ...(typeof archiveEntry.directory === "boolean"
+            ? { directory: archiveEntry.directory }
+            : {}),
+        };
+      });
+      return text(
+        validatePaperPluginArchiveMetadata({
+          archiveEntries,
+          archiveEntriesComplete: args.archiveEntriesComplete,
+          ...(typeof args.pluginYml === "string" ? { pluginYml: args.pluginYml } : {}),
+          ...(typeof args.paperPluginYml === "string"
+            ? { paperPluginYml: args.paperPluginYml }
+            : {}),
         }),
       );
     }

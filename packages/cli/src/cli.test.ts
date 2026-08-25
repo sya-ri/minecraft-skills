@@ -22,6 +22,7 @@ import {
   getVersionDetail,
 } from "@minecraft-skills/catalog";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readBoundedArchiveFile } from "./boundedArchiveFile.js";
 import { runCli } from "./cli.js";
 import { classifyDatapackProjectEntry, readDatapackProjectFiles } from "./datapackProjectFiles.js";
 import { readFabricModJarFile } from "./fabricModJarFile.js";
@@ -1593,6 +1594,138 @@ describe("minecraft-skills CLI", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it("validates a bounded local Paper plugin JAR without network access", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-paper-jar-cli-"));
+    const jarPath = join(root, "example.jar");
+    const pluginYml = [
+      "name: ExamplePlugin",
+      "version: '1.0'",
+      "main: dev.example.ExamplePlugin",
+      "api-version: '1.21'",
+    ].join("\n");
+    try {
+      writeFileSync(
+        jarPath,
+        createStoredZip({
+          "plugin.yml": pluginYml,
+          "dev/example/ExamplePlugin.class": "opaque class bytes",
+        }),
+      );
+      const valid = await capture(["plugin", "paper", "validate-jar", jarPath]);
+      expect(valid.code).toBe(0);
+      expect(valid.stderr).toEqual([]);
+      expect(valid.stdout.join("\n")).toContain('"validationStrength": "binary"');
+      expect(valid.stdout.join("\n")).toContain('"zipStructureValidated": true');
+      expect(valid.stdout.join("\n")).not.toContain("opaque class bytes");
+
+      writeFileSync(jarPath, createStoredZip({ "plugin.yml": pluginYml }));
+      const missingClass = await capture(["plugin", "paper", "validate-jar", jarPath]);
+      expect(missingClass.code).toBe(0);
+      expect(missingClass.stdout.join("\n")).toContain(
+        '"code": "class.entry-missing-from-archive"',
+      );
+
+      const overLimit = await capture([
+        "plugin",
+        "paper",
+        "validate-jar",
+        jarPath,
+        "--max-archive-bytes",
+        "1",
+      ]);
+      expect(overLimit.code).toBe(1);
+      expect(overLimit.stderr.join("\n")).toContain("larger than 1 bytes");
+
+      const wrongExtension = join(root, "example.zip");
+      writeFileSync(wrongExtension, createStoredZip({ "plugin.yml": pluginYml }));
+      const wrong = await capture(["plugin", "paper", "validate-jar", wrongExtension]);
+      expect(wrong.code).toBe(1);
+      expect(wrong.stderr.join("\n")).toContain(".jar extension");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects Paper JAR links, FIFOs, and devices before attempting to open them", () => {
+    for (const kind of ["symlink", "fifo", "device"] as const) {
+      const open = vi.fn(() => 7);
+      expect(() =>
+        readBoundedArchiveFile(
+          "special.jar",
+          1_024,
+          { command: "plugin paper validate-jar", extension: ".jar" },
+          {
+            lstat: () => fakeBigIntStats(kind, 1n),
+            open,
+          },
+        ),
+      ).toThrow("requires a regular local .jar file");
+      expect(open).not.toHaveBeenCalled();
+    }
+  });
+
+  it("opens bounded Paper and Modrinth archives with nonblocking no-follow flags", () => {
+    const contents = Buffer.from("jar", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+
+    for (const description of [
+      { command: "plugin paper validate-jar", extension: ".jar" },
+      { command: "modrinth validate-pack", extension: ".mrpack" },
+    ]) {
+      const open = vi.fn(() => 7);
+      const close = vi.fn();
+      const result = readBoundedArchiveFile("example.archive", 1_024, description, {
+        lstat: () => expected,
+        open,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length) => {
+          contents.copy(buffer, offset, 0, length);
+          return length;
+        },
+        close,
+        openFlags: { readonly: 1, noFollow: 2, nonBlock: 4 },
+      });
+
+      expect(result).toEqual(contents);
+      expect(open).toHaveBeenCalledWith("example.archive", 7);
+      expect(close).toHaveBeenCalledWith(7);
+    }
+  });
+
+  it("rejects a Paper JAR path replaced before or during its bounded read", () => {
+    const contents = Buffer.from("jar", "utf8");
+    const expected = fakeBigIntStats("file", 1n, BigInt(contents.byteLength));
+    const replacement = fakeBigIntStats("file", 2n, BigInt(contents.byteLength));
+    const special = fakeBigIntStats("fifo", 3n);
+    const description = { command: "plugin paper validate-jar", extension: ".jar" };
+
+    expect(() =>
+      readBoundedArchiveFile("example.jar", 1_024, description, {
+        lstat: () => expected,
+        open: () => 7,
+        fstat: () => special,
+        close: () => undefined,
+      }),
+    ).toThrow("changed before it could be read");
+
+    let pathChecks = 0;
+    expect(() =>
+      readBoundedArchiveFile("example.jar", 1_024, description, {
+        lstat: () => {
+          pathChecks += 1;
+          return pathChecks < 3 ? expected : replacement;
+        },
+        open: () => 7,
+        fstat: () => expected,
+        read: (_handle, buffer, offset, length) => {
+          contents.copy(buffer, offset, 0, length);
+          return length;
+        },
+        close: () => undefined,
+      }),
+    ).toThrow("changed while it was being read");
   });
 
   it("prints Paper API references", async () => {
@@ -3291,6 +3424,7 @@ describe("minecraft-skills CLI", () => {
       'minecraft-skills plugin paper search-scenarios "Paper event listener"',
     );
     expect(output).toContain("minecraft-skills plugin paper search <query>");
+    expect(output).toContain("minecraft-skills plugin paper validate-jar <file.jar>");
     expect(output).toContain("Grouped commands:");
     expect(output).toContain("minecraft-skills minecraft analyze-log <file>");
     expect(output).not.toContain("Compatibility:");
