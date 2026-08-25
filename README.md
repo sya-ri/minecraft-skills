@@ -70,6 +70,7 @@ minecraft-skills plugin paper plan paper-plugin-configuration-lifecycle-review 1
 minecraft-skills plugin paper plan paper-bossbar-audience-lifecycle-review 26.2
 minecraft-skills plugin paper plan paper-persistent-data-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
+minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
@@ -225,6 +226,12 @@ target-version evidence for claimed snapshot, update, unload, reload, or restart
 add/remove result with an explicit partial-recovery outcome, chooses material matching or
 `RecipeChoice.ExactChoice` by intent, detects equal-input shaped or shapeless recipe collisions,
 and treats online-client recipe-list resend separately from recipe-book discovery.
+`paper-display-interaction-contract-review` keeps clickable in-world displays aligned with their
+separate Interaction entity targets. It derives both roles from one local-space layout, keeps
+pending hit targets outside live input space until complete registered publication, reconciles
+owned generations, handles hand and event-duplication semantics, and requires
+loaded-server lifecycle plus real-client alignment and click-boundary evidence. Generic scheduler,
+persistent-data, event-priority, ItemStack identity, and cross-chunk rules remain separate concerns.
 
 `minecraft analyze-log` structures Minecraft Java logs, Java stack traces, and crash reports before
 diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,

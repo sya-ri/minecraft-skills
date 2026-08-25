@@ -1520,6 +1520,146 @@ describe("catalog", () => {
     );
   });
 
+  it("exposes and routes Paper display interaction contract guidance", () => {
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("define-display-interaction-contract");
+
+    const recipe = getAuthoringRecipe("paper-display-interaction-contract");
+    expect(recipe.steps.map((step) => step.id)).toEqual([
+      "verify-target-display-and-interaction-surfaces",
+      "derive-visuals-and-hit-targets-from-one-layout",
+      "publish-and-reconcile-owned-entity-pairs",
+      "route-one-interaction-to-one-logical-element",
+      "test-layout-lifecycle-and-client-result",
+    ]);
+    const actions = recipe.steps.map((step) => step.action).join("\n");
+    expect(actions).toContain("centered ItemDisplay model origin");
+    expect(actions).toContain("no similarly named Display value proves a clickable bound");
+    expect(actions).toContain("setPersistent(false)");
+    expect(actions).toContain("spuriously in addition to the parent event");
+    expect(actions).toContain("Never place an unregistered or pending Interaction");
+    expect(JSON.stringify(recipe)).not.toContain("jd.papermc.io/paper/1.21.11");
+    expect(actions).toContain("dedicated guidance");
+    expect(recipe.finalChecks).toContain("paper-display-interaction-contract");
+
+    const guardrail = getAuthoringGuardrail("paper-display-interaction-contract");
+    const rules = guardrail.rules.join("\n");
+    expect(rules).toContain("derive each display and hit-target specification");
+    expect(rules).toContain("never-unloading chunk");
+    expect(rules).toContain("pending Interaction outside live input space");
+    expect(rules).toContain("possible extra delivery");
+
+    const diagnostic = getAuthoringDiagnostic("paper-display-interaction-contract-unsafe");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.requiredChecks.join("\n")).toContain(
+      "paired display and Interaction specifications",
+    );
+    expect(diagnostic.failIf.join("\n")).toContain("foreign Display or Interaction entities");
+    expect(diagnostic.failIf.join("\n")).toContain("both parent and position-specific");
+
+    const scenario = getAuthoringScenario("paper-display-interaction-contract-review");
+    expect(scenario.requiredLookups.recipes).toEqual([
+      "paper-display-interaction-contract",
+      "paper-event-listener",
+    ]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-display-interaction-contract-unsafe",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("persistent-data");
+
+    for (const query of [
+      "Paper ItemDisplay Interaction entity hitbox offset layout",
+      "Paper TextDisplay clickable billboard alignment",
+      "Paper Interaction entity duplicate generation after reload",
+      "Paper hologram click target ownership cleanup",
+      "Replace a Paper inventory GUI with ItemDisplay and Interaction entity hitboxes",
+      "ItemDisplay custom resource pack model with Interaction entity hitbox offset",
+    ]) {
+      const search = searchAuthoringScenarios({ query });
+      expect(search.results[0]?.scenario.id, query).toBe(
+        "paper-display-interaction-contract-review",
+      );
+    }
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-display-interaction-contract-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual([
+      "paper-display-interaction-contract",
+      "paper-event-listener",
+    ]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-display-interaction-contract-unsafe",
+    );
+    const olderPlan = getAuthoringPlan({
+      scenario: "paper-display-interaction-contract-review",
+      version: "1.20.6",
+    });
+    const olderPlanRecipes = JSON.stringify(olderPlan.recipes);
+    expect(olderPlanRecipes).toContain("Matching target-version Display and Interaction Javadocs");
+    expect(olderPlanRecipes).not.toContain("jd.papermc.io/paper/1.21.11");
+
+    const suggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "align a Paper ItemDisplay and Interaction entity hitbox",
+    });
+    expect(suggestions.domain).toBe("paper-plugin");
+    expect(suggestions.suggestedTools.map((entry) => entry.tool)).toContain(
+      'plugin paper search "align a Paper ItemDisplay and Interaction entity hitbox"',
+    );
+    expect(suggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-display-interaction-contract-review",
+    );
+    expect(
+      suggestions.suggestedTools.some((entry) => entry.tool.startsWith("resourcepack assets")),
+    ).toBe(false);
+    expect(suggestions.suggestedTools.some((entry) => entry.tool.startsWith("datapack find"))).toBe(
+      false,
+    );
+
+    const customModelSuggestions = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "ItemDisplay custom resource pack model with Interaction entity hitbox offset",
+    });
+    expect(customModelSuggestions.domain).toBeUndefined();
+    expect(customModelSuggestions.suggestedTools.map((entry) => entry.tool)).toEqual(
+      expect.arrayContaining([
+        'plugin paper search "ItemDisplay custom resource pack model with Interaction entity hitbox offset"',
+        'resourcepack assets find "ItemDisplay custom resource pack model with Interaction entity hitbox offset" --version 1.21.11',
+      ]),
+    );
+    expect(customModelSuggestions.scenarios.results[0]?.scenario.id).toBe(
+      "paper-display-interaction-contract-review",
+    );
+
+    for (const task of [
+      "Fabric TextDisplay client screen HUD overlay",
+      "resource pack ItemDisplay model pivot texture",
+      "Paper inventory GUI click Interaction entity",
+      "Paper BossBar click interaction",
+    ]) {
+      const unrelated = searchAuthoringScenarios({ query: task });
+      expect(
+        unrelated.results.some(
+          (entry) => entry.scenario.id === "paper-display-interaction-contract-review",
+        ),
+        task,
+      ).toBe(false);
+    }
+
+    const nonPaper = suggestMinecraftLookups({
+      version: "1.21.11",
+      task: "Fabric ItemDisplay interaction overlay",
+    });
+    expect(nonPaper.domain).not.toBe("paper-plugin");
+    expect(
+      nonPaper.scenarios.results.some(
+        (entry) => entry.scenario.id === "paper-display-interaction-contract-review",
+      ),
+    ).toBe(false);
+  });
+
   it("matches Paper plugin runtime claims to sufficient test evidence", () => {
     const recipe = getAuthoringRecipe("paper-plugin-testing-evidence");
     expect(recipe.steps.map((step) => step.id)).toEqual([

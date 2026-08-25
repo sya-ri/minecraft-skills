@@ -543,6 +543,33 @@
         "loaded-server lifecycle and crafting tests plus client evidence for any visibility claim"
       ],
       "failureMode": "A recipe reload can delete unrelated recipes, leave a mixed old/new owned set, accept unintended ingredients, lose discovery state, or leave online clients with a stale recipe list."
+    },
+    {
+      "id": "paper-display-interaction-contract",
+      "domains": ["paper-plugin"],
+      "title": "Keep Paper display visuals, Interaction targets, and ownership aligned",
+      "rules": [
+        "Resolve the target Paper version and verify every Display subtype, Interaction member, lifecycle member, and event used; type/member indexes do not prove geometry or client behavior.",
+        "Define one local-space layout with anchor, axes, units, facing, subtype origin, transformation order, logical rectangles, and offsets, then derive each display and hit-target specification from it.",
+        "Treat Display as visual-only and Interaction as the separate hit target; do not infer Interaction bounds from Display width, height, transformation, billboard, view range, or interpolation.",
+        "Account for ItemDisplay's centered model origin and BlockDisplay's corner origin, and verify TextDisplay and custom resource-pack model pivots with the target client.",
+        "Make the clickable policy explicit during client-side transformation or teleport interpolation; do not assume the server Interaction follows the client's interpolated pose.",
+        "Assign stable plugin-owned surface and element IDs, a generation, a display or hit-target role, a persistence policy, and one authoritative registry to every owned entity.",
+        "Prepare pending ownership before spawning hit targets, keep every pending Interaction outside live input space, publish only complete registered pairs through one serialized non-suspending transition, and retire the previous generation only after the replacement is authoritative.",
+        "Reconcile missing, duplicate, mismatched, and stale owned entities through bounded IDs or indexed locations while preserving malformed or foreign entities for explicit recovery.",
+        "Always remove temporary entities explicitly and idempotently; setPersistent(false) and chunk unload are not sufficient cleanup for a never-unloading chunk.",
+        "Map an event's current owned Interaction to one logical element, filter the intended hand, define cancellation and eligibility, and execute one terminal action.",
+        "Use PlayerInteractEntityEvent for right clicks unless clicked position is specifically required; do not combine it with PlayerInteractAtEntityEvent without handling the documented possible extra delivery.",
+        "Keep generic event priority and threading, scheduler ownership, persistent marker schemas, ItemStack identity, and cross-chunk iteration in their dedicated contracts.",
+        "Test pure layout math, loaded-server spawn and reconciliation, and real-client rendering and click boundaries separately, and limit claims to the completed evidence layer."
+      ],
+      "requiredEvidence": [
+        "target-version Paper type/member/event matches plus official Display, Interaction, and interaction-event behavior documentation",
+        "one coordinate and ownership contract that emits paired entity specifications and defines input-unavailable staging, publication, replacement, and rollback",
+        "bounded lifecycle and event tests covering pending hit-target exposure, partial spawn, repeated refresh, stale generation, both hands, duplicate delivery, reload, disable, and foreign preservation",
+        "target-client visual and input evidence for subtype or custom-model pivots, transformations, billboard behavior, interpolation policy, debug hitboxes, and click boundaries"
+      ],
+      "failureMode": "An independently positioned visual and hit target can drift, duplicate, execute more than once, leak across lifecycle transitions, or cause broad cleanup to remove another owner's entities."
     }
   ]
 }

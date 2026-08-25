@@ -98,6 +98,8 @@ minecraft-skills plugin paper recipe paper-custom-recipe-registration
 minecraft-skills plugin paper plan paper-custom-recipe-review 1.21.11
 minecraft-skills plugin paper guardrail paper-custom-recipe-ownership
 minecraft-skills plugin paper diagnostic paper-custom-recipe-registration-unsafe
+minecraft-skills plugin paper recipe paper-display-interaction-contract
+minecraft-skills plugin paper plan paper-display-interaction-contract-review 1.21.11
 minecraft-skills plugin paper search-scenarios "MockBukkit loaded server test evidence"
 minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper search-scenarios "bounded block edits across chunk boundaries"
@@ -808,6 +810,15 @@ snapshot publication, cross-holder transfer, `copyTo` replacement, selective rem
 schema migration. It preserves foreign and unsupported-future records and requires target-version
 loaded-server evidence for holder save, unload, reload, or restart claims. ItemStack identity,
 similarity, and presentation refresh remain a separate concern.
+For clickable Paper in-world displays, resolve
+`plugin paper plan paper-display-interaction-contract-review <version>`. The plan defines one
+local-space coordinate contract for both the visual Display and separate Interaction hit target,
+keeps subtype origins and client-rendered transforms distinct from hitbox dimensions, and keeps
+pending hit targets input-unavailable until a complete registered generation is published through
+one serialized transition. It then applies bounded reconciliation and explicit removal, selects one
+right-click event path and hand policy, then requires pure layout, loaded-server lifecycle, and
+target-client visual and click-boundary evidence. Generic scheduler, PDC, event-priority,
+ItemStack-identity, and cross-chunk behavior stays in dedicated guidance.
 
 ## Source Policy
 

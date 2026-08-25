@@ -428,6 +428,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-persistent-data-contract-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-persistent-data-contract.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-persistent-data-contract-unsafe.json`
+- `minecraft-skills://data/authoring-recipes/paper-display-interaction-contract.json`
+- `minecraft-skills://data/authoring-scenarios/paper-display-interaction-contract-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-display-interaction-contract.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-display-interaction-contract-unsafe.json`
 - `minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json`
 - `minecraft-skills://data/authoring-scenarios/paper-plugin-testing-evidence-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-plugin-testing-evidence.json`

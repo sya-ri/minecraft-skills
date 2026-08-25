@@ -75,6 +75,9 @@ describe("@minecraft-skills/data", () => {
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-scheduled-task-lifecycle");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain("paper-plugin-protocol-safety");
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
+      "paper-display-interaction-contract",
+    );
+    expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
       "paper-bossbar-audience-lifecycle",
     );
     expect(recipes.recipes.map((recipe) => recipe.id)).toContain(
@@ -103,6 +106,7 @@ describe("@minecraft-skills/data", () => {
     expect(scenarioIds).toContain("paper-administrative-command-operability-review");
     expect(scenarioIds).toContain("paper-scheduled-task-lifecycle-review");
     expect(scenarioIds).toContain("paper-plugin-protocol-safety-review");
+    expect(scenarioIds).toContain("paper-display-interaction-contract-review");
     expect(scenarioIds).toContain("paper-bossbar-audience-lifecycle-review");
     expect(scenarioIds).toContain("paper-itemstack-semantic-identity-review");
     expect(scenarioIds).toContain("paper-plugin-configuration-lifecycle-review");
@@ -129,6 +133,7 @@ describe("@minecraft-skills/data", () => {
     expect(guardrailIds).toContain("paper-administrative-command-operability");
     expect(guardrailIds).toContain("paper-scheduled-task-lifecycle-safety");
     expect(guardrailIds).toContain("paper-plugin-protocol-safety");
+    expect(guardrailIds).toContain("paper-display-interaction-contract");
     expect(guardrailIds).toContain("paper-bossbar-audience-lifecycle-safety");
     expect(guardrailIds).toContain("paper-itemstack-semantic-identity");
     expect(guardrailIds).toContain("paper-plugin-configuration-lifecycle-safety");
@@ -150,6 +155,7 @@ describe("@minecraft-skills/data", () => {
     expect(diagnosticIds).toContain("paper-administrative-command-incomplete");
     expect(diagnosticIds).toContain("paper-scheduled-task-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-plugin-protocol-unsafe");
+    expect(diagnosticIds).toContain("paper-display-interaction-contract-unsafe");
     expect(diagnosticIds).toContain("paper-bossbar-audience-lifecycle-unsafe");
     expect(diagnosticIds).toContain("paper-itemstack-identity-or-state-loss");
     expect(diagnosticIds).toContain("paper-plugin-configuration-lifecycle-unsafe");
@@ -455,6 +461,101 @@ describe("@minecraft-skills/data", () => {
     expect(diagnostic?.requiredChecks.join("\n")).toContain("repeat-migration");
     expect(diagnostic?.failIf.join("\n")).toContain("possibly aliased ItemStack");
     expect(diagnostic?.failIf.join("\n")).toContain("unrelated-state preservation");
+  });
+
+  it("loads complete Paper display interaction contract guidance", () => {
+    const checklists = readDataJson<{
+      checklists: Array<{ domain: string; steps: Array<{ id: string; evidence: string[] }> }>;
+    }>("authoring-checklists.json");
+    const paperChecklist = checklists.checklists.find((entry) => entry.domain === "paper-plugin");
+    expect(paperChecklist?.steps.map((step) => step.id)).toContain(
+      "define-display-interaction-contract",
+    );
+
+    const recipes = readDataJson<{
+      recipes: Array<{
+        id: string;
+        steps: Array<{ id: string; action: string; evidence: string[]; stopIfMissing: string }>;
+        finalChecks: string[];
+      }>;
+    }>("authoring-recipes.json");
+    const recipe = recipes.recipes.find(
+      (entry) => entry.id === "paper-display-interaction-contract",
+    );
+    expect(recipe?.steps.map((step) => step.id)).toEqual(
+      expect.arrayContaining([
+        "verify-target-display-and-interaction-surfaces",
+        "derive-visuals-and-hit-targets-from-one-layout",
+        "publish-and-reconcile-owned-entity-pairs",
+        "route-one-interaction-to-one-logical-element",
+        "test-layout-lifecycle-and-client-result",
+      ]),
+    );
+    const actions = recipe?.steps.map((step) => step.action).join("\n") ?? "";
+    expect(actions).toContain("ItemDisplay model origin");
+    expect(actions).toContain("display width or height");
+    expect(actions).toContain("setPersistent(false)");
+    expect(actions).toContain("spuriously in addition to the parent event");
+    expect(actions).toContain("Never place an unregistered or pending Interaction");
+    expect(JSON.stringify(recipe)).not.toContain("jd.papermc.io/paper/1.21.11");
+    expect(actions).toContain("dedicated guidance");
+    expect(recipe?.steps.flatMap((step) => step.evidence).join("\n")).toContain(
+      "https://docs.papermc.io/paper/dev/display-entities/",
+    );
+    expect(recipe?.finalChecks).toContain("paper-display-interaction-contract");
+
+    const scenarios = readDataJson<{
+      scenarios: Array<{
+        id: string;
+        requiredLookups: { recipes: string[]; diagnostics: string[] };
+        successCriteria: string[];
+        mustAvoid: string[];
+      }>;
+    }>("authoring-scenarios.json");
+    const scenario = scenarios.scenarios.find(
+      (entry) => entry.id === "paper-display-interaction-contract-review",
+    );
+    expect(scenario?.requiredLookups.recipes).toEqual([
+      "paper-display-interaction-contract",
+      "paper-event-listener",
+    ]);
+    expect(scenario?.requiredLookups.diagnostics).toContain(
+      "paper-display-interaction-contract-unsafe",
+    );
+    expect(scenario?.successCriteria.join("\n")).toContain("same layout result");
+    expect(scenario?.mustAvoid.join("\n")).toContain("persistent-data");
+
+    const guardrails = readDataJson<{
+      guardrails: Array<{ id: string; rules: string[]; requiredEvidence: string[] }>;
+    }>("authoring-guardrails.json");
+    const guardrail = guardrails.guardrails.find(
+      (entry) => entry.id === "paper-display-interaction-contract",
+    );
+    expect(guardrail?.rules.join("\n")).toContain("derive each display and hit-target");
+    expect(guardrail?.rules.join("\n")).toContain("never-unloading chunk");
+    expect(guardrail?.rules.join("\n")).toContain("pending Interaction outside live input space");
+    expect(guardrail?.rules.join("\n")).toContain("possible extra delivery");
+
+    const diagnostics = readDataJson<{
+      diagnostics: Array<{
+        id: string;
+        severity: string;
+        requiredChecks: string[];
+        failIf: string[];
+      }>;
+    }>("authoring-diagnostics.json");
+    const diagnostic = diagnostics.diagnostics.find(
+      (entry) => entry.id === "paper-display-interaction-contract-unsafe",
+    );
+    expect(diagnostic?.severity).toBe("error");
+    expect(diagnostic?.requiredChecks.join("\n")).toContain(
+      "paired display and Interaction specifications",
+    );
+    expect(diagnostic?.failIf.join("\n")).toContain("both parent and position-specific");
+    expect(diagnostic?.failIf.join("\n")).toContain("foreign Display or Interaction entities");
+    expect(diagnostic?.failIf.join("\n")).toContain(
+      "unregistered or pending Interaction can receive live input",
+    );
   });
 
   it("loads Paper player-session lifecycle safety guidance", () => {
