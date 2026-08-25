@@ -6450,4 +6450,54 @@ describe("catalog", () => {
       "paper-attribute-effect-ownership-review",
     );
   });
+
+  it("routes generic Paper region protection policy reviews", () => {
+    const checklist = getAuthoringChecklist("paper-plugin");
+    expect(checklist.steps.map((step) => step.id)).toContain("design-region-protection-policy");
+
+    const recipe = getAuthoringRecipe("paper-region-protection-policy");
+    expect(recipe.steps.map((step) => step.id)).toContain("decide-all-targets-and-boundaries");
+    expect(recipe.steps.map((step) => step.action).join("\n")).toContain(
+      "direct plugin-originated world mutations",
+    );
+    expect(recipe.finalChecks).toContain("paper-region-protection-policy-safety");
+
+    const scenario = getAuthoringScenario("paper-region-protection-policy-review");
+    expect(scenario.requiredLookups.recipes).toEqual([
+      "paper-region-protection-policy",
+      "paper-event-listener",
+    ]);
+    expect(scenario.requiredLookups.diagnostics).toContain(
+      "paper-region-protection-policy-incomplete",
+    );
+    expect(scenario.mustAvoid.join("\n")).toContain("blanket-cancelling environmental events");
+
+    const guardrail = getAuthoringGuardrail("paper-region-protection-policy-safety");
+    expect(guardrail.rules.join("\n")).toContain("actor, source, action, target, cause, boundary");
+    expect(guardrail.rules.join("\n")).toContain("every moved block and its destination");
+
+    const diagnostic = getAuthoringDiagnostic("paper-region-protection-policy-incomplete");
+    expect(diagnostic.severity).toBe("error");
+    expect(diagnostic.failIf.join("\n")).toContain("BlockIgniteEvent");
+    expect(diagnostic.failIf.join("\n")).toContain("constructed built-in events");
+
+    const search = searchAuthoringScenarios({
+      query: "region protection projectile piston cross-boundary",
+      domain: "paper-plugin",
+    });
+    expect(search.results[0]?.scenario.id).toBe("paper-region-protection-policy-review");
+
+    const plan = getAuthoringPlan({
+      scenario: "paper-region-protection-policy-review",
+      version: "1.21.11",
+    });
+    expect(plan.recipes.map((entry) => entry.id)).toEqual([
+      "paper-region-protection-policy",
+      "paper-event-listener",
+    ]);
+    expect(plan.diagnostics.map((entry) => entry.id)).toContain(
+      "paper-region-protection-policy-incomplete",
+    );
+    expect(plan.preflight?.resolvedVersion).toBe("1.21.11");
+  });
 });

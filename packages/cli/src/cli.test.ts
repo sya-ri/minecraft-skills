@@ -4614,6 +4614,58 @@ describe("minecraft-skills CLI", () => {
     expect(raisedClassLoadingFailures.stderr.join("\n")).toContain("must not exceed");
   });
 
+  it("prints generic Paper region protection policy guidance", async () => {
+    const checklist = await capture(["plugin", "paper", "checklist"]);
+    expect(checklist.code).toBe(0);
+    expect(checklist.stdout.join("\n")).toContain("design-region-protection-policy");
+
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-region-protection-policy"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("decide-all-targets-and-boundaries");
+    expect(recipe.stdout.join("\n")).toContain("direct plugin-originated world mutations");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "region protection projectile piston cross-boundary",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-region-protection-policy-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-region-protection-policy-review",
+      "1.21.11",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-region-protection-policy"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-event-listener"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-region-protection-policy-incomplete"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-region-protection-policy-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("null actor with denial");
+    expect(guardrail.stdout.join("\n")).toContain("every moved block and its destination");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-region-protection-policy-incomplete",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("BlockIgniteEvent");
+    expect(diagnostic.stdout.join("\n")).toContain("blanket-cancelled");
+  });
+
   it("reports unknown commands", async () => {
     const result = await capture(["nope"]);
     expect(result.code).toBe(1);

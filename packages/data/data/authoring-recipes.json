@@ -3492,6 +3492,166 @@
         "folia-or-thread-safety"
       ],
       "failureMode": "A Model Engine integration can publish a naked carrier or half-attached model, silently play the wrong animation, let competing channel owners fight, retain stale generations through reload or teleport, and leak models or carriers while tests prove only a fake adapter. Combat behavior, balance, damage, hitboxes, loot, spawn policy, individual model assets, display-interaction geometry, generic scheduler, event, or persistent-data design, and a full Model Engine project validator are outside this concern."
+    },
+    {
+      "id": "paper-region-protection-policy",
+      "domains": ["paper-plugin"],
+      "title": "Design or review a generic Paper region protection policy",
+      "when": [
+        "the plugin allows or denies building, breaking, interaction, damage, movement, ignition, explosion, growth, spread, flow, or another world-affecting action by region or world policy",
+        "the decision differs for direct players, indirect projectiles, entities, blocks, environmental mechanics, plugins, public areas, or bypass holders",
+        "one action can affect multiple blocks or entities, cross a policy boundary, or travel through more than one Paper or Bukkit event path",
+        "the review must prevent policy gaps without disabling unrelated vanilla mechanics"
+      ],
+      "steps": [
+        {
+          "id": "inventory-actions-and-event-paths",
+          "action": "Resolve the target Paper version, start from each policy action, and use the Paper event-listener recipe plus official event documentation to build a version-scoped event-path inventory. Verify event classes and the fields that actually expose actor, source, cause, and every affected target. Include direct and indirect paths and explicit gaps: interaction can lead to later placement or ignition events, player-placed fire is documented through BlockPlaceEvent rather than BlockIgniteEvent, BlockMultiPlaceEvent represents one action affecting several blocks, block and entity explosions are distinct events, and environmental movement, spread, growth, and entity changes use different source and target shapes.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "An exact target version and official Paper listener documentation",
+            "Target-version Javadocs for every selected event and every actor, source, cause, target-list, direction, or destination member used",
+            "A behavior-to-event inventory that names direct, indirect, multi-event, and multi-target paths plus any unverified coverage"
+          ],
+          "stopIfMissing": "Do not claim a protection policy is complete from one plausible event name or one player path; keep missing event coverage explicit."
+        },
+        {
+          "id": "normalize-policy-decision-input",
+          "action": "Normalize each verified event into one policy decision input with actor, source, action, target, cause, boundary, and proposed outcome. Keep the immediate source separate from a responsible actor: a projectile is the direct source and its documented shooter may be an indirect actor, while ignition and TNT events can expose cause enums plus nullable source entities or blocks. Attribute only provenance supplied by the event or plugin-owned context; preserve environmental, plugin, and unknown causes instead of guessing a player. Evaluate source and target policy membership independently so outside-to-inside, inside-to-outside, same-policy, different-policy, and multi-target transitions remain distinguishable.",
+          "tools": {
+            "cli": ["plugin paper types", "plugin paper members", "plugin paper guardrail"],
+            "mcp": ["search_paper_types", "search_paper_members", "get_authoring_guardrail"],
+            "packageApis": ["searchPaperTypes", "searchPaperMembers", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A normalized policy input schema that does not collapse actor, source, cause, or target into one nullable player field",
+            "Explicit direct, indirect, environmental, plugin-owned, and unknown attribution rules backed by event members",
+            "Boundary classification for every source and affected target rather than only the event origin"
+          ],
+          "stopIfMissing": "Do not assign a responsible player, bypass, or ownership decision when the verified event path does not provide that provenance."
+        },
+        {
+          "id": "define-defaults-precedence-and-exceptions",
+          "action": "Define the default decision and precedence for every applicable policy surface before wiring listeners. Make protected, public or unprotected, bypass, vanilla or environmental, plugin-owned, and unknown-cause handling explicit and independently testable. Project configuration may supply geometry, permission checks, materials, entity classes, or other concrete rules, but reusable guidance must not prescribe those values. Do not treat a null actor as automatic denial or cancel every environmental event in a protected area; decide which mechanics remain available and ensure the ordinary public or unprotected world preserves intended vanilla behavior.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A documented precedence order for explicit deny, explicit allow, bypass, public or unprotected access, vanilla or environmental behavior, plugin-owned actions, and the unknown fallback",
+            "A mechanics-preservation inventory naming behavior that must remain allowed in public or unprotected space and any deliberate protected-area exceptions",
+            "Configuration boundaries showing that server-specific geometry and rule values are supplied by the consuming project"
+          ],
+          "stopIfMissing": "Do not ship implicit exception ordering, an unspecified unknown fallback, or blanket environmental cancellation that can silently disable intended mechanics."
+        },
+        {
+          "id": "decide-all-targets-and-boundaries",
+          "action": "For every event path, evaluate all affected targets and every relevant source-to-target transition before mutation. Check all states from a multi-place action, all moved blocks and computed destinations for piston movement, every explosion or structure-growth target, and both source and destination for flow or spread. Choose whole-event denial or per-target filtering only when the target-version API documents the required mutation surface and the policy explicitly permits a partial outcome; otherwise keep the action atomic. Never infer that an earlier interaction check covers the later world-changing event.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers"
+            ]
+          },
+          "evidence": [
+            "Target-version member evidence for each affected-target list, source, destination, direction, and proposed state used by the decision",
+            "Cross-boundary cases for outside-to-inside, inside-to-outside, different protected policies, and mixed multi-target sets",
+            "An explicit atomic-or-partial contract for each multi-target event path"
+          ],
+          "stopIfMissing": "Do not decide a multi-block or cross-boundary action from only its origin, clicked block, piston block, explosion location, or first target."
+        },
+        {
+          "id": "separate-policy-from-execution-and-world-operations",
+          "action": "Keep the policy function deterministic and route event discovery, priority, prior-cancellation handling, execution context, registration ownership, and teardown to the Paper event-listener concern. For direct plugin-originated world mutations, authorize before calling world APIs and route chunk ownership, scheduling, batching, recovery, and shutdown to the dedicated world-operation lifecycle concern; do not assume Bukkit listeners intercept every plugin-originated mutation or make a multi-step operation atomic. Carry plugin provenance only through explicit plugin-owned context or a documented custom contract.",
+          "tools": {
+            "cli": ["plugin paper recipe", "plugin paper guardrail"],
+            "mcp": ["get_authoring_recipe", "get_authoring_guardrail"],
+            "packageApis": ["getAuthoringRecipe", "getAuthoringGuardrail"]
+          },
+          "evidence": [
+            "A pure policy boundary separated from Paper listener adapters",
+            "A scope statement routing handler execution and registration behavior to the event-listener concern",
+            "A scope statement routing plugin-originated multi-target world mutation to its own bounded lifecycle rather than event cancellation"
+          ],
+          "stopIfMissing": "Do not hide listener semantics or plugin-originated world-operation safety inside a region predicate, and do not use event cancellation as the only authorization boundary for direct plugin mutation."
+        },
+        {
+          "id": "prove-policy-table-and-runtime-paths",
+          "action": "Drive the deterministic policy with table rows spanning allow and deny, protected and public or unprotected targets, bypass and non-bypass, direct and indirect causes, vanilla or environmental and plugin-owned exceptions, unknown attribution, every boundary direction, mixed multi-target sets, and the chosen default. Add target-version loaded-Paper evidence for event selection, field normalization, cancellation or documented filtering, and preserved mechanics when runtime wiring is claimed. Built-in event constructors are not plugin API, so constructing events directly is not sufficient evidence that the server fires the expected path.",
+          "tools": {
+            "cli": [
+              "plugin paper diagnostic",
+              "plugin paper output-requirements",
+              "plugin paper response-patterns"
+            ],
+            "mcp": [
+              "get_authoring_diagnostic",
+              "list_output_requirements",
+              "list_response_patterns"
+            ],
+            "packageApis": [
+              "getAuthoringDiagnostic",
+              "listOutputRequirements",
+              "listResponsePatterns"
+            ]
+          },
+          "evidence": [
+            "A table-driven policy suite whose rows name the matched rule and expected outcome",
+            "Positive regression rows proving intended vanilla and public or unprotected mechanics still work, not only denial rows",
+            "Loaded target-version Paper evidence for every event-firing, field-shape, and cancellation or filtering claim made by the implementation"
+          ],
+          "stopIfMissing": "Do not report complete protection from deny-only tests, hand-constructed built-in events, or a matrix that omits indirect, exception, unknown, cross-boundary, and preserved-mechanics rows."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-event-candidate",
+        "paper-region-protection-policy-safety",
+        "paper-plugin-testing-evidence"
+      ],
+      "failureMode": "An incomplete protection policy can allow indirect or cross-boundary mutations, over-cancel public and environmental behavior, apply exceptions inconsistently, or mistake one event listener for complete authorization coverage."
     }
   ]
 }

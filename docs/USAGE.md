@@ -117,6 +117,10 @@ minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach anima
 minecraft-skills plugin paper plan paper-modelengine-runtime-binding-review 1.21.11
 minecraft-skills plugin paper guardrail paper-modelengine-runtime-binding-safety
 minecraft-skills plugin paper diagnostic paper-modelengine-runtime-binding-unsafe
+minecraft-skills plugin paper recipe paper-region-protection-policy
+minecraft-skills plugin paper plan paper-region-protection-policy-review 1.21.11
+minecraft-skills plugin paper guardrail paper-region-protection-policy-safety
+minecraft-skills plugin paper diagnostic paper-region-protection-policy-incomplete
 minecraft-skills plugin paper preflight 26.2
 minecraft-skills plugin paper evidence 26.2
 minecraft-skills source report paper-plugin 26.2
@@ -247,6 +251,13 @@ use the [Paper plugin lifecycle](https://docs.papermc.io/paper/dev/how-do-plugin
 [entity teleport](https://docs.papermc.io/paper/dev/entity-teleport/) documentation for the target
 Paper behavior. Combat, damage, hitboxes, loot, spawn policy, individual assets, interaction
 geometry, and generic scheduler, event, or persistent-data design remain separate concerns.
+
+The `paper-region-protection-policy-review` scenario normalizes direct and indirect Paper event
+paths into one actor, source, action, target, cause, boundary, and outcome decision. The policy must
+define its default and bypass, public, vanilla, and plugin exceptions, decide every source,
+destination, or multi-target effect, and preserve intended mechanics instead of blanket-cancelling
+environmental events. Table-driven allow and deny cases plus positive preserved-mechanics evidence
+cover the policy; listener execution and direct plugin world-operation lifecycles stay separate.
 
 For a release-oriented table of every checked-in Java version, pack format, domain coverage, Paper
 support, and heavy-data availability, see [VERSION_SUPPORT.md](VERSION_SUPPORT.md).

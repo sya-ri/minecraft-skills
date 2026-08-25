@@ -4555,4 +4555,43 @@ describe("MCP tools", () => {
     });
     expect(catalog.content[0]?.text).toContain('"id": "paper-attribute-effect-ownership"');
   });
+
+  it("calls Paper region protection policy guidance tools", async () => {
+    const checklist = await callMinecraftSkillsTool("get_authoring_checklist", {
+      domain: "paper-plugin",
+    });
+    expect(checklist.content[0]?.text).toContain("design-region-protection-policy");
+
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-region-protection-policy",
+    });
+    expect(recipe.content[0]?.text).toContain("normalize-policy-decision-input");
+    expect(recipe.content[0]?.text).toContain("decide-all-targets-and-boundaries");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "region protection projectile piston cross-boundary",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-region-protection-policy-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-region-protection-policy-review",
+      version: "1.21.11",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-region-protection-policy"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-event-listener"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-region-protection-policy-incomplete"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-region-protection-policy-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("null actor with denial");
+    expect(guardrail.content[0]?.text).toContain("every moved block and its destination");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-region-protection-policy-incomplete",
+    });
+    expect(diagnostic.content[0]?.text).toContain("BlockIgniteEvent");
+    expect(diagnostic.content[0]?.text).toContain("constructed built-in events");
+  });
 });

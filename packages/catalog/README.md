@@ -184,6 +184,10 @@ const modelEngineBindingPlan = getAuthoringPlan({
   scenario: "paper-modelengine-runtime-binding-review",
   version: "1.21.11",
 });
+const regionProtectionPlan = getAuthoringPlan({
+  scenario: "paper-region-protection-policy-review",
+  version: "1.21.11",
+});
 const preflight = getAuthoringPreflight({ domain: "paper-plugin", version: "26.2" });
 const evidence = getEvidenceBundle({ domain: "paper-plugin", version: "26.2" });
 const checklists = listAuthoringChecklists();
@@ -206,6 +210,7 @@ const customRecipeRegistrationRecipe = getAuthoringRecipe(
 );
 const attributeEffectRecipe = getAuthoringRecipe("paper-attribute-effect-ownership");
 const modelEngineBindingRecipe = getAuthoringRecipe("paper-modelengine-runtime-binding");
+const regionProtectionRecipe = getAuthoringRecipe("paper-region-protection-policy");
 const scenarios = listAuthoringScenarios({ domain: "paper-plugin" });
 const scenarioMatches = searchAuthoringScenarios({
   query: "Paper event listener",
@@ -238,6 +243,9 @@ const attributeEffectScenario = getAuthoringScenario(
 const modelEngineBindingScenario = getAuthoringScenario(
   "paper-modelengine-runtime-binding-review",
 );
+const regionProtectionScenario = getAuthoringScenario(
+  "paper-region-protection-policy-review",
+);
 const guardrails = listAuthoringGuardrails({ domain: "paper-plugin" });
 const paperApiGuardrail = getAuthoringGuardrail("paper-api-surface-limits");
 const eventListenerGuardrail = getAuthoringGuardrail("paper-event-listener-semantics-safety");
@@ -260,6 +268,9 @@ const attributeEffectGuardrail = getAuthoringGuardrail(
 const modelEngineBindingGuardrail = getAuthoringGuardrail(
   "paper-modelengine-runtime-binding-safety",
 );
+const regionProtectionGuardrail = getAuthoringGuardrail(
+  "paper-region-protection-policy-safety",
+);
 const diagnostics = listAuthoringDiagnostics({ domain: "paper-plugin" });
 const apiDiagnostic = getAuthoringDiagnostic("paper-api-member-unverified");
 const eventListenerDiagnostic = getAuthoringDiagnostic("paper-event-listener-semantics-unsafe");
@@ -272,6 +283,9 @@ const itemStackIdentityDiagnostic = getAuthoringDiagnostic(
   "paper-itemstack-identity-or-state-loss",
 );
 const scheduledTaskDiagnostic = getAuthoringDiagnostic("paper-scheduled-task-lifecycle-unsafe");
+const regionProtectionDiagnostic = getAuthoringDiagnostic(
+  "paper-region-protection-policy-incomplete",
+);
 const sessionDiagnostic = getAuthoringDiagnostic("paper-player-session-lifecycle-unsafe");
 const configurationLifecycleDiagnostic = getAuthoringDiagnostic(
   "paper-plugin-configuration-lifecycle-unsafe",

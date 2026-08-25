@@ -147,6 +147,9 @@ All notable changes to this project are documented here.
   before verified attachment and publication; explicit idle, locomotion, and action ownership;
   fail-closed generation replacement and cleanup; and exact-artifact loaded-server plus paired-client
   evidence without embedding guessed external API names.
+- Generic Paper region-protection policy guidance across data, Catalog, CLI, and MCP, covering
+  actor, source, action, target, cause, boundary, and outcome decisions; explicit defaults and
+  exceptions; indirect and cross-boundary paths; preserved mechanics; and table-driven evidence.
 - Version-aware resource-pack project reference validation across the catalog API, CLI, and MCP,
   including modern and legacy item models, model parents, inherited textures, safe asset paths, and
   parent/texture-variable cycles.

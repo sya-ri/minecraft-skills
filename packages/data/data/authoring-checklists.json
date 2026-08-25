@@ -396,6 +396,42 @@
           "failureMode": "Do not approve a clickable display whose visual and hitbox geometry have separate sources, whose pair ownership is ambiguous, or whose client alignment and click boundaries were inferred from server state alone."
         },
         {
+          "id": "design-region-protection-policy",
+          "reason": "Region and world protection is an authorization policy over heterogeneous event paths, not a single coordinate check or blanket cancellation rule.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper events",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "get_authoring_recipe",
+              "search_paper_events",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "searchPaperEvents",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "An actor, source, action, target, cause, boundary, and outcome matrix with explicit default, bypass, public, vanilla, plugin, and unknown-cause decisions.",
+            "A target-version inventory mapping each protected behavior to verified direct, indirect, multi-target, and cross-boundary event paths while listing any unverified gaps.",
+            "Table-driven allow and deny regressions for protected and public targets, direct and indirect causes, exceptions, unknowns, cross-boundary changes, and preserved vanilla mechanics."
+          ],
+          "failureMode": "Do not approve protection implemented as one region check or blanket cancellation without a complete policy matrix, explicit precedence and defaults, and preserved-mechanics tests."
+        },
+        {
           "id": "flag-folia-and-scheduler-assumptions",
           "reason": "Threading and scheduler behavior is behavior documentation, not derivable from API surface indexes alone.",
           "tools": {

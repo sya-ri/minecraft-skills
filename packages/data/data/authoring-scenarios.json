@@ -1188,6 +1188,54 @@
         "expanding this review into combat AI, balance, damage, hitboxes, loot, spawn policy, individual mob or asset authoring, display-interaction geometry or click routing, generic scheduler, event, or persistent-data design, or a full Model Engine project validator"
       ],
       "failureMode": "A superficially working binding can leak its base carrier, attach the wrong case-sensitive asset, substitute an undeclared animation, race channel owners, keep stale runtime generations after reload or teleport, and leave ghost models or carriers after teardown."
+    },
+    {
+      "id": "paper-region-protection-policy-review",
+      "domains": ["paper-plugin"],
+      "title": "Review a generic Paper region or world protection policy",
+      "userPrompt": "Create or review a Paper protection policy that handles direct and indirect actors, cross-boundary and multi-target changes, explicit exceptions and defaults, and preserved vanilla mechanics without relying on one blanket event cancellation.",
+      "useWhen": [
+        "the plugin allows or denies world-affecting actions based on a region, world, ownership, membership, or public-access decision",
+        "players, projectiles, entities, blocks, explosions, pistons, fluids, growth, spread, fire, or plugin-owned actions can reach the same protected target",
+        "an action can originate outside and land inside, originate inside and leave, cross two policies, or affect multiple targets",
+        "the review must define bypass, public, vanilla or environmental, plugin, and unknown-cause behavior while preserving intended mechanics"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-region-protection-policy", "paper-event-listener"],
+        "intents": ["prepare-generation", "verify-paper-type-or-member"],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-region-protection-policy-incomplete"
+        ],
+        "claimPolicies": ["paper-type-or-member-exists", "paper-event-candidate"],
+        "factSurfaces": ["paper-builds", "paper-api-surface", "paper-event-search"],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "the exact Paper version and a behavior-to-event inventory identify every verified direct, indirect, multi-event, multi-target, and cross-boundary path plus remaining gaps",
+        "every listener adapter produces a normalized actor, source, action, target, cause, boundary, and proposed-outcome input without inventing missing attribution",
+        "default and precedence are explicit for protected, public or unprotected, bypass, vanilla or environmental, plugin-owned, and unknown-cause decisions",
+        "all affected targets and both sides of a boundary are evaluated, with an explicit whole-event or documented partial-outcome contract",
+        "ordinary public or unprotected behavior and each deliberately preserved vanilla mechanic have positive regression coverage instead of being collateral damage from blanket cancellation",
+        "event priority, cancellation phase, execution context, registration, and teardown stay in the event-listener concern, while direct plugin world mutation uses a separate bounded world-operation lifecycle",
+        "table-driven policy rows and loaded target-version event-path evidence cover allow, deny, exceptions, indirect attribution, unknowns, boundaries, mixed target sets, and runtime wiring"
+      ],
+      "mustAvoid": [
+        "implementing protection as only if target is protected then cancel",
+        "checking only direct players while projectiles, entities, blocks, environmental sources, plugins, or unknown causes bypass the same policy",
+        "assuming one interaction, placement, ignition, explosion, piston, fluid, spread, growth, or entity-change event covers every path for an action",
+        "attributing a projectile, entity, block, or null cause to a player without documented provenance",
+        "checking only an event origin, clicked block, piston block, explosion location, or first affected target",
+        "leaving bypass, public, vanilla or environmental, plugin-owned, default, unknown, or conflict precedence implicit",
+        "blanket-cancelling environmental events and disabling intended mechanics in public, unprotected, or deliberately exempt protected space",
+        "inventing event priority, prior-cancellation, thread, or registration behavior inside the policy instead of routing it to the event-listener concern",
+        "relying on event listeners to authorize or make atomic a direct plugin-originated multi-step world mutation",
+        "baking a fixed region shape, permission name, game mode, mob policy, or protected-material list into reusable guidance",
+        "testing only denial with hand-constructed built-in events and no positive preserved-mechanics or loaded-server evidence"
+      ],
+      "failureMode": "Protection can be bypassed through indirect, alternate, multi-target, or cross-boundary paths while overbroad cancellation breaks intended vanilla behavior when the policy dimensions, defaults, exceptions, and evidence are incomplete."
     }
   ]
 }

@@ -76,6 +76,7 @@ minecraft-skills plugin paper plan paper-plugin-testing-evidence-review 1.21.11
 minecraft-skills plugin paper plan paper-attribute-effect-ownership-review 1.21.11
 minecraft-skills plugin paper search-scenarios "ModelEngine carrier attach animation reload"
 minecraft-skills plugin paper plan paper-modelengine-runtime-binding-review 1.21.11
+minecraft-skills plugin paper plan paper-region-protection-policy-review 1.21.11
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log
@@ -243,6 +244,12 @@ pending hit targets outside live input space until complete registered publicati
 owned generations, handles hand and event-duplication semantics, and requires
 loaded-server lifecycle plus real-client alignment and click-boundary evidence. Generic scheduler,
 persistent-data, event-priority, ItemStack identity, and cross-chunk rules remain separate concerns.
+
+`paper-region-protection-policy-review` turns heterogeneous Paper event paths into an explicit
+actor, source, action, target, cause, boundary, and outcome policy. It evaluates every target of a
+multi-target or cross-boundary change, defines defaults plus bypass, public, vanilla, and plugin
+exceptions, and requires allow, deny, and preserved-mechanics regressions. Event execution and
+registration, together with direct plugin world-operation lifecycles, remain separate concerns.
 
 `minecraft analyze-log` structures Minecraft Java logs, Java stack traces, and crash reports before
 diagnosis. It reads one bounded UTF-8 file, separates primary causes from suppressed branches,

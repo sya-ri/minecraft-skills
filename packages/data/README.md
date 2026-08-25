@@ -53,6 +53,9 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Paper and Model Engine runtime-binding guidance for exact artifact and identifier evidence,
   fail-closed carrier attachment, animation-channel ownership, generation replacement, and
   loaded-server plus paired-client verification.
+- Generic Paper region-protection policy guidance for actor, source, action, target, cause,
+  boundary, and outcome decisions; explicit defaults and exceptions; indirect and cross-boundary
+  paths; preserved mechanics; and table-driven allow and deny evidence.
 - Machine-readable claim policies for evidence-bounded wording.
 - Machine-readable output requirements for final-answer and generated-file checks.
 - Machine-readable response patterns for verified facts, missing evidence, and gap wording.
