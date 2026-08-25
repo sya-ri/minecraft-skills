@@ -12,6 +12,9 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Machine-readable authoring diagnostics for pre-finalization pass/fail checks.
 - Paper player-session lifecycle guidance for connection generations, idempotent teardown,
   stale-callback fences, bounded durable flushes, reconciliation, and leak observability.
+- Paper BossBar audience-lifecycle guidance for owner generations, explicit viewer gates, stable
+  arbitration with hysteresis, add/remove set reconciliation, bounded revisioned updates, and
+  terminal cleanup across replacement, reconnect, transfer, and disable.
 - Paper item-delivery safety entries for partial insertion, explicit overflow handling, and
   target-version API verification.
 - Paper custom inventory GUI safety entries for default-deny interactions, supported cursor

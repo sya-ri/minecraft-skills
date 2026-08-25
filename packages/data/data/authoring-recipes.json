@@ -1295,6 +1295,216 @@
       "failureMode": "A UUID-only session map or event-only cleanup path can leak resources, let old callbacks mutate a replacement connection, retain stale Player references, or lose and reorder durable state during reconnect, transfer, reload, and shutdown."
     },
     {
+      "id": "paper-bossbar-audience-lifecycle",
+      "domains": ["paper-plugin"],
+      "title": "Own, arbitrate, and reconcile Paper BossBar audiences",
+      "when": [
+        "the request creates or reviews a Paper BossBar whose viewers change over time",
+        "several feature-owned bars can compete for one intended UI slot",
+        "viewer eligibility depends on session, backend, permission, world, range, visibility, or owner state",
+        "scheduled or asynchronous work updates BossBar content or audiences",
+        "bars must close safely across replacement, reconnect, transfer, reload, or plugin disable"
+      ],
+      "steps": [
+        {
+          "id": "verify-target-bossbar-and-lifecycle-surfaces",
+          "action": "Resolve the target Paper version, then verify the BossBar type, creation surface, addPlayer, removePlayer, getPlayers, removeAll, setVisible, every lifecycle event, and the scheduler context actually used. Read official behavior prose after checking the bundled type and member surface. Treat the API index as name evidence only, prefer non-deprecated target members, and do not infer ownership, arbitration, thread safety, event order, or cross-server cleanup from method presence.",
+          "tools": {
+            "cli": [
+              "plugin paper context",
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper events",
+              "plugin paper fact-surfaces"
+            ],
+            "mcp": [
+              "get_authoring_context",
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "search_paper_events",
+              "list_fact_surfaces"
+            ],
+            "packageApis": [
+              "getAuthoringContext",
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "searchPaperEvents",
+              "listFactSurfaces"
+            ]
+          },
+          "evidence": [
+            "Target-version type and member matches for every BossBar, lifecycle, and scheduler API named in generated code",
+            "Official Javadocs behavior evidence for adding, removing, listing, hiding, and detaching viewers",
+            "A statement that plugin-owned generation, stable arbitration, lifecycle coverage, and any distributed handoff are application policies rather than guarantees derived from the BossBar member list"
+          ],
+          "stopIfMissing": "Do not invent a BossBar member, lifecycle event, execution-context guarantee, removal operation, or backend handoff behavior when target-version evidence does not establish it."
+        },
+        {
+          "id": "model-one-owner-generation-and-explicit-gates",
+          "action": "Define a stable logical slot key and exactly one current owner generation for each bar. Keep the bar handle, candidate state, current winner, desired and applied viewer identity sets, writer, revision, plugin epoch, and terminal state under that owner. Before ranking or attaching a viewer, evaluate all declared gates from current state: owner active, plugin accepting work, current player session and backend, permission, world, range, visibility, and any other product rule. Store stable identities and immutable facts, not long-lived Player references.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic", "plugin paper recipe"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic", "get_authoring_recipe"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic", "getAuthoringRecipe"]
+          },
+          "evidence": [
+            "A state diagram for active, replacing, closing, and closed owner generations",
+            "An ownership table for the bar handle, candidates, winner, viewer identities, reverse indexes, queued commands, and cleanup",
+            "An eligibility table naming every gate, its authoritative source, reevaluation trigger, and terminal behavior",
+            "No Player object in candidate, queued, cached, desired, applied, reverse-index, or durable state"
+          ],
+          "stopIfMissing": "Do not create or publish a bar whose owner generation, complete eligibility predicate, or terminal owner is ambiguous."
+        },
+        {
+          "id": "select-a-stable-winner-with-hysteresis",
+          "action": "If product design allocates one logical slot to competing candidates, filter to currently eligible candidates, rank by declared priority and an immutable stable tie-break key, and retain the current eligible winner until an explicit switch rule is met. Define hysteresis with controlled monotonic time and bounded values, such as separate enter and exit thresholds, a minimum hold interval, or a priority switch margin. Specify immediate terminal exceptions and behavior when no candidate remains. If simultaneous bars are intended, model separate slots instead of imposing one winner globally.",
+          "tools": {
+            "cli": ["plugin paper guardrail", "plugin paper diagnostic"],
+            "mcp": ["get_authoring_guardrail", "get_authoring_diagnostic"],
+            "packageApis": ["getAuthoringGuardrail", "getAuthoringDiagnostic"]
+          },
+          "evidence": [
+            "A total ordering with explicit priority direction and a stable final tie break independent of map or callback order",
+            "A bounded hysteresis contract covering enter, remain, switch, leave, owner termination, and no-candidate outcomes",
+            "Controlled-time examples proving rapid enter and leave does not flicker while a materially better or sole eligible candidate can take over"
+          ],
+          "stopIfMissing": "Do not let hash iteration, event arrival order, equal scores, wall-clock timing, or threshold noise choose or repeatedly switch the visible candidate."
+        },
+        {
+          "id": "reconcile-an-authoritative-viewer-set-by-diff",
+          "action": "After owner and winner selection, compute one authoritative desired Set of stable viewer identities from current eligibility. In the target-version-verified Paper context, snapshot current attached players for that bar without retaining the list, derive current-minus-desired removals and desired-minus-current additions, remove first, then reacquire and revalidate each desired live player immediately before adding. Record the successfully applied identity set and independently report failures or drift; repeated reconciliation with unchanged inputs must be idempotent.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper types",
+              "plugin paper members",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_types",
+              "search_paper_members",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperTypes",
+              "searchPaperMembers",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "Set-diff tests for add, remove, unchanged, disconnected, newly eligible, newly ineligible, and actual-viewer drift cases",
+            "Removal-before-add ordering and a final eligibility check using the current session and backend generation",
+            "An assertion that repeated reconciliation performs no duplicate side effects and retains no Player references",
+            "Viewer add and remove counters whose imbalance or nonzero post-close viewer count is observable"
+          ],
+          "stopIfMissing": "Do not append viewers opportunistically, rely on only enter or leave events, or treat a cached applied set as authoritative when the actual bar can drift."
+        },
+        {
+          "id": "serialize-bounded-revisioned-updates",
+          "action": "Route title, progress, style, winner, visibility, and viewer mutations through one writer for the logical slot in the verified Paper execution context. Every accepted immutable command carries the logical slot, owner generation, plugin epoch, and a strictly increasing slot revision. At application time reject a noncurrent generation or epoch, a revision at or below the applied revision, and every publication after closing begins. Bound pending count and memory per slot and across the manager, coalesce replaceable updates by slot and newest revision, and reserve admission and prompt execution for terminal cleanup.",
+          "tools": {
+            "cli": [
+              "plugin paper api",
+              "plugin paper members",
+              "plugin paper claim-policy",
+              "plugin paper guardrail"
+            ],
+            "mcp": [
+              "get_paper_api_reference",
+              "search_paper_members",
+              "get_claim_policy",
+              "get_authoring_guardrail"
+            ],
+            "packageApis": [
+              "getPaperApiReference",
+              "searchPaperMembers",
+              "getClaimPolicy",
+              "getAuthoringGuardrail"
+            ]
+          },
+          "evidence": [
+            "A single-writer invariant and documented target-compatible publication context",
+            "Revision-order tests covering duplicate, out-of-order, old-generation, old-plugin-epoch, and post-terminal commands",
+            "Configured per-slot and aggregate command-count and memory bounds plus coalescing behavior for replaceable updates",
+            "An overload test proving terminal hide and detachment cannot be dropped or indefinitely delayed"
+          ],
+          "stopIfMissing": "Do not mutate the same logical bar directly from listeners, tasks, and callbacks or use an unbounded queue whose pressure can starve cleanup."
+        },
+        {
+          "id": "terminally-hide-detach-and-drop-the-generation",
+          "action": "Use one idempotent terminal transition for owner or feature completion, encounter end, an owning player-session close, rapid reconnect or relevant backend transfer, replacement, partial initialization failure, reload or disable, repeated signals, and orphan-owner reconciliation. A non-owning viewer-session end only invalidates that viewer and runs audience reconciliation; it does not close a shared owner. For terminal cleanup, close update admission, mark the generation terminal, hide through a verified visibility member, detach every current viewer, clear desired and applied sets, candidate state and reverse indexes, and close the writer. Continue independent cleanup after one action fails, retain no Player objects for retry, and release the last bar handle only after detachment is confirmed or a bounded observable cleanup-failure outcome is recorded. Publish a replacement only after old-generation detachment is confirmed; otherwise reject or defer it with the cleanup failure visible. On transfer of a session-owned bar, start a fresh local generation and use an explicit plugin-owned fence or handoff policy; Paper BossBar methods do not establish distributed ownership.",
+          "tools": {
+            "cli": [
+              "plugin paper events",
+              "plugin paper members",
+              "plugin paper guardrail",
+              "plugin paper diagnostic"
+            ],
+            "mcp": [
+              "search_paper_events",
+              "search_paper_members",
+              "get_authoring_guardrail",
+              "get_authoring_diagnostic"
+            ],
+            "packageApis": [
+              "searchPaperEvents",
+              "searchPaperMembers",
+              "getAuthoringGuardrail",
+              "getAuthoringDiagnostic"
+            ]
+          },
+          "evidence": [
+            "A terminal-cause matrix covering owner or encounter end, owning-session close, reconnect or transfer, replacement, initialization failure, reload, disable, repeated signals, and missing signals, plus viewer-only reconciliation for a non-owning session end",
+            "Replacement ordering evidence showing the old generation hidden and detached before the new generation publishes",
+            "Idempotent cleanup assertions for zero attached viewers, empty desired and applied sets, no reverse indexes, a closed writer, and no retained bar or Player references after successful detachment",
+            "A bounded observable failure path that stays terminal, continues independent cleanup, retains no Player objects, and does not claim zero leaks when detachment cannot be confirmed",
+            "An explicit local-versus-distributed ownership and transfer policy without an automatic Paper handoff claim"
+          ],
+          "stopIfMissing": "Do not consider a generation closed while it remains visible, has attached viewers or reverse references, accepts updates, or can be reached by an old callback."
+        },
+        {
+          "id": "test-races-reconcile-leaks-and-report-limits",
+          "action": "Test pure eligibility, ordering, hysteresis, set-diff, generation, and revision rules with controlled time and callback order. Add the minimum target-version loaded-server or client evidence needed for actual BossBar attachment and visibility claims. Cover rapid enter and leave, equal-priority ties, winner replacement, same-identity reconnect, backend transfer, repeated disable, stale generation and revision callbacks, queue overload, partial initialization, missing or late lifecycle signals, orphan reconciliation, and zero viewers or reverse indexes after every terminal path. Report which tests prove plugin policy and which prove Paper or client behavior. Keep boss AI, encounter mechanics, custom mobs, ModelEngine, scoreboard, action bar, and vanilla /bossbar authoring outside the result.",
+          "tools": {
+            "cli": [
+              "plugin paper recipe",
+              "plugin paper diagnostic",
+              "plugin paper output-requirements"
+            ],
+            "mcp": ["get_authoring_recipe", "get_authoring_diagnostic", "list_output_requirements"],
+            "packageApis": [
+              "getAuthoringRecipe",
+              "getAuthoringDiagnostic",
+              "listOutputRequirements"
+            ]
+          },
+          "evidence": [
+            "Deterministic unit tests for gates, total ordering, hysteresis, set differences, revisions, and idempotent terminal state",
+            "Lifecycle race tests for rapid threshold changes, replacement, same-identity reconnect, transfer, repeated disable, stale callbacks, overload, and missing signals",
+            "Leak assertions showing zero attached viewers, active generations, pending commands, reverse indexes, and retained Player references after closure",
+            "Exact target-version runtime commands and a limitations statement for visibility or lifecycle behavior not exercised on a loaded server or client"
+          ],
+          "stopIfMissing": "Do not claim flicker-free, leak-free, transfer-safe, or client-visible behavior from only compilation, immediate-success unit tests, or mocked Paper internals."
+        }
+      ],
+      "finalChecks": [
+        "global-version-and-evidence",
+        "paper-plugin-output-safety",
+        "paper-type-or-member-exists",
+        "paper-event-candidate",
+        "paper-bossbar-audience-lifecycle-safety",
+        "paper-player-session-lifecycle-safety",
+        "paper-plugin-testing-evidence",
+        "folia-or-thread-safety"
+      ],
+      "failureMode": "Unowned or independently updated BossBars can oscillate, accumulate viewers, publish stale state into a replacement, and survive reconnect, transfer, owner completion, or plugin shutdown."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Match Paper plugin test evidence to runtime claims",

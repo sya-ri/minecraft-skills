@@ -1166,6 +1166,49 @@ describe("MCP tools", () => {
     expect(catalog.content[0]?.text).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("calls Paper BossBar audience lifecycle guidance tools", async () => {
+    const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
+      id: "paper-bossbar-audience-lifecycle",
+    });
+    expect(recipe.content[0]?.text).toContain("select-a-stable-winner-with-hysteresis");
+    expect(recipe.content[0]?.text).toContain("reconcile-an-authoritative-viewer-set-by-diff");
+
+    const scenario = await callMinecraftSkillsTool("get_authoring_scenario", {
+      id: "paper-bossbar-audience-lifecycle-review",
+    });
+    expect(scenario.content[0]?.text).toContain("paper-bossbar-audience-lifecycle-unsafe");
+
+    const search = await callMinecraftSkillsTool("search_authoring_scenarios", {
+      query: "BossBar viewer hysteresis replacement reconnect leak",
+      domain: "paper-plugin",
+    });
+    expect(search.content[0]?.text).toContain('"id": "paper-bossbar-audience-lifecycle-review"');
+
+    const plan = await callMinecraftSkillsTool("get_authoring_plan", {
+      scenario: "paper-bossbar-audience-lifecycle-review",
+      version: "26.2",
+    });
+    expect(plan.content[0]?.text).toContain('"id": "paper-bossbar-audience-lifecycle"');
+    expect(plan.content[0]?.text).toContain('"id": "paper-bossbar-audience-lifecycle-unsafe"');
+
+    const guardrail = await callMinecraftSkillsTool("get_authoring_guardrail", {
+      id: "paper-bossbar-audience-lifecycle-safety",
+    });
+    expect(guardrail.content[0]?.text).toContain("desired viewer identity set as authoritative");
+
+    const diagnostic = await callMinecraftSkillsTool("get_authoring_diagnostic", {
+      id: "paper-bossbar-audience-lifecycle-unsafe",
+    });
+    expect(diagnostic.content[0]?.text).toContain("stale generation and revision callbacks");
+
+    const catalog = await callMinecraftSkillsTool("search_catalog", {
+      query: "BossBar audience hysteresis viewer diff",
+      domain: "paper-plugin",
+      kind: "authoring-recipe",
+    });
+    expect(catalog.content[0]?.text).toContain('"id": "paper-bossbar-audience-lifecycle"');
+  });
+
   it("calls Paper plugin testing evidence guidance tools", async () => {
     const recipe = await callMinecraftSkillsTool("get_authoring_recipe", {
       id: "paper-plugin-testing-evidence",

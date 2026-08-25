@@ -228,6 +228,38 @@
       "failureMode": "Transient resources and callbacks can escape their connection generation, while unordered or unbounded shutdown writes corrupt durable player state."
     },
     {
+      "id": "paper-bossbar-audience-lifecycle-safety",
+      "domains": ["paper-plugin"],
+      "title": "Own and reconcile each Paper BossBar audience explicitly",
+      "rules": [
+        "Give each logical BossBar slot exactly one plugin-owned current generation. Keep the bar handle, candidate state, winner, desired viewer identities, applied viewer identities, writer, and cleanup state under that owner.",
+        "Compute viewer eligibility before selection from explicit gates such as active owner state, current player session and backend, plugin admission, permission, world, distance, visibility, or other stated product rules. A stable identity match alone is not eligibility.",
+        "When several candidates compete for one logical slot, rank them by declared priority and a stable tie-break key, then apply explicit hysteresis such as an enter threshold, exit threshold, minimum hold, or switch margin using a monotonic clock. Apply this one-winner policy only to that declared slot, and keep independent slots when multiple simultaneous bars are intentional.",
+        "Treat a freshly computed desired viewer identity set as authoritative. In the verified Paper execution context, snapshot current viewers, remove current-minus-desired viewers, then add desired-minus-current viewers after rechecking their current session and eligibility.",
+        "Do not retain Player objects in candidate, desired, applied, queued, or durable state. Resolve live Player objects only while applying one reconciliation or terminal cleanup in the required execution context.",
+        "Route every BossBar mutation through one serialized writer for the logical slot. Each accepted command carries the owner generation and a strictly increasing slot revision, and the writer rejects a stale generation, an older or duplicate revision, and publication after terminal state.",
+        "Bound and observe pending updates per logical slot and across the manager. Coalesce replaceable title, progress, style, winner, and viewer-set updates by slot and revision, while ensuring overload cannot discard or indefinitely delay terminal hide and removal.",
+        "On replacement, terminally hide and detach the old generation before publishing the new bar. If detachment cannot be confirmed within the cleanup budget, reject or defer replacement with an observable failure instead of silently overlapping generations. A late callback from the old generation must not attach viewers, change the winner, or mutate the replacement.",
+        "Route owner completion, feature or encounter end, an owning player-session close, reconnect or relevant backend transfer, plugin disable or reload, replacement, partial initialization failure, repeated signals, and orphan-owner reconciliation through one idempotent terminal transition. A non-owning viewer-session end removes only that viewer through eligibility reconciliation instead of closing a shared bar.",
+        "Terminal cleanup closes update admission, hides the bar with a target-version-verified visibility member, removes every attached player, and clears desired and applied viewer identities plus reverse indexes. Keep the generation terminal when one action fails, continue independent cleanup, and release the last bar handle only after detachment is confirmed or a bounded observable cleanup-failure outcome is recorded. Never retain Player objects for retry. Verify any registered-bar removal API separately before using it.",
+        "Run bounded reconciliation for orphaned owners and viewer drift, and observe active generations, queued revisions, winner switches, suppressed switches, viewer add/remove balance, rejected stale updates, terminal reasons, and nonzero viewers after close.",
+        "Verify target-version BossBar type and member behavior in official Paper Javadocs. API members that add, remove, list, hide, or detach viewers do not by themselves prove plugin ownership, stable arbitration, lifecycle coverage, thread safety, or distributed handoff.",
+        "For reconnect or backend transfer of a session-owned bar, create a fresh local generation and define an explicit plugin-owned handoff or fencing policy when state crosses servers. For a shared owner, invalidate only the departing viewer unless the owner itself ends. Do not claim that Paper BossBar APIs provide distributed ownership or clean a previous backend automatically.",
+        "Test rapid enter and leave around thresholds, deterministic replacement, reconnect and backend transfer, repeated disable cleanup, stale generations and revisions, bounded-queue overload, missing lifecycle signals, and zero viewer or reverse-index leaks after every terminal path.",
+        "Keep boss AI, combat or encounter mechanics, custom mob systems, ModelEngine integration, scoreboard or action-bar policy, and vanilla /bossbar command authoring outside this BossBar audience-lifecycle concern."
+      ],
+      "requiredEvidence": [
+        "A logical-slot state machine naming the current owner generation, revision, winner, desired and applied viewer identity sets, writer, and terminal state",
+        "Target-version Paper type, member, scheduler-context, lifecycle-event, and official behavior evidence for every BossBar and cleanup API actually used",
+        "An eligibility table plus deterministic ranking and hysteresis contract with stable tie breaking and a controlled monotonic clock",
+        "Authoritative add/remove set-diff reconciliation evidence without retained Player references",
+        "A bounded one-writer command and coalescing design that rejects stale generations and revisions while preserving terminal cleanup",
+        "A lifecycle matrix and deterministic race tests covering replacement, rapid enter and leave, reconnect, transfer, disable, stale callbacks, reconciliation, and zero viewer leaks",
+        "An explicit cross-server ownership statement and a scope statement excluding unrelated boss, mob, scoreboard, action-bar, and vanilla command features"
+      ],
+      "failureMode": "A BossBar can flicker between candidates, retain ineligible viewers, accept stale updates, survive its owner or owning player session, or leak across reconnect, transfer, replacement, and plugin shutdown."
+    },
+    {
       "id": "paper-plugin-testing-evidence",
       "domains": ["paper-plugin"],
       "title": "Do not claim more Paper behavior than the completed tests prove",

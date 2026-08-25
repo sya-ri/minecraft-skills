@@ -382,6 +382,10 @@ Data resources are exposed under `minecraft-skills://data/...`, including:
 - `minecraft-skills://data/authoring-scenarios/paper-player-session-lifecycle-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-player-session-lifecycle-safety.json`
 - `minecraft-skills://data/authoring-diagnostics/paper-player-session-lifecycle-unsafe.json`
+- `minecraft-skills://data/authoring-recipes/paper-bossbar-audience-lifecycle.json`
+- `minecraft-skills://data/authoring-scenarios/paper-bossbar-audience-lifecycle-review.json`
+- `minecraft-skills://data/authoring-guardrails/paper-bossbar-audience-lifecycle-safety.json`
+- `minecraft-skills://data/authoring-diagnostics/paper-bossbar-audience-lifecycle-unsafe.json`
 - `minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json`
 - `minecraft-skills://data/authoring-scenarios/paper-plugin-testing-evidence-review.json`
 - `minecraft-skills://data/authoring-guardrails/paper-plugin-testing-evidence.json`

@@ -480,6 +480,82 @@
       "failureMode": "Connection-scoped work can outlive its player session, corrupt a replacement session, leak resources, or lose durable updates when cleanup depends on a single ideal event order."
     },
     {
+      "id": "paper-bossbar-audience-lifecycle-review",
+      "domains": ["paper-plugin"],
+      "title": "Review Paper BossBar audience ownership and lifecycle",
+      "userPrompt": "Create or review a Paper BossBar audience controller that chooses stable candidates, reconciles viewers, rejects stale updates, and removes every bar cleanly across replacement, reconnect, transfer, and plugin shutdown.",
+      "useWhen": [
+        "Paper code creates a BossBar for players whose eligibility changes over time",
+        "several candidate bars can compete for one intended UI slot",
+        "range, world, permission, visibility, session, backend, or owner state changes who should view the bar",
+        "scheduled or asynchronous callbacks update BossBar content, winner, or viewers",
+        "a bar can be replaced or survive owner completion, reconnect, transfer, reload, or disable",
+        "the request diagnoses BossBar flicker, stale updates, duplicate attachments, retained Player references, or viewer leaks"
+      ],
+      "requiredLookups": {
+        "recipes": ["paper-bossbar-audience-lifecycle", "paper-plugin-testing-evidence"],
+        "intents": [
+          "prepare-generation",
+          "discover-paper-event-candidates",
+          "verify-paper-type-or-member"
+        ],
+        "diagnostics": [
+          "target-version-missing",
+          "paper-api-member-unverified",
+          "paper-event-candidate-unverified",
+          "paper-threading-assumption",
+          "paper-player-session-lifecycle-unsafe",
+          "paper-bossbar-audience-lifecycle-unsafe",
+          "paper-plugin-test-evidence-gap"
+        ],
+        "claimPolicies": [
+          "paper-type-or-member-exists",
+          "paper-event-candidate",
+          "folia-or-thread-safety"
+        ],
+        "factSurfaces": [
+          "paper-builds",
+          "paper-api-index",
+          "paper-api-surface",
+          "paper-event-search"
+        ],
+        "responsePatterns": ["paper-api-answer"]
+      },
+      "successCriteria": [
+        "each logical BossBar slot has exactly one current plugin-owned generation, revision, writer, winner, viewer state, and terminal owner",
+        "viewer eligibility is reevaluated from explicit current owner, plugin, session, backend, permission, world, range, visibility, and product gates that apply",
+        "one-slot candidate selection uses declared priority, a stable tie break, controlled-time hysteresis, and explicit no-candidate and immediate-terminal outcomes",
+        "multiple simultaneous bars are modeled as intentional independent slots instead of an accidental global winner",
+        "an authoritative desired viewer identity set is reconciled by current-minus-desired removals and desired-minus-current additions in a verified Paper context",
+        "Player objects are resolved only while applying one reconciliation or terminal cleanup and are not retained in long-lived state",
+        "one bounded writer rejects stale generations, plugin epochs, duplicate or older revisions, and every update after terminal cleanup begins",
+        "replaceable updates are coalesced while terminal hide and detach cannot be dropped or indefinitely delayed",
+        "replacement retires the old generation before the new bar publishes",
+        "one idempotent terminal path handles owner or encounter end, owning-session close, rapid reconnect, relevant backend transfer, partial initialization, reload or disable, repeated signals, and orphan-owner reconciliation, while a non-owning viewer-session end removes only that viewer",
+        "terminal cleanup leaves zero attached viewers, desired or applied identities, queued commands, reverse indexes, bar references, and retained Player objects",
+        "a cleanup exception leaves the generation terminal, does not skip independent cleanup, retains no Player objects, and records a bounded failure instead of claiming successful detachment",
+        "cross-server state uses an explicit plugin-owned generation, fencing, or handoff policy without claiming automatic Paper BossBar ownership",
+        "tests cover rapid enter and leave, stable ties, replacement, reconnect, transfer, repeated disable, stale generations and revisions, overload, missing signals, reconciliation, and viewer leaks"
+      ],
+      "mustAvoid": [
+        "sharing one BossBar handle across ambiguous owners or generations",
+        "attaching a viewer from UUID presence, range alone, or a previous eligibility decision",
+        "selecting a candidate by map iteration, callback order, or unstable equal-score ordering",
+        "switching at one noisy threshold with no explicit hysteresis",
+        "only adding viewers without removing current-minus-desired viewers",
+        "retaining Player objects in candidates, queues, caches, desired or applied sets, reverse indexes, or durable state",
+        "mutating the same logical slot from multiple listeners, tasks, or callbacks",
+        "using an unbounded update queue or letting overload starve terminal cleanup",
+        "accepting an old generation or revision after replacement, reconnect, transfer, or close",
+        "publishing a replacement before the old bar is hidden and detached",
+        "closing a shared bar merely because one non-owning viewer session ends",
+        "assuming one lifecycle event always fires or omitting fallback reconciliation",
+        "claiming Paper automatically arbitrates candidates, transfers BossBars, owns them across backends, or cleans another server",
+        "mixing boss AI, combat or encounter mechanics, custom mob systems, ModelEngine, scoreboard, action bar, or vanilla /bossbar command authoring into this concern"
+      ],
+      "failureMode": "A BossBar audience controller can flicker, display to stale or ineligible viewers, mutate a replacement, retain Player references, or leak visible bars after its local or distributed lifecycle ends."
+    },
+    {
       "id": "paper-plugin-testing-evidence-review",
       "domains": ["paper-plugin"],
       "title": "Design or review evidence for a Paper plugin change",

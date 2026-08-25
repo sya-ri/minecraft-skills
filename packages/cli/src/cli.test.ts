@@ -1096,6 +1096,72 @@ describe("minecraft-skills CLI", () => {
     expect(catalog.stdout.join("\n")).toContain('"id": "paper-player-session-lifecycle"');
   });
 
+  it("prints and routes Paper BossBar audience lifecycle guidance", async () => {
+    const recipe = await capture(["plugin", "paper", "recipe", "paper-bossbar-audience-lifecycle"]);
+    expect(recipe.code).toBe(0);
+    expect(recipe.stdout.join("\n")).toContain("select-a-stable-winner-with-hysteresis");
+    expect(recipe.stdout.join("\n")).toContain("reconcile-an-authoritative-viewer-set-by-diff");
+
+    const scenario = await capture([
+      "plugin",
+      "paper",
+      "scenario",
+      "paper-bossbar-audience-lifecycle-review",
+    ]);
+    expect(scenario.code).toBe(0);
+    expect(scenario.stdout.join("\n")).toContain("paper-bossbar-audience-lifecycle-unsafe");
+    expect(scenario.stdout.join("\n")).toContain("repeated disable");
+
+    const search = await capture([
+      "plugin",
+      "paper",
+      "search-scenarios",
+      "BossBar viewer hysteresis replacement reconnect leak",
+    ]);
+    expect(search.code).toBe(0);
+    expect(search.stdout.join("\n")).toContain('"id": "paper-bossbar-audience-lifecycle-review"');
+
+    const plan = await capture([
+      "plugin",
+      "paper",
+      "plan",
+      "paper-bossbar-audience-lifecycle-review",
+      "26.2",
+    ]);
+    expect(plan.code).toBe(0);
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-bossbar-audience-lifecycle"');
+    expect(plan.stdout.join("\n")).toContain('"id": "paper-bossbar-audience-lifecycle-unsafe"');
+
+    const guardrail = await capture([
+      "plugin",
+      "paper",
+      "guardrail",
+      "paper-bossbar-audience-lifecycle-safety",
+    ]);
+    expect(guardrail.code).toBe(0);
+    expect(guardrail.stdout.join("\n")).toContain("desired viewer identity set as authoritative");
+
+    const diagnostic = await capture([
+      "plugin",
+      "paper",
+      "diagnostic",
+      "paper-bossbar-audience-lifecycle-unsafe",
+    ]);
+    expect(diagnostic.code).toBe(0);
+    expect(diagnostic.stdout.join("\n")).toContain("stale generation and revision callbacks");
+
+    const catalog = await capture([
+      "plugin",
+      "paper",
+      "search",
+      "BossBar audience hysteresis viewer diff",
+      "--kind",
+      "authoring-recipe",
+    ]);
+    expect(catalog.code).toBe(0);
+    expect(catalog.stdout.join("\n")).toContain('"id": "paper-bossbar-audience-lifecycle"');
+  });
+
   it("prints Paper plugin testing evidence guidance", async () => {
     const recipe = await capture(["plugin", "paper", "recipe", "paper-plugin-testing-evidence"]);
     expect(recipe.code).toBe(0);

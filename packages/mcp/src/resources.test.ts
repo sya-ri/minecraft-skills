@@ -448,6 +448,40 @@ describe("MCP resources", () => {
     expect(diagnostic.contents[0]?.text).toContain("fire-and-forget persistence");
   });
 
+  it("reads Paper BossBar audience lifecycle resources", () => {
+    const uris = listMinecraftSkillsResources().map((resource) => resource.uri);
+    expect(uris).toEqual(
+      expect.arrayContaining([
+        "minecraft-skills://data/authoring-recipes/paper-bossbar-audience-lifecycle.json",
+        "minecraft-skills://data/authoring-scenarios/paper-bossbar-audience-lifecycle-review.json",
+        "minecraft-skills://data/authoring-guardrails/paper-bossbar-audience-lifecycle-safety.json",
+        "minecraft-skills://data/authoring-diagnostics/paper-bossbar-audience-lifecycle-unsafe.json",
+      ]),
+    );
+
+    const recipe = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-recipes/paper-bossbar-audience-lifecycle.json",
+    );
+    expect(recipe.contents[0]?.text).toContain("select-a-stable-winner-with-hysteresis");
+    expect(recipe.contents[0]?.text).toContain("current-minus-desired removals");
+
+    const scenario = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-scenarios/paper-bossbar-audience-lifecycle-review.json",
+    );
+    expect(scenario.contents[0]?.text).toContain("paper-bossbar-audience-lifecycle-unsafe");
+    expect(scenario.contents[0]?.text).toContain("backend transfer");
+
+    const guardrail = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-guardrails/paper-bossbar-audience-lifecycle-safety.json",
+    );
+    expect(guardrail.contents[0]?.text).toContain("one serialized writer");
+
+    const diagnostic = readMinecraftSkillsResource(
+      "minecraft-skills://data/authoring-diagnostics/paper-bossbar-audience-lifecycle-unsafe.json",
+    );
+    expect(diagnostic.contents[0]?.text).toContain("zero-viewer leak assertions");
+  });
+
   it("reads Paper plugin testing evidence resources", () => {
     const recipe = readMinecraftSkillsResource(
       "minecraft-skills://data/authoring-recipes/paper-plugin-testing-evidence.json",
