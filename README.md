@@ -12,11 +12,24 @@ that create or review Java data packs, Java resource packs, and Paper plugins.
 minecraft-skills helps agents verify Minecraft facts before writing code or pack files and handle
 incomplete evidence without guessing.
 
-## Quick Start
+## Installation
 
 Node.js 22.12 or newer is required.
 
-For AI clients that support MCP, add the server to the client's MCP configuration:
+### CLI
+
+Run the published CLI without a global installation:
+
+```sh
+npx minecraft-skills minecraft latest
+```
+
+Use the same `npx minecraft-skills` prefix for the commands in the
+[usage guide](docs/USAGE.md).
+
+### MCP
+
+For AI clients that support stdio MCP servers, add this entry to the client's MCP configuration:
 
 ```json
 {
@@ -29,22 +42,8 @@ For AI clients that support MCP, add the server to the client's MCP configuratio
 }
 ```
 
-Run the CLI without installing it globally:
-
-```sh
-npx minecraft-skills minecraft latest
-```
-
-A few representative commands:
-
-```sh
-npx minecraft-skills plugin paper context 26.2
-npx minecraft-skills datapack validate-project 26.2 ./my-data-pack
-npx minecraft-skills resourcepack validate-project 26.2 ./my-resource-pack
-```
-
-See the [usage guide](docs/USAGE.md) for the full reference for the CLI, MCP server, package APIs,
-cache behavior, and authoring workflows.
+The server runs as `npx -y @minecraft-skills/mcp`. After running the CLI or configuring the MCP
+server, see the [usage guide](docs/USAGE.md) for its command and capability reference.
 
 ## Agent Skills
 
@@ -56,7 +55,8 @@ Clients that support external skills can use the bundled skill folders:
 
 ## Documentation
 
-- [Usage](docs/USAGE.md): CLI, MCP, package APIs, cache behavior, and authoring workflows.
+- [Usage](docs/USAGE.md): CLI commands, MCP capabilities, package APIs, cache behavior, and
+  authoring workflows.
 - [Version Support](docs/VERSION_SUPPORT.md): bundled and downloadable data by Minecraft version.
 - [Source Strategy](docs/SOURCE_STRATEGY.md): source tiers, redistribution rules, and claim wording.
 - [RCON](docs/RCON.md): configuration and permission presets.
