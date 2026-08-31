@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -1451,7 +1451,10 @@ describe("@minecraft-skills/data", () => {
     expect(scenario?.requiredLookups.recipes).toEqual(["paper-world-operation-safety"]);
     expect(scenario?.requiredLookups.diagnostics).toContain("paper-world-operation-unbounded");
 
-    const usage = readFileSync(join(process.cwd(), "../../docs/USAGE.md"), "utf8");
+    const paperApiSurface = readDataJson<{ types: Array<{ url: string }> }>(
+      "java/paper-api-surfaces/26.2.json",
+    );
+    const paperApiTypeUrls = paperApiSurface.types.map((entry) => entry.url);
     for (const officialUrl of [
       "https://jd.papermc.io/paper/26.2/org/bukkit/World.html",
       "https://jd.papermc.io/paper/26.2/org/bukkit/block/Block.html",
@@ -1459,10 +1462,17 @@ describe("@minecraft-skills/data", () => {
       "https://jd.papermc.io/paper/26.2/org/bukkit/event/world/ChunkUnloadEvent.html",
       "https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/RegionScheduler.html",
       "https://jd.papermc.io/paper/26.2/io/papermc/paper/threadedregions/scheduler/EntityScheduler.html",
+    ]) {
+      expect(paperApiTypeUrls).toContain(officialUrl);
+    }
+
+    const paper = readDataJson<{ sources: Array<{ url: string }> }>("java/paper.json");
+    const paperSourceUrls = paper.sources.map((entry) => entry.url);
+    for (const officialUrl of [
       "https://docs.papermc.io/paper/dev/folia-support/",
       "https://docs.papermc.io/folia/reference/overview/",
     ]) {
-      expect(usage).toContain(officialUrl);
+      expect(paperSourceUrls).toContain(officialUrl);
     }
   });
 
