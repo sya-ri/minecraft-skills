@@ -45,6 +45,14 @@ For AI clients that support stdio MCP servers, add this entry to the client's MC
 The server runs as `npx -y @minecraft-skills/mcp`. After running the CLI or configuring the MCP
 server, see the [usage guide](docs/USAGE.md) for its command and capability reference.
 
+## Optional Evaluation History
+
+Maintainers and contributors can explicitly opt in to local MCP tool evaluation history with
+`minecraft-skills evaluation enable`. It is disabled by default, stores raw tool requests and
+responses only under `~/.minecraft-skills/evaluation`, and never uploads records or creates issues
+automatically. See [Optional Evaluation History](docs/EVALUATION_HISTORY.md) for privacy guidance,
+project-level opt-out, scoring, search, deletion, and the manual sanitized-feedback workflow.
+
 ## Agent Skills
 
 Clients that support external skills can use the bundled skill folders:
@@ -60,6 +68,8 @@ Clients that support external skills can use the bundled skill folders:
 - [Version Support](docs/VERSION_SUPPORT.md): bundled and downloadable data by Minecraft version.
 - [Source Strategy](docs/SOURCE_STRATEGY.md): source tiers, redistribution rules, and claim wording.
 - [RCON](docs/RCON.md): configuration and permission presets.
+- [Optional Evaluation History](docs/EVALUATION_HISTORY.md): opt-in local MCP request, response,
+  and quality records for improving minecraft-skills.
 - [Mixin Configuration Validation](docs/MIXIN_CONFIG_VALIDATION.md): validator scope and limits.
 - [WAVE Audio Inspection](docs/WAVE_AUDIO_INSPECTION.md): parser and signal-metric boundaries.
 - [Changelog](CHANGELOG.md): release history.

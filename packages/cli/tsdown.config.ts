@@ -6,6 +6,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   deps: {
+    alwaysBundle: ["@minecraft-skills/evaluation-core"],
     neverBundle: ["@minecraft-skills/catalog"],
   },
 });

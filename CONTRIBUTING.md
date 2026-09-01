@@ -12,6 +12,32 @@ mise exec -- pnpm install
 CI=true mise exec -- pnpm run check
 ```
 
+## Evaluation Feedback
+
+The optional evaluation-history feature can record raw MCP tool arguments and results locally for
+later scoring and gap analysis. It is disabled by default. Contributors who explicitly opt in can
+use this workflow:
+
+```sh
+mise exec -- pnpm --filter minecraft-skills build
+node packages/cli/dist/cli.mjs evaluation enable
+```
+
+Restart the MCP server after enabling the feature. Use `evaluation search`, `evaluation show`,
+`evaluation rate`, and `evaluation gaps` to identify useful improvements. Records remain only under
+`~/.minecraft-skills/evaluation` until explicitly deleted; the project never uploads them or opens
+an issue automatically.
+
+Before sharing feedback, review the complete record locally and manually remove credentials,
+personal data, private logs, IP addresses, paths, configuration values, and unrelated content.
+Copy only the smallest sanitized excerpt into the **MCP evaluation feedback** Issue Form. Never
+commit or attach a raw record. See [Optional Evaluation History](docs/EVALUATION_HISTORY.md) for the
+score anchors, exact commands, storage schema, and sanitization checklist.
+
+For a sensitive working tree, create `.minecraft-skills/evaluation.disabled`; the marker overrides
+global recording. This repository ignores that path. In other repositories, add it to
+`.git/info/exclude` when the opt-out should remain local.
+
 ## Release Readiness
 
 Published package manifests are checked with pnpm because pnpm rewrites `workspace:` dependencies to

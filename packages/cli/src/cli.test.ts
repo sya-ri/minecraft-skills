@@ -2305,8 +2305,11 @@ describe("minecraft-skills CLI", () => {
     const previousCacheDir = process.env.MINECRAFT_SKILLS_CACHE_DIR;
     process.env.MINECRAFT_SKILLS_CACHE_DIR = root;
     try {
-      const body = readFileSync(
-        join(process.cwd(), "../data/data/java/datapack-schema-surfaces/26.2.json"),
+      const body = Buffer.from(
+        readFileSync(
+          join(process.cwd(), "../data/data/java/datapack-schema-surfaces/26.2.json"),
+          "utf8",
+        ).replaceAll("\r\n", "\n"),
       );
       vi.stubGlobal(
         "fetch",
@@ -4915,6 +4918,26 @@ describe("minecraft-skills CLI", () => {
     const result = await capture(["nope"]);
     expect(result.code).toBe(1);
     expect(result.stderr).toEqual(["Unknown command: nope"]);
+  });
+
+  it("routes evaluation help and failure exits through the top-level CLI", async () => {
+    const help = await capture(["evaluation", "--help"]);
+    const unknown = await capture(["evaluation", "nope"]);
+    const protectedDelete = await capture(["evaluation", "delete", "--all"]);
+
+    expect(help.code).toBe(0);
+    expect(help.stderr).toEqual([]);
+    expect(help.stdout.join("\n")).toContain("evaluation delete --all --yes");
+    expect(unknown).toEqual({
+      code: 1,
+      stdout: [],
+      stderr: ["Unknown evaluation command: nope"],
+    });
+    expect(protectedDelete).toEqual({
+      code: 1,
+      stdout: [],
+      stderr: ["evaluation delete --all requires --yes"],
+    });
   });
 
   it("reports unknown grouped subcommands", async () => {

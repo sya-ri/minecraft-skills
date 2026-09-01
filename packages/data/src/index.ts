@@ -15,7 +15,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { homedir, platform, tmpdir } from "node:os";
-import { dirname, isAbsolute, join } from "node:path";
+import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openZipArchive, type ZipArchive } from "./zip.js";
 
@@ -532,10 +532,10 @@ export function listCachedDataFiles(dataVersion = getDataManifest().dataVersion)
       if (!entry.isFile()) {
         continue;
       }
-      const relative = absolute.slice(root.length + 1);
+      const logicalPath = relative(root, absolute).split(sep).join("/");
       found.push({
         dataVersion,
-        path: relative,
+        path: logicalPath,
         file: absolute,
         bytes: statSync(absolute).size,
       });
