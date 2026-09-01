@@ -52,6 +52,7 @@
     "@minecraft-skills/rcon": "workspace:0.1.6"
   },
   "devDependencies": {
+    "@minecraft-skills/evaluation-core": "workspace:0.1.6",
     "@types/node": "26.0.0",
     "@typescript/native-preview": "7.0.0-dev.20260621.1",
     "tsdown": "0.22.3",

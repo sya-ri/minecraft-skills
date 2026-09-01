@@ -11,6 +11,7 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { createEvaluationIntegration, minecraftSkillsMcpVersion } from "./evaluation.js";
 import { getMinecraftSkillsPrompt, prompts } from "./prompts.js";
 import { listMinecraftSkillsResources, readMinecraftSkillsResource } from "./resources.js";
 import { callMinecraftSkillsTool, listMinecraftSkillsTools } from "./tools.js";
@@ -22,10 +23,13 @@ function isDirectRun(metaUrl: string): boolean {
 }
 
 export function createServer(): Server {
+  const evaluation = createEvaluationIntegration();
+  const baseInstructions =
+    "Use minecraft-skills tools and resources for version-aware Minecraft datapack, resourcepack, and Paper plugin facts. Treat unknown or not-extracted fields as gaps, not facts.";
   const server = new Server(
     {
       name: "minecraft-skills",
-      version: "0.0.0",
+      version: minecraftSkillsMcpVersion,
     },
     {
       capabilities: {
@@ -34,7 +38,9 @@ export function createServer(): Server {
         tools: {},
       },
       instructions:
-        "Use minecraft-skills tools and resources for version-aware Minecraft datapack, resourcepack, and Paper plugin facts. Treat unknown or not-extracted fields as gaps, not facts.",
+        evaluation.instructions === undefined
+          ? baseInstructions
+          : `${baseInstructions}\n\n${evaluation.instructions}`,
     },
   );
 
@@ -49,10 +55,16 @@ export function createServer(): Server {
     getMinecraftSkillsPrompt(request.params.name, request.params.arguments),
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: listMinecraftSkillsTools(),
+    tools: [...listMinecraftSkillsTools(), ...evaluation.tools],
   }));
-  server.setRequestHandler(CallToolRequestSchema, async (request) =>
-    callMinecraftSkillsTool(request.params.name, request.params.arguments),
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) =>
+    evaluation.callTool(
+      server,
+      request.params.name,
+      request.params.arguments,
+      extra,
+      callMinecraftSkillsTool,
+    ),
   );
 
   return server;

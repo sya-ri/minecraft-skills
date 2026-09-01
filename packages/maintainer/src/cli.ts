@@ -87,13 +87,29 @@ function findRepositoryRoot(start = process.cwd()): string {
 }
 
 function requireFile(root: string, path: string, messages: string[]): void {
-  if (!existsSync(join(root, path))) {
+  if (!existsSync(repositorySourcePath(root, path))) {
     messages.push(`missing file: ${path}`);
   }
 }
 
 function dataFilePath(path: string): string {
   return `packages/data/data/${path}`;
+}
+
+function repositorySourcePath(root: string, path: string): string {
+  const directPath = join(root, path);
+  if (existsSync(directPath) || (path !== "skills" && !path.startsWith("skills/"))) {
+    return directPath;
+  }
+  const skillsEntry = join(root, "skills");
+  if (
+    existsSync(skillsEntry) &&
+    statSync(skillsEntry).isFile() &&
+    readFileSync(skillsEntry, "utf8").trim().replaceAll("\\", "/") === "packages/data/data/skills"
+  ) {
+    return join(root, dataFilePath(path));
+  }
+  return directPath;
 }
 
 function requireDataFile(root: string, path: string, messages: string[]): void {
@@ -104,8 +120,12 @@ function readJsonFile<T>(path: string): T {
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
 
+function canonicalTextFileBytes(path: string): Buffer {
+  return Buffer.from(readFileSync(path, "utf8").replaceAll("\r\n", "\n"));
+}
+
 function sha256File(path: string): string {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
+  return createHash("sha256").update(canonicalTextFileBytes(path)).digest("hex");
 }
 
 function versionFromJsonFileName(file: string): string | undefined {
@@ -148,12 +168,13 @@ function buildDataManifestEntries(root: string, baseUrl: string): DataManifestEn
       }
       const path = `${section.directory}/${file}`;
       const absolutePath = join(dataRoot, path);
+      const bytes = canonicalTextFileBytes(absolutePath);
       entries.push({
         path,
         kind: section.kind,
         edition: "java",
         version,
-        size: statSync(absolutePath).size,
+        size: bytes.length,
         sha256: sha256File(absolutePath),
         url: `${normalizedBaseUrl}/${path}`,
       });
@@ -250,7 +271,7 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
     if (!existsSync(absolutePath)) {
       continue;
     }
-    const actualSize = statSync(absolutePath).size;
+    const actualSize = canonicalTextFileBytes(absolutePath).length;
     if (actualSize !== entry.size) {
       messages.push(
         `${prefix} size must match checked-in file: expected ${entry.size}, got ${actualSize}`,
@@ -271,14 +292,16 @@ function walkTextFiles(root: string, directory: string, files: string[] = []): s
     return files;
   }
   for (const entry of readdirSync(absoluteDirectory)) {
-    const path = join(directory, entry);
+    const path = directory === "." ? entry : `${directory}/${entry}`;
     const absolutePath = join(root, path);
     const stat = statSync(absolutePath);
     if (stat.isDirectory()) {
       if (
-        path === ".git" ||
-        path === "node_modules" ||
-        path.endsWith("/dist") ||
+        entry === ".git" ||
+        entry === ".pnpm-store" ||
+        entry === ".turbo" ||
+        entry === "node_modules" ||
+        entry === "dist" ||
         path === "packages/data/data/java"
       ) {
         continue;
@@ -967,7 +990,7 @@ function requireIntentLookups(
 }
 
 function requireGeneratedHeader(root: string, path: string, messages: string[]): void {
-  const absolutePath = join(root, path);
+  const absolutePath = repositorySourcePath(root, path);
   requireFile(root, path, messages);
   if (existsSync(absolutePath) && !readFileSync(absolutePath, "utf8").includes(generatedHeader)) {
     messages.push(`missing generated header: ${path}`);
@@ -981,11 +1004,11 @@ function readYamlStringField(content: string, key: string): string | undefined {
 
 function requireSkillMetadata(root: string, skill: string, messages: string[]): void {
   const skillPath = `skills/${skill}/SKILL.md`;
-  const skillAbsolutePath = join(root, skillPath);
+  const skillAbsolutePath = repositorySourcePath(root, skillPath);
   requireGeneratedHeader(root, skillPath, messages);
 
   if (existsSync(skillAbsolutePath)) {
-    const content = readFileSync(skillAbsolutePath, "utf8");
+    const content = readFileSync(skillAbsolutePath, "utf8").replaceAll("\r\n", "\n");
     const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
     if (!frontmatter) {
       messages.push(`missing skill frontmatter: ${skillPath}`);
@@ -1005,7 +1028,7 @@ function requireSkillMetadata(root: string, skill: string, messages: string[]): 
   }
 
   const openaiYamlPath = `skills/${skill}/agents/openai.yaml`;
-  const openaiYamlAbsolutePath = join(root, openaiYamlPath);
+  const openaiYamlAbsolutePath = repositorySourcePath(root, openaiYamlPath);
   requireFile(root, openaiYamlPath, messages);
   if (!existsSync(openaiYamlAbsolutePath)) {
     return;
@@ -1031,7 +1054,7 @@ function requireSkillMetadata(root: string, skill: string, messages: string[]): 
 }
 
 function requireMirroredDataFile(root: string, path: string, messages: string[]): void {
-  const sourcePath = join(root, path);
+  const sourcePath = repositorySourcePath(root, path);
   const bundledPath = join(root, dataFilePath(path));
   requireFile(root, path, messages);
   requireDataFile(root, path, messages);

@@ -12,7 +12,7 @@ coverage gaps, not permission to guess.
 
 | Interface | Use it for |
 | --- | --- |
-| [CLI](#cli) | Local files, cache management, shell workflows, and direct JSON output. |
+| [CLI](#cli) | Local files, cache management, optional evaluation history, shell workflows, and direct JSON output. |
 | [MCP](#mcp) | Giving an AI agent structured Minecraft lookup, validation, and authoring tools. |
 | [Package APIs](#package-apis) | Calling the same catalog, validation, data, or RCON capabilities from TypeScript. |
 | [Agent Skills](#agent-skills) | Teaching compatible agents the lookup order, evidence rules, and authoring workflow for a domain. |
@@ -54,6 +54,7 @@ subcommands in its table.
 | [`source`](#minecraft-skills-source) | Source policy, provenance reports, tiers, and structured datasets. |
 | [`domain`](#minecraft-skills-domain) | Supported authoring-domain discovery. |
 | [`reference`](#minecraft-skills-reference) | Bundled reference discovery. |
+| [`evaluation`](#minecraft-skills-evaluation) | Opt-in local MCP request, response, and quality history. |
 
 ### Shared Authoring Commands
 
@@ -331,11 +332,51 @@ See [RCON](RCON.md) for configuration locations, permission presets, and MCP beh
 | --- | --- |
 | `list` | List bundled reference documents, optionally narrowed by domain. |
 
+### `minecraft-skills evaluation`
+
+Evaluation history is disabled by default. When explicitly enabled, the MCP server stores raw tool
+arguments and results under `~/.minecraft-skills/evaluation`; it does not store conversation text,
+ordinary CLI commands, MCP resources, or prompts. It never uploads, expires, or deletes records
+automatically. Restart the MCP server after enabling recording so agents receive its evaluation
+instructions.
+
+| Subcommand | Purpose |
+| --- | --- |
+| `status` | Show global and current-directory effective state, marker, storage path, and record count. |
+| `enable` / `disable` | Change the global opt-in without deleting existing records. |
+| `search [query] [filters]` | Search newest summaries without displaying raw requests or responses. |
+| `show <id>` | Display one complete raw record after a privacy warning. |
+| `rate <id> --score <1-5> --information-need <text> --comment <text>` | Add or replace an evaluation; repeat `--missing-feature <key>=<summary>` as needed. |
+| `gaps [query] [filters]` | Group recurring missing capabilities by stable key. |
+| `delete <id...>` | Delete named records. |
+| `delete --all --yes` | Explicitly delete all records and owned crash-residue record temp files. |
+
+`search` filters are `--tool <name>`, `--evaluated <true|false>`, `--min-score <1-5>`,
+`--max-score <1-5>`, `--missing-feature <key>`, `--since <ISO timestamp>`,
+`--until <ISO timestamp>`, and `--limit <1-100>`. The free-text query searches only tool and
+evaluation metadata. `gaps` accepts the same filters except `--evaluated`; its query searches gap
+metadata, and it returns every matching aggregate.
+
+Create `.minecraft-skills/evaluation.disabled` in a sensitive project to override the global
+opt-in. See [Optional Evaluation History](EVALUATION_HISTORY.md) for raw-data warnings, MCP-root
+fallback behavior, record schema, score anchors, and the manual sanitized Issue flow.
+
 ## MCP
 
 The MCP server exposes the same catalog as flat tools, resources, and prompts. This section groups
 the flat tool namespace by purpose; see the [MCP package reference](../packages/mcp/README.md#tools)
 for package-level tool details and input schemas.
+
+### Evaluation History
+
+When local recording is enabled, each ordinary tool result carries its stored record ID in
+`_meta["minecraft-skills/evaluationRecordId"]`. `get_evaluation_status` reports the effective state
+and current MCP/catalog data versions, `list_pending_evaluations` returns up to 100 newest
+process-local unevaluated calls with their recorded MCP/catalog data versions, and
+`record_tool_evaluation` records the information need, 1-5 score, comment, and optional missing
+features. These management tools are excluded from history. Pending results contain only ID,
+timestamps, tool, outcome, and recorded MCP/catalog data versions; they do not repeat the raw
+request or response.
 
 ### Authoring Guidance
 
@@ -487,6 +528,7 @@ Set `MINECRAFT_SKILLS_CACHE_DIR` to override the cache root.
 | [Version Support](VERSION_SUPPORT.md) | Version-by-version bundled and downloadable coverage. |
 | [Source Strategy](SOURCE_STRATEGY.md) | Source tiers, redistribution, provenance, and safe claim wording. |
 | [RCON](RCON.md) | Configuration, profiles, permissions, and MCP behavior. |
+| [Optional Evaluation History](EVALUATION_HISTORY.md) | Local opt-in, privacy, schema, scoring, gap analysis, and sanitized feedback. |
 | [Mixin Configuration Validation](MIXIN_CONFIG_VALIDATION.md) | Audited source, checked fields, limits, and explicit non-goals. |
 | [WAVE Audio Inspection](WAVE_AUDIO_INSPECTION.md) | WAVE parser and sample-metric boundary. |
 | [CLI Package Reference](../packages/cli/README.md) | Exact CLI examples and command-specific behavior. |

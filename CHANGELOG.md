@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+
+- Default-off local MCP evaluation history across the CLI and MCP server, storing raw tool calls
+  under `~/.minecraft-skills/evaluation` for explicit scoring, information-need notes, recurring-gap
+  search, and deletion. Project markers can override the global opt-in for sensitive work.
+- Evaluation privacy and contribution guidance, including a dedicated sanitized-feedback Issue Form.
+
+### Fixed
+
+- Made local validation and cached logical data paths portable across Windows and POSIX checkouts.
+- Hardened evaluation deletion against failed removals and owned crash-residue temporary files,
+  preserved JSON keys such as `__proto__`, and rejected symlink components in storage paths.
+
 ## 0.1.6 - 2026-08-26
 
 ### Added

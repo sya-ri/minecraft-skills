@@ -7,4 +7,5 @@ dist/
 *.tgz
 pnpm-publish-summary.json
 .minecraft-skills/rcon.json
+.minecraft-skills/evaluation.disabled
 minecraft-skills.rcon.json

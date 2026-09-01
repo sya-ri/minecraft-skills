@@ -326,6 +326,15 @@ describe("MCP tools", () => {
     expect(tools.every((tool) => tool.inputSchema.additionalProperties === false)).toBe(true);
   });
 
+  it("documents the opt-in evaluation-history exception on profile tools", () => {
+    for (const name of ["lookup_java_player_profile", "get_verified_java_player_textures"]) {
+      const description = tools.find((tool) => tool.name === name)?.description;
+      expect(description).toContain("writes no disk cache or application log");
+      expect(description).toContain("evaluation history is explicitly enabled");
+      expect(description).toContain("raw MCP call may be stored locally");
+    }
+  });
+
   it("documents caller-side English normalization for intent-based searches", () => {
     const semanticInputs = new Map([
       ["search_authoring_scenarios", "query"],

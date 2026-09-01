@@ -1647,7 +1647,7 @@ describe("@minecraft-skills/data", () => {
   });
 
   it("exposes a package data root", () => {
-    expect(getDataRoot()).toMatch(/packages\/data\/data$/);
+    expect(getDataRoot()).toMatch(/packages[\\/]data[\\/]data$/);
   });
 
   it("checks bundled data files", () => {
@@ -1732,7 +1732,7 @@ describe("@minecraft-skills/data", () => {
 
   it("fetches manifest entries into the cache with sha256 verification", async () => {
     await withCacheDir(async () => {
-      const body = readDataText("java/datapack-schema-surfaces/26.2.json");
+      const body = readDataText("java/datapack-schema-surfaces/26.2.json").replaceAll("\r\n", "\n");
       const fetchMock: typeof fetch = async (_input, _init) =>
         ({
           ok: true,

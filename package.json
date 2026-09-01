@@ -18,11 +18,11 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "build": "pnpm --recursive --filter './packages/*' build",
+    "build": "pnpm --recursive --filter \"./packages/*\" build",
     "check": "sherif && biome check . && pnpm build && pnpm typecheck && pnpm test && pnpm validate",
     "format": "biome check --write .",
     "lint": "biome check .",
-    "pack:dry-run": "pnpm --recursive --filter './packages/{data,catalog,rcon,cli,mcp}' pack --dry-run",
+    "pack:dry-run": "pnpm --recursive --filter \"./packages/{data,catalog,rcon,cli,mcp}\" pack --dry-run",
     "pack:smoke": "pnpm --filter @minecraft-skills/maintainer build && node packages/maintainer/dist/cli.mjs package-smoke",
     "publish:dry-run": "pnpm --recursive --filter @minecraft-skills/data --filter @minecraft-skills/catalog --filter @minecraft-skills/rcon --filter minecraft-skills --filter @minecraft-skills/mcp publish --access public --dry-run --no-git-checks",
     "publish:public": "pnpm --recursive --filter @minecraft-skills/data --filter @minecraft-skills/catalog --filter @minecraft-skills/rcon --filter minecraft-skills --filter @minecraft-skills/mcp publish --access public --report-summary --no-git-checks",

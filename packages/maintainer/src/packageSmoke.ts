@@ -33,6 +33,10 @@ function tarballName(packageName: string, version: string): string {
   return `${packageName.replace(/^@/, "").replace("/", "-")}-${version}.tgz`;
 }
 
+function localTarballReference(tarballDir: string, tarball: string): string {
+  return `file:${join(tarballDir, tarball).replaceAll("\\", "/")}`;
+}
+
 function runCommand(
   command: string,
   args: string[],
@@ -97,7 +101,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     const dependencies = Object.fromEntries(
       packedPackages.map(({ packageName, tarball }) => [
         packageName,
-        `file:${join(tarballDir, tarball)}`,
+        localTarballReference(tarballDir, tarball),
       ]),
     );
     writeFileSync(
@@ -118,7 +122,8 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
       [
         "overrides:",
         ...packedPackages.map(
-          ({ packageName, tarball }) => `  "${packageName}": "file:${join(tarballDir, tarball)}"`,
+          ({ packageName, tarball }) =>
+            `  "${packageName}": "${localTarballReference(tarballDir, tarball)}"`,
         ),
         "",
       ].join("\n"),
@@ -163,7 +168,7 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
             'import { readFileSync } from "node:fs";',
             'import { join } from "node:path";',
             `const sourceDataRoot = ${JSON.stringify(sourceDataRoot)};`,
-            'const localFetch = async (url) => { const path = new URL(url).pathname.split("/packages/data/data/").at(1); if (!path) return new Response("missing path", { status: 404, statusText: "Not Found" }); return new Response(readFileSync(join(sourceDataRoot, path)), { status: 200, statusText: "OK" }); };',
+            'const localFetch = async (url) => { const path = new URL(url).pathname.split("/packages/data/data/").at(1); if (!path) return new Response("missing path", { status: 404, statusText: "Not Found" }); const body = readFileSync(join(sourceDataRoot, path), "utf8").replaceAll("\\r\\n", "\\n"); return new Response(body, { status: 200, statusText: "OK" }); };',
             "cleanCachedData();",
             "const coverage = getCoverageSummary();",
             "const manifest = getDataManifest();",
@@ -480,6 +485,12 @@ export function runPackageSmoke(options: { root: string; keepTemp?: boolean }): 
     );
     if (!existsSync(join(consumerDir, "generated-skills/minecraft-paper-plugins/SKILL.md"))) {
       throw new Error("write-skill did not materialize minecraft-paper-plugins/SKILL.md");
+    }
+    commands.push(
+      runCommand("pnpm", ["exec", "minecraft-skills", "evaluation", "status"], consumerDir),
+    );
+    if (!commands.at(-1)?.stdout.includes('"effectiveEnabled"')) {
+      throw new Error("minecraft-skills evaluation core was not bundled into the CLI");
     }
     commands.push(
       runCommand(

@@ -168,6 +168,7 @@ import {
 import { readBlockbenchProjectFile } from "./blockbenchProjectFile.js";
 import { readBoundedArchiveFile } from "./boundedArchiveFile.js";
 import { readDatapackProjectFiles } from "./datapackProjectFiles.js";
+import { runEvaluationCli } from "./evaluationCli.js";
 import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabricModDirectory.js";
 import { readFabricModJarFile } from "./fabricModJarFile.js";
 import { readBoundedPngFile } from "./filePrefix.js";
@@ -1306,6 +1307,11 @@ Start here:
   minecraft-skills source datasets
       Inspect source tiers and recommended structured community datasets such as PrismarineJS and
       misode/mcmeta.
+  minecraft-skills evaluation status
+  minecraft-skills evaluation enable|disable
+      Inspect or change the opt-in local MCP evaluation history setting. Recording is disabled by
+      default; enabled history stores raw tool arguments and results under
+      ~/.minecraft-skills/evaluation.
 
 Domains:
   datapack        Java data packs: commands, server reports, pack formats, vanilla data paths,
@@ -1473,6 +1479,7 @@ Grouped commands:
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills minecraft validate-mixin-config <config.json> [--archive-entries entries.json] [--archive-entries-complete true|false]
   minecraft-skills data manifest|fetch|cache-dir|cache-list|cache-clean|coverage
+  minecraft-skills evaluation status|enable|disable|search|show|rate|gaps|delete
   minecraft-skills skill list|show|write
   minecraft-skills reference list [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills domain show <datapack|resourcepack|paper-plugin>
@@ -1642,6 +1649,9 @@ function readRconPreset(args: string[], fallback: RconPermissionPreset): RconPer
 }
 
 export async function runCli(argv: string[], output: Output = defaultOutput): Promise<number> {
+  if (argv[0] === "evaluation") {
+    return runEvaluationCli(argv.slice(1), output);
+  }
   const flatSuggestion = flatCommandSuggestions[argv[0] ?? ""];
   const hasSubcommand = Boolean(argv[1] && !argv[1].startsWith("-"));
   if (flatSuggestion && !(commandGroups.has(argv[0] ?? "") && hasSubcommand)) {

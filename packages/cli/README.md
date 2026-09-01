@@ -10,6 +10,46 @@ npx minecraft-skills minecraft latest
 
 Node.js 22.12 or newer is required.
 
+## Optional Evaluation History
+
+The CLI manages an opt-in, local history of raw MCP tool requests, responses, and later quality
+evaluations. Recording is disabled by default and stores data only under
+`~/.minecraft-skills/evaluation`; it does not upload, expire, or automatically delete records.
+
+```sh
+minecraft-skills evaluation status
+minecraft-skills evaluation enable
+minecraft-skills evaluation search [query] \
+  --tool <name> --evaluated <true|false> \
+  --min-score <1-5> --max-score <1-5> \
+  --missing-feature <key> --since <ISO> --until <ISO> --limit <1-100>
+minecraft-skills evaluation show <id>
+minecraft-skills evaluation rate <id> \
+  --score <1-5> --information-need <text> --comment <text> \
+  --missing-feature <key>=<summary>
+minecraft-skills evaluation gaps [query]
+minecraft-skills evaluation delete <id...>
+minecraft-skills evaluation delete --all --yes
+minecraft-skills evaluation disable
+```
+
+Search summaries include the recorded minecraft-skills MCP and catalog data versions, but never raw
+requests or responses. `show` does include raw data, and displays a privacy warning first. `rate`
+requires a standalone description of the information that was needed and a comment explaining the
+score; repeat `--missing-feature` for multiple stable gap keys. Search results default to 20 and
+accept at most 100. `gaps` accepts the search filters except `--evaluated` and `--limit`, and returns
+every matching aggregate with the distinct versions that contributed to it.
+
+Deletion returns a nonzero exit status when a requested record is missing or any removal is unsafe
+or fails. `delete --all --yes` also removes only evaluator-owned crash-residue record temp files;
+unrelated hidden files are not touched.
+
+Create `.minecraft-skills/evaluation.disabled` in a sensitive project to override the global
+opt-in. Restart the MCP server after enabling history so agents receive the evaluation workflow in
+its instructions. See the repository's
+[Optional Evaluation History](../../docs/EVALUATION_HISTORY.md) guide for score anchors, MCP-root
+fallback behavior, storage schema, retention, and the manual sanitized Issue flow.
+
 ## Examples
 
 ```sh
@@ -211,7 +251,9 @@ reject Unicode query values.
 `player-profile lookup-name` and `player-profile textures` send the supplied Java name or UUID to
 fixed Mojang services. They do not accept caller endpoints, headers, bodies, or cache paths and do
 not write a disk cache or application log. Only `found` and `verified` return exit code 0; every
-other structured JSON outcome returns 1.
+other structured JSON outcome returns 1. This statement describes the CLI commands themselves; the
+separate optional evaluation-history feature can store equivalent raw MCP tool calls only after
+explicit opt-in.
 
 The exact service paths and response shapes are derived from the official Minecraft 26.2 Authlib
 9.0.75 artifact and are version-specific, undocumented behavior. `verified` means only that the

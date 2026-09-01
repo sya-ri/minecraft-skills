@@ -305,7 +305,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "lookup_java_player_profile",
     description:
-      "Resolve a bounded Java player name to canonical UUID and returned profile name through the fixed Mojang profile service. The supplied name is sent to Mojang; no disk cache or application log is used. The exact endpoint and schema are version-specific, undocumented Authlib 9.0.75 behavior.",
+      "Resolve a bounded Java player name to canonical UUID and returned profile name through the fixed Mojang profile service. The supplied name is sent to Mojang; the profile lookup itself writes no disk cache or application log. If optional evaluation history is explicitly enabled, its raw MCP call may be stored locally. The exact endpoint and schema are version-specific, undocumented Authlib 9.0.75 behavior.",
     inputSchema: {
       type: "object",
       properties: {
@@ -323,7 +323,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_verified_java_player_textures",
     description:
-      "Resolve metadata for a Java UUID through fixed Mojang session/key services and verify its signed textures property plus UUID/name binding. The supplied UUID is sent to Mojang; no disk cache or application log is used. Returns only canonical identity, texture hashes/HTTPS references, and model evidence—not PNG bytes, layout/crops, ownership, licensing, freshness, or proof that bytes match the 64-hex reference. The exact service API is version-specific, undocumented Authlib 9.0.75 behavior.",
+      "Resolve metadata for a Java UUID through fixed Mojang session/key services and verify its signed textures property plus UUID/name binding. The supplied UUID is sent to Mojang; the profile lookup itself writes no disk cache or application log. If optional evaluation history is explicitly enabled, its raw MCP call may be stored locally. Returns only canonical identity, texture hashes/HTTPS references, and model evidence—not PNG bytes, layout/crops, ownership, licensing, freshness, or proof that bytes match the 64-hex reference. The exact service API is version-specific, undocumented Authlib 9.0.75 behavior.",
     inputSchema: {
       type: "object",
       properties: {

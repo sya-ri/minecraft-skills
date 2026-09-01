@@ -1,0 +1,117 @@
+name: MCP evaluation feedback
+description: Share a minimal, sanitized MCP tool evaluation to help improve minecraft-skills.
+title: "[Evaluation feedback]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve minecraft-skills. Evaluation records can contain secrets,
+        private logs, IP addresses, local paths, configuration values, and personal data. Review the
+        record locally and copy only the smallest sanitized details needed to explain the gap. Do
+        not upload or paste a raw `~/.minecraft-skills/evaluation/records/*.json` file.
+
+        See the [evaluation-history guide](https://github.com/sya-ri/minecraft-skills/blob/main/docs/EVALUATION_HISTORY.md)
+        for the local review and sanitization workflow.
+
+  - type: input
+    id: tool
+    attributes:
+      label: MCP tool
+      description: Copy `request.tool` from the local record.
+      placeholder: search_catalog
+    validations:
+      required: true
+
+  - type: input
+    id: mcp_version
+    attributes:
+      label: minecraft-skills MCP version
+      description: Copy `runtime.mcpVersion` from the local record.
+      placeholder: "Example: 0.1.6"
+    validations:
+      required: true
+
+  - type: input
+    id: data_version
+    attributes:
+      label: Catalog data version
+      description: Copy `runtime.dataVersion` from the local record.
+      placeholder: "Example: 2026.08.25-13"
+    validations:
+      required: false
+
+  - type: textarea
+    id: information_need
+    attributes:
+      label: Information need
+      description: State what information was needed without quoting or summarizing the conversation.
+      placeholder: Determine whether the selected version exposes a schema for this file kind.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: score
+    attributes:
+      label: Score
+      description: Rate how well the response met the stated information need.
+      options:
+        - "1 - Unusable"
+        - "2 - Major information or capability missing"
+        - "3 - Partly useful with a material gap"
+        - "4 - Useful with a minor gap"
+        - "5 - Fully met the information need"
+    validations:
+      required: true
+
+  - type: textarea
+    id: evaluation_comment
+    attributes:
+      label: Evaluation comment
+      description: Explain the score and identify the most important limitation or strength.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_result
+    attributes:
+      label: Expected result
+      description: Describe the minimum information or behavior that would have met the need.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_result
+    attributes:
+      label: Actual result
+      description: Summarize the relevant result after removing private or unrelated content.
+    validations:
+      required: true
+
+  - type: textarea
+    id: missing_features
+    attributes:
+      label: Missing features
+      description: List stable gap keys and short summaries, one per line, when applicable.
+      placeholder: schema-details = Return the selected schema and unsupported fields
+    validations:
+      required: false
+
+  - type: textarea
+    id: sanitized_excerpt
+    attributes:
+      label: Minimal sanitized excerpt
+      description: Include only the smallest reviewed request or response excerpt needed to understand the gap.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy_confirmation
+    attributes:
+      label: Privacy confirmation
+      description: Confirm both statements before submitting this public issue.
+      options:
+        - label: I removed credentials, personal data, private logs, IP addresses, local paths, and configuration values.
+          required: true
+        - label: I did not attach or paste an unreviewed raw evaluation record.
+          required: true

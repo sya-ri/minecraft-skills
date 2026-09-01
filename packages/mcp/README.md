@@ -61,8 +61,45 @@ assumption and ask the user to confirm it.
 This normalization is performed by the caller. MCP search tools do not expand language-specific
 aliases or reject Unicode query values.
 
+## Optional Evaluation History
+
+The MCP server supports an explicit, local opt-in for recording raw ordinary `tools/call`
+arguments, results, and later quality evaluations. It is disabled by default, writes only under
+`~/.minecraft-skills/evaluation`, and never uploads records, creates issues, applies retention, or
+deletes records automatically. Enable it through the CLI, then restart the MCP server so its
+instructions include the evaluation workflow:
+
+```sh
+minecraft-skills evaluation enable
+```
+
+When a call is stored, the result includes its ID in
+`_meta["minecraft-skills/evaluationRecordId"]`. Clients may hide `_meta` from the model, so these
+management tools provide a fallback:
+
+- `get_evaluation_status` takes `{}` and reports the effective state plus the current MCP and
+  catalog data versions;
+- `list_pending_evaluations` takes optional `limit` from 1 to 100, default 20, and returns minimal
+  summaries of the newest process-local unevaluated calls (ID, timestamps, tool, outcome, and the
+  MCP and catalog data versions stored with that record); and
+- `record_tool_evaluation` takes `id`, `score`, `informationNeed`, `comment`, and optional
+  `missingFeatures` entries with `key` and `summary`.
+
+The management tools are excluded from recording. Conversation messages, MCP resources, and MCP
+prompts are also excluded. Create `.minecraft-skills/evaluation.disabled` in a sensitive project
+to override global recording. If the client advertises roots, a marker found from any `file:` root
+disables the whole call; without usable roots, the server can scan only from its process working
+directory. A call must be eligible both when it starts and when it completes, so mid-call opt-in
+cannot capture an earlier request and a newly added opt-out still prevents storage. Pending summaries
+never repeat raw arguments or results. See
+[Optional Evaluation History](../../docs/EVALUATION_HISTORY.md) before enabling the feature or
+viewing a complete record through the CLI.
+
 ## Tools
 
+- `get_evaluation_status`
+- `list_pending_evaluations`
+- `record_tool_evaluation`
 - `latest_version`
 - `list_skills`
 - `get_skill`
@@ -178,7 +215,9 @@ client API surface.
 The profile tools send the supplied Java name or UUID only to fixed Mojang profile, session, and
 public-key services. They accept no caller URL, headers, body, or cache path and write no disk cache
 or application log. Their exact endpoints and response shapes are version-specific, undocumented
-behavior pinned to the official Minecraft 26.2 Authlib 9.0.75 artifact.
+behavior pinned to the official Minecraft 26.2 Authlib 9.0.75 artifact. That no-log statement
+describes the profile tools without evaluation history; an explicitly enabled evaluation history
+can store their raw MCP calls locally.
 
 `get_verified_java_player_textures` returns metadata only. `verified` establishes the signed
 textures-property signature and UUID/name binding. Its 64-hex reference is extracted from verified
