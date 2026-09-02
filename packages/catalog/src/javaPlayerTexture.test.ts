@@ -254,7 +254,7 @@ describe("downloadJavaPlayerTexture", () => {
         headers: {
           Accept: "image/png",
           "Accept-Encoding": "identity",
-          "User-Agent": "sya-ri/minecraft-skills/0.1.7 (github.com/sya-ri/minecraft-skills)",
+          "User-Agent": "sya-ri/minecraft-skills/0.1.8 (github.com/sya-ri/minecraft-skills)",
         },
         signal: expect.any(AbortSignal),
       }),

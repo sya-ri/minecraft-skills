@@ -4,12 +4,18 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+## 0.1.8 - 2026-09-03
+
 ### Added
 
 - Added a repository-local evaluation maintenance skill and a read-only, time-bounded report helper
   that ranks one snapshot of allowlisted metadata without exposing free-form needs or raw payloads.
 - Added exact evaluation record ID filtering so safe summaries can be compared without relying on
   free-text search ordering.
+- Added exact-version Fabric API rendering type and declared-member searches across Catalog, CLI,
+  and MCP using official Maven candidates, aggregate POM coordinates, and SHA-256-verified fat
+  Javadoc indexes. Searches retain nested types and overload-specific URL signatures without
+  claiming Mojang client API, full Java declaration, or rendering behavior coverage.
 
 ### Fixed
 
@@ -26,10 +32,12 @@ All notable changes to this project are documented here.
 - Paper member searches scoped to a type now include declarations from known supertypes when the
   generated Javadocs surface has overview-tree hierarchy coverage. Results retain each declaration's
   owning type and report both the coverage level and searched types.
-- Filled the missing exact-version Fabric API rendering type and declared-member surface across
-  Catalog, CLI, and MCP using official Maven candidates, aggregate POM coordinates, and
-  SHA-256-verified fat Javadoc indexes. Searches retain nested types and overload-specific URL
-  signatures without claiming Mojang client API, full Java declaration, or rendering behavior coverage.
+
+### Changed
+
+- Pinned downloadable data to the immutable `v0.1.8` release tag. Data version `2026.09.03-15`
+  includes regenerated Paper 26.2 API declarations and hierarchy coverage.
+- Updated the transitive PostCSS dependency to 8.5.25.
 
 ## 0.1.7 - 2026-09-02
 
