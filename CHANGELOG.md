@@ -2,20 +2,32 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.1.7 - 2026-09-02
 
 ### Added
 
 - Default-off local MCP evaluation history across the CLI and MCP server, storing raw tool calls
   under `~/.minecraft-skills/evaluation` for explicit scoring, information-need notes, recurring-gap
-  search, and deletion. Project markers can override the global opt-in for sensitive work.
+  search, and deletion. Records retain the minecraft-skills MCP and catalog data versions, and the
+  status, pending, search, and gap views surface those versions for later comparison. Project
+  markers can override the global opt-in for sensitive work.
 - Evaluation privacy and contribution guidance, including a dedicated sanitized-feedback Issue Form.
+- Bundled Mojang and PaperMC source data is refreshed for this release. The data version is
+  `2026.08.31-14`, Paper 26.2 records build 121, and the Paper API indexes, derived version
+  coverage, and heavy-data manifest have been regenerated from the current source snapshot.
 
 ### Fixed
 
 - Made local validation and cached logical data paths portable across Windows and POSIX checkouts.
 - Hardened evaluation deletion against failed removals and owned crash-residue temporary files,
   preserved JSON keys such as `__proto__`, and rejected symlink components in storage paths.
+
+### Documentation
+
+- Streamlined the README into a focused project overview and quick start, with detailed operations
+  moved into the usage and maintenance guides.
+- Restructured the usage guide around the public CLI, MCP, package, and Agent Skill interfaces so
+  commands and capability boundaries are easier to find.
 
 ## 0.1.6 - 2026-08-26
 

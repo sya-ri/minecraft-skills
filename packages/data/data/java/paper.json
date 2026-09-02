@@ -4,7 +4,7 @@
   "projectName": "Paper",
   "latest": {
     "minecraftVersion": "26.2",
-    "build": 119
+    "build": 121
   },
   "support": {
     "primarySince": "1.13",
@@ -304,8 +304,8 @@
     },
     {
       "minecraftVersion": "26.2",
-      "latestBuild": 119,
-      "buildCount": 104
+      "latestBuild": 121,
+      "buildCount": 106
     }
   ],
   "eventSearch": {
@@ -327,49 +327,49 @@
       "id": "papermc-downloads-project-paper",
       "kind": "official",
       "url": "https://fill.papermc.io/v3/projects/paper",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "spigot-event-list-search-api",
       "kind": "project-api",
       "url": "https://spigot-event-list.s7a.dev/api/search/events",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "spigot-event-search-skill-api-reference",
       "kind": "project-api-reference",
       "url": "https://raw.githubusercontent.com/sya-ri/spigot-event-list/master/skills/spigot-event-search/references/api.md",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "papermc-docs-paper-dev",
       "kind": "official-docs",
       "url": "https://docs.papermc.io/paper/dev/",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "papermc-docs-paper-scheduling",
       "kind": "official-docs",
       "url": "https://docs.papermc.io/paper/dev/scheduler/",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "papermc-docs-paper-folia-support",
       "kind": "official-docs",
       "url": "https://docs.papermc.io/paper/dev/folia-support/",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "papermc-docs-folia-overview",
       "kind": "official-docs",
       "url": "https://docs.papermc.io/folia/reference/overview/",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     },
     {
       "id": "papermc-downloads-paper-version-builds",
       "kind": "official-bulk",
       "url": "https://fill.papermc.io/v3/projects/paper/versions/{minecraftVersion}/builds",
-      "retrievedAt": "2026-08-25T17:21:51Z"
+      "retrievedAt": "2026-08-31T09:47:57Z"
     }
   ]
 }

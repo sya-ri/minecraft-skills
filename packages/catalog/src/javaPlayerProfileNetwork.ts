@@ -22,7 +22,7 @@ import {
 const profileLookupBaseUrl = "https://api.mojang.com/minecraft/profile/lookup/name";
 const sessionProfileBaseUrl = "https://sessionserver.mojang.com/session/minecraft/profile";
 const publicKeysUrl = "https://api.minecraftservices.com/publickeys";
-const userAgent = "sya-ri/minecraft-skills/0.1.6 (github.com/sya-ri/minecraft-skills)";
+const userAgent = "sya-ri/minecraft-skills/0.1.7 (github.com/sya-ri/minecraft-skills)";
 const requestTimeoutMs = 5_000;
 const maxProfileLookupResponseBytes = 8 * 1_024;
 const maxSessionProfileResponseBytes = 64 * 1_024;
