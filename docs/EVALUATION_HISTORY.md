@@ -102,6 +102,11 @@ Repeat `--missing-feature <key>=<summary>` to record up to 20 missing capabiliti
 stable kebab-case identifiers so that semantically identical gaps aggregate together. Rating a
 record that already has an evaluation replaces the previous evaluation.
 
+Reuse a known key exactly when it describes the same capability. Name a reusable missing capability,
+not a particular version, query, or error instance. `missingFeatures` is only for capabilities that
+belong in minecraft-skills; if the wrong tool was selected or the need is outside minecraft-skills'
+scope, explain that in `comment` and leave `missingFeatures` empty.
+
 Write `informationNeed` so it still makes sense when read without the original conversation. For
 example, prefer “Determine which schema validates a Java 1.21.11 data pack recipe” over “Answer the
 user's last question.” Put the reason for the score in `comment`, and put reusable capability names
@@ -123,9 +128,12 @@ evaluations; put record-specific detail in the summary or comment.
 
 ## MCP Evaluation Workflow
 
-When recording succeeds, an ordinary tool result includes its record ID in the namespaced metadata
-field `_meta["minecraft-skills/evaluationRecordId"]`. MCP clients may hide `_meta` from the model, so
-the server also exposes these management tools:
+When recording succeeds, an ordinary tool result appends a short, assistant-audience evaluation
+receipt containing that call's record ID. It also includes the same ID in the namespaced metadata
+field `_meta["minecraft-skills/evaluationRecordId"]`. The receipt is added after the original result
+is saved, so it is not part of the stored response. MCP clients may hide `_meta` from the model, so
+the receipt is the preferred model-visible correlation source. The server also exposes these
+management tools:
 
 | Tool | Input and purpose |
 | --- | --- |
@@ -138,6 +146,12 @@ arguments or results; use the returned ID with the call already in the agent's c
 the complete local record explicitly with `evaluation show`. Pending-list and MCP rating calls are
 unavailable while recording is ineffective in the current roots; the equivalent CLI operations
 remain available for reviewing existing local history.
+
+Evaluate each ordinary call immediately, before making another ordinary call, and use the receipt
+attached to that same result. Fall back to `list_pending_evaluations` only when the target is
+unambiguous. If multiple pending records have the same tool name and the same-call receipt or
+metadata is unavailable, never infer their mapping from list position or timestamps; leave them
+pending or inspect each complete record explicitly with `evaluation show`.
 
 To bound memory in a long-running MCP process, the pending list tracks only the most recent 1,000
 record IDs and reads them one at a time until it fills the requested limit. Older records remain on

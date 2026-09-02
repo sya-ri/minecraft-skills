@@ -116,8 +116,11 @@ describe("MCP evaluation integration", () => {
       "record_tool_evaluation",
     ]);
     const rateTool = integration.tools.find((tool) => tool.name === "record_tool_evaluation");
+    const pendingTool = integration.tools.find((tool) => tool.name === "list_pending_evaluations");
     expect(rateTool?.description).toContain("1=unusable");
     expect(rateTool?.description).toContain("5=fully sufficient");
+    expect(rateTool?.description).toContain("wrong-tool choices");
+    expect(pendingTool?.description).toContain("do not infer their IDs from list position");
     expect(integration.instructions).toBeUndefined();
   });
 
@@ -131,6 +134,9 @@ describe("MCP evaluation integration", () => {
     expect(instructions).toContain("record_tool_evaluation");
     expect(instructions).toContain("1=unusable");
     expect(instructions).toContain("5=fully sufficient");
+    expect(instructions).toContain("before making another ordinary call");
+    expect(instructions).toContain("never infer an ID from list position");
+    expect(instructions).toContain("outside minecraft-skills scope");
   });
 
   it("reports the current MCP and catalog data versions in evaluation status", async () => {
@@ -148,6 +154,8 @@ describe("MCP evaluation integration", () => {
         dataVersion: "2026.09.01-2",
       },
     });
+    expect(result.content).toHaveLength(1);
+    expect(result._meta).toBeUndefined();
     expect(core.createEvaluationRecord).not.toHaveBeenCalled();
   });
 
@@ -158,6 +166,7 @@ describe("MCP evaluation integration", () => {
     expect(server.listRoots).not.toHaveBeenCalled();
     expect(core.createEvaluationRecord).not.toHaveBeenCalled();
     expect(result._meta).toBeUndefined();
+    expect(result.content).toEqual([{ type: "text", text: "ok" }]);
   });
 
   it("does not save a call that becomes globally enabled only after it starts", async () => {
@@ -229,6 +238,15 @@ describe("MCP evaluation integration", () => {
     expect(context).toMatchObject({
       roots: [{ uri: "file:///project-one" }, { uri: "file:///project-two" }],
     });
+    expect(rawResult.content).toEqual([{ type: "text", text: "sensitive raw result" }]);
+    expect(result.content).toEqual([
+      { type: "text", text: "sensitive raw result" },
+      {
+        type: "text",
+        text: "minecraft-skills evaluation receipt for this tool call: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        annotations: { audience: ["assistant"] },
+      },
+    ]);
     expect(result._meta).toEqual({
       [evaluationRecordIdMetaKey]: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     });
@@ -243,12 +261,116 @@ describe("MCP evaluation integration", () => {
       content: [{ type: "text", text: "bad input" }],
       isError: true,
     };
+    core.createEvaluationRecord.mockReturnValue({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    });
 
-    await call(createEvaluationIntegration(), { implementation: async () => result });
+    const returned = await call(createEvaluationIntegration(), {
+      implementation: async () => result,
+    });
 
     expect(core.createEvaluationRecord.mock.calls[0]?.[1]).toMatchObject({
       response: { outcome: "tool-error", result },
     });
+    expect(result.content).toEqual([{ type: "text", text: "bad input" }]);
+    expect(returned).toMatchObject({
+      isError: true,
+      content: [
+        { type: "text", text: "bad input" },
+        {
+          type: "text",
+          text: "minecraft-skills evaluation receipt for this tool call: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          annotations: { audience: ["assistant"] },
+        },
+      ],
+    });
+  });
+
+  it("keeps same-name calls correlated through their model-visible receipts", async () => {
+    core.getEvaluationStatus.mockReturnValue({
+      globallyEnabled: true,
+      effectiveEnabled: true,
+    });
+    const calls = [
+      {
+        name: "code-review",
+        id: "11111111-1111-4111-8111-111111111111",
+      },
+      {
+        name: "dev-rules",
+        id: "22222222-2222-4222-8222-222222222222",
+      },
+      {
+        name: "delivery",
+        id: "33333333-3333-4333-8333-333333333333",
+      },
+    ];
+    core.createEvaluationRecord.mockImplementation((_store, input) => {
+      const skillName = (input as { request: { arguments: { name: string } } }).request.arguments
+        .name;
+      return { id: calls.find((entry) => entry.name === skillName)?.id ?? "" };
+    });
+    const integration = createEvaluationIntegration();
+    const finish = new Map<string, (result: CallToolResult) => void>();
+    const resultPromises = calls.map((expected) =>
+      call(integration, {
+        name: "get_skill",
+        input: { name: expected.name },
+        implementation: async () =>
+          new Promise<CallToolResult>((resolve) => {
+            finish.set(expected.name, resolve);
+          }),
+      }),
+    );
+    await vi.waitFor(() => expect(finish.size).toBe(calls.length));
+    for (const name of ["delivery", "code-review", "dev-rules"]) {
+      finish.get(name)?.({
+        content: [{ type: "text", text: `Unknown skill: ${name}` }],
+        isError: true,
+      });
+    }
+    const results = await Promise.all(resultPromises);
+    expect(
+      core.createEvaluationRecord.mock.calls.map(
+        (entry) =>
+          (entry[1] as { request: { arguments: { name: string } } }).request.arguments.name,
+      ),
+    ).toEqual(["delivery", "code-review", "dev-rules"]);
+
+    for (const [index, expected] of calls.entries()) {
+      const result = results[index];
+      if (result === undefined) {
+        throw new Error(`Missing result for ${expected.name}`);
+      }
+      const receipt = result.content.at(-1);
+
+      expect(receipt).toEqual({
+        type: "text",
+        text: `minecraft-skills evaluation receipt for this tool call: ${expected.id}`,
+        annotations: { audience: ["assistant"] },
+      });
+      expect(result._meta?.[evaluationRecordIdMetaKey]).toBe(expected.id);
+
+      const receiptId = receipt?.type === "text" ? receipt.text.split(": ").at(-1) : undefined;
+      await call(integration, {
+        name: "record_tool_evaluation",
+        input: {
+          id: receiptId,
+          score: 1,
+          informationNeed: `Load the ${expected.name} skill`,
+          comment: "The wrong MCP tool was selected",
+        },
+      });
+    }
+
+    expect(core.rateEvaluationRecord.mock.calls.map((entry) => entry[1])).toEqual(
+      calls.map((entry) => entry.id),
+    );
+    expect(
+      core.rateEvaluationRecord.mock.calls.map(
+        (entry) => (entry[2] as { informationNeed: string }).informationNeed,
+      ),
+    ).toEqual(calls.map((entry) => `Load the ${entry.name} skill`));
   });
 
   it("records thrown failures as sanitized protocol errors and preserves the exception", async () => {
