@@ -2431,6 +2431,8 @@ describe("minecraft-skills CLI", () => {
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain('"version": "0.17.0"');
     expect(result.stdout.join("\n")).toContain('"version": "1.21.11+build.6"');
+    expect(result.stdout.join("\n")).toContain('"mappingMode": "intermediary-yarn"');
+    expect(result.stdout.join("\n")).toContain('"loomPluginId": "net.fabricmc.fabric-loom-remap"');
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(
       expect.arrayContaining([

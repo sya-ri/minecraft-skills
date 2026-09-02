@@ -61,6 +61,27 @@ and preserves their documented newest-first ordering. An upstream `stable` field
 selection, but it must not be restated as proof that a mod, Fabric API release, or full dependency
 graph is compatible.
 
+Mapping mode is not inferred from an Intermediary coordinate or sentinel value. A maintained policy
+follows Fabric's official [mapping migration](https://docs.fabricmc.net/develop/porting/mappings)
+and [Loom plugin](https://docs.fabricmc.net/develop/loom) documentation: Minecraft 26.1 and newer
+are unobfuscated, do not require a separate Intermediary or Yarn mappings dependency, and use
+`net.fabricmc.fabric-loom`; older mapped versions use `net.fabricmc.fabric-loom-remap`. Keep the
+26.1 boundary and plugin IDs synchronized with those official documents when this policy changes.
+The boundary recognizes both date-based version IDs such as `26.1-snapshot-1` and weekly snapshot
+IDs from `26w14a` onward. Fabric's official
+[version-normalization documentation](https://docs.fabricmc.net/develop/loader/fabric-mod-json)
+specifically normalizes `26w14a` into the 26.1.1 lineage. Earlier `26w` IDs are not covered by this
+maintained normalization policy: they report `mappingMode: "unknown"`, `mappingsRequired: null`,
+and `loomPluginId: null` while preserving the legacy live candidate and tuple surface. The mapping
+policy does not inspect Intermediary response values to reach any of these decisions.
+
+For no-remap versions, Loader remains required while standalone Yarn and Intermediary requests are
+supplemental. Supplemental fetch or validation failures are reported through
+`source.endpointAvailability` and notes. At the shared deadline, completed supplemental responses
+are preserved and unfinished requests are aborted; a completed Loader response can still produce a
+result. A Loader request failure or timeout remains fatal, and mapped versions retain strict
+three-endpoint lookup behavior.
+
 Live responses are treated as untrusted input despite the official source: requests are timed out,
 response bytes and entry counts are bounded, required fields and numeric ranges are validated, and
 the Loader-provided Intermediary pairing is cross-checked when the Intermediary endpoint returns a

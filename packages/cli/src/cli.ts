@@ -1534,7 +1534,7 @@ Command reference:
   plugin paper info|api|api-index|compare-api|api-surface|types|members|compare-api-surface|events
                  Inspect Paper support, Javadocs-derived API surfaces, and event candidates.
   fabric toolchain
-                 Look up bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta.
+                 Resolve mapping mode and Loom plugin, then look up bounded official Fabric Meta candidates.
   fabric validate-mod
                  Check bounded structural rules for current schema v1 and JAR evidence offline.
   fabric mods inventory

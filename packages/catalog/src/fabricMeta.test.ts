@@ -11,7 +11,18 @@ const intermediary = {
   stable: true,
 };
 
-function loader(version: string, build: number, stable: boolean) {
+const sentinelIntermediary = {
+  maven: "net.fabricmc:intermediary:0.0.0",
+  version: "0.0.0",
+  stable: true,
+};
+
+function loader(
+  version: string,
+  build: number,
+  stable: boolean,
+  pairedIntermediary = intermediary,
+) {
   return {
     loader: {
       separator: "+build.",
@@ -20,7 +31,7 @@ function loader(version: string, build: number, stable: boolean) {
       version,
       stable,
     },
-    intermediary,
+    intermediary: pairedIntermediary,
   };
 }
 
@@ -87,6 +98,10 @@ describe("Fabric Meta toolchain lookup", () => {
 
     expect(result.recommended?.loader.version).toBe("0.16.9");
     expect(result.recommended?.yarn.version).toBe("1.21.11+build.1");
+    expect(result.recommendedLoader?.version).toBe("0.16.9");
+    expect(result.mappingMode).toBe("intermediary-yarn");
+    expect(result.mappingsRequired).toBe(true);
+    expect(result.loomPluginId).toBe("net.fabricmc.fabric-loom-remap");
     expect(result.candidates.loaderPairs.map((entry) => entry.loader.version)).toEqual([
       "0.17.0",
       "0.16.9",
@@ -118,30 +133,332 @@ describe("Fabric Meta toolchain lookup", () => {
     expect(result.recommended?.yarn.version).toBe("1.21.11+build.2");
   });
 
-  it("reports an incomplete result when Fabric Meta has no Yarn mappings", async () => {
-    const sentinelIntermediary = {
-      maven: "net.fabricmc:intermediary:0.0.0",
-      version: "0.0.0",
-      stable: true,
-    };
+  it("keeps legacy versions incomplete without Yarn while still recommending Loader", async () => {
     const result = await getFabricToolchainCompatibility(
       { gameVersion: "1.21.11" },
       fixtureFetch({
-        loaders: [
-          {
-            ...loader("0.17.0", 17, true),
-            intermediary: sentinelIntermediary,
-          },
-        ],
+        loaders: [loader("0.17.0", 17, true, sentinelIntermediary)],
         yarnMappings: [],
         intermediaries: [sentinelIntermediary],
       }),
     );
     expect(result.recommended).toBeNull();
+    expect(result.recommendedLoader?.version).toBe("0.17.0");
     expect(result.tuples).toEqual([]);
+    expect(result.mappingMode).toBe("intermediary-yarn");
+    expect(result.mappingsRequired).toBe(true);
+    expect(result.loomPluginId).toBe("net.fabricmc.fabric-loom-remap");
     expect(result.notes.join(" ")).toContain("no Yarn mappings");
     expect(result.candidates.intermediaries[0]?.version).toBe("0.0.0");
     expect(result.notes.join(" ")).toContain("different from the requested game version");
+  });
+
+  it("uses the maintained no-remap policy for Minecraft 26.1 and newer", async () => {
+    const result = await getFabricToolchainCompatibility(
+      { gameVersion: "26.2" },
+      fixtureFetch({
+        loaders: [loader("0.19.5", 19, true, sentinelIntermediary)],
+        yarnMappings: [],
+        intermediaries: [sentinelIntermediary],
+      }),
+    );
+
+    expect(result.mappingPolicy).toEqual({
+      kind: "maintained-official-documentation",
+      coverage: "covered",
+      unobfuscatedSince: "26.1",
+      unobfuscatedWeeklySnapshotSince: "26w14a",
+      documentation: {
+        mappings: "https://docs.fabricmc.net/develop/porting/mappings",
+        loom: "https://docs.fabricmc.net/develop/loom",
+        versionNormalization: "https://docs.fabricmc.net/develop/loader/fabric-mod-json",
+      },
+    });
+    expect(result.mappingMode).toBe("unobfuscated");
+    expect(result.mappingsRequired).toBe(false);
+    expect(result.loomPluginId).toBe("net.fabricmc.fabric-loom");
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.recommended).toBeNull();
+    expect(result.tuples).toEqual([]);
+    expect(result.counts.possibleTuples).toBe(0);
+    expect(result.notes.join(" ")).not.toContain("complete Loader + Intermediary + Yarn");
+    expect(result.notes.join(" ")).toContain("their values do not decide the mapping mode");
+  });
+
+  it("applies the no-remap policy to date-based and post-transition weekly identifiers", async () => {
+    for (const gameVersion of [
+      "26.1.2",
+      "26.1-snapshot-1",
+      "26.1-pre-1",
+      "26w14a",
+      "26w14b",
+      "27w01a",
+    ]) {
+      const result = await getFabricToolchainCompatibility(
+        { gameVersion },
+        fixtureFetch({
+          loaders: [loader("0.19.5", 19, true, sentinelIntermediary)],
+          yarnMappings: [],
+          intermediaries: [sentinelIntermediary],
+        }),
+      );
+      expect(result.mappingMode).toBe("unobfuscated");
+    }
+  });
+
+  it("keeps pre-26.1 versions mapped even when Meta returns the sentinel Intermediary", async () => {
+    for (const gameVersion of ["26.0", "25w45a"]) {
+      const result = await getFabricToolchainCompatibility(
+        { gameVersion },
+        fixtureFetch({
+          loaders: [loader("0.19.5", 19, true, sentinelIntermediary)],
+          yarnMappings: [],
+          intermediaries: [sentinelIntermediary],
+        }),
+      );
+
+      expect(result.mappingMode).toBe("intermediary-yarn");
+      expect(result.mappingsRequired).toBe(true);
+      expect(result.loomPluginId).toBe("net.fabricmc.fabric-loom-remap");
+    }
+  });
+
+  it("does not assert mapping requirements for uncovered pre-boundary 26w identifiers", async () => {
+    for (const gameVersion of ["26w01a", "26w13a"]) {
+      const result = await getFabricToolchainCompatibility(
+        { gameVersion },
+        fixtureFetch({
+          loaders: [loader("0.19.5", 19, true, sentinelIntermediary)],
+          yarnMappings: [],
+          intermediaries: [sentinelIntermediary],
+        }),
+      );
+      expect(result.mappingMode).toBe("unknown");
+      expect(result.mappingPolicy.coverage).toBe("unknown");
+      expect(result.mappingsRequired).toBeNull();
+      expect(result.loomPluginId).toBeNull();
+      expect(result.recommendedLoader?.version).toBe("0.19.5");
+      expect(result.notes.join(" ")).toContain("need additional official normalization evidence");
+    }
+  });
+
+  it("keeps a no-remap Loader recommendation when supplemental endpoints are unavailable", async () => {
+    const result = await getFabricToolchainCompatibility({ gameVersion: "26w14a" }, async (url) =>
+      url.includes("/loader/")
+        ? response([loader("0.19.5", 19, true, sentinelIntermediary)])
+        : new Response("gone", { status: 404, statusText: "Not Found" }),
+    );
+
+    expect(result.mappingMode).toBe("unobfuscated");
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.source.endpointAvailability).toEqual({
+      loader: "available",
+      yarn: "unavailable",
+      intermediary: "unavailable",
+    });
+    expect(result.candidates.yarnMappings).toEqual([]);
+    expect(result.candidates.intermediaries).toEqual([]);
+    expect(result.notes.join(" ")).toContain(
+      "supplemental Fabric Meta yarn endpoint was unavailable",
+    );
+    expect(result.notes.join(" ")).toContain(
+      "supplemental Fabric Meta intermediary endpoint was unavailable",
+    );
+  });
+
+  it.each([
+    { init: { status: 404 }, expected: "404", cancellation: "complete" },
+    {
+      init: { headers: { "Content-Length": "invalid" } },
+      expected: "invalid Content-Length header",
+      cancellation: "reject",
+    },
+    {
+      init: { headers: { "Content-Length": String(1024 * 1024 + 1) } },
+      expected: "exceeds the 1048576 byte limit",
+      cancellation: "hang",
+    },
+  ])("cancels rejected supplemental response bodies without replacing $expected", async ({
+    init,
+    expected,
+    cancellation,
+  }) => {
+    const cancel = vi.fn(() => {
+      if (cancellation === "reject") {
+        return Promise.reject(new Error("cleanup failed"));
+      }
+      if (cancellation === "hang") {
+        return new Promise<void>(() => {});
+      }
+    });
+    const requests: RequestInit[] = [];
+    const result = await getFabricToolchainCompatibility(
+      { gameVersion: "26.2", timeoutMs: 100 },
+      async (url, requestInit) => {
+        if (requestInit !== undefined) {
+          requests.push(requestInit);
+        }
+        if (url.includes("/loader/")) {
+          return response([loader("0.19.5", 19, true, sentinelIntermediary)]);
+        }
+        if (url.includes("/yarn/")) {
+          return new Response(new ReadableStream<Uint8Array>({ cancel }), init);
+        }
+        return response([sentinelIntermediary]);
+      },
+    );
+
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.source.endpointAvailability.yarn).toBe("unavailable");
+    expect(result.notes.join(" ")).toContain(expected);
+    expect(result.notes.join(" ")).not.toContain("cleanup failed");
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(requests.every((request) => request.signal?.aborted)).toBe(true);
+  });
+
+  it("keeps a no-remap Loader recommendation when supplemental endpoints time out", async () => {
+    vi.useFakeTimers();
+    let abortedSupplementalRequests = 0;
+    const fetchImpl: FabricMetaFetch = async (url, init) => {
+      if (url.includes("/loader/")) {
+        return response([loader("0.19.5", 19, true, sentinelIntermediary)]);
+      }
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener(
+          "abort",
+          () => {
+            abortedSupplementalRequests += 1;
+            reject(new DOMException("aborted", "AbortError"));
+          },
+          { once: true },
+        );
+      });
+    };
+
+    const lookup = getFabricToolchainCompatibility(
+      { gameVersion: "26w14a", timeoutMs: 100 },
+      fetchImpl,
+    );
+    await vi.advanceTimersByTimeAsync(100);
+    const result = await lookup;
+
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.source.endpointAvailability).toEqual({
+      loader: "available",
+      yarn: "unavailable",
+      intermediary: "unavailable",
+    });
+    expect(result.notes.join(" ")).toContain(
+      "supplemental Fabric Meta yarn endpoint was unavailable",
+    );
+    expect(result.notes.join(" ")).toContain("did not finish before the 100 millisecond deadline");
+    expect(abortedSupplementalRequests).toBe(2);
+  });
+
+  it("releases and cancels an oversized supplemental stream", async () => {
+    const cancel = vi.fn();
+    const result = await getFabricToolchainCompatibility({ gameVersion: "26.2" }, async (url) => {
+      if (url.includes("/loader/")) {
+        return response([loader("0.19.5", 19, true, sentinelIntermediary)]);
+      }
+      if (url.includes("/yarn/")) {
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new Uint8Array(1024 * 1024 + 1));
+            },
+            cancel,
+          }),
+        );
+      }
+      return response([sentinelIntermediary]);
+    });
+
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.source.endpointAvailability.yarn).toBe("unavailable");
+    expect(result.notes.join(" ")).toContain("exceeds the 1048576 byte limit");
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits invalid supplemental data without discarding a no-remap Loader result", async () => {
+    const result = await getFabricToolchainCompatibility(
+      { gameVersion: "26.2" },
+      fixtureFetch({
+        loaders: [loader("0.19.5", 19, true, sentinelIntermediary)],
+        yarnMappings: [yarn(1, true)],
+        intermediaries: [intermediary],
+      }),
+    );
+
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.source.endpointAvailability).toEqual({
+      loader: "available",
+      yarn: "unavailable",
+      intermediary: "unavailable",
+    });
+    expect(result.candidates.yarnMappings).toEqual([]);
+    expect(result.candidates.intermediaries).toEqual([]);
+    expect(result.notes.join(" ")).toContain("does not match requested game version 26.2");
+    expect(result.notes.join(" ")).toContain("responses are inconsistent for intermediary");
+  });
+
+  it("preserves a completed supplemental response when another ignores the abort signal", async () => {
+    vi.useFakeTimers();
+    const fetchImpl: FabricMetaFetch = async (url) => {
+      if (url.includes("/loader/")) {
+        return response([loader("0.19.5", 19, true, sentinelIntermediary)]);
+      }
+      if (url.includes("/intermediary/")) {
+        return response([sentinelIntermediary]);
+      }
+      return new Promise(() => {});
+    };
+    const lookup = getFabricToolchainCompatibility(
+      { gameVersion: "26.2", timeoutMs: 100 },
+      fetchImpl,
+    );
+    await vi.advanceTimersByTimeAsync(100);
+    const result = await lookup;
+
+    expect(result.recommendedLoader?.version).toBe("0.19.5");
+    expect(result.source.endpointAvailability).toEqual({
+      loader: "available",
+      yarn: "unavailable",
+      intermediary: "available",
+    });
+    expect(result.candidates.intermediaries).toEqual([sentinelIntermediary]);
+  });
+
+  it("still rejects a no-remap Loader failure while cancelling supplemental requests", async () => {
+    const fetchImpl: FabricMetaFetch = async (url, init) => {
+      if (url.includes("/loader/")) {
+        return new Response("down", { status: 503, statusText: "Service Unavailable" });
+      }
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          reject(new DOMException("aborted", "AbortError"));
+        });
+      });
+    };
+    await expect(
+      getFabricToolchainCompatibility({ gameVersion: "26.2" }, fetchImpl),
+    ).rejects.toThrow("Fabric Meta loader request failed: 503 Service Unavailable");
+  });
+
+  it("still requires mapping endpoints for legacy versions", async () => {
+    await expect(
+      getFabricToolchainCompatibility({ gameVersion: "1.21.11" }, async (url) => {
+        if (url.includes("/loader/")) {
+          return response([loader("0.17.0", 17, true)]);
+        }
+        if (url.includes("/yarn/")) {
+          return new Response("gone", { status: 404, statusText: "Not Found" });
+        }
+        return response([intermediary]);
+      }),
+    ).rejects.toThrow(
+      "Fabric Meta yarn endpoint rejected Minecraft game version 1.21.11: 404 Not Found",
+    );
   });
 
   it("distinguishes a missing game version from an incomplete toolchain", async () => {
@@ -334,7 +651,10 @@ describe("Fabric Meta toolchain lookup", () => {
     ).rejects.toThrow("loader response is not valid JSON");
   });
 
-  it("aborts a lookup that exceeds the configured timeout", async () => {
+  it.each([
+    "1.21.11",
+    "26.2",
+  ])("aborts a %s lookup when Loader exceeds the timeout", async (gameVersion) => {
     vi.useFakeTimers();
     const fetchImpl: FabricMetaFetch = async (_url, init) =>
       new Promise((_resolve, reject) => {
@@ -342,10 +662,7 @@ describe("Fabric Meta toolchain lookup", () => {
           reject(new DOMException("aborted", "AbortError"));
         });
       });
-    const lookup = getFabricToolchainCompatibility(
-      { gameVersion: "1.21.11", timeoutMs: 100 },
-      fetchImpl,
-    );
+    const lookup = getFabricToolchainCompatibility({ gameVersion, timeoutMs: 100 }, fetchImpl);
     const rejection = expect(lookup).rejects.toThrow("timed out after 100 milliseconds");
     await vi.advanceTimersByTimeAsync(100);
     await rejection;

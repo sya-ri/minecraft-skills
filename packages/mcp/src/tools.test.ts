@@ -4027,6 +4027,52 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("net.fabricmc:fabric-loader:0.17.0");
     expect(result.content[0]?.text).toContain("net.fabricmc:yarn:1.21.11+build.6");
+    expect(result.content[0]?.text).toContain('"mappingMode": "intermediary-yarn"');
+    expect(result.content[0]?.text).toContain('"loomPluginId": "net.fabricmc.fabric-loom-remap"');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    "26.2",
+    "26w14a",
+  ])("returns a %s Loader recommendation without Yarn", async (gameVersion) => {
+    const intermediary = {
+      maven: "net.fabricmc:intermediary:0.0.0",
+      version: "0.0.0",
+      stable: true,
+    };
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
+      const body = url.includes("/loader/")
+        ? [
+            {
+              loader: {
+                separator: "+build.",
+                build: 19,
+                maven: "net.fabricmc:fabric-loader:0.19.5",
+                version: "0.19.5",
+                stable: true,
+              },
+              intermediary,
+            },
+          ]
+        : url.includes("/yarn/")
+          ? []
+          : [intermediary];
+      return new Response(JSON.stringify(body));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await callMinecraftSkillsTool("get_fabric_toolchain", {
+      gameVersion,
+      limit: 1,
+      timeoutMs: 1000,
+    });
+    expect(result.content[0]?.text).toContain('"mappingMode": "unobfuscated"');
+    expect(result.content[0]?.text).toContain('"mappingsRequired": false');
+    expect(result.content[0]?.text).toContain('"loomPluginId": "net.fabricmc.fabric-loom"');
+    expect(result.content[0]?.text).toContain('"recommendedLoader"');
+    expect(result.content[0]?.text).toContain("net.fabricmc:fabric-loader:0.19.5");
+    expect(result.content[0]?.text).toContain('"recommended": null');
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 

@@ -389,7 +389,7 @@ const assetFile = await fetchMinecraftAssetFile({
 });
 const anyMinecraftMatches = searchAll({ version: "26.2", query: "bundle item model" });
 const fabricToolchain = await getFabricToolchainCompatibility({
-  gameVersion: "1.21.11",
+  gameVersion: "26.2",
   limit: 10,
 });
 const velocityToolchain = await resolveVelocityToolchain({ limit: 10, timeoutMs: 5000 });
@@ -669,6 +669,15 @@ const communityDatasets = listCommunityDatasets();
 When the bundled Paper surface reports Javadocs overview-tree coverage, a type-scoped
 `searchPaperMembers` call also searches known supertypes. The result reports `searchedTypes` and
 `inheritanceCoverage`, while each member keeps its declaring `qualifiedTypeName`.
+
+`getFabricToolchainCompatibility` reports the maintained `mappingMode`, `mappingsRequired`, and
+`loomPluginId` policy alongside live Fabric Meta candidates. Minecraft 26.1 and newer use the
+officially documented unobfuscated, no-remap Loom mode, including weekly snapshot IDs from
+`26w14a` onward. Earlier `26w` IDs report an `unknown` mapping policy with no asserted mappings
+requirement or Loom plugin. `recommendedLoader` remains available when Fabric Meta has no Yarn
+entries or its supplemental no-remap mapping endpoints fail or exceed the lookup deadline; the legacy
+`recommended` field continues to represent a complete Loader, Intermediary, and Yarn tuple for
+older mapped versions.
 
 `validateResourcepackPng` validates complete bytes against the
 [W3C PNG specification](https://www.w3.org/TR/png-3/) with bounded signature, chunk framing, IHDR,

@@ -2051,7 +2051,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_fabric_toolchain",
     description:
-      "Look up bounded Fabric Loader, Intermediary, and Yarn candidate tuples for a Minecraft game version from the official live Fabric Meta v2 API. Stable flags are selection metadata, not a full compatibility guarantee.",
+      "Resolve the maintained mapping mode and Loom plugin ID, then look up bounded Fabric Loader, Intermediary, and Yarn candidates for a Minecraft game version from the official live Fabric Meta v2 API. Loader recommendations do not require Yarn; stable flags are selection metadata, not a full compatibility guarantee.",
     inputSchema: {
       type: "object",
       properties: {
