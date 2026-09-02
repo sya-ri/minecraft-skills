@@ -27,7 +27,7 @@ body:
     attributes:
       label: minecraft-skills MCP version
       description: Copy `runtime.mcpVersion` from the local record.
-      placeholder: "Example: 0.1.6"
+      placeholder: "Example: 0.1.7"
     validations:
       required: true
 
