@@ -28,6 +28,21 @@ Restart the MCP server after enabling the feature. Use `evaluation search`, `eva
 `~/.minecraft-skills/evaluation` until explicitly deleted; the project never uploads them or opens
 an issue automatically.
 
+For a bounded triage report while preparing a repository change, build the CLI and run the
+repository-local evaluation maintenance helper with explicit ISO timestamps:
+
+```sh
+mise exec -- pnpm build
+mise exec -- pnpm run evaluation:window -- scan \
+  --since 2026-09-01T00:00:00.000Z \
+  --until 2026-09-02T00:00:00.000Z
+```
+
+The helper itself is read-only with respect to evaluation history, uses one safe `evaluation search`
+snapshot, and omits free-form information needs from its output. A strict read-only audit must not
+build first; follow the `mcp-evaluation-maintenance` skill for that branch and when turning a
+reported gap into a tested pull request.
+
 Before sharing feedback, review the complete record locally and manually remove credentials,
 personal data, private logs, IP addresses, paths, configuration values, and unrelated content.
 Copy only the smallest sanitized excerpt into the **MCP evaluation feedback** Issue Form. Never

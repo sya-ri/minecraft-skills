@@ -196,6 +196,7 @@ describe("evaluation CLI", () => {
       store,
     );
     const unevaluated = capture(["search", "--evaluated", "false"], store);
+    const exact = capture(["search", "--id", evaluated.id, "--limit", "1"], store);
 
     expect(rated.code).toBe(0);
     expect(JSON.parse(rated.stdout[0] ?? "{}")).toMatchObject({
@@ -223,6 +224,9 @@ describe("evaluation CLI", () => {
     expect(filtered.stdout.join("\n")).not.toContain("privateToken");
     expect(JSON.parse(unevaluated.stdout[0] ?? "{}")).toMatchObject({
       records: [{ id: pending.id, score: null }],
+    });
+    expect(JSON.parse(exact.stdout[0] ?? "{}")).toMatchObject({
+      records: [{ id: evaluated.id }],
     });
   });
 
@@ -320,6 +324,7 @@ describe("evaluation CLI", () => {
       ],
       [["search", "--evaluated", "maybe"], "--evaluated must be true or false"],
       [["search", "--limit", "101"], "--limit must be an integer from 1 to 100"],
+      [["search", "--id", "not-a-record-id"], "Invalid evaluation record ID: not-a-record-id"],
       [["search", "--since", "not-a-date"], "--since must be a valid ISO timestamp"],
       [
         ["search", "--min-score", "5", "--max-score", "2"],

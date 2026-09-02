@@ -176,6 +176,7 @@ export interface EvaluationGateStatus {
 }
 
 export interface EvaluationSearchFilters {
+  id?: string;
   query?: string;
   tool?: string;
   evaluated?: boolean;
@@ -187,7 +188,7 @@ export interface EvaluationSearchFilters {
   limit?: number;
 }
 
-export type EvaluationGapFilters = Omit<EvaluationSearchFilters, "evaluated" | "limit">;
+export type EvaluationGapFilters = Omit<EvaluationSearchFilters, "id" | "evaluated" | "limit">;
 
 export interface EvaluationRecordSummary {
   id: string;
@@ -1109,11 +1110,15 @@ function validateSearchFilters(
   filters: EvaluationSearchFilters,
   applyLimit: boolean,
 ): {
+  id: string | null;
   query: string | null;
   from: number | null;
   to: number | null;
   limit: number | null;
 } {
+  if (filters.id !== undefined && !uuidPattern.test(filters.id)) {
+    throw new EvaluationStoreError("INVALID_ID", `Invalid evaluation record ID: ${filters.id}`);
+  }
   if (
     filters.minScore !== undefined &&
     (!Number.isInteger(filters.minScore) || filters.minScore < 1 || filters.minScore > 5)
@@ -1149,7 +1154,13 @@ function validateSearchFilters(
       );
     }
   }
-  return { query: filters.query?.trim().toLowerCase() || null, from, to, limit };
+  return {
+    id: filters.id?.toLowerCase() ?? null,
+    query: filters.query?.trim().toLowerCase() || null,
+    from,
+    to,
+    limit,
+  };
 }
 
 function recordMatches(
@@ -1158,6 +1169,9 @@ function recordMatches(
   normalized: ReturnType<typeof validateSearchFilters>,
 ): boolean {
   const evaluation = record.evaluation;
+  if (normalized.id !== null && record.id.toLowerCase() !== normalized.id) {
+    return false;
+  }
   if (filters.tool !== undefined && record.request.tool !== filters.tool) {
     return false;
   }

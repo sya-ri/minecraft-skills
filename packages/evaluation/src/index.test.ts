@@ -547,7 +547,7 @@ describe("assessment, search, and aggregation", () => {
     rateEvaluationRecord(store, recent.id, {
       score: 4,
       informationNeed: "biome registry entries",
-      comment: "mostly complete",
+      comment: `mostly complete; related record ${old.id}`,
       missingFeatures: [{ key: "registry-tags", summary: "tag membership" }],
       source: "mcp",
     });
@@ -579,6 +579,12 @@ describe("assessment, search, and aggregation", () => {
     expect(
       searchEvaluationRecords(store, { query: "2026.08.20" }).records.map((entry) => entry.id),
     ).toEqual([recent.id]);
+    expect(
+      searchEvaluationRecords(store, { id: old.id, evaluated: true, limit: 1 }).records.map(
+        (entry) => entry.id,
+      ),
+    ).toEqual([old.id]);
+    expect(searchEvaluationRecords(store, { query: old.id }).records[0]?.id).toBe(recent.id);
     expect(searchEvaluationRecords(store, { evaluated: false }).records).toHaveLength(1);
     expect(searchEvaluationRecords(store).records.map((entry) => entry.id)).toEqual([
       expect.any(String),
@@ -598,6 +604,9 @@ describe("assessment, search, and aggregation", () => {
 
     expect(searchEvaluationRecords(store).records).toHaveLength(20);
     expect(() => searchEvaluationRecords(store, { limit: 101 })).toThrow(/between 1 and 100/);
+    expect(() => searchEvaluationRecords(store, { id: "not-a-record-id" })).toThrow(
+      /Invalid evaluation record ID/,
+    );
     expect(() => searchEvaluationRecords(store, { minScore: 5, maxScore: 2 })).toThrow(
       /must not exceed/,
     );

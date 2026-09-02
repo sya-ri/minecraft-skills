@@ -64,7 +64,7 @@ history.
 | `evaluation status` | Show the global setting, effective setting for the current directory, blocking marker, storage path, and record count. |
 | `evaluation enable` | Enable global recording after displaying the raw-data warning. Existing records are preserved. |
 | `evaluation disable` | Disable global recording. Existing records are preserved. |
-| `evaluation search [query]` | List newest matching summaries; filter by tool, evaluation state, score, missing-feature key, date, or result limit. |
+| `evaluation search [query]` | List newest matching summaries; filter by exact record ID, tool, evaluation state, score, missing-feature key, date, or result limit. |
 | `evaluation show <id>` | Print the complete raw JSON record after displaying a privacy warning. |
 | `evaluation rate <id>` | Add or replace the record's evaluation. |
 | `evaluation gaps` | Group evaluated records by stable missing-feature key. |
@@ -75,7 +75,7 @@ The complete search filter syntax is:
 
 ```text
 evaluation search [query]
-  [--tool <name>] [--evaluated <true|false>]
+  [--id <UUID>] [--tool <name>] [--evaluated <true|false>]
   [--min-score <1-5>] [--max-score <1-5>]
   [--missing-feature <key>] [--since <ISO timestamp>] [--until <ISO timestamp>]
   [--limit <1-100>]
@@ -91,6 +91,9 @@ contains only record ID, timestamp, tool name, `mcpVersion`, `dataVersion`, scor
 The free-text query also searches both recorded versions. `evaluation gaps` searches and returns all
 matching aggregated gap metadata. Use `evaluation show` only when you are prepared to view
 potentially sensitive raw data.
+
+Use `--id <UUID>` when one exact safe summary is required. A positional UUID remains a free-text
+query and can also match newer evaluation comments or missing-feature summaries that mention it.
 
 `evaluation rate` requires all of the following:
 

@@ -20,7 +20,7 @@ evaluations. Recording is disabled by default and stores data only under
 minecraft-skills evaluation status
 minecraft-skills evaluation enable
 minecraft-skills evaluation search [query] \
-  --tool <name> --evaluated <true|false> \
+  --id <UUID> --tool <name> --evaluated <true|false> \
   --min-score <1-5> --max-score <1-5> \
   --missing-feature <key> --since <ISO> --until <ISO> --limit <1-100>
 minecraft-skills evaluation show <id>
@@ -37,8 +37,11 @@ Search summaries include the recorded minecraft-skills MCP and catalog data vers
 requests or responses. `show` does include raw data, and displays a privacy warning first. `rate`
 requires a standalone description of the information that was needed and a comment explaining the
 score; repeat `--missing-feature` for multiple stable gap keys. Search results default to 20 and
-accept at most 100. `gaps` accepts the search filters except `--evaluated` and `--limit`, and returns
-every matching aggregate with the distinct versions that contributed to it.
+accept at most 100. `gaps` accepts the search filters except `--id`, `--evaluated`, and `--limit`,
+and returns every matching aggregate with the distinct versions that contributed to it.
+
+Use `search --id <UUID>` for an exact safe-summary lookup. Supplying the UUID as the positional
+query remains a free-text search and can match narrative evaluation fields that mention the ID.
 
 Deletion returns a nonzero exit status when a requested record is missing or any removal is unsafe
 or fails. `delete --all --yes` also removes only evaluator-owned crash-residue record temp files;
