@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Fixed
+
+- Added a model-visible, per-call MCP evaluation receipt so repeated or concurrent calls to the
+  same tool retain the correct record ID even when clients hide result metadata, while keeping the
+  receipt out of the stored response. Evaluation guidance now also rejects ambiguous pending-ID
+  guesses and keeps stable missing-feature keys focused on reusable, in-scope capabilities.
+
 ## 0.1.7 - 2026-09-02
 
 ### Added

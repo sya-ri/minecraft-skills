@@ -85,6 +85,16 @@ describe("MCP evaluation integration with the real evaluation core", () => {
     const recorded = await call(integration);
 
     expect(recorded._meta?.[evaluationRecordIdMetaKey]).toEqual(expect.any(String));
+    expect(recorded.content).toEqual([
+      { type: "text", text: "raw result" },
+      {
+        type: "text",
+        text: `minecraft-skills evaluation receipt for this tool call: ${String(
+          recorded._meta?.[evaluationRecordIdMetaKey],
+        )}`,
+        annotations: { audience: ["assistant"] },
+      },
+    ]);
     const firstFiles = readdirSync(store.recordsDirectory);
     expect(firstFiles).toHaveLength(1);
     const saved = JSON.parse(
@@ -97,6 +107,7 @@ describe("MCP evaluation integration with the real evaluation core", () => {
     expect(saved.response.result).toMatchObject({
       content: [{ type: "text", text: "raw result" }],
     });
+    expect(JSON.stringify(saved.response.result)).not.toContain("evaluation receipt");
 
     let finish: ((result: CallToolResult) => void) | undefined;
     const delayedResult = new Promise<CallToolResult>((resolve) => {
@@ -113,6 +124,7 @@ describe("MCP evaluation integration with the real evaluation core", () => {
 
     const blockedAtCompletion = await completionOptOut;
     expect(blockedAtCompletion._meta).toBeUndefined();
+    expect(blockedAtCompletion.content).toEqual([{ type: "text", text: "must not be stored" }]);
     expect(readdirSync(store.recordsDirectory)).toHaveLength(1);
     expect(stdout).not.toHaveBeenCalled();
   });
