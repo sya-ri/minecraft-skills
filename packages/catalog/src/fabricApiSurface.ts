@@ -4,7 +4,7 @@ import { openZipArchive, type ZipArchive } from "@minecraft-skills/data";
 const fabricApiRepositoryUrl = "https://maven.fabricmc.net/";
 const fabricApiArtifactPath = "net/fabricmc/fabric-api/fabric-api";
 const fabricApiMetadataUrl = `${fabricApiRepositoryUrl}${fabricApiArtifactPath}/maven-metadata.xml`;
-const fabricApiUserAgent = "sya-ri/minecraft-skills/0.1.7 (github.com/sya-ri/minecraft-skills)";
+const fabricApiUserAgent = "sya-ri/minecraft-skills/0.1.8 (github.com/sya-ri/minecraft-skills)";
 
 export const fabricApiRenderingPackagePrefixes = [
   "net.fabricmc.fabric.api.client.rendering.v1",

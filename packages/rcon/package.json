@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-skills/rcon",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "type": "module",
   "description": "RCON configuration, permissions, and execution utilities for Minecraft Skills.",
   "license": "MIT",
