@@ -34,7 +34,7 @@ Commands:
   evaluation status
   evaluation enable
   evaluation disable
-  evaluation search [query] [--tool name] [--evaluated true|false]
+  evaluation search [query] [--id UUID] [--tool name] [--evaluated true|false]
       [--min-score 1] [--max-score 5] [--missing-feature key]
       [--since ISO-timestamp] [--until ISO-timestamp] [--limit 20]
   evaluation show <id>
@@ -156,6 +156,7 @@ function searchFilters(parsed: ParsedOptions, includeEvaluated: boolean): Evalua
     throw new Error("--min-score must not exceed --max-score");
   }
   return {
+    ...(parsed.values.get("--id") ? { id: parsed.values.get("--id") } : {}),
     ...(query ? { query } : {}),
     ...(parsed.values.get("--tool") ? { tool: parsed.values.get("--tool") } : {}),
     ...(includeEvaluated && parsed.values.has("--evaluated")
@@ -177,6 +178,7 @@ function searchFilters(parsed: ParsedOptions, includeEvaluated: boolean): Evalua
 }
 
 const filterValueOptions = [
+  "--id",
   "--tool",
   "--evaluated",
   "--min-score",
@@ -267,7 +269,7 @@ export function runEvaluationCli(
     if (command === "gaps") {
       const parsed = parseOptions(args, {
         values: filterValueOptions.filter(
-          (value) => value !== "--evaluated" && value !== "--limit",
+          (value) => value !== "--id" && value !== "--evaluated" && value !== "--limit",
         ),
       });
       const filters = searchFilters(parsed, false);

@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Added
+
+- Added a repository-local evaluation maintenance skill and a read-only, time-bounded report helper
+  that ranks one snapshot of allowlisted metadata without exposing free-form needs or raw payloads.
+- Added exact evaluation record ID filtering so safe summaries can be compared without relying on
+  free-text search ordering.
+
 ### Fixed
 
 - Added a model-visible, per-call MCP evaluation receipt so repeated or concurrent calls to the

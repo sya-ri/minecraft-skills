@@ -1,0 +1,4 @@
+interface:
+  display_name: "MCP Evaluation Maintenance"
+  short_description: "Triage MCP evaluation gaps into focused fixes"
+  default_prompt: "Use $mcp-evaluation-maintenance to triage local minecraft-skills evaluation gaps and prepare focused, privacy-safe fixes."
