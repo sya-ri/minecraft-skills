@@ -3118,18 +3118,20 @@ describe("minecraft-skills CLI", () => {
       "plugin",
       "paper",
       "members",
-      "1.21.11",
+      "26.2",
       "--type",
       "org.bukkit.entity.Player",
       "--contains",
-      "sendMessage",
+      "teleportAsync",
       "--kind",
       "method",
       "--limit",
       "5",
     ]);
     expect(members.code).toBe(0);
-    expect(members.stdout.join("\n")).toContain("sendMessage");
+    expect(members.stdout.join("\n")).toContain('"inheritanceCoverage": "javadocs-overview-tree"');
+    expect(members.stdout.join("\n")).toContain("org.bukkit.entity.Entity");
+    expect(members.stdout.join("\n")).toContain("teleportAsync");
   });
 
   it("compares Paper API package indexes", async () => {

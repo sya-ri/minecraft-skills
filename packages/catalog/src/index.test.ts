@@ -4965,21 +4965,112 @@ describe("catalog", () => {
         limit: 10,
       }).types,
     ).toContainEqual(expect.objectContaining({ qualifiedName: "org.bukkit.entity.Player" }));
-    expect(
-      searchPaperMembers({
-        version: "1.21.11",
-        type: "org.bukkit.entity.Player",
-        contains: "sendMessage",
-        kind: "method",
-        limit: 10,
-      }).members,
-    ).toContainEqual(
+    const declaredMembers = searchPaperMembers({
+      version: "1.21.11",
+      type: "org.bukkit.entity.Player",
+      contains: "sendMessage",
+      kind: "method",
+      limit: 10,
+    });
+    expect(declaredMembers.inheritanceCoverage).toBe("declared-members-only");
+    expect(declaredMembers.searchedTypes).toEqual(["org.bukkit.entity.Player"]);
+    expect(declaredMembers.members).toContainEqual(
       expect.objectContaining({
         qualifiedTypeName: "org.bukkit.entity.Player",
         name: "sendMessage",
         kind: "method",
       }),
     );
+  });
+
+  it("searches members declared by supertypes when hierarchy coverage is available", () => {
+    const result = searchPaperMembers({
+      version: "26.2",
+      type: "org.bukkit.entity.Player",
+      contains: "teleportAsync",
+      kind: "method",
+      limit: 10,
+    });
+
+    expect(result.inheritanceCoverage).toBe("javadocs-overview-tree");
+    expect(result.searchedTypes).toContain("org.bukkit.entity.Player");
+    expect(result.searchedTypes).toContain("org.bukkit.entity.Entity");
+    expect(result.members).toContainEqual(
+      expect.objectContaining({
+        qualifiedTypeName: "org.bukkit.entity.Entity",
+        name: "teleportAsync",
+      }),
+    );
+
+    const constructors = searchPaperMembers({
+      version: "26.2",
+      type: "org.bukkit.event.player.PlayerJoinEvent",
+      kind: "constructor",
+      limit: 50,
+    });
+    expect(constructors.searchedTypes).toContain("org.bukkit.event.Event");
+    expect(constructors.members.length).toBeGreaterThan(0);
+    expect(
+      constructors.members.every(
+        (entry) => entry.qualifiedTypeName === "org.bukkit.event.player.PlayerJoinEvent",
+      ),
+    ).toBe(true);
+
+    const nestedConstructors = searchPaperMembers({
+      version: "26.2",
+      type: "org.bukkit.entity.Player.Spigot",
+      kind: "constructor",
+      limit: 50,
+    });
+    expect(nestedConstructors.searchedTypes).toContain("org.bukkit.command.CommandSender.Spigot");
+    expect(nestedConstructors.members.length).toBeGreaterThan(0);
+    expect(
+      nestedConstructors.members.every(
+        (entry) => entry.qualifiedTypeName === "org.bukkit.entity.Player.Spigot",
+      ),
+    ).toBe(true);
+
+    const firstPage = searchPaperMembers({
+      version: "26.2",
+      type: "org.bukkit.entity.Player",
+      limit: 50,
+    });
+    expect(firstPage.matchedMembers).toBeGreaterThan(firstPage.members.length);
+    expect(firstPage.members).toHaveLength(50);
+    expect(
+      firstPage.members.every((entry) => entry.qualifiedTypeName === "org.bukkit.entity.Player"),
+    ).toBe(true);
+  });
+
+  it("isolates returned Paper type hierarchies from the cached surface", () => {
+    const player = searchPaperTypes({
+      version: "26.2",
+      contains: "org.bukkit.entity.Player",
+      limit: 1,
+    }).types[0];
+    expect(player?.directSupertypes?.length).toBeGreaterThan(0);
+    player?.directSupertypes?.splice(0);
+
+    const inheritedSearch = searchPaperMembers({
+      version: "26.2",
+      type: "org.bukkit.entity.Player",
+      contains: "teleportAsync",
+      limit: 10,
+    });
+    expect(inheritedSearch.searchedTypes).toContain("org.bukkit.entity.Entity");
+
+    const comparison = comparePaperApiSurface("1.21.11", "26.2");
+    const addedType = comparison.addedTypes.find((entry) => entry.directSupertypes?.length);
+    expect(addedType).toBeDefined();
+    const expectedSupertypes = [...(addedType?.directSupertypes ?? [])];
+    addedType?.directSupertypes?.splice(0);
+
+    const repeatedComparison = comparePaperApiSurface("1.21.11", "26.2");
+    expect(
+      repeatedComparison.addedTypes.find(
+        (entry) => entry.qualifiedName === addedType?.qualifiedName,
+      )?.directSupertypes,
+    ).toEqual(expectedSupertypes);
   });
 
   it("compares Paper API surfaces", () => {

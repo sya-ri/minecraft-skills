@@ -57,6 +57,7 @@ import {
   validateDatapackReferenceGraph,
 } from "./datapackProject.js";
 import { inspectModrinthArchive } from "./modrinthZip.js";
+import { paperMemberMatchesType } from "./paperMemberSearch.js";
 import { compareObservedProtocolIds } from "./registryEntryComparison.js";
 import {
   defaultResourcepackPngValidationLimits,
@@ -941,6 +942,8 @@ export type PaperMemberSearchOptions = {
 
 export type PaperMemberSearchResult = {
   version: string;
+  inheritanceCoverage: "javadocs-overview-tree" | "declared-members-only";
+  searchedTypes: string[];
   totalMembers: number;
   matchedMembers: number;
   truncated: boolean;
@@ -4135,6 +4138,13 @@ export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
   return structuredClone(readPaperApiSurface(requested));
 }
 
+function clonePaperApiType(entry: PaperApiTypeData): PaperApiTypeData {
+  return {
+    ...entry,
+    ...(entry.directSupertypes ? { directSupertypes: [...entry.directSupertypes] } : {}),
+  };
+}
+
 export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTypeSearchResult {
   const surface = readPaperApiSurface(options.version ?? "latest");
   const limit = normalizeLimit(options.limit, 50, 500);
@@ -4159,7 +4169,7 @@ export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTyp
     totalTypes: surface.types.length,
     matchedTypes: matched.length,
     truncated: matched.length > limit,
-    types: matched.slice(0, limit).map((entry) => ({ ...entry })),
+    types: matched.slice(0, limit).map(clonePaperApiType),
   };
 }
 
@@ -4171,29 +4181,69 @@ export function searchPaperMembers(
   const typeName = options.type?.trim();
   const packageName = options.packageName?.trim();
   const contains = options.contains?.trim().toLowerCase();
-  const matched = surface.members.filter((entry) => {
-    if (typeName && entry.qualifiedTypeName !== typeName && entry.typeName !== typeName) {
-      return false;
+  const resolvedTypes = typeName
+    ? surface.types.filter((entry) => entry.qualifiedName === typeName || entry.name === typeName)
+    : [];
+  const resolvedTypeNames = new Set(resolvedTypes.map((entry) => entry.qualifiedName));
+  const searchedTypes: string[] = [];
+  const searchedTypeNames = new Set<string>();
+  const typeByQualifiedName = new Map(surface.types.map((entry) => [entry.qualifiedName, entry]));
+  const pendingTypes = [...resolvedTypes];
+  while (pendingTypes.length > 0) {
+    const entry = pendingTypes.shift();
+    if (!entry || searchedTypeNames.has(entry.qualifiedName)) continue;
+    searchedTypeNames.add(entry.qualifiedName);
+    searchedTypes.push(entry.qualifiedName);
+    if (!surface.inheritanceCoverage) continue;
+    for (const supertypeName of entry.directSupertypes ?? []) {
+      const supertype = typeByQualifiedName.get(supertypeName);
+      if (supertype && !searchedTypeNames.has(supertypeName)) {
+        pendingTypes.push(supertype);
+      }
     }
-    if (packageName && entry.packageName !== packageName) {
-      return false;
-    }
-    if (options.kind && entry.kind !== options.kind) {
-      return false;
-    }
-    if (
-      contains &&
-      !entry.name.toLowerCase().includes(contains) &&
-      !entry.label.toLowerCase().includes(contains) &&
-      !entry.qualifiedTypeName.toLowerCase().includes(contains)
-    ) {
-      return false;
-    }
-    return true;
-  });
+  }
+  const typeSearchOrder = new Map(
+    searchedTypes.map((qualifiedTypeName, index) => [qualifiedTypeName, index]),
+  );
+  const matched = surface.members
+    .filter((entry) => {
+      if (
+        !paperMemberMatchesType({
+          member: entry,
+          typeName,
+          resolvedTypeNames,
+          searchedTypeNames,
+        })
+      )
+        return false;
+      if (packageName && entry.packageName !== packageName) {
+        return false;
+      }
+      if (options.kind && entry.kind !== options.kind) {
+        return false;
+      }
+      if (
+        contains &&
+        !entry.name.toLowerCase().includes(contains) &&
+        !entry.label.toLowerCase().includes(contains) &&
+        !entry.qualifiedTypeName.toLowerCase().includes(contains)
+      ) {
+        return false;
+      }
+      return true;
+    })
+    .sort((left, right) => {
+      if (!typeName || resolvedTypes.length === 0) return 0;
+      return (
+        (typeSearchOrder.get(left.qualifiedTypeName) ?? Number.MAX_SAFE_INTEGER) -
+        (typeSearchOrder.get(right.qualifiedTypeName) ?? Number.MAX_SAFE_INTEGER)
+      );
+    });
 
   return {
     version: surface.minecraftVersion,
+    inheritanceCoverage: surface.inheritanceCoverage ?? "declared-members-only",
+    searchedTypes,
     totalMembers: surface.members.length,
     matchedMembers: matched.length,
     truncated: matched.length > limit,
@@ -4217,10 +4267,10 @@ export function comparePaperApiSurface(
   const toMembers = new Map(to.members.map((entry) => [memberKey(entry), entry]));
   const addedTypes = to.types
     .filter((entry) => !fromTypes.has(entry.qualifiedName))
-    .map((entry) => ({ ...entry }));
+    .map(clonePaperApiType);
   const removedTypes = from.types
     .filter((entry) => !toTypes.has(entry.qualifiedName))
-    .map((entry) => ({ ...entry }));
+    .map(clonePaperApiType);
   const addedMembers = to.members
     .filter((entry) => !fromMembers.has(memberKey(entry)))
     .map((entry) => ({ ...entry }));

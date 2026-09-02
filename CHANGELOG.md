@@ -10,6 +10,9 @@ All notable changes to this project are documented here.
   same tool retain the correct record ID even when clients hide result metadata, while keeping the
   receipt out of the stored response. Evaluation guidance now also rejects ambiguous pending-ID
   guesses and keeps stable missing-feature keys focused on reusable, in-scope capabilities.
+- Paper member searches scoped to a type now include declarations from known supertypes when the
+  generated Javadocs surface has overview-tree hierarchy coverage. Results retain each declaration's
+  owning type and report both the coverage level and searched types.
 
 ## 0.1.7 - 2026-09-02
 

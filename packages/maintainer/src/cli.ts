@@ -1422,7 +1422,7 @@ Commands:
   ingest-paper-api-indexes
                         Download Paper Javadocs package indexes for supported versions.
   ingest-paper-api-surfaces
-                        Download Paper Javadocs type/member search indexes.
+                        Download Paper Javadocs type/member search indexes and overview hierarchies.
   materialize-version-details
                         Write derived domain coverage facts into checked-in version detail JSON.
   ingest-vanilla-inventory

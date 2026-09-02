@@ -326,6 +326,13 @@ describe("MCP tools", () => {
     expect(tools.every((tool) => tool.inputSchema.additionalProperties === false)).toBe(true);
   });
 
+  it("documents inherited Paper member search coverage", () => {
+    const tool = tools.find((entry) => entry.name === "search_paper_members");
+    expect(tool?.description).toContain("known supertypes");
+    expect(tool?.description).toContain("declaring type");
+    expect(tool?.description).toContain("coverage");
+  });
+
   it("documents the opt-in evaluation-history exception on profile tools", () => {
     for (const name of ["lookup_java_player_profile", "get_verified_java_player_textures"]) {
       const description = tools.find((tool) => tool.name === name)?.description;
@@ -2140,13 +2147,15 @@ describe("MCP tools", () => {
     expect(types.content[0]?.text).toContain("org.bukkit.entity.Player");
 
     const members = await callMinecraftSkillsTool("search_paper_members", {
-      version: "1.21.11",
+      version: "26.2",
       type: "org.bukkit.entity.Player",
-      contains: "sendMessage",
+      contains: "teleportAsync",
       kind: "method",
       limit: 5,
     });
-    expect(members.content[0]?.text).toContain("sendMessage");
+    expect(members.content[0]?.text).toContain('"inheritanceCoverage": "javadocs-overview-tree"');
+    expect(members.content[0]?.text).toContain("org.bukkit.entity.Entity");
+    expect(members.content[0]?.text).toContain("teleportAsync");
 
     const comparison = await callMinecraftSkillsTool("compare_paper_api_surface", {
       from: "1.21.11",

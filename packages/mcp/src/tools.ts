@@ -2580,7 +2580,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_paper_members",
     description:
-      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version.",
+      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version. Type-scoped searches include members declared by known supertypes when the surface has Javadocs hierarchy coverage, preserve each member's declaring type, and report the searched types and coverage.",
     inputSchema: {
       type: "object",
       properties: {

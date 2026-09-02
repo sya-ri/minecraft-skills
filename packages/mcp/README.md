@@ -219,6 +219,11 @@ client API surface.
 - `lookup_java_player_profile`
 - `get_verified_java_player_textures`
 
+For surfaces with Javadocs overview-tree coverage, `search_paper_members` type filters include
+members declared by known supertypes. Responses preserve the declaring type and report both
+`searchedTypes` and `inheritanceCoverage` so callers can distinguish inherited searches from
+declared-members-only data.
+
 The profile tools send the supplied Java name or UUID only to fixed Mojang profile, session, and
 public-key services. They accept no caller URL, headers, body, or cache path and write no disk cache
 or application log. Their exact endpoints and response shapes are version-specific, undocumented

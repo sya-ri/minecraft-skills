@@ -1452,6 +1452,7 @@ Grouped commands:
   minecraft-skills plugin paper api|api-index|api-surface [version]
   minecraft-skills plugin paper types [version] [--package package.name] [--contains text] [--limit 50]
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
+                        Type filters include members declared by known supertypes when hierarchy coverage is available.
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills plugin paper validate-jar <file.jar> [--max-archive-bytes bytes]
   minecraft-skills plugin velocity validate-jar <file.jar> [--target-java 25] [--max-archive-bytes bytes]
