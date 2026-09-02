@@ -21,6 +21,9 @@ const maximumTrackedPendingEvaluations = 1_000;
 
 export const evaluationRecordIdMetaKey = "minecraft-skills/evaluationRecordId";
 
+const evaluationWorkflowInstructions =
+  "MCP evaluation history is enabled. Immediately after each non-evaluation minecraft-skills tool call, evaluate whether its saved request and response met the information need, then call record_tool_evaluation before making another ordinary call. Use the evaluation receipt attached to that same tool result, or minecraft-skills/evaluationRecordId metadata when visible. Only use list_pending_evaluations when the target is unambiguous; never infer an ID from list position when multiple pending records share a tool name. Use these score anchors: 1=unusable, 2=major gaps, 3=partly useful, 4=minor gaps, 5=fully sufficient. Provide an independent informationNeed description that does not quote the conversation and a concise comment. Reuse the same stable missing-feature key for the same in-scope minecraft-skills capability, and do not create version-, query-, or error-instance-specific variants. A wrong tool choice or a capability outside minecraft-skills scope belongs in the comment, not missingFeatures.";
+
 type EvaluationStore = ReturnType<typeof createEvaluationStore>;
 type EvaluationContext = NonNullable<Parameters<typeof getEvaluationStatus>[1]>;
 type EvaluationRecordInput = Parameters<typeof createEvaluationRecord>[1];
@@ -61,7 +64,7 @@ const evaluationTools: Tool[] = [
   {
     name: "list_pending_evaluations",
     description:
-      "List minimal summaries, including the recorded minecraft-skills MCP and catalog data versions, of recent tool calls recorded by this MCP process that still need an evaluation. Raw arguments and results are not returned. This management call is never recorded.",
+      "List minimal summaries, including the recorded minecraft-skills MCP and catalog data versions, of recent tool calls recorded by this MCP process that still need an evaluation. Raw arguments and results are not returned. If multiple pending records share a tool name and no same-call receipt or metadata is available, do not infer their IDs from list position. This management call is never recorded.",
     inputSchema: {
       type: "object",
       properties: {
@@ -83,7 +86,7 @@ const evaluationTools: Tool[] = [
   {
     name: "record_tool_evaluation",
     description:
-      "Evaluate one saved MCP tool call using 1=unusable, 2=major gaps, 3=partly useful, 4=minor gaps, and 5=fully sufficient. Describe the information need independently instead of quoting conversation text. Replaces an existing evaluation for the same record. This management call is never recorded.",
+      "Immediately evaluate one saved MCP tool call using the record ID from that same call's evaluation receipt or metadata. Use 1=unusable, 2=major gaps, 3=partly useful, 4=minor gaps, and 5=fully sufficient. Describe the information need independently instead of quoting conversation text. Reuse stable missing-feature keys for the same in-scope minecraft-skills capability; put wrong-tool choices and out-of-scope needs in the comment instead of missingFeatures. Replaces an existing evaluation for the same record. This management call is never recorded.",
     inputSchema: {
       type: "object",
       properties: {
@@ -182,6 +185,16 @@ function errorResult(error: unknown): CallToolResult {
       },
     ],
     isError: true,
+  };
+}
+
+function evaluationReceipt(id: string): CallToolResult["content"][number] {
+  return {
+    type: "text",
+    text: `minecraft-skills evaluation receipt for this tool call: ${id}`,
+    annotations: {
+      audience: ["assistant"],
+    },
   };
 }
 
@@ -457,9 +470,7 @@ export function createEvaluationIntegration(
   };
 
   return {
-    instructions: startupEnabled
-      ? "MCP evaluation history is enabled. After each non-evaluation minecraft-skills tool call, evaluate whether its saved request and response met the information need, then call record_tool_evaluation using these score anchors: 1=unusable, 2=major gaps, 3=partly useful, 4=minor gaps, 5=fully sufficient. Provide an independent informationNeed description that does not quote the conversation, a concise comment, and any stable missing-feature keys. Use the minecraft-skills/evaluationRecordId result metadata when visible; otherwise call list_pending_evaluations."
-      : undefined,
+    instructions: startupEnabled ? evaluationWorkflowInstructions : undefined,
     tools: evaluationTools,
     callTool: async (server, name, input, extra, callMinecraftTool) => {
       if (evaluationToolNames.has(name)) {
@@ -526,6 +537,7 @@ export function createEvaluationIntegration(
         }
         return {
           ...result,
+          content: [...result.content, evaluationReceipt(record.id)],
           _meta: {
             ...result._meta,
             [evaluationRecordIdMetaKey]: record.id,

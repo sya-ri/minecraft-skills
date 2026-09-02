@@ -73,9 +73,10 @@ instructions include the evaluation workflow:
 minecraft-skills evaluation enable
 ```
 
-When a call is stored, the result includes its ID in
-`_meta["minecraft-skills/evaluationRecordId"]`. Clients may hide `_meta` from the model, so these
-management tools provide a fallback:
+When a call is stored, the result appends a short assistant-audience evaluation receipt containing
+its ID and includes the same ID in `_meta["minecraft-skills/evaluationRecordId"]`. The receipt is
+added after the original response is stored. Clients may hide `_meta` from the model, so the receipt
+is the preferred model-visible correlation source and these management tools provide a fallback:
 
 - `get_evaluation_status` takes `{}` and reports the effective state plus the current MCP and
   catalog data versions;
@@ -84,6 +85,12 @@ management tools provide a fallback:
   MCP and catalog data versions stored with that record); and
 - `record_tool_evaluation` takes `id`, `score`, `informationNeed`, `comment`, and optional
   `missingFeatures` entries with `key` and `summary`.
+
+Evaluate each ordinary call immediately and use the receipt attached to that same result. Use the
+pending list only for an unambiguous target; never map multiple same-name pending calls by their list
+position or timestamps. Reuse a stable missing-feature key for the same in-scope minecraft-skills
+capability. Put wrong-tool selection and out-of-scope needs in the evaluation comment instead of
+`missingFeatures`.
 
 The management tools are excluded from recording. Conversation messages, MCP resources, and MCP
 prompts are also excluded. Create `.minecraft-skills/evaluation.disabled` in a sensitive project

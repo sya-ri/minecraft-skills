@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
+- Added a model-visible, per-call MCP evaluation receipt so repeated or concurrent calls to the
+  same tool retain the correct record ID even when clients hide result metadata, while keeping the
+  receipt out of the stored response. Evaluation guidance now also rejects ambiguous pending-ID
+  guesses and keeps stable missing-feature keys focused on reusable, in-scope capabilities.
 - Paper member searches scoped to a type now include declarations from known supertypes when the
   generated Javadocs surface has overview-tree hierarchy coverage. Results retain each declaration's
   owning type and report both the coverage level and searched types.

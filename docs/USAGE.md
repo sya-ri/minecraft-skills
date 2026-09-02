@@ -369,14 +369,17 @@ for package-level tool details and input schemas.
 
 ### Evaluation History
 
-When local recording is enabled, each ordinary tool result carries its stored record ID in
+When local recording is enabled, each ordinary tool result appends an assistant-audience evaluation
+receipt with its stored record ID and carries the same ID in
 `_meta["minecraft-skills/evaluationRecordId"]`. `get_evaluation_status` reports the effective state
 and current MCP/catalog data versions, `list_pending_evaluations` returns up to 100 newest
 process-local unevaluated calls with their recorded MCP/catalog data versions, and
 `record_tool_evaluation` records the information need, 1-5 score, comment, and optional missing
-features. These management tools are excluded from history. Pending results contain only ID,
-timestamps, tool, outcome, and recorded MCP/catalog data versions; they do not repeat the raw
-request or response.
+features. Evaluate each call immediately from its same-call receipt. Never map multiple same-name
+pending calls by position or timestamps. Reuse stable keys for the same in-scope capability, and put
+wrong-tool or out-of-scope gaps in the comment instead of `missingFeatures`. These management tools
+are excluded from history. Pending results contain only ID, timestamps, tool, outcome, and recorded
+MCP/catalog data versions; they do not repeat the raw request or response.
 
 ### Authoring Guidance
 
