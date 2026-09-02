@@ -221,9 +221,10 @@
       "title": "Paper Javadocs type and member surface",
       "dataKind": "javadocs-search-index",
       "coverage": "downloadable or bundled versions listed in the support matrix",
-      "provenance": "Paper Javadocs search index artifacts",
+      "provenance": "Paper Javadocs search index and overview-tree artifacts",
       "guarantees": [
         "type names, member labels, package names, and URLs are extracted from Javadocs search indexes",
+        "when overview-tree coverage is present, type-scoped member search traverses known supertypes while preserving each member declaration's owning type",
         "comparison reports added and removed observed type/member labels"
       ],
       "nonGuarantees": [

@@ -444,6 +444,7 @@ export const PaperApiType = type({
   name: "string",
   qualifiedName: "string",
   url: "string",
+  "directSupertypes?": "string[]",
 });
 
 export const PaperApiMember = type({
@@ -462,6 +463,7 @@ export const PaperApiSurface = type({
   minecraftVersion: "string",
   coverage: "'javadocs-search-index'",
   javadocsUrl: "string",
+  "inheritanceCoverage?": "'javadocs-overview-tree'",
   typeCount: "number",
   memberCount: "number",
   types: PaperApiType.array(),

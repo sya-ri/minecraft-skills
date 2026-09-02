@@ -193,6 +193,10 @@ node packages/maintainer/dist/cli.mjs ingest-paper-api-surfaces \
   --retrieved-at 2026-06-22T00:00:00.000Z
 ```
 
+Paper API surface ingestion reads the Javadocs type/member search indexes and `overview-tree.html`.
+Hierarchy coverage is recorded only when known direct-supertype edges can be extracted; otherwise
+type-scoped member searches remain explicitly declared-members-only.
+
 Regenerate all Java 1.13+ vanilla client asset and server data inventories:
 
 ```sh

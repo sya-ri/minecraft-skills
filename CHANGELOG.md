@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Fixed
+
+- Paper member searches scoped to a type now include declarations from known supertypes when the
+  generated Javadocs surface has overview-tree hierarchy coverage. Results retain each declaration's
+  owning type and report both the coverage level and searched types.
+
 ## 0.1.7 - 2026-09-02
 
 ### Added

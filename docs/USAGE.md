@@ -439,7 +439,7 @@ request or response.
 | Tools | Purpose |
 | --- | --- |
 | `get_paper_plugin_data`, `get_paper_api_reference`, `get_paper_api_index`, `compare_paper_api` | Resolve Paper support, dependencies, documentation, and package/class indexes. |
-| `get_paper_api_surface`, `search_paper_types`, `search_paper_members`, `compare_paper_api_surface` | Inspect Paper type/member surfaces and changes. |
+| `get_paper_api_surface`, `search_paper_types`, `search_paper_members`, `compare_paper_api_surface` | Inspect Paper type/member surfaces and changes. Type-scoped member searches include declarations from known supertypes when Javadocs hierarchy coverage is available and report the declaring type plus every searched type. |
 | `search_paper_events` | Find Paper/Bukkit event candidates. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |
 | `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata or validate supplied Fabric mod metadata. |

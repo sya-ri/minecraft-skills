@@ -638,7 +638,7 @@ const paperTypes = searchPaperTypes({ version: "26.2", contains: "Player" });
 const paperMembers = searchPaperMembers({
   version: "26.2",
   type: "org.bukkit.entity.Player",
-  contains: "sendMessage",
+  contains: "teleportAsync",
 });
 const paperSurfaceDiff = comparePaperApiSurface("26.2", "26.2");
 const paper = getPaperPluginData();
@@ -665,6 +665,10 @@ const sources = getSourceReport({ domain: "datapack", version: "26.2" });
 const sourceTiers = listSourceTiers();
 const communityDatasets = listCommunityDatasets();
 ```
+
+When the bundled Paper surface reports Javadocs overview-tree coverage, a type-scoped
+`searchPaperMembers` call also searches known supertypes. The result reports `searchedTypes` and
+`inheritanceCoverage`, while each member keeps its declaring `qualifiedTypeName`.
 
 `validateResourcepackPng` validates complete bytes against the
 [W3C PNG specification](https://www.w3.org/TR/png-3/) with bounded signature, chunk framing, IHDR,
