@@ -223,7 +223,7 @@ thread safety, or Folia safety. Resolve a matching authoring plan before turning
 
 | Subcommand | Purpose |
 | --- | --- |
-| `toolchain <game-version>` | Resolve bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta. |
+| `toolchain <game-version>` | Resolve the maintained mapping mode and Loom plugin, plus bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta. |
 | `validate-mod <file.jar>` | Validate bounded current `fabric.mod.json` schema-v1 and archive structure offline. |
 
 #### `minecraft-skills fabric mods`
@@ -445,7 +445,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `get_paper_api_surface`, `search_paper_types`, `search_paper_members`, `compare_paper_api_surface` | Inspect Paper type/member surfaces and changes. Type-scoped member searches include declarations from known supertypes when Javadocs hierarchy coverage is available and report the declaring type plus every searched type. |
 | `search_paper_events` | Find Paper/Bukkit event candidates. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |
-| `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata or validate supplied Fabric mod metadata. |
+| `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata, including Fabric mapping/Loom policy, or validate supplied Fabric mod metadata. |
 | `search_modrinth_projects`, `list_modrinth_project_versions`, `resolve_modrinth_compatibility`, `get_modrinth_resource`, `validate_modrinth_pack` | Search public Modrinth metadata, intersect compatibility labels, or validate supplied pack metadata. |
 | `validate_server_properties`, `validate_server_access_list`, `validate_mixin_config` | Validate server configuration and bounded Mixin evidence. |
 | `analyze_minecraft_log`, `analyze_minecraft_performance`, `inspect_blockbench_project` | Structure diagnostics or inspect bounded project metadata. |

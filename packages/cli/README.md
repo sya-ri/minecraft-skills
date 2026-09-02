@@ -439,11 +439,18 @@ and unknown local-absence evidence remain valid and return 0. The command does n
 runtime classpath, bytecode, targets, injection behavior, mappings, or launcher integration. See
 [Mixin configuration validation](../../docs/MIXIN_CONFIG_VALIDATION.md).
 
-`fabric toolchain` reads Loader, Intermediary, and Yarn candidates from the official live Fabric
-Meta v2 API. It prefers upstream `stable` entries without treating that flag as a complete project
-compatibility guarantee. Generated tuples only combine entries listed for the same game version;
-they are not a separately published Fabric Meta guarantee. The command bounds returned candidates
-and reports versions without Yarn as incomplete instead of guessing.
+`fabric toolchain` resolves a maintained mapping mode and Loom plugin ID, then reads Loader,
+Intermediary, and Yarn candidates from the official live Fabric Meta v2 API. Minecraft 26.1 and
+newer, including weekly snapshot IDs from `26w14a` onward, use
+Fabric's documented unobfuscated mode with `net.fabricmc.fabric-loom`; older mapped versions use
+`net.fabricmc.fabric-loom-remap`. It prefers upstream `stable` entries without treating that flag as
+a complete project compatibility guarantee. Earlier `26w` IDs report an `unknown` mapping policy
+with no asserted mappings requirement or Loom plugin. A Loader can be recommended without Yarn,
+and a failure or deadline overrun from a supplemental mapping endpoint does not discard the Loader
+result in no-remap mode.
+Only older mapped versions require Yarn for the legacy complete-tuple recommendation. Generated
+tuples only combine entries listed for the same game version and are not a separately published
+Fabric Meta guarantee.
 
 `minecraft search "Fabric Client GameTest visual evidence"` returns guidance for stable case IDs,
 bounded readiness, full-frame and runtime-bounds crop evidence, explicit compare versus

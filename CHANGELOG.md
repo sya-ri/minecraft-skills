@@ -13,6 +13,12 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
+- Fabric toolchain lookup now follows the documented Minecraft 26.1+ unobfuscated/no-remap policy,
+  including weekly snapshot IDs from `26w14a`; reports the mapping mode and Loom
+  plugin ID without inferring them from Intermediary sentinel values; and recommends a compatible
+  Loader even when Fabric Meta publishes no Yarn mappings or a supplemental mapping endpoint is
+  unavailable or exceeds the lookup deadline. Uncovered earlier `26w` IDs explicitly report an
+  unknown mapping policy instead of asserting a mapping dependency or Loom plugin.
 - Added a model-visible, per-call MCP evaluation receipt so repeated or concurrent calls to the
   same tool retain the correct record ID even when clients hide result metadata, while keeping the
   receipt out of the stored response. Evaluation guidance now also rejects ambiguous pending-ID
