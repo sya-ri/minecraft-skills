@@ -30,6 +30,8 @@ import {
   defaultServerAccessListValidationLimits,
   defaultServerPropertiesValidationLimits,
   explainPackPath,
+  type FabricApiMemberSearchOptions,
+  fabricApiSurfaceLimits,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
@@ -133,6 +135,8 @@ import {
   searchCatalog,
   searchCommands,
   searchDatapackSchema,
+  searchFabricApiMembers,
+  searchFabricApiTypes,
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperEvents,
@@ -194,6 +198,35 @@ type ToolDefinition = {
 
 const semanticSearchGuidance =
   "For intent-based discovery, use concise English canonical Minecraft terms; translate non-English user intent before calling. Use the English terms only for the lookup, and keep the user's requested response language. Keep exact identifiers, namespace IDs, file paths, project titles, and content literals unchanged.";
+
+const fabricApiSearchProperties = {
+  gameVersion: {
+    type: "string",
+    minLength: 1,
+    maxLength: 128,
+    pattern: "^[0-9A-Za-z][0-9A-Za-z._-]*$",
+  },
+  query: { type: "string", minLength: 1, maxLength: 512 },
+  packagePrefix: {
+    type: "string",
+    minLength: 1,
+    maxLength: 512,
+    description:
+      "Exact package or subpackage prefix under net.fabricmc.fabric.api.client.rendering.v1 or net.fabricmc.fabric.api.client.renderer.v1.",
+  },
+  limit: {
+    type: "integer",
+    minimum: 1,
+    maximum: fabricApiSurfaceLimits.maxResultLimit,
+    default: 50,
+  },
+  timeoutMs: {
+    type: "integer",
+    minimum: 100,
+    maximum: fabricApiSurfaceLimits.maxTimeoutMs,
+    default: fabricApiSurfaceLimits.defaultTimeoutMs,
+  },
+};
 
 const resourcepackPngLimitNames = [
   "maxInputBytes",
@@ -2058,6 +2091,35 @@ export const tools: ToolDefinition[] = [
         gameVersion: { type: "string", minLength: 1, maxLength: 128 },
         limit: { type: "number", minimum: 1, maximum: 50, default: 10 },
         timeoutMs: { type: "number", minimum: 100, maximum: 30000, default: 5000 },
+      },
+      required: ["gameVersion"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_fabric_api_types",
+    description:
+      "Search Fabric API rendering types in official Maven fatjavadoc search indexes for an exact Minecraft game version. Selects the highest matching Fabric API artifact, not Maven latest/release. Covers rendering/renderer packages only, not Mojang client internals or runtime compatibility.",
+    inputSchema: {
+      type: "object",
+      properties: fabricApiSearchProperties,
+      required: ["gameVersion"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "search_fabric_api_members",
+    description:
+      "Search declared Fabric API rendering members in official Maven fatjavadoc search indexes for an exact Minecraft game version. Preserves overload fragments and nested type names; does not infer inherited members, full Java declarations, Mojang client internals, or runtime compatibility.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ...fabricApiSearchProperties,
+        type: { type: "string", minLength: 1, maxLength: 512 },
+        kind: {
+          type: "string",
+          enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
+        },
       },
       required: ["gameVersion"],
       additionalProperties: false,
@@ -4495,6 +4557,56 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
           ...(typeof args.timeoutMs === "number" ? { timeoutMs: args.timeoutMs } : {}),
         }),
+      );
+    }
+    if (name === "search_fabric_api_types" || name === "search_fabric_api_members") {
+      const members = name === "search_fabric_api_members";
+      const searchArgs = plainDataRecordArg(
+        input,
+        name,
+        new Set([
+          "gameVersion",
+          "query",
+          "packagePrefix",
+          "limit",
+          "timeoutMs",
+          ...(members ? ["type", "kind"] : []),
+        ]),
+      );
+      if (typeof searchArgs.gameVersion !== "string") {
+        throw new Error(`${name} requires string gameVersion`);
+      }
+      const options: FabricApiMemberSearchOptions = { gameVersion: searchArgs.gameVersion };
+      for (const key of ["query", "packagePrefix", "type"] as const) {
+        if (hasOwnArg(searchArgs, key)) {
+          const value = searchArgs[key];
+          if (typeof value !== "string") throw new Error(`${name} ${key} must be a string`);
+          options[key] = value;
+        }
+      }
+      for (const key of ["limit", "timeoutMs"] as const) {
+        if (hasOwnArg(searchArgs, key)) {
+          const value = searchArgs[key];
+          if (typeof value !== "number") throw new Error(`${name} ${key} must be a number`);
+          options[key] = value;
+        }
+      }
+      if (hasOwnArg(searchArgs, "kind")) {
+        const kind = searchArgs.kind;
+        if (
+          kind !== "constructor" &&
+          kind !== "method" &&
+          kind !== "field-or-enum-constant" &&
+          kind !== "unknown"
+        ) {
+          throw new Error(
+            `${name} kind must be constructor, method, field-or-enum-constant, or unknown`,
+          );
+        }
+        options.kind = kind;
+      }
+      return text(
+        members ? await searchFabricApiMembers(options) : await searchFabricApiTypes(options),
       );
     }
     if (name === "resolve_velocity_toolchain") {

@@ -40,7 +40,7 @@ subcommands in its table.
 | [`datapack`](#minecraft-skills-datapack) | Data pack authoring guidance, commands, schemas, vanilla data, migration, and project validation. |
 | [`resourcepack`](#minecraft-skills-resourcepack) | Resource pack guidance, assets, models, images, audio, translations, migration, and validation. |
 | [`plugin`](#minecraft-skills-plugin) | Paper authoring and API lookup, plus Paper and Velocity plugin JAR preflight. |
-| [`fabric`](#minecraft-skills-fabric) | Fabric toolchain lookup and local mod inspection. |
+| [`fabric`](#minecraft-skills-fabric) | Fabric toolchain lookup, rendering API search, and local mod inspection. |
 | [`velocity`](#minecraft-skills-velocity) | Current Velocity toolchain lookup. |
 | [`modrinth`](#minecraft-skills-modrinth) | Public project/version metadata, compatibility intersections, and modpack validation. |
 | [`server`](#minecraft-skills-server) | Local server configuration validation. |
@@ -225,6 +225,26 @@ thread safety, or Folia safety. Resolve a matching authoring plan before turning
 | --- | --- |
 | `toolchain <game-version>` | Resolve the maintained mapping mode and Loom plugin, plus bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta. |
 | `validate-mod <file.jar>` | Validate bounded current `fabric.mod.json` schema-v1 and archive structure offline. |
+
+#### `minecraft-skills fabric api`
+
+| Subcommand | Purpose |
+| --- | --- |
+| `types <game-version>` | Search official Fabric API rendering Javadoc type names with `--query`, `--package-prefix`, and `--limit`. |
+| `members <game-version>` | Search declared rendering members with `--query`, `--type`, `--kind`, `--package-prefix`, and `--limit`. |
+
+Both searches resolve the highest Fabric API numeric version with the exact Minecraft suffix,
+verify the official fat Javadoc archive, and return bounded structured evidence without prose.
+Use `--timeout-ms` to set the shared network deadline (default 15,000 ms, maximum 60,000 ms).
+The default result limit is 50 and the maximum is 200. Only Fabric API's `client.rendering.v1`
+and `client.renderer.v1` package trees are covered; Mojang client APIs, inherited members, behavior,
+return types, generic bounds, and parameter names remain unverified. See
+[the source and parsing boundaries](SOURCE_STRATEGY.md#fabric-api-rendering-surface).
+
+```sh
+minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
+minecraft-skills fabric api members 26.2 --type ArmorRenderer --query register --kind method
+```
 
 #### `minecraft-skills fabric mods`
 
@@ -444,6 +464,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `get_paper_plugin_data`, `get_paper_api_reference`, `get_paper_api_index`, `compare_paper_api` | Resolve Paper support, dependencies, documentation, and package/class indexes. |
 | `get_paper_api_surface`, `search_paper_types`, `search_paper_members`, `compare_paper_api_surface` | Inspect Paper type/member surfaces and changes. Type-scoped member searches include declarations from known supertypes when Javadocs hierarchy coverage is available and report the declaring type plus every searched type. |
 | `search_paper_events` | Find Paper/Bukkit event candidates. |
+| `search_fabric_api_types`, `search_fabric_api_members` | Search exact-version official Fabric API rendering type/member indexes with artifact, POM, and checksum provenance; excludes Mojang client surface and behavior. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |
 | `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata, including Fabric mapping/Loom policy, or validate supplied Fabric mod metadata. |
 | `search_modrinth_projects`, `list_modrinth_project_versions`, `resolve_modrinth_compatibility`, `get_modrinth_resource`, `validate_modrinth_pack` | Search public Modrinth metadata, intersect compatibility labels, or validate supplied pack metadata. |

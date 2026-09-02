@@ -18,7 +18,8 @@ Use `minecraft-skills source report`, `minecraft-skills source tiers`, or MCP
 `get_source_report`/`list_source_tiers` to inspect the machine-readable form of this policy.
 
 - `canonical-official`: Mojang version metadata and downloads served through Piston endpoints,
-  official jars, generated reports, PaperMC API, Paper Javadocs, and Fabric Meta version metadata.
+  official jars, generated reports, PaperMC API, Paper Javadocs, Fabric Meta version metadata, and
+  FabricMC's official Maven metadata and Fabric API Javadoc search indexes.
   Use this for version-specific facts that generated files or code depend on.
 - `derived-bundled`: minecraft-skills indexes generated from official or accepted structured data,
   such as command paths, vanilla paths, observed JSON surfaces, and Paper API surfaces.
@@ -86,6 +87,38 @@ Live responses are treated as untrusted input despite the official source: reque
 response bytes and entry counts are bounded, required fields and numeric ranges are validated, and
 the Loader-provided Intermediary pairing is cross-checked when the Intermediary endpoint returns a
 candidate.
+
+## Fabric API Rendering Surface
+
+Fabric API type and member searches read only fixed URLs under FabricMC's official
+[`maven.fabricmc.net` repository](https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/).
+The aggregate artifact's `maven-metadata.xml` is filtered by the exact `+<gameVersion>` suffix;
+the highest numeric `major.minor.patch` core wins. The global Maven `latest` and `release` fields
+are reported but never used to select a Minecraft-specific version. No nearest-version fallback
+or `latest` game-version alias is inferred.
+
+The exact aggregate POM establishes rendering-related dependency coordinates. The matching
+`fatjavadoc.jar` and its official SHA-256 sidecar establish the archive identity; the checksum is
+an integrity check from the same HTTPS origin, not an independent signature or trust source.
+Bounded requests reject redirects, unexpected content types, invalid UTF-8, excess bytes and
+timeouts. XML declarations/entities beyond the basic UTF-8 declaration and executable search-index
+JavaScript are rejected; search-index assignments are parsed as JSON, never evaluated. The shared
+ZIP reader validates central/local consistency and selected-entry CRCs, with archive, entry-count,
+declared expansion, and pre-inflation search-index byte ceilings.
+
+Only `net.fabricmc.fabric.api.client.rendering.v1` and
+`net.fabricmc.fabric.api.client.renderer.v1`, including dot-delimited subpackages, are indexed.
+Results retain exact artifact URLs, checksum, retrieval time, POM module coordinates, Java owners,
+display labels, archive-relative Javadoc paths, and decoded Javadoc URL signatures (`u`) when
+present. Nested type dots and overload-specific signatures are preserved. No Javadoc prose or
+binary content is returned or written to disk.
+
+This is name and URL-signature evidence from a selected published artifact, not a guarantee of
+runtime behavior, full signatures with return types/generics/parameter names, inherited members,
+Java visibility, deprecation status, complete dependency compatibility, or rendering correctness.
+The aggregate indexes do not associate symbols with Maven modules, so per-symbol module ownership
+is not inferred. Mojang client classes and mappings remain outside this surface; names used only
+as Fabric API parameter types do not establish the corresponding Mojang class API.
 
 ## Fabric Client GameTest Visual Evidence
 

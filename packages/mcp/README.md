@@ -158,6 +158,8 @@ client API surface.
 - `analyze_minecraft_log`
 - `validate_fabric_mod`
 - `get_fabric_toolchain`
+- `search_fabric_api_types`
+- `search_fabric_api_members`
 - `resolve_velocity_toolchain`
 - `search_modrinth_projects`
 - `list_modrinth_project_versions`
@@ -361,6 +363,19 @@ default. `additionalDownloadHosts` explicitly extends it and produces non-offici
 `resolve_velocity_toolchain` performs the same bounded official PaperMC Maven/docs lookup as the
 CLI. Its provenance distinguishes retrieved, unavailable, and malformed sources, and its result
 explicitly declines to infer Minecraft compatibility from Velocity versions.
+
+`search_fabric_api_types` and `search_fabric_api_members` accept required `gameVersion`, optional
+`query`, `packagePrefix`, `limit` (1–200, default 50), and `timeoutMs` (100–60,000, default 15,000).
+Member searches also accept exact declaring `type` and `kind` (`constructor`, `method`,
+`field-or-enum-constant`, or `unknown`). They fetch only fixed official Fabric Maven URLs,
+select the highest numeric Fabric API version with the exact Minecraft suffix, and verify the
+fat Javadoc SHA-256 plus ZIP/search-index structure before returning bounded names, labels,
+Javadoc URL signatures, POM coordinates, and artifact provenance. Results cover only
+`net.fabricmc.fabric.api.client.rendering.v1` and `net.fabricmc.fabric.api.client.renderer.v1`
+including subpackages. They do not return prose or binaries, write a disk cache, establish
+runtime rendering behavior, or inspect Mojang client APIs. Signatures are Javadoc URL fragments,
+not full Java declarations or parameter-name evidence. See
+[source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-rendering-surface).
 
 `validate_fabric_mod` accepts parsed `fabric.mod.json` data or bounded JSON text plus optional
 `archiveEntries`; it never accepts binary JAR content. Input arrays, path strings, JSON complexity,
