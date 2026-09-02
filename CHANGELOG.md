@@ -13,6 +13,10 @@ All notable changes to this project are documented here.
 - Paper member searches scoped to a type now include declarations from known supertypes when the
   generated Javadocs surface has overview-tree hierarchy coverage. Results retain each declaration's
   owning type and report both the coverage level and searched types.
+- Filled the missing exact-version Fabric API rendering type and declared-member surface across
+  Catalog, CLI, and MCP using official Maven candidates, aggregate POM coordinates, and
+  SHA-256-verified fat Javadoc indexes. Searches retain nested types and overload-specific URL
+  signatures without claiming Mojang client API, full Java declaration, or rendering behavior coverage.
 
 ## 0.1.7 - 2026-09-02
 

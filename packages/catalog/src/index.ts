@@ -174,6 +174,7 @@ import {
 } from "./schemas.js";
 
 export * from "./blockbenchProject.js";
+export * from "./fabricApiSurface.js";
 export * from "./fabricMeta.js";
 export * from "./fabricMod.js";
 export * from "./javaClassArchive.js";
@@ -1977,6 +1978,16 @@ function isFabricToolchainDiscoveryQuery(query: string): boolean {
   }
   const hasMinecraftOrFabricContext = /\b(minecraft|fabric)\b/.test(normalized);
   return hasMinecraftOrFabricContext && /\b(yarn|toolchain)\b/.test(normalized);
+}
+
+function isFabricRenderingApiDiscoveryQuery(query: string): boolean {
+  const normalized = normalizeSearchText(query);
+  return (
+    /\bfabric\b/.test(normalized) &&
+    /\b(render|renderer|rendering|levelrenderevents|armorrenderer|hudelementregistry)\b/.test(
+      normalized,
+    )
+  );
 }
 
 function isServerPropertiesValidationQuery(query: string): boolean {
@@ -6115,7 +6126,11 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
       );
     }
   }
-  if (!searchDomain || searchDomain === "paper-plugin") {
+  if (
+    searchDomain === "paper-plugin" ||
+    (!searchDomain &&
+      (!isFabricRenderingApiDiscoveryQuery(task) || /\b(paper|bukkit|spigot)\b/.test(lower)))
+  ) {
     const paperApiTask = /(paper|plugin|event|listener|bukkit|spigot|api|method|class|member)/.test(
       lower,
     );
@@ -6173,6 +6188,16 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     add(
       `fabric toolchain ${JSON.stringify(version)}`,
       "Look up official live Fabric Loader, Intermediary, and Yarn candidates for the target game version.",
+    );
+  }
+  if (!searchDomain && isFabricRenderingApiDiscoveryQuery(task)) {
+    add(
+      `fabric api types ${JSON.stringify(version)}`,
+      "Find exact-version Fabric rendering type names in official Javadoc indexes, then narrow with --query.",
+    );
+    add(
+      `fabric api members ${JSON.stringify(version)}`,
+      "Verify declaring types and overload-specific Javadoc URL signatures; narrow with --type and --query. Mojang client APIs and rendering behavior remain outside this lookup.",
     );
   }
   if (!searchDomain && isVelocityToolchainDiscoveryQuery(task)) {
@@ -6909,6 +6934,22 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
       score: dedicatedToolRouteScore,
       matches: ["Fabric Loader", "Intermediary", "Yarn", "official Fabric Meta v2"],
       lookup: `fabric toolchain ${JSON.stringify(version)}`,
+    });
+  }
+
+  if (!options.domain && isFabricRenderingApiDiscoveryQuery(query)) {
+    addCrossResult(results, {
+      surface: "fabric-api-rendering",
+      domain: "minecraft",
+      kind: "live-javadoc-search",
+      title: "Fabric API rendering types and declared members",
+      score: dedicatedToolRouteScore,
+      matches: [
+        "Fabric client rendering API",
+        "exact-version Javadoc URL signatures",
+        "official Fabric Maven",
+      ],
+      lookup: `fabric api types ${JSON.stringify(version)}`,
     });
   }
 

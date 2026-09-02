@@ -5413,6 +5413,43 @@ describe("catalog", () => {
     expect(contextualYarn.results.some((entry) => entry.surface === "fabric-meta")).toBe(true);
   });
 
+  it("routes Fabric client rendering API discovery to bounded versioned Javadoc searches", () => {
+    const query = "Fabric client rendering API for world player head rendering";
+    const search = searchAll({ version: "26.2", query });
+    expect(search.results[0]).toMatchObject({
+      surface: "fabric-api-rendering",
+      lookup: 'fabric api types "26.2"',
+    });
+    const suggestions = suggestMinecraftLookups({ version: "26.2", task: query });
+    const commands = suggestions.suggestedTools.map((entry) => entry.tool);
+    expect(commands).toContain('fabric api types "26.2"');
+    expect(commands).toContain('fabric api members "26.2"');
+    expect(commands.some((command) => command.startsWith("plugin paper"))).toBe(false);
+    expect(
+      searchAll({ version: "26.2", query: "Paper rendering API" }).results.some(
+        (entry) => entry.surface === "fabric-api-rendering",
+      ),
+    ).toBe(false);
+    expect(
+      searchAll({ version: "26.2", query, domain: "paper-plugin" }).results.some(
+        (entry) => entry.surface === "fabric-api-rendering",
+      ),
+    ).toBe(false);
+  });
+
+  it("retains Paper suggestions when Fabric rendering discovery explicitly compares platforms", () => {
+    for (const task of [
+      "Compare Paper and Fabric rendering APIs",
+      "Compare Bukkit and Fabric rendering APIs for a resourcepack",
+      "Compare Spigot and Fabric rendering APIs for a datapack",
+    ]) {
+      const suggestions = suggestMinecraftLookups({ version: "26.2", task });
+      expect(
+        suggestions.suggestedTools.some((entry) => entry.tool.startsWith("plugin paper types")),
+      ).toBe(true);
+    }
+  });
+
   it("discovers bounded server.properties validation without domain false positives", () => {
     const search = searchAll({
       version: "1.21.11",

@@ -223,6 +223,8 @@ minecraft-skills plugin paper validate-jar ./build/libs/example.jar --max-archiv
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar
 minecraft-skills plugin velocity validate-jar ./build/libs/example.jar --target-java 26
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
+minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
+minecraft-skills fabric api members 26.2 --type ArmorRenderer --query register --kind method
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
 minecraft-skills fabric mods inventory ./server/mods
@@ -441,6 +443,20 @@ Meta v2 API. It prefers upstream `stable` entries without treating that flag as 
 compatibility guarantee. Generated tuples only combine entries listed for the same game version;
 they are not a separately published Fabric Meta guarantee. The command bounds returned candidates
 and reports versions without Yarn as incomplete instead of guessing.
+
+`fabric api types` and `fabric api members` search bounded official Fabric API rendering Javadoc
+indexes for one exact Minecraft version. Selection ignores Maven's global `latest` / `release`
+and chooses the highest numeric version with the exact game-version suffix. The POM, SHA-256,
+ZIP structure, and index CRCs are verified before results are returned. Filters are `--query`
+(case-insensitive substring), `--package-prefix` (within the two covered package trees), and,
+for members, exact `--type` and `--kind`. Results default to 50 with a 200 maximum;
+`--timeout-ms` defaults to 15,000 with a 60,000 maximum shared across all requests.
+
+Results contain exact artifact provenance, rendering-related POM coordinates, names, owners,
+display labels and Javadoc URL signatures, not full Java declarations, prose, behavior, inherited
+members, or Mojang client API evidence. No file is written. Empty query matches succeed with
+`totalMatches: 0`; an absent exact version or invalid/unavailable source returns exit code 1.
+See [source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-rendering-surface).
 
 `minecraft search "Fabric Client GameTest visual evidence"` returns guidance for stable case IDs,
 bounded readiness, full-frame and runtime-bounds crop evidence, explicit compare versus

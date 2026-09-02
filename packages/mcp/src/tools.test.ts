@@ -151,6 +151,53 @@ function testJar(entries: Record<string, string>): Buffer {
   return Buffer.concat([...localParts, centralDirectory, end]);
 }
 
+function fabricApiFixtureFetch() {
+  const version = "0.159.0+26.2";
+  const packageName = "net.fabricmc.fabric.api.client.rendering.v1";
+  const metadata = `<metadata><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><versioning><latest>0.116.17+1.21.1</latest><release>0.116.17+1.21.1</release><versions><version>0.116.17+1.21.1</version><version>${version}</version></versions></versioning></metadata>`;
+  const pom = `<project><modelVersion>4.0.0</modelVersion><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><version>${version}</version><dependencies><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-rendering-v1</artifactId><version>25.3.3+515ac5339e</version></dependency><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-renderer-api-v1</artifactId><version>14.1.4+2b0d8a229e</version></dependency></dependencies></project>`;
+  const types = [
+    { p: packageName, l: "ArmorRenderer" },
+    { p: `${packageName}.level`, l: "LevelRenderEvents.BeforeBlockOutline" },
+  ];
+  const members = [
+    {
+      p: packageName,
+      c: "ArmorRenderer",
+      l: "register(Renderer)",
+      u: "register(net.minecraft.client.renderer.Renderer)",
+    },
+    {
+      p: packageName,
+      c: "ArmorRenderer",
+      l: "register(Renderer)",
+      u: "register(net.fabricmc.example.Renderer)",
+    },
+  ];
+  const archive = testJar({
+    "type-search-index.js": `typeSearchIndex = ${JSON.stringify(types)};updateSearchResults();`,
+    "member-search-index.js": `memberSearchIndex = ${JSON.stringify(members)};updateSearchResults();`,
+  });
+  const checksum = createHash("sha256").update(archive).digest("hex");
+  return vi.fn(async (url: string, _init?: RequestInit) => {
+    if (url.endsWith("maven-metadata.xml")) {
+      return new Response(metadata, { headers: { "Content-Type": "text/xml" } });
+    }
+    if (url.endsWith(".pom")) {
+      return new Response(pom, { headers: { "Content-Type": "application/octet-stream" } });
+    }
+    if (url.endsWith(".sha256")) {
+      return new Response(checksum, { headers: { "Content-Type": "text/plain" } });
+    }
+    if (url.endsWith("-fatjavadoc.jar")) {
+      return new Response(new Uint8Array(archive), {
+        headers: { "Content-Type": "application/java-archive" },
+      });
+    }
+    throw new Error(`Unexpected Fabric API fixture URL: ${url}`);
+  });
+}
+
 const serverMetadataRestorers: Array<() => void> = [];
 
 function cacheServerJar(version: string, entries: Record<string, string>): void {
@@ -283,6 +330,8 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("search_all");
     expect(tools.map((tool) => tool.name)).toContain("validate_fabric_mod");
     expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
+    expect(tools.map((tool) => tool.name)).toContain("search_fabric_api_types");
+    expect(tools.map((tool) => tool.name)).toContain("search_fabric_api_members");
     expect(tools.map((tool) => tool.name)).toContain("resolve_velocity_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
     expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
@@ -3982,6 +4031,163 @@ describe("MCP tools", () => {
       "maxMetadataNodes",
       "maxMetadataStringBytes",
     ]);
+  });
+
+  it("exposes bounded Fabric API search schemas", () => {
+    const types = tools.find((tool) => tool.name === "search_fabric_api_types");
+    const members = tools.find((tool) => tool.name === "search_fabric_api_members");
+    for (const tool of [types, members]) {
+      expect(tool?.inputSchema.required).toEqual(["gameVersion"]);
+      expect(tool?.inputSchema.additionalProperties).toBe(false);
+      expect(tool?.inputSchema.properties.limit).toEqual({
+        type: "integer",
+        minimum: 1,
+        maximum: 200,
+        default: 50,
+      });
+      expect(tool?.inputSchema.properties.timeoutMs).toEqual({
+        type: "integer",
+        minimum: 100,
+        maximum: 60000,
+        default: 15000,
+      });
+    }
+    expect(types?.inputSchema.properties).not.toHaveProperty("type");
+    expect(types?.inputSchema.properties).not.toHaveProperty("kind");
+    expect(members?.inputSchema.properties.kind).toEqual({
+      type: "string",
+      enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
+    });
+  });
+
+  it("calls search_fabric_api_types with exact-version rendering filters", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await callMinecraftSkillsTool("search_fabric_api_types", {
+      gameVersion: "26.2",
+      query: "BeforeBlockOutline",
+      packagePrefix: "net.fabricmc.fabric.api.client.rendering.v1.level",
+      limit: 1,
+      timeoutMs: 1000,
+    });
+    expect(result.isError, result.content[0]?.text).not.toBe(true);
+    const output = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(output.fabricApiVersion).toBe("0.159.0+26.2");
+    expect(output.search).toMatchObject({
+      query: "BeforeBlockOutline",
+      packagePrefix: "net.fabricmc.fabric.api.client.rendering.v1.level",
+      limit: 1,
+      returned: 1,
+    });
+    expect(output.types[0].name).toBe("LevelRenderEvents.BeforeBlockOutline");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(
+      fetchMock.mock.calls.every(([url]) => url.startsWith("https://maven.fabricmc.net/")),
+    ).toBe(true);
+  });
+
+  it("calls search_fabric_api_members with overload-aware member filters", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await callMinecraftSkillsTool("search_fabric_api_members", {
+      gameVersion: "26.2",
+      query: "register",
+      type: "ArmorRenderer",
+      kind: "method",
+      packagePrefix: "net.fabricmc.fabric.api.client.rendering.v1",
+      limit: 1,
+      timeoutMs: 1000,
+    });
+    expect(result.isError, result.content[0]?.text).not.toBe(true);
+    const output = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(output.search).toMatchObject({
+      query: "register",
+      type: "ArmorRenderer",
+      kind: "method",
+      limit: 1,
+      packagePrefix: "net.fabricmc.fabric.api.client.rendering.v1",
+      totalMatches: 2,
+      returned: 1,
+      truncated: true,
+    });
+    expect(output.members[0].signatureSource).toBe("url-fragment");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([
+    {},
+    { gameVersion: 26.2 },
+    { gameVersion: "26.2", query: 1 },
+    { gameVersion: "26.2", query: " " },
+    { gameVersion: "26.2", packagePrefix: false },
+    { gameVersion: "26.2", packagePrefix: "net.minecraft" },
+    { gameVersion: "26.2", limit: "1" },
+    { gameVersion: "26.2", limit: 1.5 },
+    { gameVersion: "26.2", limit: 201 },
+    { gameVersion: "26.2", timeoutMs: "1000" },
+    { gameVersion: "26.2", timeoutMs: 99 },
+    { gameVersion: "26.2", source: "https://example.com/" },
+  ])("rejects invalid Fabric API MCP search input before fetching: %j", async (input) => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    for (const name of ["search_fabric_api_types", "search_fabric_api_members"]) {
+      const result = await callMinecraftSkillsTool(name, input);
+      expect(result.isError).toBe(true);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid Fabric API member fields and type-only extra fields", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    for (const fields of [{ type: 1 }, { kind: "class" }, { kind: null }, { type: " " }]) {
+      const result = await callMinecraftSkillsTool("search_fabric_api_members", {
+        gameVersion: "26.2",
+        ...fields,
+      });
+      expect(result.isError).toBe(true);
+    }
+    for (const fields of [{ type: "ArmorRenderer" }, { kind: "method" }]) {
+      const result = await callMinecraftSkillsTool("search_fabric_api_types", {
+        gameVersion: "26.2",
+        ...fields,
+      });
+      expect(result.isError).toBe(true);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "search_fabric_api_types",
+    "search_fabric_api_members",
+  ])("reports %s upstream failures", async (name) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("unavailable", { status: 503 })),
+    );
+    const result = await callMinecraftSkillsTool(name, { gameVersion: "26.2" });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("503");
+  });
+
+  it.each([
+    "search_fabric_api_types",
+    "search_fabric_api_members",
+  ])("forwards the %s deadline", async (name) => {
+    let signal: AbortSignal | null | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        signal = init?.signal;
+        return new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+        });
+      }),
+    );
+    const result = await callMinecraftSkillsTool(name, { gameVersion: "26.2", timeoutMs: 100 });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain("timed out after 100 milliseconds");
+    expect(signal?.aborted).toBe(true);
   });
 
   it("calls get_fabric_toolchain", async () => {

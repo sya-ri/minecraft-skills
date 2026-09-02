@@ -226,6 +226,53 @@ function createStoredZip(entries: Record<string, string | Uint8Array>): Buffer {
   return Buffer.concat([...localParts, centralDirectory, end]);
 }
 
+function fabricApiFixtureFetch() {
+  const version = "0.159.0+26.2";
+  const packageName = "net.fabricmc.fabric.api.client.rendering.v1";
+  const metadata = `<metadata><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><versioning><latest>0.116.17+1.21.1</latest><release>0.116.17+1.21.1</release><versions><version>0.116.17+1.21.1</version><version>${version}</version></versions></versioning></metadata>`;
+  const pom = `<project><modelVersion>4.0.0</modelVersion><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><version>${version}</version><dependencies><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-rendering-v1</artifactId><version>25.3.3+515ac5339e</version></dependency><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-renderer-api-v1</artifactId><version>14.1.4+2b0d8a229e</version></dependency></dependencies></project>`;
+  const types = [
+    { p: packageName, l: "ArmorRenderer" },
+    { p: `${packageName}.level`, l: "LevelRenderEvents.BeforeBlockOutline" },
+  ];
+  const members = [
+    {
+      p: packageName,
+      c: "ArmorRenderer",
+      l: "register(Renderer)",
+      u: "register(net.minecraft.client.renderer.Renderer)",
+    },
+    {
+      p: packageName,
+      c: "ArmorRenderer",
+      l: "register(Renderer)",
+      u: "register(net.fabricmc.example.Renderer)",
+    },
+  ];
+  const archive = createStoredZip({
+    "type-search-index.js": `typeSearchIndex = ${JSON.stringify(types)};updateSearchResults();`,
+    "member-search-index.js": `memberSearchIndex = ${JSON.stringify(members)};updateSearchResults();`,
+  });
+  const checksum = createHash("sha256").update(archive).digest("hex");
+  return vi.fn(async (url: string, _init?: RequestInit) => {
+    if (url.endsWith("maven-metadata.xml")) {
+      return new Response(metadata, { headers: { "Content-Type": "text/xml" } });
+    }
+    if (url.endsWith(".pom")) {
+      return new Response(pom, { headers: { "Content-Type": "application/octet-stream" } });
+    }
+    if (url.endsWith(".sha256")) {
+      return new Response(checksum, { headers: { "Content-Type": "text/plain" } });
+    }
+    if (url.endsWith("-fatjavadoc.jar")) {
+      return new Response(new Uint8Array(archive), {
+        headers: { "Content-Type": "application/java-archive" },
+      });
+    }
+    throw new Error(`Unexpected Fabric API fixture URL: ${url}`);
+  });
+}
+
 function javaU2(value: number): Buffer {
   const result = Buffer.alloc(2);
   result.writeUInt16BE(value);
@@ -2381,6 +2428,127 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain(
       "https://spigot-event-list.s7a.dev/api/search/events",
     );
+  });
+
+  it("searches Fabric API types through the grouped CLI route", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await capture([
+      "fabric",
+      "api",
+      "types",
+      "26.2",
+      "--query",
+      "BeforeBlockOutline",
+      "--package-prefix",
+      "net.fabricmc.fabric.api.client.rendering.v1.level",
+      "--limit",
+      "1",
+      "--timeout-ms",
+      "1000",
+    ]);
+    expect(result.code, result.stderr.join("\n")).toBe(0);
+    const output = JSON.parse(result.stdout.join("\n"));
+    expect(output.fabricApiVersion).toBe("0.159.0+26.2");
+    expect(output.search).toMatchObject({
+      query: "BeforeBlockOutline",
+      packagePrefix: "net.fabricmc.fabric.api.client.rendering.v1.level",
+      returned: 1,
+      limit: 1,
+    });
+    expect(output.types[0].name).toBe("LevelRenderEvents.BeforeBlockOutline");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(
+      fetchMock.mock.calls.every(([url]) => url.startsWith("https://maven.fabricmc.net/")),
+    ).toBe(true);
+    expect(output.source.fatJavadocUrl).toContain("0.159.0%2B26.2-fatjavadoc.jar");
+  });
+
+  it("searches Fabric API members with type, kind, query and result limits", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await capture([
+      "fabric",
+      "api",
+      "members",
+      "26.2",
+      "--query",
+      "register",
+      "--type",
+      "ArmorRenderer",
+      "--kind",
+      "method",
+      "--package-prefix",
+      "net.fabricmc.fabric.api.client.rendering.v1",
+      "--limit",
+      "1",
+      "--timeout-ms",
+      "1000",
+    ]);
+    expect(result.code, result.stderr.join("\n")).toBe(0);
+    const output = JSON.parse(result.stdout.join("\n"));
+    expect(output.search).toMatchObject({
+      query: "register",
+      type: "ArmorRenderer",
+      kind: "method",
+      limit: 1,
+      packagePrefix: "net.fabricmc.fabric.api.client.rendering.v1",
+      totalMatches: 2,
+      returned: 1,
+      truncated: true,
+    });
+    expect(output.members[0].signatureSource).toBe("url-fragment");
+    expect(output.members[0].signature).toContain("register(");
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([
+    ["types"],
+    ["types", "26.2", "extra"],
+    ["types", "26.2", "--query"],
+    ["types", "26.2", "--query", "a", "--query", "b"],
+    ["types", "26.2", "--type", "ArmorRenderer"],
+    ["types", "26.2", "--source", "https://example.com/"],
+    ["types", "26.2", "--limit", "1.5"],
+    ["types", "26.2", "--limit", "201"],
+    ["types", "26.2", "--timeout-ms", "99"],
+    ["types", "26.2", "--package-prefix", "net.minecraft"],
+    ["members", "26.2", "--kind", "class"],
+    ["members", "26.2", "--type", " "],
+  ])("rejects invalid Fabric API CLI arguments before fetching: %j", async (...args) => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await capture(["fabric", "api", ...args]);
+    expect(result.code).toBe(1);
+    expect(result.stderr.join("\n")).not.toBe("");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["types", "members"])("reports Fabric API %s upstream failures", async (route) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("unavailable", { status: 503 })),
+    );
+    const result = await capture(["fabric", "api", route, "26.2"]);
+    expect(result.code).toBe(1);
+    expect(result.stderr.join("\n")).toContain("503");
+  });
+
+  it.each(["types", "members"])("forwards the Fabric API %s deadline", async (route) => {
+    let signal: AbortSignal | null | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url: string, init?: RequestInit) => {
+        signal = init?.signal;
+        return new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener("abort", () => reject(new Error("aborted")), { once: true });
+        });
+      }),
+    );
+    const result = await capture(["fabric", "api", route, "26.2", "--timeout-ms", "100"]);
+    expect(result.code).toBe(1);
+    expect(result.stderr.join("\n")).toContain("timed out after 100 milliseconds");
+    expect(signal?.aborted).toBe(true);
   });
 
   it("looks up a bounded Fabric toolchain tuple", async () => {

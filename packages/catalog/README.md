@@ -90,6 +90,8 @@ import {
   searchAll,
   searchCommands,
   searchDatapackSchema,
+  searchFabricApiMembers,
+  searchFabricApiTypes,
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperMembers,
@@ -391,6 +393,17 @@ const anyMinecraftMatches = searchAll({ version: "26.2", query: "bundle item mod
 const fabricToolchain = await getFabricToolchainCompatibility({
   gameVersion: "1.21.11",
   limit: 10,
+});
+const fabricRenderTypes = await searchFabricApiTypes({
+  gameVersion: "26.2",
+  query: "LevelRenderEvents",
+  limit: 10,
+});
+const fabricRenderMembers = await searchFabricApiMembers({
+  gameVersion: "26.2",
+  type: "ArmorRenderer",
+  query: "register",
+  kind: "method",
 });
 const velocityToolchain = await resolveVelocityToolchain({ limit: 10, timeoutMs: 5000 });
 const fabricMetadata = validateFabricMod({
@@ -723,6 +736,23 @@ to one dotted value; `initialization-failed` requires explicit `Could not initia
 The result does not infer dependencies, classpaths, JAR contents, shading, ownership, fixes, or root
 causes. `classLoadingFailureTotal`, retained and omitted counts, `maxClassLoadingFailures`, and
 `exceededLimits` expose truncation explicitly.
+
+`searchFabricApiTypes` and `searchFabricApiMembers` resolve the highest numeric Fabric API release
+with an exact `+gameVersion` Maven suffix and search only the `client.rendering.v1` and
+`client.renderer.v1` package trees. `gameVersion` is required; no latest/nearest game version is
+guessed. `query` is case-insensitive substring matching across names, owners, labels, and decoded
+Javadoc URL signatures as applicable. `packagePrefix` has dot-delimited package boundaries;
+member `type` is an exact simple/nested or qualified declaring type. `limit` is 1–200 (default 50)
+and `timeoutMs` is 100–60,000 (default 15,000) across all fixed official requests.
+
+The selected aggregate POM and SHA-256-verified fat Javadoc archive provide provenance. Results
+include source URLs, exact artifact/module coordinates, checksum, retrieval time, coverage, and
+archive-relative Javadoc paths. `signature` decodes the index's `u` fragment if present, otherwise
+retains `l`; `signatureSource` identifies which. It is not a full Java declaration: return types,
+generic bounds, parameter names, inherited members, Java visibility, deprecation, behavior, and
+Mojang client APIs are not inferred. Module coordinates are POM dependencies, not per-symbol
+ownership. No prose, binary bytes, or disk cache is returned. See
+[source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-rendering-surface).
 
 `validateFabricMod` checks bounded structural rules for current `fabric.mod.json` schema v1 data.
 Without `archiveEntries` it proves metadata structure only; caller-supplied entries additionally

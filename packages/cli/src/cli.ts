@@ -31,6 +31,7 @@ import {
   defaultServerAccessListValidationLimits,
   downloadJavaPlayerTexture,
   explainPackPath,
+  type FabricApiMemberSearchOptions,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
@@ -130,6 +131,8 @@ import {
   searchCatalog,
   searchCommands,
   searchDatapackSchema,
+  searchFabricApiMembers,
+  searchFabricApiTypes,
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperEvents,
@@ -279,6 +282,68 @@ function readOption(args: string[], name: string, fallback: string): string {
     return fallback;
   }
   return args[index + 1] ?? fallback;
+}
+
+function parseFabricApiSearchArgs(args: string[], members: boolean): FabricApiMemberSearchOptions {
+  const command = `fabric api ${members ? "members" : "types"}`;
+  const allowed = new Set(["--query", "--package-prefix", "--limit", "--timeout-ms"]);
+  if (members) {
+    allowed.add("--type");
+    allowed.add("--kind");
+  }
+  const values = new Map<string, string>();
+  const positionals: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === undefined) continue;
+    if (!arg.startsWith("-")) {
+      positionals.push(arg);
+      continue;
+    }
+    if (!allowed.has(arg)) throw new Error(`${command} received unknown option: ${arg}`);
+    if (values.has(arg)) throw new Error(`${command} option must not be repeated: ${arg}`);
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`${command} ${arg} requires a value`);
+    }
+    values.set(arg, value);
+    index += 1;
+  }
+  const gameVersion = positionals[0];
+  if (positionals.length !== 1 || !gameVersion) {
+    throw new Error(`${command} requires exactly one <game-version>`);
+  }
+  const options: FabricApiMemberSearchOptions = { gameVersion };
+  for (const [flag, key] of [
+    ["--query", "query"],
+    ["--package-prefix", "packagePrefix"],
+    ["--type", "type"],
+  ] as const) {
+    const value = values.get(flag);
+    if (value !== undefined) options[key] = value;
+  }
+  for (const [flag, key] of [
+    ["--limit", "limit"],
+    ["--timeout-ms", "timeoutMs"],
+  ] as const) {
+    const value = values.get(flag);
+    if (value !== undefined) options[key] = readIntegerArg(value, `${command} ${flag}`);
+  }
+  const kind = values.get("--kind");
+  if (kind !== undefined) {
+    if (
+      kind !== "constructor" &&
+      kind !== "method" &&
+      kind !== "field-or-enum-constant" &&
+      kind !== "unknown"
+    ) {
+      throw new Error(
+        `${command} --kind must be constructor, method, field-or-enum-constant, or unknown`,
+      );
+    }
+    options.kind = kind;
+  }
+  return options;
 }
 
 function parsePlayerTextureDownloadArgs(args: string[]): {
@@ -856,6 +921,13 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
 
   const groupedCommand = `${group} ${subcommand}`;
+  if (group === "fabric" && subcommand === "api") {
+    const [apiSubcommand, ...apiRest] = rest;
+    if (apiSubcommand === "types" || apiSubcommand === "members") {
+      return [`fabric-api-${apiSubcommand}`, ...apiRest];
+    }
+    return argv;
+  }
   if (group === "fabric" && subcommand === "mods") {
     const [modsSubcommand, ...modsRest] = rest;
     if (modsSubcommand === "inventory") {
@@ -1160,6 +1232,8 @@ const flatCommandSuggestions: Record<string, string> = {
   "paper-validate-jar": "plugin paper validate-jar",
   "velocity-validate-jar": "plugin velocity validate-jar",
   "fabric-toolchain": "fabric toolchain",
+  "fabric-api-types": "fabric api types",
+  "fabric-api-members": "fabric api members",
   "velocity-toolchain": "velocity toolchain",
   "server-validate-properties": "server validate-properties",
   "fabric-validate-mod": "fabric validate-mod",
@@ -1457,6 +1531,8 @@ Grouped commands:
   minecraft-skills plugin paper validate-jar <file.jar> [--max-archive-bytes bytes]
   minecraft-skills plugin velocity validate-jar <file.jar> [--target-java 25] [--max-archive-bytes bytes]
   minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
+  minecraft-skills fabric api types <game-version> [--query text] [--package-prefix package.name] [--limit 50] [--timeout-ms 15000]
+  minecraft-skills fabric api members <game-version> [--query text] [--package-prefix package.name] [--type name] [--kind kind] [--limit 50] [--timeout-ms 15000]
   minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
   minecraft-skills fabric mods inventory <directory>
   minecraft-skills fabric mods diff <left-directory> <right-directory>
@@ -1537,6 +1613,8 @@ Command reference:
                  Look up bounded Loader, Intermediary, and Yarn candidates from official Fabric Meta.
   fabric validate-mod
                  Check bounded structural rules for current schema v1 and JAR evidence offline.
+  fabric api types|members
+                 Search the exact-version Fabric API rendering surface from official Maven fatjavadoc indexes.
   fabric mods inventory
                  Inventory direct lowercase .jar regular files with bounded stable reads and hashes;
                  invalid, rejected, duplicate, or incomplete results exit 1.
@@ -3272,6 +3350,16 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       );
       printJson(output, result);
       return result.comparisonComplete && !result.hasDifferences ? 0 : 1;
+    }
+
+    if (command === "fabric-api-types" || command === "fabric-api-members") {
+      const members = command === "fabric-api-members";
+      const options = parseFabricApiSearchArgs(args, members);
+      printJson(
+        output,
+        members ? await searchFabricApiMembers(options) : await searchFabricApiTypes(options),
+      );
+      return 0;
     }
 
     if (command === "fabric-toolchain") {
