@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- Cross-search now preserves available results when downloadable data pack schema or Paper API
+  indexes are absent, with explicit source-availability gaps and opt-in fetch guidance. Unsupported
+  Paper versions do not substitute latest API facts; searches remain offline and read-only.
+
 ## 0.1.8 - 2026-09-03
 
 ### Added

@@ -110,6 +110,19 @@ and answer in the user's requested language.
 | `validate-access-list <file>` | Validate canonical whitelist, operator, and ban-list JSON without returning private values. |
 | `validate-mixin-config <file>` | Preflight a bounded Mixin configuration and optional archive-entry metadata. |
 
+`minecraft search-all` / MCP `search_all` remains read-only and offline. Missing downloadable
+data pack schema or Paper API indexes no longer prevent searches of available sources. Results
+include `searchComplete: false`, structured `unavailableSurfaces`, and human-readable `gaps`.
+For a manifest-listed download, an entry's `fetch` object can be passed to MCP `fetch_data`;
+the corresponding CLI recovery is `minecraft-skills data fetch <kind> --version <version>`.
+Fetch explicitly and retry to include that index. An unsupported Paper version is reported without
+substituting another version's API. Corrupt indexed data still raises an error.
+
+`searchComplete` concerns the availability of sources within the selected domain, including the
+optional community asset cache; it does not certify full Minecraft knowledge or client behavior.
+`truncated` independently indicates result limits, not missing sources. An empty partial result is
+not evidence that a type, member, or behavior does not exist.
+
 See [Performance Time-Series Analysis](../packages/cli/README.md#performance-time-series-analysis)
 for the input contract and [Mixin Configuration Validation](MIXIN_CONFIG_VALIDATION.md) for that
 validator's exact scope.
