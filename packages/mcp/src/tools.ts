@@ -140,7 +140,7 @@ import {
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperEvents,
-  searchPaperMembers,
+  searchPaperMembersWithData,
   searchPaperTypes,
   searchRegistryEntries,
   searchResourcepackModelPaths,
@@ -2642,13 +2642,19 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_paper_members",
     description:
-      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version. Type-scoped searches include members declared by known supertypes when the surface has Javadocs hierarchy coverage, preserve each member's declaring type, and report the searched types and coverage.",
+      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version. Type-scoped searches include known supertypes with Javadocs hierarchy coverage and preserve declaring types. Read-only by default: explicitly set fetchMissing:true to download a missing, exact-version manifest-verified surface into the local cache, then search. No Javadocs prose, deprecation, or behavioral guarantees.",
     inputSchema: {
       type: "object",
       properties: {
         version: { type: "string", default: "latest" },
         type: { type: "string" },
         packageName: { type: "string" },
+        fetchMissing: {
+          type: "boolean",
+          default: false,
+          description:
+            "Explicitly allow downloading the missing exact-version surface into the local cache (manifest size and SHA-256 verified; 30-second deadline). Does not refresh existing data.",
+        },
         kind: {
           type: "string",
           enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
@@ -5367,7 +5373,12 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       if (typeof args.limit === "number") {
         searchOptions.limit = args.limit;
       }
-      return text(searchPaperMembers(searchOptions));
+      return text(
+        await searchPaperMembersWithData({
+          ...searchOptions,
+          fetchMissing: args.fetchMissing === true,
+        }),
+      );
     }
     if (name === "compare_paper_api_surface") {
       if (typeof args.from !== "string" || typeof args.to !== "string") {

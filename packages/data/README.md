@@ -142,6 +142,9 @@ const cleaned = cleanMojangServerJar("26.2");
 
 Downloaded data is cached under the platform cache directory for the manifest data version. Set
 `MINECRAFT_SKILLS_CACHE_DIR` to override that location.
+`fetchData` bounds every downloaded entry by its manifest byte size and verifies exact size and
+SHA-256 before writing it. Its optional `timeoutMs` (1–120000) bounds each entry's request and body
+consumption; existing callers do not acquire an implicit deadline.
 External resource pack asset references are cached under `minecraft-assets/<version>` in the same
 cache root.
 `scanCachedMojangServerJarText` reads a cached server jar from disk once, validates ZIP metadata and

@@ -71,6 +71,8 @@ export type FetchDataOptions = {
   baseUrl?: string;
   force?: boolean;
   fetch?: typeof fetch;
+  /** Optional per-entry download deadline, including response body consumption. */
+  timeoutMs?: number;
 };
 
 export type FetchDataResult = {
@@ -679,9 +681,8 @@ async function fetchBytes(
     }
     if (controller?.signal.aborted && reader) {
       void reader.cancel().catch(() => undefined);
-    } else {
-      reader?.releaseLock();
     }
+    reader?.releaseLock();
   }
 }
 
@@ -758,6 +759,14 @@ function errorMessage(error: unknown): string {
 }
 
 export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDataResult> {
+  if (
+    options.timeoutMs !== undefined &&
+    (!Number.isSafeInteger(options.timeoutMs) ||
+      options.timeoutMs < 1 ||
+      options.timeoutMs > 120_000)
+  ) {
+    throw new Error("fetchData timeoutMs must be an integer between 1 and 120000");
+  }
   const manifest = getDataManifest();
   const entries = matchingEntries(options);
   if (entries.length === 0) {
@@ -768,12 +777,25 @@ export async function fetchData(options: FetchDataOptions = {}): Promise<FetchDa
   const skipped: FetchDataResult["skipped"] = [];
 
   for (const entry of entries) {
+    if (!Number.isSafeInteger(entry.size) || entry.size < 0) {
+      throw new Error(`Invalid manifest size for ${entry.path}`);
+    }
     const output = cachedPath(entry.path, manifest.dataVersion);
     if (!options.force && existsSync(output)) {
       skipped.push({ path: entry.path, file: output, reason: "already-cached" });
       continue;
     }
-    const bytes = await fetchBytes(entryUrl(entry, options), fetchImpl);
+    const bytes = await fetchBytes(
+      entryUrl(entry, options),
+      fetchImpl,
+      entry.size,
+      options.timeoutMs,
+    );
+    if (bytes.length !== entry.size) {
+      throw new Error(
+        `Size mismatch for ${entry.path}: expected ${entry.size} bytes, got ${bytes.length}`,
+      );
+    }
     const actualSha256 = sha256(bytes);
     if (actualSha256 !== entry.sha256) {
       throw new Error(

@@ -95,6 +95,7 @@ import {
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperMembers,
+  searchPaperMembersWithData,
   searchPaperTypes,
   searchResourcepackModelPaths,
   searchRegistryEntries,
@@ -682,6 +683,15 @@ const communityDatasets = listCommunityDatasets();
 When the bundled Paper surface reports Javadocs overview-tree coverage, a type-scoped
 `searchPaperMembers` call also searches known supertypes. The result reports `searchedTypes` and
 `inheritanceCoverage`, while each member keeps its declaring `qualifiedTypeName`.
+
+Paper surfaces remain downloadable rather than included in the npm package. `searchPaperMembers`
+is synchronous and read-only. To explicitly allow a missing surface to be cached before searching,
+use `await searchPaperMembersWithData({ version: "26.2", type: "JavaPlugin", contains: "onDisable",
+fetchMissing: true })`. This downloads only the resolved version's single manifest entry, verifies
+its exact byte size and SHA-256, and applies a 30-second download deadline. Without `fetchMissing:
+true`, the async helper also stays read-only. Existing data is never refreshed or replaced on lookup
+failure, unsupported versions do not fall back, and failed downloads do not produce member facts.
+The results remain search-index metadata, not deprecation details or Javadocs behavioral prose.
 
 `getFabricToolchainCompatibility` reports the maintained `mappingMode`, `mappingsRequired`, and
 `loomPluginId` policy alongside live Fabric Meta candidates. Minecraft 26.1 and newer use the

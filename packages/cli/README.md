@@ -218,6 +218,7 @@ minecraft-skills plugin paper api-index 26.2
 minecraft-skills plugin paper api-surface 26.2
 minecraft-skills plugin paper types 26.2 --contains org.bukkit.entity.Player
 minecraft-skills plugin paper members 26.2 --type org.bukkit.entity.Player --contains sendMessage
+minecraft-skills plugin paper members 26.2 --type JavaPlugin --contains onDisable --fetch-missing
 minecraft-skills plugin paper compare-api 1.20.4 26.2
 minecraft-skills plugin paper compare-api-surface 26.2 26.2
 minecraft-skills plugin paper events "player join" --version 26.2
@@ -252,6 +253,12 @@ canonical Minecraft terms before passing the query. Keep exact identifiers, name
 paths, project titles, and content literals unchanged. Use the English terms only for the lookup and
 keep the user's requested response language. The CLI does not expand language-specific aliases or
 reject Unicode query values.
+
+`plugin paper members` is read-only unless `--fetch-missing` is explicitly supplied. This flag
+downloads only a missing exact-version surface into the local cache, checks manifest size and
+SHA-256, and bounds the download to 30 seconds. It does not refresh existing data or fall back to
+another version. The equivalent separate recovery command is
+`minecraft-skills data fetch paper-api-surface --version 26.2`, followed by the original lookup.
 
 `player-profile lookup-name` and `player-profile textures` send the supplied Java name or UUID to
 fixed Mojang services. They do not accept caller endpoints, headers, bodies, or cache paths and do

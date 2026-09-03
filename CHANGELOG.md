@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- Paper member lookups can explicitly download a missing exact-version surface with MCP
+  `fetchMissing: true` or CLI `--fetch-missing` before searching. Defaults stay read-only; downloads
+  verify manifest size and SHA-256 under a 30-second deadline without refreshing existing data or
+  falling back to another version. Corrected the standalone CLI data-fetch recovery command.
+
 ## 0.1.8 - 2026-09-03
 
 ### Added

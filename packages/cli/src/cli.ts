@@ -136,7 +136,7 @@ import {
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperEvents,
-  searchPaperMembers,
+  searchPaperMembersWithData,
   searchPaperTypes,
   searchRegistryEntries,
   searchResourcepackModelPaths,
@@ -1525,7 +1525,8 @@ Grouped commands:
   minecraft-skills plugin paper info
   minecraft-skills plugin paper api|api-index|api-surface [version]
   minecraft-skills plugin paper types [version] [--package package.name] [--contains text] [--limit 50]
-  minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50]
+  minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50] [--fetch-missing]
+    Read-only by default; --fetch-missing allows one exact-version, verified surface download into the local cache.
                         Type filters include members declared by known supertypes when hierarchy coverage is available.
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills plugin paper validate-jar <file.jar> [--max-archive-bytes bytes]
@@ -3207,7 +3208,13 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     }
 
     if (command === "paper-members") {
-      const requested = positionalArgs(args)[0] ?? "latest";
+      const [requested = "latest", ...extraPositionals] = positionalArgsWithOptions(args, {
+        flags: ["--fetch-missing"],
+        values: ["--type", "--package", "--contains", "--kind", "--limit"],
+      });
+      if (extraPositionals.length > 0) {
+        throw new Error("paper-members accepts at most one version");
+      }
       const searchOptions: PaperMemberSearchOptions = {
         version: requested,
         limit: Number(readOption(args, "--limit", "50")),
@@ -3235,7 +3242,13 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }
         searchOptions.kind = kind;
       }
-      printJson(output, searchPaperMembers(searchOptions));
+      printJson(
+        output,
+        await searchPaperMembersWithData({
+          ...searchOptions,
+          fetchMissing: args.includes("--fetch-missing"),
+        }),
+      );
       return 0;
     }
 

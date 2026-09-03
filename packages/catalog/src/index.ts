@@ -941,6 +941,12 @@ export type PaperMemberSearchOptions = {
   limit?: number;
 };
 
+export type PaperMemberSearchWithDataOptions = PaperMemberSearchOptions & {
+  /** Explicitly allow downloading a missing surface into the local cache. Defaults to false. */
+  fetchMissing?: boolean;
+  fetch?: typeof fetch;
+};
+
 export type PaperMemberSearchResult = {
   version: string;
   inheritanceCoverage: "javadocs-overview-tree" | "declared-members-only";
@@ -3238,7 +3244,12 @@ function unavailableDataFileMessage(options: {
     base,
     `This data is downloadable.`,
     `In MCP, call fetch_data with {"kind":"${options.kind}","version":"${options.version}"}, then retry this lookup.`,
-    `In CLI, run minecraft-skills data fetch --kind ${options.kind} --version ${options.version}.`,
+    `In CLI, run minecraft-skills data fetch ${options.kind} --version ${options.version}.`,
+    ...(options.kind === "paper-api-surface"
+      ? [
+          "For member searches only, explicitly allow the download and retry with fetchMissing:true in MCP or --fetch-missing in CLI; the default lookup is read-only.",
+        ]
+      : []),
   ].join(" ");
 }
 
@@ -4260,6 +4271,38 @@ export function searchPaperMembers(
     truncated: matched.length > limit,
     members: matched.slice(0, limit).map((entry) => ({ ...entry })),
   };
+}
+
+/** Search locally by default; opt in to one exact-version manifest download before searching. */
+export async function searchPaperMembersWithData(
+  options: PaperMemberSearchWithDataOptions = {},
+): Promise<PaperMemberSearchResult> {
+  if (options.fetchMissing !== true) return searchPaperMembers(options);
+  normalizeLimit(options.limit, 50, 500);
+
+  const reference = getPaperApiReference(options.version ?? "latest");
+  const version = reference.requestedVersion;
+  const path = `java/paper-api-surfaces/${version}.json`;
+  if (reference.supported && !paperApiSurfaceCache.has(version) && !hasDataFile(path)) {
+    const entries = getDataManifest().downloadable.filter(
+      (entry) =>
+        entry.kind === "paper-api-surface" &&
+        entry.edition === "java" &&
+        entry.version === version &&
+        entry.path === path,
+    );
+    if (entries.length !== 1) {
+      throw new Error(`No unique downloadable Paper API surface for java ${version}`);
+    }
+    await fetchData({
+      kind: "paper-api-surface",
+      version,
+      path,
+      timeoutMs: 30_000,
+      ...(options.fetch ? { fetch: options.fetch } : {}),
+    });
+  }
+  return searchPaperMembers({ ...options, version });
 }
 
 function memberKey(entry: PaperApiMemberData): string {
