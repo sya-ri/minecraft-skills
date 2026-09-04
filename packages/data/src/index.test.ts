@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   cleanCachedData,
   fetchData,
@@ -1733,13 +1733,7 @@ describe("@minecraft-skills/data", () => {
   it("fetches manifest entries into the cache with sha256 verification", async () => {
     await withCacheDir(async () => {
       const body = readDataText("java/datapack-schema-surfaces/26.2.json").replaceAll("\r\n", "\n");
-      const fetchMock: typeof fetch = async (_input, _init) =>
-        ({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          arrayBuffer: async () => Buffer.from(body),
-        }) as unknown as Response;
+      const fetchMock: typeof fetch = async () => new Response(body);
 
       const result = await fetchData({
         kind: "datapack-schema-surface",
@@ -1771,13 +1765,11 @@ describe("@minecraft-skills/data", () => {
 
   it("rejects fetched bytes when sha256 verification fails", async () => {
     await withCacheDir(async () => {
-      const fetchMock: typeof fetch = async (_input, _init) =>
-        ({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          arrayBuffer: async () => Buffer.from("not the manifest payload"),
-        }) as unknown as Response;
+      const body = Buffer.from(
+        readDataText("java/datapack-schema-surfaces/26.2.json").replaceAll("\r\n", "\n"),
+      );
+      body[0] = 0;
+      const fetchMock: typeof fetch = async () => new Response(body);
 
       await expect(
         fetchData({
@@ -1789,6 +1781,61 @@ describe("@minecraft-skills/data", () => {
 
       expect(hasCachedDataFile("java/datapack-schema-surfaces/26.2.json")).toBe(false);
     });
+  });
+
+  it.each([
+    "declared-too-large",
+    "stream-too-large",
+    "truncated",
+  ])("rejects manifest download size mismatch (%s) without a cache write", async (failure) => {
+    await withCacheDir(async () => {
+      const path = "java/datapack-schema-surfaces/26.2.json";
+      const entry = getDataManifest().downloadable.find((candidate) => candidate.path === path);
+      if (!entry) throw new Error("Expected manifest fixture");
+      const response =
+        failure === "declared-too-large"
+          ? new Response("x", { headers: { "content-length": String(entry.size + 1) } })
+          : new Response(failure === "stream-too-large" ? Buffer.alloc(entry.size + 1) : "x");
+      await expect(
+        fetchData({ path, fetch: async () => response, timeoutMs: 1000 }),
+      ).rejects.toThrow(failure === "truncated" ? "Size mismatch" : "response exceeds");
+      expect(hasCachedDataFile(path)).toBe(false);
+      expect(listCachedDataFiles()).toEqual([]);
+    });
+  });
+
+  it.each(["headers", "body"])("bounds manifest download time while awaiting %s", async (phase) => {
+    await withCacheDir(async () => {
+      const path = "java/datapack-schema-surfaces/26.2.json";
+      const stalledBody = new Response(
+        new ReadableStream<Uint8Array>({ pull: () => new Promise<void>(() => {}) }),
+      );
+      const fetchMock = vi.fn<typeof fetch>(async () => {
+        if (phase === "headers") return new Promise<Response>(() => {});
+        return stalledBody;
+      });
+      await expect(fetchData({ path, fetch: fetchMock, timeoutMs: 10 })).rejects.toThrow(
+        "Fetch timed out",
+      );
+      expect(fetchMock.mock.calls[0]?.[1]?.signal?.aborted).toBe(true);
+      expect(stalledBody.body?.locked).toBe(false);
+      expect(hasCachedDataFile(path)).toBe(false);
+    });
+  });
+
+  it.each([
+    0,
+    -1,
+    120001,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    1.5,
+  ])("rejects invalid manifest download deadline %s before fetching", async (timeoutMs) => {
+    const fetchMock = vi.fn<typeof fetch>();
+    await expect(
+      fetchData({ kind: "paper-api-surface", version: "26.2", timeoutMs, fetch: fetchMock }),
+    ).rejects.toThrow("timeoutMs must be an integer");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("rejects a Mojang server jar response whose declared length exceeds the cache bound", async () => {

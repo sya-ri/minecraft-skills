@@ -2360,12 +2360,7 @@ describe("minecraft-skills CLI", () => {
       );
       vi.stubGlobal(
         "fetch",
-        vi.fn(async (_url: string) => ({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          arrayBuffer: async () => body,
-        })),
+        vi.fn(async (_url: string) => new Response(body)),
       );
 
       const result = await capture([

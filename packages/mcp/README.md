@@ -226,6 +226,13 @@ members declared by known supertypes. Responses preserve the declaring type and 
 `searchedTypes` and `inheritanceCoverage` so callers can distinguish inherited searches from
 declared-members-only data.
 
+Paper member lookups are read-only by default. If the requested surface is not installed, call
+`fetch_data` with `{"kind":"paper-api-surface","version":"26.2"}` and retry, or explicitly add
+`"fetchMissing":true` to `search_paper_members` to perform that download and search in one call.
+The opt-in writes only the resolved version's surface into the local cache, verifies the manifest
+byte size and SHA-256, and has a 30-second download deadline. It does not refresh existing data,
+fetch a neighboring version, or add deprecation/behavioral documentation beyond search-index facts.
+
 The profile tools send the supplied Java name or UUID only to fixed Mojang profile, session, and
 public-key services. They accept no caller URL, headers, body, or cache path and write no disk cache
 or application log. Their exact endpoints and response shapes are version-specific, undocumented
