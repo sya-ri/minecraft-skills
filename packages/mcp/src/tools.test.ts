@@ -3677,6 +3677,10 @@ describe("MCP tools", () => {
       limit: 80,
     });
     expect(search.content[0]?.text).toContain("resourcepack-models");
+    expect(JSON.parse(search.content[0]?.text ?? "{}")).toMatchObject({
+      searchComplete: expect.any(Boolean),
+      unavailableSurfaces: expect.any(Array),
+    });
 
     const datapack = await callMinecraftSkillsTool("find_datapack_entries", {
       version: "26.2",
