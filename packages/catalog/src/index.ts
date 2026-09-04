@@ -552,6 +552,13 @@ export type CrossSearchEntry = {
   lookup: string;
 };
 
+export type CrossSearchUnavailableSurface = {
+  surface: "datapack-schema" | "paper-api" | "minecraft-assets-cache";
+  reason: "not-available" | "unsupported-version" | "not-searchable";
+  /** Explicit recovery only; cross-search never downloads data. */
+  fetch?: { kind: string; version: string };
+};
+
 export type CrossSearchResults = {
   schemaVersion: 1;
   query: string;
@@ -560,6 +567,9 @@ export type CrossSearchResults = {
   domain?: "datapack" | "resourcepack" | "paper-plugin";
   limit: number;
   truncated: boolean;
+  /** Availability of selected indexed sources, not completeness of Minecraft knowledge. */
+  searchComplete: boolean;
+  unavailableSurfaces: CrossSearchUnavailableSurface[];
   results: CrossSearchEntry[];
   gaps: string[];
 };
@@ -6884,10 +6894,33 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
   const limit = normalizeLimit(options.limit, 20, 200);
   const results: CrossSearchEntry[] = [];
   const gaps: string[] = [];
+  const unavailableSurfaces: CrossSearchUnavailableSurface[] = [];
   let sourceTruncated = false;
   const discoveryTerm = primaryDiscoveryTerm(query);
   const include = (domain: DomainIdData | "minecraft") =>
     !options.domain || domain === options.domain || domain === "minecraft";
+  const available = (
+    surface: "datapack-schema" | "paper-api",
+    kind: string,
+    path: string,
+  ): boolean => {
+    if (hasDataFile(path)) return true;
+    const downloadable = getDataManifest().downloadable.some(
+      (entry) => entry.kind === kind && entry.version === version && entry.path === path,
+    );
+    unavailableSurfaces.push({
+      surface,
+      reason: "not-available",
+      ...(downloadable ? { fetch: { kind, version } } : {}),
+    });
+    gaps.push(
+      `${surface} is not available for ${edition} ${version}.` +
+        (downloadable
+          ? ` To include it, call fetch_data with ${JSON.stringify({ kind, version })}, or run minecraft-skills data fetch ${kind} --version ${version}, then retry.`
+          : " No matching download is listed in the data manifest."),
+    );
+    return false;
+  };
 
   if (!options.domain && isServerAccessListValidationQuery(query)) {
     addCrossResult(results, {
@@ -7085,7 +7118,15 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
         )} --exact ${JSON.stringify(entry.entryId)} --limit 1`,
       });
     }
-    const schema = flattenDatapackFields(getDatapackSchemaSurface(edition, version)).filter(
+    const schema = (
+      available(
+        "datapack-schema",
+        "datapack-schema-surface",
+        `${edition}/datapack-schema-surfaces/${version}.json`,
+      )
+        ? flattenDatapackFields(getDatapackSchemaSurface(edition, version))
+        : []
+    ).filter(
       (field) =>
         (field.kind.toLowerCase().includes(discoveryTerm) ||
           field.path.toLowerCase().includes(discoveryTerm)) &&
@@ -7180,17 +7221,27 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
           lookup: `resourcepack assets search ${version} --prefix ${JSON.stringify(path)} --limit 1`,
         });
       }
-    } catch (error) {
+    } catch {
+      unavailableSurfaces.push({ surface: "minecraft-assets-cache", reason: "not-searchable" });
       gaps.push(
-        `minecraft-assets cache is not searchable for ${version}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `minecraft-assets cache is not searchable for ${version}; bundled resourcepack indexes were still searched. To fetch the optional community index explicitly, call fetch_resourcepack_assets with ${JSON.stringify({ version, indexOnly: true })}, or run minecraft-skills resourcepack assets fetch ${version} --index-only, then retry.`,
       );
     }
   }
 
   if (include("paper-plugin")) {
-    const surface = getPaperApiSurface(version);
+    const supported = getPaperApiReference(version).supported;
+    if (!supported) {
+      unavailableSurfaces.push({ surface: "paper-api", reason: "unsupported-version" });
+      gaps.push(
+        `Paper API is not supported for ${version}; no other version's API facts were substituted.`,
+      );
+    }
+    const surface =
+      supported &&
+      available("paper-api", "paper-api-surface", `java/paper-api-surfaces/${version}.json`)
+        ? getPaperApiSurface(version)
+        : { types: [], members: [] };
     const types = surface.types.filter(
       (entry) =>
         (entry.name.toLowerCase().includes(discoveryTerm) ||
@@ -7261,6 +7312,8 @@ export function searchAll(options: CrossSearchOptions): CrossSearchResults {
     ...(options.domain ? { domain: options.domain } : {}),
     limit,
     truncated: sourceTruncated || sorted.length > limit,
+    searchComplete: unavailableSurfaces.length === 0,
+    unavailableSurfaces,
     results: sorted.slice(0, limit),
     gaps,
   };

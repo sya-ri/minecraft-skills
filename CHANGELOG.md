@@ -10,6 +10,9 @@ All notable changes to this project are documented here.
   `fetchMissing: true` or CLI `--fetch-missing` before searching. Defaults stay read-only; downloads
   verify manifest size and SHA-256 under a 30-second deadline without refreshing existing data or
   falling back to another version. Corrected the standalone CLI data-fetch recovery command.
+- Cross-search now preserves available results when downloadable data pack schema or Paper API
+  indexes are absent, with explicit source-availability gaps and opt-in fetch guidance. Unsupported
+  Paper versions do not substitute latest API facts; searches remain offline and read-only.
 
 ## 0.1.8 - 2026-09-03
 

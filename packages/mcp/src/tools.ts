@@ -1845,7 +1845,7 @@ export const tools: ToolDefinition[] = [
   },
   {
     name: "search_all",
-    description: `Search across Minecraft catalog guidance, datapack command/schema/path indexes, resourcepack path/model/asset indexes, and Paper API indexes. ${semanticSearchGuidance}`,
+    description: `Search across Minecraft catalog guidance, datapack command/schema/path indexes, resourcepack path/model/asset indexes, and Paper API indexes. Read-only: unavailable downloadable indexes are skipped, with searchComplete=false, unavailableSurfaces, and explicit fetch_data recovery guidance; no data is downloaded automatically. searchComplete describes indexed-source availability, not complete Minecraft behavior coverage. ${semanticSearchGuidance}`,
     inputSchema: {
       type: "object",
       properties: {

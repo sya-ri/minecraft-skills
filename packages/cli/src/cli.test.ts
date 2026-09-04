@@ -4528,6 +4528,10 @@ describe("minecraft-skills CLI", () => {
     ]);
     expect(searchAll.code).toBe(0);
     expect(searchAll.stdout.join("\n")).toContain("resourcepack-models");
+    expect(JSON.parse(searchAll.stdout.join("\n"))).toMatchObject({
+      searchComplete: expect.any(Boolean),
+      unavailableSurfaces: expect.any(Array),
+    });
 
     const datapack = await capture(["datapack", "find", "execute", "--limit", "5"]);
     expect(datapack.code).toBe(0);
