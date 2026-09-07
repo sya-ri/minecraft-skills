@@ -159,8 +159,10 @@ function fabricApiFixtureFetch() {
   const types = [
     { p: packageName, l: "ArmorRenderer" },
     { p: `${packageName}.level`, l: "LevelRenderEvents.BeforeBlockOutline" },
+    { p: "net.fabricmc.fabric.api.networking.v1", l: "NetworkingFixture" },
   ];
   const members = [
+    { p: "net.fabricmc.fabric.api.networking.v1", c: "NetworkingFixture", l: "registerPayload()" },
     {
       p: packageName,
       c: "ArmorRenderer",
@@ -4120,6 +4122,25 @@ describe("MCP tools", () => {
       type: "string",
       enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
     });
+  });
+
+  it("calls both Fabric API searches for public networking packages", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    for (const name of ["search_fabric_api_types", "search_fabric_api_members"]) {
+      const result = await callMinecraftSkillsTool(name, {
+        gameVersion: "26.2",
+        packagePrefix: "net.fabricmc.fabric.api.networking.v1",
+      });
+      expect(result.isError, result.content[0]?.text).not.toBe(true);
+      const output = JSON.parse(result.content[0]?.text ?? "{}");
+      expect(output.coverage.packagePrefixes).toEqual(["net.fabricmc.fabric.api"]);
+      expect(output.search.returned).toBe(1);
+      expect(output.modules).toEqual(output.renderingModules);
+      if (name === "search_fabric_api_types")
+        expect(output.types[0].name).toBe("NetworkingFixture");
+      else expect(output.members[0].name).toBe("registerPayload");
+    }
   });
 
   it("calls search_fabric_api_types with exact-version rendering filters", async () => {

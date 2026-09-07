@@ -398,12 +398,15 @@ Member searches also accept exact declaring `type` and `kind` (`constructor`, `m
 `field-or-enum-constant`, or `unknown`). They fetch only fixed official Fabric Maven URLs,
 select the highest numeric Fabric API version with the exact Minecraft suffix, and verify the
 fat Javadoc SHA-256 plus ZIP/search-index structure before returning bounded names, labels,
-Javadoc URL signatures, POM coordinates, and artifact provenance. Results cover only
-`net.fabricmc.fabric.api.client.rendering.v1` and `net.fabricmc.fabric.api.client.renderer.v1`
-including subpackages. They do not return prose or binaries, write a disk cache, establish
-runtime rendering behavior, or inspect Mojang client APIs. Signatures are Javadoc URL fragments,
+Javadoc URL signatures, POM coordinates, and artifact provenance. Results cover
+`net.fabricmc.fabric.api` and its dot-delimited subpackages, including rendering, networking,
+and GameTest. `packagePrefix` can select that root or any subpackage; omitted filters search the
+whole scope. Fabric implementation, Loader, and Mojang client packages are excluded. `modules`
+returns the aggregate POM's Fabric API group dependencies; `renderingModules` preserves the old
+rendering-related subset, without attributing symbols to modules. They do not return prose or
+binaries, write a disk cache, or establish runtime behavior. Signatures are Javadoc URL fragments,
 not full Java declarations or parameter-name evidence. See
-[source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-rendering-surface).
+[source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-surface).
 
 `validate_fabric_mod` accepts parsed `fabric.mod.json` data or bounded JSON text plus optional
 `archiveEntries`; it never accepts binary JAR content. Input arrays, path strings, JSON complexity,

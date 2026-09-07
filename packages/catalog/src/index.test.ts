@@ -5451,6 +5451,36 @@ describe("catalog", () => {
     }
   });
 
+  it.each([
+    "Find Fabric API networking members for custom payload registration",
+    "Find Fabric client GameTest keyboard methods",
+    "Search Fabric API type signatures",
+  ])("discovers public Fabric API searches beyond rendering: %s", (task) => {
+    const search = searchAll({ version: "26.2", query: task });
+    expect(search.results[0]).toMatchObject({
+      surface: "fabric-api-rendering",
+      title: "Public Fabric API types and declared members",
+      lookup: 'fabric api types "26.2"',
+    });
+    const suggestions = suggestMinecraftLookups({ version: "26.2", task });
+    const commands = suggestions.suggestedTools.map((entry) => entry.tool);
+    expect(commands).toContain('fabric api types "26.2"');
+    expect(commands).toContain('fabric api members "26.2"');
+    expect(commands.some((command) => command.startsWith("plugin paper"))).toBe(false);
+  });
+
+  it.each([
+    "Paper networking APIs",
+    "Minecraft GameTest",
+    "Fabric Loader installation",
+  ])("does not route unrelated discovery to Fabric API: %s", (query) => {
+    expect(
+      searchAll({ version: "26.2", query }).results.some(
+        (entry) => entry.surface === "fabric-api-rendering",
+      ),
+    ).toBe(false);
+  });
+
   it("discovers bounded server.properties validation without domain false positives", () => {
     const search = searchAll({
       version: "1.21.11",

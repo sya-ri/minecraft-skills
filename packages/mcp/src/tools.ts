@@ -2101,7 +2101,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_fabric_api_types",
     description:
-      "Search Fabric API rendering types in official Maven fatjavadoc search indexes for an exact Minecraft game version. Selects the highest matching Fabric API artifact, not Maven latest/release. Covers rendering/renderer packages only, not Mojang client internals or runtime compatibility.",
+      "Search public Fabric API types under net.fabricmc.fabric.api in official Maven fatjavadoc search indexes for an exact Minecraft game version. Selects the highest matching Fabric API artifact, not Maven latest/release. Covers API subpackages including rendering, networking, and GameTest; excludes Fabric internals, Loader, Mojang client internals, and runtime compatibility.",
     inputSchema: {
       type: "object",
       properties: fabricApiSearchProperties,
@@ -2112,7 +2112,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_fabric_api_members",
     description:
-      "Search declared Fabric API rendering members in official Maven fatjavadoc search indexes for an exact Minecraft game version. Preserves overload fragments and nested type names; does not infer inherited members, full Java declarations, Mojang client internals, or runtime compatibility.",
+      "Search declared public Fabric API members under net.fabricmc.fabric.api in official Maven fatjavadoc search indexes for an exact Minecraft game version. Preserves overload fragments and nested type names across API subpackages; does not infer inherited members, full Java declarations, Fabric internals, Loader, Mojang client internals, or runtime compatibility.",
     inputSchema: {
       type: "object",
       properties: {

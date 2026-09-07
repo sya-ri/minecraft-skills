@@ -767,9 +767,10 @@ causes. `classLoadingFailureTotal`, retained and omitted counts, `maxClassLoadin
 `exceededLimits` expose truncation explicitly.
 
 `searchFabricApiTypes` and `searchFabricApiMembers` resolve the highest numeric Fabric API release
-with an exact `+gameVersion` Maven suffix and search only the `client.rendering.v1` and
-`client.renderer.v1` package trees. `gameVersion` is required; no latest/nearest game version is
-guessed. `query` is case-insensitive substring matching across names, owners, labels, and decoded
+with an exact `+gameVersion` Maven suffix and search `net.fabricmc.fabric.api` and its
+dot-delimited subpackages, including rendering, networking, and GameTest. `gameVersion` is required;
+no latest/nearest game version is guessed. `query` is case-insensitive substring matching across
+names, owners, labels, and decoded
 Javadoc URL signatures as applicable. `packagePrefix` has dot-delimited package boundaries;
 member `type` is an exact simple/nested or qualified declaring type. `limit` is 1–200 (default 50)
 and `timeoutMs` is 100–60,000 (default 15,000) across all fixed official requests.
@@ -779,9 +780,17 @@ include source URLs, exact artifact/module coordinates, checksum, retrieval time
 archive-relative Javadoc paths. `signature` decodes the index's `u` fragment if present, otherwise
 retains `l`; `signatureSource` identifies which. It is not a full Java declaration: return types,
 generic bounds, parameter names, inherited members, Java visibility, deprecation, behavior, and
-Mojang client APIs are not inferred. Module coordinates are POM dependencies, not per-symbol
-ownership. No prose, binary bytes, or disk cache is returned. See
-[source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-rendering-surface).
+Mojang client APIs are not inferred. `modules` contains all aggregate POM dependencies in the
+`net.fabricmc.fabric-api` group; `renderingModules` retains the rendering-related subset. Either
+array may be empty; neither attributes individual symbols to modules. Fabric implementation and
+Loader packages are excluded. No prose, binary bytes, or disk cache is returned.
+
+`FabricApiModule`, `FabricApiType`, and `FabricApiMember` are the general public types; the previous
+`FabricApiRenderingModule`, `FabricApiRenderingType`, and `FabricApiRenderingMember` names remain
+compatible aliases. `fabricApiRenderingPackagePrefixes` retains the original two rendering roots
+for callers that want to restrict searches, while `fabricApiPackagePrefixes` describes the expanded
+default scope. Existing input fields and `schemaVersion: 1` are retained. See
+[source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-surface).
 
 `validateFabricMod` checks bounded structural rules for current `fabric.mod.json` schema v1 data.
 Without `archiveEntries` it proves metadata structure only; caller-supplied entries additionally

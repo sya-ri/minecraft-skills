@@ -88,7 +88,9 @@ response bytes and entry counts are bounded, required fields and numeric ranges 
 the Loader-provided Intermediary pairing is cross-checked when the Intermediary endpoint returns a
 candidate.
 
-## Fabric API Rendering Surface
+<a id="fabric-api-rendering-surface"></a>
+
+## Fabric API Surface
 
 Fabric API type and member searches read only fixed URLs under FabricMC's official
 [`maven.fabricmc.net` repository](https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/).
@@ -97,8 +99,11 @@ the highest numeric `major.minor.patch` core wins. The global Maven `latest` and
 are reported but never used to select a Minecraft-specific version. No nearest-version fallback
 or `latest` game-version alias is inferred.
 
-The exact aggregate POM establishes rendering-related dependency coordinates. The matching
-`fatjavadoc.jar` and its official SHA-256 sidecar establish the archive identity; the checksum is
+The exact aggregate POM establishes dependency coordinates in the `net.fabricmc.fabric-api` group,
+returned in `modules`. `renderingModules` retains the rendering-related subset for compatibility.
+Neither list changes with the search filter or establishes per-symbol module ownership; absent
+groups or rendering dependencies produce empty arrays without requiring particular modules.
+The matching `fatjavadoc.jar` and its official SHA-256 sidecar establish the archive identity; the checksum is
 an integrity check from the same HTTPS origin, not an independent signature or trust source.
 Bounded requests reject redirects, unexpected content types, invalid UTF-8, excess bytes and
 timeouts. XML declarations/entities beyond the basic UTF-8 declaration and executable search-index
@@ -106,8 +111,11 @@ JavaScript are rejected; search-index assignments are parsed as JSON, never eval
 ZIP reader validates central/local consistency and selected-entry CRCs, with archive, entry-count,
 declared expansion, and pre-inflation search-index byte ceilings.
 
-Only `net.fabricmc.fabric.api.client.rendering.v1` and
-`net.fabricmc.fabric.api.client.renderer.v1`, including dot-delimited subpackages, are indexed.
+`net.fabricmc.fabric.api` and its dot-delimited subpackages are indexed. This includes public
+rendering, networking, and GameTest API packages present in the selected artifact, and excludes
+`net.fabricmc.fabric.impl`, Fabric Loader, Mojang packages, and similar-looking roots such as
+`net.fabricmc.fabric.api0`. The default search spans the whole root; an explicit `packagePrefix`
+can narrow to any covered subpackage, including the previously supported rendering trees.
 Results retain exact artifact URLs, checksum, retrieval time, POM module coordinates, Java owners,
 display labels, archive-relative Javadoc paths, and decoded Javadoc URL signatures (`u`) when
 present. Nested type dots and overload-specific signatures are preserved. No Javadoc prose or

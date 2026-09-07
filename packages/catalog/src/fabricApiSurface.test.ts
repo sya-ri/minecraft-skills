@@ -1,7 +1,15 @@
 import { createHash } from "node:crypto";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
+  type FabricApiMember,
+  type FabricApiModule,
+  type FabricApiRenderingMember,
+  type FabricApiRenderingModule,
+  type FabricApiRenderingType,
   type FabricApiSurfaceFetch,
+  type FabricApiType,
+  fabricApiPackagePrefixes,
+  fabricApiRenderingPackagePrefixes,
   fabricApiSurfaceLimits,
   searchFabricApiMembers,
   searchFabricApiTypes,
@@ -9,6 +17,8 @@ import {
 
 const renderingPackage = "net.fabricmc.fabric.api.client.rendering.v1";
 const rendererPackage = "net.fabricmc.fabric.api.client.renderer.v1";
+const networkingPackage = "net.fabricmc.fabric.api.networking.v1";
+const gametestPackage = "net.fabricmc.fabric.api.client.gametest";
 const apiVersion = "0.159.0+26.2";
 const metadata = `<metadata><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><versioning><latest>0.116.17+1.21.1</latest><release>0.116.17+1.21.1</release><versions><version>0.159.0+26.2</version><version>0.99.0+26.2</version><version>0.116.17+1.21.1</version><version>0.160.0+26.2.1</version><version>0.999.0+26.2-pre.1</version></versions></versioning></metadata>`;
 const pom = `<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><modelVersion>4.0.0</modelVersion><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><version>${apiVersion}</version><dependencies><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-rendering-v1</artifactId><version>25.3.3+515ac5339e</version><scope>compile</scope></dependency><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-renderer-api-v1</artifactId><version>14.1.4+2b0d8a229e</version><scope>compile</scope></dependency><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-model-loading-api-v1</artifactId><version>8.0.17+c80601bb9e</version><scope>compile</scope></dependency></dependencies></project>`;
@@ -16,7 +26,11 @@ const typeEntries = [
   { p: renderingPackage, l: "ArmorRenderer", k: "10" },
   { p: `${renderingPackage}.level`, l: "LevelRenderEvents.BeforeBlockOutline", k: "10" },
   { p: `${rendererPackage}.mesh`, l: "QuadView", k: "10" },
-  { p: `${renderingPackage}0`, l: "NotCovered" },
+  { p: networkingPackage, l: "NetworkingFixture" },
+  { p: gametestPackage, l: "ClientTestFixture" },
+  { p: "net.fabricmc.fabric.api0", l: "NotCovered" },
+  { p: "net.fabricmc.fabric.impl.networking", l: "NotImplementation" },
+  { p: "net.fabricmc.loader.api", l: "NotLoader" },
   { p: "net.minecraft.client.renderer", l: "NotMojang" },
   { l: "All Classes and Interfaces", u: "allclasses-index.html", k: "18" },
 ];
@@ -42,7 +56,11 @@ const memberEntries = [
   },
   { p: `${rendererPackage}.mesh`, c: "QuadView", l: "x(int)" },
   { p: `${rendererPackage}.mesh`, c: "QuadView", l: "DEFAULT", k: "2" },
-  { p: `${renderingPackage}0`, c: "NotCovered", l: "unexpected()" },
+  { p: networkingPackage, c: "NetworkingFixture", l: "registerPayload()" },
+  { p: gametestPackage, c: "ClientTestFixture", l: "pressKey(int)" },
+  { p: "net.fabricmc.fabric.api0", c: "NotCovered", l: "unexpected()" },
+  { p: "net.fabricmc.fabric.impl.networking", c: "NotImplementation", l: "unexpected()" },
+  { p: "net.fabricmc.loader.api", c: "NotLoader", l: "unexpected()" },
   { p: "net.minecraft.client.renderer", c: "NotMojang", l: "notIncluded()" },
 ];
 
@@ -136,7 +154,7 @@ function fixtureFetch(
   };
 }
 
-describe("Fabric API rendering surface", () => {
+describe("Fabric API surface", () => {
   afterEach(() => vi.useRealTimers());
 
   it("selects highest numeric exact suffix independently of metadata order, latest and release", async () => {
@@ -154,9 +172,13 @@ describe("Fabric API rendering surface", () => {
       matchingCandidateCount: 2,
       candidates: ["0.159.0+26.2", "0.99.0+26.2"],
     });
-    expect(result.coverage).toMatchObject({ typeCount: 3, memberCount: 6 });
+    expect(result.coverage).toMatchObject({
+      packagePrefixes: ["net.fabricmc.fabric.api"],
+      typeCount: 5,
+      memberCount: 8,
+    });
     expect(result.search).toMatchObject({
-      totalMatches: 3,
+      totalMatches: 5,
       returned: 1,
       truncated: true,
       limit: 1,
@@ -175,6 +197,100 @@ describe("Fabric API rendering surface", () => {
     ).toBe(true);
     expect(result.coverage.nonGuarantees.join(" ")).toContain("Mojang client");
     expect(JSON.stringify(result)).not.toContain("NotCovered");
+  });
+
+  it("searches public networking and GameTest indexes while excluding implementation and foreign namespaces", async () => {
+    const types = await searchFabricApiTypes({ gameVersion: "26.2" }, fixtureFetch());
+    expect(types.types.map((entry) => entry.name)).toEqual([
+      "ClientTestFixture",
+      "QuadView",
+      "ArmorRenderer",
+      "LevelRenderEvents.BeforeBlockOutline",
+      "NetworkingFixture",
+    ]);
+    const members = await searchFabricApiMembers(
+      { gameVersion: "26.2", packagePrefix: networkingPackage, query: "payload" },
+      fixtureFetch(),
+    );
+    expect(members.members.map((entry) => entry.name)).toEqual(["registerPayload"]);
+    const gameTest = await searchFabricApiMembers(
+      { gameVersion: "26.2", type: "ClientTestFixture", query: "pressKey" },
+      fixtureFetch(),
+    );
+    expect(gameTest.members[0]?.qualifiedTypeName).toBe(`${gametestPackage}.ClientTestFixture`);
+    const all = await searchFabricApiMembers(
+      { gameVersion: "26.2", packagePrefix: "net.fabricmc.fabric.api" },
+      fixtureFetch(),
+    );
+    expect(all.members).toHaveLength(8);
+    expect(all.members.some((entry) => entry.name === "unexpected")).toBe(false);
+    expect(all.members.some((entry) => entry.name === "notIncluded")).toBe(false);
+  });
+
+  it("preserves rendering type aliases, scope constants and filtered results", async () => {
+    expectTypeOf<FabricApiRenderingType>().toEqualTypeOf<FabricApiType>();
+    expectTypeOf<FabricApiRenderingMember>().toEqualTypeOf<FabricApiMember>();
+    expectTypeOf<FabricApiRenderingModule>().toEqualTypeOf<FabricApiModule>();
+    expect(fabricApiPackagePrefixes).toEqual(["net.fabricmc.fabric.api"]);
+    expect(fabricApiRenderingPackagePrefixes).toEqual([renderingPackage, rendererPackage]);
+    const results = await searchFabricApiTypes(
+      { gameVersion: "26.2", packagePrefix: renderingPackage },
+      fixtureFetch(),
+    );
+    expect(results.types.map((entry) => entry.name)).toEqual([
+      "ArmorRenderer",
+      "LevelRenderEvents.BeforeBlockOutline",
+    ]);
+  });
+
+  it("returns all Fabric API POM modules and keeps the legacy rendering subset", async () => {
+    const broaderPom = pom.replace(
+      "</dependencies>",
+      "<dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-networking-api-v1</artifactId><version>1.0.0+fixture</version></dependency><dependency><groupId>org.example</groupId><artifactId>foreign-library</artifactId><version>1.0.0</version></dependency></dependencies>",
+    );
+    const result = await searchFabricApiTypes(
+      { gameVersion: "26.2", packagePrefix: gametestPackage },
+      fixtureFetch({ pom: broaderPom }),
+    );
+    expect(result.modules.map((module) => module.artifactId)).toEqual([
+      "fabric-model-loading-api-v1",
+      "fabric-networking-api-v1",
+      "fabric-renderer-api-v1",
+      "fabric-rendering-v1",
+    ]);
+    expect(result.modules[1]?.coordinate).toBe(
+      "net.fabricmc.fabric-api:fabric-networking-api-v1:1.0.0+fixture",
+    );
+    expect(result.renderingModules.map((module) => module.artifactId)).toEqual([
+      "fabric-model-loading-api-v1",
+      "fabric-renderer-api-v1",
+      "fabric-rendering-v1",
+    ]);
+  });
+
+  it("accepts non-rendering artifacts and reports absent module groups as empty evidence", async () => {
+    const networkingOnlyPom = pom.replace(
+      /<dependencies>[\s\S]*<\/dependencies>/,
+      "<dependencies><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-networking-api-v1</artifactId><version>1.0.0+fixture</version></dependency></dependencies>",
+    );
+    for (const selectedPom of [
+      networkingOnlyPom,
+      pom.replace(/<dependencies>[\s\S]*<\/dependencies>/, "<dependencies/>"),
+    ]) {
+      const result = await searchFabricApiTypes(
+        { gameVersion: "26.2", query: "NetworkingFixture" },
+        fixtureFetch({
+          pom: selectedPom,
+          typeIndex: index("typeSearchIndex", [{ p: networkingPackage, l: "NetworkingFixture" }]),
+          memberIndex: index("memberSearchIndex", [
+            { p: networkingPackage, c: "NetworkingFixture", l: "registerPayload()" },
+          ]),
+        }),
+      );
+      expect(result.types[0]?.name).toBe("NetworkingFixture");
+      expect(result.renderingModules).toEqual([]);
+      expect(result.modules).toHaveLength(selectedPom === networkingOnlyPom ? 1 : 0);
+    }
   });
 
   it("retains overloaded mapped fragments, nested owner paths, and declaring-only evidence", async () => {
@@ -223,12 +339,23 @@ describe("Fabric API rendering surface", () => {
     );
     expect(empty.types).toEqual([]);
     expect(empty.search).toMatchObject({ totalMatches: 0, returned: 0, truncated: false });
-    await expect(
-      searchFabricApiTypes(
-        { gameVersion: "26.2", packagePrefix: `${renderingPackage}0` },
-        fixtureFetch(),
-      ),
-    ).rejects.toThrow("packagePrefix");
+    for (const packagePrefix of [
+      "net.fabricmc.fabric.api0",
+      "net.fabricmc.fabric.impl",
+      "net.fabricmc.loader.api",
+      "net.minecraft",
+    ]) {
+      const fetchMock = vi.fn<FabricApiSurfaceFetch>();
+      await expect(
+        searchFabricApiTypes({ gameVersion: "26.2", packagePrefix }, fetchMock),
+      ).rejects.toThrow("packagePrefix");
+      expect(fetchMock).not.toHaveBeenCalled();
+    }
+    const sibling = await searchFabricApiTypes(
+      { gameVersion: "26.2", packagePrefix: `${renderingPackage}0` },
+      fixtureFetch(),
+    );
+    expect(sibling.types).toEqual([]);
   });
 
   it.each([
@@ -274,7 +401,6 @@ describe("Fabric API rendering surface", () => {
 
   it.each([
     [pom.replace(apiVersion, "0.158.0+26.2"), "unexpected artifact"],
-    [pom.replace("fabric-rendering-v1", "fabric-unrelated-v1"), "both fabric-rendering-v1"],
     [pom.replace("fabric-model-loading-api-v1", "fabric-rendering-v1"), "duplicate dependency"],
     [pom.replace("25.3.3+515ac5339e", `$\{unsafe.version}`), "Maven token"],
   ])("rejects inconsistent aggregate POM %s", async (value, message) => {
@@ -364,7 +490,7 @@ describe("Fabric API rendering surface", () => {
           memberIndex: index("memberSearchIndex", []),
         }),
       ),
-    ).rejects.toThrow("no covered rendering");
+    ).rejects.toThrow("no covered Fabric API");
     await expect(
       searchFabricApiTypes(
         { gameVersion: "26.2" },
