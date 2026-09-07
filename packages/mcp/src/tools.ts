@@ -87,6 +87,7 @@ import {
   getVersionDetail,
   inspectBlockbenchProject,
   inspectResourcepackPngAlphaBounds,
+  javaTargetInspectionLimits,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -152,10 +153,12 @@ import {
   searchVanillaDatapackJsonFiles,
   searchVanillaPaths,
   suggestMinecraftLookups,
+  type ValidateJavaTargetMetadataOptions,
   type VanillaPathComparisonOptions,
   type VanillaPathSearchOptions,
   validateDatapackProject,
   validateFabricMod,
+  validateJavaTargetMetadata,
   validateMixinConfig,
   validateModrinthPack,
   validatePackFilesContent,
@@ -1777,6 +1780,51 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["config"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "inspect_java_targets",
+    description:
+      "Assess bounded caller-extracted classfile paths and major/minor versions for supplied Java 8–26 and preview settings. Select standard Multi-Release JAR entries and report unknown/incomplete evidence. Metadata only: does not read local paths, inspect archive/class bytes, execute code, inspect nested JARs, or prove JVM/linkage/Minecraft compatibility. For actual JAR bytes use CLI minecraft inspect-java-targets <jar> --java <release>.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        targetJavaRelease: { type: "integer", minimum: 8, maximum: 26 },
+        previewEnabled: {
+          type: "boolean",
+          description:
+            "Supplied runtime setting; actual JVM flags are not observed. Defaults to false.",
+        },
+        multiRelease: {
+          type: ["boolean", "null"],
+          description: "Extracted main-manifest Multi-Release setting; null when unknown.",
+        },
+        classEntriesComplete: {
+          type: "boolean",
+          description:
+            "Caller claim that classes covers every .class entry in this archive. Does not cover nested JARs or the runtime classpath.",
+        },
+        classes: {
+          type: "array",
+          maxItems: javaTargetInspectionLimits.maxClassEntries,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              path: {
+                type: "string",
+                minLength: 1,
+                maxLength: javaTargetInspectionLimits.maxEntryPathCharacters,
+              },
+              majorVersion: { type: ["integer", "null"], minimum: 0, maximum: 65535 },
+              minorVersion: { type: ["integer", "null"], minimum: 0, maximum: 65535 },
+            },
+            required: ["path", "majorVersion", "minorVersion"],
+          },
+        },
+      },
+      required: ["targetJavaRelease", "multiRelease", "classEntriesComplete", "classes"],
       additionalProperties: false,
     },
   },
@@ -3777,6 +3825,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
   }
   try {
+    if (name === "inspect_java_targets") {
+      return text(validateJavaTargetMetadata(input as ValidateJavaTargetMetadataOptions));
+    }
     if (name === "validate_velocity_plugin_jar") {
       return text(validateVelocityPluginArchiveMetadata(preflightVelocityPluginMcpInput(input)));
     }

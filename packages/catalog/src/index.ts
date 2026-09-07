@@ -228,6 +228,7 @@ export {
   javaPlayerTextureDownloadLimits,
   javaPlayerTextureSourceEvidence,
 } from "./javaPlayerTexture.js";
+export * from "./javaTargets.js";
 export * from "./minecraftLog.js";
 export * from "./minecraftPerformance.js";
 export * from "./mixinConfig.js";
@@ -6157,6 +6158,19 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     add(
       `minecraft block-state ${version} <block-id>`,
       "Read official block properties, allowed values, and default states; use registry search to select the block ID.",
+    );
+  }
+  if (
+    /\b(unsupportedclassversionerror|class[ -]?file versions?|bytecode targets?|java targets?|multi-release jar)\b/.test(
+      lower,
+    ) ||
+    (/\bjar\b/.test(lower) &&
+      /\b(java|jdk|jvm)\b/.test(lower) &&
+      /\b(compatib|release|version|preview|requir)/.test(lower))
+  ) {
+    add(
+      "minecraft inspect-java-targets <jar-file> --java <release> [--enable-preview]",
+      "Inspect all bounded JAR classfiles and standard multi-release selection for supplied Java and preview settings; this does not prove runtime or linkage compatibility.",
     );
   }
   if (

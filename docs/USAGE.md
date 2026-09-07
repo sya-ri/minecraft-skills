@@ -120,6 +120,7 @@ and answer in the user's requested language.
 | `registry-entries [version]` | Search official registry entry indexes. |
 | `compare-registry-entries <from> <to>` | Compare indexed entries and protocol IDs between versions. |
 | `analyze-log <file>` | Structure a bounded Minecraft log, crash report, exception chain, and explicit Mixin/class-loading evidence. |
+| `inspect-java-targets <jar> --java <release> [--enable-preview]` | Inspect every bounded classfile target and standard Multi-Release selection for supplied Java 8–26. |
 | `analyze-performance <file>` | Summarize a normalized performance time series and observed threshold violations. |
 | `explain-path [version] <path>` | Explain a data pack or resource pack path in version context. |
 | `suggest-lookups <task>` | Suggest the smallest lookup sequence for a task. |
@@ -501,6 +502,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `search_modrinth_projects`, `list_modrinth_project_versions`, `resolve_modrinth_compatibility`, `get_modrinth_resource`, `validate_modrinth_pack` | Search public Modrinth metadata, intersect compatibility labels, or validate supplied pack metadata. |
 | `validate_server_properties`, `validate_server_access_list`, `validate_mixin_config` | Validate server configuration and bounded Mixin evidence. |
 | `analyze_minecraft_log`, `analyze_minecraft_performance`, `inspect_blockbench_project` | Structure diagnostics or inspect bounded project metadata. |
+| `inspect_java_targets` | Assess bounded extracted classfile metadata for supplied Java and preview settings; no local file or binary access. |
 | `get_rcon_config_status`, `create_rcon_config`, `run_rcon_command` | Inspect, create, or use permission-gated RCON configuration. |
 | `lookup_java_player_profile`, `get_verified_java_player_textures` | Resolve profile identity and verified signed texture metadata. |
 

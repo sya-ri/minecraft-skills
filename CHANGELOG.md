@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added bounded whole-JAR Java classfile target inspection through Catalog and CLI, with a
+  metadata-only MCP counterpart. Results cover supplied Java 8–26, standard Multi-Release JAR
+  selection and exact-release preview constraints, distinguish binary from caller-supplied evidence,
+  and keep partial scans and nested JAR requirements explicit without claiming JVM compatibility.
 - Added bounded command-tree details from official 26.2 and 1.21.11 reports in Catalog, CLI, and MCP, including parser properties, executable markers, explicit redirects, and navigable child names.
 
 - Added versioned block property, allowed-value, explicit default-state, and paginated state

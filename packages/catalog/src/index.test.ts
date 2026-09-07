@@ -6737,6 +6737,24 @@ describe("catalog", () => {
     }
   });
 
+  it("routes classfile target and Multi-Release JAR questions to whole-JAR inspection", () => {
+    for (const task of [
+      "inspect an UnsupportedClassVersionError",
+      "check this plugin JAR Java version compatibility",
+      "inspect Multi-Release JAR selection",
+      "scan bytecode targets",
+    ]) {
+      expect(suggestMinecraftLookups({ task }).suggestedTools.map((entry) => entry.tool)).toContain(
+        "minecraft inspect-java-targets <jar-file> --java <release> [--enable-preview]",
+      );
+    }
+    expect(
+      suggestMinecraftLookups({ task: "find Java edition block models" })
+        .suggestedTools.map((entry) => entry.tool)
+        .join(" "),
+    ).not.toContain("inspect-java-targets");
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",
