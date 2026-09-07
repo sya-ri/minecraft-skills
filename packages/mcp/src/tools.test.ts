@@ -5025,6 +5025,65 @@ describe("MCP tools", () => {
     expect(calls).toBe(0);
   });
 
+  it("compares extracted platform inventories without promoting missing hashes or file claims", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const record = {
+      archiveName: "example.jar",
+      platform: "paper",
+      id: "Example",
+      version: "1.0",
+      sha256: null,
+      byteLength: 100,
+      metadataIssue: null,
+    };
+    const left = { schemaVersion: 1, scanComplete: true, records: [record] };
+    const right = {
+      schemaVersion: 1,
+      scanComplete: true,
+      records: [{ ...record, sha256: "a".repeat(64) }],
+    };
+    const result = await callMinecraftSkillsTool("compare_jar_inventories", { left, right });
+    expect(result.isError).not.toBe(true);
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      evidenceStrength: "supplied-metadata",
+      hasDifferences: null,
+      comparisonComplete: false,
+      counts: { changed: 0, unresolved: 1 },
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(
+      tools.find((entry) => entry.name === "compare_jar_inventories")?.inputSchema,
+    ).toMatchObject({ required: ["left", "right"], additionalProperties: false });
+    expect(
+      (
+        await callMinecraftSkillsTool("compare_jar_inventories", {
+          left,
+          right,
+          localPath: "plugins",
+        })
+      ).isError,
+    ).toBe(true);
+    expect(
+      (
+        await callMinecraftSkillsTool("compare_jar_inventories", {
+          left: { ...left, bytesVerified: true },
+          right,
+        })
+      ).isError,
+    ).toBe(true);
+    let calls = 0;
+    const accessor = await callMinecraftSkillsTool("compare_jar_inventories", {
+      get left() {
+        calls += 1;
+        return left;
+      },
+      right,
+    });
+    expect(accessor.isError).toBe(true);
+    expect(calls).toBe(0);
+  });
+
   it("analyzes bounded Minecraft logs while redacting retained sensitive values", async () => {
     const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: [

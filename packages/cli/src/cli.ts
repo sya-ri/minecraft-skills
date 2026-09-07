@@ -14,6 +14,7 @@ import {
   cleanMojangServerJar,
   compareCommands,
   compareDatapackSchema,
+  compareJarInventories,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -180,6 +181,7 @@ import { runEvaluationCli } from "./evaluationCli.js";
 import { diffFabricModDirectories, inventoryFabricModsDirectory } from "./fabricModDirectory.js";
 import { readFabricModJarFile } from "./fabricModJarFile.js";
 import { readBoundedPngFile } from "./filePrefix.js";
+import { inventoryJarDirectory } from "./jarDirectory.js";
 import { readBoundedMinecraftLog } from "./minecraftLogFile.js";
 import { readMinecraftPerformanceFile } from "./minecraftPerformanceFile.js";
 import { readMixinConfigCliFiles } from "./mixinConfigFiles.js";
@@ -926,6 +928,12 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
 
   const groupedCommand = `${group} ${subcommand}`;
+  if (group === "minecraft" && subcommand === "jars") {
+    const [jarSubcommand, ...jarRest] = rest;
+    if (jarSubcommand === "inventory" || jarSubcommand === "diff")
+      return [`jars-${jarSubcommand}`, ...jarRest];
+    return argv;
+  }
   if (group === "fabric" && subcommand === "api") {
     const [apiSubcommand, ...apiRest] = rest;
     if (apiSubcommand === "types" || apiSubcommand === "members") {
@@ -1223,6 +1231,8 @@ const flatCommandSuggestions: Record<string, string> = {
   "download-player-texture": "player-texture download",
   "analyze-minecraft-log": "minecraft analyze-log",
   "inspect-java-targets": "minecraft inspect-java-targets",
+  "jars-inventory": "minecraft jars inventory",
+  "jars-diff": "minecraft jars diff",
   "validate-resourcepack-translations": "resourcepack validate-translations",
   "inspect-wave-audio": "resourcepack sound inspect",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
@@ -1552,6 +1562,8 @@ Grouped commands:
   minecraft-skills fabric api members <game-version> [--query text] [--package-prefix package.name] [--type name] [--kind kind] [--limit 50] [--timeout-ms 15000]
   minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
   minecraft-skills fabric mods inventory <directory>
+  minecraft-skills minecraft jars inventory <directory>
+  minecraft-skills minecraft jars diff <left-directory> <right-directory>
   minecraft-skills fabric mods diff <left-directory> <right-directory>
   minecraft-skills velocity toolchain [--limit 10] [--timeout-ms 5000]
   minecraft-skills blockbench inspect-project <file.bbmodel> [--require-animation name]... [--require-group name]... [--limit 100]
@@ -3399,6 +3411,32 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       const result = validateFabricModJar(archive, { limits: { maxArchiveBytes } });
       printJson(output, result);
       return result.valid ? 0 : 1;
+    }
+
+    if (command === "jars-inventory" || command === "jars-diff") {
+      if (
+        args.some((arg) => arg.startsWith("-")) ||
+        args.length !== (command === "jars-inventory" ? 1 : 2)
+      ) {
+        throw new Error(
+          command === "jars-inventory"
+            ? "minecraft jars inventory requires exactly one local directory"
+            : "minecraft jars diff requires exactly two local directories",
+        );
+      }
+      const left = inventoryJarDirectory(args[0] ?? "");
+      if (command === "jars-inventory") {
+        printJson(output, left);
+        return left.complete ? 0 : 1;
+      }
+      const right = inventoryJarDirectory(args[1] ?? "");
+      const result = compareJarInventories({ left: left.inventory, right: right.inventory });
+      printJson(output, {
+        ...result,
+        collectionEvidence: "stable-local-archive-bytes",
+        collection: { left, right },
+      });
+      return result.comparisonComplete && result.hasDifferences === false ? 0 : 1;
     }
 
     if (command === "fabric-mods-inventory") {

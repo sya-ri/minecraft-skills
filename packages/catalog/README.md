@@ -27,6 +27,15 @@ preview defaults to disabled. Results include standard Multi-Release selection, 
 preview constraints, selected target requirements, completeness and bounded per-class diagnostics.
 Binary integrity is never inferred from metadata. See [the full contract](../../docs/JAVA_TARGET_INSPECTION.md).
 
+## JAR inventories
+
+`inspectJarInventoryRecord(archiveName, bytes)` extracts a bounded Fabric, Paper/Bukkit or Velocity
+identity/version and hashes a JAR without loading code. `normalizeJarInventory` and
+`summarizeJarInventory` accept `{ schemaVersion: 1, scanComplete, records }` metadata.
+`compareJarInventories({ left, right })` compares exact platform/ID groups, retaining duplicates,
+unknown hashes and incomplete inventory evidence. Caller metadata never grants byte-verification
+claims. See [the inventory contract](../../docs/JAR_INVENTORY.md) for record fields, limits and scope.
+
 ## Examples
 
 ```ts

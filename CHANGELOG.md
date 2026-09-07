@@ -6,6 +6,10 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added shared Fabric, Paper/Bukkit and Velocity JAR inventories and diffs with exact platform/ID
+  matching, stable local SHA-256 hashes, explicit duplicates and incomplete evidence, and a
+  metadata-only MCP comparison. Existing Fabric inventory/diff interfaces and limits are retained
+  through shared directory scanning; unknown hashes never count as content changes.
 - Added bounded whole-JAR Java classfile target inspection through Catalog and CLI, with a
   metadata-only MCP counterpart. Results cover supplied Java 8–26, standard Multi-Release JAR
   selection and exact-release preview constraints, distinguish binary from caller-supplied evidence,

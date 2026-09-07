@@ -11,6 +11,7 @@ import {
   cleanCachedData,
   compareCommands,
   compareDatapackSchema,
+  compareJarInventories,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -87,6 +88,8 @@ import {
   getVersionDetail,
   inspectBlockbenchProject,
   inspectResourcepackPngAlphaBounds,
+  type JarInventory,
+  jarInventoryLimits,
   javaTargetInspectionLimits,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
@@ -340,6 +343,75 @@ const playerSkinRectangleSchema = {
 const resourcepackProjectLimitNames = [
   "maxBinaryContentBytes",
 ] as const satisfies readonly (keyof ResourcepackProjectValidationLimits)[];
+
+const jarInventorySchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    schemaVersion: { type: "integer", const: 1 },
+    scanComplete: {
+      type: "boolean",
+      description:
+        "Caller claim that all direct archive candidates were inventoried; not binary verification.",
+    },
+    records: {
+      type: "array",
+      maxItems: jarInventoryLimits.maxRecords,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          archiveName: {
+            type: "string",
+            minLength: 1,
+            maxLength: jarInventoryLimits.maxArchiveNameCharacters,
+            description:
+              "Logical .jar basename only, never an absolute or relative filesystem path.",
+          },
+          platform: { type: ["string", "null"], enum: ["fabric", "paper", "velocity", null] },
+          id: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: jarInventoryLimits.maxIdCharacters,
+          },
+          version: {
+            type: ["string", "null"],
+            minLength: 1,
+            maxLength: jarInventoryLimits.maxVersionCharacters,
+          },
+          sha256: { type: ["string", "null"], pattern: "^[a-fA-F0-9]{64}$" },
+          byteLength: {
+            type: ["integer", "null"],
+            minimum: 0,
+            maximum: jarInventoryLimits.maxArchiveBytes,
+          },
+          metadataIssue: {
+            type: ["string", "null"],
+            enum: [
+              "archive-limit",
+              "archive-unreadable",
+              "descriptor-missing",
+              "multiple-platform-descriptors",
+              "identity-unavailable",
+              "jar-read-failed",
+              null,
+            ],
+          },
+        },
+        required: [
+          "archiveName",
+          "platform",
+          "id",
+          "version",
+          "sha256",
+          "byteLength",
+          "metadataIssue",
+        ],
+      },
+    },
+  },
+  required: ["schemaVersion", "scanComplete", "records"],
+};
 
 export const tools: ToolDefinition[] = [
   {
@@ -1825,6 +1897,17 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["targetJavaRelease", "multiRelease", "classEntriesComplete", "classes"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_jar_inventories",
+    description:
+      "Compare bounded extracted Fabric, Paper/Bukkit and Velocity JAR inventory records by exact platform and declared ID. Report known hash/version/filename changes, duplicates and unidentified or incomplete evidence without treating unknown hashes as content changes or asserting absence against incomplete inventories. All hashes and scan completeness are caller claims. No local paths, binary uploads, downloads, recursive scanning, code execution, dependency resolution or runtime compatibility proof. Use CLI minecraft jars inventory/diff to collect local JAR bytes.",
+    inputSchema: {
+      type: "object",
+      properties: { left: jarInventorySchema, right: jarInventorySchema },
+      required: ["left", "right"],
       additionalProperties: false,
     },
   },
@@ -3827,6 +3910,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
   try {
     if (name === "inspect_java_targets") {
       return text(validateJavaTargetMetadata(input as ValidateJavaTargetMetadataOptions));
+    }
+    if (name === "compare_jar_inventories") {
+      return text(compareJarInventories(input as { left: JarInventory; right: JarInventory }));
     }
     if (name === "validate_velocity_plugin_jar") {
       return text(validateVelocityPluginArchiveMetadata(preflightVelocityPluginMcpInput(input)));

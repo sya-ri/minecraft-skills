@@ -45,6 +45,22 @@ assert byte integrity. Classfile target compatibility does not imply code verifi
 module resolution, dependency availability or runtime execution. Nested archives and multi-release
 public API parity remain outside this inspection. See [the contract](JAVA_TARGET_INSPECTION.md).
 
+## JAR Inventory Identity
+
+The shared JAR inventory uses existing bounded Fabric, Paper/Bukkit and Velocity descriptor readers.
+It reports root `fabric.mod.json` ID/version, the active `paper-plugin.yml` or `plugin.yml` name/version,
+or `velocity-plugin.json` ID/version. Paper descriptor precedence follows the existing audited loader
+selection. A missing optional Velocity version remains null. Cross-platform descriptor combinations
+are explicit identity gaps, and nested archives are not inventoried.
+
+Primary references are [Fabric Loader metadata](https://docs.fabricmc.net/develop/loader/fabric-mod-json),
+[Paper plugin.yml](https://docs.papermc.io/paper/dev/plugin-yml),
+[Paper plugins](https://docs.papermc.io/paper/dev/getting-started/paper-plugins), and
+[Velocity PluginDescription](https://jd.papermc.io/velocity/4.1.0/com/velocitypowered/api/plugin/PluginDescription.html).
+SHA-256 identifies the inspected local bytes, not an authenticated publisher or verified runtime.
+MCP comparison accepts only extracted metadata, keeping every digest and completeness flag a caller
+claim. See [the inventory contract](JAR_INVENTORY.md).
+
 ## Structured Community Datasets
 
 These sources are useful because they are structured and versioned. They should be imported as

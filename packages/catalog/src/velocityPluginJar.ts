@@ -99,6 +99,7 @@ export type VelocityPluginJarValidationResult = {
     jsonValidated: boolean;
     unknownFieldCount: number;
     id: string | null;
+    version: string | null;
     main: string | null;
     dependencyCount: number;
     providedIdCount: number;
@@ -1418,6 +1419,7 @@ function validateVelocityPluginInternal(options: {
     jsonValidated: parsedDescriptor !== null,
     unknownFieldCount: parsedDescriptor?.unknownFieldCount ?? 0,
     id: parsedDescriptor?.id || null,
+    version: parsedDescriptor?.version || null,
     main: parsedDescriptor?.main || null,
     dependencyCount: parsedDescriptor?.dependencies.length ?? 0,
     providedIdCount: parsedDescriptor?.provides.length ?? 0,

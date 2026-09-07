@@ -208,6 +208,7 @@ export * from "./blockbenchProject.js";
 export * from "./fabricApiSurface.js";
 export * from "./fabricMeta.js";
 export * from "./fabricMod.js";
+export * from "./jarInventory.js";
 export * from "./javaClassArchive.js";
 export * from "./javaPlayerProfile.js";
 export * from "./javaPlayerProfileNetwork.js";
@@ -6171,6 +6172,21 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     add(
       "minecraft inspect-java-targets <jar-file> --java <release> [--enable-preview]",
       "Inspect all bounded JAR classfiles and standard multi-release selection for supplied Java and preview settings; this does not prove runtime or linkage compatibility.",
+    );
+  }
+  if (
+    /\b(inventory|compare|diff|duplicates?|sha256|hashes)\b/.test(lower) &&
+    (/\b(jars?|plugin artifacts?|mod artifacts?)\b/.test(lower) ||
+      (/\b(plugins?|mods?)\b/.test(lower) &&
+        /\b(installed|deployment|directory|directories)\b/.test(lower)))
+  ) {
+    add(
+      "minecraft jars inventory <directory>",
+      "Collect bounded direct Fabric, Paper/Bukkit and Velocity archive identities and SHA-256 values with explicit duplicates and unknown metadata.",
+    );
+    add(
+      "minecraft jars diff <left-directory> <right-directory>",
+      "Compare exact platform/ID inventories without promoting missing hashes or incomplete scans into content changes or absence claims.",
     );
   }
   if (
