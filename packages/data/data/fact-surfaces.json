@@ -3,6 +3,23 @@
   "generatedFrom": "reviewed-maintainer-guidance",
   "surfaces": [
     {
+      "id": "command-tree-details",
+      "domains": ["datapack", "paper-plugin"],
+      "title": "Command syntax tree details",
+      "dataKind": "command-tree-surface",
+      "coverage": "Java 26.2 and 1.21.11; downloadable generated facts",
+      "provenance": "Official Mojang commands.json reports with artifact and report digests",
+      "guarantees": [
+        "Versioned node types, parser constraints, executable markers, explicit redirects, and child paths with bounded traversal"
+      ],
+      "nonGuarantees": [
+        "No execution, permission checks, context suggestions, or inferred redirect targets"
+      ],
+      "cli": ["minecraft command-details"],
+      "mcp": ["get_command_details"],
+      "packageApis": ["getCommandDetails"]
+    },
+    {
       "id": "block-state-definitions",
       "domains": ["datapack", "resourcepack", "paper-plugin"],
       "title": "Block properties and states",

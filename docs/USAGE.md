@@ -1,5 +1,7 @@
 # Usage
 
+Command details: Catalog `getCommandDetails({ version: "26.2", path: ["execute", "as", "targets"], depth: 1 })`, MCP `get_command_details`, or CLI `minecraft-skills minecraft command-details 26.2 execute as targets --depth 1`. Paths name syntax-tree nodes, including argument names; they do not contain player argument values. Results preserve parser properties and explicit redirects, bound depth/node count, and report truncation. Missing data returns fetch guidance for `command-tree-surface`; unsupported versions do not substitute another version.
+
 ## Block properties and states
 
 Find a block ID with `minecraft registry-entries`, fetch the versioned data with

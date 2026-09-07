@@ -1,5 +1,7 @@
 # Source Strategy
 
+Command-tree surfaces are normalized from `commands.json` produced by the exact official server report generator. Run `ingest-command-tree` with the report directory and generation timestamp, then `write-data-manifest`. Source records include the server SHA-1 and raw report SHA-256.
+
 This project provides machine-readable Minecraft authoring facts for AI agents. Source handling is
 part of the product surface: agents should know what can be asserted, what is only a candidate, and
 which sources must not be fetched automatically.

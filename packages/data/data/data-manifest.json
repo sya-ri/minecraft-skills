@@ -1,11 +1,29 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.08-1",
+  "dataVersion": "2026.09.08-2",
   "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.8/packages/data/data",
   "cache": {
     "environmentVariable": "MINECRAFT_SKILLS_CACHE_DIR"
   },
   "downloadable": [
+    {
+      "path": "java/command-trees/1.21.11.json",
+      "kind": "command-tree-surface",
+      "edition": "java",
+      "version": "1.21.11",
+      "size": 174416,
+      "sha256": "35a0d88fd4d232df0b73444ba683d94a9124bc1c84f053872f47e35e9ea22646",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/command-trees/1.21.11.json"
+    },
+    {
+      "path": "java/command-trees/26.2.json",
+      "kind": "command-tree-surface",
+      "edition": "java",
+      "version": "26.2",
+      "size": 176655,
+      "sha256": "cc1d558f7548077da1f0d443837fff43a6e33cd39e973716f675e634f00147d2",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/command-trees/26.2.json"
+    },
     {
       "path": "java/block-states/1.21.11.json",
       "kind": "block-state-surface",

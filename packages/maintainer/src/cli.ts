@@ -35,6 +35,7 @@ import {
   validatePackFileContent,
 } from "@minecraft-skills/catalog";
 import { ingestBlockStates } from "./blockStates.js";
+import { ingestCommandTree } from "./commandTrees.js";
 import { auditCurrentSources } from "./currentSources.js";
 import { ingestDatapackSchemaSurfaces } from "./datapackSchemaSurfaceSummaries.js";
 import {
@@ -140,6 +141,10 @@ function buildDataManifestEntries(root: string, baseUrl: string): DataManifestEn
     kind: DataManifestEntry["kind"];
   }> = [
     {
+      directory: "java/command-trees",
+      kind: "command-tree-surface",
+    },
+    {
       directory: "java/block-states",
       kind: "block-state-surface",
     },
@@ -244,7 +249,14 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
     }
     seenPaths.add(entry.path);
 
-    if (entry.kind === "block-state-surface") {
+    if (entry.kind === "command-tree-surface") {
+      if (
+        entry.edition !== "java" ||
+        !entry.version ||
+        entry.path !== `java/command-trees/${entry.version}.json`
+      )
+        messages.push(`${prefix} command tree path must match version`);
+    } else if (entry.kind === "block-state-surface") {
       if (
         entry.edition !== "java" ||
         !entry.version ||
@@ -440,7 +452,8 @@ type DataManifestEntry = {
     | "datapack-schema-surface"
     | "paper-api-surface"
     | "resourcepack-model-summary"
-    | "block-state-surface";
+    | "block-state-surface"
+    | "command-tree-surface";
   edition: "java";
   version: string;
   size: number;
@@ -1410,6 +1423,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
+  minecraft-skills-maintainer ingest-command-tree --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-block-states --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-reports-all [--java-bin <java>] [--force] [--retrieved-at <iso>]
@@ -1831,6 +1845,22 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
       return 0;
     }
 
+    if (command === "ingest-command-tree") {
+      const args = argv.slice(1),
+        version = readOption(args, "--version"),
+        reportsDir = readOption(args, "--reports-dir");
+      if (!version || !reportsDir)
+        throw new Error("ingest-command-tree requires --version and --reports-dir");
+      console.log(
+        ingestCommandTree({
+          root: findRepositoryRoot(),
+          version,
+          reportsDir,
+          retrievedAt: readOption(args, "--retrieved-at") ?? new Date().toISOString(),
+        }),
+      );
+      return 0;
+    }
     if (command === "ingest-block-states") {
       const args = argv.slice(1);
       const version = readOption(args, "--version");

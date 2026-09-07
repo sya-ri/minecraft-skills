@@ -6,6 +6,8 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added bounded command-tree details from official 26.2 and 1.21.11 reports in Catalog, CLI, and MCP, including parser properties, executable markers, explicit redirects, and navigable child names.
+
 - Added versioned block property, allowed-value, explicit default-state, and paginated state
   lookups across Catalog, CLI, and MCP, generated from official 26.2 and 1.21.11 server reports.
   Missing cached data and unsupported versions remain distinct from an unknown block ID.
