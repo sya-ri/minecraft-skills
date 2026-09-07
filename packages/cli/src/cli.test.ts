@@ -3609,6 +3609,65 @@ describe("minecraft-skills CLI", () => {
     }
   });
 
+  it("reads resourcepack mcmeta and reports blockstate references and incomplete coverage", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-resourcepack-coverage-"));
+    const blockstateDirectory = join(root, "assets", "example", "blockstates");
+    mkdirSync(blockstateDirectory, { recursive: true });
+    writeFileSync(
+      join(root, "pack.mcmeta"),
+      JSON.stringify({
+        pack: {
+          pack_format: getVersionDetail("java", "1.21").packFormats.resource,
+          description: "CLI coverage fixture",
+        },
+      }),
+    );
+    writeFileSync(
+      join(blockstateDirectory, "test.json"),
+      JSON.stringify({
+        variants: { "": { model: "minecraft:block/stone" } },
+      }),
+    );
+    try {
+      const valid = await capture(["resourcepack", "validate-project", "1.21", root]);
+      expect(valid.code).toBe(0);
+      expect(JSON.parse(valid.stdout.join("\n"))).toMatchObject({
+        valid: true,
+        validationComplete: true,
+        blockstateFiles: 1,
+        packMetadataFiles: 1,
+      });
+      expect(() =>
+        readResourcepackProjectFiles(root, {
+          maxFiles: 20,
+          maxPathLength: 4096,
+          maxContentDepth: 20,
+          maxBinaryContentBytes: 1024,
+          maxTextContentCharacters: 20,
+        }),
+      ).toThrow();
+      writeFileSync(join(root, "pack.mcmeta"), "{");
+      const invalid = await capture(["resourcepack", "validate-project", "1.21", root]);
+      expect(invalid.code).toBe(1);
+      expect(invalid.stdout.join("\n")).toContain('"invalid-pack-metadata"');
+      rmSync(join(root, "pack.mcmeta"));
+      const partial = await capture(["resourcepack", "validate-project", "1.21", root]);
+      expect(partial.code).toBe(0);
+      expect(partial.stdout.join("\n")).toContain('"pack-metadata-unavailable"');
+      writeFileSync(
+        join(blockstateDirectory, "test.json"),
+        JSON.stringify({
+          multipart: [{ apply: { model: "example:missing" } }],
+        }),
+      );
+      const missing = await capture(["resourcepack", "validate-project", "1.21", root]);
+      expect(missing.code).toBe(1);
+      expect(missing.stdout.join("\n")).toContain('"missing-blockstate-model"');
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("validates explicit resource-pack translation files without exposing values or local paths", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-translation-cli-"));
     const directory = join(root, "assets", "example", "lang");

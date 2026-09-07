@@ -1395,7 +1395,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "validate_resourcepack_project",
     description:
-      "Validate item-definition and legacy override model references, model parents, inherited texture references, local model-parent cycles, sounds.json graphs, bounded Ogg/Vorbis identification headers, and complete PNG bytes across a resource-pack project. For OGG files, pass at most the first 58 bytes as contentBase64; omitted PNG bytes are reported as incomplete validation.",
+      "Validate supplied target-version pack.mcmeta, blockstate variants/multipart model references, item-definition and legacy override model references, model parents, inherited texture references, local model-parent cycles, sounds.json graphs, bounded Ogg/Vorbis identification headers, and complete PNG bytes across a resource-pack project. Missing root metadata, unsupported asset graphs, overlays, and omitted PNG bytes remain explicit completeness gaps. Blockstate conditions, property values, and rendering are not validated. For OGG files, pass at most the first 58 bytes as contentBase64.",
     inputSchema: {
       type: "object",
       properties: {

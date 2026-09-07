@@ -2758,7 +2758,65 @@ describe("MCP tools", () => {
     expect(result.content[0]?.text).toContain('"inspectedSoundFiles": 1');
     expect(result.content[0]?.text).toContain('"inspectedPngFiles": 1');
     expect(result.content[0]?.text).toContain('"pngValidationComplete": true');
-    expect(result.content[0]?.text).toContain('"validationComplete": true');
+    expect(result.content[0]?.text).toContain('"validationComplete": false');
+    expect(result.content[0]?.text).toContain('"pack-metadata-unavailable"');
+  });
+
+  it("reports resourcepack metadata, blockstate errors, and unsupported graph coverage", async () => {
+    const result = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      version: "1.21",
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: JSON.stringify({
+            pack: {
+              pack_format: getVersionDetail("java", "1.21").packFormats.resource,
+              description: "MCP coverage fixture",
+            },
+          }),
+        },
+        {
+          path: "assets/example/blockstates/test.json",
+          content: {
+            multipart: [{ apply: { model: "example:missing" } }],
+          },
+        },
+        { path: "assets/example/font/default.json", content: {} },
+      ],
+    });
+    expect(result.isError).not.toBe(true);
+    const report = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(report).toMatchObject({
+      valid: false,
+      packMetadataFiles: 1,
+      blockstateFiles: 1,
+      checkedReferences: 1,
+      validationComplete: false,
+      unsupportedReferenceKinds: ["font"],
+      validationIncompleteReasons: ["unsupported-reference-kind"],
+    });
+    expect(report.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "missing-blockstate-model",
+        source: "$.multipart[0].apply.model",
+      }),
+    );
+    const malformed = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      version: "1.21",
+      files: [{ path: "pack.mcmeta", content: "{" }],
+    });
+    expect(malformed.content[0]?.text).toContain('"invalid-pack-metadata"');
+    const bounded = await callMinecraftSkillsTool("validate_resourcepack_project", {
+      version: "1.21",
+      files: [
+        {
+          path: "pack.mcmeta",
+          content: `{"pack":${'{"nested":'.repeat(128)}{}${"}".repeat(128)}}`,
+        },
+      ],
+    });
+    expect(bounded.content[0]?.text).toContain('"maxContentDepth"');
+    expect(bounded.content[0]?.text).toContain('"processedFiles": 0');
   });
 
   it("calls validate_resourcepack_translations without returning translation values", async () => {

@@ -316,7 +316,14 @@ within one chain, while reserving `initialization-failed` for explicit `Could no
 wording. Explicit class labels do not prove dependencies, classpaths, JAR contents, shading,
 ownership, fixes, or root causes.
 
-`validate_resourcepack_project` checks model, texture, and `sounds.json` reference graphs. For an
+`validate_resourcepack_project` checks supplied target-version `pack.mcmeta`, blockstate
+variant/multipart model references, model/texture graphs, and `sounds.json` references. Missing
+root metadata is accepted for partial inputs, but sets `validationComplete: false` with
+`pack-metadata-unavailable` in `validationIncompleteReasons`. Known unsupported asset graphs
+(fonts, atlases, particles, equipment, shaders, and post effects), overlays, filters, and asset
+`.mcmeta` files are listed in `unsupportedReferenceKinds` and also prevent complete validation.
+Blockstate conditions, property names/values, rotations, weights, state coverage, and rendering
+remain outside the reference checks. For an
 OGG file, send canonical `contentBase64` containing no more than its first 58 bytes; the tool rejects
 larger payloads and rejects arbitrary OGG `content`, then validates only the Ogg/Vorbis
 identification page. For a PNG file, send canonical `contentBase64` for the complete file; arbitrary

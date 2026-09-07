@@ -142,7 +142,7 @@ export function readResourcepackProjectFiles(
       }
 
       let content: string | Uint8Array | undefined;
-      if (path.endsWith(".json")) {
+      if (/\.(json|mcmeta)$/i.test(path)) {
         const read = readBoundedUtf8File(fullPath, limits.maxTextContentCharacters - textBytes);
         textBytes += read.bytes;
         content = read.content;

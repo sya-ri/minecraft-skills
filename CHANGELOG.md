@@ -10,6 +10,11 @@ All notable changes to this project are documented here.
   Javadocs retrieval supplies declarations, annotations, descriptions, deprecation, and labeled
   parameter/return/exception notes from modern and legacy doclets, with source hashes and explicit
   unavailable or truncated evidence. It does not infer behavioral contracts or substitute versions.
+- Resource-pack project validation now checks supplied target-version `pack.mcmeta` and blockstate
+  variant/multipart model references, including texture checks when a selected model is also a
+  parent. CLI scans read `.mcmeta` within existing text limits. Missing root metadata, unsupported
+  asset graphs, overlays, and asset metadata remain explicit completeness gaps across Catalog,
+  CLI, and MCP; partial inputs remain accepted.
 
 ### Fixed
 

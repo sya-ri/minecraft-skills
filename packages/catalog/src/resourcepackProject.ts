@@ -12,6 +12,16 @@ export type ResourcepackProjectFile = {
 
 export type ResourcepackProjectDiagnosticSeverity = "error" | "warning";
 
+export type ResourcepackProjectValidationIncompleteReason =
+  | "pack-metadata-unavailable"
+  | "content-unavailable"
+  | "file-schema-unavailable"
+  | "unsupported-reference-kind"
+  | "vanilla-model-content-unavailable"
+  | "png-validation-incomplete"
+  | "sound-validation-incomplete"
+  | "limit-exceeded";
+
 export type ResourcepackPngValidationIncompleteReason =
   | "content-unavailable"
   | "input-limit-exceeded"
@@ -87,9 +97,13 @@ export type ResourcepackProjectValidationResult = {
   totalFiles: number;
   processedFiles: number;
   validationComplete: boolean;
+  validationIncompleteReasons: ResourcepackProjectValidationIncompleteReason[];
+  unsupportedReferenceKinds: string[];
   appliedLimits: ResourcepackProjectValidationLimits & { maxDiagnostics: number };
   exceededLimits: ResourcepackProjectValidationLimitName[];
   modelFiles: number;
+  packMetadataFiles: number;
+  blockstateFiles: number;
   itemDefinitionFiles: number;
   soundDefinitionFiles: number;
   soundEvents: number;
@@ -124,6 +138,11 @@ type ResolvedValidationOptions = {
   limit: number;
   limits: ResourcepackProjectValidationLimits;
   pngLimits: ResourcepackPngValidationLimits;
+  validateContent: (file: ResourcepackProjectFile) => {
+    validated: boolean;
+    valid: boolean;
+    issues: Array<{ message: string; source: string }>;
+  };
 };
 
 type ProjectFile = ResourcepackProjectFile & {
@@ -152,7 +171,16 @@ type ModelTextureUsage = {
 
 const resourceLocationPattern = /^([a-z0-9_.-]+):([a-z0-9/._-]+)$/;
 const builtInModelReferences = new Set(["builtin/entity", "builtin/generated"]);
-const graphAssetCategories = new Set(["items", "models", "sounds", "textures"]);
+const graphAssetCategories = new Set(["blockstates", "items", "models", "sounds", "textures"]);
+const unsupportedAssetGraphKinds: Readonly<Record<string, string>> = {
+  atlases: "atlas",
+  font: "font",
+  fonts: "font",
+  particles: "particle",
+  shaders: "shader",
+  post_effect: "post-effect",
+  equipment: "equipment",
+};
 
 function boundedDiagnosticValue(value: string, maxLength: number): string {
   if (value.length <= maxLength) {
@@ -460,7 +488,8 @@ function inspectRequestLimits(
     }
     if (file.content !== undefined) {
       inspectContent(file.content, true);
-      if (typeof file.content === "string" && file.path.toLowerCase().endsWith(".json")) {
+      if (exceeded.size > 0) return [...exceeded].sort();
+      if (typeof file.content === "string" && /\.(json|mcmeta)$/i.test(file.path)) {
         try {
           inspectContent(JSON.parse(file.content) as unknown, false);
         } catch {
@@ -475,6 +504,9 @@ function inspectRequestLimits(
 
 function resourcepackValidationNotes(version: string): string[] {
   return [
+    "Supplied root pack.mcmeta was checked with the target-version file schema; omitted metadata remains an explicit completeness gap, allowing partial project inputs.",
+    "Blockstate variants and multipart apply model references were checked against local and bundled vanilla paths. Block-state property names, conditions, rotations, weights, coverage, and in-game rendering were not validated.",
+    "Known unsupported asset graphs and pack overlays remain explicit completeness gaps; their absence from diagnostics does not establish rendering validity.",
     `Processed vanilla model and texture references were checked against the bundled Java ${version} resource-pack path index; sounds.json event and file references outside the submitted project are not bundled and remain unverified.`,
     "PNG files with complete byte content were checked by the bounded structural and CRC validator; missing PNG content is reported as incomplete validation. OGG files were inspected only through their bounded 58-byte Ogg/Vorbis identification page.",
     "PNG IDAT payloads were not decompressed; rendered pixels, APNG ancillary-chunk semantics, and animation .mcmeta semantics were not validated.",
@@ -574,6 +606,10 @@ function modelIdFromPath(path: string): string | null {
 
 function itemDefinitionPath(path: string): boolean {
   return /^assets\/[^/]+\/items\/.+\.json$/.test(path);
+}
+
+function blockstatePath(path: string): boolean {
+  return /^assets\/[^/]+\/blockstates\/.+\.json$/.test(path);
 }
 
 function binaryAssetPath(path: string): boolean {
@@ -899,9 +935,13 @@ export function validateResourcepackReferenceGraph(
       totalFiles: options.files.length,
       processedFiles: 0,
       validationComplete: false,
+      validationIncompleteReasons: ["limit-exceeded"],
+      unsupportedReferenceKinds: [],
       appliedLimits: { ...options.limits, maxDiagnostics: options.limit },
       exceededLimits: requestExceededLimits,
       modelFiles: 0,
+      packMetadataFiles: 0,
+      blockstateFiles: 0,
       itemDefinitionFiles: 0,
       soundDefinitionFiles: 0,
       soundEvents: 0,
@@ -951,6 +991,13 @@ export function validateResourcepackReferenceGraph(
   let parsedJsonFiles = 0;
   let checkedReferences = 0;
   let validationComplete = true;
+  const incompleteReasons = new Set<ResourcepackProjectValidationIncompleteReason>();
+  const unsupportedReferenceKinds = new Set<string>();
+  const markUnsupported = (kind: string): void => {
+    unsupportedReferenceKinds.add(kind);
+    incompleteReasons.add("unsupported-reference-kind");
+    validationComplete = false;
+  };
   let modelGraphOperations = 0;
   let modelGraphLimitReached = false;
   const processingExceededLimits = new Set<ResourcepackProjectValidationLimitName>();
@@ -961,6 +1008,7 @@ export function validateResourcepackReferenceGraph(
     }
     modelGraphLimitReached = true;
     validationComplete = false;
+    incompleteReasons.add("limit-exceeded");
     if (!processingExceededLimits.has("maxModelGraphOperations")) {
       processingExceededLimits.add("maxModelGraphOperations");
       addDiagnostic({
@@ -969,7 +1017,7 @@ export function validateResourcepackReferenceGraph(
         path,
         reference: "maxModelGraphOperations",
         source: "model-graph",
-        message: `Model validation stopped after reaching its applied graph-work limit of ${options.limits.maxModelGraphOperations} operations.`,
+        message: `Model and blockstate validation stopped after reaching its applied graph-work limit of ${options.limits.maxModelGraphOperations} operations.`,
       });
     }
     return false;
@@ -1033,6 +1081,9 @@ export function validateResourcepackReferenceGraph(
     }
   }
   validationComplete &&= pngValidationComplete;
+  if (!pngValidationComplete) {
+    incompleteReasons.add("png-validation-incomplete");
+  }
 
   const duplicatePaths = new Set<string>();
   for (const file of projectFiles) {
@@ -1053,7 +1104,7 @@ export function validateResourcepackReferenceGraph(
         path: file.normalizedPath,
         reference: file.path,
         message:
-          "Resource-pack item, model, sound, and texture asset paths must use lowercase resource-location-safe namespaces and path segments.",
+          "Resource-pack blockstate, item, model, sound, and texture asset paths must use lowercase resource-location-safe namespaces and path segments.",
       });
     }
   }
@@ -1078,14 +1129,85 @@ export function validateResourcepackReferenceGraph(
     });
   }
 
+  const packMetadata = projectFiles.filter(
+    (file) => file.validPath && file.normalizedPath === "pack.mcmeta",
+  );
+  if (packMetadata.length === 0) {
+    incompleteReasons.add("pack-metadata-unavailable");
+    validationComplete = false;
+  }
+  for (const file of packMetadata) {
+    if (file.content === undefined) {
+      incompleteReasons.add("pack-metadata-unavailable");
+      validationComplete = false;
+      continue;
+    }
+    const result = options.validateContent({ path: file.normalizedPath, content: file.content });
+    if (!result.validated && result.valid) {
+      incompleteReasons.add("file-schema-unavailable");
+      validationComplete = false;
+    }
+    for (const issue of result.issues) {
+      addDiagnostic({
+        severity: "error",
+        code: "invalid-pack-metadata",
+        path: file.normalizedPath,
+        reference: null,
+        source: issue.source,
+        message: issue.message,
+      });
+    }
+    const parsed = parseProjectJson(file);
+    if ("json" in parsed) {
+      parsedJsonFiles += 1;
+      if (!Object.hasOwn(parsed.json, "pack")) {
+        addDiagnostic({
+          severity: "error",
+          code: "invalid-pack-metadata",
+          path: file.normalizedPath,
+          reference: null,
+          source: "$.pack",
+          message: "Root pack.mcmeta must contain a pack section.",
+        });
+      }
+      const overlays = parsed.json.overlays;
+      if (
+        isJsonObject(overlays) &&
+        Array.isArray(overlays.entries) &&
+        overlays.entries.length > 0
+      ) {
+        markUnsupported("pack-overlays");
+      }
+      if (Object.hasOwn(parsed.json, "filter")) {
+        markUnsupported("pack-filters");
+      }
+    }
+  }
+  for (const file of projectFiles) {
+    if (!file.validPath) continue;
+    const category = /^assets\/[^/]+\/([^/]+)\//.exec(file.normalizedPath)?.[1];
+    const unsupported =
+      category && Object.hasOwn(unsupportedAssetGraphKinds, category)
+        ? unsupportedAssetGraphKinds[category]
+        : undefined;
+    if (unsupported) markUnsupported(unsupported);
+    if (/^assets\/.+\.mcmeta$/.test(file.normalizedPath)) {
+      markUnsupported("asset-metadata");
+    }
+  }
+
   const modelsByPath = new Map<string, ParsedModel>();
   const itemDefinitions: Array<{ file: ProjectFile; json: JsonObject }> = [];
+  const blockstates: Array<{ file: ProjectFile; json: JsonObject }> = [];
+  let blockstateFiles = 0;
   for (const file of projectFiles) {
     if (!file.validPath || !file.validAssetPath) {
       continue;
     }
     const modelId = modelIdFromPath(file.normalizedPath);
-    if (!modelId && !itemDefinitionPath(file.normalizedPath)) {
+    const isBlockstate = blockstatePath(file.normalizedPath);
+    if (isBlockstate) blockstateFiles += 1;
+    if (!modelId && !itemDefinitionPath(file.normalizedPath) && !isBlockstate) {
       continue;
     }
     const parsed = parseProjectJson(file);
@@ -1101,12 +1223,13 @@ export function validateResourcepackReferenceGraph(
     }
     if ("unavailable" in parsed) {
       validationComplete = false;
+      incompleteReasons.add("content-unavailable");
       addDiagnostic({
         severity: "error",
         code: "json-content-unavailable",
         path: file.normalizedPath,
         reference: null,
-        message: "JSON content is required to validate model references.",
+        message: "JSON content is required to validate model and blockstate references.",
       });
       continue;
     }
@@ -1118,6 +1241,8 @@ export function validateResourcepackReferenceGraph(
         json: parsed.json,
         parent: typeof parsed.json.parent === "string" ? parsed.json.parent : null,
       });
+    } else if (isBlockstate) {
+      blockstates.push({ file, json: parsed.json });
     } else {
       itemDefinitions.push({ file, json: parsed.json });
     }
@@ -1125,6 +1250,94 @@ export function validateResourcepackReferenceGraph(
 
   const assetExists = (path: string): boolean => localPaths.has(path) || vanillaPaths.has(path);
   const explicitModelRoots = new Set<string>();
+
+  for (const { file, json } of blockstates) {
+    if (modelGraphLimitReached) break;
+    const consume = (): boolean => consumeModelGraphOperations(1, file.normalizedPath);
+    if (!consume()) break;
+    const invalid = (source: string, message: string, reference: string | null = null): void => {
+      addDiagnostic({
+        severity: "error",
+        code: "invalid-blockstate-model",
+        path: file.normalizedPath,
+        reference,
+        source,
+        message,
+      });
+    };
+    const inspectModel = (value: unknown, source: string): void => {
+      if (!consume()) return;
+      if (!isJsonObject(value) || typeof value.model !== "string") {
+        invalid(
+          source,
+          "Blockstate model applications must be objects with a model resource-location string.",
+        );
+        return;
+      }
+      checkedReferences += 1;
+      const reference = value.model;
+      const path = modelAssetPath(reference);
+      if (!path) {
+        invalid(
+          `${source}.model`,
+          "Blockstate model reference must be a valid resource location.",
+          reference,
+        );
+      } else if (!assetExists(path)) {
+        addDiagnostic({
+          severity: "error",
+          code: "missing-blockstate-model",
+          path: file.normalizedPath,
+          reference,
+          source: `${source}.model`,
+          message: `Blockstate model '${diagnosticValue(reference)}' was not found locally or in vanilla assets for ${options.version}.`,
+        });
+      } else if (modelsByPath.has(path)) {
+        explicitModelRoots.add(path);
+      }
+    };
+    const inspectApplication = (value: unknown, source: string): void => {
+      if (!consume()) return;
+      if (Array.isArray(value)) {
+        if (value.length === 0)
+          invalid(source, "Blockstate model application arrays must not be empty.");
+        for (let index = 0; index < value.length && !modelGraphLimitReached; index += 1) {
+          inspectModel(value[index], `${source}[${index}]`);
+        }
+      } else {
+        inspectModel(value, source);
+      }
+    };
+    if (Object.hasOwn(json, "variants")) {
+      if (!isJsonObject(json.variants)) {
+        invalid("$.variants", "Blockstate variants must be an object.");
+      } else {
+        for (const [variant, value] of Object.entries(json.variants)) {
+          if (modelGraphLimitReached) break;
+          inspectApplication(value, `$.variants[${JSON.stringify(variant)}]`);
+        }
+      }
+    }
+    if (Object.hasOwn(json, "multipart")) {
+      if (!Array.isArray(json.multipart)) {
+        invalid("$.multipart", "Blockstate multipart must be an array.");
+      } else {
+        for (let index = 0; index < json.multipart.length && !modelGraphLimitReached; index += 1) {
+          if (!consume()) break;
+          const part = json.multipart[index];
+          const source = `$.multipart[${index}]`;
+          if (!isJsonObject(part)) {
+            invalid(source, "Blockstate multipart entries must be objects with an apply field.");
+          } else {
+            inspectApplication(part.apply, `${source}.apply`);
+          }
+        }
+      }
+    }
+    if (!Object.hasOwn(json, "variants") && !Object.hasOwn(json, "multipart")) {
+      markUnsupported("blockstate-format");
+    }
+  }
 
   for (const itemDefinition of itemDefinitions) {
     const references: string[] = [];
@@ -1345,6 +1558,7 @@ export function validateResourcepackReferenceGraph(
       }
       if (resolved.status === "unknown") {
         validationComplete = false;
+        incompleteReasons.add("vanilla-model-content-unavailable");
         addDiagnostic({
           severity: "warning",
           code: "unverified-vanilla-texture-variable",
@@ -1449,9 +1663,13 @@ export function validateResourcepackReferenceGraph(
   parsedJsonFiles += soundValidation.parsedJsonFiles;
   checkedReferences += soundValidation.checkedReferences;
   validationComplete &&= soundValidation.soundValidationComplete;
+  if (!soundValidation.soundValidationComplete) {
+    incompleteReasons.add("sound-validation-incomplete");
+  }
   const exceededLimits = [
     ...new Set([...processingExceededLimits, ...soundValidation.exceededLimits]),
   ].sort();
+  if (exceededLimits.length > 0) incompleteReasons.add("limit-exceeded");
   const summary = collector.finish();
 
   return {
@@ -1462,9 +1680,13 @@ export function validateResourcepackReferenceGraph(
     totalFiles: projectFiles.length,
     processedFiles: projectFiles.length,
     validationComplete,
+    validationIncompleteReasons: [...incompleteReasons].sort(),
+    unsupportedReferenceKinds: [...unsupportedReferenceKinds].sort(),
     appliedLimits: { ...options.limits, maxDiagnostics: options.limit },
     exceededLimits,
     modelFiles: modelsByPath.size,
+    packMetadataFiles: packMetadata.length,
+    blockstateFiles,
     itemDefinitionFiles: itemDefinitions.length,
     soundDefinitionFiles: soundValidation.soundDefinitionFiles,
     soundEvents: soundValidation.soundEvents,

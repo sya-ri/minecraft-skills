@@ -335,7 +335,9 @@ namespace; unresolved dependencies then make `validationComplete` false. Schema-
 macro-expanded commands, pack overlays, and unsupported graph kinds are likewise reported as
 incomplete rather than guessed.
 
-`resourcepack validate-project` recursively checks item-definition and legacy override model targets,
+`resourcepack validate-project` reads JSON and `.mcmeta` under the shared text budget and checks
+supplied target-version root `pack.mcmeta`, blockstate variant/multipart model references,
+item-definition and legacy override model targets,
 model parents, textures, inherited texture variables, `sounds.json` file/event references, and local
 model and sound-event cycles against the project and target-version vanilla assets. Special
 item-model base references are included. PNG files receive the same bounded structural validation,
@@ -345,7 +347,12 @@ of scope. Stereo is accepted with a positional-attenuation warning; more than tw
 error. Unverified external sound references keep a warning-only project valid but set validation
 completeness false. Directory traversal is iterative and applies file, directory-depth, path, and
 aggregate JSON- and binary-byte limits before loading project content. Invalid graphs, PNG files,
-or audio headers are printed as JSON and return exit code 1.
+or audio headers are printed as JSON and return exit code 1. Missing root metadata is accepted
+for partial inputs and keeps exit code 0 when no errors are found, but reports
+`pack-metadata-unavailable` in `validationIncompleteReasons`. `unsupportedReferenceKinds` lists
+unverified fonts, atlases, particles, equipment, shaders, post effects, overlays, filters, and
+asset metadata. These gaps also set `validationComplete: false`. Blockstate conditions, property
+names/values, rotations, weights, state coverage, and rendering are outside this check.
 
 PNG validation follows the [W3C PNG specification](https://www.w3.org/TR/png-3/) but does not
 decompress IDAT or prove rendered texture validity. It does not impose square, power-of-two, or a
