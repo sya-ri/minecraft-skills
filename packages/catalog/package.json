@@ -47,6 +47,7 @@
     "@minecraft-skills/data": "workspace:0.1.8",
     "ajv": "8.20.0",
     "arktype": "2.2.1",
+    "parse5": "8.0.1",
     "yaml": "2.9.0"
   },
   "devDependencies": {

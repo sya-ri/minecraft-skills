@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Added
+
+- Added exact indexed Paper member detail lookup in Catalog, CLI, and MCP. Bounded live official
+  Javadocs retrieval supplies declarations, annotations, descriptions, deprecation, and labeled
+  parameter/return/exception notes from modern and legacy doclets, with source hashes and explicit
+  unavailable or truncated evidence. It does not infer behavioral contracts or substitute versions.
+
 ### Fixed
 
 - Paper member lookups can explicitly download a missing exact-version surface with MCP

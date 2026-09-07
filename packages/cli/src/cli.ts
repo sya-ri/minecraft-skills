@@ -71,6 +71,7 @@ import {
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
+  getPaperMemberDetails,
   getPaperPluginData,
   getResourcepackModelSummary,
   getResponsePattern,
@@ -1111,6 +1112,7 @@ function normalizeSubcommands(argv: string[]): string[] {
       "api-surface": "paper-api-surface",
       types: "paper-types",
       members: "paper-members",
+      "member-details": "paper-member-details",
       "compare-api-surface": "compare-paper-api-surface",
       events: "paper-events",
       info: "paper",
@@ -1227,6 +1229,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "paper-api-surface": "plugin paper api-surface",
   "paper-types": "plugin paper types",
   "paper-members": "plugin paper members",
+  "paper-member-details": "plugin paper member-details",
   "compare-paper-api-surface": "plugin paper compare-api-surface",
   "paper-events": "plugin paper events",
   "paper-validate-jar": "plugin paper validate-jar",
@@ -1528,6 +1531,7 @@ Grouped commands:
   minecraft-skills plugin paper members [version] [--type qualified.Type] [--package package.name] [--kind method|constructor|field-or-enum-constant|unknown] [--contains text] [--limit 50] [--fetch-missing]
     Read-only by default; --fetch-missing allows one exact-version, verified surface download into the local cache.
                         Type filters include members declared by known supertypes when hierarchy coverage is available.
+  minecraft-skills plugin paper member-details [version] --url <indexed-member-url> [--timeout-ms 10000]
   minecraft-skills plugin paper events <query> [--version latest] [--source paper] [--limit 20]
   minecraft-skills plugin paper validate-jar <file.jar> [--max-archive-bytes bytes]
   minecraft-skills plugin velocity validate-jar <file.jar> [--target-java 25] [--max-archive-bytes bytes]
@@ -3205,6 +3209,23 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       }
       printJson(output, searchPaperTypes(searchOptions));
       return 0;
+    }
+
+    if (command === "paper-member-details") {
+      const [version = "latest", ...extra] = positionalArgsWithOptions(args, {
+        flags: [],
+        values: ["--url", "--timeout-ms"],
+      });
+      if (extra.length) throw new Error("plugin paper member-details accepts at most one version");
+      const result = await getPaperMemberDetails({
+        version,
+        memberUrl: readOption(args, "--url", ""),
+        ...(args.includes("--timeout-ms")
+          ? { timeoutMs: readIntegerArg(readOption(args, "--timeout-ms", ""), "--timeout-ms") }
+          : {}),
+      });
+      printJson(output, result);
+      return result.status === "available" && result.coverage.extractionComplete ? 0 : 1;
     }
 
     if (command === "paper-members") {

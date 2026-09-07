@@ -57,6 +57,13 @@ import {
   validateDatapackReferenceGraph,
 } from "./datapackProject.js";
 import { inspectModrinthArchive } from "./modrinthZip.js";
+import {
+  fetchPaperMemberDetails,
+  type PaperMemberDetailsFetch,
+  type PaperMemberDetailsOptions,
+  type PaperMemberDetailsResult,
+  validatePaperMemberDetailsOptions,
+} from "./paperMemberDetails.js";
 import { paperMemberMatchesType } from "./paperMemberSearch.js";
 import { compareObservedProtocolIds } from "./registryEntryComparison.js";
 import {
@@ -214,6 +221,12 @@ export {
   modrinthCompatibilityLimits,
   resolveModrinthCompatibility,
 } from "./modrinthCompatibility.js";
+export {
+  type PaperMemberDetailsFetch,
+  type PaperMemberDetailsOptions,
+  type PaperMemberDetailsResult,
+  paperMemberDetailsLimits,
+} from "./paperMemberDetails.js";
 export * from "./paperPluginJar.js";
 export {
   type PlayerSkinCanonicalRectangle,
@@ -4168,6 +4181,19 @@ function readPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
 
 export function getPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
   return structuredClone(readPaperApiSurface(requested));
+}
+
+/** Retrieve one indexed declaration's official documentation without downloading missing surfaces. */
+export async function getPaperMemberDetails(
+  options: PaperMemberDetailsOptions,
+  fetchImpl: PaperMemberDetailsFetch = fetch,
+): Promise<PaperMemberDetailsResult> {
+  validatePaperMemberDetailsOptions(options);
+  return fetchPaperMemberDetails(
+    readPaperApiSurface(options.version ?? "latest"),
+    options,
+    fetchImpl,
+  );
 }
 
 function clonePaperApiType(entry: PaperApiTypeData): PaperApiTypeData {
