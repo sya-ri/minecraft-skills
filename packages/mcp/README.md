@@ -183,6 +183,7 @@ client API surface.
 - `validate_player_skin_layout`
 - `validate_resourcepack_png`
 - `validate_datapack_project`
+- `resolve_datapack_tag`
 - `validate_resourcepack_project`
 - `validate_server_properties`
 - `validate_server_access_list`
@@ -296,6 +297,11 @@ published ceiling are tool-input errors.
 current 64x64 or legacy 64x32 layout status without receiving image bytes, filesystem paths, URLs,
 or player identity. It does not infer slim/wide from pixels or claim decoded alpha, conversion, or
 GUI-rendering validity.
+
+`resolve_datapack_tag` resolves one tag across ordered named pack inventories on exactly Java
+26.2 or 1.21.11. It supports append/replace, nested tags and optional entries with bounded
+membership/provenance. Incomplete candidates are separate from resolved members; cached vanilla
+content is never downloaded implicitly. See [tag resolution](../../docs/DATAPACK_TAG_RESOLUTION.md).
 
 `validate_datapack_project` accepts a bounded list of project-relative paths with optional JSON,
 mcmeta, or mcfunction content. It checks safe and version-correct paths, `pack.mcmeta`,

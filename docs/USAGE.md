@@ -159,6 +159,7 @@ This group also supports every [shared authoring command](#shared-authoring-comm
 | `file-schema [version] <path>` | Get the best available non-normative schema for a path. |
 | `validate-files <version> <file...>` | Validate caller-selected files against available pack schemas. |
 | `validate-project <version> <directory>` | Scan and validate a bounded local project, paths, contents, and supported reference graphs. |
+| `resolve-tag <version> <registry> <tag> --pack-root <directory>` | Resolve an ordered pack stack's tag membership with provenance; repeat `--pack-root` from lowest to highest priority. See [tag resolution](DATAPACK_TAG_RESOLUTION.md). |
 | `migration-plan <from> <to> [path...]` | Build a version-aware migration checklist for selected paths. |
 | `find <query>` | Search data pack entries from task wording. |
 | `commands [version]` | Search the Brigadier command tree. |
@@ -471,6 +472,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `get_datapack_schema_surface`, `search_datapack_schema`, `compare_datapack_schema` | Inspect observed versioned JSON shapes. |
 | `classify_pack_files`, `get_pack_file_schema`, `validate_pack_files` | Classify paths and validate caller-supplied files against available schemas. |
 | `validate_datapack_json`, `validate_datapack_project` | Validate individual JSON or a bounded project and supported reference graphs. |
+| `resolve_datapack_tag` | Resolve a selected tag across ordered packs with append/replace, nested/optional entries and bounded evidence. |
 | `find_datapack_entries` | Search data pack commands, schema paths, and vanilla paths from task wording. |
 | `get_mojang_version_metadata`, `fetch_mojang_server_jar` | Resolve official downloads and cache a verified server JAR. |
 | `search_vanilla_datapack_json_files`, `search_vanilla_datapack_json_content`, `get_vanilla_datapack_json` | Search or read exact `data/**/*.json` content from the verified JAR. |

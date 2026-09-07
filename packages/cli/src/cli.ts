@@ -22,6 +22,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultDatapackTagResolutionLimits,
   defaultFabricModSetLimits,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
@@ -128,6 +129,7 @@ import {
   type ResourcepackModelPathSearchOptions,
   type ResourcepackPngAlphaBoundsLimits,
   type ResourcepackPngValidationLimits,
+  resolveDatapackTag,
   resolveModrinthCompatibility,
   resolveResourcepackPngAlphaBoundsLimits,
   resolveResourcepackPngValidationLimits,
@@ -1005,6 +1007,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "datapack file-schema": "file-schema",
     "datapack validate-files": "validate-files",
     "datapack validate-project": "validate-datapack-project",
+    "datapack resolve-tag": "resolve-datapack-tag",
     "datapack migration-plan": "migration-plan",
     "datapack find": "datapack-find",
     "datapack commands": "commands",
@@ -1230,6 +1233,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "inspect-resourcepack-png-alpha": "resourcepack inspect-png-alpha",
   "validate-resourcepack-png": "resourcepack validate-png",
   "validate-datapack-project": "datapack validate-project",
+  "resolve-datapack-tag": "datapack resolve-tag",
   "validate-resourcepack-project": "resourcepack validate-project",
   "validate-player-skin-layout": "player-skin validate-layout",
   "download-player-texture": "player-texture download",
@@ -1522,6 +1526,7 @@ Grouped commands:
   minecraft-skills datapack file-schema [version] <path>
   minecraft-skills datapack validate-files <version> <file...> [--pack-root dir]
   minecraft-skills datapack validate-project <version> <directory> [--limit 100] [--allow-merged-namespace-dependencies]
+  minecraft-skills datapack resolve-tag <version> <registry> <tag> --pack-root <directory> [--pack-root <higher-priority-directory>] [--no-vanilla] [--limit 100]
   minecraft-skills datapack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills datapack find <query...> [--version latest] [--limit 25]
   minecraft-skills datapack server-reports [version] [--edition java]
@@ -2696,6 +2701,53 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       });
       printJson(output, result);
       return result.valid ? 0 : 1;
+    }
+
+    if (command === "resolve-datapack-tag") {
+      const [version, registry, tag, ...extra] = positionalArgsWithOptions(args, {
+        flags: ["--no-vanilla"],
+        values: ["--pack-root", "--limit"],
+      });
+      const roots = readRepeatedOption(args, "--pack-root");
+      if (
+        !version ||
+        !registry ||
+        !tag ||
+        extra.length > 0 ||
+        roots.length === 0 ||
+        roots.length > defaultDatapackTagResolutionLimits.maxPacks
+      ) {
+        throw new Error(
+          "datapack resolve-tag requires <version> <registry> <tag> and 1-32 --pack-root directories in low-to-high priority order",
+        );
+      }
+      if (version !== "26.2" && version !== "1.21.11")
+        throw new Error("datapack resolve-tag requires exact version 26.2 or 1.21.11");
+      if (new Set(roots.map((root) => resolve(root))).size !== roots.length)
+        throw new Error("datapack resolve-tag pack roots must not repeat");
+      let remainingFiles = defaultDatapackTagResolutionLimits.maxFiles;
+      let remainingText = defaultDatapackTagResolutionLimits.maxTextContentCharacters;
+      const packs = roots.map((root, index) => {
+        const files = readDatapackProjectFiles(root, {
+          ...defaultDatapackTagResolutionLimits,
+          maxFiles: remainingFiles,
+          maxTextContentCharacters: remainingText,
+        });
+        remainingFiles -= files.length;
+        for (const file of files) remainingText -= Buffer.byteLength(file.content ?? "", "utf8");
+        return { id: `pack-${index + 1}`, files };
+      });
+      const result = resolveDatapackTag({
+        edition,
+        version,
+        registry,
+        tag,
+        packs,
+        includeVanilla: !args.includes("--no-vanilla"),
+        limit: Number(readOption(args, "--limit", "100")),
+      });
+      printJson(output, result);
+      return result.resolutionComplete ? 0 : 1;
     }
 
     if (command === "validate-datapack-project") {

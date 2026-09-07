@@ -816,7 +816,7 @@ function registryElementCandidatePaths(
   return [`data/${location.namespace}/${directory}/${location.path}.json`];
 }
 
-function inspectJsonTree(
+export function inspectJsonTree(
   value: unknown,
   options: {
     maxNodes: number;

@@ -45,6 +45,11 @@ See [selected Fabric set validation](../../docs/FABRIC_MOD_SET.md) for the paylo
 
 ## Examples
 
+`resolveDatapackTag({ version, registry, tag, packs })` resolves one tag across a low-to-high
+priority pack stack, with bounded membership and provenance. See
+[datapack tag resolution](../../docs/DATAPACK_TAG_RESOLUTION.md) for the input and completeness
+contracts on Java 26.2 and 1.21.11.
+
 ```ts
 import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";

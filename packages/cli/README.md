@@ -203,6 +203,7 @@ minecraft-skills datapack vanilla-json fetch 26.2
 minecraft-skills datapack vanilla-json search minecraft:diamond --version 26.2 --kind recipe --scope values
 minecraft-skills datapack vanilla-json clean 26.2
 minecraft-skills datapack validate-project 26.2 ./my-data-pack
+minecraft-skills datapack resolve-tag 26.2 item example:tools --pack-root ./base-pack --pack-root ./higher-pack
 minecraft-skills resourcepack vanilla-paths latest --contains models/block
 minecraft-skills resourcepack compare-vanilla-paths 1.20.6 1.21 --prefix assets/minecraft/models/item/
 minecraft-skills resourcepack assets status 26.2
@@ -359,6 +360,11 @@ file. Use `--max-inflated-bytes` to lower the filtered-image byte ceiling. Optio
 turning an unrequested empty image into an invalid PNG. Exit code 0 requires complete pixel
 inspection and a policy status of `met` or `not-requested`; structurally invalid, indeterminate,
 not-met, and not-checked results return exit code 1.
+
+`datapack resolve-tag` accepts explicit roots in lowest-to-highest priority order and resolves
+one tag with append/replace, nested/optional entries and source evidence. Exactly Java 26.2 and
+1.21.11 are supported. It returns nonzero for unresolved or incomplete membership. See
+[tag resolution](../../docs/DATAPACK_TAG_RESOLUTION.md) for cached vanilla and completeness rules.
 
 `datapack validate-project` recursively scans a stable regular local directory tree. It rejects
 observed symbolic links and special entries, identity-binds every text-file handle, and aborts when
