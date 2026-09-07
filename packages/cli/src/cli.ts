@@ -22,6 +22,7 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  defaultFabricModSetLimits,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultMinecraftPerformanceAnalysisLimits,
@@ -33,6 +34,7 @@ import {
   downloadJavaPlayerTexture,
   explainPackPath,
   type FabricApiMemberSearchOptions,
+  type FabricModSetOptions,
   fetchData,
   fetchMinecraftAssetFile,
   fetchMinecraftAssetsArchive,
@@ -155,6 +157,7 @@ import {
   type VanillaPathSearchOptions,
   validateDatapackProject,
   validateFabricModJar,
+  validateFabricModSet,
   validateMixinConfig,
   validateModrinthPackArchive,
   validatePackFilesContent,
@@ -986,6 +989,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "fabric toolchain": "fabric-toolchain",
     "velocity toolchain": "velocity-toolchain",
     "fabric validate-mod": "fabric-validate-mod",
+    "fabric validate-set": "fabric-validate-set",
     "blockbench inspect-project": "blockbench-inspect-project",
     "modrinth search": "modrinth-search",
     "modrinth versions": "modrinth-versions",
@@ -1260,6 +1264,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "velocity-toolchain": "velocity toolchain",
   "server-validate-properties": "server validate-properties",
   "fabric-validate-mod": "fabric validate-mod",
+  "fabric-validate-set": "fabric validate-set",
   "fabric-mods-inventory": "fabric mods inventory",
   "fabric-mods-diff": "fabric mods diff",
   "blockbench-inspect-project": "blockbench inspect-project",
@@ -1561,6 +1566,7 @@ Grouped commands:
   minecraft-skills fabric api types <game-version> [--query text] [--package-prefix package.name] [--limit 50] [--timeout-ms 15000]
   minecraft-skills fabric api members <game-version> [--query text] [--package-prefix package.name] [--type name] [--kind kind] [--limit 50] [--timeout-ms 15000]
   minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
+  minecraft-skills fabric validate-set <selection.json>
   minecraft-skills fabric mods inventory <directory>
   minecraft-skills minecraft jars inventory <directory>
   minecraft-skills minecraft jars diff <left-directory> <right-directory>
@@ -1643,6 +1649,8 @@ Command reference:
                  Resolve mapping mode and Loom plugin, then look up bounded official Fabric Meta candidates.
   fabric validate-mod
                  Check bounded structural rules for current schema v1 and JAR evidence offline.
+  fabric validate-set
+                 Check a fixed metadata selection's dependencies and report incomplete or nested coverage.
   fabric api types|members
                  Search exact-version public Fabric API packages from official Maven fatjavadoc indexes.
   fabric mods inventory
@@ -3381,6 +3389,25 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+
+    if (command === "fabric-validate-set") {
+      const positional = positionalArgsWithOptions(args);
+      if (positional.length !== 1 || !positional[0])
+        throw new Error("fabric validate-set requires exactly one local selection JSON file");
+      const bytes = readBoundedArchiveFile(positional[0], defaultFabricModSetLimits.maxInputBytes, {
+        command: "fabric validate-set",
+        extension: ".json",
+      });
+      let selection: unknown;
+      try {
+        selection = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+      } catch {
+        throw new Error("fabric validate-set requires valid UTF-8 JSON input");
+      }
+      const result = validateFabricModSet(selection as FabricModSetOptions);
+      printJson(output, result);
+      return result.status === "satisfied" ? 0 : 1;
     }
 
     if (command === "fabric-validate-mod") {

@@ -164,6 +164,7 @@ client API surface.
 - `inspect_java_targets`
 - `compare_jar_inventories`
 - `validate_fabric_mod`
+- `validate_fabric_mod_set`
 - `get_fabric_toolchain`
 - `search_fabric_api_types`
 - `search_fabric_api_members`
@@ -443,6 +444,14 @@ not validate dependency predicates or satisfaction, entrypoint classes or runtim
 mixin/access-widener syntax, nested JAR metadata, or icon pixels. `limits` can lower only the
 archive-entry count, metadata byte/node/depth/string-byte, and retained-diagnostic ceilings that
 this metadata-only surface actually applies.
+
+`validate_fabric_mod_set` checks dependencies among a fixed supplied selection of schema-v1
+metadata and explicitly supplied Loader-reported Minecraft, Java, and Fabric Loader versions.
+Callers state the physical environment and `selectionComplete`; missing providers remain
+unverified when selection or nested-JAR coverage is incomplete. Aliases, hard/soft declarations,
+and Loader's v1 environment rules are checked offline under lower-only bounds. The tool does not
+solve alternative versions or prove runtime compatibility. See the
+[input schema, dependency rules, and bounds](../../docs/FABRIC_MOD_SET.md).
 
 `validate_paper_plugin_jar` accepts bounded `pluginYml` / `paperPluginYml` text and JAR entry
 metadata, not binary uploads. Callers must state whether the entry list is complete. Paper's

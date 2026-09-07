@@ -500,6 +500,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `search_fabric_api_types`, `search_fabric_api_members` | Search exact-version public Fabric API type/member indexes with artifact, POM, and checksum provenance; excludes implementation, Loader, Mojang client surface, and behavior. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |
 | `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata, including Fabric mapping/Loom policy, or validate supplied Fabric mod metadata. |
+| `validate_fabric_mod_set` | Check a fixed selected Fabric metadata set's dependencies, aliases, runtime versions, and environment with explicit incomplete/nested coverage. |
 | `search_modrinth_projects`, `list_modrinth_project_versions`, `resolve_modrinth_compatibility`, `get_modrinth_resource`, `validate_modrinth_pack` | Search public Modrinth metadata, intersect compatibility labels, or validate supplied pack metadata. |
 | `validate_server_properties`, `validate_server_access_list`, `validate_mixin_config` | Validate server configuration and bounded Mixin evidence. |
 | `analyze_minecraft_log`, `analyze_minecraft_performance`, `inspect_blockbench_project` | Structure diagnostics or inspect bounded project metadata. |

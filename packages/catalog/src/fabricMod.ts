@@ -870,6 +870,7 @@ function validateStringMap(
 function validateDependencies(
   metadata: Record<string, unknown>,
   collector: FabricModDiagnosticCollector,
+  loaderPredicates = false,
 ): void {
   for (const field of fabricModDependencyFields) {
     const value = metadata[field];
@@ -888,7 +889,10 @@ function validateDependencies(
       const path = `${fieldPath}.${id}`;
       validateModId(id, path, collector);
       if (typeof predicate === "string") {
-        validText(predicate, path, collector);
+        validText(predicate, path, collector, {
+          allowEmpty: loaderPredicates,
+          allowControls: loaderPredicates,
+        });
         continue;
       }
       if (!Array.isArray(predicate)) {
@@ -901,7 +905,10 @@ function validateDependencies(
         continue;
       }
       for (const [index, entry] of predicate.entries())
-        validText(entry, `${path}[${index}]`, collector);
+        validText(entry, `${path}[${index}]`, collector, {
+          allowEmpty: loaderPredicates,
+          allowControls: loaderPredicates,
+        });
     }
   }
 }
@@ -1066,7 +1073,12 @@ type ParsedMod = NonNullable<FabricModValidationResult["mod"]>;
 function validateMetadata(
   value: unknown,
   collector: FabricModDiagnosticCollector,
-): { mod: ParsedMod | null; references: Map<string, string> } {
+  loaderPredicates = false,
+): {
+  mod: ParsedMod | null;
+  references: Map<string, string>;
+  metadata: Record<string, unknown> | null;
+} {
   const references = new Map<string, string>();
   const parsed = parseMetadata(value, collector);
   if (!isRecord(parsed)) {
@@ -1078,7 +1090,7 @@ function validateMetadata(
         "fabric.mod.json must contain a JSON object.",
       );
     }
-    return { mod: null, references };
+    return { mod: null, references, metadata: null };
   }
   if (typeof value === "string" && firstJsonObjectKey(value) !== "schemaVersion") {
     collector.add(
@@ -1145,7 +1157,7 @@ function validateMetadata(
       }
     }
   }
-  validateDependencies(parsed, collector);
+  validateDependencies(parsed, collector, loaderPredicates);
   if (parsed.custom !== undefined && !isRecord(parsed.custom)) {
     collector.add(
       "error",
@@ -1155,6 +1167,7 @@ function validateMetadata(
     );
   }
   return {
+    metadata: parsed,
     mod: {
       metadataSchemaVersion,
       id,
@@ -1168,6 +1181,38 @@ function validateMetadata(
     },
     references,
   };
+}
+
+/** Internal shared bounded metadata snapshot for selected-set validation. */
+export function inspectFabricModMetadataForSet(
+  metadata: unknown,
+  limits: Partial<FabricModValidationLimits>,
+) {
+  const collector = new FabricModDiagnosticCollector(resolveFabricModValidationLimits(limits));
+  try {
+    const parsed = validateMetadata(metadata, collector, true);
+    return {
+      ...parsed,
+      ...collector.finish(),
+      errorCount: collector.errorCount,
+      warningCount: collector.warningCount,
+    };
+  } catch {
+    collector.add(
+      "error",
+      "validation.inspection-failed",
+      "$",
+      "Fabric metadata inspection failed safely.",
+    );
+    return {
+      metadata: null,
+      mod: null,
+      references: new Map<string, string>(),
+      ...collector.finish(),
+      errorCount: collector.errorCount,
+      warningCount: collector.warningCount,
+    };
+  }
 }
 
 function finishResult(options: {
