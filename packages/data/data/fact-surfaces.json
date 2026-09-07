@@ -3,6 +3,24 @@
   "generatedFrom": "reviewed-maintainer-guidance",
   "surfaces": [
     {
+      "id": "block-state-definitions",
+      "domains": ["datapack", "resourcepack", "paper-plugin"],
+      "title": "Block properties and states",
+      "dataKind": "block-state-surface",
+      "coverage": "Java 26.2 and 1.21.11; downloadable generated facts",
+      "provenance": "Official Mojang server blocks.json reports with artifact and report digests",
+      "guarantees": [
+        "Reported property values, explicit default states, and paginated state tuples are bound to one version"
+      ],
+      "nonGuarantees": [
+        "No hardness, collision shape, or runtime behavior facts",
+        "Unsupported versions and missing cached data are explicit"
+      ],
+      "cli": ["minecraft block-state"],
+      "mcp": ["get_block_state_definition"],
+      "packageApis": ["getBlockStateDefinition"]
+    },
+    {
       "id": "java-version-metadata",
       "domains": ["datapack", "resourcepack", "paper-plugin"],
       "title": "Java version metadata",

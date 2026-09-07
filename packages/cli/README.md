@@ -1,5 +1,9 @@
 # minecraft-skills
 
+Use `minecraft-skills minecraft block-state 26.2 minecraft:oak_stairs --limit 20` to inspect
+official block properties and the default state. Fetch the `block-state-surface` kind first in
+packed installations; `--offset` continues a page. Initial coverage is 26.2 and 1.21.11.
+
 CLI for version-aware Minecraft authoring facts, generated skills, and AI agent lookups.
 
 ## Install

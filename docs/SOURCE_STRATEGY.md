@@ -189,6 +189,14 @@ cape/elytra layout.
 
 ## Importer Policy
 
+Block state definitions are normalized from official server-generated `reports/blocks.json`.
+The surface retains the selected server URL/SHA-1, input-report SHA-256, and generation retrieval
+timestamp. Only reported properties, states, and explicit default markers are extracted; the
+newer report's block implementation definitions are not treated as behavioral documentation.
+Reproduce with `ingest-block-states --version <version> --reports-dir <generated/reports>`.
+Initial sources cover 26.2 and 1.21.11. Manifest regeneration preserves unchanged immutable entry
+URLs; new or changed entries use development main URLs unless an explicit release base is supplied.
+
 Future importers should follow this shape:
 
 1. Fetch or read a pinned upstream artifact.

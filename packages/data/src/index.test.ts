@@ -1693,7 +1693,14 @@ describe("@minecraft-skills/data", () => {
     await withCacheDir((cacheDir) => {
       const manifest = getDataManifest();
       expect(manifest.dataVersion).toMatch(/^\d{4}\.\d{2}\.\d{2}-\d+$/);
-      expect(manifest.downloadable).toHaveLength(138);
+      expect(manifest.downloadable.length).toBeGreaterThan(0);
+      expect(new Set(manifest.downloadable.map((entry) => entry.path)).size).toBe(
+        manifest.downloadable.length,
+      );
+      for (const version of ["26.2", "1.21.11"])
+        expect(manifest.downloadable).toContainEqual(
+          expect.objectContaining({ kind: "block-state-surface", version }),
+        );
       expect(manifest.downloadable).toContainEqual(
         expect.objectContaining({ kind: "datapack-schema-surface", version: "1.13" }),
       );

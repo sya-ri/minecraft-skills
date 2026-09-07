@@ -1,11 +1,29 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.03-15",
+  "dataVersion": "2026.09.08-1",
   "defaultBaseUrl": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/v0.1.8/packages/data/data",
   "cache": {
     "environmentVariable": "MINECRAFT_SKILLS_CACHE_DIR"
   },
   "downloadable": [
+    {
+      "path": "java/block-states/1.21.11.json",
+      "kind": "block-state-surface",
+      "edition": "java",
+      "version": "1.21.11",
+      "size": 3116612,
+      "sha256": "83f651e9517ad109fed38aaed2b98c5f219ae5f2ba64c9a96e105940cc11764c",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/block-states/1.21.11.json"
+    },
+    {
+      "path": "java/block-states/26.2.json",
+      "kind": "block-state-surface",
+      "edition": "java",
+      "version": "26.2",
+      "size": 3423116,
+      "sha256": "40642babd647231d0fbd3bdbf5d63fe501f1921e60e1b0b7964188124c504c29",
+      "url": "https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/java/block-states/26.2.json"
+    },
     {
       "path": "java/datapack-schema-surfaces/1.13.1.json",
       "kind": "datapack-schema-surface",

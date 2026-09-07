@@ -1,5 +1,10 @@
 # @minecraft-skills/catalog
 
+`getBlockStateDefinition({ version, blockId, offset?, limit? })` returns official reported block
+properties, allowed values, the explicit default state, and a bounded state page. Initial coverage
+is 26.2 and 1.21.11; fetch `block-state-surface` data first in packed installations. Unsupported
+versions, absent cached data, and unknown IDs are distinct outcomes.
+
 ArkType-validated read APIs for the bundled Minecraft Skills data package.
 
 ## Install

@@ -1,5 +1,19 @@
 # Usage
 
+## Block properties and states
+
+Find a block ID with `minecraft registry-entries`, fetch the versioned data with
+`minecraft-skills data fetch --kind block-state-surface --version 26.2`, then run
+`minecraft-skills minecraft block-state 26.2 minecraft:oak_stairs --limit 20`.
+Use `--offset` to continue a state page; the full property map and explicit default state are
+returned on every page. MCP exposes `get_block_state_definition` with `version`, `blockId`,
+optional `offset`, and `limit`; Catalog exposes `getBlockStateDefinition` with the same fields.
+
+Initial source coverage is 26.2 and 1.21.11. `unavailable` distinguishes unsupported versions
+from uncached downloadable data, while `not-found` means the loaded version has no such ID.
+State IDs apply only to the selected version. These reports do not establish hardness,
+collision shapes, or in-game behavior.
+
 This guide maps the public minecraft-skills interfaces and explains what each command or capability
 provides. Install the CLI or MCP server first by following the
 [installation instructions](../README.md#installation).
