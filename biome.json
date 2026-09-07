@@ -14,7 +14,8 @@
       "!packages/data/data/java/datapack-schema-surfaces",
       "!packages/data/data/java/paper-api-surfaces",
       "!packages/data/data/java/command-trees",
-      "!packages/data/data/java/block-states"
+      "!packages/data/data/java/block-states",
+      "!packages/data/data/java/entity-metadata"
     ]
   },
   "formatter": {

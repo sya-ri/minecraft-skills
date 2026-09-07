@@ -85,6 +85,18 @@ versions, Java runtime metadata, and pack format extraction inputs. Refer to it 
 as "Mojang official version metadata and downloads, served through Piston endpoints" so the
 infrastructure name does not look like a third-party source.
 
+## Official Entity Metadata Declarations
+
+Entity metadata surfaces for exact Java 26.2 and 1.21.11 derive from static reflection over
+hash-verified official server jars, using verified Mojang server mappings for 1.21.11 names.
+The checked-in maintainer helper loads verified bundled dependencies in an isolated class loader,
+bootstraps official classes, and creates no entity instance or world. Surfaces preserve the
+artifact URLs/SHA-1 hashes, extraction report/helper SHA-256 hashes, and retrieval time.
+Independent official entity registry IDs establish coverage; failed declaration extraction is
+an explicit gap. These are accessor/index/type/serializer facts, with no claim about instance
+defaults, bit meanings, runtime behavior, or wire decoding. See the
+[entity metadata source and reproduction guide](ENTITY_METADATA.md#reproduce-the-extraction).
+
 ## Fabric Meta v2
 
 [Fabric Meta](https://github.com/FabricMC/fabric-meta) is FabricMC's official live JSON API for

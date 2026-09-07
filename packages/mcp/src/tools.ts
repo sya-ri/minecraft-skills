@@ -62,6 +62,7 @@ import {
   getCoverageSummary,
   getDataManifest,
   getDatapackSchemaSurface,
+  getEntityMetadata,
   getEvidenceBundle,
   getFabricToolchainCompatibility,
   getFactSurface,
@@ -1183,6 +1184,29 @@ export const tools: ToolDefinition[] = [
         limit: { type: "integer", minimum: 1, maximum: 2000 },
       },
       required: ["version"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_entity_metadata",
+    description:
+      "Get exact-version static entity metadata accessor indexes, inherited declaring classes, value types, serializers and serializer IDs from hash-verified official Java servers (26.2 or 1.21.11). Includes source hashes and registry/extraction coverage. Does not establish default values, bit meanings, runtime initialization or mod metadata. Missing heavy data is unavailable with explicit fetch guidance; never downloads implicitly.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: {
+          type: "string",
+          maxLength: 128,
+          description: "Exact Minecraft version. Initially supported: 26.2 and 1.21.11.",
+        },
+        entityId: {
+          type: "string",
+          maxLength: 256,
+          description:
+            "Namespaced vanilla entity ID, e.g. minecraft:armor_stand. Use registry search with minecraft:entity_type to discover IDs.",
+        },
+      },
+      required: ["version", "entityId"],
       additionalProperties: false,
     },
   },
@@ -4493,6 +4517,14 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(args.path !== undefined ? { path: args.path as string[] } : {}),
           ...(args.depth !== undefined ? { depth: args.depth as number } : {}),
           ...(args.limit !== undefined ? { limit: args.limit as number } : {}),
+        }),
+      );
+    }
+    if (name === "get_entity_metadata") {
+      return text(
+        getEntityMetadata({
+          version: requiredStringArg(args, name, "version"),
+          entityId: requiredStringArg(args, name, "entityId"),
         }),
       );
     }

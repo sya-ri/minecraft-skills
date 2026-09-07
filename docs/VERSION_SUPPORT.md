@@ -12,6 +12,11 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 ## Summary
 
+- Entity metadata declarations: exact Java 26.2 (158 entity types) and 1.21.11 (157 entity types),
+  available as downloadable `entity-metadata-surface` data with zero initial extraction gaps.
+  Static inherited indexes, value types and serializer identities do not establish instance
+  defaults or bit meanings. Other versions and aliases stay unavailable; see
+  [entity metadata coverage](ENTITY_METADATA.md#coverage-and-integrity).
 - Block property/state definitions: Java 26.2 and 1.21.11, available as the downloadable
   `block-state-surface` kind. Other releases are explicitly unsupported for this new surface.
 

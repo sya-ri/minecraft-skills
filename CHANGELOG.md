@@ -6,6 +6,11 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added exact-version entity metadata lookups across Catalog, CLI, and MCP for Java 26.2 and
+  1.21.11. Hash-verified official server extraction supplies inherited accessor indexes, types,
+  serializer names/IDs and source provenance with registry coverage and explicit extraction
+  gaps. Heavy surfaces are fetched separately; instance defaults, bit meanings and runtime
+  behavior are outside the evidence. Added a reproducible isolated Java extractor and ingestion.
 - Added `resolve_datapack_tag`, Catalog `resolveDatapackTag`, and CLI `datapack resolve-tag` for
   explicit ordered pack stacks on Java 26.2 and 1.21.11. Resolution handles append/replace, nested
   tags, optional entries, ordered deduplicated members and bounded source evidence. Required
