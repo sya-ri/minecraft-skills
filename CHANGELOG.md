@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added `resolve_datapack_tag`, Catalog `resolveDatapackTag`, and CLI `datapack resolve-tag` for
+  explicit ordered pack stacks on Java 26.2 and 1.21.11. Resolution handles append/replace, nested
+  tags, optional entries, ordered deduplicated members and bounded source evidence. Required
+  failures never return partial loaded membership; metadata/content gaps, overlays, filters,
+  cycles and unvalidated custom element files remain incomplete. Cached vanilla content is
+  read without implicit downloads.
 - Added fixed Fabric mod-set dependency validation through Catalog, MCP
   `validate_fabric_mod_set`, and CLI `fabric validate-set`, with Loader predicates, runtime
   versions, aliases, environment rules, bounded diagnostics, and explicit incomplete/nested coverage.

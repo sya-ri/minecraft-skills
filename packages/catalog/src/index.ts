@@ -79,6 +79,12 @@ import {
   resolveDatapackProjectValidationLimits,
   validateDatapackReferenceGraph,
 } from "./datapackProject.js";
+import {
+  type DatapackTagResolutionOptions,
+  type DatapackTagResolutionResult,
+  prepareDatapackTagResolution,
+  resolveDatapackTagGraph,
+} from "./datapackTag.js";
 import { inspectModrinthArchive } from "./modrinthZip.js";
 import {
   fetchPaperMemberDetails,
@@ -205,6 +211,22 @@ import {
 } from "./schemas.js";
 
 export * from "./blockbenchProject.js";
+export type {
+  DatapackTagDefinition,
+  DatapackTagDiagnostic,
+  DatapackTagIncompleteReason,
+  DatapackTagMember,
+  DatapackTagPack,
+  DatapackTagReference,
+  DatapackTagResolutionLimits,
+  DatapackTagResolutionOptions,
+  DatapackTagResolutionResult,
+  DatapackTagSource,
+} from "./datapackTag.js";
+export {
+  datapackTagResolutionVersions,
+  defaultDatapackTagResolutionLimits,
+} from "./datapackTag.js";
 export * from "./fabricApiSurface.js";
 export * from "./fabricMeta.js";
 export {
@@ -5955,6 +5977,36 @@ export function validatePackFilesContent(
     invalidFiles: files.filter((file) => !file.valid).length,
     files,
   };
+}
+
+export function resolveDatapackTag(
+  options: DatapackTagResolutionOptions,
+): DatapackTagResolutionResult {
+  const input = prepareDatapackTagResolution(options);
+  const reports = getJavaReportsSummary("java", input.version);
+  const registry = reports.datapack.registries.find((entry) => entry.id === input.registry);
+  const isFunction = input.registry === "minecraft:function";
+  if (!isFunction && registry?.tags !== true) {
+    throw new Error(
+      `No tag-enabled vanilla registry evidence for ${input.registry} in ${input.version}`,
+    );
+  }
+  const indexAvailable =
+    registry?.entryIndexStatus === "indexed" && hasDataFile(reports.datapack.registryEntries.path);
+  const entries = indexAvailable
+    ? readRegistryEntryList("java", reports)
+        .filter((entry) => entry.registryId === input.registry)
+        .map((entry) => entry.entryId)
+    : [];
+  return resolveDatapackTagGraph(input, {
+    registryEntries: new Set(entries),
+    registryIndexAvailable: indexAvailable,
+    fileBacked: isFunction || registry?.elements === true,
+    vanillaPaths: new Set(readVanillaPathList("java", input.version, "datapack")),
+    readVanillaTag(path) {
+      return getVanillaDatapackJson({ version: input.version, path }).json;
+    },
+  });
 }
 
 export function validateDatapackProject(

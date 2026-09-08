@@ -19,7 +19,9 @@ import {
   compareVersions,
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
+  type DatapackTagPack,
   defaultDatapackProjectValidationLimits,
+  defaultDatapackTagResolutionLimits,
   defaultFabricModSetLimits,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
@@ -134,6 +136,7 @@ import {
   type ResourcepackPngValidationLimits,
   type ResourcepackProjectValidationLimits,
   readCachedMinecraftAssetText,
+  resolveDatapackTag,
   resolveModrinthCompatibility,
   resolveResourcepackPngAlphaBoundsLimits,
   resolveResourcepackPngValidationLimits,
@@ -1458,6 +1461,77 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["contentBase64"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "resolve_datapack_tag",
+    description:
+      "Resolve one Java 26.2 or 1.21.11 tag across explicitly ordered datapacks (lowest priority first), including append/replace, nested tags, optional entries, ordered membership and source evidence. Cached official vanilla tags are included by default; no download occurs. Required missing references never return a partial loaded tag. Missing metadata/content, overlays, filters, cycles and unvalidated custom registry/function resources remain incomplete.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        edition: { type: "string", enum: ["java"], default: "java" },
+        version: { type: "string", enum: ["26.2", "1.21.11"] },
+        registry: {
+          type: "string",
+          maxLength: 512,
+          description:
+            "Tag-enabled vanilla registry ID, e.g. minecraft:item, minecraft:worldgen/biome, or minecraft:function.",
+        },
+        tag: {
+          type: "string",
+          maxLength: 512,
+          description: "Tag resource ID without the # prefix.",
+        },
+        includeVanilla: { type: "boolean", default: true },
+        packs: {
+          type: "array",
+          maxItems: defaultDatapackTagResolutionLimits.maxPacks,
+          items: {
+            type: "object",
+            required: ["id", "files"],
+            additionalProperties: false,
+            properties: {
+              id: {
+                type: "string",
+                minLength: 1,
+                maxLength: 128,
+                pattern: "^[a-zA-Z0-9_.-]+$",
+                description: "Unique provenance name; vanilla is reserved.",
+              },
+              files: {
+                type: "array",
+                maxItems: defaultDatapackTagResolutionLimits.maxFiles,
+                items: {
+                  type: "object",
+                  required: ["path"],
+                  additionalProperties: false,
+                  properties: {
+                    path: {
+                      type: "string",
+                      maxLength: defaultDatapackTagResolutionLimits.maxPathLength,
+                    },
+                    content: {
+                      oneOf: [
+                        {
+                          type: "string",
+                          maxLength: defaultDatapackTagResolutionLimits.maxTextContentCharacters,
+                        },
+                        { type: "object" },
+                      ],
+                      description:
+                        "JSON text or object for tag files and pack.mcmeta. Other paths provide existence evidence only.",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        limit: { type: "integer", minimum: 1, maximum: 1_000, default: 100 },
+      },
+      required: ["version", "registry", "tag", "packs"],
       additionalProperties: false,
     },
   },
@@ -4603,6 +4677,19 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       const inspected = inspectCanonicalBase64(args.contentBase64, limits.maxInputBytes, label);
       const bytes = decodeCanonicalBase64(inspected, label);
       return text(validateResourcepackPng(bytes, { limits }));
+    }
+    if (name === "resolve_datapack_tag") {
+      return text(
+        resolveDatapackTag({
+          edition: vanillaDatapackJsonEditionArg(args, name),
+          version: requiredStringArg(args, name, "version"),
+          registry: requiredStringArg(args, name, "registry"),
+          tag: requiredStringArg(args, name, "tag"),
+          packs: args.packs as DatapackTagPack[],
+          includeVanilla: optionalBooleanArg(args, name, "includeVanilla") ?? true,
+          limit: optionalIntegerArg(args, name, "limit", 1, 1_000) ?? 100,
+        }),
+      );
     }
     if (name === "validate_datapack_project") {
       if (!Array.isArray(args.files)) {
