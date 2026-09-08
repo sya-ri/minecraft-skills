@@ -476,6 +476,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | --- | --- |
 | `get_paper_plugin_data`, `get_paper_api_reference`, `get_paper_api_index`, `compare_paper_api` | Resolve Paper support, dependencies, documentation, and package/class indexes. |
 | `get_paper_api_surface`, `search_paper_types`, `search_paper_members`, `compare_paper_api_surface` | Inspect Paper type/member surfaces and changes. Type-scoped member searches include declarations from known supertypes when Javadocs hierarchy coverage is available and report the declaring type plus every searched type. |
+| `get_paper_member_details` | Retrieve the exact indexed member's official declaration and documentation notes, with bounded live source evidence. |
 | `search_paper_events` | Find Paper/Bukkit event candidates. |
 | `search_fabric_api_types`, `search_fabric_api_members` | Search exact-version official Fabric API rendering type/member indexes with artifact, POM, and checksum provenance; excludes Mojang client surface and behavior. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |

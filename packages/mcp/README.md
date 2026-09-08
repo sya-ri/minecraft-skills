@@ -213,6 +213,7 @@ client API surface.
 - `get_paper_api_surface`
 - `search_paper_types`
 - `search_paper_members`
+- `get_paper_member_details`
 - `compare_paper_api_surface`
 - `search_paper_events`
 - `list_domains`
@@ -220,6 +221,19 @@ client API surface.
 - `get_source_policy`
 - `lookup_java_player_profile`
 - `get_verified_java_player_textures`
+
+`get_paper_member_details` takes an exact `memberUrl` returned by `search_paper_members` and the
+same `version` (default `latest`). It verifies membership in the locally available versioned
+surface before fetching one official Javadocs page. Missing surfaces retain the existing explicit
+data-fetch recovery path. No surface is downloaded implicitly and no alternate version is used.
+Results include the original declaration and annotations, member description, deprecation text,
+and labeled parameter/return/throws and other notes. Modern and legacy doclets are supported;
+legacy declarations remain intact when separate Java type fields cannot be extracted. Missing
+anchors or unsupported HTML return `status: unavailable`. Output reports source URL, retrieval
+time, page SHA-256, extraction completeness, and truncation. It does not interpret nullability,
+thread safety, or runtime behavior, and does not fetch declaring-type prose or linked pages.
+Requests have a 10-second default deadline (configurable from 100 to 30,000 ms), an 8 MiB streamed
+page ceiling, and 32,768 retained documentation characters. Redirects and arbitrary URLs are rejected.
 
 For surfaces with Javadocs overview-tree coverage, `search_paper_members` type filters include
 members declared by known supertypes. Responses preserve the declaring type and report both

@@ -54,6 +54,7 @@ import {
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
+  getPaperMemberDetails,
   getPaperPluginData,
   paperPluginJarValidationLimits,
   getVerifiedJavaPlayerTextures,
@@ -654,6 +655,11 @@ const paperMembers = searchPaperMembers({
   type: "org.bukkit.entity.Player",
   contains: "teleportAsync",
 });
+// Fetch one exact indexed declaration's official Javadocs, with bounded source evidence.
+const indexedMember = paperMembers.members[0];
+const memberDetails = indexedMember
+  ? await getPaperMemberDetails({ version: paperMembers.version, memberUrl: indexedMember.url })
+  : null;
 const paperSurfaceDiff = comparePaperApiSurface("26.2", "26.2");
 const paper = getPaperPluginData();
 const paperPluginMetadata = validatePaperPluginArchiveMetadata({

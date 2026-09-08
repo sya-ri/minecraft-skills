@@ -70,6 +70,7 @@ import {
   getPaperApiIndex,
   getPaperApiReference,
   getPaperApiSurface,
+  getPaperMemberDetails,
   getPaperPluginData,
   getResourcepackModelSummary,
   getResponsePattern,
@@ -114,6 +115,7 @@ import {
   modrinthCompatibilityLimits,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
+  paperMemberDetailsLimits,
   paperPluginJarValidationLimits,
   playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
@@ -2642,7 +2644,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_paper_members",
     description:
-      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version. Type-scoped searches include known supertypes with Javadocs hierarchy coverage and preserve declaring types. Read-only by default: explicitly set fetchMissing:true to download a missing, exact-version manifest-verified surface into the local cache, then search. No Javadocs prose, deprecation, or behavioral guarantees.",
+      "Search Paper Javadocs member labels by type, package, kind, or text for a supported version. Type-scoped searches include known supertypes with Javadocs hierarchy coverage and preserve declaring types. Read-only by default: explicitly set fetchMissing:true to download a missing, exact-version manifest-verified surface into the local cache, then search. For declarations and documentation, pass a returned URL to get_paper_member_details. Search labels alone do not prove behavioral guarantees.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2662,6 +2664,30 @@ export const tools: ToolDefinition[] = [
         contains: { type: "string" },
         limit: { type: "number", default: 50 },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_paper_member_details",
+    description:
+      "Fetch one exact indexed Paper member's declaration, annotations, description, deprecation, and labeled documentation notes from official versioned Javadocs. Copy memberUrl from search_paper_members. Bound the request and output; missing sections remain explicit. Does not infer contracts or fetch other versions, linked pages, or missing API surfaces.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", minLength: 1, maxLength: 128, default: "latest" },
+        memberUrl: {
+          type: "string",
+          minLength: 1,
+          maxLength: paperMemberDetailsLimits.maxUrlCharacters,
+        },
+        timeoutMs: {
+          type: "integer",
+          minimum: 100,
+          maximum: paperMemberDetailsLimits.maxTimeoutMs,
+          default: paperMemberDetailsLimits.defaultTimeoutMs,
+        },
+      },
+      required: ["memberUrl"],
       additionalProperties: false,
     },
   },
@@ -5377,6 +5403,26 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         await searchPaperMembersWithData({
           ...searchOptions,
           fetchMissing: args.fetchMissing === true,
+        }),
+      );
+    }
+    if (name === "get_paper_member_details") {
+      const detailArgs = plainDataRecordArg(
+        input,
+        name,
+        new Set(["version", "memberUrl", "timeoutMs"]),
+      );
+      if (typeof detailArgs.memberUrl !== "string")
+        throw new Error("get_paper_member_details requires string memberUrl");
+      if (hasOwnArg(detailArgs, "version") && typeof detailArgs.version !== "string")
+        throw new Error("get_paper_member_details version must be a string");
+      if (hasOwnArg(detailArgs, "timeoutMs") && typeof detailArgs.timeoutMs !== "number")
+        throw new Error("get_paper_member_details timeoutMs must be a number");
+      return text(
+        await getPaperMemberDetails({
+          memberUrl: detailArgs.memberUrl,
+          ...(typeof detailArgs.version === "string" ? { version: detailArgs.version } : {}),
+          ...(typeof detailArgs.timeoutMs === "number" ? { timeoutMs: detailArgs.timeoutMs } : {}),
         }),
       );
     }

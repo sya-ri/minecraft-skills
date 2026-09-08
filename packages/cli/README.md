@@ -429,6 +429,16 @@ does not include descriptor values or class bytes. Errors return 1;
 warnings and explicitly incomplete/experimental coverage do not by themselves make the artifact
 invalid.
 
+`plugin paper member-details [version] --url <member-url>` retrieves one exact member's official
+Javadocs declaration, annotations, description, deprecation, and labeled parameter/return/throws
+notes. Copy the URL from `plugin paper members` for the same version; `latest` is the default.
+Membership in the locally available versioned API surface is checked before the network request.
+Use `--timeout-ms` to set the 100–30,000 ms deadline (default 10,000). The page is bounded to 8 MiB,
+documentation output to 32,768 characters, and redirects are refused. Modern and legacy doclets
+are supported, with explicit unavailable fields and source URL/time/SHA-256 evidence. Missing or
+truncated detail extraction returns exit code 1; complete extraction returns 0. This observes
+documentation without inferring behavioral guarantees or fetching other pages or versions.
+
 `plugin velocity validate-jar` applies the same regular-file, non-symlink, stable-read, 64 MiB
 ceiling before bounded ZIP inspection. It checks root `velocity-plugin.json` integrity and current
 structural fields, exact entrypoint class presence, bounded classfile identity, that entrypoint's
