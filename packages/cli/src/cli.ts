@@ -52,6 +52,7 @@ import {
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
+  getCommandDetails,
   getCommunityDataset,
   getCoverageSummary,
   getDataManifest,
@@ -962,6 +963,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft search": "catalog-search",
     "minecraft search-all": "search-all",
     "minecraft registry-entries": "registry-entries",
+    "minecraft command-details": "command-details",
     "minecraft block-state": "block-state",
     "minecraft compare-registry-entries": "compare-registry-entries",
     "minecraft analyze-performance": "analyze-minecraft-performance",
@@ -1197,6 +1199,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "show-version": "minecraft show",
   "compare-versions": "minecraft compare",
   "registry-entries": "minecraft registry-entries",
+  "command-details": "minecraft command-details",
   "block-state": "minecraft block-state",
   "compare-registry-entries": "minecraft compare-registry-entries",
   "validate-server-access-list": "minecraft validate-access-list",
@@ -1487,6 +1490,7 @@ Grouped commands:
   minecraft-skills datapack|resourcepack response-patterns|response-pattern
   minecraft-skills plugin paper response-patterns|response-pattern
   minecraft-skills datapack commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
+  minecraft-skills minecraft command-details <version> [<node> ...] [--depth 1] [--limit 100]
   minecraft-skills minecraft block-state <version> <block-id> [--offset 0] [--limit 256]
   minecraft-skills minecraft registry-entries [version] [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft compare-registry-entries <from> <to> [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
@@ -2338,6 +2342,20 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return 0;
     }
 
+    if (command === "command-details") {
+      const [version, ...path] = positionalArgs(args);
+      if (!version) throw new Error("command-details requires <version>");
+      printJson(
+        output,
+        getCommandDetails({
+          version,
+          path,
+          depth: Number(readOption(args, "--depth", "1")),
+          limit: Number(readOption(args, "--limit", "100")),
+        }),
+      );
+      return 0;
+    }
     if (command === "block-state") {
       const [version, blockId] = positionalArgs(args);
       if (!version || !blockId) throw new Error("block-state requires <version> <block-id>");

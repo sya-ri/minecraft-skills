@@ -1,5 +1,7 @@
 # Version Support
 
+- Command syntax trees initially cover Java 26.2 and 1.21.11. No runtime permission, execution, context suggestions, or inferred redirect semantics are claimed.
+
 This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.8. It is
 derived from the same catalog data used by the CLI, package API, and MCP server.
 

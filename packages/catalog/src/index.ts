@@ -43,6 +43,14 @@ import {
   searchMinecraftAssets,
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
+import { type CommandDetailsOptions, readCommandDetails } from "./commandDetails.js";
+
+export type { CommandDetailsOptions, CommandNode, CommandTreeSurface } from "./commandDetails.js";
+export { buildCommandTreeSurface, commandDetailLimits } from "./commandDetails.js";
+export function getCommandDetails(options: CommandDetailsOptions) {
+  return readCommandDetails({ ...options, version: resolveVersion("java", options.version) });
+}
+
 import { type BlockStateDefinitionOptions, readBlockStateDefinition } from "./blockStates.js";
 
 export type {

@@ -52,6 +52,7 @@ import {
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
+  getCommandDetails,
   getCommunityDataset,
   getCoverageSummary,
   getDataManifest,
@@ -1081,6 +1082,26 @@ export const tools: ToolDefinition[] = [
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_command_details",
+    description:
+      "Read a bounded subtree of an exact-version official command report. Path is an array of literal or argument node names, not an executable command. Returns parser properties, executable markers, explicit redirects, and child names; omitted results are explicit.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string" },
+        path: {
+          type: "array",
+          items: { type: "string", minLength: 1, maxLength: 256 },
+          maxItems: 128,
+        },
+        depth: { type: "integer", minimum: 0, maximum: 8 },
+        limit: { type: "integer", minimum: 1, maximum: 2000 },
+      },
+      required: ["version"],
       additionalProperties: false,
     },
   },
@@ -4191,6 +4212,17 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_server_reports") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getJavaReportsSummary(edition, version));
+    }
+    if (name === "get_command_details") {
+      if (typeof args.version !== "string") throw new Error("get_command_details requires version");
+      return text(
+        getCommandDetails({
+          version: args.version,
+          ...(args.path !== undefined ? { path: args.path as string[] } : {}),
+          ...(args.depth !== undefined ? { depth: args.depth as number } : {}),
+          ...(args.limit !== undefined ? { limit: args.limit as number } : {}),
+        }),
+      );
     }
     if (name === "get_block_state_definition") {
       if (typeof args.version !== "string" || typeof args.blockId !== "string")
