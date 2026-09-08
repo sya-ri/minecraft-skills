@@ -17,6 +17,16 @@ pnpm add @minecraft-skills/catalog
 
 Node.js 22.12 or newer is required.
 
+## Java target inspection
+
+`inspectJavaJarTargets({ archive, targetJavaRelease, previewEnabled? })` inspects bounded JAR bytes
+without loading code or extracting files. `validateJavaTargetMetadata({ classes,
+classEntriesComplete, multiRelease, targetJavaRelease, previewEnabled? })` shares the target analysis
+but treats every input field as caller-supplied evidence. The required Java release is 8–26;
+preview defaults to disabled. Results include standard Multi-Release selection, exact-release
+preview constraints, selected target requirements, completeness and bounded per-class diagnostics.
+Binary integrity is never inferred from metadata. See [the full contract](../../docs/JAVA_TARGET_INSPECTION.md).
+
 ## Examples
 
 ```ts

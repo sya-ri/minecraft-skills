@@ -4967,6 +4967,64 @@ describe("MCP tools", () => {
     expect(requirement.content[0]?.text).toContain("crop-only proof");
   });
 
+  it("assesses Java target metadata without granting binary integrity claims", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const result = await callMinecraftSkillsTool("inspect_java_targets", {
+      targetJavaRelease: 21,
+      multiRelease: true,
+      classEntriesComplete: true,
+      classes: [
+        { path: "example/Main.class", majorVersion: 52, minorVersion: 0 },
+        { path: "META-INF/versions/21/example/Main.class", majorVersion: 65, minorVersion: 65535 },
+      ],
+    });
+    expect(result.isError).not.toBe(true);
+    expect(JSON.parse(result.content[0]?.text ?? "{}")).toMatchObject({
+      targetCompatible: false,
+      effectiveClassCount: 1,
+      evidence: {
+        strength: "metadata",
+        zipStructureValidated: false,
+        classContentIntegrityValidated: false,
+      },
+      diagnostics: [expect.objectContaining({ code: "class.preview-disabled" })],
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    const tool = tools.find((entry) => entry.name === "inspect_java_targets");
+    expect(tool?.inputSchema).toMatchObject({
+      additionalProperties: false,
+      required: ["targetJavaRelease", "multiRelease", "classEntriesComplete", "classes"],
+    });
+    expect(JSON.stringify(tool?.inputSchema)).not.toContain("archivePath");
+  });
+
+  it("rejects forged archive evidence and unsafe Java target metadata before reading accessors", async () => {
+    const valid = {
+      targetJavaRelease: 21,
+      multiRelease: false,
+      classEntriesComplete: true,
+      classes: [{ path: "Main.class", majorVersion: 65, minorVersion: 0 }],
+    };
+    for (const input of [
+      { ...valid, archivePath: "server.jar" },
+      { ...valid, classContentIntegrityValidated: true },
+      { ...valid, targetJavaRelease: 100 },
+      { ...valid, classes: [{ path: "../Main.class", majorVersion: 65, minorVersion: 0 }] },
+    ])
+      expect((await callMinecraftSkillsTool("inspect_java_targets", input)).isError).toBe(true);
+    let calls = 0;
+    const result = await callMinecraftSkillsTool("inspect_java_targets", {
+      ...valid,
+      get classes() {
+        calls += 1;
+        return [];
+      },
+    });
+    expect(result.isError).toBe(true);
+    expect(calls).toBe(0);
+  });
+
   it("analyzes bounded Minecraft logs while redacting retained sensitive values", async () => {
     const result = await callMinecraftSkillsTool("analyze_minecraft_log", {
       text: [

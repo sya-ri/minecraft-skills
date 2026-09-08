@@ -31,6 +31,20 @@ Use `minecraft-skills source report`, `minecraft-skills source tiers`, or MCP
   response patterns.
 - `human-only-background`: material maintainers may read manually outside automated AI retrieval.
 
+## Java Classfile Targets and Multi-Release JARs
+
+Java target inspection uses Oracle's [Java SE 26 JVM classfile specification](https://docs.oracle.com/javase/specs/jvms/se26/html/jvms-4.html#jvms-4.1)
+for major/minor version rules and exact-release preview constraints, the
+[Java SE 11 historical ranges](https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.1)
+for the pre-preview highest-major minor-zero boundary, and the
+[JAR specification](https://docs.oracle.com/en/java/javase/25/docs/specs/jar/jar.html#multi-release-jar-files)
+for main-manifest attributes and standard version-directory selection. The audited runtime input
+range is Java 8–26. These stable format rules do not establish Minecraft platform support.
+Local JAR bytes and supplied extracted metadata are separate evidence strengths; metadata cannot
+assert byte integrity. Classfile target compatibility does not imply code verification, linkage,
+module resolution, dependency availability or runtime execution. Nested archives and multi-release
+public API parity remain outside this inspection. See [the contract](JAVA_TARGET_INSPECTION.md).
+
 ## Structured Community Datasets
 
 These sources are useful because they are structured and versioned. They should be imported as

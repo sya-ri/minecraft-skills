@@ -3206,6 +3206,82 @@ describe("minecraft-skills CLI", () => {
     ).toThrow("changed while it was being read");
   });
 
+  it("inspects all local JAR class targets with explicit Java and preview settings", async () => {
+    const root = mkdtempSync(join(tmpdir(), "minecraft-skills-java-target-cli-"));
+    const jarPath = join(root, "example.jar");
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    try {
+      writeFileSync(
+        jarPath,
+        createStoredZip({
+          "Main.class": createMinimalVelocityEntrypointClass(65),
+          "Helper.class": createMinimalVelocityEntrypointClass(69),
+        }),
+      );
+      const failed = await capture(["minecraft", "inspect-java-targets", jarPath, "--java", "21"]);
+      expect(failed.code).toBe(1);
+      expect(JSON.parse(failed.stdout.join("\n"))).toMatchObject({
+        targetCompatible: false,
+        classCount: 2,
+        evidence: { strength: "binary", classContentIntegrityValidated: true },
+      });
+      const compatible = await capture([
+        "minecraft",
+        "inspect-java-targets",
+        jarPath,
+        "--java",
+        "25",
+      ]);
+      expect(compatible.code).toBe(0);
+      const preview = createMinimalVelocityEntrypointClass(69);
+      preview.writeUInt16BE(65535, 4);
+      writeFileSync(jarPath, createStoredZip({ "Main.class": preview }));
+      expect(
+        (await capture(["minecraft", "inspect-java-targets", jarPath, "--java", "25"])).code,
+      ).toBe(1);
+      expect(
+        (
+          await capture([
+            "minecraft",
+            "inspect-java-targets",
+            jarPath,
+            "--java",
+            "25",
+            "--enable-preview",
+          ])
+        ).code,
+      ).toBe(0);
+      writeFileSync(jarPath, createStoredZip({ "Broken.class": "invalid" }));
+      const unknown = await capture(["minecraft", "inspect-java-targets", jarPath, "--java", "25"]);
+      expect(unknown.code).toBe(1);
+      expect(JSON.parse(unknown.stdout.join("\n"))).toMatchObject({
+        targetCompatible: null,
+        scanComplete: false,
+      });
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects missing, repeated and unsupported Java target inspection options before file access", async () => {
+    for (const args of [
+      [],
+      ["--java", "27"],
+      ["--java", "8.5"],
+      ["--java"],
+      ["--java", "21", "--java", "25"],
+      ["--java", "21", "--enable-preview", "--enable-preview"],
+      ["--java", "21", "--unknown"],
+    ]) {
+      const result = await capture(["minecraft", "inspect-java-targets", "missing.jar", ...args]);
+      expect(result.code).toBe(1);
+      expect(result.stderr.join("\n")).toContain("minecraft inspect-java-targets");
+      expect(result.stdout).toEqual([]);
+    }
+  });
+
   it("validates a bounded local Velocity plugin JAR without network access", async () => {
     const root = mkdtempSync(join(tmpdir(), "minecraft-skills-velocity-jar-cli-"));
     const jarPath = join(root, "example.jar");

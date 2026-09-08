@@ -177,6 +177,7 @@ minecraft-skills minecraft list
 minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log --max-mixin-failures 50
+minecraft-skills minecraft inspect-java-targets ./plugins/example.jar --java 21
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills minecraft analyze-performance ./performance-samples.json
 minecraft-skills minecraft pack-formats
@@ -288,6 +289,21 @@ versions. `outcome` reports whether the requested scope was fully, partially, or
 `excludedRegistries` contains bounded per-version coverage statuses. Protocol changes require
 numeric IDs in both versions; null-to-number and number-to-null observations are not classified as
 changes.
+
+`minecraft inspect-java-targets <jar> --java <release> [--enable-preview]` reads a local regular `.jar`
+file up to 64 MiB and inspects classfiles throughout the archive, including shaded helper classes.
+It requires an explicit audited Java release from 8 through 26; `--enable-preview` describes the
+supplied runtime configuration and does not inspect or alter JVM flags. Standard Multi-Release JAR
+selection uses the main manifest and the highest eligible version directory. Preview classes require
+their exact release and enabled preview, even when the supplied Java is newer.
+
+JSON distinguishes incompatible targets (`targetCompatible: false`) from unresolved requirements
+(`null`), and records per-class selection, bounded diagnostics, byte evidence and scan completeness.
+Exit status is 0 only for a complete compatible target scan; incompatible or incomplete results return
+1 with JSON. Invalid arguments and local file errors return 1 with stderr. Symlinks and special files
+are refused. Nothing is extracted or executed, and no network requests are made. Nested JARs remain
+uninspected and make overall requirements unknown. This does not prove runtime, linkage, dependency
+or Minecraft API compatibility. See [inspection details](../../docs/JAVA_TARGET_INSPECTION.md).
 
 `minecraft analyze-log <file>` accepts a regular file or a symlink to a regular file, reads it from
 one stable file handle, rejects a size/timestamp change during the read, and requires valid UTF-8.

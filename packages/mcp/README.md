@@ -161,6 +161,7 @@ client API surface.
 - `compare_versions`
 - `search_all`
 - `analyze_minecraft_log`
+- `inspect_java_targets`
 - `validate_fabric_mod`
 - `get_fabric_toolchain`
 - `search_fabric_api_types`
@@ -302,6 +303,17 @@ namespaces are assumed complete by default. Set `assumeLocalNamespacesComplete` 
 another pack or mod may merge resources into the same namespace. Those unresolved dependencies,
 JSON without version-compatible schema coverage, dynamic macro commands, pack overlays, and
 unsupported graph kinds are returned as explicit completeness gaps.
+
+`inspect_java_targets` accepts `classes` containing extracted `.class` entry `path`, `majorVersion`
+and `minorVersion` fields, required `classEntriesComplete` and `multiRelease` claims, and an explicit
+`targetJavaRelease` from 8 through 26. Unknown version pairs and the manifest setting use `null`.
+Optional `previewEnabled` defaults to false and describes supplied runtime configuration. Standard
+Multi-Release selection and exact-release preview constraints are assessed without reading files,
+accepting archive paths or binary payloads, accessing the network, or executing code. All byte and
+archive verification fields remain false even when supplied metadata is complete. Results assess
+classfile target constraints only; they do not establish JVM/linkage or Minecraft compatibility.
+Use CLI `minecraft inspect-java-targets <jar> --java <release>` for actual binary inspection.
+See [the contract and limits](../../docs/JAVA_TARGET_INSPECTION.md).
 
 `analyze_minecraft_log` accepts Minecraft Java log, stack-trace, or crash-report text within both a
 2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. Its optional `limits` object can only lower the

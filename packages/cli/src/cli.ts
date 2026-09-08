@@ -88,9 +88,11 @@ import {
   getVersionDetail,
   inferServerAccessListKind,
   inspectBlockbenchProject,
+  inspectJavaJarTargets,
   inspectResourcepackPngAlphaBounds,
   inspectWaveAudio,
   type JavaPlayerTextureKind,
+  javaTargetInspectionLimits,
   listAuthoringChecklists,
   listAuthoringDiagnostics,
   listAuthoringGuardrails,
@@ -970,6 +972,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft explain-path": "explain-path",
     "minecraft suggest-lookups": "suggest-lookups",
     "minecraft analyze-log": "analyze-minecraft-log",
+    "minecraft inspect-java-targets": "inspect-java-targets",
     "minecraft validate-access-list": "validate-server-access-list",
     "minecraft validate-mixin-config": "validate-mixin-config",
     "fabric toolchain": "fabric-toolchain",
@@ -1219,6 +1222,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "validate-player-skin-layout": "player-skin validate-layout",
   "download-player-texture": "player-texture download",
   "analyze-minecraft-log": "minecraft analyze-log",
+  "inspect-java-targets": "minecraft inspect-java-targets",
   "validate-resourcepack-translations": "resourcepack validate-translations",
   "inspect-wave-audio": "resourcepack sound inspect",
   "migration-plan": "datapack migration-plan or resourcepack migration-plan",
@@ -1565,6 +1569,7 @@ Grouped commands:
   minecraft-skills minecraft explain-path [version] <path> [--domain datapack|resourcepack]
   minecraft-skills minecraft suggest-lookups <task...> [--version latest] [--domain datapack|resourcepack|paper-plugin]
   minecraft-skills minecraft analyze-log <file> [--max-input-bytes bytes] [--max-characters chars] [--max-lines count] [--max-line-characters chars] [--max-events count] [--max-exception-chains count] [--max-mixin-failures count] [--max-class-loading-failures count] [--max-exception-depth count] [--max-exception-entries count] [--max-stack-frames count]
+  minecraft-skills minecraft inspect-java-targets <jar-file> --java <release> [--enable-preview]
     [--max-platforms count] [--max-artifacts count] [--max-components count] [--max-text-characters chars] [--max-retained-text-characters chars]
   minecraft-skills minecraft sources [datapack|resourcepack|paper-plugin] [version]
   minecraft-skills minecraft validate-mixin-config <config.json> [--archive-entries entries.json] [--archive-entries-complete true|false]
@@ -3742,6 +3747,48 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         }),
       );
       return 0;
+    }
+
+    if (command === "inspect-java-targets") {
+      const paths: string[] = [];
+      let java: string | undefined;
+      let previewEnabled = false;
+      for (let index = 0; index < args.length; index += 1) {
+        const arg = args[index];
+        if (arg === "--java") {
+          if (java !== undefined)
+            throw new Error("minecraft inspect-java-targets --java must not be repeated");
+          java = args[++index];
+          if (!java || java.startsWith("-"))
+            throw new Error("minecraft inspect-java-targets --java requires a release");
+        } else if (arg === "--enable-preview") {
+          if (previewEnabled)
+            throw new Error("minecraft inspect-java-targets --enable-preview must not be repeated");
+          previewEnabled = true;
+        } else if (arg?.startsWith("-")) {
+          throw new Error(`minecraft inspect-java-targets received unknown option: ${arg}`);
+        } else if (arg) paths.push(arg);
+      }
+      const path = paths[0];
+      if (paths.length !== 1 || !path || java === undefined) {
+        throw new Error(
+          "minecraft inspect-java-targets requires exactly one .jar file and --java <release>",
+        );
+      }
+      const targetJavaRelease = readIntegerArg(java, "minecraft inspect-java-targets --java");
+      if (
+        targetJavaRelease < javaTargetInspectionLimits.minTargetJavaRelease ||
+        targetJavaRelease > javaTargetInspectionLimits.maxTargetJavaRelease
+      ) {
+        throw new Error("minecraft inspect-java-targets --java must be between 8 and 26");
+      }
+      const archive = readBoundedArchiveFile(path, javaTargetInspectionLimits.maxArchiveBytes, {
+        command: "minecraft inspect-java-targets",
+        extension: ".jar",
+      });
+      const result = inspectJavaJarTargets({ archive, targetJavaRelease, previewEnabled });
+      printJson(output, result);
+      return result.targetCompatible === true && result.scanComplete ? 0 : 1;
     }
 
     if (command === "analyze-minecraft-log") {
