@@ -162,6 +162,7 @@ client API surface.
 - `search_all`
 - `analyze_minecraft_log`
 - `inspect_java_targets`
+- `compare_jar_inventories`
 - `validate_fabric_mod`
 - `get_fabric_toolchain`
 - `search_fabric_api_types`
@@ -314,6 +315,15 @@ archive verification fields remain false even when supplied metadata is complete
 classfile target constraints only; they do not establish JVM/linkage or Minecraft compatibility.
 Use CLI `minecraft inspect-java-targets <jar> --java <release>` for actual binary inspection.
 See [the contract and limits](../../docs/JAVA_TARGET_INSPECTION.md).
+
+`compare_jar_inventories` accepts `left` and `right` inventories containing `schemaVersion: 1`,
+`scanComplete`, and bounded `records` with logical archive names, platform, ID, version, SHA-256,
+byte length and metadata issue fields. CLI `minecraft jars inventory` returns this shape in its
+`inventory` field. Null hashes/versions stay unknown; duplicate IDs and unidentified archives are
+not arbitrarily paired, and incomplete opposite inventories do not prove absence. All input fields
+remain supplied metadata: this tool reads no paths or bytes, downloads nothing and does not prove
+runtime compatibility or dependency resolution. Use `minecraft jars diff` for local collection and
+comparison. See [the record contract](../../docs/JAR_INVENTORY.md).
 
 `analyze_minecraft_log` accepts Minecraft Java log, stack-trace, or crash-report text within both a
 2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. Its optional `limits` object can only lower the

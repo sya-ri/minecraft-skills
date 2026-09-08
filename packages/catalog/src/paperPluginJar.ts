@@ -111,6 +111,7 @@ export type PaperPluginDescriptorSummary = {
   contentProvided: boolean;
   contentIntegrityValidated: boolean;
   yamlValidated: boolean;
+  identity: { id: string | null; version: string | null } | null;
   unknownFieldCount: number;
   declaredClasses: PaperPluginDeclaredClassCheck[];
 };
@@ -1223,7 +1224,11 @@ function validatePluginYml(
   collector: DiagnosticCollector,
   entryPaths: Set<string>,
   entryListComplete: boolean,
-): { unknownFieldCount: number; declaredClasses: PaperPluginDeclaredClassCheck[] } {
+): {
+  unknownFieldCount: number;
+  declaredClasses: PaperPluginDeclaredClassCheck[];
+  identity: { id: string | null; version: string | null };
+} {
   const name = textValue(record, "name", pluginDescriptorPath, collector, {
     required: true,
     maximum: 128,
@@ -1237,7 +1242,7 @@ function validatePluginYml(
       "Bukkit plugin names may contain only letters, digits, spaces, underscores, dots, and hyphens.",
     );
   }
-  textValue(record, "version", pluginDescriptorPath, collector, {
+  const version = textValue(record, "version", pluginDescriptorPath, collector, {
     required: true,
     maximum: 256,
     allowNumber: true,
@@ -1299,6 +1304,7 @@ function validatePluginYml(
     ),
   ].filter((value): value is PaperPluginDeclaredClassCheck => value !== null);
   return {
+    identity: { id: name !== null && pluginName.test(name) ? name : null, version },
     unknownFieldCount: validateTopLevelUnknownFields(
       record,
       pluginYmlKnownFields,
@@ -1398,7 +1404,11 @@ function validatePaperPluginYml(
   collector: DiagnosticCollector,
   entryPaths: Set<string>,
   entryListComplete: boolean,
-): { unknownFieldCount: number; declaredClasses: PaperPluginDeclaredClassCheck[] } {
+): {
+  unknownFieldCount: number;
+  declaredClasses: PaperPluginDeclaredClassCheck[];
+  identity: { id: string | null; version: string | null };
+} {
   const name = textValue(record, "name", paperPluginDescriptorPath, collector, {
     required: true,
     maximum: 128,
@@ -1416,7 +1426,7 @@ function validatePaperPluginYml(
       "Paper plugin name violates the current loader's documented name constraints.",
     );
   }
-  textValue(record, "version", paperPluginDescriptorPath, collector, {
+  const version = textValue(record, "version", paperPluginDescriptorPath, collector, {
     required: true,
     maximum: 256,
     allowNumber: true,
@@ -1501,6 +1511,16 @@ function validatePaperPluginYml(
     ),
   ].filter((value): value is PaperPluginDeclaredClassCheck => value !== null);
   return {
+    identity: {
+      id:
+        name !== null &&
+        pluginName.test(name) &&
+        !name.includes(" ") &&
+        !reservedPaperPluginNames.has(name.toLowerCase())
+          ? name
+          : null,
+      version,
+    },
     unknownFieldCount: validateTopLevelUnknownFields(
       record,
       paperPluginYmlKnownFields,
@@ -1713,6 +1733,7 @@ function validatePaperPluginArchiveInternal(options: {
     }
 
     let yamlValidated = false;
+    let identity: PaperPluginDescriptorSummary["identity"] = null;
     let unknownFieldCount = 0;
     let declaredClasses: PaperPluginDeclaredClassCheck[] = [];
     if (content !== undefined && role === "active") {
@@ -1723,6 +1744,7 @@ function validatePaperPluginArchiveInternal(options: {
             ? validatePluginYml(record, collector, entryPaths, entryListComplete)
             : validatePaperPluginYml(record, collector, entryPaths, entryListComplete);
         unknownFieldCount = validation.unknownFieldCount;
+        identity = validation.identity;
         declaredClasses = validation.declaredClasses;
         yamlValidated = true;
       }
@@ -1735,6 +1757,7 @@ function validatePaperPluginArchiveInternal(options: {
       contentProvided: content !== undefined,
       contentIntegrityValidated: options.contentIntegrity.has(kind),
       yamlValidated,
+      identity,
       unknownFieldCount,
       declaredClasses,
     });

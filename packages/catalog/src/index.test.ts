@@ -6755,6 +6755,23 @@ describe("catalog", () => {
     ).not.toContain("inspect-java-targets");
   });
 
+  it("routes installed plugin JAR comparisons without matching inventory GUI tasks", () => {
+    for (const task of [
+      "compare plugin JAR hashes",
+      "inventory installed mods",
+      "find duplicate JAR identities",
+    ]) {
+      expect(suggestMinecraftLookups({ task }).suggestedTools.map((entry) => entry.tool)).toContain(
+        "minecraft jars inventory <directory>",
+      );
+    }
+    expect(
+      suggestMinecraftLookups({ task: "Paper plugin inventory GUI" })
+        .suggestedTools.map((entry) => entry.tool)
+        .join(" "),
+    ).not.toContain("minecraft jars");
+  });
+
   it("routes Java log and crash analysis tasks to the bounded log analyzer", () => {
     for (const task of [
       "analyze this Minecraft server log",

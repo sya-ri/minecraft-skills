@@ -178,6 +178,9 @@ minecraft-skills minecraft search-all "bundle item model" --domain resourcepack
 minecraft-skills minecraft suggest-lookups "migrate resource pack item model" --domain resourcepack
 minecraft-skills minecraft analyze-log ./logs/latest.log --max-mixin-failures 50
 minecraft-skills minecraft inspect-java-targets ./plugins/example.jar --java 21
+
+minecraft-skills minecraft jars inventory ./plugins
+minecraft-skills minecraft jars diff ./before ./after
 minecraft-skills minecraft explain-path 26.2 assets/example/items/widget.json --domain resourcepack
 minecraft-skills minecraft analyze-performance ./performance-samples.json
 minecraft-skills minecraft pack-formats
@@ -304,6 +307,19 @@ Exit status is 0 only for a complete compatible target scan; incompatible or inc
 are refused. Nothing is extracted or executed, and no network requests are made. Nested JARs remain
 uninspected and make overall requirements unknown. This does not prove runtime, linkage, dependency
 or Minecraft API compatibility. See [inspection details](../../docs/JAVA_TARGET_INSPECTION.md).
+
+`minecraft jars inventory <directory>` collects direct `.jar` files case-insensitively using stable
+bounded reads, SHA-256 hashes and existing Fabric/Paper/Velocity descriptor parsers. Its `inventory`
+field is the versioned metadata input for `compare_jar_inventories`; `summary` reports duplicate
+platform/ID groups and unknown metadata. `minecraft jars diff <left> <right>` collects both directories
+and compares exact platform/ID identities, known hashes, versions and basenames. Missing hashes do
+not prove content changes; incomplete or unidentified opposite inventories do not prove additions
+or removals. Both commands are offline, non-recursive and reject links/special files. Limits are
+512 JARs, 64 MiB per file and 1 GiB total. Inventory exits 0 only when collection and identities are
+complete without duplicates; diff exits 0 only for complete inventories with no observed differences.
+Incomplete/changed results return 1 with JSON. Existing `fabric mods inventory` and `fabric mods diff`
+retain their output formats, exact lowercase `.jar` selection and existing limits through the same
+directory scanner. See [the contract](../../docs/JAR_INVENTORY.md).
 
 `minecraft analyze-log <file>` accepts a regular file or a symlink to a regular file, reads it from
 one stable file handle, rejects a size/timestamp change during the read, and requires valid UTF-8.
