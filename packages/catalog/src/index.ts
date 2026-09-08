@@ -82,6 +82,7 @@ import {
   type ResourcepackProjectDiagnosticSeverity,
   type ResourcepackProjectFile,
   type ResourcepackProjectPngValidationLimitName,
+  type ResourcepackProjectValidationIncompleteReason,
   type ResourcepackProjectValidationLimitName,
   type ResourcepackProjectValidationLimits,
   type ResourcepackProjectValidationOptions,
@@ -329,6 +330,7 @@ export type {
   ResourcepackProjectDiagnosticSeverity,
   ResourcepackProjectFile,
   ResourcepackProjectPngValidationLimitName,
+  ResourcepackProjectValidationIncompleteReason,
   ResourcepackProjectValidationLimitName,
   ResourcepackProjectValidationLimits,
   ResourcepackProjectValidationOptions,
@@ -5976,6 +5978,20 @@ export function validateResourcepackProject(
     files: options.files,
     version,
     vanillaPaths: readVanillaPathList(edition, version, "resourcepack"),
+    validateContent(file) {
+      const result = validatePackFileContent({
+        edition,
+        version,
+        domain: "resourcepack",
+        path: file.path,
+        content: file.content,
+      });
+      return {
+        validated: result.validated,
+        valid: result.valid,
+        issues: result.issues.map((issue) => ({ message: issue.message, source: issue.path })),
+      };
+    },
     limit,
     limits: resolveResourcepackProjectValidationLimits(options.limits),
     pngLimits: resolveResourcepackPngValidationLimits(options.pngLimits),

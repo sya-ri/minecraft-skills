@@ -519,6 +519,10 @@ const resourcepackProject = validateResourcepackProject({
     },
   ],
 });
+// Root pack.mcmeta is optional for partial inputs; its absence keeps validationComplete false.
+// Supplied metadata uses the version-aware file schema. Blockstate variants/multipart targets
+// join the existing model/texture graph; conditions and rendered state coverage are not checked.
+// validationIncompleteReasons and unsupportedReferenceKinds expose remaining coverage gaps.
 const datapackProject = validateDatapackProject({
   version: "26.2",
   files: [
