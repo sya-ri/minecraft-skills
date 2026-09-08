@@ -6,6 +6,9 @@ const fabricApiArtifactPath = "net/fabricmc/fabric-api/fabric-api";
 const fabricApiMetadataUrl = `${fabricApiRepositoryUrl}${fabricApiArtifactPath}/maven-metadata.xml`;
 const fabricApiUserAgent = "sya-ri/minecraft-skills/0.1.8 (github.com/sya-ri/minecraft-skills)";
 
+export const fabricApiPackagePrefixes = ["net.fabricmc.fabric.api"] as const;
+
+/** Rendering-only prefixes retained for callers that want the original search scope. */
 export const fabricApiRenderingPackagePrefixes = [
   "net.fabricmc.fabric.api.client.rendering.v1",
   "net.fabricmc.fabric.api.client.renderer.v1",
@@ -31,21 +34,21 @@ export type FabricApiSurfaceFetch = (url: string, init?: RequestInit) => Promise
 
 export type FabricApiMemberKind = "constructor" | "method" | "field-or-enum-constant" | "unknown";
 
-export type FabricApiRenderingModule = {
+export type FabricApiModule = {
   groupId: "net.fabricmc.fabric-api";
   artifactId: string;
   version: string;
   coordinate: string;
 };
 
-export type FabricApiRenderingType = {
+export type FabricApiType = {
   packageName: string;
   name: string;
   qualifiedName: string;
   javadocPath: string;
 };
 
-export type FabricApiRenderingMember = {
+export type FabricApiMember = {
   packageName: string;
   typeName: string;
   qualifiedTypeName: string;
@@ -58,7 +61,14 @@ export type FabricApiRenderingMember = {
   javadocFragment: string;
 };
 
-type FabricApiRenderingSurface = {
+/** @deprecated Use FabricApiModule. */
+export type FabricApiRenderingModule = FabricApiModule;
+/** @deprecated Use FabricApiType. */
+export type FabricApiRenderingType = FabricApiType;
+/** @deprecated Use FabricApiMember. */
+export type FabricApiRenderingMember = FabricApiMember;
+
+type FabricApiSurface = {
   gameVersion: string;
   fabricApiVersion: string;
   artifact: {
@@ -80,6 +90,7 @@ type FabricApiRenderingSurface = {
     reportedLatestUsed: false;
     reportedReleaseUsed: false;
   };
+  modules: FabricApiModule[];
   renderingModules: FabricApiRenderingModule[];
   source: {
     kind: "official-live";
@@ -99,8 +110,8 @@ type FabricApiRenderingSurface = {
     guarantees: string[];
     nonGuarantees: string[];
   };
-  types: FabricApiRenderingType[];
-  members: FabricApiRenderingMember[];
+  types: FabricApiType[];
+  members: FabricApiMember[];
 };
 
 export type FabricApiTypeSearchOptions = {
@@ -116,7 +127,7 @@ export type FabricApiMemberSearchOptions = FabricApiTypeSearchOptions & {
   kind?: FabricApiMemberKind;
 };
 
-type FabricApiSearchContext = Omit<FabricApiRenderingSurface, "types" | "members">;
+type FabricApiSearchContext = Omit<FabricApiSurface, "types" | "members">;
 
 export type FabricApiTypeSearchResult = FabricApiSearchContext & {
   schemaVersion: 1;
@@ -128,7 +139,7 @@ export type FabricApiTypeSearchResult = FabricApiSearchContext & {
     truncated: boolean;
     limit: number;
   };
-  types: FabricApiRenderingType[];
+  types: FabricApiType[];
 };
 
 export type FabricApiMemberSearchResult = FabricApiSearchContext & {
@@ -143,7 +154,7 @@ export type FabricApiMemberSearchResult = FabricApiSearchContext & {
     truncated: boolean;
     limit: number;
   };
-  members: FabricApiRenderingMember[];
+  members: FabricApiMember[];
 };
 
 type XmlNode = {
@@ -226,7 +237,7 @@ function normalizeOptionalSearchText(value: string | undefined, field: string): 
 }
 
 function isCoveredPackage(packageName: string): boolean {
-  return fabricApiRenderingPackagePrefixes.some(
+  return fabricApiPackagePrefixes.some(
     (prefix) => packageName === prefix || packageName.startsWith(`${prefix}.`),
   );
 }
@@ -235,12 +246,12 @@ function validatePackagePrefix(value: string | undefined): string | null {
   const packagePrefix = normalizeOptionalSearchText(value, "packagePrefix");
   if (
     packagePrefix !== null &&
-    !fabricApiRenderingPackagePrefixes.some(
+    !fabricApiPackagePrefixes.some(
       (root) => packagePrefix === root || packagePrefix.startsWith(`${root}.`),
     )
   ) {
     throw new Error(
-      `Fabric API surface packagePrefix must be one of ${fabricApiRenderingPackagePrefixes.join(
+      `Fabric API surface packagePrefix must be one of ${fabricApiPackagePrefixes.join(
         ", ",
       )} or a subpackage`,
     );
@@ -452,7 +463,7 @@ function isRenderingModule(artifactId: string): boolean {
   );
 }
 
-function parseAggregatePom(xml: string, expectedVersion: string): FabricApiRenderingModule[] {
+function parseAggregatePom(xml: string, expectedVersion: string): FabricApiModule[] {
   const label = "Fabric API aggregate POM";
   const root = parseBoundedXml(xml, label);
   if (root.name !== "project") throw new Error(`${label} root must be <project>`);
@@ -475,7 +486,7 @@ function parseAggregatePom(xml: string, expectedVersion: string): FabricApiRende
     throw new Error(`${label} exceeds the dependency limit`);
   }
   const seen = new Set<string>();
-  const modules: FabricApiRenderingModule[] = [];
+  const modules: FabricApiModule[] = [];
   for (const [index, dependency] of dependencies.entries()) {
     const dependencyLabel = `${label} dependency[${index}]`;
     const dependencyGroup = validateMavenToken(
@@ -497,7 +508,7 @@ function parseAggregatePom(xml: string, expectedVersion: string): FabricApiRende
       );
     }
     seen.add(`${dependencyGroup}:${dependencyArtifact}`);
-    if (dependencyGroup === "net.fabricmc.fabric-api" && isRenderingModule(dependencyArtifact)) {
+    if (dependencyGroup === "net.fabricmc.fabric-api") {
       modules.push({
         groupId: "net.fabricmc.fabric-api",
         artifactId: dependencyArtifact,
@@ -505,14 +516,6 @@ function parseAggregatePom(xml: string, expectedVersion: string): FabricApiRende
         coordinate,
       });
     }
-  }
-  if (
-    !modules.some((module) => module.artifactId === "fabric-rendering-v1") ||
-    !modules.some((module) => module.artifactId === "fabric-renderer-api-v1")
-  ) {
-    throw new Error(
-      `${label} does not identify both fabric-rendering-v1 and fabric-renderer-api-v1`,
-    );
   }
   return modules.sort((left, right) => left.artifactId.localeCompare(right.artifactId));
 }
@@ -755,8 +758,8 @@ function classifyMember(
 }
 
 function parseSurfaceArchive(archiveBytes: Buffer): {
-  types: FabricApiRenderingType[];
-  members: FabricApiRenderingMember[];
+  types: FabricApiType[];
+  members: FabricApiMember[];
 } {
   let archive: ZipArchive;
   try {
@@ -891,7 +894,7 @@ function parseSurfaceArchive(archiveBytes: Buffer): {
     memberNames.add(key);
   }
   if (types.length === 0 || members.length === 0) {
-    throw new Error("Fabric API fat Javadoc has no covered rendering types or members");
+    throw new Error("Fabric API fat Javadoc has no covered Fabric API types or members");
   }
   return { types, members };
 }
@@ -909,11 +912,11 @@ function artifactUrls(version: string): {
   return { pom, fatJavadoc, fatJavadocSha256: `${fatJavadoc}.sha256` };
 }
 
-async function loadFabricApiRenderingSurface(
+async function loadFabricApiSurface(
   gameVersionInput: string,
   timeoutMsInput: number | undefined,
   fetchImpl: FabricApiSurfaceFetch,
-): Promise<FabricApiRenderingSurface> {
+): Promise<FabricApiSurface> {
   const gameVersion = validateGameVersion(gameVersionInput);
   const timeoutMs = validateTimeout(timeoutMsInput);
   const controller = new AbortController();
@@ -985,7 +988,7 @@ async function loadFabricApiRenderingSurface(
         `Fabric API fat Javadoc SHA-256 mismatch: expected ${checksum}, got ${actualChecksum}`,
       );
     }
-    const renderingModules = parseAggregatePom(
+    const modules = parseAggregatePom(
       decodeUtf8(pomBytes, "Fabric API aggregate POM"),
       selection.selected,
     );
@@ -1014,7 +1017,8 @@ async function loadFabricApiRenderingSurface(
         reportedLatestUsed: false,
         reportedReleaseUsed: false,
       },
-      renderingModules,
+      modules,
+      renderingModules: modules.filter((module) => isRenderingModule(module.artifactId)),
       source: {
         kind: "official-live",
         repositoryUrl: fabricApiRepositoryUrl,
@@ -1027,7 +1031,7 @@ async function loadFabricApiRenderingSurface(
       },
       coverage: {
         kind: "official-fatjavadoc-search-index",
-        packagePrefixes: [...fabricApiRenderingPackagePrefixes],
+        packagePrefixes: [...fabricApiPackagePrefixes],
         typeCount: parsedSurface.types.length,
         memberCount: parsedSurface.members.length,
         guarantees: [
@@ -1036,7 +1040,7 @@ async function loadFabricApiRenderingSurface(
         ],
         nonGuarantees: [
           "Search-index presence does not establish runtime behavior, binary compatibility, Java visibility, deprecation status, thread safety, or complete documentation prose.",
-          "Rendering module coordinates are selected from aggregate POM dependency names; this surface does not attribute each symbol to one module.",
+          "Module coordinates are Fabric API group dependencies from the aggregate POM; renderingModules retains the rendering-related subset. Neither list attributes each symbol to one module.",
           "Members are declared search-index entries only; inherited members, return types, generic bounds, and parameter names are not extracted. signature preserves the decoded Javadoc URL fragment when present and otherwise its display label.",
           "Only the listed Fabric API package prefixes are indexed; Mojang client classes and mappings are outside this surface.",
         ],
@@ -1060,7 +1064,7 @@ async function loadFabricApiRenderingSurface(
   }
 }
 
-function searchContext(surface: FabricApiRenderingSurface): FabricApiSearchContext {
+function searchContext(surface: FabricApiSurface): FabricApiSearchContext {
   const { types: _types, members: _members, ...context } = surface;
   return context;
 }
@@ -1076,11 +1080,7 @@ export async function searchFabricApiTypes(
   const limit = validateLimit(options.limit);
   const query = normalizeOptionalSearchText(options.query, "query");
   const packagePrefix = validatePackagePrefix(options.packagePrefix);
-  const surface = await loadFabricApiRenderingSurface(
-    options.gameVersion,
-    options.timeoutMs,
-    fetchImpl,
-  );
+  const surface = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
   const needle = query?.toLowerCase() ?? null;
   const matches = surface.types.filter(
     (entry) =>
@@ -1121,11 +1121,7 @@ export async function searchFabricApiMembers(
   ) {
     throw new Error("Fabric API surface kind is unsupported");
   }
-  const surface = await loadFabricApiRenderingSurface(
-    options.gameVersion,
-    options.timeoutMs,
-    fetchImpl,
-  );
+  const surface = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
   const needle = query?.toLowerCase() ?? null;
   const matches = surface.members.filter(
     (entry) =>

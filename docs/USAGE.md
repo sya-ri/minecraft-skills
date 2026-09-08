@@ -243,16 +243,17 @@ thread safety, or Folia safety. Resolve a matching authoring plan before turning
 
 | Subcommand | Purpose |
 | --- | --- |
-| `types <game-version>` | Search official Fabric API rendering Javadoc type names with `--query`, `--package-prefix`, and `--limit`. |
-| `members <game-version>` | Search declared rendering members with `--query`, `--type`, `--kind`, `--package-prefix`, and `--limit`. |
+| `types <game-version>` | Search official public Fabric API Javadoc type names with `--query`, `--package-prefix`, and `--limit`. |
+| `members <game-version>` | Search declared public Fabric API members with `--query`, `--type`, `--kind`, `--package-prefix`, and `--limit`. |
 
 Both searches resolve the highest Fabric API numeric version with the exact Minecraft suffix,
 verify the official fat Javadoc archive, and return bounded structured evidence without prose.
 Use `--timeout-ms` to set the shared network deadline (default 15,000 ms, maximum 60,000 ms).
-The default result limit is 50 and the maximum is 200. Only Fabric API's `client.rendering.v1`
-and `client.renderer.v1` package trees are covered; Mojang client APIs, inherited members, behavior,
+The default result limit is 50 and the maximum is 200. Fabric API's `net.fabricmc.fabric.api`
+namespace and its dot-delimited subpackages are covered; implementation and Loader packages are
+excluded. Mojang client APIs, inherited members, behavior,
 return types, generic bounds, and parameter names remain unverified. See
-[the source and parsing boundaries](SOURCE_STRATEGY.md#fabric-api-rendering-surface).
+[the source and parsing boundaries](SOURCE_STRATEGY.md#fabric-api-surface).
 
 ```sh
 minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
@@ -478,7 +479,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `get_paper_api_surface`, `search_paper_types`, `search_paper_members`, `compare_paper_api_surface` | Inspect Paper type/member surfaces and changes. Type-scoped member searches include declarations from known supertypes when Javadocs hierarchy coverage is available and report the declaring type plus every searched type. |
 | `get_paper_member_details` | Retrieve the exact indexed member's official declaration and documentation notes, with bounded live source evidence. |
 | `search_paper_events` | Find Paper/Bukkit event candidates. |
-| `search_fabric_api_types`, `search_fabric_api_members` | Search exact-version official Fabric API rendering type/member indexes with artifact, POM, and checksum provenance; excludes Mojang client surface and behavior. |
+| `search_fabric_api_types`, `search_fabric_api_members` | Search exact-version public Fabric API type/member indexes with artifact, POM, and checksum provenance; excludes implementation, Loader, Mojang client surface, and behavior. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |
 | `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata, including Fabric mapping/Loom policy, or validate supplied Fabric mod metadata. |
 | `search_modrinth_projects`, `list_modrinth_project_versions`, `resolve_modrinth_compatibility`, `get_modrinth_resource`, `validate_modrinth_pack` | Search public Modrinth metadata, intersect compatibility labels, or validate supplied pack metadata. |

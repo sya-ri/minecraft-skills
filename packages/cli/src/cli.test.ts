@@ -234,8 +234,10 @@ function fabricApiFixtureFetch() {
   const types = [
     { p: packageName, l: "ArmorRenderer" },
     { p: `${packageName}.level`, l: "LevelRenderEvents.BeforeBlockOutline" },
+    { p: "net.fabricmc.fabric.api.client.gametest", l: "ClientTestFixture" },
   ];
   const members = [
+    { p: "net.fabricmc.fabric.api.client.gametest", c: "ClientTestFixture", l: "pressKey(int)" },
     {
       p: packageName,
       c: "ArmorRenderer",
@@ -2423,6 +2425,27 @@ describe("minecraft-skills CLI", () => {
     expect(result.stdout.join("\n")).toContain(
       "https://spigot-event-list.s7a.dev/api/search/events",
     );
+  });
+
+  it.each([
+    "types",
+    "members",
+  ])("searches public GameTest packages through Fabric API %s", async (route) => {
+    vi.stubGlobal("fetch", fabricApiFixtureFetch());
+    const result = await capture([
+      "fabric",
+      "api",
+      route,
+      "26.2",
+      "--package-prefix",
+      "net.fabricmc.fabric.api.client.gametest",
+    ]);
+    expect(result.code).toBe(0);
+    const output = JSON.parse(result.stdout.join("\n"));
+    expect(output.coverage.packagePrefixes).toEqual(["net.fabricmc.fabric.api"]);
+    expect(output.search.returned).toBe(1);
+    if (route === "types") expect(output.types[0].name).toBe("ClientTestFixture");
+    else expect(output.members[0].name).toBe("pressKey");
   });
 
   it("searches Fabric API types through the grouped CLI route", async () => {

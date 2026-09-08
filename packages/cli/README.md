@@ -478,19 +478,23 @@ Only older mapped versions require Yarn for the legacy complete-tuple recommenda
 tuples only combine entries listed for the same game version and are not a separately published
 Fabric Meta guarantee.
 
-`fabric api types` and `fabric api members` search bounded official Fabric API rendering Javadoc
+`fabric api types` and `fabric api members` search bounded official Fabric API Javadoc
 indexes for one exact Minecraft version. Selection ignores Maven's global `latest` / `release`
 and chooses the highest numeric version with the exact game-version suffix. The POM, SHA-256,
 ZIP structure, and index CRCs are verified before results are returned. Filters are `--query`
-(case-insensitive substring), `--package-prefix` (within the two covered package trees), and,
+(case-insensitive substring), `--package-prefix` (`net.fabricmc.fabric.api` or a dot-delimited
+subpackage), and,
 for members, exact `--type` and `--kind`. Results default to 50 with a 200 maximum;
 `--timeout-ms` defaults to 15,000 with a 60,000 maximum shared across all requests.
 
-Results contain exact artifact provenance, rendering-related POM coordinates, names, owners,
+The default scope includes all `net.fabricmc.fabric.api` packages, including rendering, networking,
+and GameTest. Fabric implementation, Loader, and Mojang client packages are excluded.
+Results contain exact artifact provenance, Fabric API group POM coordinates in `modules`, the
+original rendering-related subset in `renderingModules`, names, owners,
 display labels and Javadoc URL signatures, not full Java declarations, prose, behavior, inherited
 members, or Mojang client API evidence. No file is written. Empty query matches succeed with
 `totalMatches: 0`; an absent exact version or invalid/unavailable source returns exit code 1.
-See [source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-rendering-surface).
+See [source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-surface).
 
 `minecraft search "Fabric Client GameTest visual evidence"` returns guidance for stable case IDs,
 bounded readiness, full-frame and runtime-bounds crop evidence, explicit compare versus

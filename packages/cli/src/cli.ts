@@ -1619,7 +1619,7 @@ Command reference:
   fabric validate-mod
                  Check bounded structural rules for current schema v1 and JAR evidence offline.
   fabric api types|members
-                 Search the exact-version Fabric API rendering surface from official Maven fatjavadoc indexes.
+                 Search exact-version public Fabric API packages from official Maven fatjavadoc indexes.
   fabric mods inventory
                  Inventory direct lowercase .jar regular files with bounded stable reads and hashes;
                  invalid, rejected, duplicate, or incomplete results exit 1.

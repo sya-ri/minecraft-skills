@@ -16,6 +16,14 @@ All notable changes to this project are documented here.
   asset graphs, overlays, and asset metadata remain explicit completeness gaps across Catalog,
   CLI, and MCP; partial inputs remain accepted.
 
+### Changed
+
+- Expanded the existing Fabric API type and member searches from rendering-only packages to all
+  `net.fabricmc.fabric.api` subpackages, including networking and GameTest. Results add all Fabric
+  API group POM dependencies in `modules`, while retaining `renderingModules`, legacy exported
+  rendering type aliases, and explicit rendering package filters. Exact-version selection,
+  source verification, request limits, and implementation/Loader/Mojang exclusions remain intact.
+
 ### Fixed
 
 - Paper member lookups can explicitly download a missing exact-version surface with MCP
