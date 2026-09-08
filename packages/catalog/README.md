@@ -36,6 +36,13 @@ identity/version and hashes a JAR without loading code. `normalizeJarInventory` 
 unknown hashes and incomplete inventory evidence. Caller metadata never grants byte-verification
 claims. See [the inventory contract](../../docs/JAR_INVENTORY.md) for record fields, limits and scope.
 
+## Fabric mod sets
+
+`validateFabricModSet(options)` checks a fixed selection of Fabric schema-v1 metadata against
+Loader dependency predicates, aliases, physical environment, and caller-supplied runtime versions.
+Its result separates hard failures, soft warnings, and incomplete or nested selection coverage.
+See [selected Fabric set validation](../../docs/FABRIC_MOD_SET.md) for the payload and bounds.
+
 ## Examples
 
 ```ts

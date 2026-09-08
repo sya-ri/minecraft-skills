@@ -6,6 +6,9 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added fixed Fabric mod-set dependency validation through Catalog, MCP
+  `validate_fabric_mod_set`, and CLI `fabric validate-set`, with Loader predicates, runtime
+  versions, aliases, environment rules, bounded diagnostics, and explicit incomplete/nested coverage.
 - Added shared Fabric, Paper/Bukkit and Velocity JAR inventories and diffs with exact platform/ID
   matching, stable local SHA-256 hashes, explicit duplicates and incomplete evidence, and a
   metadata-only MCP comparison. Existing Fabric inventory/diff interfaces and limits are retained

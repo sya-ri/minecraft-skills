@@ -20,6 +20,7 @@ import {
   type DatapackSchemaComparisonOptions,
   type DatapackSchemaSearchOptions,
   defaultDatapackProjectValidationLimits,
+  defaultFabricModSetLimits,
   defaultFabricModValidationLimits,
   defaultMinecraftLogAnalysisLimits,
   defaultMinecraftPerformanceAnalysisLimits,
@@ -32,6 +33,7 @@ import {
   defaultServerPropertiesValidationLimits,
   explainPackPath,
   type FabricApiMemberSearchOptions,
+  type FabricModSetOptions,
   fabricApiSurfaceLimits,
   fetchData,
   fetchMinecraftAssetFile,
@@ -161,6 +163,7 @@ import {
   type VanillaPathSearchOptions,
   validateDatapackProject,
   validateFabricMod,
+  validateFabricModSet,
   validateJavaTargetMetadata,
   validateMixinConfig,
   validateModrinthPack,
@@ -2079,6 +2082,64 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["index"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "validate_fabric_mod_set",
+    description:
+      "Check dependencies of a fixed, explicitly selected Fabric mod metadata set offline. Supply schema-v1 fabric.mod.json objects or JSON text, physical environment, exact Loader-reported runtime versions, and a completeness assertion. Applies Fabric predicates, provides aliases, dependency severities, and v1 environment softening. Does not solve candidate versions, select nested JARs, or prove runtime compatibility; nested declarations keep whole-set coverage incomplete.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mods: {
+          type: "array",
+          maxItems: defaultFabricModSetLimits.maxMods,
+          items: {
+            type: "object",
+            properties: {
+              metadata: {
+                oneOf: [
+                  { type: "object" },
+                  { type: "string", maxLength: defaultFabricModSetLimits.maxMetadataBytes },
+                ],
+              },
+              label: { type: "string", minLength: 1, maxLength: 256 },
+            },
+            required: ["metadata"],
+            additionalProperties: false,
+          },
+        },
+        environment: { type: "string", enum: ["client", "server"] },
+        runtimeVersions: {
+          type: "object",
+          properties: {
+            minecraft: { type: "string", minLength: 1, maxLength: 8192 },
+            java: { type: "string", minLength: 1, maxLength: 8192 },
+            fabricloader: { type: "string", minLength: 1, maxLength: 8192 },
+          },
+          required: ["minecraft", "java", "fabricloader"],
+          additionalProperties: false,
+          description:
+            "Exact versions reported by Loader; launcher snapshot names are not normalized.",
+        },
+        selectionComplete: {
+          type: "boolean",
+          description:
+            "Explicit caller assertion that the entire selected set is supplied. Missing dependencies remain unverified for incomplete sets.",
+        },
+        limits: {
+          type: "object",
+          properties: Object.fromEntries(
+            Object.entries(defaultFabricModSetLimits).map(([name, maximum]) => [
+              name,
+              { type: "integer", minimum: 1, maximum },
+            ]),
+          ),
+          additionalProperties: false,
+        },
+      },
+      required: ["mods", "environment", "runtimeVersions", "selectionComplete"],
       additionalProperties: false,
     },
   },
@@ -4773,6 +4834,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
         }),
       );
+    }
+    if (name === "validate_fabric_mod_set") {
+      return text(validateFabricModSet(args as unknown as FabricModSetOptions));
     }
     if (name === "validate_fabric_mod") {
       return text(validateFabricMod(preflightFabricModInput(args)));

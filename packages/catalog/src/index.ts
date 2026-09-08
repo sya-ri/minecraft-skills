@@ -207,7 +207,20 @@ import {
 export * from "./blockbenchProject.js";
 export * from "./fabricApiSurface.js";
 export * from "./fabricMeta.js";
-export * from "./fabricMod.js";
+export {
+  defaultFabricModValidationLimits,
+  type FabricModArchiveEntry,
+  type FabricModDiagnostic,
+  type FabricModJarValidationOptions,
+  type FabricModValidationLimits,
+  type FabricModValidationOptions,
+  type FabricModValidationResult,
+  type FabricModValidationStrength,
+  resolveFabricModValidationLimits,
+  validateFabricMod,
+  validateFabricModJar,
+} from "./fabricMod.js";
+export * from "./fabricModSet.js";
 export * from "./jarInventory.js";
 export * from "./javaClassArchive.js";
 export * from "./javaPlayerProfile.js";

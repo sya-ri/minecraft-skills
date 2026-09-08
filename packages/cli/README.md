@@ -240,6 +240,7 @@ minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
 minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
 minecraft-skills fabric api members 26.2 --type ArmorRenderer --query register --kind method
 minecraft-skills fabric validate-mod ./example-mod.jar
+minecraft-skills fabric validate-set ./selection.json
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
 minecraft-skills fabric mods inventory ./server/mods
 minecraft-skills fabric mods diff ./server/mods ./client/mods
@@ -576,6 +577,13 @@ bounded structural rules for current `fabric.mod.json` schema v1, portable JAR p
 and referenced-file presence; invalid results return exit code 1. It does not validate dependency
 predicates or satisfaction, entrypoint classes or runtime loading, mixin/access-widener syntax,
 nested JAR metadata, or icon pixels.
+
+`fabric validate-set <selection.json>` checks a fixed selection of schema-v1 Fabric mod metadata,
+physical environment, exact Loader-reported runtime versions, and explicit `selectionComplete`.
+The input is a regular UTF-8 JSON file bounded to 8 MiB. Predicate failures, alias collisions, and
+soft warnings are distinguished from incomplete selection or nested-JAR coverage; only a
+`satisfied` result returns exit code 0. It does not select candidates or prove runtime loading.
+See [input schema, dependency rules, and bounds](../../docs/FABRIC_MOD_SET.md).
 
 `fabric mods inventory <directory>` scans no subdirectories and selects only direct entries whose
 basenames end in exact lowercase `.jar`; `.JAR` and nested JARs are ignored. The root must be a
