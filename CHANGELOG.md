@@ -6,6 +6,9 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added versioned block property, allowed-value, explicit default-state, and paginated state
+  lookups across Catalog, CLI, and MCP, generated from official 26.2 and 1.21.11 server reports.
+  Missing cached data and unsupported versions remain distinct from an unknown block ID.
 - Added exact indexed Paper member detail lookup in Catalog, CLI, and MCP. Bounded live official
   Javadocs retrieval supplies declarations, annotations, descriptions, deprecation, and labeled
   parameter/return/exception notes from modern and legacy doclets, with source hashes and explicit

@@ -43,6 +43,21 @@ import {
   searchMinecraftAssets,
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
+import { type BlockStateDefinitionOptions, readBlockStateDefinition } from "./blockStates.js";
+
+export type {
+  BlockState,
+  BlockStateDefinition,
+  BlockStateDefinitionOptions,
+  BlockStateSource,
+  BlockStateSurface,
+} from "./blockStates.js";
+export { blockStateLimits, buildBlockStateSurface } from "./blockStates.js";
+
+export function getBlockStateDefinition(options: BlockStateDefinitionOptions) {
+  return readBlockStateDefinition({ ...options, version: resolveVersion("java", options.version) });
+}
+
 import {
   type DatapackProjectDiagnostic,
   type DatapackProjectDiagnosticSeverity,
@@ -6130,6 +6145,12 @@ export function suggestMinecraftLookups(options: LookupSuggestionOptions): Looku
     `minecraft search-all ${JSON.stringify(task)} --version ${version}`,
     "Start with a cross-domain search.",
   );
+  if (/\b(block ?state|blockdata|block propert(?:y|ies))\b/.test(normalizedTask)) {
+    add(
+      `minecraft block-state ${version} <block-id>`,
+      "Read official block properties, allowed values, and default states; use registry search to select the block ID.",
+    );
+  }
   if (
     /\b(crash report|stack ?trace|latest\.log|debug\.log|server log|minecraft log|java exception|caused by|mixin apply|noclassdeffounderror|classnotfoundexception|could not initialize class|class[ -]?loading failures?)\b/.test(
       lower,

@@ -104,6 +104,9 @@ viewing a complete record through the CLI.
 
 ## Tools
 
+- `get_block_state_definition`: version and block ID select official properties/default/state
+  tuples, with optional `offset` and `limit` (1–4096). Initial coverage: 26.2 and 1.21.11.
+
 - `get_evaluation_status`
 - `list_pending_evaluations`
 - `record_tool_evaluation`

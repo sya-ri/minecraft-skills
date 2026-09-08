@@ -34,6 +34,7 @@ import {
   listVersions,
   validatePackFileContent,
 } from "@minecraft-skills/catalog";
+import { ingestBlockStates } from "./blockStates.js";
 import { auditCurrentSources } from "./currentSources.js";
 import { ingestDatapackSchemaSurfaces } from "./datapackSchemaSurfaceSummaries.js";
 import {
@@ -139,6 +140,10 @@ function buildDataManifestEntries(root: string, baseUrl: string): DataManifestEn
     kind: DataManifestEntry["kind"];
   }> = [
     {
+      directory: "java/block-states",
+      kind: "block-state-surface",
+    },
+    {
       directory: "java/datapack-schema-surfaces",
       kind: "datapack-schema-surface",
     },
@@ -192,7 +197,16 @@ function writeDataManifest(root: string, dataVersion?: string, baseUrl?: string)
     dataVersion: dataVersion ?? current.dataVersion,
     defaultBaseUrl: manifestBaseUrl,
     cache: current.cache,
-    downloadable: buildDataManifestEntries(root, manifestBaseUrl),
+    downloadable: buildDataManifestEntries(root, manifestBaseUrl).map((entry) => ({
+      ...entry,
+      url:
+        baseUrl !== undefined
+          ? entry.url
+          : (current.downloadable.find(
+              (previous) => previous.path === entry.path && previous.sha256 === entry.sha256,
+            )?.url ??
+            `https://raw.githubusercontent.com/sya-ri/minecraft-skills/main/packages/data/data/${entry.path}`),
+    })),
   };
   const output = join(root, dataFilePath("data-manifest.json"));
   writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -230,7 +244,14 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
     }
     seenPaths.add(entry.path);
 
-    if (entry.kind === "datapack-schema-surface") {
+    if (entry.kind === "block-state-surface") {
+      if (
+        entry.edition !== "java" ||
+        !entry.version ||
+        entry.path !== `java/block-states/${entry.version}.json`
+      )
+        messages.push(`${prefix} block state surface path must match version`);
+    } else if (entry.kind === "datapack-schema-surface") {
       if (entry.edition !== "java" || !entry.version) {
         messages.push(`${prefix} datapack schema surface must identify Java version`);
       } else if (entry.path !== `java/datapack-schema-surfaces/${entry.version}.json`) {
@@ -415,7 +436,11 @@ type PublicEntrypoints = {
 
 type DataManifestEntry = {
   path: string;
-  kind: "datapack-schema-surface" | "paper-api-surface" | "resourcepack-model-summary";
+  kind:
+    | "datapack-schema-surface"
+    | "paper-api-surface"
+    | "resourcepack-model-summary"
+    | "block-state-surface";
   edition: "java";
   version: string;
   size: number;
@@ -1385,6 +1410,7 @@ Usage:
   minecraft-skills-maintainer ingest-java-version-detail --version-json <version.json> [--version-json-url <url>] [--client-jar <client.jar>] [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-version-details [--skip-client-jars] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
+  minecraft-skills-maintainer ingest-block-states --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-reports-all [--java-bin <java>] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer audit-java-reports
@@ -1805,6 +1831,22 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
       return 0;
     }
 
+    if (command === "ingest-block-states") {
+      const args = argv.slice(1);
+      const version = readOption(args, "--version");
+      const reportsDir = readOption(args, "--reports-dir");
+      if (!version || !reportsDir)
+        throw new Error("ingest-block-states requires --version and --reports-dir");
+      console.log(
+        ingestBlockStates({
+          root: findRepositoryRoot(),
+          version,
+          reportsDir,
+          retrievedAt: readOption(args, "--retrieved-at") ?? new Date().toISOString(),
+        }),
+      );
+      return 0;
+    }
     if (command === "ingest-java-reports") {
       ingestJavaReports(argv.slice(1));
       return 0;

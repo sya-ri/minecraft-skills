@@ -48,6 +48,7 @@ import {
   getAuthoringPreflight,
   getAuthoringRecipe,
   getAuthoringScenario,
+  getBlockStateDefinition,
   getCacheDataRoot,
   getCacheRoot,
   getClaimPolicy,
@@ -1080,6 +1081,22 @@ export const tools: ToolDefinition[] = [
         edition: { type: "string", enum: ["java"], default: "java" },
         version: { type: "string", default: "latest" },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_block_state_definition",
+    description:
+      "Get version-specific block properties, allowed values, explicit default state, and paginated state tuples from official server reports. Use registry search to find block IDs. Missing data is unavailable, never an empty definition.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string" },
+        blockId: { type: "string", maxLength: 256 },
+        offset: { type: "integer", minimum: 0 },
+        limit: { type: "integer", minimum: 1, maximum: 4096 },
+      },
+      required: ["version", "blockId"],
       additionalProperties: false,
     },
   },
@@ -4174,6 +4191,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "get_server_reports") {
       const version = typeof args.version === "string" ? args.version : "latest";
       return text(getJavaReportsSummary(edition, version));
+    }
+    if (name === "get_block_state_definition") {
+      if (typeof args.version !== "string" || typeof args.blockId !== "string")
+        throw new Error("get_block_state_definition requires version and blockId");
+      return text(
+        getBlockStateDefinition({
+          version: args.version,
+          blockId: args.blockId,
+          ...(typeof args.offset === "number" ? { offset: args.offset } : {}),
+          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+        }),
+      );
     }
     if (name === "search_registry_entries") {
       const registryOptions: RegistryEntrySearchOptions = {

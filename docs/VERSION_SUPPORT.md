@@ -10,6 +10,9 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 ## Summary
 
+- Block property/state definitions: Java 26.2 and 1.21.11, available as the downloadable
+  `block-state-surface` kind. Other releases are explicitly unsupported for this new surface.
+
 - Java release coverage: 1.13 through 26.2 (50 releases).
 - Datapack coverage: server reports, command paths, vanilla datapack paths, and observed schema
   surfaces for 50/50 releases.
