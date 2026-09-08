@@ -106,6 +106,10 @@ viewing a complete record through the CLI.
 
 ## Tools
 
+- `get_entity_metadata`: exact version and entity ID select inherited static accessor indexes,
+  value types, serializers and source hashes. Initial coverage: 26.2 and 1.21.11. See
+  [entity metadata](../../docs/ENTITY_METADATA.md); instance defaults and bit meanings are not inferred.
+
 - `get_block_state_definition`: version and block ID select official properties/default/state
   tuples, with optional `offset` and `limit` (1–4096). Initial coverage: 26.2 and 1.21.11.
 

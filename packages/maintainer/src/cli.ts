@@ -42,6 +42,7 @@ import {
   buildObservedDatapackSchemaSurface,
   writeObservedDatapackSchemaSurface,
 } from "./datapackSchemaSurfaces.js";
+import { ingestEntityMetadata } from "./entityMetadata.js";
 import { buildJavaVersionIndex } from "./javaManifest.js";
 import { ingestJavaReportSummaries, listPendingJavaReportVersions } from "./javaReportSummaries.js";
 import {
@@ -147,6 +148,10 @@ function buildDataManifestEntries(root: string, baseUrl: string): DataManifestEn
     {
       directory: "java/block-states",
       kind: "block-state-surface",
+    },
+    {
+      directory: "java/entity-metadata",
+      kind: "entity-metadata-surface",
     },
     {
       directory: "java/datapack-schema-surfaces",
@@ -256,6 +261,13 @@ function requireDataManifestIntegrity(root: string, messages: string[]): void {
         entry.path !== `java/command-trees/${entry.version}.json`
       )
         messages.push(`${prefix} command tree path must match version`);
+    } else if (entry.kind === "entity-metadata-surface") {
+      if (
+        entry.edition !== "java" ||
+        !entry.version ||
+        entry.path !== `java/entity-metadata/${entry.version}.json`
+      )
+        messages.push(`${prefix} entity metadata surface path must match version`);
     } else if (entry.kind === "block-state-surface") {
       if (
         entry.edition !== "java" ||
@@ -453,7 +465,8 @@ type DataManifestEntry = {
     | "paper-api-surface"
     | "resourcepack-model-summary"
     | "block-state-surface"
-    | "command-tree-surface";
+    | "command-tree-surface"
+    | "entity-metadata-surface";
   edition: "java";
   version: string;
   size: number;
@@ -1425,6 +1438,7 @@ Usage:
   minecraft-skills-maintainer generate-java-reports --server-jar <server.jar> --work-dir <dir> --output-dir <dir> [--java-bin <java>]
   minecraft-skills-maintainer ingest-command-tree --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-block-states --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
+  minecraft-skills-maintainer ingest-entity-metadata --version <version> --input <report.json> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-reports --version <version> --reports-dir <generated/reports> [--retrieved-at <iso>]
   minecraft-skills-maintainer ingest-java-reports-all [--java-bin <java>] [--force] [--retrieved-at <iso>]
   minecraft-skills-maintainer audit-java-reports
@@ -1856,6 +1870,22 @@ export async function runMaintainerCli(argv: string[]): Promise<number> {
           root: findRepositoryRoot(),
           version,
           reportsDir,
+          retrievedAt: readOption(args, "--retrieved-at") ?? new Date().toISOString(),
+        }),
+      );
+      return 0;
+    }
+    if (command === "ingest-entity-metadata") {
+      const args = argv.slice(1);
+      const version = readOption(args, "--version");
+      const input = readOption(args, "--input");
+      if (!version || !input)
+        throw new Error("ingest-entity-metadata requires --version and --input");
+      console.log(
+        ingestEntityMetadata({
+          root: findRepositoryRoot(),
+          version,
+          input,
           retrievedAt: readOption(args, "--retrieved-at") ?? new Date().toISOString(),
         }),
       );

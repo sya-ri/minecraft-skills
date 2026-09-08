@@ -52,6 +52,7 @@ export function getCommandDetails(options: CommandDetailsOptions) {
 }
 
 import { type BlockStateDefinitionOptions, readBlockStateDefinition } from "./blockStates.js";
+import { type EntityMetadataOptions, readEntityMetadata } from "./entityMetadata.js";
 
 export type {
   BlockState,
@@ -61,6 +62,31 @@ export type {
   BlockStateSurface,
 } from "./blockStates.js";
 export { blockStateLimits, buildBlockStateSurface } from "./blockStates.js";
+export type {
+  EntityMetadataDefinition,
+  EntityMetadataEntry,
+  EntityMetadataGap,
+  EntityMetadataOptions,
+  EntityMetadataSource,
+  EntityMetadataSurface,
+} from "./entityMetadata.js";
+export {
+  buildEntityMetadataSurface,
+  entityMetadataArtifacts,
+  entityMetadataLimits,
+} from "./entityMetadata.js";
+export function getEntityMetadata(options: EntityMetadataOptions) {
+  return readEntityMetadata(options, () => {
+    const registry = searchRegistryEntries({
+      version: options.version,
+      registry: "minecraft:entity_type",
+      limit: 500,
+    });
+    if (registry.registryStatus !== "indexed" || registry.truncated)
+      throw new Error("Complete official entity registry coverage is required for metadata lookup");
+    return registry.entries.map((entry) => entry.entryId);
+  });
+}
 
 export function getBlockStateDefinition(options: BlockStateDefinitionOptions) {
   return readBlockStateDefinition({ ...options, version: resolveVersion("java", options.version) });

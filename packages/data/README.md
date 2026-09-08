@@ -77,6 +77,8 @@ Redistributable canonical data for Minecraft Skills consumers.
 - Official server report summaries, command path indexes, and registry entry TSV indexes.
 - Vanilla client asset and server data inventories.
 - Downloadable vanilla resource pack model and item definition JSON shape summaries.
+- Downloadable exact-version entity metadata declarations, with inherited indexes, serializer
+  identities, official artifact hashes, and explicit extraction coverage.
 - Packaged Agent Skill payloads under `skills/`, mirrored from the repository root skill folders.
 - PaperMC support metadata, per-version Paper build summaries, Paper docs source links, and
   `sya-ri/spigot-event-list` API contract metadata.

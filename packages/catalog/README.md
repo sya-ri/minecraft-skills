@@ -2,6 +2,11 @@
 
 Command details: Catalog `getCommandDetails({ version: "26.2", path: ["execute", "as", "targets"], depth: 1 })`, MCP `get_command_details`, or CLI `minecraft-skills minecraft command-details 26.2 execute as targets --depth 1`. Paths name syntax-tree nodes, including argument names; they do not contain player argument values. Results preserve parser properties and explicit redirects, bound depth/node count, and report truncation. Missing data returns fetch guidance for `command-tree-surface`; unsupported versions do not substitute another version.
 
+`getEntityMetadata({ version, entityId })` returns inherited static accessor indexes, value types,
+serializers and source hashes for exactly 26.2 or 1.21.11. Fetch `entity-metadata-surface` in
+installed packages first. See [entity metadata](../../docs/ENTITY_METADATA.md) for coverage;
+default values and bit semantics are not established.
+
 `getBlockStateDefinition({ version, blockId, offset?, limit? })` returns official reported block
 properties, allowed values, the explicit default state, and a bounded state page. Initial coverage
 is 26.2 and 1.21.11; fetch `block-state-surface` data first in packed installations. Unsupported

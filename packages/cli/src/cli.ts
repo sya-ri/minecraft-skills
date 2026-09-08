@@ -62,6 +62,7 @@ import {
   getDataManifest,
   getDatapackSchemaSurface,
   getDomain,
+  getEntityMetadata,
   getEvidenceBundle,
   getFabricToolchainCompatibility,
   getFactSurface,
@@ -980,6 +981,7 @@ function normalizeSubcommands(argv: string[]): string[] {
     "minecraft registry-entries": "registry-entries",
     "minecraft command-details": "command-details",
     "minecraft block-state": "block-state",
+    "minecraft entity-metadata": "entity-metadata",
     "minecraft compare-registry-entries": "compare-registry-entries",
     "minecraft analyze-performance": "analyze-minecraft-performance",
     "minecraft explain-path": "explain-path",
@@ -1219,6 +1221,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "registry-entries": "minecraft registry-entries",
   "command-details": "minecraft command-details",
   "block-state": "minecraft block-state",
+  "entity-metadata": "minecraft entity-metadata",
   "compare-registry-entries": "minecraft compare-registry-entries",
   "validate-server-access-list": "minecraft validate-access-list",
   "validate-mixin-config": "minecraft validate-mixin-config",
@@ -1515,6 +1518,7 @@ Grouped commands:
   minecraft-skills datapack commands [version] [--contains text] [--prefix literal] [--parser parser] [--limit 50]
   minecraft-skills minecraft command-details <version> [<node> ...] [--depth 1] [--limit 100]
   minecraft-skills minecraft block-state <version> <block-id> [--offset 0] [--limit 256]
+  minecraft-skills minecraft entity-metadata <version> <entity-id>
   minecraft-skills minecraft registry-entries [version] [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft compare-registry-entries <from> <to> [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips] [--evaluated-at UTC-timestamp]
@@ -2384,6 +2388,13 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           limit: Number(readOption(args, "--limit", "100")),
         }),
       );
+      return 0;
+    }
+    if (command === "entity-metadata") {
+      const [version, entityId, ...extra] = positionalArgsWithOptions(args, {});
+      if (!version || !entityId || extra.length > 0)
+        throw new Error("minecraft entity-metadata requires <version> <entity-id>");
+      printJson(output, getEntityMetadata({ version, entityId }));
       return 0;
     }
     if (command === "block-state") {

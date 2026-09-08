@@ -2,6 +2,10 @@
 
 Command details: Catalog `getCommandDetails({ version: "26.2", path: ["execute", "as", "targets"], depth: 1 })`, MCP `get_command_details`, or CLI `minecraft-skills minecraft command-details 26.2 execute as targets --depth 1`. Paths name syntax-tree nodes, including argument names; they do not contain player argument values. Results preserve parser properties and explicit redirects, bound depth/node count, and report truncation. Missing data returns fetch guidance for `command-tree-surface`; unsupported versions do not substitute another version.
 
+Use `minecraft-skills minecraft entity-metadata 26.2 minecraft:armor_stand` for versioned
+static metadata accessor and serializer facts. Fetch `entity-metadata-surface` if uncached.
+See [entity metadata](../../docs/ENTITY_METADATA.md) for the evidence and completeness rules.
+
 Use `minecraft-skills minecraft block-state 26.2 minecraft:oak_stairs --limit 20` to inspect
 official block properties and the default state. Fetch the `block-state-surface` kind first in
 packed installations; `--offset` continues a page. Initial coverage is 26.2 and 1.21.11.

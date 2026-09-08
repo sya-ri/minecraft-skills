@@ -1697,10 +1697,14 @@ describe("@minecraft-skills/data", () => {
       expect(new Set(manifest.downloadable.map((entry) => entry.path)).size).toBe(
         manifest.downloadable.length,
       );
-      for (const version of ["26.2", "1.21.11"])
+      for (const version of ["26.2", "1.21.11"]) {
         expect(manifest.downloadable).toContainEqual(
           expect.objectContaining({ kind: "block-state-surface", version }),
         );
+        expect(manifest.downloadable).toContainEqual(
+          expect.objectContaining({ kind: "entity-metadata-surface", version }),
+        );
+      }
       expect(manifest.downloadable).toContainEqual(
         expect.objectContaining({ kind: "datapack-schema-surface", version: "1.13" }),
       );
