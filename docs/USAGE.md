@@ -273,6 +273,7 @@ thread safety, or Folia safety. Resolve a matching authoring plan before turning
 | --- | --- |
 | `types <game-version>` | Search official public Fabric API Javadoc type names with `--query`, `--package-prefix`, and `--limit`. |
 | `members <game-version>` | Search declared public Fabric API members with `--query`, `--type`, `--kind`, `--package-prefix`, and `--limit`. |
+| `member-details <game-version> --fabric-api-version <version> --javadoc-path <path> --javadoc-fragment <fragment>` | Extract bounded declaration and documentation text for one exact member returned by `members`. |
 
 Both searches resolve the highest Fabric API numeric version with the exact Minecraft suffix,
 verify the official fat Javadoc archive, and return bounded structured evidence without prose.
@@ -286,7 +287,17 @@ return types, generic bounds, and parameter names remain unverified. See
 ```sh
 minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
 minecraft-skills fabric api members 26.2 --type ArmorRenderer --query register --kind method
+minecraft-skills fabric api member-details 26.2 --fabric-api-version 0.160.0+26.2 \
+  --javadoc-path net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html \
+  --javadoc-fragment 'clearExtraData()'
 ```
+
+Copy `fabricApiVersion`, `javadocPath`, and raw `javadocFragment` from one `members` result. The
+detail lookup rejects artifact drift instead of silently substituting a newer matching artifact,
+then extracts only that indexed member from the verified archive. Returned prose can establish
+what the selected Javadoc says, but it does not infer undocumented runtime behavior. In particular,
+the current 26.2 `FabricRenderState` page describes `clearExtraData()` without stating when Fabric
+calls it automatically or how long reused render-state data remains valid.
 
 #### `minecraft-skills fabric mods`
 
@@ -509,6 +520,7 @@ MCP/catalog data versions; they do not repeat the raw request or response.
 | `get_paper_member_details` | Retrieve the exact indexed member's official declaration and documentation notes, with bounded live source evidence. |
 | `search_paper_events` | Find Paper/Bukkit event candidates. |
 | `search_fabric_api_types`, `search_fabric_api_members` | Search exact-version public Fabric API type/member indexes with artifact, POM, and checksum provenance; excludes implementation, Loader, Mojang client surface, and behavior. |
+| `get_fabric_api_member_details` | Extract bounded official Javadoc text for one exact indexed Fabric API member; does not infer undocumented lifecycle or runtime guarantees. |
 | `validate_paper_plugin_jar`, `validate_velocity_plugin_jar` | Validate bounded descriptors and supplied archive evidence. |
 | `get_fabric_toolchain`, `validate_fabric_mod`, `resolve_velocity_toolchain` | Resolve platform metadata, including Fabric mapping/Loom policy, or validate supplied Fabric mod metadata. |
 | `validate_fabric_mod_set` | Check a fixed selected Fabric metadata set's dependencies, aliases, runtime versions, and environment with explicit incomplete/nested coverage. |

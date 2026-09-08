@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { openZipArchive, type ZipArchive } from "@minecraft-skills/data";
+import { extractJavadocMemberDetails, javadocMemberDetailsLimits } from "./javadocMemberDetails.js";
 
 const fabricApiRepositoryUrl = "https://maven.fabricmc.net/";
 const fabricApiArtifactPath = "net/fabricmc/fabric-api/fabric-api";
@@ -127,6 +128,17 @@ export type FabricApiMemberSearchOptions = FabricApiTypeSearchOptions & {
   kind?: FabricApiMemberKind;
 };
 
+export type FabricApiMemberDetailsOptions = {
+  gameVersion: string;
+  /** Copy the exact Fabric API artifact version from search_fabric_api_members. */
+  fabricApiVersion: string;
+  /** Copy the exact archive path from search_fabric_api_members. */
+  javadocPath: string;
+  /** Copy the exact raw fragment from search_fabric_api_members. */
+  javadocFragment: string;
+  timeoutMs?: number;
+};
+
 type FabricApiSearchContext = Omit<FabricApiSurface, "types" | "members">;
 
 export type FabricApiTypeSearchResult = FabricApiSearchContext & {
@@ -155,6 +167,44 @@ export type FabricApiMemberSearchResult = FabricApiSearchContext & {
     limit: number;
   };
   members: FabricApiMember[];
+};
+
+export type FabricApiMemberDetailsResult = {
+  schemaVersion: 1;
+  gameVersion: string;
+  fabricApiVersion: string;
+  member: FabricApiMember;
+  status: "available" | "unavailable";
+  unavailableReason: "anchor-not-found" | "ambiguous-anchor" | "unsupported-format" | null;
+  source: {
+    kind: "official-verified-fatjavadoc-entry";
+    repositoryUrl: string;
+    metadataUrl: string;
+    aggregatePomUrl: string;
+    fatJavadocUrl: string;
+    fatJavadocSha256Url: string;
+    archiveSha256: string;
+    entryPath: string;
+    entrySha256: string;
+    entryBytes: number;
+    retrievedAt: string;
+  };
+  format: "modern-section" | "legacy-block-list" | null;
+  declarationText: string | null;
+  returnTypeText: string | null;
+  parametersText: string | null;
+  throwsText: string | null;
+  descriptionText: string | null;
+  deprecationText: string | null;
+  /** Original dt/dd labels and text; these are documentation, not interpreted guarantees. */
+  notes: Array<{ label: string; entries: string[] }>;
+  coverage: {
+    extractionComplete: boolean;
+    truncated: boolean;
+    unavailableFields: string[];
+    scope: "selected-declaration-documentation";
+    nonClaims: string[];
+  };
 };
 
 type XmlNode = {
@@ -225,6 +275,44 @@ function validateLimit(value: number | undefined): number {
     );
   }
   return limit;
+}
+
+function validateFabricApiMemberDetailsOptions(options: FabricApiMemberDetailsOptions): {
+  gameVersion: string;
+  timeoutMs: number;
+} {
+  if (!options || typeof options !== "object") {
+    throw new Error("Fabric API member details options must be an object");
+  }
+  const gameVersion = validateGameVersion(options.gameVersion);
+  if (typeof options.fabricApiVersion !== "string") {
+    throw new Error("Fabric API member details requires fabricApiVersion from the member search");
+  }
+  validateMavenToken(options.fabricApiVersion, "Fabric API member details fabricApiVersion");
+  if (!options.fabricApiVersion.endsWith(`+${gameVersion}`)) {
+    throw new Error(
+      "Fabric API member details fabricApiVersion must have the exact requested Minecraft version suffix",
+    );
+  }
+  numericVersionParts(options.fabricApiVersion, gameVersion);
+  for (const [field, value] of [
+    ["javadocPath", options.javadocPath],
+    ["javadocFragment", options.javadocFragment],
+  ] as const) {
+    if (
+      typeof value !== "string" ||
+      value.length < 1 ||
+      value.length > javadocMemberDetailsLimits.maxUrlCharacters ||
+      value.trim() !== value ||
+      hasUnsupportedControl(value)
+    ) {
+      throw new Error(
+        `Fabric API member details ${field} must be a bounded exact value from the member search`,
+      );
+    }
+  }
+  decodeJavadocSignature(options.javadocFragment, "Fabric API member details javadocFragment");
+  return { gameVersion, timeoutMs: validateTimeout(options.timeoutMs) };
 }
 
 function normalizeOptionalSearchText(value: string | undefined, field: string): string | null {
@@ -758,6 +846,7 @@ function classifyMember(
 }
 
 function parseSurfaceArchive(archiveBytes: Buffer): {
+  archive: ZipArchive;
   types: FabricApiType[];
   members: FabricApiMember[];
 } {
@@ -896,7 +985,7 @@ function parseSurfaceArchive(archiveBytes: Buffer): {
   if (types.length === 0 || members.length === 0) {
     throw new Error("Fabric API fat Javadoc has no covered Fabric API types or members");
   }
-  return { types, members };
+  return { archive, types, members };
 }
 
 function artifactUrls(version: string): {
@@ -916,7 +1005,8 @@ async function loadFabricApiSurface(
   gameVersionInput: string,
   timeoutMsInput: number | undefined,
   fetchImpl: FabricApiSurfaceFetch,
-): Promise<FabricApiSurface> {
+  expectedFabricApiVersion?: string,
+): Promise<{ surface: FabricApiSurface; archive: ZipArchive }> {
   const gameVersion = validateGameVersion(gameVersionInput);
   const timeoutMs = validateTimeout(timeoutMsInput);
   const controller = new AbortController();
@@ -946,6 +1036,11 @@ async function loadFabricApiSurface(
       decodeUtf8(metadataBytes, "Fabric API Maven metadata"),
       gameVersion,
     );
+    if (expectedFabricApiVersion !== undefined && selection.selected !== expectedFabricApiVersion) {
+      throw new Error(
+        `Fabric API artifact changed from ${expectedFabricApiVersion} to ${selection.selected}; rerun the member search and use its current fabricApiVersion`,
+      );
+    }
     const urls = artifactUrls(selection.selected);
     const [pomBytes, checksumBytes, archiveBytes] = await Promise.race([
       Promise.all([
@@ -992,60 +1087,63 @@ async function loadFabricApiSurface(
       decodeUtf8(pomBytes, "Fabric API aggregate POM"),
       selection.selected,
     );
-    const parsedSurface = parseSurfaceArchive(archiveBytes);
+    const { archive, ...parsedSurface } = parseSurfaceArchive(archiveBytes);
     const candidates = selection.candidates.slice(0, 50);
     const checkedAt = new Date().toISOString();
     return {
-      gameVersion,
-      fabricApiVersion: selection.selected,
-      artifact: {
-        groupId: "net.fabricmc.fabric-api",
-        artifactId: "fabric-api",
-        version: selection.selected,
-        coordinate: `net.fabricmc.fabric-api:fabric-api:${selection.selected}`,
-        classifier: "fatjavadoc",
-        extension: "jar",
+      archive,
+      surface: {
+        gameVersion,
+        fabricApiVersion: selection.selected,
+        artifact: {
+          groupId: "net.fabricmc.fabric-api",
+          artifactId: "fabric-api",
+          version: selection.selected,
+          coordinate: `net.fabricmc.fabric-api:fabric-api:${selection.selected}`,
+          classifier: "fatjavadoc",
+          extension: "jar",
+        },
+        versionSelection: {
+          strategy: "highest-semver-with-exact-game-version-suffix",
+          exactSuffix: `+${gameVersion}`,
+          reportedLatest: selection.reportedLatest,
+          reportedRelease: selection.reportedRelease,
+          matchingCandidateCount: selection.candidates.length,
+          candidates,
+          candidatesTruncated: selection.candidates.length > candidates.length,
+          reportedLatestUsed: false,
+          reportedReleaseUsed: false,
+        },
+        modules,
+        renderingModules: modules.filter((module) => isRenderingModule(module.artifactId)),
+        source: {
+          kind: "official-live",
+          repositoryUrl: fabricApiRepositoryUrl,
+          metadataUrl: fabricApiMetadataUrl,
+          aggregatePomUrl: urls.pom,
+          fatJavadocUrl: urls.fatJavadoc,
+          fatJavadocSha256Url: urls.fatJavadocSha256,
+          fatJavadocSha256: checksum,
+          checkedAt,
+        },
+        coverage: {
+          kind: "official-fatjavadoc-search-index",
+          packagePrefixes: [...fabricApiPackagePrefixes],
+          typeCount: parsedSurface.types.length,
+          memberCount: parsedSurface.members.length,
+          guarantees: [
+            "Names, declaring types, display labels, and Javadoc URL signatures are present in the verified official Fabric API fat Javadoc search indexes for the selected artifact.",
+            "The aggregate POM coordinates and fat Javadoc SHA-256 were fetched from the official Fabric Maven repository.",
+          ],
+          nonGuarantees: [
+            "Search-index presence does not establish runtime behavior, binary compatibility, Java visibility, deprecation status, thread safety, or complete documentation prose.",
+            "Module coordinates are Fabric API group dependencies from the aggregate POM; renderingModules retains the rendering-related subset. Neither list attributes each symbol to one module.",
+            "Members are declared search-index entries only; inherited members, return types, generic bounds, and parameter names are not extracted. signature preserves the decoded Javadoc URL fragment when present and otherwise its display label.",
+            "Only the listed Fabric API package prefixes are indexed; Mojang client classes and mappings are outside this surface.",
+          ],
+        },
+        ...parsedSurface,
       },
-      versionSelection: {
-        strategy: "highest-semver-with-exact-game-version-suffix",
-        exactSuffix: `+${gameVersion}`,
-        reportedLatest: selection.reportedLatest,
-        reportedRelease: selection.reportedRelease,
-        matchingCandidateCount: selection.candidates.length,
-        candidates,
-        candidatesTruncated: selection.candidates.length > candidates.length,
-        reportedLatestUsed: false,
-        reportedReleaseUsed: false,
-      },
-      modules,
-      renderingModules: modules.filter((module) => isRenderingModule(module.artifactId)),
-      source: {
-        kind: "official-live",
-        repositoryUrl: fabricApiRepositoryUrl,
-        metadataUrl: fabricApiMetadataUrl,
-        aggregatePomUrl: urls.pom,
-        fatJavadocUrl: urls.fatJavadoc,
-        fatJavadocSha256Url: urls.fatJavadocSha256,
-        fatJavadocSha256: checksum,
-        checkedAt,
-      },
-      coverage: {
-        kind: "official-fatjavadoc-search-index",
-        packagePrefixes: [...fabricApiPackagePrefixes],
-        typeCount: parsedSurface.types.length,
-        memberCount: parsedSurface.members.length,
-        guarantees: [
-          "Names, declaring types, display labels, and Javadoc URL signatures are present in the verified official Fabric API fat Javadoc search indexes for the selected artifact.",
-          "The aggregate POM coordinates and fat Javadoc SHA-256 were fetched from the official Fabric Maven repository.",
-        ],
-        nonGuarantees: [
-          "Search-index presence does not establish runtime behavior, binary compatibility, Java visibility, deprecation status, thread safety, or complete documentation prose.",
-          "Module coordinates are Fabric API group dependencies from the aggregate POM; renderingModules retains the rendering-related subset. Neither list attributes each symbol to one module.",
-          "Members are declared search-index entries only; inherited members, return types, generic bounds, and parameter names are not extracted. signature preserves the decoded Javadoc URL fragment when present and otherwise its display label.",
-          "Only the listed Fabric API package prefixes are indexed; Mojang client classes and mappings are outside this surface.",
-        ],
-      },
-      ...parsedSurface,
     };
   } catch (error) {
     controller.abort();
@@ -1080,7 +1178,7 @@ export async function searchFabricApiTypes(
   const limit = validateLimit(options.limit);
   const query = normalizeOptionalSearchText(options.query, "query");
   const packagePrefix = validatePackagePrefix(options.packagePrefix);
-  const surface = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
+  const { surface } = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
   const needle = query?.toLowerCase() ?? null;
   const matches = surface.types.filter(
     (entry) =>
@@ -1121,7 +1219,7 @@ export async function searchFabricApiMembers(
   ) {
     throw new Error("Fabric API surface kind is unsupported");
   }
-  const surface = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
+  const { surface } = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
   const needle = query?.toLowerCase() ?? null;
   const matches = surface.members.filter(
     (entry) =>
@@ -1148,5 +1246,80 @@ export async function searchFabricApiMembers(
       limit,
     },
     members: matches.slice(0, limit).map((entry) => ({ ...entry })),
+  };
+}
+
+export async function getFabricApiMemberDetails(
+  options: FabricApiMemberDetailsOptions,
+  fetchImpl: FabricApiSurfaceFetch = fetch,
+  now: () => Date = () => new Date(),
+): Promise<FabricApiMemberDetailsResult> {
+  const { gameVersion, timeoutMs } = validateFabricApiMemberDetailsOptions(options);
+  const { surface, archive } = await loadFabricApiSurface(
+    gameVersion,
+    timeoutMs,
+    fetchImpl,
+    options.fabricApiVersion,
+  );
+  const matches = surface.members.filter(
+    (member) =>
+      member.javadocPath === options.javadocPath &&
+      member.javadocFragment === options.javadocFragment,
+  );
+  if (matches.length !== 1) {
+    throw new Error(
+      "Fabric API member details path and fragment must exactly match one member in the current selected artifact; copy them from search_fabric_api_members",
+    );
+  }
+  const member = matches[0];
+  if (!member) throw new Error("Fabric API member details member is not indexed");
+  const entry = archive.entries.find((candidate) => candidate.name === member.javadocPath);
+  if (!entry || entry.directory) {
+    throw new Error("Fabric API fat Javadoc is missing the indexed member page");
+  }
+  if (entry.uncompressedSize > javadocMemberDetailsLimits.maxPageBytes) {
+    throw new Error(
+      `Fabric API indexed member page exceeds the ${javadocMemberDetailsLimits.maxPageBytes} byte limit`,
+    );
+  }
+  let entryBytes: Buffer;
+  try {
+    entryBytes = archive.readEntry(member.javadocPath);
+  } catch (error) {
+    throw new Error(
+      `Fabric API indexed member page is invalid: ${boundedErrorDetail(
+        error instanceof Error ? error.message : String(error),
+      )}`,
+    );
+  }
+  const html = decodeUtf8(entryBytes, "Fabric API indexed member page");
+  const details = extractJavadocMemberDetails(html, member.signature);
+  return {
+    schemaVersion: 1,
+    gameVersion: surface.gameVersion,
+    fabricApiVersion: surface.fabricApiVersion,
+    member: { ...member },
+    source: {
+      kind: "official-verified-fatjavadoc-entry",
+      repositoryUrl: surface.source.repositoryUrl,
+      metadataUrl: surface.source.metadataUrl,
+      aggregatePomUrl: surface.source.aggregatePomUrl,
+      fatJavadocUrl: surface.source.fatJavadocUrl,
+      fatJavadocSha256Url: surface.source.fatJavadocSha256Url,
+      archiveSha256: surface.source.fatJavadocSha256,
+      entryPath: member.javadocPath,
+      entrySha256: createHash("sha256").update(entryBytes).digest("hex"),
+      entryBytes: entryBytes.byteLength,
+      retrievedAt: now().toISOString(),
+    },
+    ...details,
+    coverage: {
+      ...details.coverage,
+      nonClaims: [
+        "Javadoc text and annotations are observed documentation, not inferred runtime behavior, thread safety, binary compatibility, or rendering correctness.",
+        "Type overviews, linked pages, inherited documentation, implementation source, Fabric Loader, and Mojang client APIs are not fetched.",
+        "The same-origin Maven SHA-256 sidecar is integrity evidence, not an independent signature or trust source.",
+      ],
+    },
   };
 }

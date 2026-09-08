@@ -64,6 +64,7 @@ import {
   getDatapackSchemaSurface,
   getEntityMetadata,
   getEvidenceBundle,
+  getFabricApiMemberDetails,
   getFabricToolchainCompatibility,
   getFactSurface,
   getIntentLookup,
@@ -2440,7 +2441,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_fabric_api_members",
     description:
-      "Search declared public Fabric API members under net.fabricmc.fabric.api in official Maven fatjavadoc search indexes for an exact Minecraft game version. Preserves overload fragments and nested type names across API subpackages; does not infer inherited members, full Java declarations, Fabric internals, Loader, Mojang client internals, or runtime compatibility.",
+      "Search declared public Fabric API members under net.fabricmc.fabric.api in official Maven fatjavadoc search indexes for an exact Minecraft game version. Preserves overload fragments and nested type names across API subpackages. For declarations and documentation prose, copy the returned artifact and member selectors to get_fabric_api_member_details. Search indexes do not infer inherited members, Fabric internals, Loader, Mojang client internals, runtime behavior, or compatibility.",
     inputSchema: {
       type: "object",
       properties: {
@@ -2452,6 +2453,23 @@ export const tools: ToolDefinition[] = [
         },
       },
       required: ["gameVersion"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_fabric_api_member_details",
+    description:
+      "Extract bounded declaration and documentation prose for one exact member from the same verified official Fabric API fat Javadoc artifact selected by search_fabric_api_members. Copy fabricApiVersion, javadocPath, and javadocFragment from that search result. Documentation text is evidence, not an inferred runtime, lifecycle, thread-safety, or compatibility guarantee.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        gameVersion: fabricApiSearchProperties.gameVersion,
+        fabricApiVersion: { type: "string", minLength: 1, maxLength: 256 },
+        javadocPath: { type: "string", minLength: 1, maxLength: 4096 },
+        javadocFragment: { type: "string", minLength: 1, maxLength: 4096 },
+        timeoutMs: fabricApiSearchProperties.timeoutMs,
+      },
+      required: ["gameVersion", "fabricApiVersion", "javadocPath", "javadocFragment"],
       additionalProperties: false,
     },
   },
@@ -5020,6 +5038,35 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       }
       return text(
         members ? await searchFabricApiMembers(options) : await searchFabricApiTypes(options),
+      );
+    }
+    if (name === "get_fabric_api_member_details") {
+      const detailArgs = plainDataRecordArg(
+        input,
+        name,
+        new Set(["gameVersion", "fabricApiVersion", "javadocPath", "javadocFragment", "timeoutMs"]),
+      );
+      for (const key of [
+        "gameVersion",
+        "fabricApiVersion",
+        "javadocPath",
+        "javadocFragment",
+      ] as const) {
+        if (typeof detailArgs[key] !== "string") {
+          throw new Error(`${name} requires string ${key}`);
+        }
+      }
+      if (hasOwnArg(detailArgs, "timeoutMs") && typeof detailArgs.timeoutMs !== "number") {
+        throw new Error(`${name} timeoutMs must be a number`);
+      }
+      return text(
+        await getFabricApiMemberDetails({
+          gameVersion: detailArgs.gameVersion as string,
+          fabricApiVersion: detailArgs.fabricApiVersion as string,
+          javadocPath: detailArgs.javadocPath as string,
+          javadocFragment: detailArgs.javadocFragment as string,
+          ...(typeof detailArgs.timeoutMs === "number" ? { timeoutMs: detailArgs.timeoutMs } : {}),
+        }),
       );
     }
     if (name === "resolve_velocity_toolchain") {
