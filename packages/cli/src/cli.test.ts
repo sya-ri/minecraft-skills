@@ -233,6 +233,7 @@ function fabricApiFixtureFetch() {
   const pom = `<project><modelVersion>4.0.0</modelVersion><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-api</artifactId><version>${version}</version><dependencies><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-rendering-v1</artifactId><version>25.3.3+515ac5339e</version></dependency><dependency><groupId>net.fabricmc.fabric-api</groupId><artifactId>fabric-renderer-api-v1</artifactId><version>14.1.4+2b0d8a229e</version></dependency></dependencies></project>`;
   const types = [
     { p: packageName, l: "ArmorRenderer" },
+    { p: packageName, l: "FabricRenderState" },
     { p: `${packageName}.level`, l: "LevelRenderEvents.BeforeBlockOutline" },
     { p: "net.fabricmc.fabric.api.client.gametest", l: "ClientTestFixture" },
   ];
@@ -250,10 +251,13 @@ function fabricApiFixtureFetch() {
       l: "register(Renderer)",
       u: "register(net.fabricmc.example.Renderer)",
     },
+    { p: packageName, c: "FabricRenderState", l: "clearExtraData()" },
   ];
   const archive = createStoredZip({
     "type-search-index.js": `typeSearchIndex = ${JSON.stringify(types)};updateSearchResults();`,
     "member-search-index.js": `memberSearchIndex = ${JSON.stringify(members)};updateSearchResults();`,
+    "net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html":
+      '<!doctype html><html><body><section class="detail" id="clearExtraData()"><h3>clearExtraData</h3><div class="member-signature"><span class="modifiers">public</span> <span class="return-type">void</span> <span class="element-name">clearExtraData</span>()</div><div class="block">Clears extra data before the next extraction pass.</div><dl class="notes"><dt>API Note:</dt><dd>Render state instances may be reused.</dd></dl></section></body></html>',
   });
   const checksum = createHash("sha256").update(archive).digest("hex");
   return vi.fn(async (url: string, _init?: RequestInit) => {
@@ -2520,6 +2524,44 @@ describe("minecraft-skills CLI", () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
+  it("extracts one exact Fabric API member through the grouped CLI route", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await capture([
+      "fabric",
+      "api",
+      "member-details",
+      "26.2",
+      "--fabric-api-version",
+      "0.159.0+26.2",
+      "--javadoc-path",
+      "net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html",
+      "--javadoc-fragment",
+      "clearExtraData()",
+      "--timeout-ms",
+      "1000",
+    ]);
+    expect(result.code, result.stderr.join("\n")).toBe(0);
+    const output = JSON.parse(result.stdout.join("\n"));
+    expect(output).toMatchObject({
+      gameVersion: "26.2",
+      fabricApiVersion: "0.159.0+26.2",
+      status: "available",
+      format: "modern-section",
+      declarationText: "public void clearExtraData()",
+      descriptionText: "Clears extra data before the next extraction pass.",
+      member: {
+        qualifiedTypeName: "net.fabricmc.fabric.api.client.rendering.v1.FabricRenderState",
+        name: "clearExtraData",
+      },
+      source: {
+        entryPath: "net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html",
+      },
+      coverage: { extractionComplete: true },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
   it.each([
     ["types"],
     ["types", "26.2", "extra"],
@@ -2533,6 +2575,39 @@ describe("minecraft-skills CLI", () => {
     ["types", "26.2", "--package-prefix", "net.minecraft"],
     ["members", "26.2", "--kind", "class"],
     ["members", "26.2", "--type", " "],
+    ["member-details", "26.2"],
+    [
+      "member-details",
+      "26.2",
+      "--fabric-api-version",
+      "0.159.0+26.2",
+      "--javadoc-path",
+      "net/fabricmc/fabric/api/Foo.html",
+      "--javadoc-fragment",
+    ],
+    [
+      "member-details",
+      "26.2",
+      "extra",
+      "--fabric-api-version",
+      "0.159.0+26.2",
+      "--javadoc-path",
+      "net/fabricmc/fabric/api/Foo.html",
+      "--javadoc-fragment",
+      "run()",
+    ],
+    [
+      "member-details",
+      "26.2",
+      "--fabric-api-version",
+      "0.159.0+26.2",
+      "--javadoc-path",
+      "net/fabricmc/fabric/api/Foo.html",
+      "--javadoc-fragment",
+      "run()",
+      "--timeout-ms",
+      "1.5",
+    ],
   ])("rejects invalid Fabric API CLI arguments before fetching: %j", async (...args) => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

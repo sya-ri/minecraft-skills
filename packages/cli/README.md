@@ -244,6 +244,7 @@ minecraft-skills plugin velocity validate-jar ./build/libs/example.jar --target-
 minecraft-skills fabric toolchain 1.21.11 --limit 10 --timeout-ms 5000
 minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
 minecraft-skills fabric api members 26.2 --type ArmorRenderer --query register --kind method
+minecraft-skills fabric api member-details 26.2 --fabric-api-version "0.160.0+26.2" --javadoc-path net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html --javadoc-fragment "clearExtraData()"
 minecraft-skills fabric validate-mod ./example-mod.jar
 minecraft-skills fabric validate-set ./selection.json
 minecraft-skills fabric validate-mod ./example-mod.jar --max-archive-bytes 104857600
@@ -544,6 +545,15 @@ display labels and Javadoc URL signatures, not full Java declarations, prose, be
 members, or Mojang client API evidence. No file is written. Empty query matches succeed with
 `totalMatches: 0`; an absent exact version or invalid/unavailable source returns exit code 1.
 See [source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-surface).
+
+`fabric api member-details <game-version> --fabric-api-version <version> --javadoc-path <path>
+--javadoc-fragment <fragment>` extracts the bounded declaration and documentation prose for one
+exact member in that verified official fat Javadoc. Copy all three option values from a
+`fabric api members` result so the selected artifact, archive entry, and member fragment stay
+pinned. `--timeout-ms` uses the same 100–60,000 ms range and 15,000 ms default as the search
+commands. Complete extraction returns exit code 0; unavailable or incomplete extraction returns
+1. The prose is evidence for the selected declaration, not an inferred runtime, lifecycle,
+thread-safety, or compatibility guarantee.
 
 `minecraft search "Fabric Client GameTest visual evidence"` returns guidance for stable case IDs,
 bounded readiness, full-frame and runtime-bounds crop evidence, explicit compare versus

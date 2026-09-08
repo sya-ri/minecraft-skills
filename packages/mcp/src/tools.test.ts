@@ -179,6 +179,8 @@ function fabricApiFixtureFetch() {
   const archive = testJar({
     "type-search-index.js": `typeSearchIndex = ${JSON.stringify(types)};updateSearchResults();`,
     "member-search-index.js": `memberSearchIndex = ${JSON.stringify(members)};updateSearchResults();`,
+    "net/fabricmc/fabric/api/client/rendering/v1/ArmorRenderer.html":
+      '<!doctype html><html><body><section class="detail" id="register(net.minecraft.client.renderer.Renderer)"><h3>register</h3><div class="member-signature"><span class="modifiers">public static</span> <span class="return-type">void</span> <span class="element-name">register</span>(Renderer renderer)</div><div class="block">Registers an armor renderer for subsequent render extraction.</div><dl class="notes"><dt>Parameters:</dt><dd>renderer - the renderer to register</dd></dl></section></body></html>',
   });
   const checksum = createHash("sha256").update(archive).digest("hex");
   return vi.fn(async (url: string, _init?: RequestInit) => {
@@ -334,6 +336,7 @@ describe("MCP tools", () => {
     expect(tools.map((tool) => tool.name)).toContain("get_fabric_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_fabric_api_types");
     expect(tools.map((tool) => tool.name)).toContain("search_fabric_api_members");
+    expect(tools.map((tool) => tool.name)).toContain("get_fabric_api_member_details");
     expect(tools.map((tool) => tool.name)).toContain("resolve_velocity_toolchain");
     expect(tools.map((tool) => tool.name)).toContain("search_modrinth_projects");
     expect(tools.map((tool) => tool.name)).toContain("list_modrinth_project_versions");
@@ -4122,6 +4125,13 @@ describe("MCP tools", () => {
       type: "string",
       enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
     });
+    const details = tools.find((tool) => tool.name === "get_fabric_api_member_details");
+    expect(details?.inputSchema).toMatchObject({
+      required: ["gameVersion", "fabricApiVersion", "javadocPath", "javadocFragment"],
+      additionalProperties: false,
+    });
+    expect(details?.inputSchema.properties.javadocPath).toMatchObject({ maxLength: 4096 });
+    expect(details?.description).toContain("runtime");
   });
 
   it("calls both Fabric API searches for public networking packages", async () => {
@@ -4195,6 +4205,53 @@ describe("MCP tools", () => {
     });
     expect(output.members[0].signatureSource).toBe("url-fragment");
     expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("calls get_fabric_api_member_details for one exact search result", async () => {
+    const fetchMock = fabricApiFixtureFetch();
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await callMinecraftSkillsTool("get_fabric_api_member_details", {
+      gameVersion: "26.2",
+      fabricApiVersion: "0.159.0+26.2",
+      javadocPath: "net/fabricmc/fabric/api/client/rendering/v1/ArmorRenderer.html",
+      javadocFragment: "register(net.minecraft.client.renderer.Renderer)",
+      timeoutMs: 1000,
+    });
+    expect(result.isError, result.content[0]?.text).not.toBe(true);
+    const output = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(output).toMatchObject({
+      status: "available",
+      fabricApiVersion: "0.159.0+26.2",
+      member: { name: "register" },
+      returnTypeText: "void",
+      descriptionText: "Registers an armor renderer for subsequent render extraction.",
+      source: { kind: "official-verified-fatjavadoc-entry" },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("rejects invalid Fabric API member-detail input before fetching", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    for (const input of [
+      {},
+      {
+        gameVersion: "26.2",
+        fabricApiVersion: "0.159.0+26.2",
+        javadocPath: "net/fabricmc/fabric/api/client/rendering/v1/ArmorRenderer.html",
+      },
+      {
+        gameVersion: "26.2",
+        fabricApiVersion: "0.159.0+26.2",
+        javadocPath: "net/fabricmc/fabric/api/client/rendering/v1/ArmorRenderer.html",
+        javadocFragment: "register()",
+        unexpected: true,
+      },
+    ]) {
+      const result = await callMinecraftSkillsTool("get_fabric_api_member_details", input);
+      expect(result.isError).toBe(true);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it.each([

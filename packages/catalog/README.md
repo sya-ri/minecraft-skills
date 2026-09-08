@@ -12,6 +12,12 @@ properties, allowed values, the explicit default state, and a bounded state page
 is 26.2 and 1.21.11; fetch `block-state-surface` data first in packed installations. Unsupported
 versions, absent cached data, and unknown IDs are distinct outcomes.
 
+`searchFabricApiMembers({ gameVersion, ... })` returns exact Fabric API artifact identity plus
+archive-relative member selectors. Pass one result's `fabricApiVersion`, `javadocPath`, and raw
+`javadocFragment` to `getFabricApiMemberDetails` to extract bounded documentation from that same
+SHA-256-verified official fat Javadoc. The lookup rejects artifact drift and reports unavailable or
+truncated fields; documentation text is not an inferred runtime or lifecycle guarantee.
+
 ArkType-validated read APIs for the bundled Minecraft Skills data package.
 
 ## Install

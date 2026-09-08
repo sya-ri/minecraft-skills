@@ -6,6 +6,12 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Added exact indexed Fabric API member-detail lookup across Catalog, CLI, and MCP. The selected
+  member is bound to the caller's exact Fabric API version and extracted from the same
+  SHA-256-verified official fat Javadoc archive, with bounded declaration, description,
+  deprecation, and labeled notes. Documentation text remains evidence rather than an inferred
+  runtime, lifecycle, thread-safety, or compatibility guarantee; the current `FabricRenderState`
+  prose does not document automatic clearing time.
 - Added exact-version entity metadata lookups across Catalog, CLI, and MCP for Java 26.2 and
   1.21.11. Hash-verified official server extraction supplies inherited accessor indexes, types,
   serializer names/IDs and source provenance with registry coverage and explicit extraction

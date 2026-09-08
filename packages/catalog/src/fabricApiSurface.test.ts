@@ -11,9 +11,11 @@ import {
   fabricApiPackagePrefixes,
   fabricApiRenderingPackagePrefixes,
   fabricApiSurfaceLimits,
+  getFabricApiMemberDetails,
   searchFabricApiMembers,
   searchFabricApiTypes,
 } from "./fabricApiSurface.js";
+import { javadocMemberDetailsLimits } from "./javadocMemberDetails.js";
 
 const renderingPackage = "net.fabricmc.fabric.api.client.rendering.v1";
 const rendererPackage = "net.fabricmc.fabric.api.client.renderer.v1";
@@ -321,6 +323,144 @@ describe("Fabric API surface", () => {
     );
     expect(constructorResult.members[0]?.signature).toBe("<init>()");
     expect(constructorResult.members[0]?.javadocFragment).toBe("%3Cinit%3E()");
+  });
+
+  it("extracts bounded lifecycle prose for one exact indexed member", async () => {
+    const javadocPath = "net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html";
+    const html =
+      '<!doctype html><html><body><section class="detail" id="clearExtraData()"><h3>clearExtraData</h3><div class="member-signature"><span class="modifiers">public</span> <span class="return-type">void</span> <span class="element-name">clearExtraData</span>()</div><div class="block">Clears extra data before the next extraction pass.</div><dl class="notes"><dt>API Note:</dt><dd>Render state instances may be reused.</dd></dl></section></body></html>';
+    const archive = storedZip([
+      [
+        "type-search-index.js",
+        index("typeSearchIndex", [{ p: renderingPackage, l: "FabricRenderState" }]),
+      ],
+      [
+        "member-search-index.js",
+        index("memberSearchIndex", [
+          { p: renderingPackage, c: "FabricRenderState", l: "clearExtraData()" },
+        ]),
+      ],
+      [javadocPath, html],
+    ]);
+
+    const result = await getFabricApiMemberDetails(
+      {
+        gameVersion: "26.2",
+        fabricApiVersion: apiVersion,
+        javadocPath,
+        javadocFragment: "clearExtraData()",
+      },
+      fixtureFetch({ archive }),
+      () => new Date("2026-09-08T00:00:00.000Z"),
+    );
+
+    expect(result).toMatchObject({
+      schemaVersion: 1,
+      gameVersion: "26.2",
+      fabricApiVersion: apiVersion,
+      member: {
+        qualifiedTypeName: `${renderingPackage}.FabricRenderState`,
+        name: "clearExtraData",
+      },
+      status: "available",
+      format: "modern-section",
+      declarationText: "public void clearExtraData()",
+      returnTypeText: "void",
+      descriptionText: "Clears extra data before the next extraction pass.",
+      notes: [{ label: "API Note:", entries: ["Render state instances may be reused."] }],
+      source: {
+        kind: "official-verified-fatjavadoc-entry",
+        archiveSha256: createHash("sha256").update(archive).digest("hex"),
+        entryPath: javadocPath,
+        entrySha256: createHash("sha256").update(html).digest("hex"),
+        retrievedAt: "2026-09-08T00:00:00.000Z",
+      },
+      coverage: {
+        scope: "selected-declaration-documentation",
+        extractionComplete: true,
+        truncated: false,
+      },
+    });
+    expect(result.coverage.nonClaims.join(" ")).toContain("runtime behavior");
+  });
+
+  it("rejects artifact drift before downloading a different fat Javadoc", async () => {
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    await expect(
+      getFabricApiMemberDetails(
+        {
+          gameVersion: "26.2",
+          fabricApiVersion: "0.158.0+26.2",
+          javadocPath: `${renderingPackage.replaceAll(".", "/")}/ArmorRenderer.html`,
+          javadocFragment: "register(net.minecraft.client.renderer.Renderer)",
+        },
+        fixtureFetch({ requests }),
+      ),
+    ).rejects.toThrow("artifact changed");
+    expect(requests).toHaveLength(1);
+  });
+
+  it("uses the decoded exact anchor and rejects missing or oversized indexed pages", async () => {
+    const javadocPath = `${renderingPackage.replaceAll(".", "/")}/ArmorRenderer.html`;
+    const member = {
+      p: renderingPackage,
+      c: "ArmorRenderer",
+      l: "ArmorRenderer()",
+      u: "%3Cinit%3E()",
+      k: "3",
+    };
+    const indexes: Array<[string, string]> = [
+      [
+        "type-search-index.js",
+        index("typeSearchIndex", [{ p: renderingPackage, l: "ArmorRenderer" }]),
+      ],
+      ["member-search-index.js", index("memberSearchIndex", [member])],
+    ];
+    const html =
+      '<section class="detail" id="&lt;init&gt;()"><div class="member-signature"><span class="element-name">ArmorRenderer</span><span class="parameters">()</span></div></section>';
+    const available = await getFabricApiMemberDetails(
+      {
+        gameVersion: "26.2",
+        fabricApiVersion: apiVersion,
+        javadocPath,
+        javadocFragment: "%3Cinit%3E()",
+      },
+      fixtureFetch({ archive: storedZip([...indexes, [javadocPath, html]]) }),
+    );
+    expect(available).toMatchObject({
+      status: "available",
+      declarationText: "ArmorRenderer()",
+      member: { signature: "<init>()" },
+    });
+
+    await expect(
+      getFabricApiMemberDetails(
+        {
+          gameVersion: "26.2",
+          fabricApiVersion: apiVersion,
+          javadocPath,
+          javadocFragment: "%3Cinit%3E()",
+        },
+        fixtureFetch({ archive: storedZip(indexes) }),
+      ),
+    ).rejects.toThrow("missing the indexed member page");
+
+    await expect(
+      getFabricApiMemberDetails(
+        {
+          gameVersion: "26.2",
+          fabricApiVersion: apiVersion,
+          javadocPath,
+          javadocFragment: "%3Cinit%3E()",
+        },
+        fixtureFetch({
+          archive: storedZip([
+            ...indexes,
+            [javadocPath, "x".repeat(javadocMemberDetailsLimits.maxPageBytes + 1)],
+          ]),
+        }),
+      ),
+    ).rejects.toThrow("indexed member page exceeds");
   });
 
   it("filters exact package boundaries and reports an empty query match without widening coverage", async () => {

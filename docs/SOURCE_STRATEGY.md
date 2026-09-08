@@ -165,12 +165,22 @@ display labels, archive-relative Javadoc paths, and decoded Javadoc URL signatur
 present. Nested type dots and overload-specific signatures are preserved. No Javadoc prose or
 binary content is returned or written to disk.
 
+The member-detail lookup requires the exact `fabricApiVersion`, `javadocPath`, and raw
+`javadocFragment` returned by a member search. It rejects selected-artifact drift, verifies the
+same official archive and sidecar again, exact-matches one index entry, and reads only its bounded
+HTML entry through the validated ZIP reader. The selected declaration, description, deprecation,
+and labeled notes are parsed as documentation evidence and identified by archive and entry hashes;
+no unpacked page URL is invented. Missing anchors and unsupported doclet structures remain explicit.
+
 This is name and URL-signature evidence from a selected published artifact, not a guarantee of
 runtime behavior, full signatures with return types/generics/parameter names, inherited members,
 Java visibility, deprecation status, complete dependency compatibility, or rendering correctness.
 The aggregate indexes do not associate symbols with Maven modules, so per-symbol module ownership
 is not inferred. Mojang client classes and mappings remain outside this surface; names used only
 as Fabric API parameter types do not establish the corresponding Mojang class API.
+Member prose likewise does not establish behavior the documentation does not state. For example,
+the selected 26.2 `FabricRenderState` Javadoc documents clearing extra data but not the automatic
+clear point or render-state reuse lifetime.
 
 ## Fabric Client GameTest Visual Evidence
 

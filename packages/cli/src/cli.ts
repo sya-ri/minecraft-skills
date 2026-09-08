@@ -34,6 +34,7 @@ import {
   defaultServerAccessListValidationLimits,
   downloadJavaPlayerTexture,
   explainPackPath,
+  type FabricApiMemberDetailsOptions,
   type FabricApiMemberSearchOptions,
   type FabricModSetOptions,
   fetchData,
@@ -64,6 +65,7 @@ import {
   getDomain,
   getEntityMetadata,
   getEvidenceBundle,
+  getFabricApiMemberDetails,
   getFabricToolchainCompatibility,
   getFactSurface,
   getIntentLookup,
@@ -357,6 +359,54 @@ function parseFabricApiSearchArgs(args: string[], members: boolean): FabricApiMe
     options.kind = kind;
   }
   return options;
+}
+
+function parseFabricApiMemberDetailsArgs(args: string[]): FabricApiMemberDetailsOptions {
+  const command = "fabric api member-details";
+  const allowed = new Set([
+    "--fabric-api-version",
+    "--javadoc-path",
+    "--javadoc-fragment",
+    "--timeout-ms",
+  ]);
+  const values = new Map<string, string>();
+  const positionals: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === undefined) continue;
+    if (!arg.startsWith("-")) {
+      positionals.push(arg);
+      continue;
+    }
+    if (!allowed.has(arg)) throw new Error(`${command} received unknown option: ${arg}`);
+    if (values.has(arg)) throw new Error(`${command} option must not be repeated: ${arg}`);
+    const value = args[index + 1];
+    if (!value || value.startsWith("--")) {
+      throw new Error(`${command} ${arg} requires a value`);
+    }
+    values.set(arg, value);
+    index += 1;
+  }
+  const gameVersion = positionals[0];
+  if (positionals.length !== 1 || !gameVersion) {
+    throw new Error(`${command} requires exactly one <game-version>`);
+  }
+  const requiredOption = (flag: string): string => {
+    const value = values.get(flag);
+    if (value === undefined) throw new Error(`${command} requires ${flag}`);
+    return value;
+  };
+  return {
+    gameVersion,
+    fabricApiVersion: requiredOption("--fabric-api-version"),
+    javadocPath: requiredOption("--javadoc-path"),
+    javadocFragment: requiredOption("--javadoc-fragment"),
+    ...(values.has("--timeout-ms")
+      ? {
+          timeoutMs: readIntegerArg(values.get("--timeout-ms"), `${command} --timeout-ms`),
+        }
+      : {}),
+  };
 }
 
 function parsePlayerTextureDownloadArgs(args: string[]): {
@@ -942,7 +992,11 @@ function normalizeSubcommands(argv: string[]): string[] {
   }
   if (group === "fabric" && subcommand === "api") {
     const [apiSubcommand, ...apiRest] = rest;
-    if (apiSubcommand === "types" || apiSubcommand === "members") {
+    if (
+      apiSubcommand === "types" ||
+      apiSubcommand === "members" ||
+      apiSubcommand === "member-details"
+    ) {
       return [`fabric-api-${apiSubcommand}`, ...apiRest];
     }
     return argv;
@@ -1268,6 +1322,7 @@ const flatCommandSuggestions: Record<string, string> = {
   "fabric-toolchain": "fabric toolchain",
   "fabric-api-types": "fabric api types",
   "fabric-api-members": "fabric api members",
+  "fabric-api-member-details": "fabric api member-details",
   "velocity-toolchain": "velocity toolchain",
   "server-validate-properties": "server validate-properties",
   "fabric-validate-mod": "fabric validate-mod",
@@ -1574,6 +1629,7 @@ Grouped commands:
   minecraft-skills fabric toolchain <game-version> [--limit 10] [--timeout-ms 5000]
   minecraft-skills fabric api types <game-version> [--query text] [--package-prefix package.name] [--limit 50] [--timeout-ms 15000]
   minecraft-skills fabric api members <game-version> [--query text] [--package-prefix package.name] [--type name] [--kind kind] [--limit 50] [--timeout-ms 15000]
+  minecraft-skills fabric api member-details <game-version> --fabric-api-version version --javadoc-path path --javadoc-fragment fragment [--timeout-ms 15000]
   minecraft-skills fabric validate-mod <file.jar> [--max-archive-bytes bytes]
   minecraft-skills fabric validate-set <selection.json>
   minecraft-skills fabric mods inventory <directory>
@@ -1660,8 +1716,8 @@ Command reference:
                  Check bounded structural rules for current schema v1 and JAR evidence offline.
   fabric validate-set
                  Check a fixed metadata selection's dependencies and report incomplete or nested coverage.
-  fabric api types|members
-                 Search exact-version public Fabric API packages from official Maven fatjavadoc indexes.
+  fabric api types|members|member-details
+                 Search exact-version public Fabric API packages or inspect one indexed member from official Maven fatjavadoc archives.
   fabric mods inventory
                  Inventory direct lowercase .jar regular files with bounded stable reads and hashes;
                  invalid, rejected, duplicate, or incomplete results exit 1.
@@ -3563,6 +3619,12 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
         members ? await searchFabricApiMembers(options) : await searchFabricApiTypes(options),
       );
       return 0;
+    }
+
+    if (command === "fabric-api-member-details") {
+      const result = await getFabricApiMemberDetails(parseFabricApiMemberDetailsArgs(args));
+      printJson(output, result);
+      return result.status === "available" && result.coverage.extractionComplete ? 0 : 1;
     }
 
     if (command === "fabric-toolchain") {

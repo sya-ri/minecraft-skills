@@ -172,6 +172,7 @@ client API surface.
 - `get_fabric_toolchain`
 - `search_fabric_api_types`
 - `search_fabric_api_members`
+- `get_fabric_api_member_details`
 - `resolve_velocity_toolchain`
 - `search_modrinth_projects`
 - `list_modrinth_project_versions`
@@ -445,6 +446,14 @@ rendering-related subset, without attributing symbols to modules. They do not re
 binaries, write a disk cache, or establish runtime behavior. Signatures are Javadoc URL fragments,
 not full Java declarations or parameter-name evidence. See
 [source boundaries](../../docs/SOURCE_STRATEGY.md#fabric-api-surface).
+
+`get_fabric_api_member_details` accepts `gameVersion` plus the exact `fabricApiVersion`,
+`javadocPath`, and raw `javadocFragment` copied from one member result. It rejects artifact drift,
+re-verifies the official fat Javadoc, and extracts bounded declaration and documentation fields
+from only that indexed entry. The result includes archive/entry hashes and explicit unavailable or
+truncated evidence. It does not infer undocumented runtime, lifecycle, thread-safety, or
+compatibility guarantees; the current `FabricRenderState` member prose does not state the automatic
+clear point.
 
 `validate_fabric_mod` accepts parsed `fabric.mod.json` data or bounded JSON text plus optional
 `archiveEntries`; it never accepts binary JAR content. Input arrays, path strings, JSON complexity,
