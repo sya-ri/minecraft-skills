@@ -9,8 +9,12 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  check:
+  workspace:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -18,20 +22,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup mise
-        uses: jdx/mise-action@v4.2.0
-        with:
-          install: true
-          cache: true
+      - name: Setup workspace
+        uses: ./.github/actions/setup
 
-      - name: Install dependencies
-        run: mise exec -- pnpm install --frozen-lockfile
+      - name: Lint workspace
+        run: mise exec -- pnpm exec sherif && mise exec -- pnpm run lint
 
-      - name: Check
-        run: CI=true mise exec -- pnpm run check
+      - name: Build workspace packages
+        run: mise exec -- pnpm build
 
-      - name: Pack dry run
-        run: mise exec -- pnpm run pack:dry-run
+      - name: Typecheck
+        run: mise exec -- pnpm typecheck
+
+      - name: Test
+        run: mise exec -- pnpm test
+
+      - name: Validate data
+        run: mise exec -- pnpm validate
+
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup
+
+      # The maintainer CLI imports catalog/data at startup. Build only that
+      # dependency closure; package-smoke exercises all public prepack hooks.
+      - name: Build smoke prerequisites
+        run: mise exec -- pnpm --filter @minecraft-skills/maintainer... build
 
       - name: Package smoke
-        run: mise exec -- pnpm run pack:smoke
+        run: mise exec -- node packages/maintainer/dist/cli.mjs package-smoke
+
+  # Preserve the existing check name and report failed/skipped dependencies.
+  check:
+    if: ${{ always() }}
+    needs: [workspace, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require all checks to pass
+        env:
+          WORKSPACE_RESULT: ${{ needs.workspace.result }}
+          PACKAGE_RESULT: ${{ needs.package.result }}
+        run: test "$WORKSPACE_RESULT" = success && test "$PACKAGE_RESULT" = success

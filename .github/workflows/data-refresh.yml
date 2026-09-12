@@ -28,14 +28,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup mise
-        uses: jdx/mise-action@v4.2.0
-        with:
-          install: true
-          cache: true
-
-      - name: Install dependencies
-        run: mise exec -- pnpm install --frozen-lockfile
+      - name: Setup workspace
+        uses: ./.github/actions/setup
 
       - name: Build workspace packages
         run: mise exec -- pnpm build
