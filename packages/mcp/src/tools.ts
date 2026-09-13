@@ -121,6 +121,7 @@ import {
   type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
+  migrateLegacyItemModel,
   minecraftPerformanceAnalysisRules,
   minecraftPerformanceMetricNames,
   mixinConfigValidationLimits,
@@ -422,6 +423,18 @@ const jarInventorySchema = {
 };
 
 export const tools: ToolDefinition[] = [
+  {
+    name: "migrate_legacy_item_model",
+    description:
+      "Conservatively generate separate geometry and item-definition JSON for strictly increasing legacy custom_model_data-only overrides. Mixed predicates, reordered thresholds and inexact float values are unsupported; never silently approximate. Does not write files or prove target compatibility/render equivalence.",
+    inputSchema: {
+      type: "object",
+      properties: { modelId: { type: "string" }, model: { type: "object" } },
+      required: ["modelId", "model"],
+      additionalProperties: false,
+    },
+  },
+
   {
     name: "lookup_java_player_profile",
     description:
@@ -4933,6 +4946,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.evaluatedAt === "string" ? { evaluatedAt: args.evaluatedAt } : {}),
         }),
       );
+    }
+    if (name === "migrate_legacy_item_model") {
+      return text(migrateLegacyItemModel(args.modelId as string, args.model));
     }
     if (name === "get_pack_migration_plan") {
       if (args.domain !== "datapack" && args.domain !== "resourcepack") {

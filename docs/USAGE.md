@@ -621,3 +621,7 @@ Set `MINECRAFT_SKILLS_CACHE_DIR` to override the cache root.
 Minecraft Wiki is human-only background for this project. Automated workflows should use bundled
 data, allowed structured datasets, official sources, and source reports as defined by the
 [Source Strategy](SOURCE_STRATEGY.md).
+
+## Migration evidence
+
+See [Conservative legacy custom-model-data item-model conversion](LEGACY_ITEM_MODEL_MIGRATION.md) for the input contract, CLI/MCP/API entrypoints and evidence limits.
