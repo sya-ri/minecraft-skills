@@ -9883,3 +9883,5 @@ export async function getModrinthResource(
   }
   return response.json();
 }
+
+export { type MigrationBlockState, normalizeMigrationBlockStates } from "./migrationBlockStates.js";

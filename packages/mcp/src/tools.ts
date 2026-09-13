@@ -125,6 +125,7 @@ import {
   minecraftPerformanceMetricNames,
   mixinConfigValidationLimits,
   modrinthCompatibilityLimits,
+  normalizeMigrationBlockStates,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   paperMemberDetailsLimits,
@@ -422,6 +423,41 @@ const jarInventorySchema = {
 };
 
 export const tools: ToolDefinition[] = [
+  {
+    name: "normalize_migration_block_states",
+    description:
+      "Fill omitted block-state properties from a caller-supplied generated blocks report. Requires version/source provenance, blocks (the parsed reports/blocks.json object), and states in NBT palette JSON form. Rejects unknown blocks, values, combinations or ambiguous defaults. Never renames IDs, reads or edits worlds, authenticates the report, or declares migration/render equality.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        version: { type: "string", minLength: 1, maxLength: 128 },
+        source: { type: "string", minLength: 1, maxLength: 2048 },
+        blocks: {
+          type: "object",
+          minProperties: 1,
+          maxProperties: 4096,
+          additionalProperties: { type: "object" },
+        },
+        states: {
+          type: "array",
+          minItems: 1,
+          maxItems: 100000,
+          items: {
+            type: "object",
+            properties: {
+              Name: { type: "string" },
+              Properties: { type: "object", additionalProperties: { type: "string" } },
+            },
+            required: ["Name"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["version", "source", "blocks", "states"],
+      additionalProperties: false,
+    },
+  },
+
   {
     name: "lookup_java_player_profile",
     description:
@@ -4933,6 +4969,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.evaluatedAt === "string" ? { evaluatedAt: args.evaluatedAt } : {}),
         }),
       );
+    }
+    if (name === "normalize_migration_block_states") {
+      return text(normalizeMigrationBlockStates(args));
     }
     if (name === "get_pack_migration_plan") {
       if (args.domain !== "datapack" && args.domain !== "resourcepack") {

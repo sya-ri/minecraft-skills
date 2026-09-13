@@ -122,6 +122,7 @@ import {
   listVersions,
   lookupJavaPlayerProfileByName,
   type MinecraftLogAnalysisLimits,
+  normalizeMigrationBlockStates,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type PlayerSkinSourceRectangleInput,
@@ -1578,6 +1579,7 @@ Grouped commands:
   minecraft-skills minecraft compare-registry-entries <from> <to> [--registry id] [--exact id] [--contains text] [--prefix id] [--limit 50]
   minecraft-skills minecraft validate-access-list <file> [--kind whitelist|ops|banned-players|banned-ips] [--evaluated-at UTC-timestamp]
   minecraft-skills minecraft analyze-performance <file>
+  minecraft-skills normalize-migration-block-states <input.json>
   minecraft-skills datapack schema [version] [--edition java]
   minecraft-skills datapack search-schema [version] [--kind kind] [--path field.path] [--contains text] [--limit 50]
   minecraft-skills datapack compare-schema <from> <to> [--kind kind] [--contains text] [--limit 50]
@@ -2871,6 +2873,16 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return result.valid && result.inspectionComplete ? 0 : 1;
     }
 
+    if (command === "normalize-migration-block-states") {
+      const path = readSingleOptionlessArgument(args, command);
+      const input = JSON.parse(
+        readBoundedArchiveFile(path, 64 * 1024 * 1024, { command, extension: ".json" }).toString(
+          "utf8",
+        ),
+      );
+      printJson(output, normalizeMigrationBlockStates(input));
+      return 0;
+    }
     if (command === "migration-plan") {
       const [from, to, ...paths] = positionalArgs(args);
       if (!from || !to) {

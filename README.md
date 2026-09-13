@@ -1,5 +1,43 @@
 # minecraft-skills
 
+### Compare omitted block-state defaults during a migration
+
+`minecraft-skills normalize-migration-block-states <input.json>` fills omitted
+properties using a caller-supplied, generated `reports/blocks.json`. The same
+operation is available as the `normalize_migration_block_states` MCP tool and
+`normalizeMigrationBlockStates` catalog export. The input envelope is:
+
+```json
+{
+  "version": "the-report-version",
+  "source": "description of the verified report source",
+  "blocks": {
+    "example:block": {
+      "properties": { "powered": ["false", "true"] },
+      "states": [
+        { "default": true, "properties": { "powered": "false" } },
+        { "properties": { "powered": "true" } }
+      ]
+    }
+  },
+  "states": [{ "Name": "example:block" }]
+}
+```
+
+Use the actual parsed report as `blocks`; the example is only a small fixture.
+An omitted `powered` property becomes `false` here, while an explicitly supplied
+`true` remains `true`. Unknown blocks, properties, values, combinations, missing
+defaults and ambiguous defaults fail instead of being silently normalized.
+Source labels are caller evidence, not authenticated provenance. The tool does
+not read or edit a world, infer version-specific renames, compare screenshots, or
+declare two worlds equivalent. Compare the returned states separately, retaining
+the raw differences and an explicit account of the covered coordinates.
+
+Limits are 4,096 block definitions, 200,000 reported state combinations, 100,000
+input states, 64 properties per state and 16 MiB of inspected identifier/value
+characters. Empty input coverage does not pass. The CLI additionally limits its
+JSON input file to 64 MiB.
+
 [![npm](https://img.shields.io/npm/v/minecraft-skills.svg)](https://www.npmjs.com/package/minecraft-skills)
 [![npm data](https://img.shields.io/npm/v/%40minecraft-skills%2Fdata.svg?label=%40minecraft-skills%2Fdata)](https://www.npmjs.com/package/@minecraft-skills/data)
 [![npm catalog](https://img.shields.io/npm/v/%40minecraft-skills%2Fcatalog.svg?label=%40minecraft-skills%2Fcatalog)](https://www.npmjs.com/package/@minecraft-skills/catalog)
