@@ -173,6 +173,7 @@ import {
   validateResourcepackTranslations,
   validateServerAccessList,
   validateServerProperties,
+  validateTextureMetadata,
   validateVelocityPluginJar,
   velocityPluginJarValidationLimits,
 } from "@minecraft-skills/catalog";
@@ -2871,6 +2872,18 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return result.valid && result.inspectionComplete ? 0 : 1;
     }
 
+    if (command === "validate-texture-metadata") {
+      const [file] = positionalArgs(args);
+      if (!file) throw new Error("A JSON file containing metadata, width and height is required");
+      const input = JSON.parse(
+        readBoundedArchiveFile(file, 1024 * 1024, { command, extension: ".json" }).toString("utf8"),
+      );
+      if (!input || typeof input !== "object" || Array.isArray(input))
+        throw new Error("Expected an input object");
+      const result = validateTextureMetadata(input.metadata, input.width, input.height);
+      printJson(output, result);
+      return result.valid && result.validationComplete ? 0 : 1;
+    }
     if (command === "migration-plan") {
       const [from, to, ...paths] = positionalArgs(args);
       if (!from || !to) {
