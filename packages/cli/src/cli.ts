@@ -15,6 +15,7 @@ import {
   compareCommands,
   compareDatapackSchema,
   compareJarInventories,
+  compareMigrationCaptures,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -1608,6 +1609,7 @@ Grouped commands:
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack validate-translations <version> <file...> --pack-root dir [--reference-locale en_us] [--required-locale locale]... [--limit 100]
   minecraft-skills resourcepack sound inspect <file.wav>
+  minecraft-skills compare-migration-captures <before.json> <after.json>
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills resourcepack assets status [version]
@@ -2871,6 +2873,19 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return result.valid && result.inspectionComplete ? 0 : 1;
     }
 
+    if (command === "compare-migration-captures") {
+      const [before, after] = positionalArgs(args);
+      if (!before || !after) throw new Error("Before and after JSON paths are required");
+      const read = (path: string) =>
+        JSON.parse(
+          readBoundedArchiveFile(path, 24 * 1024 * 1024, { command, extension: ".json" }).toString(
+            "utf8",
+          ),
+        );
+      const result = compareMigrationCaptures(read(before), read(after));
+      printJson(output, result);
+      return result.status === "equal" ? 0 : 1;
+    }
     if (command === "migration-plan") {
       const [from, to, ...paths] = positionalArgs(args);
       if (!from || !to) {
