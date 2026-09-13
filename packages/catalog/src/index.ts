@@ -9883,3 +9883,5 @@ export async function getModrinthResource(
   }
   return response.json();
 }
+
+export { compareMigrationSnapshots, type MigrationSnapshot } from "./migrationSnapshots.js";

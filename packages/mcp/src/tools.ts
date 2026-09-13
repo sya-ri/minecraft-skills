@@ -12,6 +12,7 @@ import {
   compareCommands,
   compareDatapackSchema,
   compareJarInventories,
+  compareMigrationSnapshots,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -421,7 +422,40 @@ const jarInventorySchema = {
   required: ["schemaVersion", "scanComplete", "records"],
 };
 
+const migrationSnapshotSchema = {
+  type: "object",
+  properties: {
+    version: { type: "string", minLength: 1 },
+    coverage: { type: "string", minLength: 1 },
+    complete: { type: "boolean" },
+    records: {
+      type: "array",
+      maxItems: 100000,
+      items: {
+        type: "object",
+        properties: { key: { type: "string", minLength: 1, maxLength: 512 }, value: {} },
+        required: ["key", "value"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["version", "coverage", "complete", "records"],
+  additionalProperties: false,
+} as const;
+
 export const tools: ToolDefinition[] = [
+  {
+    name: "compare_migration_snapshots",
+    description:
+      "Compare bounded caller-normalized keyed world, entity or item records offline. Each snapshot requires version, coverage (identical scope/normalization identifier), complete and records [{key,value}]. Reports added/removed/changed keys, never values. Empty, incomplete or mismatched coverage never passes. Does not acquire worlds or infer NBT conversions.",
+    inputSchema: {
+      type: "object",
+      properties: { before: migrationSnapshotSchema, after: migrationSnapshotSchema },
+      required: ["before", "after"],
+      additionalProperties: false,
+    },
+  },
+
   {
     name: "lookup_java_player_profile",
     description:
@@ -4933,6 +4967,9 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
           ...(typeof args.evaluatedAt === "string" ? { evaluatedAt: args.evaluatedAt } : {}),
         }),
       );
+    }
+    if (name === "compare_migration_snapshots") {
+      return text(compareMigrationSnapshots(args.before, args.after));
     }
     if (name === "get_pack_migration_plan") {
       if (args.domain !== "datapack" && args.domain !== "resourcepack") {
