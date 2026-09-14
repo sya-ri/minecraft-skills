@@ -676,7 +676,13 @@
       "id": "paper-javadocs-1.21.5",
       "kind": "official-javadocs",
       "url": "https://jd.papermc.io/paper/1.21.5/",
-      "retrievedAt": "2026-08-31T09:47:57Z"
+      "retrievedAt": "2026-09-14T08:58:19Z"
+    },
+    {
+      "id": "paper-javadocs-index-1.21.5",
+      "kind": "official-javadocs-index",
+      "url": "https://jd.papermc.io/paper/1.21.5/package-search-index.js",
+      "retrievedAt": "2026-09-14T08:58:19Z"
     }
   ]
 }
