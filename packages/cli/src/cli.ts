@@ -2797,8 +2797,8 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
           "datapack resolve-tag requires <version> <registry> <tag> and 1-32 --pack-root directories in low-to-high priority order",
         );
       }
-      if (version !== "26.2" && version !== "1.21.11")
-        throw new Error("datapack resolve-tag requires exact version 26.2 or 1.21.11");
+      if (version !== "26.3" && version !== "26.2" && version !== "1.21.11")
+        throw new Error("datapack resolve-tag requires exact version 26.3, 26.2 or 1.21.11");
       if (new Set(roots.map((root) => resolve(root))).size !== roots.length)
         throw new Error("datapack resolve-tag pack roots must not repeat");
       let remainingFiles = defaultDatapackTagResolutionLimits.maxFiles;

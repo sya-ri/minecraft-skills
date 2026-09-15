@@ -2390,18 +2390,18 @@ describe("minecraft-skills CLI", () => {
   });
 
   it("prints latest Java version", async () => {
-    expect((await capture(["minecraft", "latest"])).stdout).toEqual(["26.2"]);
+    expect((await capture(["minecraft", "latest"])).stdout).toEqual(["26.3"]);
   });
 
   it("prints effective version coverage", async () => {
     const result = await capture(["minecraft", "list"]);
-    expect(result.stdout[0]).toBe("26.2\trelease\t2026-06-16T12:03:33+00:00\tversion-json-and-jar");
+    expect(result.stdout[0]).toBe("26.3\trelease\t2026-09-15T11:23:02+00:00\tversion-json-and-jar");
   });
 
   it("prints pack formats by version", async () => {
     const result = await capture(["minecraft", "pack-formats"]);
-    expect(result.stdout[0]).toContain("26.2\t2026-06-16T12:03:33+00:00\tdata=107");
-    expect(result.stdout[0]).toContain("resource=88");
+    expect(result.stdout[0]).toContain("26.3\t2026-09-15T11:23:02+00:00\tdata=121");
+    expect(result.stdout[0]).toContain("resource=97");
     expect(result.stdout[0]).toContain("paper=api-reference-linked");
   });
 
@@ -3490,7 +3490,7 @@ describe("minecraft-skills CLI", () => {
   it("prints vanilla inventory", async () => {
     const result = await capture(["minecraft", "vanilla-inventory"]);
     expect(result.code).toBe(0);
-    expect(result.stdout.join("\n")).toContain('"version": "26.2"');
+    expect(result.stdout.join("\n")).toContain('"version": "26.3"');
     expect(result.stdout.join("\n")).toContain('"assets/minecraft/models"');
     expect(result.stdout.join("\n")).toContain('"data/minecraft/tags"');
   });

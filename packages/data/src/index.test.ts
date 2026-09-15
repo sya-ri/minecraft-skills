@@ -48,7 +48,8 @@ describe("@minecraft-skills/data", () => {
 
   it("loads bundled catalog JSON", () => {
     const catalog = readDataJson<{ latest: { java: string } }>("catalog.json");
-    expect(catalog.latest.java).toBe("26.2");
+    const versions = readDataJson<{ latest: { release: string } }>("java/versions.json");
+    expect(catalog.latest.java).toBe(versions.latest.release);
   });
 
   it("loads bundled authoring checklist JSON", () => {

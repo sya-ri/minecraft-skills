@@ -334,7 +334,7 @@ describe("ordered datapack tag resolution", () => {
   });
 
   it("supports only verified exact versions and uses official registry evidence in the public API", () => {
-    for (const version of ["26.2", "1.21.11"]) {
+    for (const version of ["26.3", "26.2", "1.21.11"]) {
       const result = resolveDatapackTag({
         version,
         registry: "minecraft:item",
@@ -345,7 +345,7 @@ describe("ordered datapack tag resolution", () => {
       expect(result.resolutionComplete).toBe(true);
       expect(result.memberCount).toBe(2);
     }
-    for (const version of ["latest", "1.21", "26.3", "26.2-snapshot-1"]) {
+    for (const version of ["latest", "1.21", "26.4", "26.2-snapshot-1"]) {
       expect(() =>
         resolveDatapackTag({ version, registry: "item", tag: "test:root", packs: [] }),
       ).toThrow("exact version");

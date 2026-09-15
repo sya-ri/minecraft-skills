@@ -6,7 +6,7 @@ describe("get_entity_metadata MCP tool", () => {
     const tool = tools.find((candidate) => candidate.name === "get_entity_metadata");
     expect(tool?.inputSchema.additionalProperties).toBe(false);
     expect(tool?.inputSchema.required).toEqual(["version", "entityId"]);
-    for (const version of ["26.2", "1.21.11"]) {
+    for (const version of ["26.3", "26.2", "1.21.11"]) {
       const result = await callMinecraftSkillsTool("get_entity_metadata", {
         version,
         entityId: "minecraft:armor_stand",

@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "edition": "java",
+  "version": "26.3",
+  "type": "release",
+  "releaseTime": "2026-09-15T11:23:02+00:00",
+  "coverage": "version-json-and-jar",
+  "protocolVersion": 777,
+  "worldVersion": 5023,
+  "stable": true,
+  "javaVersion": {
+    "component": "java-runtime-epsilon",
+    "majorVersion": 25
+  },
+  "assetIndex": {
+    "id": "34",
+    "sha1": "d8492bc61d32a4874c77daa03c0cba9201e9b83b",
+    "size": 597035,
+    "totalSize": 483700241,
+    "url": "https://piston-meta.mojang.com/v1/packages/d8492bc61d32a4874c77daa03c0cba9201e9b83b/34.json"
+  },
+  "downloads": {
+    "client": {
+      "sha1": "e877b6a07acd633fb3bb475002175cec036e7b87",
+      "size": 41483720,
+      "url": "https://piston-data.mojang.com/v1/objects/e877b6a07acd633fb3bb475002175cec036e7b87/client.jar"
+    },
+    "server": {
+      "sha1": "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c",
+      "size": 62294556,
+      "url": "https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar"
+    }
+  },
+  "packFormats": {
+    "data": 121,
+    "dataMinor": 0,
+    "resource": 97,
+    "resourceMinor": 1,
+    "status": "extracted"
+  },
+  "domains": {
+    "datapack": {
+      "status": "reports-extracted",
+      "facts": [
+        "data_pack_format=121",
+        "vanilla_data_inventory=26.3",
+        "server_reports=26.3",
+        "datapack_schema_surface=26.3"
+      ],
+      "unknowns": []
+    },
+    "resourcepack": {
+      "status": "models-extracted",
+      "facts": [
+        "resource_pack_format=97",
+        "vanilla_asset_inventory=26.3",
+        "resourcepack_models=26.3"
+      ],
+      "unknowns": []
+    },
+    "paper-plugin": {
+      "status": "api-reference-linked",
+      "facts": [
+        "paper_supported=true",
+        "paper_minecraft_version=26.3",
+        "paper_latest_build=5",
+        "paper_build_count=3",
+        "paper_api_dependency=io.papermc.paper:paper-api:26.3-R0.1-SNAPSHOT",
+        "paper_javadocs=https://jd.papermc.io/paper/26.3/",
+        "paper_api_package_index=26.3",
+        "paper_api_surface=26.3",
+        "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
+        "paper_scheduler_docs=https://docs.papermc.io/paper/dev/scheduler/",
+        "paper_global_latest_build=5"
+      ],
+      "unknowns": []
+    }
+  },
+  "sources": [
+    {
+      "id": "mojang-version-json",
+      "kind": "official",
+      "url": "https://piston-meta.mojang.com/v1/packages/96c00d95a31328714d3811cfade2804bb050e455/26.3.json",
+      "retrievedAt": "2026-09-15T18:49:47.961Z"
+    },
+    {
+      "id": "mojang-client-jar-version-json",
+      "kind": "official-extracted",
+      "url": "https://piston-data.mojang.com/v1/objects/e877b6a07acd633fb3bb475002175cec036e7b87/client.jar",
+      "retrievedAt": "2026-09-15T18:49:47.961Z"
+    }
+  ]
+}

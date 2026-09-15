@@ -54,16 +54,16 @@ describe("cross-search availability", () => {
   });
 
   it("preserves Paper guidance without an API cache and resolves aliases exactly", async () => {
-    state.missing.add(paperPath);
+    state.missing.add("java/paper-api-surfaces/26.3.json");
     const { searchAll } = await import("./index.js");
     const result = searchAll({ query: "paper event", version: "latest", domain: "paper-plugin" });
-    expect(result.version).toBe("26.2");
+    expect(result.version).toBe("26.3");
     expect(result.results.some((entry) => entry.surface === "catalog")).toBe(true);
     expect(result.unavailableSurfaces).toEqual([
       {
         surface: "paper-api",
         reason: "not-available",
-        fetch: { kind: "paper-api-surface", version: "26.2" },
+        fetch: { kind: "paper-api-surface", version: "26.3" },
       },
     ]);
     expect(state.fetch).not.toHaveBeenCalled();

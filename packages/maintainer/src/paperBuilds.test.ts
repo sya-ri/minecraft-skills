@@ -38,16 +38,13 @@ describe("ingestPaperBuilds", () => {
       "fetch",
       vi.fn(async (url: string) => {
         const version = url.split("/").at(-2);
-        const buildsByVersion: Record<string, Array<{ id: number; channel: string }>> = {
+        const buildsByVersion: Record<string, Array<{ id: number; channel?: string }>> = {
           "26.1": [],
-          "26.1.1": [
-            { id: 28, channel: "ALPHA" },
-            { id: 29, channel: "ALPHA" },
-          ],
+          "26.1.1": [{ id: 28, channel: "ALPHA" }, { id: 29 }],
           "26.1.2": [{ id: 72, channel: "STABLE" }],
           "26.2": [
-            { id: 1, channel: "ALPHA" },
             { id: 30, channel: "ALPHA" },
+            { id: 1, channel: "STABLE" },
           ],
         };
         return {
@@ -76,6 +73,7 @@ describe("ingestPaperBuilds", () => {
     expect(paper.latest).toEqual({
       minecraftVersion: "26.2",
       build: 30,
+      channel: "ALPHA",
     });
     expect(paper.support.minecraftLatestGap).toEqual({
       javaLatest: "26.2",
@@ -88,16 +86,19 @@ describe("ingestPaperBuilds", () => {
         minecraftVersion: "26.1.1",
         latestBuild: 29,
         buildCount: 2,
+        latestChannel: null,
       },
       {
         minecraftVersion: "26.1.2",
         latestBuild: 72,
         buildCount: 1,
+        latestChannel: "STABLE",
       },
       {
         minecraftVersion: "26.2",
         latestBuild: 30,
         buildCount: 2,
+        latestChannel: "ALPHA",
       },
     ]);
     expect(paper.sources.map((source) => source.id)).toContain(

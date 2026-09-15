@@ -15,6 +15,7 @@ import java.util.zip.ZipFile;
  */
 public final class ExtractEntityMetadata {
     private static final Map<String, String> SERVERS = Map.of(
+        "26.3", "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c",
         "26.2", "823e2250d24b3ddac457a60c92a6a941943fcd6a",
         "1.21.11", "64bb6d763bed0a9f1d632ec347938594144943ed");
     private static final String MAPPINGS_SHA1 = "5621e9253f05fd57872bbe7f8ddf5f9a7d525955";
@@ -109,7 +110,7 @@ public final class ExtractEntityMetadata {
             Object value = field.get(null);
             if (value == null || serializers.put(value, field) != null) throw new IllegalStateException("Null or aliased serializer declaration");
         }
-        Class<?> constants = version.equals("26.2") ? cls("net.minecraft.world.entity.EntityTypes") : entityType;
+        Class<?> constants = version.equals("26.2") || version.equals("26.3") ? cls("net.minecraft.world.entity.EntityTypes") : entityType;
         Map<String, Object> entities = new TreeMap<>();
         List<Map<String, Object>> gaps = new ArrayList<>();
         Set<String> discovered = new TreeSet<>();
@@ -208,7 +209,7 @@ public final class ExtractEntityMetadata {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 4 || !SERVERS.containsKey(args[0])) throw new IllegalArgumentException("Expected <26.2|1.21.11> <server.jar> <mappings|-> <output.json>");
+        if (args.length != 4 || !SERVERS.containsKey(args[0])) throw new IllegalArgumentException("Expected <26.3|26.2|1.21.11> <server.jar> <mappings|-> <output.json>");
         String version = args[0], expectedHash = SERVERS.get(version);
         Path server = Path.of(args[1]), mappings = args[2].equals("-") ? null : Path.of(args[2]);
         byte[] serverBytes = boundedFile(server, MAX_JAR_BYTES);
@@ -216,7 +217,7 @@ public final class ExtractEntityMetadata {
         if (!digest(serverBytes, "SHA-1").equals(expectedHash)) throw new IllegalArgumentException("Official server SHA-1 mismatch");
         if (version.equals("1.21.11") && (mappingsBytes == null || !digest(mappingsBytes, "SHA-1").equals(MAPPINGS_SHA1)))
             throw new IllegalArgumentException("Official mappings SHA-1 mismatch");
-        if (version.equals("26.2") && mappings != null) throw new IllegalArgumentException("26.2 uses official unobfuscated names; pass - for mappings");
+        if ((version.equals("26.2") || version.equals("26.3")) && mappings != null) throw new IllegalArgumentException("26.2 and 26.3 use official unobfuscated names; pass - for mappings");
         Path temporary = Files.createTempDirectory("minecraft-entity-metadata-");
         java.net.URLConnection.setDefaultUseCaches("jar", false);
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();

@@ -15,7 +15,7 @@ export function ingestEntityMetadata(options: {
 }): string {
   const artifact = entityMetadataArtifacts[options.version as keyof typeof entityMetadataArtifacts];
   if (!artifact)
-    throw new Error("Entity metadata ingestion supports exact versions 26.2 and 1.21.11");
+    throw new Error("Entity metadata ingestion supports exact versions 26.3, 26.2 and 1.21.11");
   if (statSync(options.input).size > 16 * 1024 * 1024)
     throw new Error("Entity metadata report exceeds the 16 MiB input limit");
   const bytes = readFileSync(options.input);

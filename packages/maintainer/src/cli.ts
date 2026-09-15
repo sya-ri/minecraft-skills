@@ -1149,6 +1149,10 @@ function validationSampleContent(
     };
   }
   if (path.endsWith(".json")) {
+    // Official 26.3 block-transformer files use an array at the JSON root.
+    if (domain === "datapack" && /(?:^|\/)data\/[^/]+\/block_transformer\//.test(path)) {
+      return [];
+    }
     return {};
   }
   return "";
@@ -1512,6 +1516,12 @@ function ingestJavaManifest(args: string[]): void {
   const root = findRepositoryRoot();
   const output = join(root, "packages/data/data/java/versions.json");
   writeFileSync(output, `${JSON.stringify(versionIndex, null, 2)}\n`);
+  const catalog = getCatalog();
+  catalog.latest.java = versionIndex.latest.release;
+  writeFileSync(
+    join(root, "packages/data/data/catalog.json"),
+    `${JSON.stringify(catalog, null, 2)}\n`,
+  );
   console.log(`wrote ${versionIndex.versions.length} Java 1.13+ releases to ${output}`);
 }
 

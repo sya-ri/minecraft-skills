@@ -20,6 +20,21 @@ const request = {
   ],
 };
 describe("resolve_datapack_tag MCP", () => {
+  it("accepts verified 26.3 tag resolution through its public schema", async () => {
+    const tool = tools.find((candidate) => candidate.name === "resolve_datapack_tag");
+    expect(tool?.inputSchema.properties.version).toMatchObject({
+      enum: expect.arrayContaining(["26.3"]),
+    });
+    const result = await callMinecraftSkillsTool("resolve_datapack_tag", {
+      ...request,
+      version: "26.3",
+    });
+    expect(result.isError).toBeUndefined();
+    expect(JSON.parse(result.content[0]?.text ?? "null")).toMatchObject({
+      resolutionComplete: true,
+      memberCount: 1,
+    });
+  });
   it("exposes a closed bounded exact-version schema and ordered source evidence", async () => {
     const tool = tools.find((candidate) => candidate.name === "resolve_datapack_tag");
     expect(tool?.inputSchema.additionalProperties).toBe(false);

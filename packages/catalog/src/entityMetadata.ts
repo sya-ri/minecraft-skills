@@ -9,6 +9,7 @@ export const entityMetadataLimits = Object.freeze({
   maxTotalFields: 65536,
 });
 export const entityMetadataArtifacts = Object.freeze({
+  "26.3": { serverSha1: "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c", mappingsSha1: null },
   "26.2": { serverSha1: "823e2250d24b3ddac457a60c92a6a941943fcd6a", mappingsSha1: null },
   "1.21.11": {
     serverSha1: "64bb6d763bed0a9f1d632ec347938594144943ed",
@@ -152,7 +153,7 @@ export function buildEntityMetadataSurface(
   source: EntityMetadataSource,
 ): EntityMetadataSurface {
   const artifact = entityMetadataArtifacts[version as keyof typeof entityMetadataArtifacts];
-  if (!artifact) throw new Error("Entity metadata supports exact versions 26.2 and 1.21.11");
+  if (!artifact) throw new Error("Entity metadata supports exact versions 26.3, 26.2 and 1.21.11");
   if (
     source.kind !== "official-reflection" ||
     source.serverSha1 !== artifact.serverSha1 ||

@@ -98,7 +98,11 @@ describe("explicit Paper member data recovery", () => {
     "latest-release",
   ])("resolves %s before choosing the exact manifest entry", async (version) => {
     const { searchPaperMembersWithData } = await import("./index.js");
-    const fetchMock = vi.fn<typeof fetch>(async () => new Response(body));
+    const latest = JSON.parse(readDataText("java/paper.json")).latest.minecraftVersion as string;
+    const latestPath = `java/paper-api-surfaces/${latest}.json`;
+    const latestEntry = manifest.downloadable.find((candidate) => candidate.path === latestPath);
+    const latestBody = readDataText(latestPath).replaceAll("\r\n", "\n");
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(latestBody));
     const result = await searchPaperMembersWithData({
       version,
       type: "JavaPlugin",
@@ -106,8 +110,8 @@ describe("explicit Paper member data recovery", () => {
       fetchMissing: true,
       fetch: fetchMock,
     });
-    expect(result.version).toBe("26.2");
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(entry?.url, {
+    expect(result.version).toBe(latest);
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(latestEntry?.url, {
       signal: expect.any(AbortSignal),
     });
   });

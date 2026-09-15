@@ -5,7 +5,7 @@ import { extractJavadocMemberDetails, javadocMemberDetailsLimits } from "./javad
 const fabricApiRepositoryUrl = "https://maven.fabricmc.net/";
 const fabricApiArtifactPath = "net/fabricmc/fabric-api/fabric-api";
 const fabricApiMetadataUrl = `${fabricApiRepositoryUrl}${fabricApiArtifactPath}/maven-metadata.xml`;
-const fabricApiUserAgent = "sya-ri/minecraft-skills/0.1.8 (github.com/sya-ri/minecraft-skills)";
+const fabricApiUserAgent = "sya-ri/minecraft-skills/0.1.9 (github.com/sya-ri/minecraft-skills)";
 
 export const fabricApiPackagePrefixes = ["net.fabricmc.fabric.api"] as const;
 

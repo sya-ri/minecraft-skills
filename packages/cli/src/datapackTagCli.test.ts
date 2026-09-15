@@ -26,6 +26,24 @@ async function capture(argv: string[]) {
   return { code, stdout, stderr };
 }
 describe("datapack resolve-tag CLI", () => {
+  it("accepts verified 26.3 tags with explicit local inputs", async () => {
+    const root = pack(["stone"]);
+    const result = await capture([
+      "datapack",
+      "resolve-tag",
+      "26.3",
+      "item",
+      "test:root",
+      "--pack-root",
+      root,
+      "--no-vanilla",
+    ]);
+    expect(result.code).toBe(0);
+    expect(JSON.parse(result.stdout.join("\n"))).toMatchObject({
+      resolutionComplete: true,
+      memberCount: 1,
+    });
+  });
   afterEach(() => {
     for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
   });

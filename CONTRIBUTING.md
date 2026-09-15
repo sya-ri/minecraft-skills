@@ -75,6 +75,10 @@ The publish job uses npm provenance via GitHub OIDC and publishes:
 - `minecraft-skills`
 - `@minecraft-skills/mcp`
 
+Java manifest ingestion also updates the catalog's latest Java alias from the official release
+index. Paper build ingestion preserves each latest build's official channel in `latestChannel`
+and the global latest build's `channel`; a missing channel remains `null`.
+
 The `Data Refresh` GitHub Actions workflow runs weekly and can also be started manually. It first
 runs `audit-current-sources`; only source drift or a manual force run triggers regeneration. When
 regeneration and repository checks pass, the workflow pushes a `data-refresh/<run-id>` branch and
