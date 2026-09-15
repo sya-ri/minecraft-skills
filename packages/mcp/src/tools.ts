@@ -12,6 +12,8 @@ import {
   compareCommands,
   compareDatapackSchema,
   compareJarInventories,
+  compareMigrationCaptures,
+  compareMigrationSnapshots,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -118,9 +120,11 @@ import {
   listVersionSupport,
   listVersions,
   lookupJavaPlayerProfileByName,
+  type MigrationCapture,
   type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
+  migrateLegacyItemModel,
   minecraftPerformanceAnalysisRules,
   minecraftPerformanceMetricNames,
   mixinConfigValidationLimits,
@@ -422,6 +426,43 @@ const jarInventorySchema = {
   required: ["schemaVersion", "scanComplete", "records"],
 };
 
+const migrationSnapshotSchema = {
+  type: "object",
+  properties: {
+    version: { type: "string", minLength: 1 },
+    coverage: { type: "string", minLength: 1 },
+    complete: { type: "boolean" },
+    records: {
+      type: "array",
+      maxItems: 100000,
+      items: {
+        type: "object",
+        properties: { key: { type: "string", minLength: 1, maxLength: 512 }, value: {} },
+        required: ["key", "value"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["version", "coverage", "complete", "records"],
+  additionalProperties: false,
+} as const;
+
+const migrationCaptureSchema = {
+  type: "object",
+  properties: {
+    version: { type: "string", minLength: 1 },
+    caseId: { type: "string", minLength: 1 },
+    context: {
+      type: "string",
+      enum: ["inventory", "first-person", "third-person", "head", "ground", "fixed", "world"],
+    },
+    conditions: { type: "string", minLength: 1 },
+    pngBase64: { type: "string", maxLength: Math.ceil((8 * 1024 * 1024) / 3) * 4 },
+  },
+  required: ["version", "caseId", "context", "conditions", "pngBase64"],
+  additionalProperties: false,
+} as const;
+
 export const tools: ToolDefinition[] = [
   {
     name: "validate_texture_metadata",
@@ -438,6 +479,40 @@ export const tools: ToolDefinition[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: "compare_migration_snapshots",
+    description:
+      "Compare bounded caller-normalized keyed world, entity or item records offline. Each snapshot requires version, coverage (identical scope/normalization identifier), complete and records [{key,value}]. Reports added/removed/changed keys, never values. Empty, incomplete or mismatched coverage never passes. Does not acquire worlds or infer NBT conversions.",
+    inputSchema: {
+      type: "object",
+      properties: { before: migrationSnapshotSchema, after: migrationSnapshotSchema },
+      required: ["before", "after"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "migrate_legacy_item_model",
+    description:
+      "Generate separate geometry and item-definition JSON for legacy custom_model_data or normalized damage overrides, including damage plus damaged conditions. Preserve last-match order and duplicate thresholds, and bound wide tables. Mixed numeric properties and inexact custom model data are unsupported. Callers must verify version-specific property semantics; does not write files or prove render equivalence.",
+    inputSchema: {
+      type: "object",
+      properties: { modelId: { type: "string" }, model: { type: "object" } },
+      required: ["modelId", "model"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_migration_captures",
+    description:
+      "Compare two bounded static 8-bit RGB/RGBA PNG captures as decoded pixels. Each requires version, caseId, context (inventory/first-person/third-person/head/ground/fixed/world), conditions (identical capture setup identifier), and pngBase64. Mismatched setup never passes. Does not run clients or verify capture provenance; exact equality is not gameplay equivalence.",
+    inputSchema: {
+      type: "object",
+      properties: { before: migrationCaptureSchema, after: migrationCaptureSchema },
+      required: ["before", "after"],
+      additionalProperties: false,
+    },
+  },
+
   {
     name: "lookup_java_player_profile",
     description:
@@ -4953,6 +5028,20 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     if (name === "validate_texture_metadata") {
       return text(
         validateTextureMetadata(args.metadata, args.width as number, args.height as number),
+      );
+    }
+
+    if (name === "compare_migration_snapshots") {
+      return text(compareMigrationSnapshots(args.before, args.after));
+    }
+
+    if (name === "migrate_legacy_item_model") {
+      return text(migrateLegacyItemModel(args.modelId as string, args.model));
+    }
+
+    if (name === "compare_migration_captures") {
+      return text(
+        compareMigrationCaptures(args.before as MigrationCapture, args.after as MigrationCapture),
       );
     }
     if (name === "get_pack_migration_plan") {
