@@ -4,10 +4,21 @@
 conversion without writing files. Catalog: `migrateLegacyItemModel(modelId, model)`.
 MCP: `migrate_legacy_item_model` with `modelId` and a parsed `model` object.
 
-Only strictly increasing, positive, exactly float-representable integer `custom_model_data`
-thresholds are supported. Mixed predicates, duplicate/reordered thresholds, and nonpositive
-thresholds return `unsupported` with no generated output. Zero/negative thresholds are excluded
-because absent component behavior must not be inferred from a legacy numeric predicate.
+The converter supports one numeric property per model:
+
+- `custom_model_data`: positive, exactly float-representable integers, mapped to float index 0.
+- `damage`: finite normalized thresholds in `[0, 1]`, optionally combined with `damaged: 0` or `damaged: 1`.
+
+Duplicate and unordered thresholds preserve the last matching source override. Thresholds use
+float32 semantics. Damage branches are split by `minecraft:damaged` only when their selected
+models differ. Redundant thresholds are omitted without changing model selection. The input
+limit is 4,096 overrides and 2 MiB of JSON.
+
+Mixed numeric properties, unsupported predicates and inexact custom-model-data values return
+`unsupported` with no generated output. Zero/negative custom-model-data thresholds are excluded
+because absent component behavior must not be inferred from a legacy numeric predicate. Damage
+thresholds may be zero. Callers must verify damage normalization, damaged-state semantics and
+maximum durability against the source and target versions before applying the generated output.
 
 For an input such as:
 
@@ -30,6 +41,8 @@ that definition. Gameplay identity should be managed separately by the plugin.
 The CLI accepts a bounded regular local JSON file up to 2 MiB and refuses links/special files.
 Exit 0 means converted or unchanged; exit 1 means unsupported or invalid input. A successful
 conversion does not prove reference validity or visual equivalence. Validate the assembled pack,
-then compare real-client inventory, first-person and third-person observations with recorded
-render conditions before replacing a baseline. Blockbench can inspect retained geometry and
+compare selected models at integer states and adjacent float32 boundaries, and compare resolved
+geometry, textures and inventory/first-person/third-person transforms. Use the target client to
+check model baking, atlas membership, UV bounds and shader loading. When rendered comparisons
+are needed, record the same render conditions on both clients. Blockbench can inspect retained geometry and
 display transforms, but its preview alone is not evidence of the game's item selection behavior.
