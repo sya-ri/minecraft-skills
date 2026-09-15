@@ -9886,3 +9886,4 @@ export async function getModrinthResource(
 
 export { migrateLegacyItemModel } from "./legacyItemModel.js";
 export { compareMigrationCaptures, type MigrationCapture } from "./migrationCaptures.js";
+export { compareMigrationSnapshots, type MigrationSnapshot } from "./migrationSnapshots.js";

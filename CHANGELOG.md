@@ -6,6 +6,7 @@ All notable changes to this project are documented here.
 
 ### Added
 
+- Bounded comparison of caller-normalized migration snapshots through Catalog, CLI and MCP.
 - Conservative legacy custom-model-data item-model conversion through Catalog, CLI and MCP.
 - Exact decoded-PNG comparison with capture-condition matching through Catalog, CLI and MCP.
 
