@@ -184,6 +184,7 @@ import {
   validateResourcepackTranslations,
   validateServerAccessList,
   validateServerProperties,
+  validateTextureMetadata,
   validateVelocityPluginArchiveMetadata,
   velocityPluginJarValidationLimits,
   vorbisIdentificationPageBytes,
@@ -463,6 +464,21 @@ const migrationCaptureSchema = {
 } as const;
 
 export const tools: ToolDefinition[] = [
+  {
+    name: "validate_texture_metadata",
+    description:
+      "Check common texture .png.mcmeta animation frame dimensions, indices and timing, texture blur/clamp, and villager hat shape. Supply metadata JSON and dimensions from a separately validated PNG. Unknown fields and exceeded limits never pass. Not version-specific, not a PNG decoder or rendered animation check.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        metadata: {},
+        width: { type: "integer", minimum: 1 },
+        height: { type: "integer", minimum: 1 },
+      },
+      required: ["metadata", "width", "height"],
+      additionalProperties: false,
+    },
+  },
   {
     name: "compare_migration_snapshots",
     description:
@@ -5009,6 +5025,12 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         }),
       );
     }
+    if (name === "validate_texture_metadata") {
+      return text(
+        validateTextureMetadata(args.metadata, args.width as number, args.height as number),
+      );
+    }
+
     if (name === "compare_migration_snapshots") {
       return text(compareMigrationSnapshots(args.before, args.after));
     }
