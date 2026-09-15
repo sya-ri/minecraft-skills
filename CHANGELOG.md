@@ -7,6 +7,7 @@ All notable changes to this project are documented here.
 ### Added
 
 - Conservative legacy custom-model-data item-model conversion through Catalog, CLI and MCP.
+- Exact decoded-PNG comparison with capture-condition matching through Catalog, CLI and MCP.
 
 - Added exact indexed Fabric API member-detail lookup across Catalog, CLI, and MCP. The selected
   member is bound to the caller's exact Fabric API version and extracted from the same

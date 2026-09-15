@@ -12,6 +12,7 @@ import {
   compareCommands,
   compareDatapackSchema,
   compareJarInventories,
+  compareMigrationCaptures,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -118,6 +119,7 @@ import {
   listVersionSupport,
   listVersions,
   lookupJavaPlayerProfileByName,
+  type MigrationCapture,
   type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
@@ -422,6 +424,22 @@ const jarInventorySchema = {
   required: ["schemaVersion", "scanComplete", "records"],
 };
 
+const migrationCaptureSchema = {
+  type: "object",
+  properties: {
+    version: { type: "string", minLength: 1 },
+    caseId: { type: "string", minLength: 1 },
+    context: {
+      type: "string",
+      enum: ["inventory", "first-person", "third-person", "head", "ground", "fixed", "world"],
+    },
+    conditions: { type: "string", minLength: 1 },
+    pngBase64: { type: "string", maxLength: Math.ceil((8 * 1024 * 1024) / 3) * 4 },
+  },
+  required: ["version", "caseId", "context", "conditions", "pngBase64"],
+  additionalProperties: false,
+} as const;
+
 export const tools: ToolDefinition[] = [
   {
     name: "migrate_legacy_item_model",
@@ -431,6 +449,17 @@ export const tools: ToolDefinition[] = [
       type: "object",
       properties: { modelId: { type: "string" }, model: { type: "object" } },
       required: ["modelId", "model"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "compare_migration_captures",
+    description:
+      "Compare two bounded static 8-bit RGB/RGBA PNG captures as decoded pixels. Each requires version, caseId, context (inventory/first-person/third-person/head/ground/fixed/world), conditions (identical capture setup identifier), and pngBase64. Mismatched setup never passes. Does not run clients or verify capture provenance; exact equality is not gameplay equivalence.",
+    inputSchema: {
+      type: "object",
+      properties: { before: migrationCaptureSchema, after: migrationCaptureSchema },
+      required: ["before", "after"],
       additionalProperties: false,
     },
   },
@@ -4949,6 +4978,12 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
     }
     if (name === "migrate_legacy_item_model") {
       return text(migrateLegacyItemModel(args.modelId as string, args.model));
+    }
+
+    if (name === "compare_migration_captures") {
+      return text(
+        compareMigrationCaptures(args.before as MigrationCapture, args.after as MigrationCapture),
+      );
     }
     if (name === "get_pack_migration_plan") {
       if (args.domain !== "datapack" && args.domain !== "resourcepack") {
