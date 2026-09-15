@@ -15,6 +15,8 @@ import {
   compareCommands,
   compareDatapackSchema,
   compareJarInventories,
+  compareMigrationCaptures,
+  compareMigrationSnapshots,
   comparePaperApi,
   comparePaperApiSurface,
   compareRegistryEntries,
@@ -122,6 +124,7 @@ import {
   listVersions,
   lookupJavaPlayerProfileByName,
   type MinecraftLogAnalysisLimits,
+  migrateLegacyItemModel,
   normalizeMigrationBlockStates,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
@@ -174,6 +177,7 @@ import {
   validateResourcepackTranslations,
   validateServerAccessList,
   validateServerProperties,
+  validateTextureMetadata,
   validateVelocityPluginJar,
   velocityPluginJarValidationLimits,
 } from "@minecraft-skills/catalog";
@@ -1610,6 +1614,9 @@ Grouped commands:
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack validate-translations <version> <file...> --pack-root dir [--reference-locale en_us] [--required-locale locale]... [--limit 100]
   minecraft-skills resourcepack sound inspect <file.wav>
+  minecraft-skills compare-migration-snapshots <before.json> <after.json>
+  minecraft-skills migrate-legacy-item-model <modelId> <model.json>
+  minecraft-skills compare-migration-captures <before.json> <after.json>
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
   minecraft-skills resourcepack assets status [version]
@@ -2882,6 +2889,55 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       );
       printJson(output, normalizeMigrationBlockStates(input));
       return 0;
+    }
+
+    if (command === "validate-texture-metadata") {
+      const [file] = positionalArgs(args);
+      if (!file) throw new Error("A JSON file containing metadata, width and height is required");
+      const input = JSON.parse(
+        readBoundedArchiveFile(file, 1024 * 1024, { command, extension: ".json" }).toString("utf8"),
+      );
+      if (!input || typeof input !== "object" || Array.isArray(input))
+        throw new Error("Expected an input object");
+      const result = validateTextureMetadata(input.metadata, input.width, input.height);
+      printJson(output, result);
+      return result.valid && result.validationComplete ? 0 : 1;
+    }
+
+    if (command === "compare-migration-snapshots") {
+      const [before, after] = positionalArgs(args);
+      if (!before || !after) throw new Error("Before and after JSON paths are required");
+      const read = (path: string) =>
+        JSON.parse(
+          readBoundedArchiveFile(path, 24 * 1024 * 1024, { command, extension: ".json" }).toString(
+            "utf8",
+          ),
+        );
+      const result = compareMigrationSnapshots(read(before), read(after));
+      printJson(output, result);
+      return result.status === "equal" ? 0 : 1;
+    }
+    if (command === "migrate-legacy-item-model") {
+      const [modelId, path] = positionalArgs(args);
+      if (!modelId || !path) throw new Error("Model ID and JSON path are required");
+      const bytes = readBoundedArchiveFile(path, 2 * 1024 * 1024, { command, extension: ".json" });
+      const result = migrateLegacyItemModel(modelId, JSON.parse(bytes.toString("utf8")));
+      printJson(output, result);
+      return result.status === "unsupported" ? 1 : 0;
+    }
+
+    if (command === "compare-migration-captures") {
+      const [before, after] = positionalArgs(args);
+      if (!before || !after) throw new Error("Before and after JSON paths are required");
+      const read = (path: string) =>
+        JSON.parse(
+          readBoundedArchiveFile(path, 24 * 1024 * 1024, { command, extension: ".json" }).toString(
+            "utf8",
+          ),
+        );
+      const result = compareMigrationCaptures(read(before), read(after));
+      printJson(output, result);
+      return result.status === "equal" ? 0 : 1;
     }
     if (command === "migration-plan") {
       const [from, to, ...paths] = positionalArgs(args);
