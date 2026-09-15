@@ -2,8 +2,8 @@
 
 `resolve_datapack_tag`, Catalog `resolveDatapackTag`, and CLI `datapack resolve-tag` inspect one
 tag across an explicitly ordered pack stack. This answers which IDs contribute after another
-pack appends, replaces a definition, or changes a nested tag. The initial supported versions
-are exactly Java **26.2** and **1.21.11**; aliases and other versions are rejected.
+pack appends, replaces a definition, or changes a nested tag. The supported versions
+are exactly Java **26.3**, **26.2** and **1.21.11**; aliases and other versions are rejected.
 
 ```sh
 minecraft-skills datapack resolve-tag 26.2 minecraft:item example:tools \
@@ -101,6 +101,7 @@ The semantics were checked against the official server artifacts for both suppor
 
 | Version | Official server SHA-1 | Inspected classes |
 | --- | --- | --- |
+| 26.3 | [`33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c`](https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar) | `net.minecraft.tags.TagLoader`, `TagEntry` |
 | 26.2 | [`823e2250d24b3ddac457a60c92a6a941943fcd6a`](https://piston-data.mojang.com/v1/objects/823e2250d24b3ddac457a60c92a6a941943fcd6a/server.jar) | `net.minecraft.tags.TagLoader`, `TagEntry` |
 | 1.21.11 | [`64bb6d763bed0a9f1d632ec347938594144943ed`](https://piston-data.mojang.com/v1/objects/64bb6d763bed0a9f1d632ec347938594144943ed/server.jar) | `beg` (`TagLoader`), `bed` (`TagEntry`) |
 

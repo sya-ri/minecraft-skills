@@ -1317,14 +1317,14 @@ export const tools: ToolDefinition[] = [
   {
     name: "get_entity_metadata",
     description:
-      "Get exact-version static entity metadata accessor indexes, inherited declaring classes, value types, serializers and serializer IDs from hash-verified official Java servers (26.2 or 1.21.11). Includes source hashes and registry/extraction coverage. Does not establish default values, bit meanings, runtime initialization or mod metadata. Missing heavy data is unavailable with explicit fetch guidance; never downloads implicitly.",
+      "Get exact-version static entity metadata accessor indexes, inherited declaring classes, value types, serializers and serializer IDs from hash-verified official Java servers (26.3, 26.2 or 1.21.11). Includes source hashes and registry/extraction coverage. Does not establish default values, bit meanings, runtime initialization or mod metadata. Missing heavy data is unavailable with explicit fetch guidance; never downloads implicitly.",
     inputSchema: {
       type: "object",
       properties: {
         version: {
           type: "string",
           maxLength: 128,
-          description: "Exact Minecraft version. Initially supported: 26.2 and 1.21.11.",
+          description: "Exact Minecraft version. Supported: 26.3, 26.2 and 1.21.11.",
         },
         entityId: {
           type: "string",
@@ -1618,12 +1618,12 @@ export const tools: ToolDefinition[] = [
   {
     name: "resolve_datapack_tag",
     description:
-      "Resolve one Java 26.2 or 1.21.11 tag across explicitly ordered datapacks (lowest priority first), including append/replace, nested tags, optional entries, ordered membership and source evidence. Cached official vanilla tags are included by default; no download occurs. Required missing references never return a partial loaded tag. Missing metadata/content, overlays, filters, cycles and unvalidated custom registry/function resources remain incomplete.",
+      "Resolve one Java 26.3, 26.2 or 1.21.11 tag across explicitly ordered datapacks (lowest priority first), including append/replace, nested tags, optional entries, ordered membership and source evidence. Cached official vanilla tags are included by default; no download occurs. Required missing references never return a partial loaded tag. Missing metadata/content, overlays, filters, cycles and unvalidated custom registry/function resources remain incomplete.",
     inputSchema: {
       type: "object",
       properties: {
         edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", enum: ["26.2", "1.21.11"] },
+        version: { type: "string", enum: ["26.3", "26.2", "1.21.11"] },
         registry: {
           type: "string",
           maxLength: 512,

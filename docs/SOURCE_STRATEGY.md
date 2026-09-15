@@ -87,7 +87,7 @@ infrastructure name does not look like a third-party source.
 
 ## Official Entity Metadata Declarations
 
-Entity metadata surfaces for exact Java 26.2 and 1.21.11 derive from static reflection over
+Entity metadata surfaces for exact Java 26.3, 26.2 and 1.21.11 derive from static reflection over
 hash-verified official server jars, using verified Mojang server mappings for 1.21.11 names.
 The checked-in maintainer helper loads verified bundled dependencies in an isolated class loader,
 bootstraps official classes, and creates no entity instance or world. Surfaces preserve the
@@ -248,7 +248,7 @@ The surface retains the selected server URL/SHA-1, input-report SHA-256, and gen
 timestamp. Only reported properties, states, and explicit default markers are extracted; the
 newer report's block implementation definitions are not treated as behavioral documentation.
 Reproduce with `ingest-block-states --version <version> --reports-dir <generated/reports>`.
-Initial sources cover 26.2 and 1.21.11. Manifest regeneration preserves unchanged immutable entry
+Sources cover 26.3, 26.2 and 1.21.11. Manifest regeneration preserves unchanged immutable entry
 URLs; new or changed entries use development main URLs unless an explicit release base is supplied.
 
 Future importers should follow this shape:

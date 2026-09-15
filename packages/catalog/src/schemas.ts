@@ -389,6 +389,7 @@ export const PaperPluginData = type({
   latest: {
     minecraftVersion: "string",
     build: "number",
+    "channel?": "string | null",
   },
   support: {
     primarySince: "string",
@@ -405,6 +406,7 @@ export const PaperPluginData = type({
     minecraftVersion: "string",
     latestBuild: "number",
     buildCount: "number",
+    "latestChannel?": "string | null",
   }).array(),
   eventSearch: {
     provider: "string",

@@ -198,11 +198,29 @@ describe("official entity metadata declarations", () => {
     ];
     expect(build(input)).toMatchObject({ coverage: { complete: false }, gaps: input.gaps });
     expect(() => buildEntityMetadataSurface(input, "1.21.11", ids, source)).toThrow("provenance");
-    expect(() => buildEntityMetadataSurface(input, "26.3", ids, source)).toThrow("exact versions");
+    expect(() => buildEntityMetadataSurface(input, "26.3", ids, source)).toThrow("provenance");
+    expect(() => buildEntityMetadataSurface(input, "26.4", ids, source)).toThrow("exact versions");
     expect(() =>
       readEntityMetadata({ version: "../26.2", entityId: "minecraft:zombie" }, () => ids),
     ).toThrow();
     expect(() => lookup("minecraft:../zombie")).toThrow();
+  });
+  it("accepts 26.3 only with its exact official artifact identity", () => {
+    const artifact = entityMetadataArtifacts["26.3"];
+    const input = { ...report(), version: "26.3", serverSha1: artifact.serverSha1 };
+    const provenance = {
+      ...source,
+      serverSha1: artifact.serverSha1,
+      url: `https://piston-data.mojang.com/v1/objects/${artifact.serverSha1}/server.jar`,
+    };
+    expect(buildEntityMetadataSurface(input, "26.3", ids, provenance)).toMatchObject({
+      version: "26.3",
+      source: provenance,
+      coverage: { complete: true },
+    });
+    expect(() => buildEntityMetadataSurface(report(), "26.3", ids, provenance)).toThrow(
+      "artifact mismatch",
+    );
   });
   it("rejects truncated unique classes, contradictory inherited facts and facts overlapping extraction gaps", () => {
     const input = report();

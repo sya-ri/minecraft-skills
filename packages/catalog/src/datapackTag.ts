@@ -1,6 +1,6 @@
 import { type DatapackProjectFile, inspectJsonTree } from "./datapackProject.js";
 
-export const datapackTagResolutionVersions = ["26.2", "1.21.11"] as const;
+export const datapackTagResolutionVersions = ["26.3", "26.2", "1.21.11"] as const;
 export const defaultDatapackTagResolutionLimits = Object.freeze({
   maxPacks: 32,
   maxFiles: 25_000,
@@ -157,7 +157,7 @@ export function prepareDatapackTagResolution(options: DatapackTagResolutionOptio
     throw new Error("Datapack tag resolution supports only Java Edition");
   }
   if (!(datapackTagResolutionVersions as readonly string[]).includes(options.version)) {
-    throw new Error("Datapack tag resolution requires exact version 26.2 or 1.21.11");
+    throw new Error("Datapack tag resolution requires exact version 26.3, 26.2 or 1.21.11");
   }
   const registry = typeof options.registry === "string" ? location(options.registry) : null;
   const tag = typeof options.tag === "string" ? location(options.tag) : null;

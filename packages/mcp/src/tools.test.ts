@@ -843,7 +843,7 @@ describe("MCP tools", () => {
   });
 
   it("calls latest_version", async () => {
-    expect((await callMinecraftSkillsTool("latest_version", {})).content[0]?.text).toBe("26.2");
+    expect((await callMinecraftSkillsTool("latest_version", {})).content[0]?.text).toBe("26.3");
   });
 
   it("calls get_mojang_version_metadata", async () => {
@@ -2242,7 +2242,7 @@ describe("MCP tools", () => {
 
   it("calls get_vanilla_inventory", async () => {
     const result = await callMinecraftSkillsTool("get_vanilla_inventory", {});
-    expect(result.content[0]?.text).toContain('"version": "26.2"');
+    expect(result.content[0]?.text).toContain('"version": "26.3"');
     expect(result.content[0]?.text).toContain('"assets/minecraft/models"');
   });
 

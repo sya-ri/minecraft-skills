@@ -2337,10 +2337,10 @@ describe("catalog", () => {
   it("exposes support matrix aliases for data selection", () => {
     const matrix = getSupportMatrix();
     expect(matrix.aliases).toMatchObject({
-      latestJava: "26.2",
-      latestPaper: "26.2",
-      latestWithDatapackSchemaSurface: "26.2",
-      latestWithPaperApiSurface: "26.2",
+      latestJava: "26.3",
+      latestPaper: "26.3",
+      latestWithDatapackSchemaSurface: "26.3",
+      latestWithPaperApiSurface: "26.3",
     });
     expect(matrix.downloadable).toContainEqual(
       expect.objectContaining({
@@ -2351,7 +2351,7 @@ describe("catalog", () => {
   });
 
   it("resolves the latest Java version", () => {
-    expect(resolveVersion("java", "latest")).toBe("26.2");
+    expect(resolveVersion("java", "latest")).toBe("26.3");
   });
 
   it("does not pretend a release is a bundled snapshot", () => {
@@ -2361,10 +2361,10 @@ describe("catalog", () => {
   });
 
   it("loads extracted version details for the latest release", () => {
-    const version = getVersionDetail("java", "26.2");
+    const version = getVersionDetail("java", "26.3");
     expect(version.coverage).toBe("version-json-and-jar");
-    expect(version.packFormats.data).toBe(107);
-    expect(version.packFormats.resource).toBe(88);
+    expect(version.packFormats.data).toBe(121);
+    expect(version.packFormats.resource).toBe(97);
     expect(version.packFormats.status).toBe("extracted");
   });
 
@@ -5086,8 +5086,8 @@ describe("catalog", () => {
   it("builds Paper API references for unsupported versions", () => {
     const reference = getPaperApiReference("26.1");
     expect(reference.supported).toBe(false);
-    expect(reference.minecraftVersion).toBe("26.2");
-    expect(reference.latestSupportedVersion).toBe("26.2");
+    expect(reference.minecraftVersion).toBe("26.3");
+    expect(reference.latestSupportedVersion).toBe("26.3");
     expect(reference.apiDependency).toBeNull();
     expect(reference.javadocsUrl).toBeNull();
   });
@@ -5123,16 +5123,16 @@ describe("catalog", () => {
     const version = getVersionDetail("java", "26.1");
     expect(version.domains["paper-plugin"].status).toBe("not-yet-published");
     expect(version.domains["paper-plugin"].facts).toContain("paper_supported=false");
-    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_supported=26.2");
+    expect(version.domains["paper-plugin"].facts).toContain("paper_latest_supported=26.3");
   });
 
   it("lists pack formats for all bundled releases", () => {
     const formats = listPackFormats();
-    expect(formats).toHaveLength(50);
+    expect(formats).toHaveLength(51);
     expect(formats[0]).toMatchObject({
-      version: "26.2",
-      data: 107,
-      resource: 88,
+      version: "26.3",
+      data: 121,
+      resource: 97,
       paperPluginStatus: "api-reference-linked",
     });
     expect(formats.at(-1)).toMatchObject({
@@ -5178,7 +5178,7 @@ describe("catalog", () => {
 
   it("loads vanilla inventory for latest release", () => {
     const inventory = getVanillaInventory("java", "latest");
-    expect(inventory.version).toBe("26.2");
+    expect(inventory.version).toBe("26.3");
     expect(inventory.resources.entryCount).toBeGreaterThan(10_000);
     expect(inventory.datapack.entryCount).toBeGreaterThan(8_000);
     expect(inventory.resources.topLevel.map((entry) => entry.path)).toContain(
@@ -5224,7 +5224,7 @@ describe("catalog", () => {
 
   it("loads server reports summary for latest release", () => {
     const reports = getJavaReportsSummary("java", "latest");
-    expect(reports.version).toBe("26.2");
+    expect(reports.version).toBe("26.3");
     expect(reports.commands.rootLiterals).toContain("execute");
     expect(reports.commands.executablePathCount).toBeGreaterThan(1_000);
     expect(reports.datapack.registries.map((registry) => registry.id)).toContain(

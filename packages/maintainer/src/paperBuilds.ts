@@ -6,6 +6,7 @@ type PaperPluginData = {
   latest: {
     minecraftVersion: string;
     build: number;
+    channel?: string | null;
   };
   support: {
     minecraftLatestGap: {
@@ -19,6 +20,7 @@ type PaperPluginData = {
     minecraftVersion: string;
     latestBuild: number;
     buildCount: number;
+    latestChannel: string | null;
   }>;
   sources: Array<{
     id: string;
@@ -73,11 +75,11 @@ async function fetchJson(url: string): Promise<unknown> {
   return response.json();
 }
 
-async function fetchDownloadBuilds(version: string): Promise<number[]> {
+async function fetchDownloadBuilds(version: string): Promise<PaperDownloadBuildJson[]> {
   const url = `https://fill.papermc.io/v3/projects/paper/versions/${version}/builds`;
   const json = await fetchJson(url);
   assertPaperDownloadBuilds(json);
-  return json.map((build) => build.id).sort((left, right) => left - right);
+  return json;
 }
 
 export async function ingestPaperBuilds(options: IngestPaperBuildsOptions): Promise<number> {
@@ -88,8 +90,10 @@ export async function ingestPaperBuilds(options: IngestPaperBuildsOptions): Prom
   for (const version of paper.versions) {
     options.log?.(`fetch ${version}: Paper downloads builds`);
     let builds: number[];
+    let downloadBuilds: PaperDownloadBuildJson[] = [];
     try {
-      builds = await fetchDownloadBuilds(version);
+      downloadBuilds = await fetchDownloadBuilds(version);
+      builds = downloadBuilds.map((build) => build.id);
     } catch {
       const url = `https://api.papermc.io/v2/projects/paper/versions/${version}`;
       const json = await fetchJson(url);
@@ -108,6 +112,7 @@ export async function ingestPaperBuilds(options: IngestPaperBuildsOptions): Prom
       minecraftVersion: version,
       latestBuild,
       buildCount: builds.length,
+      latestChannel: downloadBuilds.find((build) => build.id === latestBuild)?.channel ?? null,
     });
   }
 
@@ -136,6 +141,7 @@ export async function ingestPaperBuilds(options: IngestPaperBuildsOptions): Prom
         latest: {
           minecraftVersion: latest.minecraftVersion,
           build: latest.latestBuild,
+          channel: latest.latestChannel,
         },
         support: {
           ...paper.support,

@@ -1,8 +1,8 @@
 # Versioned entity metadata declarations
 
 `get_entity_metadata`, Catalog `getEntityMetadata`, and CLI `minecraft entity-metadata` return
-the static entity metadata declarations extracted from the exact official Java server. Initial
-coverage is **26.2** and **1.21.11**. An unsupported version, including `latest`, stays unavailable;
+the static entity metadata declarations extracted from the exact official Java server.
+Coverage is **26.3**, **26.2** and **1.21.11**. An unsupported version, including `latest`, stays unavailable;
 the lookup never substitutes another version.
 
 ```sh
@@ -47,7 +47,7 @@ serializer IDs must not be reused as cross-version constants.
 
 ## Coverage and integrity
 
-The initial extracts contain all 158 official entity types in 26.2 and all 157 in 1.21.11, with
+The extracts contain all 161 official entity types in 26.3, all 158 in 26.2 and all 157 in 1.21.11, with
 no extraction gaps. `coverage` compares extracted IDs with the independent generated official
 entity registry. The result distinguishes `available`, `not-found`, `unavailable`, and
 `incomplete` (a known entity whose declaration extraction failed).
@@ -74,11 +74,15 @@ Temporary jars are removed after the loader closes. No network or game server is
 
 ```sh
 java packages/maintainer/scripts/ExtractEntityMetadata.java \
+  26.3 /path/to/26.3-server.jar - /path/to/26.3-entity-metadata.json
+java packages/maintainer/scripts/ExtractEntityMetadata.java \
   26.2 /path/to/26.2-server.jar - /path/to/26.2-entity-metadata.json
 java packages/maintainer/scripts/ExtractEntityMetadata.java \
   1.21.11 /path/to/1.21.11-server.jar /path/to/1.21.11-server-mappings.txt \
   /path/to/1.21.11-entity-metadata.json
 pnpm build
+node packages/maintainer/dist/cli.mjs ingest-entity-metadata \
+  --version 26.3 --input /path/to/26.3-entity-metadata.json --retrieved-at <ISO-timestamp>
 node packages/maintainer/dist/cli.mjs ingest-entity-metadata \
   --version 26.2 --input /path/to/26.2-entity-metadata.json --retrieved-at <ISO-timestamp>
 node packages/maintainer/dist/cli.mjs ingest-entity-metadata \
@@ -90,6 +94,7 @@ The Java helper supports these pinned official artifacts only:
 
 | Version | Server artifact SHA-1 | Naming evidence |
 | --- | --- | --- |
+| 26.3 | [`33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c`](https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar) | Official unobfuscated classes |
 | 26.2 | [`823e2250d24b3ddac457a60c92a6a941943fcd6a`](https://piston-data.mojang.com/v1/objects/823e2250d24b3ddac457a60c92a6a941943fcd6a/server.jar) | Official unobfuscated classes |
 | 1.21.11 | [`64bb6d763bed0a9f1d632ec347938594144943ed`](https://piston-data.mojang.com/v1/objects/64bb6d763bed0a9f1d632ec347938594144943ed/server.jar) | [Official server mappings](https://piston-data.mojang.com/v1/objects/5621e9253f05fd57872bbe7f8ddf5f9a7d525955/server.txt), SHA-1 `5621e9253f05fd57872bbe7f8ddf5f9a7d525955` |
 

@@ -1,8 +1,8 @@
 # Version Support
 
-- Command syntax trees initially cover Java 26.2 and 1.21.11. No runtime permission, execution, context suggestions, or inferred redirect semantics are claimed.
+- Command syntax trees cover Java 26.3, 26.2 and 1.21.11. No runtime permission, execution, context suggestions, or inferred redirect semantics are claimed.
 
-This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.8. It is
+This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.9. It is
 derived from the same catalog data used by the CLI, package API, and MCP server.
 
 Use this page to decide whether an AI agent can safely target a Minecraft version before generating
@@ -12,33 +12,34 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 ## Summary
 
-- Entity metadata declarations: exact Java 26.2 (158 entity types) and 1.21.11 (157 entity types),
+- Entity metadata declarations: exact Java 26.3 (161 entity types), 26.2 (158) and 1.21.11 (157),
   available as downloadable `entity-metadata-surface` data with zero initial extraction gaps.
   Static inherited indexes, value types and serializer identities do not establish instance
   defaults or bit meanings. Other versions and aliases stay unavailable; see
   [entity metadata coverage](ENTITY_METADATA.md#coverage-and-integrity).
-- Block property/state definitions: Java 26.2 and 1.21.11, available as the downloadable
+- Block property/state definitions: Java 26.3, 26.2 and 1.21.11, available as the downloadable
   `block-state-surface` kind. Other releases are explicitly unsupported for this new surface.
 
-- Java release coverage: 1.13 through 26.2 (50 releases).
+- Java release coverage: 1.13 through 26.3 (51 releases).
 - Datapack coverage: server reports, command paths, vanilla datapack paths, and observed schema
-  surfaces for 50/50 releases.
-- Resourcepack coverage: vanilla asset paths and model summaries for 50/50 releases.
-- Paper support metadata: 46 Minecraft versions, latest 26.2 build 121.
-- Paper API package indexes: 46/46 supported Paper versions.
-- Paper API type/member surfaces: 38/46 supported Paper versions.
-- Downloadable heavy surfaces: datapack schema surfaces, Paper API surfaces, and resourcepack model
-  summaries are listed in the data manifest and fetched into the runtime cache on demand.
+  surfaces for 51/51 releases.
+- Resourcepack coverage: vanilla asset paths and model summaries for 51/51 releases.
+- Paper support metadata: 47 Minecraft versions, latest 26.3 build 5 (ALPHA).
+- Paper API package indexes: 47/47 supported Paper versions.
+- Paper API type/member surfaces: 39/47 supported Paper versions.
+- Downloadable heavy surfaces include command trees, block states, entity metadata, datapack
+  schema surfaces, Paper API surfaces and resourcepack models. The manifest lists their hashes
+  and immutable release URLs; installed packages fetch them into the runtime cache on demand.
 
 ## Aliases
 
 | Alias | Version |
 | --- | --- |
-| latestJava | 26.2 |
-| latestPaper | 26.2 |
-| latestWithDatapackSchemaSurface | 26.2 |
-| latestWithPaperApiSurface | 26.2 |
-| latestWithResourcepackModels | 26.2 |
+| latestJava | 26.3 |
+| latestPaper | 26.3 |
+| latestWithDatapackSchemaSurface | 26.3 |
+| latestWithPaperApiSurface | 26.3 |
+| latestWithResourcepackModels | 26.3 |
 
 ## Legend
 
@@ -58,7 +59,8 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 | Version | Released | Data PF | Resource PF | Datapack | Resourcepack | Paper | Paper build | Paper API surface | Heavy data |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 26.2 | 2026-06-16 | 107.1 | 88.0 | ✅ | ✅ | ✅ | 121 | ✅ | ✅ |
+| 26.3 | 2026-09-15 | 121.0 | 97.1 | ✅ | ✅ | ✅ | 5 | ✅ | ✅ |
+| 26.2 | 2026-06-16 | 107.1 | 88.0 | ✅ | ✅ | ✅ | 124 | ✅ | ✅ |
 | 26.1.2 | 2026-04-09 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 74 | ✅ | ✅ |
 | 26.1.1 | 2026-04-01 | 101.1 | 84.0 | ✅ | ✅ | ✅ | 29 | ✅ | ✅ |
 | 26.1 | 2026-03-24 | 101.1 | 84.0 | ✅ | ✅ |  |  |  | ✅ |
@@ -111,5 +113,5 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 
 ## Notes
 
-- Paper latest supported version is 26.2. Versions without Paper support: 26.1, 1.21.2, 1.20.3, 1.16.
+- Paper latest supported version is 26.3; its recorded build 5 is ALPHA. Versions without Paper support: 26.1, 1.21.2, 1.20.3, 1.16.
 - Paper API package indexes exist, but type/member surfaces are unavailable for: 1.13, 1.14, 1.15, 1.17, 1.18, 1.19, 1.20, 1.21.
