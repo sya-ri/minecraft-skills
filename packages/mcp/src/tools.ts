@@ -426,7 +426,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "migrate_legacy_item_model",
     description:
-      "Conservatively generate separate geometry and item-definition JSON for strictly increasing legacy custom_model_data-only overrides. Mixed predicates, reordered thresholds and inexact float values are unsupported; never silently approximate. Does not write files or prove target compatibility/render equivalence.",
+      "Generate separate geometry and item-definition JSON for legacy custom_model_data or normalized damage overrides, including damage plus damaged conditions. Preserve last-match order and duplicate thresholds, and bound wide tables. Mixed numeric properties and inexact custom model data are unsupported. Callers must verify version-specific property semantics; does not write files or prove render equivalence.",
     inputSchema: {
       type: "object",
       properties: { modelId: { type: "string" }, model: { type: "object" } },
