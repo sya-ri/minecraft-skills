@@ -123,6 +123,7 @@ import {
   listVersions,
   lookupJavaPlayerProfileByName,
   type MinecraftLogAnalysisLimits,
+  migrateLegacyItemModel,
   type PaperMemberSearchOptions,
   type PaperTypeSearchOptions,
   type PlayerSkinSourceRectangleInput,
@@ -1609,6 +1610,7 @@ Grouped commands:
   minecraft-skills resourcepack validate-project <version> <directory> [--limit 100] [--max-bytes n] [--max-width n] [--max-height n] [--max-pixels n] [--max-chunks n]
   minecraft-skills resourcepack validate-translations <version> <file...> --pack-root dir [--reference-locale en_us] [--required-locale locale]... [--limit 100]
   minecraft-skills resourcepack sound inspect <file.wav>
+  minecraft-skills migrate-legacy-item-model <modelId> <model.json>
   minecraft-skills compare-migration-captures <before.json> <after.json>
   minecraft-skills resourcepack migration-plan <from> <to> [path...] [--limit 50]
   minecraft-skills resourcepack search-models [version] [--kind model|item-definition] [--contains text] [--prefix path] [--limit 50]
@@ -2871,6 +2873,15 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       const result = inspectWaveAudio(readStableWaveAudioFile(filePath));
       printJson(output, result);
       return result.valid && result.inspectionComplete ? 0 : 1;
+    }
+
+    if (command === "migrate-legacy-item-model") {
+      const [modelId, path] = positionalArgs(args);
+      if (!modelId || !path) throw new Error("Model ID and JSON path are required");
+      const bytes = readBoundedArchiveFile(path, 2 * 1024 * 1024, { command, extension: ".json" });
+      const result = migrateLegacyItemModel(modelId, JSON.parse(bytes.toString("utf8")));
+      printJson(output, result);
+      return result.status === "unsupported" ? 1 : 0;
     }
 
     if (command === "compare-migration-captures") {

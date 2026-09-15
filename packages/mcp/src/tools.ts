@@ -123,6 +123,7 @@ import {
   type MinecraftLogAnalysisLimits,
   type ModrinthPackValidationLimits,
   type ModrinthResourceKind,
+  migrateLegacyItemModel,
   minecraftPerformanceAnalysisRules,
   minecraftPerformanceMetricNames,
   mixinConfigValidationLimits,
@@ -440,6 +441,17 @@ const migrationCaptureSchema = {
 } as const;
 
 export const tools: ToolDefinition[] = [
+  {
+    name: "migrate_legacy_item_model",
+    description:
+      "Generate separate geometry and item-definition JSON for legacy custom_model_data or normalized damage overrides, including damage plus damaged conditions. Preserve last-match order and duplicate thresholds, and bound wide tables. Mixed numeric properties and inexact custom model data are unsupported. Callers must verify version-specific property semantics; does not write files or prove render equivalence.",
+    inputSchema: {
+      type: "object",
+      properties: { modelId: { type: "string" }, model: { type: "object" } },
+      required: ["modelId", "model"],
+      additionalProperties: false,
+    },
+  },
   {
     name: "compare_migration_captures",
     description:
@@ -4964,6 +4976,10 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         }),
       );
     }
+    if (name === "migrate_legacy_item_model") {
+      return text(migrateLegacyItemModel(args.modelId as string, args.model));
+    }
+
     if (name === "compare_migration_captures") {
       return text(
         compareMigrationCaptures(args.before as MigrationCapture, args.after as MigrationCapture),
