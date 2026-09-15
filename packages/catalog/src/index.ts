@@ -9885,6 +9885,7 @@ export async function getModrinthResource(
 }
 
 export { migrateLegacyItemModel } from "./legacyItemModel.js";
+export { type MigrationBlockState, normalizeMigrationBlockStates } from "./migrationBlockStates.js";
 export { compareMigrationCaptures, type MigrationCapture } from "./migrationCaptures.js";
 export { compareMigrationSnapshots, type MigrationSnapshot } from "./migrationSnapshots.js";
 export { type TextureMetadataResult, validateTextureMetadata } from "./textureMetadata.js";
