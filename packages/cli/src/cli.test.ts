@@ -3427,6 +3427,12 @@ describe("minecraft-skills CLI", () => {
     expect(result.code).toBe(0);
     expect(result.stdout.join("\n")).toContain("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
     expect(result.stdout.join("\n")).toContain("https://jd.papermc.io/paper/1.21.11/");
+
+    const buildVersionResult = await capture(["plugin", "paper", "api", "26.2"]);
+    expect(buildVersionResult.code).toBe(0);
+    expect(buildVersionResult.stdout.join("\n")).toContain(
+      "io.papermc.paper:paper-api:26.2.build.+",
+    );
   });
 
   it("prints Paper API package indexes", async () => {

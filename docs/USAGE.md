@@ -251,6 +251,10 @@ This group also supports every [shared authoring command](#shared-authoring-comm
 | `events <query>` | Find event candidates and cross-check available version evidence. |
 | `validate-jar <file.jar>` | Preflight a bounded local Paper/Bukkit plugin JAR and its active descriptor. |
 
+`api` follows Paper's official dependency-version boundary: versions through 1.21.11 use
+`<version>-R0.1-SNAPSHOT`, while 26.1 and later use `<version>.build.+`. The result includes the
+official project-setup documentation URL alongside the resolved coordinate.
+
 Paper indexes prove API-name presence, not runtime behavior, nullability, overload semantics,
 thread safety, or Folia safety. Resolve a matching authoring plan before turning names into code.
 

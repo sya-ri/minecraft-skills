@@ -1003,6 +1003,7 @@ export type PaperApiReference = {
   javadocsUrl: string | null;
   docs: {
     paperDev: string;
+    projectSetup: string;
     pluginConfiguration: string;
     commands: string;
     scheduling: string;
@@ -4150,6 +4151,14 @@ export function getPaperPluginData(): PaperPluginDataData {
   return PaperPluginData.assert(readDataJson("java/paper.json"));
 }
 
+function paperApiDependencyVersion(minecraftVersion: string): string {
+  const [majorText, minorText] = minecraftVersion.split(".");
+  const major = Number(majorText);
+  const minor = Number(minorText);
+  const usesBuildVersion = major > 26 || (major === 26 && minor >= 1);
+  return usesBuildVersion ? `${minecraftVersion}.build.+` : `${minecraftVersion}-R0.1-SNAPSHOT`;
+}
+
 function makePaperApiReference(
   paper: PaperPluginDataData,
   requested = "latest",
@@ -4172,11 +4181,12 @@ function makePaperApiReference(
     latestBuild: build?.latestBuild ?? null,
     buildCount: build?.buildCount ?? null,
     apiDependency: supported
-      ? `io.papermc.paper:paper-api:${minecraftVersion}-R0.1-SNAPSHOT`
+      ? `io.papermc.paper:paper-api:${paperApiDependencyVersion(minecraftVersion)}`
       : null,
     javadocsUrl: supported ? `https://jd.papermc.io/paper/${minecraftVersion}/` : null,
     docs: {
       paperDev: "https://docs.papermc.io/paper/dev/",
+      projectSetup: "https://docs.papermc.io/paper/dev/project-setup/",
       pluginConfiguration: "https://docs.papermc.io/paper/dev/plugin-configurations/",
       commands: "https://docs.papermc.io/paper/reference/commands/",
       scheduling: "https://docs.papermc.io/paper/dev/scheduler/",

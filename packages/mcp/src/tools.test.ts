@@ -2170,6 +2170,13 @@ describe("MCP tools", () => {
     });
     expect(result.content[0]?.text).toContain("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT");
     expect(result.content[0]?.text).toContain("https://jd.papermc.io/paper/1.21.11/");
+
+    const buildVersionResult = await callMinecraftSkillsTool("get_paper_api_reference", {
+      version: "26.2",
+    });
+    expect(buildVersionResult.content[0]?.text).toContain(
+      "io.papermc.paper:paper-api:26.2.build.+",
+    );
   });
 
   it("calls get_paper_api_index", async () => {

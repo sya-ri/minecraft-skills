@@ -4924,6 +4924,15 @@ describe("catalog", () => {
     );
     expect(reference.docs.commands).toBe("https://docs.papermc.io/paper/reference/commands/");
     expect(reference.docs.foliaSupport).toBe("https://docs.papermc.io/paper/dev/folia-support/");
+
+    const buildVersionReference = getPaperApiReference("26.2");
+    expect(buildVersionReference.apiDependency).toBe("io.papermc.paper:paper-api:26.2.build.+");
+    expect(getPaperApiReference("26.1.1").apiDependency).toBe(
+      "io.papermc.paper:paper-api:26.1.1.build.+",
+    );
+    expect(buildVersionReference.docs.projectSetup).toBe(
+      "https://docs.papermc.io/paper/dev/project-setup/",
+    );
   });
 
   it("loads Paper API package indexes", () => {
@@ -5110,6 +5119,10 @@ describe("catalog", () => {
       "paper_folia_support_docs=https://docs.papermc.io/paper/dev/folia-support/",
     );
     expect(version.domains["paper-plugin"].unknowns).toEqual([]);
+
+    expect(getVersionDetail("java", "26.2").domains["paper-plugin"].facts).toContain(
+      "paper_api_dependency=io.papermc.paper:paper-api:26.2.build.+",
+    );
   });
 
   it("links Paper API package indexes for legacy supported versions", () => {
