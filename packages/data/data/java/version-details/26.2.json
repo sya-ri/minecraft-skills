@@ -65,7 +65,7 @@
         "paper_minecraft_version=26.2",
         "paper_latest_build=124",
         "paper_build_count=109",
-        "paper_api_dependency=io.papermc.paper:paper-api:26.2-R0.1-SNAPSHOT",
+        "paper_api_dependency=io.papermc.paper:paper-api:26.2.build.+",
         "paper_javadocs=https://jd.papermc.io/paper/26.2/",
         "paper_api_package_index=26.2",
         "paper_api_surface=26.2",

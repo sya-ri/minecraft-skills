@@ -4,6 +4,11 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- Paper API references now use the official build-based dependency version for Minecraft 26.1+
+  while retaining the legacy `-R0.1-SNAPSHOT` scheme through 1.21.11.
+
 ## 0.1.9 - 2026-09-16
 
 ### Added
