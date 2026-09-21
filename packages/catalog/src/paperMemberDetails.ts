@@ -46,6 +46,62 @@ export type PaperMemberDetailsResult = {
   };
 };
 
+function canonicalMethodUrl(
+  surface: PaperApiSurfaceData,
+  member: PaperApiMemberData,
+): string | null {
+  if (
+    member.kind !== "method" ||
+    !member.label.startsWith(`${member.name}(`) ||
+    !member.label.endsWith(")")
+  )
+    return null;
+  try {
+    const base = new URL(surface.javadocsUrl);
+    const url = new URL(member.url);
+    if (
+      base.origin !== "https://jd.papermc.io" ||
+      url.origin !== base.origin ||
+      !url.pathname.startsWith(base.pathname) ||
+      url.username ||
+      url.password ||
+      url.search ||
+      decodeURIComponent(url.hash.slice(1)) !== member.name
+    )
+      return null;
+    return `${member.url.slice(0, member.url.lastIndexOf("#") + 1)}${encodeURIComponent(member.label)}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Disambiguate only duplicate modern search-index URLs; unique and legacy URLs remain stable. */
+export function normalizeAmbiguousPaperMemberUrls(
+  surface: PaperApiSurfaceData,
+): PaperApiSurfaceData {
+  if (!surface.sources.some((source) => source.kind === "official-javadocs-search-index"))
+    return surface;
+  const membersByUrl = Map.groupBy(surface.members, (member) => member.url);
+  const replacements = new Map<PaperApiMemberData, string>();
+  for (const members of membersByUrl.values()) {
+    if (members.length < 2) continue;
+    const urls = members.map((member) => canonicalMethodUrl(surface, member) ?? member.url);
+    if (new Set(urls).size !== members.length) continue;
+    members.forEach((member, index) => {
+      const url = urls[index];
+      if (url && url !== member.url) replacements.set(member, url);
+    });
+  }
+  if (replacements.size === 0) return surface;
+  return {
+    ...surface,
+    members: surface.members.map((member) => {
+      const url = replacements.get(member);
+      return url ? { ...member, url } : member;
+    }),
+  };
+}
+
 export function validatePaperMemberDetailsOptions(options: PaperMemberDetailsOptions): number {
   if (!options || typeof options !== "object")
     throw new Error("Paper member details options must be an object");
@@ -203,7 +259,11 @@ export async function fetchPaperMemberDetails(
       } catch {
         throw new Error("Paper Javadocs response is not valid UTF-8");
       }
-      const details = extractJavadocMemberDetails(html, fragment);
+      const details = extractJavadocMemberDetails(
+        html,
+        fragment,
+        member.kind === "method" && fragment === member.name ? member.label : undefined,
+      );
       return {
         schemaVersion: 1 as const,
         version: surface.minecraftVersion,

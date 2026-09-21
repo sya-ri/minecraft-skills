@@ -115,6 +115,7 @@ import {
 import { inspectModrinthArchive } from "./modrinthZip.js";
 import {
   fetchPaperMemberDetails,
+  normalizeAmbiguousPaperMemberUrls,
   type PaperMemberDetailsFetch,
   type PaperMemberDetailsOptions,
   type PaperMemberDetailsResult,
@@ -4269,7 +4270,7 @@ function readPaperApiSurface(requested = "latest"): PaperApiSurfaceData {
       }),
     );
   }
-  const surface = PaperApiSurface.assert(readDataJson(path));
+  const surface = normalizeAmbiguousPaperMemberUrls(PaperApiSurface.assert(readDataJson(path)));
   paperApiSurfaceCache.set(reference.minecraftVersion, surface);
   if (paperApiSurfaceCache.size > paperApiSurfaceCacheLimit) {
     const oldestVersion = paperApiSurfaceCache.keys().next().value;

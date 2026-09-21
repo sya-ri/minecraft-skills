@@ -198,14 +198,21 @@ function parseBoundedDocument(html: string): DefaultTreeAdapterMap["document"] {
 export function extractJavadocMemberDetails(
   html: string,
   fragment: string,
+  fallbackFragment?: string,
 ): JavadocMemberDetailsExtraction {
   const document = parseBoundedDocument(html);
   const pageElements = elements(document);
-  const anchors = pageElements.filter(
-    (node) =>
-      attribute(node, "id") === fragment ||
-      (node.tagName === "a" && attribute(node, "name") === fragment),
-  );
+  const matchingAnchors = (candidate: string) =>
+    pageElements.filter(
+      (node) =>
+        attribute(node, "id") === candidate ||
+        (node.tagName === "a" && attribute(node, "name") === candidate),
+    );
+  const primaryAnchors = matchingAnchors(fragment);
+  const anchors =
+    primaryAnchors.length === 0 && fallbackFragment && fallbackFragment !== fragment
+      ? matchingAnchors(fallbackFragment)
+      : primaryAnchors;
   const empty: JavadocMemberDetailsExtraction = {
     status: "unavailable",
     unavailableReason: anchors.length === 0 ? "anchor-not-found" : "unsupported-format",

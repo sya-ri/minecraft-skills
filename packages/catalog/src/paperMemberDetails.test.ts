@@ -120,6 +120,43 @@ describe("Paper member details", () => {
     expect(result).not.toHaveProperty("nullable");
   });
 
+  it("resolves a shortened search-index anchor through the exact member label", async () => {
+    const shortUrl = memberUrl.replace(`#${fragment}`, "#accept");
+    const shortSurface = structuredClone(surface);
+    const shortMember = shortSurface.members[0];
+    if (!shortMember) throw new Error("Expected member");
+    shortMember.url = shortUrl;
+    shortMember.label = fragment;
+
+    const result = await fetchPaperMemberDetails(
+      shortSurface,
+      { memberUrl: shortUrl },
+      fetchHtml(),
+    );
+
+    expect(result).toMatchObject({
+      status: "available",
+      unavailableReason: null,
+      declarationText: expect.stringContaining("accept"),
+      descriptionText: "Records values.\nEmpty values are preserved & reported.",
+    });
+  });
+
+  it("does not replace a missing canonical anchor with a display-label match", async () => {
+    const changedSurface = structuredClone(surface);
+    const changedMember = changedSurface.members[0];
+    if (!changedMember) throw new Error("Expected member");
+    changedMember.label = "accept(int)";
+    const result = await fetchPaperMemberDetails(
+      changedSurface,
+      { memberUrl },
+      fetchHtml(
+        '<section class="detail" id="accept(int)"><div class="member-signature">void wrong(int n)</div></section>',
+      ),
+    );
+    expect(result).toMatchObject({ status: "unavailable", unavailableReason: "anchor-not-found" });
+  });
+
   it("reads the legacy named anchor and pre declaration without inventing separated Java types", async () => {
     const oldFragment = "accept-java.lang.String...-";
     const oldUrl = memberUrl.replace(fragment, oldFragment);
@@ -326,5 +363,44 @@ describe("Paper member details", () => {
       getPaperMemberDetails({ version: "0.0.0", memberUrl: indexed.url }, fetch),
     ).rejects.toThrow("No bundled Paper API surface");
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("disambiguates bundled overload and field-method URLs before detail lookup", async () => {
+    const counts = searchPaperMembers({
+      version: "26.2",
+      type: "com.destroystokyo.paper.ParticleBuilder",
+      contains: "count",
+    }).members.filter((member) => member.name === "count");
+    expect(counts.map((member) => decodeURIComponent(new URL(member.url).hash.slice(1)))).toEqual([
+      "count()",
+      "count(int)",
+    ]);
+    const options = searchPaperMembers({
+      version: "26.2",
+      type: "org.bukkit.configuration.MemoryConfiguration",
+      contains: "options",
+    }).members.filter(
+      (member) =>
+        member.name === "options" &&
+        member.qualifiedTypeName === "org.bukkit.configuration.MemoryConfiguration",
+    );
+    expect(options.map((member) => decodeURIComponent(new URL(member.url).hash.slice(1)))).toEqual([
+      "options",
+      "options()",
+    ]);
+
+    const html = counts
+      .map(
+        (member) =>
+          `<section class="detail" id="${member.label}"><div class="member-signature">${member.label}</div></section>`,
+      )
+      .join("");
+    for (const member of counts) {
+      const result = await getPaperMemberDetails(
+        { version: "26.2", memberUrl: member.url },
+        fetchHtml(html),
+      );
+      expect(result).toMatchObject({ status: "available", member: { label: member.label } });
+    }
   });
 });
