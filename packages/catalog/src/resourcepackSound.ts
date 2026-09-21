@@ -460,7 +460,9 @@ export function validateResourcepackSounds(options: {
     }
     parsedJsonFiles += 1;
 
-    for (const eventPath of Object.keys(parsed.json).sort()) {
+    for (const eventPath of Object.keys(parsed.json).sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    )) {
       const eventIdentity = `sound-event:${soundEventOccurrences}`;
       soundEventOccurrences += 1;
       const eventId = `${namespace}:${eventPath}`;
@@ -758,7 +760,12 @@ export function validateResourcepackSounds(options: {
   };
   type VisitFrame = { eventId: string; nextTarget: number; targets: string[] };
   const sortedEventEdges = new Map(
-    [...events.keys()].map((eventId) => [eventId, [...(eventEdges.get(eventId) ?? [])].sort()]),
+    [...events.keys()].map((eventId) => [
+      eventId,
+      [...(eventEdges.get(eventId) ?? [])].sort((left, right) =>
+        left < right ? -1 : left > right ? 1 : 0,
+      ),
+    ]),
   );
   const reverseEdgeSets = new Map<string, Set<string>>();
   for (const [source, targets] of sortedEventEdges) {
@@ -771,12 +778,16 @@ export function validateResourcepackSounds(options: {
   const sortedReverseEdges = new Map(
     [...events.keys()].map((eventId) => [
       eventId,
-      [...(reverseEdgeSets.get(eventId) ?? [])].sort(),
+      [...(reverseEdgeSets.get(eventId) ?? [])].sort((left, right) =>
+        left < right ? -1 : left > right ? 1 : 0,
+      ),
     ]),
   );
   const visitedEvents = new Set<string>();
   const finishOrder: string[] = [];
-  for (const rootEventId of [...events.keys()].sort()) {
+  for (const rootEventId of [...events.keys()].sort((left, right) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  )) {
     if (visitedEvents.has(rootEventId)) {
       continue;
     }
@@ -838,7 +849,7 @@ export function validateResourcepackSounds(options: {
         }
       }
     }
-    component.sort();
+    component.sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
     const firstComponentEvent = component[0];
     const cyclic =
       component.length > 1 ||
@@ -938,9 +949,13 @@ export function validateResourcepackSounds(options: {
     soundFiles: soundFiles.length,
     inspectedSoundFiles,
     soundValidationComplete,
-    incompleteReasons: [...incompleteReasons].sort(),
+    incompleteReasons: [...incompleteReasons].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     parsedJsonFiles,
     checkedReferences,
-    exceededLimits: [...exceededLimits].sort(),
+    exceededLimits: [...exceededLimits].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
   };
 }

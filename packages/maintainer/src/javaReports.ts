@@ -252,9 +252,9 @@ function readCommands(reportsDir: string): {
   const parsers = new Set<string>();
   collectCommandPaths(root, [], paths, parsers);
   return {
-    rootLiterals: Object.keys(root.children ?? {}).sort(),
-    executablePaths: paths.sort(),
-    argumentParsers: [...parsers].sort(),
+    rootLiterals: Object.keys(root.children ?? {}).sort(compareStrings),
+    executablePaths: paths.sort(compareStrings),
+    argumentParsers: [...parsers].sort(compareStrings),
   };
 }
 
@@ -430,7 +430,7 @@ function listJarFiles(root: string): string[] {
       result.push(path);
     }
   }
-  return result.sort();
+  return result.sort(compareStrings);
 }
 
 function findBundledServerJar(workDir: string): string {

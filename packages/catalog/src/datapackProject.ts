@@ -1890,7 +1890,9 @@ export function validateDatapackReferenceGraph(
     (validation) => validation.validated,
   ).length;
   const invalidContentFiles = invalidContentPaths.size;
-  const unsupported = [...unsupportedReferenceKinds].sort();
+  const unsupported = [...unsupportedReferenceKinds].sort((left, right) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  );
   return {
     schemaVersion: 1,
     edition: "java",
@@ -1899,9 +1901,13 @@ export function validateDatapackReferenceGraph(
     totalFiles,
     processedFiles: projectFiles.length,
     validationComplete: incompleteReasons.size === 0,
-    validationIncompleteReasons: [...incompleteReasons].sort(),
+    validationIncompleteReasons: [...incompleteReasons].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     appliedLimits: { ...limits, maxDiagnostics: options.limit },
-    exceededLimits: [...exceededLimits].sort(),
+    exceededLimits: [...exceededLimits].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     packMetadataFiles,
     jsonFiles: projectFiles.filter(
       (file) => file.normalizedPath.endsWith(".json") || file.normalizedPath === "pack.mcmeta",

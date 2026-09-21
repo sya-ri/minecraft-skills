@@ -1087,7 +1087,9 @@ export function inspectResourcepackPngAlphaBounds(
     inflatedBytes,
     requirements,
     appliedLimits: limits,
-    exceededLimits: [...exceededLimits].sort(),
+    exceededLimits: [...exceededLimits].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     diagnosticTotal,
     retainedDiagnosticCount: diagnostics.length,
     omittedDiagnosticCount: diagnosticTotal - diagnostics.length,

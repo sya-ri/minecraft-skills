@@ -164,7 +164,7 @@ function appendXmlText(stack: XmlNode[], text: string): void {
     }
     return;
   }
-  if (text.includes("&") || hasAsciiControlCharacter(text)) {
+  if (text.includes("&") || text.includes("<") || hasAsciiControlCharacter(text)) {
     throw new Error("Velocity Maven metadata contains unsupported text encoding");
   }
   current.text += text;
@@ -206,7 +206,7 @@ function parseBoundedXml(xml: string): XmlNode {
   let root: XmlNode | undefined;
   let cursor = 0;
   let elementCount = 0;
-  for (const match of body.matchAll(/<[^>]*>/g)) {
+  for (const match of body.matchAll(/<[^<>]*>/g)) {
     const index = match.index;
     const tag = match[0];
     appendXmlText(stack, body.slice(cursor, index));
@@ -525,12 +525,12 @@ function findHtmlTagEnd(html: string, start: number): number {
 function readHtmlTag(html: string, start: number): HtmlTag {
   const end = findHtmlTagEnd(html, start);
   const source = html.slice(start, end + 1);
-  const match = /^<\s*(\/?)\s*([A-Za-z][A-Za-z0-9:-]*)\b/.exec(source);
+  const match = /^<\s*(\/\s*)?([A-Za-z][A-Za-z0-9:-]*)\b/.exec(source);
   if (!match?.[2]) {
     throw new Error("official documentation contains unsupported HTML tag syntax");
   }
   return {
-    closing: match[1] === "/",
+    closing: match[1] !== undefined,
     end,
     name: match[2].toLowerCase(),
     selfClosing: /\/\s*>$/.test(source),

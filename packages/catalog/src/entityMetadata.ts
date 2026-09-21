@@ -89,7 +89,7 @@ function uniqueIds(value: unknown, label: string): string[] {
     new Set(value).size !== value.length
   )
     throw new Error(`${label} must contain bounded unique Minecraft entity IDs`);
-  return [...value].sort();
+  return [...value].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 }
 function normalizeEntity(value: unknown, label: string): EntityMetadataDefinition {
   const entity = record(value, label);

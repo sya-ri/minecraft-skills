@@ -258,7 +258,10 @@ function archivePathProblem(path: string, directory = false): string | null {
       return "Path contains characters unsafe on supported filesystems.";
     }
     if (/[. ]$/u.test(segment)) return "Path segments must not end with a dot or space.";
-    const basename = (segment.split(".")[0] ?? "").replace(/[. ]+$/u, "");
+    const name = segment.split(".")[0] ?? "";
+    let end = name.length;
+    while (end > 0 && name[end - 1] === " ") end -= 1;
+    const basename = name.slice(0, end);
     if (windowsReservedPathSegment.test(basename)) {
       return `Path segment is a reserved Windows device name: ${segment}`;
     }

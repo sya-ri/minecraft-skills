@@ -212,7 +212,7 @@ export function buildResourcepackModelSummary(options: {
   const entries = listZipEntries(jar)
     .filter((entry) => !entry.directory)
     .map((entry) => entry.name)
-    .sort();
+    .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
   const modelFiles = entries.filter(
     (entry) => entry.startsWith("assets/") && entry.includes("/models/") && entry.endsWith(".json"),
   );

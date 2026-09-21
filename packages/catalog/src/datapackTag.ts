@@ -560,7 +560,9 @@ export function resolveDatapackTagGraph(
     ],
     status,
     resolutionComplete: status === "resolved",
-    resolutionIncompleteReasons: [...reasons].sort(),
+    resolutionIncompleteReasons: [...reasons].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     members: status === "resolved" ? members.slice(0, input.limit) : [],
     memberCount: status === "resolved" ? members.length : 0,
     candidateMembers: status === "incomplete" ? members.slice(0, input.limit) : [],
@@ -573,7 +575,7 @@ export function resolveDatapackTagGraph(
     checkedReferences,
     references,
     optionalMissingReferences,
-    exceededLimits: [...exceeded].sort(),
+    exceededLimits: [...exceeded].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0)),
     appliedLimits: { ...input.limits, maxResultsPerSection: input.limit },
     truncated:
       members.length > input.limit ||

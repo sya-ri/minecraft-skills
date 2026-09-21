@@ -108,7 +108,7 @@ function plainText(root: Node): string {
     .replace(/[\u200b\u00ad]/gu, "")
     .replace(/\p{Cc}/gu, (character) => ("\n\r\t".includes(character) ? character : ""))
     .replace(/[\t\r\f \u00a0]+/gu, " ")
-    .replace(/ *\n */gu, "\n")
+    .replace(/ ?\n ?/gu, "\n")
     .replace(/\n{3,}/gu, "\n\n")
     .trim();
 }

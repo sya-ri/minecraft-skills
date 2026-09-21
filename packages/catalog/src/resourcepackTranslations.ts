@@ -569,7 +569,9 @@ function parseRawTranslationObject(
       return {
         entries,
         occurrenceCount: entryCount,
-        duplicateKeys: [...duplicates].sort(),
+        duplicateKeys: [...duplicates].sort((left, right) =>
+          left < right ? -1 : left > right ? 1 : 0,
+        ),
         sourceUniquenessProven: true,
         contentCharacters,
         contentBytes,
@@ -1375,10 +1377,12 @@ function validateResourcepackTranslationCatalog(
         .slice(0, limits.maxRequiredLocales)
         .filter((locale) => validLocale(locale, limits)),
     ),
-  ].sort();
+  ].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
   const comparisons: ResourcepackTranslationComparison[] = [];
   if (reference) {
-    const referenceKeys = [...reference.definitions.keys()].sort();
+    const referenceKeys = [...reference.definitions.keys()].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    );
     for (const locale of requiredLocales) {
       const target = locales.get(locale);
       if (!target) {
@@ -1411,7 +1415,11 @@ function validateResourcepackTranslationCatalog(
       let runtimeFallbackCount = 0;
       let comparisonComplete = true;
       const targetKeys =
-        target === reference ? referenceKeys : [...target.definitions.keys()].sort();
+        target === reference
+          ? referenceKeys
+          : [...target.definitions.keys()].sort((left, right) =>
+              left < right ? -1 : left > right ? 1 : 0,
+            );
       let referenceIndex = 0;
       let targetIndex = 0;
       while (referenceIndex < referenceKeys.length || targetIndex < targetKeys.length) {
@@ -1541,7 +1549,9 @@ function validateResourcepackTranslationCatalog(
   if (omittedDiagnosticCount > 0) {
     incompleteReasons.add("diagnostics-truncated");
   }
-  const reasons = [...incompleteReasons].sort();
+  const reasons = [...incompleteReasons].sort((left, right) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  );
   return {
     schemaVersion: 1,
     edition: "java",
@@ -1564,7 +1574,9 @@ function validateResourcepackTranslationCatalog(
     comparisons,
     incompleteReasons: reasons,
     appliedLimits: { ...limits, maxDiagnostics: options.limit },
-    exceededLimits: [...exceededLimits].sort(),
+    exceededLimits: [...exceededLimits].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     errorCount: finished.errorCount,
     warningCount: finished.warningCount,
     diagnosticTotal: finished.diagnosticTotal,

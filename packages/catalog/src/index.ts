@@ -7908,7 +7908,7 @@ export function compareRegistryEntries(
           ...from.reports.datapack.registries.map((registry) => registry.id),
           ...to.reports.datapack.registries.map((registry) => registry.id),
         ]),
-      ].sort();
+      ].sort(compareText);
   const comparableRegistryIds = new Set<string>();
   const excludedRegistries: RegistryEntryComparisonExclusion[] = [];
   for (const registryId of registryIds) {
@@ -8057,7 +8057,7 @@ export function compareCommands(options: CommandComparisonOptions): CommandCompa
 }
 
 function uniqueStrings(values: string[]): string[] {
-  return [...new Set(values)].sort();
+  return [...new Set(values)].sort(compareText);
 }
 
 function migrationPackFormatChanged(
@@ -8608,7 +8608,10 @@ function modrinthPackPathProblem(path: string, directory = false): string | null
     if (/[. ]$/u.test(segment)) {
       return "Path segments must not end with a dot or space.";
     }
-    const basename = (segment.split(".")[0] ?? "").replace(/[. ]+$/u, "");
+    const name = segment.split(".")[0] ?? "";
+    let end = name.length;
+    while (end > 0 && name[end - 1] === " ") end -= 1;
+    const basename = name.slice(0, end);
     if (windowsReservedPathSegment.test(basename)) {
       return `Path segment is a reserved Windows device name: ${segment}`;
     }

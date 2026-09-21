@@ -1323,9 +1323,13 @@ export function aggregateMissingFeatures(
         key,
         count: value.count,
         averageScore: value.score / value.count,
-        tools: [...value.tools].sort(),
-        mcpVersions: [...value.mcpVersions].sort(),
-        dataVersions: [...value.dataVersions].sort(),
+        tools: [...value.tools].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0)),
+        mcpVersions: [...value.mcpVersions].sort((left, right) =>
+          left < right ? -1 : left > right ? 1 : 0,
+        ),
+        dataVersions: [...value.dataVersions].sort((left, right) =>
+          left < right ? -1 : left > right ? 1 : 0,
+        ),
         firstSeenAt: value.firstSeenAt,
         lastSeenAt: value.lastSeenAt,
         recordIds: value.records.sort(compareNewestFirst).map((record) => record.id),

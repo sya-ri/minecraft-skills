@@ -27,7 +27,7 @@ function canonical(value: unknown, depth = 0, budget = { nodes: 0, characters: 0
     Object.getPrototypeOf(value) === Object.prototype
   ) {
     return `{${Object.keys(value)
-      .sort()
+      .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
       .map(
         (key) =>
           `${canonical(key, depth + 1, budget)}:${canonical((value as Record<string, unknown>)[key], depth + 1, budget)}`,
@@ -78,7 +78,9 @@ export function compareMigrationSnapshots(beforeValue: unknown, afterValue: unkn
   const after = snapshot(afterValue);
   const changes: Array<{ key: string; kind: "added" | "removed" | "changed" }> = [];
   let differenceCount = 0;
-  for (const key of [...new Set([...before.records.keys(), ...after.records.keys()])].sort()) {
+  for (const key of [...new Set([...before.records.keys(), ...after.records.keys()])].sort(
+    (left, right) => (left < right ? -1 : left > right ? 1 : 0),
+  )) {
     if (before.records.get(key) === after.records.get(key)) continue;
     differenceCount++;
     if (changes.length < 100)

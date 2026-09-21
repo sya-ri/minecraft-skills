@@ -166,7 +166,9 @@ function buildDataManifestEntries(root: string, baseUrl: string): DataManifestEn
       kind: "resourcepack-model-summary",
     },
   ];
-  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+  let baseUrlEnd = baseUrl.length;
+  while (baseUrlEnd > 0 && baseUrl[baseUrlEnd - 1] === "/") baseUrlEnd -= 1;
+  const normalizedBaseUrl = baseUrl.slice(0, baseUrlEnd);
   const entries: DataManifestEntry[] = [];
 
   for (const section of sections) {
@@ -478,7 +480,9 @@ function collectPublicEntrypoints(root: string): PublicEntrypoints {
   const cliSource = readFileSync(join(root, "packages/cli/src/cli.ts"), "utf8");
   const cliCommands = new Set([
     ...[...cliSource.matchAll(/command === "([^"]+)"/g)].map((match) => match[1] ?? ""),
-    ...[...cliSource.matchAll(/"([^"]+ [^"]+)": "[^"]+"/g)].map((match) => match[1] ?? ""),
+    ...[...cliSource.matchAll(/"([^"]+)": "[^"]+"/g)]
+      .map((match) => match[1] ?? "")
+      .filter((command) => command.includes(" ")),
     ...[...cliSource.matchAll(/groupedCommand === "([^"]+)"/g)].map((match) => match[1] ?? ""),
   ]);
   const authoringSubcommands = [

@@ -441,7 +441,9 @@ function inspectTargets(
     diagnostics: diagnostics.values,
     diagnosticCount: diagnostics.count,
     diagnosticsTruncated: diagnostics.count > diagnostics.values.length,
-    incompleteReasons: [...incompleteReasons].sort(),
+    incompleteReasons: [...incompleteReasons].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     sources: {
       classFile:
         targetJavaRelease <= 11

@@ -1321,7 +1321,9 @@ function buildResult(options: {
     unknownCount: options.collector.unknownCount,
     diagnosticsTruncated: finished.diagnosticsTruncated,
     omittedDiagnosticCount: finished.omittedDiagnosticCount,
-    incompleteReasons: [...incompleteReasons].sort(),
+    incompleteReasons: [...incompleteReasons].sort((left, right) =>
+      left < right ? -1 : left > right ? 1 : 0,
+    ),
     archive: {
       bytes: options.archiveBytes,
       entriesInspected: options.entries.length,

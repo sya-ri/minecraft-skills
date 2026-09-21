@@ -6,6 +6,62 @@ import {
 } from "./minecraftLog.js";
 
 describe("Minecraft log analysis", () => {
+  it("preserves opening brackets in artifact names without rescanning malformed suffixes", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "java.lang.RuntimeException: failure",
+        "at example.Main.run(Main.java:1) ~[plugin[beta.jar:build.jarX]",
+        `at example.Main.run(Main.java:2) ~[${"bad.jar:".repeat(1_000)}missing`,
+      ].join("\n"),
+    });
+    expect(result.exceptionChains[0]?.entries[0]?.frames.map(({ artifact }) => artifact)).toEqual([
+      "plugin[beta.jar",
+      null,
+    ]);
+  });
+
+  it("handles long near-matches without manufacturing exception or mixin evidence", () => {
+    const spaces = " ".repeat(12_000);
+    const result = analyzeMinecraftLog({
+      text: [
+        `${"a".repeat(12_000)}!`,
+        `org.spongepowered.asm.mixin.transformer.throwables.InvalidMixinException: Mixin subject${spaces}!`,
+        `org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException: @Inject annotation on handler${spaces}!`,
+        `org.spongepowered.asm.mixin.injection.throwables.InjectionError: Redirector handler${spaces}!`,
+        `Fabric Loader${spaces}`,
+        `Quilt Loader${spaces}`,
+        `NeoForge${spaces}`,
+        `Forge Mod Loader${spaces}`,
+      ].join("\n"),
+    });
+    expect(result.exceptionEntryTotal).toBe(3);
+    expect(result.mixinFailures).toEqual([]);
+    expect(result.platforms).toEqual([]);
+  });
+
+  it("retains stack-frame artifacts and explicit loader versions with varied whitespace", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "java.lang.RuntimeException: failure",
+        "  at example.Main.run(Main.java:1) ~[example.jar:build.jarX]   ",
+        "Fabric Loader version : 0.18.1",
+        "Quilt Loader\t0.29.1",
+        "NeoForge:21.1.1",
+        "Forge Mod Loader version 52.0.1",
+      ].join("\n"),
+    });
+    expect(result.exceptionChains[0]?.entries[0]?.frames[0]).toMatchObject({
+      frame: "example.Main.run(Main.java:1) ~[example.jar:build.jarX]",
+      artifact: "example.jar",
+    });
+    expect(result.platforms.map(({ platform, version }) => [platform, version])).toEqual([
+      ["fabric-loader", "0.18.1"],
+      ["quilt-loader", "0.29.1"],
+      ["neoforge", "21.1.1"],
+      ["forge", "52.0.1"],
+    ]);
+  });
+
   it("extracts Paper-style events and explicit exception causes without assigning blame", () => {
     const result = analyzeMinecraftLog({
       text: [

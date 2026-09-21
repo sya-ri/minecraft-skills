@@ -59,7 +59,7 @@ function countEntries(entries: string[], prefix: string): SectionInventory {
 
   return {
     entryCount: files.length,
-    namespaces: [...namespaces].sort(),
+    namespaces: [...namespaces].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0)),
     topLevel: [...groups.entries()]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([path, group]) => ({
@@ -73,7 +73,7 @@ function fileEntries(entries: ZipEntry[]): string[] {
   return entries
     .filter((entry) => !entry.directory)
     .map((entry) => entry.name)
-    .sort();
+    .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
 }
 
 function readBundledServerInnerJar(serverJar: Buffer): Buffer {

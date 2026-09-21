@@ -256,8 +256,8 @@ const threadedLogPattern = new RegExp(
 );
 const simpleLogPattern = new RegExp(`^\\[([^\\]]+?)\\s+(${logLevels})\\]:? ?(.*)$`);
 const exceptionPattern =
-  /^(?:(Caused by|Suppressed):\s*)?(?:Exception in thread "[^"]+"\s+)?((?:(?:[A-Za-z_$][\w$]*\.)*[A-Za-z_$][\w$]*(?:Exception|Error|Throwable)))(?::\s*(.*))?$/;
-const stackFramePattern = /^\s*at\s+(.+?)\s*$/;
+  /^(?:(Caused by|Suppressed):\s*)?(?:Exception in thread "[^"]+"\s+)?((?:[A-Za-z_$][\w$]*\.)*[A-Za-z_$][\w$]*)(?::\s*(.*))?$/;
+const stackFramePattern = /^at\s+(\S.*)$/;
 const collapsedFramesPattern = /^\s*\.\.\.\s+(\d+)\s+more\s*$/;
 const jarPattern = /\b([A-Za-z0-9][A-Za-z0-9._+@-]{0,127}\.jar)\b/gi;
 const mixinExceptionPrefix = "org.spongepowered.asm.mixin.";
@@ -661,6 +661,14 @@ function parseExceptionHeader(value: string): ParsedExceptionHeader | null {
   if (!matched?.[2]) {
     return null;
   }
+  const simpleName = matched[2].slice(matched[2].lastIndexOf(".") + 1);
+  if (
+    !["Exception", "Error", "Throwable"].some(
+      (suffix) => simpleName.length > suffix.length && simpleName.endsWith(suffix),
+    )
+  ) {
+    return null;
+  }
   return {
     relation:
       matched[1] === "Caused by"
@@ -735,7 +743,7 @@ function parseMixinFailure(parsed: ParsedExceptionHeader): ParsedMixinFailure | 
     }
 
     const staticMember =
-      /^Mixin\s+(.{1,16384}?)\s+contains non-private static\s+(field|method)\s+(\S{1,16384})/.exec(
+      /^Mixin\s+(\S(?:.{0,16382}?\S)?)\s+contains non-private static\s+(field|method)\s+(\S{1,16384})/.exec(
         message,
       );
     if (staticMember?.[1] && staticMember[2] && staticMember[3]) {
@@ -749,7 +757,7 @@ function parseMixinFailure(parsed: ParsedExceptionHeader): ParsedMixinFailure | 
 
   if (parsed.type.endsWith(".InvalidInjectionException")) {
     const missingTarget =
-      /^(?:Critical injection failure:\s*)?@([A-Za-z][A-Za-z0-9_]{0,63})\s+annotation on\s+(.{1,16384}?)\s+could not find any targets matching\s+(['"])(.{1,16384}?)\3\s+in\s+([A-Za-z0-9_.$/]{1,16384}?)(?:\.(?:\s|$)|$)/.exec(
+      /^(?:Critical injection failure:\s*)?@([A-Za-z][A-Za-z0-9_]{0,63})\s+annotation on\s+(\S(?:.{0,16382}?\S)?)\s+could not find any targets matching\s+(['"])(.{1,16384}?)\3\s+in\s+([A-Za-z0-9_.$/]{1,16384}?)(?:\.(?:\s|$)|$)/.exec(
         message,
       );
     if (missingTarget?.[1] && missingTarget[2] && missingTarget[4] && missingTarget[5]) {
@@ -764,7 +772,7 @@ function parseMixinFailure(parsed: ParsedExceptionHeader): ParsedMixinFailure | 
 
   if (parsed.type.endsWith(".InjectionError")) {
     const failedCheck =
-      /^(?:Critical injection failure:\s*)?([A-Za-z][A-Za-z0-9_]{0,63})\s+(.{1,16384}?)\s+in\s+(\S{1,16384}?)(?:\s+from mod\s+\S{1,16384})?\s+failed injection check,\s*\((\d{1,16384})\/(\d{1,16384})\)\s+succeeded\.\s+Scanned\s+(\d{1,16384})\s+target\(s\)\./.exec(
+      /^(?:Critical injection failure:\s*)?([A-Za-z][A-Za-z0-9_]{0,63})\s+(\S(?:.{0,16382}?\S)?)\s+in\s+(\S{1,16384}?)(?:\s+from mod\s+\S{1,16384})?\s+failed injection check,\s*\((\d{1,16384})\/(\d{1,16384})\)\s+succeeded\.\s+Scanned\s+(\d{1,16384})\s+target\(s\)\./.exec(
         message,
       );
     if (
@@ -850,8 +858,24 @@ function artifactFromFrame(frame: string): string | null {
   if (direct) {
     return direct;
   }
-  const source = /~?\[([^\]]+\.jar)(?::[^\]]*)?\]\s*$/i.exec(frame)?.[1];
-  return source?.split(/[\\/]/).at(-1) ?? null;
+  const trimmedFrame = frame.trimEnd();
+  if (!trimmedFrame.endsWith("]")) return null;
+  const previousClose = trimmedFrame.lastIndexOf("]", trimmedFrame.length - 2);
+  const bracketStart = trimmedFrame.indexOf("[", previousClose + 1);
+  if (bracketStart < 0) return null;
+  const content = trimmedFrame.slice(bracketStart + 1, -1);
+  const lowerContent = content.toLowerCase();
+  let jarStart = lowerContent.lastIndexOf(".jar");
+  while (jarStart > 0 && jarStart + 4 < content.length && content[jarStart + 4] !== ":") {
+    jarStart = lowerContent.lastIndexOf(".jar", jarStart - 1);
+  }
+  if (jarStart <= 0) return null;
+  return (
+    content
+      .slice(0, jarStart + 4)
+      .split(/[\\/]/)
+      .at(-1) ?? null
+  );
 }
 
 function addArtifact(
@@ -965,16 +989,16 @@ function collectPlatforms(
     { platform: "velocity", pattern: /Booting up Velocity\s+([^\s(]{1,256})/i },
     {
       platform: "fabric-loader",
-      pattern: /Fabric Loader(?: version)?\s*[: ]\s*([^\s]{1,256})/i,
+      pattern: /Fabric Loader(?: version)?(?:\s*:\s*|\s+)([^\s]{1,256})/i,
     },
     {
       platform: "quilt-loader",
-      pattern: /Quilt Loader(?: version)?\s*[: ]\s*([^\s]{1,256})/i,
+      pattern: /Quilt Loader(?: version)?(?:\s*:\s*|\s+)([^\s]{1,256})/i,
     },
-    { platform: "neoforge", pattern: /NeoForge(?: version)?\s*[: ]\s*([^\s]{1,256})/i },
+    { platform: "neoforge", pattern: /NeoForge(?: version)?(?:\s*:\s*|\s+)([^\s]{1,256})/i },
     {
       platform: "forge",
-      pattern: /Forge Mod Loader(?: version)?\s*[: ]\s*([^\s]{1,256})/i,
+      pattern: /Forge Mod Loader(?: version)?(?:\s*:\s*|\s+)([^\s]{1,256})/i,
     },
   ];
   for (const candidate of candidates) {
@@ -1397,7 +1421,7 @@ export function analyzeMinecraftLog(
       addException(exception, line, event, retainClassLoadingEvidence);
       return true;
     }
-    const frame = stackFramePattern.exec(value)?.[1];
+    const frame = stackFramePattern.exec(value.trim())?.[1];
     if (frame) {
       addFrame(frame, line, retainClassLoadingEvidence);
       return true;
@@ -1481,7 +1505,9 @@ export function analyzeMinecraftLog(
       : exceptionChainTotal > 0
         ? "java-stacktrace"
         : "unknown";
-  const exceededLimits = [...exceeded].sort();
+  const exceededLimits = [...exceeded].sort((left, right) =>
+    left < right ? -1 : left > right ? 1 : 0,
+  );
 
   return {
     schemaVersion: 1,
