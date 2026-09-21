@@ -1,5 +1,6 @@
 import { types as nodeTypes } from "node:util";
 import { inflateSync } from "node:zlib";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import {
   defaultResourcepackPngValidationLimits,
   inspectResourcepackPng,
@@ -1087,9 +1088,7 @@ export function inspectResourcepackPngAlphaBounds(
     inflatedBytes,
     requirements,
     appliedLimits: limits,
-    exceededLimits: [...exceededLimits].sort((left, right) =>
-      left < right ? -1 : left > right ? 1 : 0,
-    ),
+    exceededLimits: [...exceededLimits].sort(compareCodeUnits),
     diagnosticTotal,
     retainedDiagnosticCount: diagnostics.length,
     omittedDiagnosticCount: diagnosticTotal - diagnostics.length,

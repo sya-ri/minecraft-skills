@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, delimiter, join } from "node:path";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { listZipEntries } from "./zip.js";
 
 type CommandNode = {
@@ -219,10 +220,6 @@ function validateRegistryContainer(
   return validated;
 }
 
-function compareStrings(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
-}
-
 function collectCommandPaths(
   node: CommandNode,
   current: string[],
@@ -252,9 +249,9 @@ function readCommands(reportsDir: string): {
   const parsers = new Set<string>();
   collectCommandPaths(root, [], paths, parsers);
   return {
-    rootLiterals: Object.keys(root.children ?? {}).sort(compareStrings),
-    executablePaths: paths.sort(compareStrings),
-    argumentParsers: [...parsers].sort(compareStrings),
+    rootLiterals: Object.keys(root.children ?? {}).sort(compareCodeUnits),
+    executablePaths: paths.sort(compareCodeUnits),
+    argumentParsers: [...parsers].sort(compareCodeUnits),
   };
 }
 
@@ -333,8 +330,8 @@ function readDatapackReports(reportsDir: string): {
 
   const sortedRegistryEntries = [...registryEntries.values()].sort(
     (left, right) =>
-      compareStrings(left.registryId, right.registryId) ||
-      compareStrings(left.entryId, right.entryId),
+      compareCodeUnits(left.registryId, right.registryId) ||
+      compareCodeUnits(left.entryId, right.entryId),
   );
   const registryEntryCounts = new Map<string, number>();
   for (const registryEntry of sortedRegistryEntries) {
@@ -346,7 +343,7 @@ function readDatapackReports(reportsDir: string): {
 
   return {
     otherTypes: Object.entries(others)
-      .sort(([left], [right]) => compareStrings(left, right))
+      .sort(([left], [right]) => compareCodeUnits(left, right))
       .map(([id, value]) => {
         const entry = requirePlainObject(value, `datapack.json.others.${id}`);
         return {
@@ -357,7 +354,7 @@ function readDatapackReports(reportsDir: string): {
           tags: typeof entry.tags === "boolean" ? entry.tags : null,
         };
       }),
-    registries: [...registryIds].sort(compareStrings).map((id) => {
+    registries: [...registryIds].sort(compareCodeUnits).map((id) => {
       const entry = datapackRegistries[id];
       const report = registryDump[id];
       const entryCount = registryEntryCounts.get(id) ?? 0;
@@ -430,7 +427,7 @@ function listJarFiles(root: string): string[] {
       result.push(path);
     }
   }
-  return result.sort(compareStrings);
+  return result.sort(compareCodeUnits);
 }
 
 function findBundledServerJar(workDir: string): string {

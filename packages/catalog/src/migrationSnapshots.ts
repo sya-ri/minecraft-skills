@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./compareCodeUnits.js";
 /** Offline comparison only: acquisition, normalization and render provenance are caller evidence. */
 export type MigrationSnapshot = {
   version: string;
@@ -27,7 +28,7 @@ function canonical(value: unknown, depth = 0, budget = { nodes: 0, characters: 0
     Object.getPrototypeOf(value) === Object.prototype
   ) {
     return `{${Object.keys(value)
-      .sort((left, right) => (left < right ? -1 : left > right ? 1 : 0))
+      .sort(compareCodeUnits)
       .map(
         (key) =>
           `${canonical(key, depth + 1, budget)}:${canonical((value as Record<string, unknown>)[key], depth + 1, budget)}`,
@@ -79,7 +80,7 @@ export function compareMigrationSnapshots(beforeValue: unknown, afterValue: unkn
   const changes: Array<{ key: string; kind: "added" | "removed" | "changed" }> = [];
   let differenceCount = 0;
   for (const key of [...new Set([...before.records.keys(), ...after.records.keys()])].sort(
-    (left, right) => (left < right ? -1 : left > right ? 1 : 0),
+    compareCodeUnits,
   )) {
     if (before.records.get(key) === after.records.get(key)) continue;
     differenceCount++;

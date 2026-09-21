@@ -1,5 +1,6 @@
 import { openZipArchive, type ZipArchive, type ZipEntry } from "@minecraft-skills/data";
 import { parseDocument } from "yaml";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { javaBinaryNameToClassEntryPath, maxJavaBinaryNameCharacters } from "./javaClassArchive.js";
 
 const pluginDescriptorPath = "plugin.yml";
@@ -1595,9 +1596,7 @@ function buildResult(options: {
     unknownCount: collector.unknownCount,
     diagnosticsTruncated: diagnosticResult.diagnosticsTruncated,
     omittedDiagnosticCount: diagnosticResult.omittedDiagnosticCount,
-    incompleteReasons: [...incompleteReasons].sort((left, right) =>
-      left < right ? -1 : left > right ? 1 : 0,
-    ),
+    incompleteReasons: [...incompleteReasons].sort(compareCodeUnits),
     archive: {
       bytes: options.archiveBytes,
       entriesInspected: options.entries.length,

@@ -44,6 +44,7 @@ import {
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import { type CommandDetailsOptions, readCommandDetails } from "./commandDetails.js";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 
 export type { CommandDetailsOptions, CommandNode, CommandTreeSurface } from "./commandDetails.js";
 export { buildCommandTreeSurface, commandDetailLimits } from "./commandDetails.js";
@@ -7908,7 +7909,7 @@ export function compareRegistryEntries(
           ...from.reports.datapack.registries.map((registry) => registry.id),
           ...to.reports.datapack.registries.map((registry) => registry.id),
         ]),
-      ].sort(compareText);
+      ].sort(compareCodeUnits);
   const comparableRegistryIds = new Set<string>();
   const excludedRegistries: RegistryEntryComparisonExclusion[] = [];
   for (const registryId of registryIds) {
@@ -8057,7 +8058,7 @@ export function compareCommands(options: CommandComparisonOptions): CommandCompa
 }
 
 function uniqueStrings(values: string[]): string[] {
-  return [...new Set(values)].sort(compareText);
+  return [...new Set(values)].sort(compareCodeUnits);
 }
 
 function migrationPackFormatChanged(
@@ -8405,16 +8406,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function compareText(left: string, right: string): number {
-  if (left < right) {
-    return -1;
-  }
-  if (left > right) {
-    return 1;
-  }
-  return 0;
-}
-
 function hasControlCharacter(value: string): boolean {
   for (const character of value) {
     const codePoint = character.codePointAt(0) ?? 0;
@@ -8442,9 +8433,9 @@ function sortModrinthPackDiagnostics(
   return diagnostics.sort(
     (left, right) =>
       (left.severity === right.severity ? 0 : left.severity === "error" ? -1 : 1) ||
-      compareText(left.path, right.path) ||
-      compareText(left.code, right.code) ||
-      compareText(left.message, right.message),
+      compareCodeUnits(left.path, right.path) ||
+      compareCodeUnits(left.code, right.code) ||
+      compareCodeUnits(left.message, right.message),
   );
 }
 
@@ -8786,7 +8777,7 @@ function boundedModrinthPackRecordKeys(
       key.length <= maxModrinthPackPathLength ? key : key.slice(0, maxModrinthPackPathLength),
   }));
   decoratedKeys.sort(
-    (left, right) => compareText(left.sortKey, right.sortKey) || left.index - right.index,
+    (left, right) => compareCodeUnits(left.sortKey, right.sortKey) || left.index - right.index,
   );
   return { keys: decoratedKeys.map((entry) => entry.key), truncated };
 }
@@ -9275,8 +9266,8 @@ function validateModrinthPackInternal(
       })
       .sort(
         (left, right) =>
-          compareText(left.sortKey, right.sortKey) ||
-          compareText(left.boundedPath, right.boundedPath) ||
+          compareCodeUnits(left.sortKey, right.sortKey) ||
+          compareCodeUnits(left.boundedPath, right.boundedPath) ||
           left.position - right.position,
       );
     for (const { entry, position } of orderedEntries) {
@@ -9572,7 +9563,7 @@ function validateModrinthPackInternal(
           registerModrinthPackFile(targetKey, entryPointer, paths.files, paths.descendants);
         }
       }
-      for (const conflictPointer of [...typeConflictPointers].sort(compareText)) {
+      for (const conflictPointer of [...typeConflictPointers].sort(compareCodeUnits)) {
         add(
           "error",
           "archive.override-path-conflict",
@@ -9580,7 +9571,7 @@ function validateModrinthPackInternal(
           `Projected override path changes between a file and directory at ${conflictPointer}.`,
         );
       }
-      for (const conflictPointer of [...hierarchyConflictPointers].sort(compareText)) {
+      for (const conflictPointer of [...hierarchyConflictPointers].sort(compareCodeUnits)) {
         add(
           "error",
           "archive.override-path-conflict",
@@ -9624,11 +9615,13 @@ function validateModrinthPackInternal(
     }
 
     for (const [targetKey, targets] of [...overrideTargets].sort(([left], [right]) =>
-      compareText(left, right),
+      compareCodeUnits(left, right),
     )) {
       const fileTargets = targets.filter((target) => !target.directory);
       const directoryTargets = targets.filter((target) => target.directory);
-      const fileLayers = [...new Set(fileTargets.map((target) => target.layer))].sort(compareText);
+      const fileLayers = [...new Set(fileTargets.map((target) => target.layer))].sort(
+        compareCodeUnits,
+      );
       if (fileLayers.includes("overrides") && fileLayers.length > 1) {
         add(
           "warning",

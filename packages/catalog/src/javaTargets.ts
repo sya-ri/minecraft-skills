@@ -1,5 +1,6 @@
 import { types as nodeTypes } from "node:util";
 import { openZipArchive, type ZipArchive } from "@minecraft-skills/data";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { inspectJavaClassFile, velocityPluginClassFileLimits } from "./velocityPluginClassFile.js";
 
 export const javaTargetInspectionLimits = Object.freeze({
@@ -441,9 +442,7 @@ function inspectTargets(
     diagnostics: diagnostics.values,
     diagnosticCount: diagnostics.count,
     diagnosticsTruncated: diagnostics.count > diagnostics.values.length,
-    incompleteReasons: [...incompleteReasons].sort((left, right) =>
-      left < right ? -1 : left > right ? 1 : 0,
-    ),
+    incompleteReasons: [...incompleteReasons].sort(compareCodeUnits),
     sources: {
       classFile:
         targetJavaRelease <= 11

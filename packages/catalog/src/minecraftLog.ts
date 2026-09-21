@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./compareCodeUnits.js";
 export type MinecraftLogLevel = "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR" | "FATAL";
 
 export type MinecraftLogFormat = "crash-report" | "minecraft-log" | "java-stacktrace" | "unknown";
@@ -1505,9 +1506,7 @@ export function analyzeMinecraftLog(
       : exceptionChainTotal > 0
         ? "java-stacktrace"
         : "unknown";
-  const exceededLimits = [...exceeded].sort((left, right) =>
-    left < right ? -1 : left > right ? 1 : 0,
-  );
+  const exceededLimits = [...exceeded].sort(compareCodeUnits);
 
   return {
     schemaVersion: 1,

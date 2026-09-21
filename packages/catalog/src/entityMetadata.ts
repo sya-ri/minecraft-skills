@@ -1,4 +1,5 @@
 import { getDataManifest, hasDataFile, readDataJson } from "@minecraft-skills/data";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 
 export const entityMetadataLimits = Object.freeze({
   maxEntities: 4096,
@@ -89,7 +90,7 @@ function uniqueIds(value: unknown, label: string): string[] {
     new Set(value).size !== value.length
   )
     throw new Error(`${label} must contain bounded unique Minecraft entity IDs`);
-  return [...value].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
+  return [...value].sort(compareCodeUnits);
 }
 function normalizeEntity(value: unknown, label: string): EntityMetadataDefinition {
   const entity = record(value, label);
