@@ -6,6 +6,8 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
+- Paper member details now resolve modern Javadocs entries whose search index omits a method
+  signature from the URL, including overloaded methods that previously shared one ambiguous URL.
 - Paper API references now use the official build-based dependency version for Minecraft 26.1+
   while retaining the legacy `-R0.1-SNAPSHOT` scheme through 1.21.11.
 

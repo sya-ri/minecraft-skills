@@ -78,12 +78,12 @@ function memberUrl(
   javadocsUrl: string,
   packageName: string,
   typeName: string,
-  memberName: string,
+  memberLabel: string,
   url?: string,
 ): string {
   const base = typeUrl(javadocsUrl, packageName, typeName);
   if (!url) {
-    return `${base}#${encodeURIComponent(memberName)}`;
+    return `${base}#${encodeURIComponent(memberLabel)}`;
   }
   if (url.startsWith("#")) {
     return `${base}${url}`;
@@ -328,7 +328,7 @@ export function buildPaperApiSurface(options: {
         name,
         label,
         kind: memberKind(typeName, name, label, entry.u),
-        url: memberUrl(options.javadocsUrl, packageName, typeName, name, entry.u),
+        url: memberUrl(options.javadocsUrl, packageName, typeName, label, entry.u),
       };
     })
     .sort((left, right) =>

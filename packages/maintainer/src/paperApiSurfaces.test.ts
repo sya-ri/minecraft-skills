@@ -9,7 +9,7 @@ describe("buildPaperApiSurface", () => {
       typeSearchIndexJs:
         'typeSearchIndex = [{"p":"org.bukkit.entity","l":"Player"},{"p":"org.bukkit.event.player","l":"PlayerJoinEvent"}];updateSearchResults();',
       memberSearchIndexJs:
-        'memberSearchIndex = [{"p":"org.bukkit.entity","c":"Player","l":"sendMessage(String)","u":"sendMessage(java.lang.String)"},{"p":"org.bukkit.entity","c":"Player","l":"Player()","u":"%3Cinit%3E()"},{"p":"org.bukkit.entity","c":"Player","l":"DEFAULT_SPEED"}];updateSearchResults();',
+        'memberSearchIndex = [{"p":"org.bukkit.entity","c":"Player","l":"sendMessage(String)","u":"sendMessage(java.lang.String)"},{"p":"org.bukkit.entity","c":"Player","l":"Player()","u":"%3Cinit%3E()"},{"p":"org.bukkit.entity","c":"Player","l":"DEFAULT_SPEED"},{"p":"org.bukkit.entity","c":"Player","l":"count()"},{"p":"org.bukkit.entity","c":"Player","l":"count(int)"}];updateSearchResults();',
       retrievedAt: "2026-06-22T00:00:00.000Z",
     });
 
@@ -20,7 +20,7 @@ describe("buildPaperApiSurface", () => {
       qualifiedName: "org.bukkit.entity.Player",
       url: "https://jd.papermc.io/paper/1.21.11/org/bukkit/entity/Player.html",
     });
-    expect(surface.memberCount).toBe(3);
+    expect(surface.memberCount).toBe(5);
     expect(surface.members).toContainEqual(
       expect.objectContaining({
         qualifiedTypeName: "org.bukkit.entity.Player",
@@ -31,6 +31,12 @@ describe("buildPaperApiSurface", () => {
     );
     expect(surface.members.map((member) => member.kind)).toContain("constructor");
     expect(surface.members.map((member) => member.kind)).toContain("field-or-enum-constant");
+    expect(
+      surface.members.filter((member) => member.name === "count").map((member) => member.url),
+    ).toEqual([
+      "https://jd.papermc.io/paper/1.21.11/org/bukkit/entity/Player.html#count()",
+      "https://jd.papermc.io/paper/1.21.11/org/bukkit/entity/Player.html#count(int)",
+    ]);
   });
 
   it("classifies nested type constructors from the simple type name and init URL", () => {
