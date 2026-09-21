@@ -28,6 +28,22 @@ function validatePair(
 }
 
 describe("validateResourcepackTranslations", () => {
+  it("compares mixed-case and Unicode keys in the same order as the merge traversal", () => {
+    const reference = { a: "a", A: "A", _: "underscore", é: "accent", "e\u0301": "combining" };
+    const result = validatePair(reference, {
+      "e\u0301": "combining",
+      é: "accent",
+      _: "underscore",
+      A: "A",
+      a: "a",
+    });
+    expect(result.comparisons[0]).toMatchObject({
+      comparedKeyCount: 5,
+      missingKeyCount: 0,
+      extraKeyCount: 0,
+    });
+  });
+
   it("uses the current Mojang Language d/f normalization before comparing references", () => {
     const result = validatePair(
       { value: "%1$s %2$s %2$s" },

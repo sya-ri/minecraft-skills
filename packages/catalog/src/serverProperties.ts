@@ -241,7 +241,7 @@ const sensitiveKeyPattern =
   /(?:^|[._-])(?:password|passwd|secret|token|credential|authorization|auth|private[-_]?key|api[-_]?key|seed)(?:$|[._-])/i;
 const sensitiveUrlParameterPattern =
   /(?:^|[?&#;])(?:access[-_]?token|api[-_]?key|auth|authorization|credential|key|password|secret|signature|sig|token)=/i;
-const urlUserInfoPattern = /(?:[a-z][a-z0-9+.-]*:)?\/\/[^/\s:@]+:[^/\s@]+@/i;
+const urlUserInfoPattern = /\/\/[^/\s:@]+:[^/\s@]+@/;
 const targetVersionPattern = /^[0-9A-Za-z][0-9A-Za-z._+-]{0,63}$/;
 const integerPattern = /^[+-]?\d+$/;
 const uuidPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;

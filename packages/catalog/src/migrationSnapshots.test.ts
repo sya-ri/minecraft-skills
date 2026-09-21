@@ -9,6 +9,27 @@ const snapshot = (records: Array<{ key: string; value: unknown }>) => ({
 });
 
 describe("migration record comparison", () => {
+  it("keeps UTF-16 ordering and distinguishes locale-equivalent object keys", () => {
+    const keys = ["é", "e\u0301", "a", "A", "_", "10", "2"];
+    const before = snapshot(keys.map((key) => ({ key, value: 0 })));
+    const after = snapshot(keys.map((key) => ({ key, value: 1 })));
+    expect(compareMigrationSnapshots(before, after).changes.map((change) => change.key)).toEqual([
+      "10",
+      "2",
+      "A",
+      "_",
+      "a",
+      "e\u0301",
+      "é",
+    ]);
+    expect(
+      compareMigrationSnapshots(
+        snapshot([{ key: "record", value: { é: 1, "e\u0301": 2 } }]),
+        snapshot([{ key: "record", value: { "e\u0301": 2, é: 1 } }]),
+      ).status,
+    ).toBe("equal");
+  });
+
   it("compares values independent of object or record ordering", () => {
     const a = snapshot([
       { key: "0,1,0", value: { block: "example:stone", properties: { facing: "north" } } },

@@ -299,6 +299,23 @@ describe("Velocity toolchain resolution", () => {
     ).rejects.toThrow("forbidden declaration");
   });
 
+  it("rejects repeated and unescaped XML tag starts", async () => {
+    await expect(
+      resolveVelocityToolchain(
+        {},
+        fixtureFetch({
+          metadata: metadata().replace("<metadata>", `${"<".repeat(20_000)}<metadata>`),
+        }),
+      ),
+    ).rejects.toThrow("text outside the root");
+    await expect(
+      resolveVelocityToolchain(
+        {},
+        fixtureFetch({ metadata: metadata().replace("<groupId>", "<groupId><") }),
+      ),
+    ).rejects.toThrow("unsupported text encoding");
+  });
+
   it("rejects inconsistent or excessive Maven version lists", async () => {
     await expect(
       resolveVelocityToolchain(

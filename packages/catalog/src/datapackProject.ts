@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./compareCodeUnits.js";
 export type DatapackProjectFile = {
   path: string;
   content?: unknown;
@@ -1890,7 +1891,7 @@ export function validateDatapackReferenceGraph(
     (validation) => validation.validated,
   ).length;
   const invalidContentFiles = invalidContentPaths.size;
-  const unsupported = [...unsupportedReferenceKinds].sort();
+  const unsupported = [...unsupportedReferenceKinds].sort(compareCodeUnits);
   return {
     schemaVersion: 1,
     edition: "java",
@@ -1899,9 +1900,9 @@ export function validateDatapackReferenceGraph(
     totalFiles,
     processedFiles: projectFiles.length,
     validationComplete: incompleteReasons.size === 0,
-    validationIncompleteReasons: [...incompleteReasons].sort(),
+    validationIncompleteReasons: [...incompleteReasons].sort(compareCodeUnits),
     appliedLimits: { ...limits, maxDiagnostics: options.limit },
-    exceededLimits: [...exceededLimits].sort(),
+    exceededLimits: [...exceededLimits].sort(compareCodeUnits),
     packMetadataFiles,
     jsonFiles: projectFiles.filter(
       (file) => file.normalizedPath.endsWith(".json") || file.normalizedPath === "pack.mcmeta",

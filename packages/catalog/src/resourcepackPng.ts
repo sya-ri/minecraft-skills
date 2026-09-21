@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./compareCodeUnits.js";
 /** Conservative resource limits for structural PNG validation. */
 export type ResourcepackPngValidationLimits = {
   maxInputBytes: number;
@@ -736,7 +737,7 @@ export function inspectResourcepackPng(
     omittedDiagnosticCount: summary.diagnosticTotal - summary.diagnostics.length,
     diagnosticsTruncated: summary.diagnosticTotal > summary.diagnostics.length,
     appliedLimits: limits,
-    exceededLimits: [...exceededLimits].sort(),
+    exceededLimits: [...exceededLimits].sort(compareCodeUnits),
     diagnostics: summary.diagnostics,
     notes: [
       "Validation covers the PNG signature, bounded chunk framing, scanned chunk CRCs, critical chunk structure, IHDR fields, and PLTE/tRNS placement and lengths.",

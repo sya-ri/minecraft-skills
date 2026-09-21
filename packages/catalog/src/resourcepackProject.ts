@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import {
   defaultResourcepackPngValidationLimits,
   inspectResourcepackPng,
@@ -488,7 +489,7 @@ function inspectRequestLimits(
     }
     if (file.content !== undefined) {
       inspectContent(file.content, true);
-      if (exceeded.size > 0) return [...exceeded].sort();
+      if (exceeded.size > 0) return [...exceeded].sort(compareCodeUnits);
       if (typeof file.content === "string" && /\.(json|mcmeta)$/i.test(file.path)) {
         try {
           inspectContent(JSON.parse(file.content) as unknown, false);
@@ -499,7 +500,7 @@ function inspectRequestLimits(
       }
     }
   }
-  return [...exceeded].sort();
+  return [...exceeded].sort(compareCodeUnits);
 }
 
 function resourcepackValidationNotes(version: string): string[] {
@@ -672,7 +673,7 @@ function collectItemModelReferences(
     if ((type === "minecraft:special" || type === "special") && typeof current.base === "string") {
       references.push(current.base);
     }
-    const keys = Object.keys(current).sort();
+    const keys = Object.keys(current).sort(compareCodeUnits);
     for (let index = keys.length - 1; index >= 0; index -= 1) {
       const key = keys[index];
       if (key !== undefined) {
@@ -693,7 +694,7 @@ function collectLegacyOverrideModelReferences(model: JsonObject): string[] {
     .filter(isJsonObject)
     .map((override) => override.model)
     .filter((reference): reference is string => typeof reference === "string")
-    .sort();
+    .sort(compareCodeUnits);
 }
 
 function localParentChain(options: {
@@ -778,8 +779,8 @@ function collectModelTextureUsage(options: {
       pending.push(descriptor.value);
     }
   }
-  textureKeys.sort();
-  references.sort();
+  textureKeys.sort(compareCodeUnits);
+  references.sort(compareCodeUnits);
   return {
     textureEntries: textureKeys.map((key) => ({ key, reference: `#${key}` })),
     references: references.map((reference) => ({
@@ -1119,7 +1120,7 @@ export function validateResourcepackReferenceGraph(
       duplicatePaths.add(projectFiles[index]?.normalizedPath ?? "");
     }
   }
-  for (const path of [...duplicatePaths].sort()) {
+  for (const path of [...duplicatePaths].sort(compareCodeUnits)) {
     addDiagnostic({
       severity: "error",
       code: "duplicate-file-path",
@@ -1342,7 +1343,7 @@ export function validateResourcepackReferenceGraph(
   for (const itemDefinition of itemDefinitions) {
     const references: string[] = [];
     collectItemModelReferences(itemDefinition.json, references, new Set());
-    for (const reference of references.sort()) {
+    for (const reference of references.sort(compareCodeUnits)) {
       checkedReferences += 1;
       const path = modelAssetPath(reference);
       if (!path) {
@@ -1614,7 +1615,7 @@ export function validateResourcepackReferenceGraph(
     return result;
   };
   const visitedParents = new Set<string>();
-  parentCycleTraversal: for (const rootPath of [...modelsByPath.keys()].sort()) {
+  parentCycleTraversal: for (const rootPath of [...modelsByPath.keys()].sort(compareCodeUnits)) {
     if (modelGraphLimitReached) {
       break;
     }
@@ -1668,7 +1669,7 @@ export function validateResourcepackReferenceGraph(
   }
   const exceededLimits = [
     ...new Set([...processingExceededLimits, ...soundValidation.exceededLimits]),
-  ].sort();
+  ].sort(compareCodeUnits);
   if (exceededLimits.length > 0) incompleteReasons.add("limit-exceeded");
   const summary = collector.finish();
 
@@ -1680,8 +1681,8 @@ export function validateResourcepackReferenceGraph(
     totalFiles: projectFiles.length,
     processedFiles: projectFiles.length,
     validationComplete,
-    validationIncompleteReasons: [...incompleteReasons].sort(),
-    unsupportedReferenceKinds: [...unsupportedReferenceKinds].sort(),
+    validationIncompleteReasons: [...incompleteReasons].sort(compareCodeUnits),
+    unsupportedReferenceKinds: [...unsupportedReferenceKinds].sort(compareCodeUnits),
     appliedLimits: { ...options.limits, maxDiagnostics: options.limit },
     exceededLimits,
     modelFiles: modelsByPath.size,
@@ -1699,8 +1700,8 @@ export function validateResourcepackReferenceGraph(
     pngFiles: pngFiles.length,
     inspectedPngFiles,
     pngValidationComplete,
-    pngValidationIncompleteReasons: [...pngValidationIncompleteReasons].sort(),
-    pngExceededLimits: [...pngExceededLimits].sort(),
+    pngValidationIncompleteReasons: [...pngValidationIncompleteReasons].sort(compareCodeUnits),
+    pngExceededLimits: [...pngExceededLimits].sort(compareCodeUnits),
     binaryFiles: projectFiles.filter((file) => binaryAssetPath(file.normalizedPath)).length,
     parsedJsonFiles,
     checkedReferences,

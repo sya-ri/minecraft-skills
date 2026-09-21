@@ -54,7 +54,7 @@ jobs:
           RETRIEVED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           DATA_VERSION="$(date -u +%Y.%m.%d)-${GITHUB_RUN_NUMBER}"
 
-          curl -fsSL -o /tmp/minecraft-version-manifest-v2.json \
+          curl --proto '=https' --proto-redir '=https' -fsSL -o /tmp/minecraft-version-manifest-v2.json \
             https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
           node packages/maintainer/dist/cli.mjs ingest-java-manifest \
             --input /tmp/minecraft-version-manifest-v2.json \
@@ -65,7 +65,7 @@ jobs:
             --retrieved-at "$RETRIEVED_AT"
           node packages/maintainer/dist/cli.mjs audit-java-reports
 
-          curl -fsSL -o /tmp/papermc-paper-project.json \
+          curl --proto '=https' --proto-redir '=https' -fsSL -o /tmp/papermc-paper-project.json \
             https://fill.papermc.io/v3/projects/paper
           node packages/maintainer/dist/cli.mjs ingest-paper-project \
             --project-json /tmp/papermc-paper-project.json \

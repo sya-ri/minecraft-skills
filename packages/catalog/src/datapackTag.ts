@@ -1,3 +1,4 @@
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { type DatapackProjectFile, inspectJsonTree } from "./datapackProject.js";
 
 export const datapackTagResolutionVersions = ["26.3", "26.2", "1.21.11"] as const;
@@ -560,7 +561,7 @@ export function resolveDatapackTagGraph(
     ],
     status,
     resolutionComplete: status === "resolved",
-    resolutionIncompleteReasons: [...reasons].sort(),
+    resolutionIncompleteReasons: [...reasons].sort(compareCodeUnits),
     members: status === "resolved" ? members.slice(0, input.limit) : [],
     memberCount: status === "resolved" ? members.length : 0,
     candidateMembers: status === "incomplete" ? members.slice(0, input.limit) : [],
@@ -573,7 +574,7 @@ export function resolveDatapackTagGraph(
     checkedReferences,
     references,
     optionalMissingReferences,
-    exceededLimits: [...exceeded].sort(),
+    exceededLimits: [...exceeded].sort(compareCodeUnits),
     appliedLimits: { ...input.limits, maxResultsPerSection: input.limit },
     truncated:
       members.length > input.limit ||

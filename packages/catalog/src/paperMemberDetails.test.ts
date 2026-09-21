@@ -69,6 +69,13 @@ afterEach(() => {
 });
 
 describe("Paper member details", () => {
+  it("normalizes long whitespace before paragraph boundaries", async () => {
+    const result = await lookup(
+      modern.replace("Records values.", `Records values.${" ".repeat(20_000)}`),
+    );
+    expect(result.descriptionText).toBe("Records values.\nEmpty values are preserved & reported.");
+  });
+
   it("extracts one exact overload's declaration and documented contract with source evidence", async () => {
     const fetch = fetchHtml();
     const result = await fetchPaperMemberDetails(surface, { memberUrl }, fetch);

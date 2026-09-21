@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { listZipEntries, readZipEntry, type ZipEntry } from "./zip.js";
 
 type SectionInventory = {
@@ -59,7 +60,7 @@ function countEntries(entries: string[], prefix: string): SectionInventory {
 
   return {
     entryCount: files.length,
-    namespaces: [...namespaces].sort(),
+    namespaces: [...namespaces].sort(compareCodeUnits),
     topLevel: [...groups.entries()]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([path, group]) => ({
@@ -73,7 +74,7 @@ function fileEntries(entries: ZipEntry[]): string[] {
   return entries
     .filter((entry) => !entry.directory)
     .map((entry) => entry.name)
-    .sort();
+    .sort(compareCodeUnits);
 }
 
 function readBundledServerInnerJar(serverJar: Buffer): Buffer {

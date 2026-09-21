@@ -1,4 +1,5 @@
 import { openZipArchive, type ZipArchive, type ZipEntry } from "@minecraft-skills/data";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { javaBinaryNameToClassEntryPath } from "./javaClassArchive.js";
 import {
   inspectJavaClassFile,
@@ -1321,7 +1322,7 @@ function buildResult(options: {
     unknownCount: options.collector.unknownCount,
     diagnosticsTruncated: finished.diagnosticsTruncated,
     omittedDiagnosticCount: finished.omittedDiagnosticCount,
-    incompleteReasons: [...incompleteReasons].sort(),
+    incompleteReasons: [...incompleteReasons].sort(compareCodeUnits),
     archive: {
       bytes: options.archiveBytes,
       entriesInspected: options.entries.length,

@@ -135,7 +135,7 @@ function decodeHtml(value: string): string {
 }
 
 function stripTags(value: string): string {
-  return decodeHtml(value.replaceAll(/<[^>]*>/g, ""))
+  return decodeHtml(value.replaceAll(/<[^<>]*>/g, ""))
     .replaceAll(/\s+/g, " ")
     .trim();
 }
@@ -206,9 +206,12 @@ export function extractPaperDirectSupertypes(options: {
         : null;
       if (activeListItemType) {
         addSupertype(activeListItemType, parentTypes.at(-1) ?? null);
-        const additionalRelations = content.match(
-          /\((?:also extends|implements)\s+([\s\S]*?)\)\s*$/i,
-        )?.[1];
+        const relationStart = /\((?:also extends|implements)\s+/i.exec(content);
+        const trimmedContent = content.trimEnd();
+        const additionalRelations =
+          relationStart && trimmedContent.endsWith(")")
+            ? trimmedContent.slice(relationStart.index + relationStart[0].length, -1)
+            : null;
         if (additionalRelations) {
           for (const anchor of additionalRelations.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/gi)) {
             addSupertype(
@@ -415,16 +418,13 @@ export function buildLegacyPaperApiSurface(options: {
     .map((match) => {
       const href = decodeHtml(match[1] ?? "");
       const label = stripTags(match[2] ?? "");
-      const description = stripTags(match[3] ?? "");
       const htmlPath = href.split("#")[0] ?? "";
       const typePath = htmlPath.replace(/\.html$/, "");
       const segments = typePath.split("/").filter(Boolean);
       const typeName = segments.pop() ?? "";
       const packageName = segments.join(".");
       const name = label.split("(")[0]?.trim() ?? label;
-      const kind = description.toLowerCase().includes("method")
-        ? memberKind(typeName, name, label, href)
-        : memberKind(typeName, name, label, href);
+      const kind = memberKind(typeName, name, label, href);
       return {
         packageName,
         typeName,

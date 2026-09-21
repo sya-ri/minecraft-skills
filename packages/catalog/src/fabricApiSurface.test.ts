@@ -525,6 +525,8 @@ describe("Fabric API surface", () => {
       "forbidden declaration",
     ],
     ["unclosed XML", metadata.replace("</metadata>", ""), "unclosed"],
+    ["repeated tag starts", "<".repeat(20_000) + metadata, "text outside the root"],
+    ["unescaped tag start", metadata.replace("<groupId>", "<groupId><"), "unsupported XML"],
     [
       "duplicate version list",
       metadata.replace(

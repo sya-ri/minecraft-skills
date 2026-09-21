@@ -9,6 +9,18 @@ function diagnosticCodes(content: string): string[] {
 }
 
 describe("validateServerProperties", () => {
+  it("redacts embedded and scheme-relative URL credentials", () => {
+    const result = validateServerProperties({
+      content: [
+        "motd=Visit https://user:privatePassword@example.invalid/pack",
+        "resource-pack=//user:otherPassword@example.invalid/pack.zip",
+      ].join("\n"),
+    });
+    expect(result.counts.redactedValues).toBe(2);
+    expect(JSON.stringify(result)).not.toContain("privatePassword");
+    expect(JSON.stringify(result)).not.toContain("otherPassword");
+  });
+
   it("parses Java Properties comments, separators, escapes, and continuations", () => {
     const result = validateServerProperties({
       targetVersion: "1.21.11",

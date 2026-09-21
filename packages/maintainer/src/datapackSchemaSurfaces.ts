@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { listZipEntries, readZipEntry, type ZipEntry } from "./zip.js";
 
 type ValueKind = "array" | "boolean" | "null" | "number" | "object" | "string";
@@ -52,7 +53,7 @@ function fileEntries(entries: ZipEntry[]): string[] {
   return entries
     .filter((entry) => !entry.directory)
     .map((entry) => entry.name)
-    .sort();
+    .sort(compareCodeUnits);
 }
 
 function readBundledServerInnerJar(serverJar: Buffer): Buffer {
@@ -162,7 +163,7 @@ function serializeFields(
       valueKinds: [...field.valueKinds.entries()]
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([kind, count]) => ({ kind, count })),
-      samples: field.samples.sort(),
+      samples: field.samples.sort(compareCodeUnits),
     }));
 }
 

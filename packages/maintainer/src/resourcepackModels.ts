@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { compareCodeUnits } from "./compareCodeUnits.js";
 import { listZipEntries, readZipEntry } from "./zip.js";
 
 type CountSample = {
@@ -212,7 +213,7 @@ export function buildResourcepackModelSummary(options: {
   const entries = listZipEntries(jar)
     .filter((entry) => !entry.directory)
     .map((entry) => entry.name)
-    .sort();
+    .sort(compareCodeUnits);
   const modelFiles = entries.filter(
     (entry) => entry.startsWith("assets/") && entry.includes("/models/") && entry.endsWith(".json"),
   );

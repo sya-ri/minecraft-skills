@@ -354,7 +354,7 @@ function appendXmlText(stack: XmlNode[], text: string, label: string): void {
     if (text.trim()) throw new Error(`${label} has text outside the root element`);
     return;
   }
-  if (text.includes("&") || hasUnsupportedControl(text)) {
+  if (text.includes("&") || text.includes("<") || hasUnsupportedControl(text)) {
     throw new Error(`${label} contains unsupported XML text encoding`);
   }
   current.text += text;
@@ -374,7 +374,7 @@ function parseBoundedXml(xml: string, label: string): XmlNode {
   let root: XmlNode | undefined;
   let cursor = 0;
   let elementCount = 0;
-  for (const match of body.matchAll(/<[^>]*>/g)) {
+  for (const match of body.matchAll(/<[^<>]*>/g)) {
     const index = match.index;
     const tag = match[0];
     appendXmlText(stack, body.slice(cursor, index), label);
