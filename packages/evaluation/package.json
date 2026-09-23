@@ -1,6 +1,6 @@
 {
   "name": "@minecraft-skills/evaluation-core",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "type": "module",
   "description": "Private local evaluation-history storage for Minecraft Skills.",

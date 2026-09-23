@@ -4,6 +4,14 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+## 0.1.10 - 2026-09-23
+
+### Changed
+
+- Updated all workspace versions and internal dependencies to 0.1.10. Data version
+  `2026.09.23-1` pins downloadable surfaces to the immutable `v0.1.10` tag with verified sizes
+  and SHA-256 hashes.
+
 ### Fixed
 
 - Paper 1.20.1 member searches now include declarations from known Javadocs supertypes,
