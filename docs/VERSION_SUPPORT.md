@@ -26,10 +26,12 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
 - Resourcepack coverage: vanilla asset paths and model summaries for 51/51 releases.
 - Paper support metadata: 47 Minecraft versions, latest 26.3 build 5 (ALPHA).
 - Paper API package indexes: 47/47 supported Paper versions.
-- Paper API type/member surfaces: 39/47 supported Paper versions.
+- Paper API type/member surfaces: 39/47 supported Paper versions. Inherited member searches
+  have Javadocs hierarchy coverage for 1.20.1, 26.2 and 26.3; other surfaces remain
+  declared-members-only.
 - Downloadable heavy surfaces include command trees, block states, entity metadata, datapack
   schema surfaces, Paper API surfaces and resourcepack models. The manifest lists their hashes
-  and immutable release URLs; installed packages fetch them into the runtime cache on demand.
+  and immutable Git revision URLs; installed packages fetch them into the runtime cache on demand.
 
 ## Aliases
 

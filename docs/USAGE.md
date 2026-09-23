@@ -257,6 +257,9 @@ official project-setup documentation URL alongside the resolved coordinate.
 
 Paper indexes prove API-name presence, not runtime behavior, nullability, overload semantics,
 thread safety, or Folia safety. Resolve a matching authoring plan before turning names into code.
+For Paper 1.20.1, a type-scoped `members` search on `org.bukkit.entity.Player` also includes
+methods declared by known supertypes such as `PluginMessageRecipient`; inspect
+`inheritanceCoverage` and `searchedTypes` because other versions may remain declared-only.
 
 #### `minecraft-skills plugin velocity`
 

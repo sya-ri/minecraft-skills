@@ -5052,6 +5052,24 @@ describe("catalog", () => {
     ).toBe(true);
   });
 
+  it("finds inherited plugin messaging members on Paper 1.20.1", () => {
+    const result = searchPaperMembers({
+      version: "1.20.1",
+      type: "org.bukkit.entity.Player",
+      contains: "getListeningPluginChannels",
+      limit: 10,
+    });
+
+    expect(result.inheritanceCoverage).toBe("javadocs-overview-tree");
+    expect(result.searchedTypes).toContain("org.bukkit.plugin.messaging.PluginMessageRecipient");
+    expect(result.members).toContainEqual(
+      expect.objectContaining({
+        qualifiedTypeName: "org.bukkit.plugin.messaging.PluginMessageRecipient",
+        name: "getListeningPluginChannels",
+      }),
+    );
+  });
+
   it("isolates returned Paper type hierarchies from the cached surface", () => {
     const player = searchPaperTypes({
       version: "26.2",

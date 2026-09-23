@@ -6,6 +6,8 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
+- Paper 1.20.1 member searches now include declarations from known Javadocs supertypes,
+  including plugin messaging methods inherited by `Player`.
 - Paper member details now resolve modern Javadocs entries whose search index omits a method
   signature from the URL, including overloaded methods that previously shared one ambiguous URL.
 - Paper API references now use the official build-based dependency version for Minecraft 26.1+
