@@ -1,30 +1,5 @@
 # Usage
 
-Command details: Catalog `getCommandDetails({ version: "26.3", path: ["execute", "as", "targets"], depth: 1 })`, MCP `get_command_details`, or CLI `minecraft-skills minecraft command-details 26.3 execute as targets --depth 1`. Paths name syntax-tree nodes, including argument names; they do not contain player argument values. Results preserve parser properties and explicit redirects, bound depth/node count, and report truncation. Missing data returns fetch guidance for `command-tree-surface`; unsupported versions do not substitute another version.
-
-## Entity metadata declarations
-
-`minecraft-skills minecraft entity-metadata 26.3 minecraft:armor_stand` returns inherited
-static accessor indexes, value types and serializer identities with official source hashes.
-Catalog exposes `getEntityMetadata({ version, entityId })`; MCP exposes `get_entity_metadata`.
-Fetch `entity-metadata-surface` explicitly when an installed package reports uncached data.
-Exact versions 26.3, 26.2 and 1.21.11 are supported. Instance defaults and bit meanings are outside
-the evidence. See [entity metadata](ENTITY_METADATA.md) for coverage and reproduction.
-
-## Block properties and states
-
-Find a block ID with `minecraft registry-entries`, fetch the versioned data with
-`minecraft-skills data fetch block-state-surface --version 26.3`, then run
-`minecraft-skills minecraft block-state 26.3 minecraft:oak_stairs --limit 20`.
-Use `--offset` to continue a state page; the full property map and explicit default state are
-returned on every page. MCP exposes `get_block_state_definition` with `version`, `blockId`,
-optional `offset`, and `limit`; Catalog exposes `getBlockStateDefinition` with the same fields.
-
-Source coverage is 26.3, 26.2 and 1.21.11. `unavailable` distinguishes unsupported versions
-from uncached downloadable data, while `not-found` means the loaded version has no such ID.
-State IDs apply only to the selected version. These reports do not establish hardness,
-collision shapes, or in-game behavior.
-
 This guide maps the public minecraft-skills interfaces and explains what each command or capability
 provides. Install the CLI or MCP server first by following the
 [installation instructions](../README.md#installation).
@@ -127,6 +102,9 @@ and answer in the user's requested language.
 | `search <query>` | Search catalog guidance, references, datasets, and support entries. |
 | `search-all <query>` | Search across commands, registries, vanilla paths, models, assets, Paper APIs, and events. |
 | `registry-entries [version]` | Search official registry entry indexes. |
+| `command-details <version> [<node> ...]` | Inspect bounded command-tree nodes, parser properties, and redirects; see [command details](#command-details). |
+| `entity-metadata <version> <entity-id>` | Inspect extracted static entity accessor declarations; see [entity metadata](#entity-metadata-declarations). |
+| `block-state <version> <block-id>` | Read block properties, default state, and paged state IDs; see [block properties and states](#block-properties-and-states). |
 | `compare-registry-entries <from> <to>` | Compare indexed entries and protocol IDs between versions. |
 | `analyze-log <file>` | Structure a bounded Minecraft log, crash report, exception chain, and explicit Mixin/class-loading evidence. |
 | `inspect-java-targets <jar> --java <release> [--enable-preview]` | Inspect every bounded classfile target and standard Multi-Release selection for supplied Java 8–26. |
@@ -137,18 +115,26 @@ and answer in the user's requested language.
 | `validate-access-list <file>` | Validate canonical whitelist, operator, and ban-list JSON without returning private values. |
 | `validate-mixin-config <file>` | Preflight a bounded Mixin configuration and optional archive-entry metadata. |
 
-`minecraft search-all` / MCP `search_all` remains read-only and offline. Missing downloadable
-data pack schema or Paper API indexes no longer prevent searches of available sources. Results
-include `searchComplete: false`, structured `unavailableSurfaces`, and human-readable `gaps`.
-For a manifest-listed download, an entry's `fetch` object can be passed to MCP `fetch_data`;
-the corresponding CLI recovery is `minecraft-skills data fetch <kind> --version <version>`.
-Fetch explicitly and retry to include that index. An unsupported Paper version is reported without
-substituting another version's API. Corrupt indexed data still raises an error.
+#### Command details
 
-`searchComplete` concerns the availability of sources within the selected domain, including the
-optional community asset cache; it does not certify full Minecraft knowledge or client behavior.
-`truncated` independently indicates result limits, not missing sources. An empty partial result is
-not evidence that a type, member, or behavior does not exist.
+Run `minecraft-skills minecraft command-details 26.3 execute as targets --depth 1` to inspect syntax-tree nodes, using node names rather than player argument values.
+Results include parser properties, redirects, and truncation; fetch `command-tree-surface` if the data is uncached.
+
+#### Entity metadata declarations
+
+`minecraft-skills minecraft entity-metadata 26.3 minecraft:armor_stand` returns inherited static accessor indexes, types, and serializer identities.
+See [entity metadata](ENTITY_METADATA.md) for supported versions, downloads, and evidence limits; instance defaults and bit meanings are not established by this lookup.
+
+#### Block properties and states
+
+Fetch `block-state-surface` for the target version, then run `minecraft-skills minecraft block-state 26.3 minecraft:oak_stairs --limit 20`.
+Use `--offset` for additional states. Results include properties and the default state; state IDs are version-specific and do not establish behavior such as hardness or collision.
+
+#### Search coverage
+
+`minecraft search-all` is read-only and offline. A partial result reports `searchComplete: false`, `unavailableSurfaces`, and `gaps`.
+Use the supplied fetch guidance to download missing data explicitly and retry; unsupported versions are not replaced by another version.
+`truncated` indicates result limits separately from source availability. An empty partial result does not prove absence, and a complete search does not prove runtime behavior.
 
 See [Performance Time-Series Analysis](../packages/cli/README.md#performance-time-series-analysis)
 for the input contract and [Mixin Configuration Validation](MIXIN_CONFIG_VALIDATION.md) for that
@@ -251,15 +237,8 @@ This group also supports every [shared authoring command](#shared-authoring-comm
 | `events <query>` | Find event candidates and cross-check available version evidence. |
 | `validate-jar <file.jar>` | Preflight a bounded local Paper/Bukkit plugin JAR and its active descriptor. |
 
-`api` follows Paper's official dependency-version boundary: versions through 1.21.11 use
-`<version>-R0.1-SNAPSHOT`, while 26.1 and later use `<version>.build.+`. The result includes the
-official project-setup documentation URL alongside the resolved coordinate.
-
-Paper indexes prove API-name presence, not runtime behavior, nullability, overload semantics,
-thread safety, or Folia safety. Resolve a matching authoring plan before turning names into code.
-For Paper 1.20.1, a type-scoped `members` search on `org.bukkit.entity.Player` also includes
-methods declared by known supertypes such as `PluginMessageRecipient`; inspect
-`inheritanceCoverage` and `searchedTypes` because other versions may remain declared-only.
+`api` returns the version-appropriate dependency coordinate and official setup link.
+API indexes establish names, not runtime behavior or thread safety. For inherited-member searches, check `inheritanceCoverage` and `searchedTypes` rather than assuming complete hierarchy coverage.
 
 #### `minecraft-skills plugin velocity`
 
@@ -282,29 +261,9 @@ methods declared by known supertypes such as `PluginMessageRecipient`; inspect
 | `members <game-version>` | Search declared public Fabric API members with `--query`, `--type`, `--kind`, `--package-prefix`, and `--limit`. |
 | `member-details <game-version> --fabric-api-version <version> --javadoc-path <path> --javadoc-fragment <fragment>` | Extract bounded declaration and documentation text for one exact member returned by `members`. |
 
-Both searches resolve the highest Fabric API numeric version with the exact Minecraft suffix,
-verify the official fat Javadoc archive, and return bounded structured evidence without prose.
-Use `--timeout-ms` to set the shared network deadline (default 15,000 ms, maximum 60,000 ms).
-The default result limit is 50 and the maximum is 200. Fabric API's `net.fabricmc.fabric.api`
-namespace and its dot-delimited subpackages are covered; implementation and Loader packages are
-excluded. Mojang client APIs, inherited members, behavior,
-return types, generic bounds, and parameter names remain unverified. See
-[the source and parsing boundaries](SOURCE_STRATEGY.md#fabric-api-surface).
-
-```sh
-minecraft-skills fabric api types 26.2 --query LevelRenderEvents --limit 10
-minecraft-skills fabric api members 26.2 --type ArmorRenderer --query register --kind method
-minecraft-skills fabric api member-details 26.2 --fabric-api-version 0.160.0+26.2 \
-  --javadoc-path net/fabricmc/fabric/api/client/rendering/v1/FabricRenderState.html \
-  --javadoc-fragment 'clearExtraData()'
-```
-
-Copy `fabricApiVersion`, `javadocPath`, and raw `javadocFragment` from one `members` result. The
-detail lookup rejects artifact drift instead of silently substituting a newer matching artifact,
-then extracts only that indexed member from the verified archive. Returned prose can establish
-what the selected Javadoc says, but it does not infer undocumented runtime behavior. In particular,
-the current 26.2 `FabricRenderState` page describes `clearExtraData()` without stating when Fabric
-calls it automatically or how long reused render-state data remains valid.
+Searches cover public Fabric API types and declared members for the exact Minecraft version.
+For `member-details`, copy `fabricApiVersion`, `javadocPath`, and `javadocFragment` from a `members` result to keep the lookup on the same artifact.
+Javadoc text supports documented contracts, not undocumented runtime guarantees; see [source and parsing boundaries](SOURCE_STRATEGY.md#fabric-api-surface) for coverage and limits.
 
 #### `minecraft-skills fabric mods`
 
@@ -449,17 +408,10 @@ for package-level tool details and input schemas.
 
 ### Evaluation History
 
-When local recording is enabled, each ordinary tool result appends an assistant-audience evaluation
-receipt with its stored record ID and carries the same ID in
-`_meta["minecraft-skills/evaluationRecordId"]`. `get_evaluation_status` reports the effective state
-and current MCP/catalog data versions, `list_pending_evaluations` returns up to 100 newest
-process-local unevaluated calls with their recorded MCP/catalog data versions, and
-`record_tool_evaluation` records the information need, 1-5 score, comment, and optional missing
-features. Evaluate each call immediately from its same-call receipt. Never map multiple same-name
-pending calls by position or timestamps. Reuse stable keys for the same in-scope capability, and put
-wrong-tool or out-of-scope gaps in the comment instead of `missingFeatures`. These management tools
-are excluded from history. Pending results contain only ID, timestamps, tool, outcome, and recorded
-MCP/catalog data versions; they do not repeat the raw request or response.
+When optional recording is enabled, ordinary tool results include an evaluation receipt and record ID.
+Use `get_evaluation_status`, `list_pending_evaluations`, and `record_tool_evaluation` to inspect recording and evaluate results.
+Evaluate each call from its own receipt; do not match same-name calls by order or timestamp.
+Reuse stable missing-feature keys for the same capability. See [evaluation history](EVALUATION_HISTORY.md) for privacy, record fields, and scoring guidance.
 
 ### Authoring Guidance
 
