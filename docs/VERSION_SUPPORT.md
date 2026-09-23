@@ -2,7 +2,7 @@
 
 - Command syntax trees cover Java 26.3, 26.2 and 1.21.11. No runtime permission, execution, context suggestions, or inferred redirect semantics are claimed.
 
-This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.9. It is
+This file summarizes the checked-in Java Edition version coverage for minecraft-skills 0.1.10. It is
 derived from the same catalog data used by the CLI, package API, and MCP server.
 
 Use this page to decide whether an AI agent can safely target a Minecraft version before generating
@@ -31,7 +31,7 @@ version. It does not prove behavior beyond the surface described in `docs/USAGE.
   declared-members-only.
 - Downloadable heavy surfaces include command trees, block states, entity metadata, datapack
   schema surfaces, Paper API surfaces and resourcepack models. The manifest lists their hashes
-  and immutable Git revision URLs; installed packages fetch them into the runtime cache on demand.
+  and immutable release-tag URLs; installed packages fetch them into the runtime cache on demand.
 
 ## Aliases
 

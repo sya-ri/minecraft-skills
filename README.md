@@ -12,8 +12,9 @@ that create or review Java data packs, Java resource packs, and Paper plugins.
 minecraft-skills helps agents verify Minecraft facts before writing code or pack files and handle
 incomplete evidence without guessing.
 
-Version 0.1.9 includes Java 26.3 data and Paper 26.3 build 5 (ALPHA), with exact-version
-command trees, block states, entity metadata and tag resolution. See the
+Version 0.1.10 includes Java 26.3 data and Paper 26.3 build 5 (ALPHA), with exact-version
+command trees, block states, entity metadata and tag resolution. Paper 1.20.1 member searches
+now include inherited declarations. See the
 [version support matrix](docs/VERSION_SUPPORT.md) for coverage and limits.
 
 ## Installation
