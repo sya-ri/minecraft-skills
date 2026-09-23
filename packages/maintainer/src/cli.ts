@@ -422,10 +422,12 @@ function requireSourcePolicyIntegrity(root: string, messages: string[]): void {
 }
 
 function requireDocumentationIntegrity(root: string, messages: string[]): void {
-  const packageJson = readJsonFile<{ version: string }>(join(root, "package.json"));
   const versionSupport = readFileSync(join(root, "docs/VERSION_SUPPORT.md"), "utf8");
-  if (!versionSupport.includes(`minecraft-skills ${packageJson.version}`)) {
-    messages.push("docs/VERSION_SUPPORT.md must reference the current workspace version");
+  if (!versionSupport.includes("## Version Table")) {
+    messages.push("docs/VERSION_SUPPORT.md must include a version table");
+  }
+  if (!versionSupport.includes(`| latestJava | ${getCatalog().latest.java} |`)) {
+    messages.push("docs/VERSION_SUPPORT.md latestJava alias must match the catalog");
   }
 
   const forbiddenSkillEntrypointPatterns = [
