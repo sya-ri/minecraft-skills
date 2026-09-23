@@ -1,30 +1,5 @@
 # Usage
 
-Command details: Catalog `getCommandDetails({ version: "26.3", path: ["execute", "as", "targets"], depth: 1 })`, MCP `get_command_details`, or CLI `minecraft-skills minecraft command-details 26.3 execute as targets --depth 1`. Paths name syntax-tree nodes, including argument names; they do not contain player argument values. Results preserve parser properties and explicit redirects, bound depth/node count, and report truncation. Missing data returns fetch guidance for `command-tree-surface`; unsupported versions do not substitute another version.
-
-## Entity metadata declarations
-
-`minecraft-skills minecraft entity-metadata 26.3 minecraft:armor_stand` returns inherited
-static accessor indexes, value types and serializer identities with official source hashes.
-Catalog exposes `getEntityMetadata({ version, entityId })`; MCP exposes `get_entity_metadata`.
-Fetch `entity-metadata-surface` explicitly when an installed package reports uncached data.
-Exact versions 26.3, 26.2 and 1.21.11 are supported. Instance defaults and bit meanings are outside
-the evidence. See [entity metadata](ENTITY_METADATA.md) for coverage and reproduction.
-
-## Block properties and states
-
-Find a block ID with `minecraft registry-entries`, fetch the versioned data with
-`minecraft-skills data fetch block-state-surface --version 26.3`, then run
-`minecraft-skills minecraft block-state 26.3 minecraft:oak_stairs --limit 20`.
-Use `--offset` to continue a state page; the full property map and explicit default state are
-returned on every page. MCP exposes `get_block_state_definition` with `version`, `blockId`,
-optional `offset`, and `limit`; Catalog exposes `getBlockStateDefinition` with the same fields.
-
-Source coverage is 26.3, 26.2 and 1.21.11. `unavailable` distinguishes unsupported versions
-from uncached downloadable data, while `not-found` means the loaded version has no such ID.
-State IDs apply only to the selected version. These reports do not establish hardness,
-collision shapes, or in-game behavior.
-
 This guide maps the public minecraft-skills interfaces and explains what each command or capability
 provides. Install the CLI or MCP server first by following the
 [installation instructions](../README.md#installation).
@@ -127,6 +102,9 @@ and answer in the user's requested language.
 | `search <query>` | Search catalog guidance, references, datasets, and support entries. |
 | `search-all <query>` | Search across commands, registries, vanilla paths, models, assets, Paper APIs, and events. |
 | `registry-entries [version]` | Search official registry entry indexes. |
+| `command-details <version> [<node> ...]` | Inspect bounded command-tree nodes, parser properties, and redirects; see [command details](#command-details). |
+| `entity-metadata <version> <entity-id>` | Inspect extracted static entity accessor declarations; see [entity metadata](#entity-metadata-declarations). |
+| `block-state <version> <block-id>` | Read block properties, default state, and paged state IDs; see [block properties and states](#block-properties-and-states). |
 | `compare-registry-entries <from> <to>` | Compare indexed entries and protocol IDs between versions. |
 | `analyze-log <file>` | Structure a bounded Minecraft log, crash report, exception chain, and explicit Mixin/class-loading evidence. |
 | `inspect-java-targets <jar> --java <release> [--enable-preview]` | Inspect every bounded classfile target and standard Multi-Release selection for supplied Java 8–26. |
@@ -136,6 +114,35 @@ and answer in the user's requested language.
 | `suggest-lookups <task>` | Suggest the smallest lookup sequence for a task. |
 | `validate-access-list <file>` | Validate canonical whitelist, operator, and ban-list JSON without returning private values. |
 | `validate-mixin-config <file>` | Preflight a bounded Mixin configuration and optional archive-entry metadata. |
+
+#### Command details
+
+Command details: Catalog `getCommandDetails({ version: "26.3", path: ["execute", "as", "targets"], depth: 1 })`, MCP `get_command_details`, or CLI `minecraft-skills minecraft command-details 26.3 execute as targets --depth 1`. Paths name syntax-tree nodes, including argument names; they do not contain player argument values. Results preserve parser properties and explicit redirects, bound depth/node count, and report truncation. Missing data returns fetch guidance for `command-tree-surface`; unsupported versions do not substitute another version.
+
+#### Entity metadata declarations
+
+`minecraft-skills minecraft entity-metadata 26.3 minecraft:armor_stand` returns inherited
+static accessor indexes, value types and serializer identities with official source hashes.
+Catalog exposes `getEntityMetadata({ version, entityId })`; MCP exposes `get_entity_metadata`.
+Fetch `entity-metadata-surface` explicitly when an installed package reports uncached data.
+Exact versions 26.3, 26.2 and 1.21.11 are supported. Instance defaults and bit meanings are outside
+the evidence. See [entity metadata](ENTITY_METADATA.md) for coverage and reproduction.
+
+#### Block properties and states
+
+Find a block ID with `minecraft registry-entries`, fetch the versioned data with
+`minecraft-skills data fetch block-state-surface --version 26.3`, then run
+`minecraft-skills minecraft block-state 26.3 minecraft:oak_stairs --limit 20`.
+Use `--offset` to continue a state page; the full property map and explicit default state are
+returned on every page. MCP exposes `get_block_state_definition` with `version`, `blockId`,
+optional `offset`, and `limit`; Catalog exposes `getBlockStateDefinition` with the same fields.
+
+Source coverage is 26.3, 26.2 and 1.21.11. `unavailable` distinguishes unsupported versions
+from uncached downloadable data, while `not-found` means the loaded version has no such ID.
+State IDs apply only to the selected version. These reports do not establish hardness,
+collision shapes, or in-game behavior.
+
+#### Search coverage
 
 `minecraft search-all` / MCP `search_all` remains read-only and offline. Missing downloadable
 data pack schema or Paper API indexes no longer prevent searches of available sources. Results
