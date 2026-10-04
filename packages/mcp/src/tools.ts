@@ -6,7 +6,6 @@ import {
   blockbenchProjectInspectionLimits,
   type CatalogSearchKind,
   type CommandComparisonOptions,
-  type CommandSearchOptions,
   classifyPackFiles,
   cleanCachedData,
   compareCommands,
@@ -130,14 +129,10 @@ import {
   mixinConfigValidationLimits,
   modrinthCompatibilityLimits,
   normalizeMigrationBlockStates,
-  type PaperMemberSearchOptions,
-  type PaperTypeSearchOptions,
   paperMemberDetailsLimits,
   paperPluginJarValidationLimits,
   playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
-  type RegistryEntrySearchOptions,
-  type ResourcepackModelPathSearchOptions,
   type ResourcepackPngAlphaBoundsLimits,
   type ResourcepackPngAlphaBoundsRequirements,
   type ResourcepackPngValidationLimits,
@@ -157,6 +152,8 @@ import {
   searchDatapackSchema,
   searchFabricApiMembers,
   searchFabricApiTypes,
+  searchInputJsonSchemas,
+  searchInputs,
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperEvents,
@@ -1357,19 +1354,7 @@ export const tools: ToolDefinition[] = [
     name: "search_registry_entries",
     description:
       "Search version-specific registry entry IDs and optional protocol IDs generated from official Minecraft server reports.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", default: "latest" },
-        registry: { type: "string" },
-        exact: { type: "string" },
-        contains: { type: "string" },
-        prefix: { type: "string" },
-        limit: { type: "number", default: 50 },
-      },
-      additionalProperties: false,
-    },
+    inputSchema: searchInputJsonSchemas.registryEntries,
   },
   {
     name: "compare_registry_entries",
@@ -2788,18 +2773,7 @@ export const tools: ToolDefinition[] = [
     name: "search_commands",
     description:
       "Search executable Minecraft command syntax paths generated from official server reports.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", default: "latest" },
-        contains: { type: "string" },
-        prefix: { type: "string" },
-        parser: { type: "string" },
-        limit: { type: "number", default: 50 },
-      },
-      additionalProperties: false,
-    },
+    inputSchema: searchInputJsonSchemas.commands,
   },
   {
     name: "compare_commands",
@@ -2837,18 +2811,7 @@ export const tools: ToolDefinition[] = [
     name: "search_resourcepack_models",
     description:
       "Search vanilla resource pack model and item definition JSON paths for a bundled Java version.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", default: "latest" },
-        kind: { type: "string", enum: ["model", "item-definition"] },
-        contains: { type: "string" },
-        prefix: { type: "string" },
-        limit: { type: "number", default: 50 },
-      },
-      additionalProperties: false,
-    },
+    inputSchema: searchInputJsonSchemas.resourcepackModels,
   },
   {
     name: "get_resourcepack_assets_status",
@@ -2884,22 +2847,7 @@ export const tools: ToolDefinition[] = [
     name: "search_resourcepack_assets",
     description:
       "Search a cached InventivetalentDev/minecraft-assets path index for vanilla resource pack asset paths.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        edition: { type: "string", enum: ["java"], default: "java" },
-        version: { type: "string", default: "latest" },
-        ref: { type: "string" },
-        prefix: { type: "string" },
-        contains: { type: "string" },
-        suffix: { type: "string" },
-        extension: { type: "string" },
-        limit: { type: "number", default: 50 },
-        fetch: { type: "boolean", default: false },
-        force: { type: "boolean", default: false },
-      },
-      additionalProperties: false,
-    },
+    inputSchema: searchInputJsonSchemas.resourcepackAssets,
   },
   {
     name: "get_resourcepack_asset",
@@ -3102,42 +3050,13 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_paper_types",
     description: "Search Paper Javadocs type names by package or text for a supported version.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        version: { type: "string", default: "latest" },
-        packageName: { type: "string" },
-        contains: { type: "string" },
-        limit: { type: "number", default: 50 },
-      },
-      additionalProperties: false,
-    },
+    inputSchema: searchInputJsonSchemas.paperTypes,
   },
   {
     name: "search_paper_members",
     description:
       "Search Paper Javadocs member labels by type, package, kind, or text for a supported version. Type-scoped searches include known supertypes with Javadocs hierarchy coverage and preserve declaring types. Read-only by default: explicitly set fetchMissing:true to download a missing, exact-version manifest-verified surface into the local cache, then search. For declarations and documentation, pass a returned URL to get_paper_member_details. Search labels alone do not prove behavioral guarantees.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        version: { type: "string", default: "latest" },
-        type: { type: "string" },
-        packageName: { type: "string" },
-        fetchMissing: {
-          type: "boolean",
-          default: false,
-          description:
-            "Explicitly allow downloading the missing exact-version surface into the local cache (manifest size and SHA-256 verified; 30-second deadline). Does not refresh existing data.",
-        },
-        kind: {
-          type: "string",
-          enum: ["constructor", "method", "field-or-enum-constant", "unknown"],
-        },
-        contains: { type: "string" },
-        limit: { type: "number", default: 50 },
-      },
-      additionalProperties: false,
-    },
+    inputSchema: searchInputJsonSchemas.paperMembers,
   },
   {
     name: "get_paper_member_details",
@@ -4685,16 +4604,11 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       );
     }
     if (name === "search_registry_entries") {
-      const registryOptions: RegistryEntrySearchOptions = {
-        edition,
-        version: typeof args.version === "string" ? args.version : "latest",
-      };
-      if (typeof args.registry === "string") registryOptions.registry = args.registry;
-      if (typeof args.exact === "string") registryOptions.exact = args.exact;
-      if (typeof args.contains === "string") registryOptions.contains = args.contains;
-      if (typeof args.prefix === "string") registryOptions.prefix = args.prefix;
-      if (typeof args.limit === "number") registryOptions.limit = args.limit;
-      return text(searchRegistryEntries(registryOptions));
+      return text(
+        searchRegistryEntries(
+          searchInputs.registryEntries.assert(input === undefined ? {} : input),
+        ),
+      );
     }
     if (name === "compare_registry_entries") {
       if (typeof args.from !== "string" || typeof args.to !== "string") {
@@ -5642,23 +5556,7 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       );
     }
     if (name === "search_commands") {
-      const commandOptions: CommandSearchOptions = {
-        edition,
-        version: typeof args.version === "string" ? args.version : "latest",
-      };
-      if (typeof args.contains === "string") {
-        commandOptions.contains = args.contains;
-      }
-      if (typeof args.prefix === "string") {
-        commandOptions.prefix = args.prefix;
-      }
-      if (typeof args.parser === "string") {
-        commandOptions.parser = args.parser;
-      }
-      if (typeof args.limit === "number") {
-        commandOptions.limit = args.limit;
-      }
-      return text(searchCommands(commandOptions));
+      return text(searchCommands(searchInputs.commands.assert(input === undefined ? {} : input)));
     }
     if (name === "compare_commands") {
       if (typeof args.from !== "string" || typeof args.to !== "string") {
@@ -5688,23 +5586,11 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       return text(getResourcepackModelSummary(edition, version));
     }
     if (name === "search_resourcepack_models") {
-      const searchOptions: ResourcepackModelPathSearchOptions = {
-        edition,
-        version: typeof args.version === "string" ? args.version : "latest",
-      };
-      if (args.kind === "model" || args.kind === "item-definition") {
-        searchOptions.kind = args.kind;
-      }
-      if (typeof args.contains === "string") {
-        searchOptions.contains = args.contains;
-      }
-      if (typeof args.prefix === "string") {
-        searchOptions.prefix = args.prefix;
-      }
-      if (typeof args.limit === "number") {
-        searchOptions.limit = args.limit;
-      }
-      return text(searchResourcepackModelPaths(searchOptions));
+      return text(
+        searchResourcepackModelPaths(
+          searchInputs.resourcepackModels.assert(input === undefined ? {} : input),
+        ),
+      );
     }
     if (name === "get_resourcepack_assets_status") {
       const requested = typeof args.version === "string" ? args.version : "latest";
@@ -5732,27 +5618,18 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       );
     }
     if (name === "search_resourcepack_assets") {
-      const requested = typeof args.version === "string" ? args.version : "latest";
-      const version = resolveVersion(edition, requested);
-      const ref = typeof args.ref === "string" ? args.ref : version;
-      if (args.fetch === true) {
-        await fetchMinecraftAssetsIndex({
-          version,
-          ref,
-          force: args.force === true,
-        });
+      const {
+        edition,
+        fetch: fetchIndex,
+        force,
+        ...filters
+      } = searchInputs.resourcepackAssets.assert(input === undefined ? {} : input);
+      const version = resolveVersion(edition, filters.version);
+      const ref = filters.ref ?? version;
+      if (fetchIndex) {
+        await fetchMinecraftAssetsIndex({ version, ref, force });
       }
-      return text(
-        searchMinecraftAssets({
-          version,
-          ref,
-          ...(typeof args.prefix === "string" ? { prefix: args.prefix } : {}),
-          ...(typeof args.contains === "string" ? { contains: args.contains } : {}),
-          ...(typeof args.suffix === "string" ? { suffix: args.suffix } : {}),
-          ...(typeof args.extension === "string" ? { extension: args.extension } : {}),
-          ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
-        }),
-      );
+      return text(searchMinecraftAssets({ ...filters, version, ref }));
     }
     if (name === "get_resourcepack_asset") {
       if (typeof args.version !== "string" || typeof args.path !== "string") {
@@ -5938,49 +5815,15 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       return text(getPaperApiSurface(version));
     }
     if (name === "search_paper_types") {
-      const searchOptions: PaperTypeSearchOptions = {
-        version: typeof args.version === "string" ? args.version : "latest",
-      };
-      if (typeof args.packageName === "string") {
-        searchOptions.packageName = args.packageName;
-      }
-      if (typeof args.contains === "string") {
-        searchOptions.contains = args.contains;
-      }
-      if (typeof args.limit === "number") {
-        searchOptions.limit = args.limit;
-      }
-      return text(searchPaperTypes(searchOptions));
+      return text(
+        searchPaperTypes(searchInputs.paperTypes.assert(input === undefined ? {} : input)),
+      );
     }
     if (name === "search_paper_members") {
-      const searchOptions: PaperMemberSearchOptions = {
-        version: typeof args.version === "string" ? args.version : "latest",
-      };
-      if (typeof args.type === "string") {
-        searchOptions.type = args.type;
-      }
-      if (typeof args.packageName === "string") {
-        searchOptions.packageName = args.packageName;
-      }
-      if (
-        args.kind === "constructor" ||
-        args.kind === "method" ||
-        args.kind === "field-or-enum-constant" ||
-        args.kind === "unknown"
-      ) {
-        searchOptions.kind = args.kind;
-      }
-      if (typeof args.contains === "string") {
-        searchOptions.contains = args.contains;
-      }
-      if (typeof args.limit === "number") {
-        searchOptions.limit = args.limit;
-      }
       return text(
-        await searchPaperMembersWithData({
-          ...searchOptions,
-          fetchMissing: args.fetchMissing === true,
-        }),
+        await searchPaperMembersWithData(
+          searchInputs.paperMembersWithData.assert(input === undefined ? {} : input),
+        ),
       );
     }
     if (name === "get_paper_member_details") {

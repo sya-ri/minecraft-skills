@@ -179,6 +179,11 @@ describe("MCP server input and evaluation surface", () => {
       }
     }
     for (const [name, arguments_] of [
+      ["search_paper_types", { limit: 0 }],
+      ["search_paper_members", { limit: 501 }],
+      ["search_registry_entries", { limit: 1.5 }],
+      ["search_commands", { limit: 501 }],
+      ["search_resourcepack_models", { limit: 0 }],
       ["search_fabric_api_types", { gameVersion: "26.3", limit: 0 }],
       ["search_fabric_api_types", { gameVersion: "26.3", limit: 1.5 }],
       ["search_fabric_api_types", { gameVersion: "26.3", query: "" }],

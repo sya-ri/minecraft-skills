@@ -25,7 +25,6 @@ describe("Paper member recovery tool", () => {
   it.each([
     undefined,
     false,
-    "true",
     true,
   ])("allows recovery only for literal boolean true (%s)", async (fetchMissing) => {
     const query = { version: "26.2", type: "JavaPlugin", contains: "onDisable", limit: 10 };
@@ -38,6 +37,13 @@ describe("Paper member recovery tool", () => {
       ...query,
       fetchMissing: fetchMissing === true,
     });
+  });
+
+  it("rejects a string recovery flag before delegating", async () => {
+    const result = await callMinecraftSkillsTool("search_paper_members", { fetchMissing: "true" });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toMatch(/fetchMissing.*boolean/);
+    expect(mocks.search).not.toHaveBeenCalled();
   });
 
   it("keeps a failed verified fetch as a tool error without member facts", async () => {

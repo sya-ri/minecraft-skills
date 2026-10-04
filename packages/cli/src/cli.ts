@@ -8,7 +8,6 @@ import {
   blockbenchProjectInspectionLimits,
   type CatalogSearchKind,
   type CommandComparisonOptions,
-  type CommandSearchOptions,
   classifyPackFiles,
   cleanCachedData,
   cleanMojangServerJar,
@@ -126,14 +125,10 @@ import {
   type MinecraftLogAnalysisLimits,
   migrateLegacyItemModel,
   normalizeMigrationBlockStates,
-  type PaperMemberSearchOptions,
-  type PaperTypeSearchOptions,
   type PlayerSkinSourceRectangleInput,
   paperPluginJarValidationLimits,
   playerSkinLayoutValidationLimits,
   type RegistryEntryComparisonOptions,
-  type RegistryEntrySearchOptions,
-  type ResourcepackModelPathSearchOptions,
   type ResourcepackPngAlphaBoundsLimits,
   type ResourcepackPngValidationLimits,
   resolveDatapackTag,
@@ -150,6 +145,7 @@ import {
   searchDatapackSchema,
   searchFabricApiMembers,
   searchFabricApiTypes,
+  searchInputs,
   searchMinecraftAssets,
   searchModrinthProjects,
   searchPaperEvents,
@@ -2477,28 +2473,31 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
       return 0;
     }
     if (command === "registry-entries") {
-      const requested = positionalArgs(args)[0] ?? "latest";
-      const registryOptions: RegistryEntrySearchOptions = {
-        edition,
+      const [requested = "latest", ...extra] = positionalArgsWithOptions(args, {
+        flags: [],
+        values: ["--edition", "--registry", "--exact", "--contains", "--prefix", "--limit"],
+      });
+      if (extra.length) throw new Error("registry-entries accepts at most one version");
+      const options: Record<string, unknown> = {
         version: requested,
         limit: Number(readOption(args, "--limit", "50")),
+        edition,
       };
       if (args.includes("--registry")) {
-        registryOptions.registry = readOption(args, "--registry", "");
+        options.registry = readOption(args, "--registry", "");
       }
       if (args.includes("--exact")) {
-        registryOptions.exact = readOption(args, "--exact", "");
+        options.exact = readOption(args, "--exact", "");
       }
       if (args.includes("--contains")) {
-        registryOptions.contains = readOption(args, "--contains", "");
+        options.contains = readOption(args, "--contains", "");
       }
       if (args.includes("--prefix")) {
-        registryOptions.prefix = readOption(args, "--prefix", "");
+        options.prefix = readOption(args, "--prefix", "");
       }
-      printJson(output, searchRegistryEntries(registryOptions));
+      printJson(output, searchRegistryEntries(searchInputs.registryEntries.assert(options)));
       return 0;
     }
-
     if (command === "compare-registry-entries") {
       const [from, to] = positionalArgs(args);
       if (!from || !to) {
@@ -2980,25 +2979,28 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     }
 
     if (command === "commands") {
-      const requested = positionalArgs(args)[0] ?? "latest";
-      const commandOptions: CommandSearchOptions = {
-        edition,
+      const [requested = "latest", ...extra] = positionalArgsWithOptions(args, {
+        flags: [],
+        values: ["--edition", "--contains", "--prefix", "--parser", "--limit"],
+      });
+      if (extra.length) throw new Error("commands accepts at most one version");
+      const options: Record<string, unknown> = {
         version: requested,
         limit: Number(readOption(args, "--limit", "50")),
+        edition,
       };
       if (args.includes("--contains")) {
-        commandOptions.contains = readOption(args, "--contains", "");
+        options.contains = readOption(args, "--contains", "");
       }
       if (args.includes("--prefix")) {
-        commandOptions.prefix = readOption(args, "--prefix", "");
+        options.prefix = readOption(args, "--prefix", "");
       }
       if (args.includes("--parser")) {
-        commandOptions.parser = readOption(args, "--parser", "");
+        options.parser = readOption(args, "--parser", "");
       }
-      printJson(output, searchCommands(commandOptions));
+      printJson(output, searchCommands(searchInputs.commands.assert(options)));
       return 0;
     }
-
     if (command === "compare-commands") {
       const [from, to] = positionalArgs(args);
       if (!from || !to) {
@@ -3030,29 +3032,31 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     }
 
     if (command === "search-models") {
-      const requested = positionalArgs(args)[0] ?? "latest";
-      const modelOptions: ResourcepackModelPathSearchOptions = {
-        edition,
+      const [requested = "latest", ...extra] = positionalArgsWithOptions(args, {
+        flags: [],
+        values: ["--edition", "--contains", "--prefix", "--kind", "--limit"],
+      });
+      if (extra.length) throw new Error("search-models accepts at most one version");
+      const options: Record<string, unknown> = {
         version: requested,
         limit: Number(readOption(args, "--limit", "50")),
+        edition,
       };
       if (args.includes("--contains")) {
-        modelOptions.contains = readOption(args, "--contains", "");
+        options.contains = readOption(args, "--contains", "");
       }
       if (args.includes("--prefix")) {
-        modelOptions.prefix = readOption(args, "--prefix", "");
+        options.prefix = readOption(args, "--prefix", "");
       }
       if (args.includes("--kind")) {
-        const kind = readOption(args, "--kind", "");
-        if (kind !== "model" && kind !== "item-definition") {
-          throw new Error("search-models --kind must be model or item-definition");
-        }
-        modelOptions.kind = kind;
+        options.kind = readOption(args, "--kind", "");
       }
-      printJson(output, searchResourcepackModelPaths(modelOptions));
+      printJson(
+        output,
+        searchResourcepackModelPaths(searchInputs.resourcepackModels.assert(options)),
+      );
       return 0;
     }
-
     if (command === "resourcepack-assets-status") {
       const requested = positionalArgs(args)[0] ?? "latest";
       const version = resolveVersion(edition, requested);
@@ -3082,30 +3086,42 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     }
 
     if (command === "resourcepack-assets-search") {
-      const requested = positionalArgs(args)[0] ?? "latest";
-      const version = resolveVersion(edition, requested);
-      const ref = readOption(args, "--ref", version);
-      if (args.includes("--fetch")) {
-        await fetchMinecraftAssetsIndex({
-          version,
-          ref,
-          force: args.includes("--force"),
-        });
+      const [requested = "latest", ...extra] = positionalArgsWithOptions(args, {
+        flags: ["--fetch", "--force"],
+        values: [
+          "--edition",
+          "--ref",
+          "--prefix",
+          "--contains",
+          "--suffix",
+          "--extension",
+          "--limit",
+        ],
+      });
+      if (extra.length) throw new Error("resourcepack-assets-search accepts at most one version");
+      const {
+        edition: assetEdition,
+        fetch: fetchIndex,
+        force,
+        ...filters
+      } = searchInputs.resourcepackAssets.assert({
+        edition,
+        version: requested,
+        fetch: args.includes("--fetch"),
+        force: args.includes("--force"),
+        limit: Number(readOption(args, "--limit", "50")),
+        ...(args.includes("--ref") ? { ref: readOption(args, "--ref", "") } : {}),
+        ...(args.includes("--prefix") ? { prefix: readOption(args, "--prefix", "") } : {}),
+        ...(args.includes("--contains") ? { contains: readOption(args, "--contains", "") } : {}),
+        ...(args.includes("--suffix") ? { suffix: readOption(args, "--suffix", "") } : {}),
+        ...(args.includes("--extension") ? { extension: readOption(args, "--extension", "") } : {}),
+      });
+      const version = resolveVersion(assetEdition, filters.version);
+      const ref = filters.ref ?? version;
+      if (fetchIndex) {
+        await fetchMinecraftAssetsIndex({ version, ref, force });
       }
-      printJson(
-        output,
-        searchMinecraftAssets({
-          version,
-          ref,
-          limit: Number(readOption(args, "--limit", "50")),
-          ...(args.includes("--prefix") ? { prefix: readOption(args, "--prefix", "") } : {}),
-          ...(args.includes("--contains") ? { contains: readOption(args, "--contains", "") } : {}),
-          ...(args.includes("--suffix") ? { suffix: readOption(args, "--suffix", "") } : {}),
-          ...(args.includes("--extension")
-            ? { extension: readOption(args, "--extension", "") }
-            : {}),
-        }),
-      );
+      printJson(output, searchMinecraftAssets({ ...filters, version, ref }));
       return 0;
     }
 
@@ -3444,21 +3460,24 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     }
 
     if (command === "paper-types") {
-      const requested = positionalArgs(args)[0] ?? "latest";
-      const searchOptions: PaperTypeSearchOptions = {
+      const [requested = "latest", ...extra] = positionalArgsWithOptions(args, {
+        flags: [],
+        values: ["--package", "--contains", "--limit"],
+      });
+      if (extra.length) throw new Error("paper-types accepts at most one version");
+      const options: Record<string, unknown> = {
         version: requested,
         limit: Number(readOption(args, "--limit", "50")),
       };
       if (args.includes("--package")) {
-        searchOptions.packageName = readOption(args, "--package", "");
+        options.packageName = readOption(args, "--package", "");
       }
       if (args.includes("--contains")) {
-        searchOptions.contains = readOption(args, "--contains", "");
+        options.contains = readOption(args, "--contains", "");
       }
-      printJson(output, searchPaperTypes(searchOptions));
+      printJson(output, searchPaperTypes(searchInputs.paperTypes.assert(options)));
       return 0;
     }
-
     if (command === "paper-member-details") {
       const [version = "latest", ...extra] = positionalArgsWithOptions(args, {
         flags: [],
@@ -3477,50 +3496,34 @@ export async function runCli(argv: string[], output: Output = defaultOutput): Pr
     }
 
     if (command === "paper-members") {
-      const [requested = "latest", ...extraPositionals] = positionalArgsWithOptions(args, {
+      const [requested = "latest", ...extra] = positionalArgsWithOptions(args, {
         flags: ["--fetch-missing"],
         values: ["--type", "--package", "--contains", "--kind", "--limit"],
       });
-      if (extraPositionals.length > 0) {
-        throw new Error("paper-members accepts at most one version");
-      }
-      const searchOptions: PaperMemberSearchOptions = {
+      if (extra.length) throw new Error("paper-members accepts at most one version");
+      const options: Record<string, unknown> = {
         version: requested,
         limit: Number(readOption(args, "--limit", "50")),
+        fetchMissing: args.includes("--fetch-missing"),
       };
       if (args.includes("--type")) {
-        searchOptions.type = readOption(args, "--type", "");
+        options.type = readOption(args, "--type", "");
       }
       if (args.includes("--package")) {
-        searchOptions.packageName = readOption(args, "--package", "");
+        options.packageName = readOption(args, "--package", "");
       }
       if (args.includes("--contains")) {
-        searchOptions.contains = readOption(args, "--contains", "");
+        options.contains = readOption(args, "--contains", "");
       }
       if (args.includes("--kind")) {
-        const kind = readOption(args, "--kind", "");
-        if (
-          kind !== "method" &&
-          kind !== "constructor" &&
-          kind !== "field-or-enum-constant" &&
-          kind !== "unknown"
-        ) {
-          throw new Error(
-            "paper-members --kind must be method, constructor, field-or-enum-constant, or unknown",
-          );
-        }
-        searchOptions.kind = kind;
+        options.kind = readOption(args, "--kind", "");
       }
       printJson(
         output,
-        await searchPaperMembersWithData({
-          ...searchOptions,
-          fetchMissing: args.includes("--fetch-missing"),
-        }),
+        await searchPaperMembersWithData(searchInputs.paperMembersWithData.assert(options)),
       );
       return 0;
     }
-
     if (command === "compare-paper-api-surface") {
       const [from, to] = positionalArgs(args);
       if (!from || !to) {

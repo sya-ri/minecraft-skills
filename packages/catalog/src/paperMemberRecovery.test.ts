@@ -190,7 +190,7 @@ describe("explicit Paper member data recovery", () => {
     const fetchMock = vi.fn<typeof fetch>();
     await expect(
       searchPaperMembersWithData({ version: "26.2", limit, fetchMissing: true, fetch: fetchMock }),
-    ).rejects.toThrow("Limit must be between 1 and 500");
+    ).rejects.toThrow(/limit must/i);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(listCachedDataFiles()).toEqual([]);
   });

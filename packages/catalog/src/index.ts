@@ -37,14 +37,22 @@ import {
   readDataJson,
   readDataText,
   readMinecraftAssetsIndex,
-  type SearchMinecraftAssetsOptions,
   type SearchMinecraftAssetsResult,
   scanCachedMojangServerJarText,
-  searchMinecraftAssets,
+  searchMinecraftAssets as searchMinecraftAssetsData,
 } from "@minecraft-skills/data";
 import { Ajv2020, type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import { type CommandDetailsOptions, readCommandDetails } from "./commandDetails.js";
 import { compareCodeUnits } from "./compareCodeUnits.js";
+import { paperMemberSearchWithFetchInput, searchInputs } from "./searchInputs.js";
+
+export { searchInputJsonSchemas, searchInputs } from "./searchInputs.js";
+export type SearchMinecraftAssetsOptions = typeof searchInputs.minecraftAssets.inferIn;
+export function searchMinecraftAssets(
+  options: SearchMinecraftAssetsOptions,
+): SearchMinecraftAssetsResult {
+  return searchMinecraftAssetsData(searchInputs.minecraftAssets.assert(options));
+}
 
 export type { CommandDetailsOptions, CommandNode, CommandTreeSurface } from "./commandDetails.js";
 export { buildCommandTreeSurface, commandDetailLimits } from "./commandDetails.js";
@@ -435,7 +443,6 @@ export type {
   ResourcepackTranslationValidationResult,
   ResponsePatternData,
   ResponsePatternIndexData,
-  SearchMinecraftAssetsOptions,
   SearchMinecraftAssetsResult,
   SkillData,
   VanillaInventoryData,
@@ -472,7 +479,6 @@ export {
   resolveResourcepackPngValidationLimits,
   resolveResourcepackProjectValidationLimits,
   resolveResourcepackTranslationValidationLimits,
-  searchMinecraftAssets,
   validateResourcepackPng,
 };
 
@@ -1031,12 +1037,7 @@ export type PaperApiComparison = {
   removed: PaperApiIndexData["packages"];
 };
 
-export type PaperTypeSearchOptions = {
-  version?: string;
-  packageName?: string;
-  contains?: string;
-  limit?: number;
-};
+export type PaperTypeSearchOptions = typeof searchInputs.paperTypes.inferIn;
 
 export type PaperTypeSearchResult = {
   version: string;
@@ -1046,18 +1047,10 @@ export type PaperTypeSearchResult = {
   types: PaperApiTypeData[];
 };
 
-export type PaperMemberSearchOptions = {
-  version?: string;
-  type?: string;
-  packageName?: string;
-  contains?: string;
-  kind?: PaperApiMemberData["kind"];
-  limit?: number;
-};
+export type PaperMemberSearchOptions = typeof searchInputs.paperMembers.inferIn;
 
-export type PaperMemberSearchWithDataOptions = PaperMemberSearchOptions & {
-  /** Explicitly allow downloading a missing surface into the local cache. Defaults to false. */
-  fetchMissing?: boolean;
+export type PaperMemberSearchWithDataOptions = typeof searchInputs.paperMembersWithData.inferIn & {
+  /** Optional transport override; it does not enable missing-surface downloads. */
   fetch?: typeof fetch;
 };
 
@@ -1681,14 +1674,7 @@ export type DatapackSchemaComparisonResult = {
   >;
 };
 
-export type CommandSearchOptions = {
-  edition?: string;
-  version?: string;
-  contains?: string;
-  prefix?: string;
-  parser?: string;
-  limit?: number;
-};
+export type CommandSearchOptions = typeof searchInputs.commands.inferIn;
 
 export type CommandSearchResult = {
   edition: EditionData;
@@ -1742,11 +1728,7 @@ export type RegistryEntryFilter = {
   registry?: string;
 };
 
-export type RegistryEntrySearchOptions = RegistryEntryFilter & {
-  edition?: string;
-  version?: string;
-  limit?: number;
-};
+export type RegistryEntrySearchOptions = typeof searchInputs.registryEntries.inferIn;
 
 export type RegistryEntryStatus =
   | "all"
@@ -1813,14 +1795,7 @@ export type RegistryEntryComparisonResult = {
   notes: string[];
 };
 
-export type ResourcepackModelPathSearchOptions = {
-  edition?: string;
-  version?: string;
-  contains?: string;
-  prefix?: string;
-  kind?: "model" | "item-definition";
-  limit?: number;
-};
+export type ResourcepackModelPathSearchOptions = typeof searchInputs.resourcepackModels.inferIn;
 
 export type ResourcepackModelPathSearchResult = {
   edition: EditionData;
@@ -4304,10 +4279,11 @@ function clonePaperApiType(entry: PaperApiTypeData): PaperApiTypeData {
 }
 
 export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTypeSearchResult {
-  const surface = readPaperApiSurface(options.version ?? "latest");
-  const limit = normalizeLimit(options.limit, 50, 500);
-  const packageName = options.packageName?.trim();
-  const contains = options.contains?.trim().toLowerCase();
+  const input = searchInputs.paperTypes.assert(options);
+  const surface = readPaperApiSurface(input.version);
+  const limit = input.limit;
+  const packageName = input.packageName?.trim();
+  const contains = input.contains?.trim().toLowerCase();
   const matched = surface.types.filter((entry) => {
     if (packageName && entry.packageName !== packageName) {
       return false;
@@ -4334,11 +4310,12 @@ export function searchPaperTypes(options: PaperTypeSearchOptions = {}): PaperTyp
 export function searchPaperMembers(
   options: PaperMemberSearchOptions = {},
 ): PaperMemberSearchResult {
-  const surface = readPaperApiSurface(options.version ?? "latest");
-  const limit = normalizeLimit(options.limit, 50, 500);
-  const typeName = options.type?.trim();
-  const packageName = options.packageName?.trim();
-  const contains = options.contains?.trim().toLowerCase();
+  const input = searchInputs.paperMembers.assert(options);
+  const surface = readPaperApiSurface(input.version);
+  const limit = input.limit;
+  const typeName = input.type?.trim();
+  const packageName = input.packageName?.trim();
+  const contains = input.contains?.trim().toLowerCase();
   const resolvedTypes = typeName
     ? surface.types.filter((entry) => entry.qualifiedName === typeName || entry.name === typeName)
     : [];
@@ -4377,7 +4354,7 @@ export function searchPaperMembers(
       if (packageName && entry.packageName !== packageName) {
         return false;
       }
-      if (options.kind && entry.kind !== options.kind) {
+      if (input.kind && entry.kind !== input.kind) {
         return false;
       }
       if (
@@ -4413,10 +4390,14 @@ export function searchPaperMembers(
 export async function searchPaperMembersWithData(
   options: PaperMemberSearchWithDataOptions = {},
 ): Promise<PaperMemberSearchResult> {
-  if (options.fetchMissing !== true) return searchPaperMembers(options);
-  normalizeLimit(options.limit, 50, 500);
+  const {
+    fetch: _fetch,
+    fetchMissing,
+    ...searchOptions
+  } = paperMemberSearchWithFetchInput.assert(options);
+  if (!fetchMissing) return searchPaperMembers(searchOptions);
 
-  const reference = getPaperApiReference(options.version ?? "latest");
+  const reference = getPaperApiReference(searchOptions.version);
   const version = reference.requestedVersion;
   const path = `java/paper-api-surfaces/${version}.json`;
   if (reference.supported && !paperApiSurfaceCache.has(version) && !hasDataFile(path)) {
@@ -4438,7 +4419,7 @@ export async function searchPaperMembersWithData(
       ...(options.fetch ? { fetch: options.fetch } : {}),
     });
   }
-  return searchPaperMembers({ ...options, version });
+  return searchPaperMembers({ ...searchOptions, version });
 }
 
 function memberKey(entry: PaperApiMemberData): string {
@@ -6590,18 +6571,19 @@ function filterResourcepackModelPaths(
 export function searchResourcepackModelPaths(
   options: ResourcepackModelPathSearchOptions = {},
 ): ResourcepackModelPathSearchResult {
-  const editionId = Edition.assert(options.edition ?? "java");
-  const modelSummary = getResourcepackModelSummary(editionId, options.version ?? "latest");
+  const input = searchInputs.resourcepackModels.assert(options);
+  const editionId = input.edition;
+  const modelSummary = getResourcepackModelSummary(editionId, input.version);
   const pathIndex = `${editionId}/vanilla-paths/${modelSummary.version}.resourcepack.txt`;
   if (!hasDataFile(pathIndex)) {
     throw new Error(`No bundled resourcepack path index for ${editionId} ${modelSummary.version}`);
   }
   const paths = readDataText(pathIndex).trim().split(/\r?\n/).filter(Boolean);
-  const limit = normalizeLimit(options.limit, 50, 500);
+  const limit = input.limit;
   const modelPaths = filterResourcepackModelPaths(paths, {
-    ...(options.kind ? { kind: options.kind } : {}),
+    ...(input.kind ? { kind: input.kind } : {}),
   });
-  const matched = filterResourcepackModelPaths(modelPaths, options);
+  const matched = filterResourcepackModelPaths(modelPaths, input);
 
   return {
     edition: editionId,
@@ -7874,9 +7856,10 @@ function registryEntryState(
 export function searchRegistryEntries(
   options: RegistryEntrySearchOptions = {},
 ): RegistryEntrySearchResult {
-  const edition = Edition.assert(options.edition ?? "java");
-  const limit = normalizeLimit(options.limit, 50, 500);
-  const state = registryEntryState(edition, options.version ?? "latest", options);
+  const input = searchInputs.registryEntries.assert(options);
+  const edition = input.edition;
+  const limit = input.limit;
+  const state = registryEntryState(edition, input.version, input);
   return {
     schemaVersion: 1,
     edition,
@@ -7994,11 +7977,12 @@ export function compareRegistryEntries(
 }
 
 export function searchCommands(options: CommandSearchOptions = {}): CommandSearchResult {
-  const editionId = Edition.assert(options.edition ?? "java");
-  const reports = getJavaReportsSummary(editionId, options.version ?? "latest");
+  const input = searchInputs.commands.assert(options);
+  const editionId = input.edition;
+  const reports = getJavaReportsSummary(editionId, input.version);
   const paths = readCommandPathList(editionId, reports.version);
-  const limit = normalizeLimit(options.limit, 50, 500);
-  const matched = filterCommandPaths(paths, options);
+  const limit = input.limit;
+  const matched = filterCommandPaths(paths, input);
 
   return {
     edition: editionId,
