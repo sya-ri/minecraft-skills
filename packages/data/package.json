@@ -55,6 +55,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260621.1",
     "tsdown": "0.22.3",
     "typescript": "6.0.3",
-    "vitest": "4.1.9"
+    "vitest": "4.1.11"
   }
 }
