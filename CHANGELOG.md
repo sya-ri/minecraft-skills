@@ -4,6 +4,41 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+## 0.1.11 - 2026-10-04
+
+### Fixed
+
+- MCP tools now reject unknown arguments, wrong types, missing required values, and violations
+  of declared nested constraints or limits before executing a handler or fetching data. Errors
+  identify the invalid input and allowed argument names instead of silently returning unfiltered
+  results. Rejected calls retain their evaluation receipt when local recording is enabled.
+
+### Changed
+
+- Paper type/member, registry entry, command, resource pack model, and asset path searches share
+  typed input validation across Catalog, CLI, and MCP. CLI searches reject unknown flags and extra
+  version arguments. Search inputs apply documented defaults without changing the caller's object.
+- Updated workspace packages and internal dependencies to 0.1.11. Bundled Minecraft data remains
+  at `2026.09.23-1`, with downloadable surfaces still pinned to the immutable `v0.1.10` tag.
+  Paper 26.3 build metadata still describes build 5 from that snapshot; newer upstream Paper
+  builds are outside this patch's data update scope.
+
+### Upgrade notes
+
+- Fix previously ignored argument names and types. These six searches use `contains` / CLI
+  `--contains` for text filtering; `query` / `--query` is not an alias. Other tools retain their
+  own advertised fields. Paper type/member, registry entry, command, and model searches require
+  an integer `limit` from 1 to 500; asset path searches retain their numeric slice limit.
+- Catalog search option types now reflect accepted enum values, including `edition: "java"`.
+  Validate external inputs before passing them to the typed API. The shared definitions are
+  available as `searchInputs` and their MCP-compatible schemas as `searchInputJsonSchemas`;
+  see the [Catalog search contract](packages/catalog/README.md#search-inputs).
+
+### Documentation
+
+- Reorganized the usage reference so command-tree details, entity metadata, block states, and
+  search coverage appear alongside their command groups.
+
 ## 0.1.10 - 2026-09-23
 
 ### Changed

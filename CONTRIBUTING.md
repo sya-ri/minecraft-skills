@@ -66,8 +66,10 @@ mise exec -- pnpm run publish:dry-run
 ```
 
 Public publishing is intentionally manual. The `Release` GitHub Actions workflow defaults to a dry
-run. To publish, configure `NPM_TOKEN`, run the workflow from `main`, and set `dry_run` to `false`.
-The publish job uses npm provenance via GitHub OIDC and publishes:
+run. Configure each public package's npm trusted publisher for the `sya-ri/minecraft-skills`
+repository and workflow filename `release.yml`, then run the workflow from `main` with `dry_run`
+set to `false`. The job authenticates through GitHub OIDC without `NPM_TOKEN` and enables npm
+provenance; see [npm trusted publishing](https://docs.npmjs.com/trusted-publishers). It publishes:
 
 - `@minecraft-skills/data`
 - `@minecraft-skills/catalog`
