@@ -236,6 +236,10 @@ client API surface.
 - `lookup_java_player_profile`
 - `get_verified_java_player_textures`
 
+`search_paper_members` and `search_resourcepack_assets` use `contains` for text filtering.
+They reject undeclared arguments before searching or fetching cache data; an unsupported `query`
+argument returns an error with the supported filter name.
+
 `get_paper_member_details` takes an exact `memberUrl` returned by `search_paper_members` and the
 same `version` (default `latest`). It verifies membership in the locally available versioned
 surface before fetching one official Javadocs page. Missing surfaces retain the existing explicit

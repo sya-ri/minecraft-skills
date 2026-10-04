@@ -3375,13 +3375,16 @@ function assertToolArgs(
   args: Record<string, unknown>,
   tool: string,
   allowed: readonly string[],
+  unknownArgumentHint = "",
 ): void {
   if (input !== undefined && (!input || typeof input !== "object" || Array.isArray(input))) {
     throw new Error(`${tool} input must be an object`);
   }
   const allowedArgs = new Set(allowed);
   if (Object.keys(args).some((name) => !allowedArgs.has(name))) {
-    throw new Error(`${tool} received an unknown argument`);
+    throw new Error(
+      `${tool} received an unknown argument${unknownArgumentHint ? `. ${unknownArgumentHint}` : ""}`,
+    );
   }
 }
 
@@ -5732,6 +5735,24 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       );
     }
     if (name === "search_resourcepack_assets") {
+      assertToolArgs(
+        input,
+        args,
+        name,
+        [
+          "edition",
+          "version",
+          "ref",
+          "prefix",
+          "contains",
+          "suffix",
+          "extension",
+          "limit",
+          "fetch",
+          "force",
+        ],
+        "Use contains for text filtering; query is not supported.",
+      );
       const requested = typeof args.version === "string" ? args.version : "latest";
       const version = resolveVersion(edition, requested);
       const ref = typeof args.ref === "string" ? args.ref : version;
@@ -5953,6 +5974,13 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
       return text(searchPaperTypes(searchOptions));
     }
     if (name === "search_paper_members") {
+      assertToolArgs(
+        input,
+        args,
+        name,
+        ["version", "type", "packageName", "fetchMissing", "kind", "contains", "limit"],
+        "Use contains for member text filtering; query is not supported.",
+      );
       const searchOptions: PaperMemberSearchOptions = {
         version: typeof args.version === "string" ? args.version : "latest",
       };
