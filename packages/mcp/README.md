@@ -236,9 +236,12 @@ client API surface.
 - `lookup_java_player_profile`
 - `get_verified_java_player_textures`
 
-`search_paper_members` and `search_resourcepack_assets` use `contains` for text filtering.
-They reject undeclared arguments before searching or fetching cache data; an unsupported `query`
-argument returns an error with the supported filter name.
+All MCP tool calls validate arguments against their advertised input schema before execution.
+Unknown arguments, wrong types, missing required fields, and values outside declared constraints
+return a tool error with the allowed argument names. For example, `search_paper_members` and
+`search_resourcepack_assets` use `contains` for text filtering; an unsupported `query` is rejected
+before searching or fetching cache data. Defaults remain the responsibility of each tool, and
+rejected ordinary calls retain their evaluation receipt when evaluation history is enabled.
 
 `get_paper_member_details` takes an exact `memberUrl` returned by `search_paper_members` and the
 same `version` (default `latest`). It verifies membership in the locally available versioned

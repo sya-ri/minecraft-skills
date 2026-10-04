@@ -31,17 +31,25 @@ const core = vi.hoisted(() => ({
   })),
 }));
 
+const normalTools = vi.hoisted(
+  (): ReturnType<typeof import("./tools.js").listMinecraftSkillsTools> => [
+    {
+      name: "normal_tool",
+      description: "A normal test tool",
+      inputSchema: {
+        type: "object" as const,
+        properties: { raw: { type: "string" } },
+        additionalProperties: false as const,
+      },
+    },
+  ],
+);
+
 const tool = vi.hoisted(() => ({
   callMinecraftSkillsTool: vi.fn(async () => ({
     content: [{ type: "text" as const, text: "ok" }],
   })),
-  listMinecraftSkillsTools: vi.fn(() => [
-    {
-      name: "normal_tool",
-      description: "A normal test tool",
-      inputSchema: { type: "object" as const, properties: {}, additionalProperties: false },
-    },
-  ]),
+  listMinecraftSkillsTools: vi.fn(() => normalTools),
 }));
 
 vi.mock("@minecraft-skills/evaluation-core", () => core);
@@ -51,9 +59,20 @@ import { createServer } from "./server.js";
 
 const connected: Array<{ client: Client; server: ReturnType<typeof createServer> }> = [];
 
-describe("MCP server evaluation surface", () => {
+async function connectClient(): Promise<Client> {
+  const server = createServer();
+  const client = new Client({ name: "test-client", version: "1.0.0" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  connected.push({ client, server });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  return client;
+}
+
+describe("MCP server input and evaluation surface", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    tool.listMinecraftSkillsTools.mockReturnValue(normalTools);
     core.getEvaluationStatus.mockReturnValue({
       globallyEnabled: false,
       effectiveEnabled: false,
@@ -71,12 +90,7 @@ describe("MCP server evaluation surface", () => {
   });
 
   it("advertises management tools alongside normal tools and the actual package version", async () => {
-    const server = createServer();
-    const client = new Client({ name: "test-client", version: "1.0.0" });
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    connected.push({ client, server });
-    await server.connect(serverTransport);
-    await client.connect(clientTransport);
+    const client = await connectClient();
 
     const listed = await client.listTools();
     const packageJson = JSON.parse(
@@ -103,12 +117,7 @@ describe("MCP server evaluation surface", () => {
     core.createEvaluationRecord.mockReturnValue({
       id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     });
-    const server = createServer();
-    const client = new Client({ name: "test-client", version: "1.0.0" });
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-    connected.push({ client, server });
-    await server.connect(serverTransport);
-    await client.connect(clientTransport);
+    const client = await connectClient();
 
     const normal = await client.callTool({ name: "normal_tool", arguments: { raw: "value" } });
     const status = await client.callTool({ name: "get_evaluation_status", arguments: {} });
@@ -129,6 +138,127 @@ describe("MCP server evaluation surface", () => {
       dataVersion: getDataManifest().dataVersion,
     });
     expect(tool.callMinecraftSkillsTool).toHaveBeenCalledOnce();
+    expect(core.createEvaluationRecord).toHaveBeenCalledOnce();
+  });
+
+  it("rejects undeclared arguments on every advertised tool before dispatch", async () => {
+    const actual = await vi.importActual<typeof import("./tools.js")>("./tools.js");
+    tool.listMinecraftSkillsTools.mockReturnValue(actual.listMinecraftSkillsTools());
+    const client = await connectClient();
+
+    const listed = await client.listTools();
+    for (const entry of listed.tools) {
+      const result = await client.callTool({
+        name: entry.name,
+        arguments: { undeclaredArgument: "ignored-before" },
+      });
+      expect(result.isError, entry.name).toBe(true);
+    }
+    expect(tool.callMinecraftSkillsTool).not.toHaveBeenCalled();
+    expect(core.createEvaluationRecord).not.toHaveBeenCalled();
+    expect(core.rateEvaluationRecord).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed search filters, required fields, and nested values before dispatch", async () => {
+    const actual = await vi.importActual<typeof import("./tools.js")>("./tools.js");
+    tool.listMinecraftSkillsTools.mockReturnValue(actual.listMinecraftSkillsTools());
+    const client = await connectClient();
+
+    for (const name of [
+      "search_paper_members",
+      "search_resourcepack_assets",
+      "search_paper_types",
+      "search_registry_entries",
+      "search_commands",
+      "search_resourcepack_models",
+    ]) {
+      for (const arguments_ of [{ query: "experience" }, { contains: 123 }]) {
+        const result = await client.callTool({ name, arguments: arguments_ });
+        expect(result.isError, `${name}: ${JSON.stringify(arguments_)}`).toBe(true);
+        expect(JSON.stringify(result.content)).toContain("contains");
+      }
+    }
+    for (const [name, arguments_] of [
+      ["search_fabric_api_types", { gameVersion: "26.3", limit: 0 }],
+      ["search_fabric_api_types", { gameVersion: "26.3", limit: 1.5 }],
+      ["search_fabric_api_types", { gameVersion: "26.3", query: "" }],
+      ["search_fabric_api_types", { gameVersion: "invalid/path" }],
+      ["search_paper_members", { kind: "invalid" }],
+      ["latest_version", { edition: "invalid" }],
+      ["validate_pack_files", { domain: "datapack" }],
+      ["validate_pack_files", { domain: "datapack", files: "wrong-type" }],
+      ["validate_pack_files", { domain: "datapack", files: [{ path: "pack.mcmeta" }] }],
+      [
+        "validate_pack_files",
+        { domain: "datapack", files: [{ path: "pack.mcmeta", content: {}, extra: true }] },
+      ],
+      [
+        "record_tool_evaluation",
+        { id: "invalid", score: 5, informationNeed: "need", comment: "comment" },
+      ],
+      [
+        "record_tool_evaluation",
+        {
+          id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          score: 6,
+          informationNeed: "need",
+          comment: "comment",
+        },
+      ],
+    ] as const) {
+      const result = await client.callTool({ name, arguments: arguments_ });
+      expect(result.isError, `${name}: ${JSON.stringify(arguments_)}`).toBe(true);
+    }
+    expect(tool.callMinecraftSkillsTool).not.toHaveBeenCalled();
+    expect(core.rateEvaluationRecord).not.toHaveBeenCalled();
+  });
+
+  it("preserves optional defaults and arbitrary content allowed by the advertised schemas", async () => {
+    const actual = await vi.importActual<typeof import("./tools.js")>("./tools.js");
+    tool.listMinecraftSkillsTools.mockReturnValue(actual.listMinecraftSkillsTools());
+    const client = await connectClient();
+
+    expect((await client.callTool({ name: "latest_version" })).isError).not.toBe(true);
+    expect(tool.callMinecraftSkillsTool).toHaveBeenLastCalledWith("latest_version", undefined);
+    const arguments_ = {
+      domain: "datapack",
+      files: [{ path: "pack.mcmeta", content: { arbitrary: [1, true, null] } }],
+    };
+    expect(
+      (await client.callTool({ name: "validate_pack_files", arguments: arguments_ })).isError,
+    ).not.toBe(true);
+    expect(tool.callMinecraftSkillsTool).toHaveBeenLastCalledWith(
+      "validate_pack_files",
+      arguments_,
+    );
+    expect(arguments_).not.toHaveProperty("edition");
+    const filters = { version: "26.3", contains: "experience", limit: 2 };
+    expect(
+      (await client.callTool({ name: "search_paper_members", arguments: filters })).isError,
+    ).not.toBe(true);
+    expect(tool.callMinecraftSkillsTool).toHaveBeenLastCalledWith("search_paper_members", filters);
+  });
+
+  it("records rejected normal calls as tool errors with their own receipt", async () => {
+    core.getEvaluationStatus.mockReturnValue({ globallyEnabled: true, effectiveEnabled: true });
+    core.createEvaluationRecord.mockReturnValue({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" });
+    const client = await connectClient();
+
+    const result = await client.callTool({ name: "normal_tool", arguments: { raw: 123 } });
+    expect(result.isError).toBe(true);
+    expect(result._meta).toEqual({
+      "minecraft-skills/evaluationRecordId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    });
+    expect(tool.callMinecraftSkillsTool).not.toHaveBeenCalled();
+    expect(core.createEvaluationRecord).toHaveBeenCalledExactlyOnceWith(
+      expect.anything(),
+      expect.objectContaining({ response: expect.objectContaining({ outcome: "tool-error" }) }),
+      expect.anything(),
+    );
+    expect(
+      (await client.callTool({ name: "list_pending_evaluations", arguments: { limit: 101 } }))
+        .isError,
+    ).toBe(true);
     expect(core.createEvaluationRecord).toHaveBeenCalledOnce();
   });
 });
