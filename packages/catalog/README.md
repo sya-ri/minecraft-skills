@@ -28,6 +28,21 @@ pnpm add @minecraft-skills/catalog
 
 Node.js 22.12 or newer is required.
 
+## Search inputs
+
+Paper types/members, registry entries, command paths, resource pack models, and asset paths use
+shared ArkType inputs before reading data. Unknown fields, wrong types, and invalid enum values
+are rejected. The first five searches require an integer `limit` from 1 to 500; asset paths retain
+their numeric slice limit. Omitted options use the documented defaults without modifying the caller's
+object. CLI flags are normalized before the same validation, and MCP input schemas are generated
+from these definitions.
+
+Use `searchInputs.paperTypes.assert(rawInput)` to obtain typed, validated search options, or
+`searchInputJsonSchemas.paperTypes` to obtain the matching JSON Schema. Other keys are `paperMembers`,
+`registryEntries`, `commands`, `resourcepackModels`, and `resourcepackAssets`; the runtime
+`paperMembersWithData` schema includes the explicit recovery flag. Existing version resolution,
+source coverage, cache rules, and file safety checks still apply.
+
 ## Java target inspection
 
 `inspectJavaJarTargets({ archive, targetJavaRelease, previewEnabled? })` inspects bounded JAR bytes

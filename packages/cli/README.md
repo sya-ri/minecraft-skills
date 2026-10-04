@@ -20,6 +20,11 @@ npx minecraft-skills minecraft latest
 
 Node.js 22.12 or newer is required.
 
+Paper type/member, registry entry, command, model, and asset path searches reject unknown flags
+and extra version arguments. Numeric flags are converted and validated before searching or an
+opt-in cache fetch. Their input types and defaults share the
+[Catalog search contract](../catalog/README.md#search-inputs).
+
 ## Optional Evaluation History
 
 The CLI manages an opt-in, local history of raw MCP tool requests, responses, and later quality

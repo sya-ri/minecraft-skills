@@ -236,6 +236,18 @@ client API surface.
 - `lookup_java_player_profile`
 - `get_verified_java_player_textures`
 
+All MCP tool calls validate arguments against their advertised input schema before execution.
+Unknown arguments, wrong types, missing required fields, and values outside declared constraints
+return a tool error with the allowed argument names. For example, `search_paper_members` and
+`search_resourcepack_assets` use `contains` for text filtering; an unsupported `query` is rejected
+before searching or fetching cache data. Defaults remain the responsibility of each tool, and
+rejected ordinary calls retain their evaluation receipt when evaluation history is enabled.
+
+The six Paper type/member, registry entry, command, model, and asset path searches derive their
+public schemas and typed runtime inputs from the same ArkType definitions used by the CLI and
+Catalog APIs. Parsing applies their documented defaults to a separate validated object.
+See [search inputs](../catalog/README.md#search-inputs) for the shared schemas and limits.
+
 `get_paper_member_details` takes an exact `memberUrl` returned by `search_paper_members` and the
 same `version` (default `latest`). It verifies membership in the locally available versioned
 surface before fetching one official Javadocs page. Missing surfaces retain the existing explicit
