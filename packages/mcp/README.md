@@ -350,7 +350,9 @@ runtime compatibility or dependency resolution. Use `minecraft jars diff` for lo
 comparison. See [the record contract](../../docs/JAR_INVENTORY.md).
 
 `analyze_minecraft_log` accepts Minecraft Java log, stack-trace, or crash-report text within both a
-2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. Its optional `limits` object can only lower the
+2 MiB UTF-8 ceiling and a 2 Mi-character ceiling. CI UTC timestamp prefixes and optional tab-separated
+job/step labels are accepted without losing payload indentation or source line numbers; prefixes
+count against input limits. Its optional `limits` object can only lower the
 Catalog ceilings for input bytes, characters, lines, line
 length, events, exception chains/depth/entries, Mixin failure facts, class-loading failures, stack
 frames, platforms, artifacts, components, per-value text, and aggregate retained text. The result

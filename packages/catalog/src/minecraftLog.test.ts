@@ -6,6 +6,94 @@ import {
 } from "./minecraftLog.js";
 
 describe("Minecraft log analysis", () => {
+  it.each([
+    "",
+    "Client tests\tRun client\t",
+  ])("extracts CI-wrapped Minecraft events and crash traces with wrapper %j", (wrapper) => {
+    const lines = [
+      "[11:18:33] [Render thread/ERROR]: java.lang.RuntimeException: resource failed",
+      "\tat example.Client.render(Client.java:10)",
+      "\tSuppressed: java.io.IOException: cleanup failed",
+      "\t\tCaused by: java.lang.IllegalStateException: cleanup cause",
+      "\t\t\tat example.Resource.close(Resource.java:11)",
+      "Caused by: java.io.FileNotFoundException: example:textures/gui/test.png",
+      "\tat example.Resource.load(Resource.java:12)",
+      "\t... 2 more",
+      "---- Minecraft Crash Report ----",
+      "Description: Rendering screen",
+      "Minecraft Version: 26.3",
+    ];
+    const plain = analyzeMinecraftLog({ text: lines.join("\n") });
+    const wrapped = analyzeMinecraftLog({
+      text: lines.map((line) => `${wrapper}2026-10-08T23:55:26.1234567Z ${line}`).join("\r\n"),
+    });
+    expect(wrapped.events).toEqual(plain.events);
+    expect(wrapped.exceptionChains).toEqual(plain.exceptionChains);
+    expect(wrapped.crashReport).toEqual(plain.crashReport);
+    expect(wrapped.platforms).toEqual(plain.platforms);
+    expect(wrapped.stackFrameTotal).toBe(3);
+    expect(wrapped.exceptionChains[0]?.deepestCause?.type).toBe("java.io.FileNotFoundException");
+    expect(wrapped.analysisComplete).toBe(true);
+  });
+
+  it("keeps transport bytes in limits and sanitizes complete payloads before retention", () => {
+    const prefix = "2026-10-08T23:55:26.1234567Z ";
+    const text = [
+      `${prefix}java.lang.RuntimeException: token=example-secret at /home/private/file.txt`,
+      `${prefix}\tat example.Client.run(Client.java:1)`,
+    ].join("\n");
+    const result = analyzeMinecraftLog({ text });
+    expect(result.exceptionChainTotal).toBe(1);
+    expect(result.processedCharacters).toBe(text.length);
+    expect(result.processedBytes).toBe(Buffer.byteLength(text));
+    expect(result.redactedValueCount).toBeGreaterThan(0);
+    expect(JSON.stringify(result)).not.toContain("example-secret");
+    expect(JSON.stringify(result)).not.toContain("/home/private");
+    const truncated = analyzeMinecraftLog({ text, limits: { maxCharacters: prefix.length + 30 } });
+    expect(truncated.exceptionChainTotal).toBe(0);
+    expect(truncated.exceededLimits).toContain("maxCharacters");
+    const lineBounded = analyzeMinecraftLog({ text, limits: { maxLineCharacters: prefix.length } });
+    expect(lineBounded.exceptionChainTotal).toBe(0);
+    expect(lineBounded.exceededLimits).toContain("maxLineCharacters");
+  });
+
+  it("does not unwrap arbitrary text, invalid timestamps or extra transport columns", () => {
+    for (const prefix of [
+      "echo 2026-10-08T23:55:26.123Z ",
+      "2026-02-30T23:55:26.123Z ",
+      "2026-10-08T25:55:26.123Z ",
+      "Job\tStep\tExtra\t2026-10-08T23:55:26.123Z ",
+    ]) {
+      expect(
+        analyzeMinecraftLog({ text: `${prefix}java.lang.RuntimeException: failure` })
+          .exceptionChainTotal,
+      ).toBe(0);
+    }
+    const result = analyzeMinecraftLog({
+      text: [
+        "2026-10-08T23:55:26Z java.lang.RuntimeException: failure",
+        "2026-10-08T23:55:26Z unrelated separator",
+        "2026-10-08T23:55:26Z \tat example.Unrelated.run(Unrelated.java:2)",
+      ].join("\n"),
+    });
+    expect(result.exceptionChainTotal).toBe(1);
+    expect(result.stackFrameTotal).toBe(0);
+  });
+
+  it("does not join exception branches across different CI jobs or steps", () => {
+    const timestamp = "2026-10-08T23:55:26Z ";
+    const result = analyzeMinecraftLog({
+      text: [
+        `Job A\tRun\t${timestamp}java.lang.RuntimeException: first job`,
+        `Job B\tRun\t${timestamp}Caused by: java.io.IOException: second job`,
+        `Job B\tCleanup\t${timestamp}\tat example.Unrelated.close(Unrelated.java:1)`,
+      ].join("\n"),
+    });
+    expect(result.exceptionChainTotal).toBe(2);
+    expect(result.exceptionChains[0]?.deepestCause).toBeNull();
+    expect(result.stackFrameTotal).toBe(0);
+  });
+
   it("preserves opening brackets in artifact names without rescanning malformed suffixes", () => {
     const result = analyzeMinecraftLog({
       text: [

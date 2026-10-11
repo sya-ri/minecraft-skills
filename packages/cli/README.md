@@ -335,6 +335,8 @@ directory scanner. See [the contract](../../docs/JAR_INVENTORY.md).
 
 `minecraft analyze-log <file>` accepts a regular file or a symlink to a regular file, reads it from
 one stable file handle, rejects a size/timestamp change during the read, and requires valid UTF-8.
+CI UTC timestamp prefixes and optional tab-separated job/step labels are accepted; payload
+indentation and source line numbers are preserved, and prefixes count against all input limits.
 The default ceilings are 2 MiB of UTF-8 input and 2 Mi decoded characters. `--max-input-bytes` and
 every analysis option (`--max-characters`, `--max-lines`, `--max-line-characters`, `--max-events`,
 `--max-exception-chains`, `--max-mixin-failures`, `--max-class-loading-failures`,

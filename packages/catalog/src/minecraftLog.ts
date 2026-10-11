@@ -436,6 +436,21 @@ function boundedText(value: string, maxCharacters: number): string {
   return `${value.slice(0, end)}…`;
 }
 
+function unwrapCiLogLine(line: string): { text: string; context: string | null } {
+  const matched =
+    /^(?:([^\t]+\t[^\t]+\t))?(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z)[ \t]/.exec(line);
+  if (!matched?.[2]) return { text: line, context: null };
+  const timestamp = Date.parse(matched[2]);
+  if (
+    !Number.isFinite(timestamp) ||
+    new Date(timestamp).toISOString().slice(0, 19) !== matched[2].slice(0, 19)
+  ) {
+    return { text: line, context: null };
+  }
+  // Consume one transport separator only: the remaining indentation defines suppressed branches.
+  return { text: line.slice(matched[0].length), context: matched[1] ?? null };
+}
+
 function safePrefix(value: string, maxCharacters: number): string {
   if (value.length <= maxCharacters) {
     return value;
@@ -1436,6 +1451,7 @@ export function analyzeMinecraftLog(
   };
 
   let cursor = 0;
+  let transportContext: string | null = null;
   while (cursor < processedText.length && processedLines < limits.maxLines) {
     const newline = processedText.indexOf("\n", cursor);
     const end = newline === -1 ? processedText.length : newline;
@@ -1451,9 +1467,16 @@ export function analyzeMinecraftLog(
     }
     // Redaction must see complete, globally bounded lines. Cutting the source first can turn an
     // address, path, or credential into an unrecognizable prefix that would then be retained.
-    const redactedLine = redactSensitiveData(originalLine);
+    const transport = unwrapCiLogLine(originalLine);
+    if (transport.context !== transportContext) finishChain();
+    transportContext = transport.context;
+    const transportCharacters = originalLine.length - transport.text.length;
+    const redactedLine = redactSensitiveData(transport.text);
     redactedValueCount += redactedLine.count;
-    const line = safePrefix(redactedLine.value, limits.maxLineCharacters);
+    const line = safePrefix(
+      redactedLine.value,
+      Math.max(0, limits.maxLineCharacters - transportCharacters),
+    );
 
     if (line.includes("---- Minecraft Crash Report ----")) {
       hasCrashReportMarker = true;
