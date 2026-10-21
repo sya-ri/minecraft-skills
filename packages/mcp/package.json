@@ -50,7 +50,7 @@
   "dependencies": {
     "@minecraft-skills/catalog": "workspace:0.1.11",
     "@minecraft-skills/rcon": "workspace:0.1.11",
-    "@modelcontextprotocol/sdk": "1.29.0"
+    "@modelcontextprotocol/sdk": "1.32.0"
   },
   "devDependencies": {
     "@minecraft-skills/evaluation-core": "workspace:0.1.11",
