@@ -813,8 +813,8 @@ texture ownership, freshness, licensing, rendered pixels, or cape/elytra layout.
 crash reports. It separates primary cause and suppressed branches, records only explicit
 platform/version and mod/plugin statements, and never infers ownership from Java package names.
 UTC ISO timestamps at the start of a line, optionally preceded by tab-separated CI job and step
-labels, are removed before parsing the payload. Payload indentation and original line numbers are
-preserved; job or step changes end the current exception chain. Transport prefixes still count
+labels, and a leading `##[error]` payload marker are removed before parsing. Payload indentation and
+original line numbers are preserved; job or step changes end the current exception chain. Prefixes count
 against input and line limits. This accepts wrapped runtime evidence, without interpreting Gradle
 task output, test summaries, thread dumps, or native VM reports as Minecraft exception chains.
 All limits may be lowered but not raised. Credentials, IP addresses, absolute paths, ANSI/OSC and

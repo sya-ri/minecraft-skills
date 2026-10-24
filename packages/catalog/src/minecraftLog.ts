@@ -439,16 +439,21 @@ function boundedText(value: string, maxCharacters: number): string {
 function unwrapCiLogLine(line: string): { text: string; context: string | null } {
   const matched =
     /^(?:([^\t]+\t[^\t]+\t))?(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z)[ \t]/.exec(line);
-  if (!matched?.[2]) return { text: line, context: null };
-  const timestamp = Date.parse(matched[2]);
-  if (
-    !Number.isFinite(timestamp) ||
-    new Date(timestamp).toISOString().slice(0, 19) !== matched[2].slice(0, 19)
-  ) {
-    return { text: line, context: null };
+  let text = line;
+  let context: string | null = null;
+  if (matched?.[2]) {
+    const timestamp = Date.parse(matched[2]);
+    if (
+      !Number.isFinite(timestamp) ||
+      new Date(timestamp).toISOString().slice(0, 19) !== matched[2].slice(0, 19)
+    ) {
+      return { text: line, context: null };
+    }
+    // Consume one transport separator only: the remaining indentation defines suppressed branches.
+    text = line.slice(matched[0].length);
+    context = matched[1] ?? null;
   }
-  // Consume one transport separator only: the remaining indentation defines suppressed branches.
-  return { text: line.slice(matched[0].length), context: matched[1] ?? null };
+  return { text: text.startsWith("##[error]") ? text.slice("##[error]".length) : text, context };
 }
 
 function safePrefix(value: string, maxCharacters: number): string {
