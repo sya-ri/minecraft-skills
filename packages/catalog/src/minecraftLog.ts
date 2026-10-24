@@ -508,7 +508,7 @@ function isIpv6Address(value: string): boolean {
 
 function isExplicitPlatformVersionContext(value: string, offset: number): boolean {
   const prefix = value.slice(Math.max(0, offset - 96), offset);
-  return /(?:Minecraft Version:|This server is running Paper version|Booting up Velocity|(?:Fabric|Quilt) Loader(?: version)?\s*[: ]|NeoForge(?: version)?\s*[: ]|Forge Mod Loader(?: version)?\s*[: ])\s*$/i.test(
+  return /(?:Minecraft Version:|Loading Minecraft|Starting (?:integrated )?minecraft server version|This server is running Paper version|Booting up Velocity|(?:Fabric|Quilt) Loader(?: version)?\s*[: ]|NeoForge(?: version)?\s*[: ]|Forge Mod Loader(?: version)?\s*[: ])\s*$/i.test(
     prefix,
   );
 }
@@ -998,6 +998,14 @@ function collectPlatforms(
     pattern: RegExp;
   }> = [
     { platform: "minecraft", pattern: /^Minecraft Version:\s*([^\s]{1,256})/i },
+    {
+      platform: "minecraft",
+      pattern: /Loading Minecraft\s+([^\s]{1,256})\s+with Fabric Loader\b/i,
+    },
+    {
+      platform: "minecraft",
+      pattern: /Starting (?:integrated )?minecraft server version\s+([^\s]{1,256})/i,
+    },
     {
       platform: "paper",
       pattern: /This server is running Paper version\s+([^\s]{1,256})/i,
