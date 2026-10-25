@@ -324,6 +324,57 @@ describe("Minecraft log analysis", () => {
     ]);
   });
 
+  it.each([
+    "",
+    "2026-10-24T12:00:00Z ",
+    "Client tests\tRun client\t2026-10-24T12:00:00Z ",
+  ])("retains explicit game versions from loading and server startup statements with prefix %j", (prefix) => {
+    const lines = [
+      "[12:00:00] [main/INFO]: Loading Minecraft 1.21.2 with Fabric Loader 0.19.5",
+      "[12:00:01] [Server thread/INFO]: Starting integrated minecraft server version 1.21.2",
+      "[12:00:02] [main/INFO]: Loading Minecraft 26.1 with Fabric Loader 0.19.5",
+      "[12:00:03] [Server thread/INFO]: Starting integrated minecraft server version 26.1",
+      "[12:00:04] [Server thread/INFO]: Starting minecraft server version 26.3",
+      "[12:00:05] [Server thread/INFO]: Starting integrated minecraft server version 1.21.11",
+    ];
+    const result = analyzeMinecraftLog({ text: lines.map((line) => prefix + line).join("\n") });
+
+    expect(result.platforms).toEqual([
+      { platform: "minecraft", version: "1.21.2", line: 1 },
+      { platform: "fabric-loader", version: "0.19.5", line: 1 },
+      { platform: "minecraft", version: "26.1", line: 3 },
+      { platform: "minecraft", version: "26.3", line: 5 },
+      { platform: "minecraft", version: "1.21.11", line: 6 },
+    ]);
+    expect(result.events.map(({ message }) => message)).toEqual(
+      lines.map((line) => line.slice(line.indexOf(": ") + 2)),
+    );
+    expect(result.crashReport).toBeNull();
+    expect(result.analysisComplete).toBe(true);
+  });
+
+  it("bounds game-version statements and does not infer versions from mentions", () => {
+    const result = analyzeMinecraftLog({
+      text: [
+        "This mod supports Minecraft 26.3",
+        "Loading Minecraft assets for 26.3",
+        "[12:00:00] [main/INFO]: Loading Minecraft 1.2.3.4 with Fabric Loader 0.19.5 peer=203.0.113.42",
+        "[12:00:01] [Server thread/INFO]: Starting integrated minecraft server version 1.2.3.4",
+        "[12:00:02] [Server thread/INFO]: Starting minecraft server version 26.3",
+      ].join("\n"),
+      limits: { maxPlatforms: 2 },
+    });
+
+    expect(result.platforms).toEqual([
+      { platform: "minecraft", version: "1.2.3.4", line: 3 },
+      { platform: "fabric-loader", version: "0.19.5", line: 3 },
+    ]);
+    expect(result.exceededLimits).toContain("maxPlatforms");
+    expect(result.analysisComplete).toBe(false);
+    expect(JSON.stringify(result)).not.toContain("203.0.113.42");
+    expect(result.crashReport).toBeNull();
+  });
+
   it("extracts only explicitly named mod and plugin components", () => {
     const result = analyzeMinecraftLog({
       text: [
