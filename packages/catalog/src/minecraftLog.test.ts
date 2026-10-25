@@ -8,6 +8,56 @@ import {
 describe("Minecraft log analysis", () => {
   it.each([
     "",
+    "2026-10-24T12:00:00Z ",
+    "Client tests\tRun client\t2026-10-24T12:00:00Z ",
+  ])("extracts error-annotated exception branches without changing indentation with prefix %j", (prefix) => {
+    const lines = [
+      "java.lang.RuntimeException: resource failed",
+      "\tat example.Client.render(Client.java:10)",
+      "\tSuppressed: java.io.IOException: cleanup failed",
+      "\t\tCaused by: java.lang.IllegalStateException: cleanup cause",
+      "\t\t\tat example.Resource.close(Resource.java:11)",
+      "Caused by: java.io.FileNotFoundException: missing resource",
+      "\tat example.Resource.load(Resource.java:12)",
+    ];
+    const plain = analyzeMinecraftLog({ text: lines.join("\n") });
+    const annotated = analyzeMinecraftLog({
+      text: lines
+        .map((line, index) => prefix + (index % 2 === 0 ? "##[error]" : "") + line)
+        .join("\n"),
+    });
+
+    expect(annotated.exceptionChains).toEqual(plain.exceptionChains);
+    expect(annotated.stackFrameTotal).toBe(3);
+    expect(annotated.analysisComplete).toBe(true);
+  });
+
+  it("counts error annotation prefixes in bounds and redacts the complete payload", () => {
+    const text = "2026-10-24T12:00:00Z ##[error]java.lang.RuntimeException: peer=203.0.113.42";
+    const result = analyzeMinecraftLog({
+      text,
+      limits: { maxLineCharacters: text.indexOf("203.0") + 5 },
+    });
+
+    expect(result.exceptionChainTotal).toBe(1);
+    expect(result.exceededLimits).toContain("maxLineCharacters");
+    expect(result.analysisComplete).toBe(false);
+    expect(JSON.stringify(result)).not.toContain("203.0");
+    for (const prefix of [
+      "prose ##[error]",
+      "##[warning]",
+      "##[error",
+      "2026-02-30T12:00:00Z ##[error]",
+    ]) {
+      expect(
+        analyzeMinecraftLog({ text: `${prefix}java.lang.RuntimeException: failed` })
+          .exceptionChainTotal,
+      ).toBe(0);
+    }
+  });
+
+  it.each([
+    "",
     "Client tests\tRun client\t",
   ])("extracts CI-wrapped Minecraft events and crash traces with wrapper %j", (wrapper) => {
     const lines = [
