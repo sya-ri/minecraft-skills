@@ -221,6 +221,13 @@ const semanticSearchGuidance =
   "For intent-based discovery, use concise English canonical Minecraft terms; translate non-English user intent before calling. Use the English terms only for the lookup, and keep the user's requested response language. Keep exact identifiers, namespace IDs, file paths, project titles, and content literals unchanged.";
 
 const fabricApiSearchProperties = {
+  fabricApiVersion: {
+    type: "string",
+    minLength: 1,
+    maxLength: 128,
+    description:
+      "Exact Fabric API artifact version with matching +gameVersion suffix; defaults to highest matching release.",
+  },
   gameVersion: {
     type: "string",
     minLength: 1,
@@ -2541,7 +2548,7 @@ export const tools: ToolDefinition[] = [
   {
     name: "search_fabric_api_types",
     description:
-      "Search public Fabric API types under net.fabricmc.fabric.api in official Maven fatjavadoc search indexes for an exact Minecraft game version. Selects the highest matching Fabric API artifact, not Maven latest/release. Covers API subpackages including rendering, networking, and GameTest; excludes Fabric internals, Loader, Mojang client internals, and runtime compatibility.",
+      "Search public Fabric API types under net.fabricmc.fabric.api in official Maven fatjavadoc search indexes for an exact Minecraft game version. Accepts fabricApiVersion to select a pinned artifact; otherwise selects the highest matching release. Covers API subpackages including rendering, networking, and GameTest; excludes Fabric internals, Loader, Mojang client internals, and runtime compatibility.",
     inputSchema: {
       type: "object",
       properties: fabricApiSearchProperties,
@@ -5060,6 +5067,7 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         name,
         new Set([
           "gameVersion",
+          "fabricApiVersion",
           "query",
           "packagePrefix",
           "limit",
@@ -5071,7 +5079,7 @@ export async function callMinecraftSkillsTool(name: string, input: unknown): Pro
         throw new Error(`${name} requires string gameVersion`);
       }
       const options: FabricApiMemberSearchOptions = { gameVersion: searchArgs.gameVersion };
-      for (const key of ["query", "packagePrefix", "type"] as const) {
+      for (const key of ["query", "packagePrefix", "type", "fabricApiVersion"] as const) {
         if (hasOwnArg(searchArgs, key)) {
           const value = searchArgs[key];
           if (typeof value !== "string") throw new Error(`${name} ${key} must be a string`);

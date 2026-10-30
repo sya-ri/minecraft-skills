@@ -2494,6 +2494,8 @@ describe("minecraft-skills CLI", () => {
       "api",
       "members",
       "26.2",
+      "--fabric-api-version",
+      "0.159.0+26.2",
       "--query",
       "register",
       "--type",
@@ -2509,6 +2511,7 @@ describe("minecraft-skills CLI", () => {
     ]);
     expect(result.code, result.stderr.join("\n")).toBe(0);
     const output = JSON.parse(result.stdout.join("\n"));
+    expect(output.versionSelection.strategy).toBe("explicit-fabric-api-version");
     expect(output.search).toMatchObject({
       query: "register",
       type: "ArmorRenderer",

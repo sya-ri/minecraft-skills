@@ -159,6 +159,34 @@ function fixtureFetch(
 describe("Fabric API surface", () => {
   afterEach(() => vi.useRealTimers());
 
+  it.each([
+    searchFabricApiTypes,
+    searchFabricApiMembers,
+  ])("selects a pinned artifact despite a newer matching release", async (search) => {
+    const requests: Array<{ url: string; init?: RequestInit }> = [];
+    const older = "0.99.0+26.2";
+    const result = await search(
+      { gameVersion: "26.2", fabricApiVersion: older },
+      fixtureFetch({ requests, pom: pom.replace(apiVersion, older) }),
+    );
+    expect(result.fabricApiVersion).toBe(older);
+    expect(result.versionSelection.strategy).toBe("explicit-fabric-api-version");
+    expect(requests.slice(1).every(({ url }) => decodeURIComponent(url).includes(older))).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    "0.158.0+26.2",
+    "0.159.0+26.3",
+    "../0.159.0+26.2",
+    "",
+  ])("rejects an unlisted or invalid pinned artifact: %s", async (fabricApiVersion) => {
+    await expect(
+      searchFabricApiMembers({ gameVersion: "26.2", fabricApiVersion }, fixtureFetch()),
+    ).rejects.toThrow();
+  });
+
   it("selects highest numeric exact suffix independently of metadata order, latest and release", async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
     const result = await searchFabricApiTypes(
@@ -384,7 +412,7 @@ describe("Fabric API surface", () => {
     expect(result.coverage.nonClaims.join(" ")).toContain("runtime behavior");
   });
 
-  it("rejects artifact drift before downloading a different fat Javadoc", async () => {
+  it("rejects unlisted artifacts before downloading a different fat Javadoc", async () => {
     const requests: Array<{ url: string; init?: RequestInit }> = [];
     await expect(
       getFabricApiMemberDetails(
@@ -396,7 +424,7 @@ describe("Fabric API surface", () => {
         },
         fixtureFetch({ requests }),
       ),
-    ).rejects.toThrow("artifact changed");
+    ).rejects.toThrow("not listed");
     expect(requests).toHaveLength(1);
   });
 

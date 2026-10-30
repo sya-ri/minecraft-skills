@@ -842,7 +842,9 @@ causes. `classLoadingFailureTotal`, retained and omitted counts, `maxClassLoadin
 `searchFabricApiTypes` and `searchFabricApiMembers` resolve the highest numeric Fabric API release
 with an exact `+gameVersion` Maven suffix and search `net.fabricmc.fabric.api` and its
 dot-delimited subpackages, including rendering, networking, and GameTest. `gameVersion` is required;
-no latest/nearest game version is guessed. `query` is case-insensitive substring matching across
+no latest/nearest game version is guessed. Optional `fabricApiVersion` selects an exact listed
+artifact with that game suffix (CLI: `--fabric-api-version`); omission selects the highest match.
+Member details keep using the copied artifact even if a newer release appears. `query` is case-insensitive substring matching across
 names, owners, labels, and decoded
 Javadoc URL signatures as applicable. `packagePrefix` has dot-delimited package boundaries;
 member `type` is an exact simple/nested or qualified declaring type. `limit` is 1–200 (default 50)

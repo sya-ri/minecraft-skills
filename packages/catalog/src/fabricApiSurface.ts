@@ -81,7 +81,7 @@ type FabricApiSurface = {
     extension: "jar";
   };
   versionSelection: {
-    strategy: "highest-semver-with-exact-game-version-suffix";
+    strategy: "highest-semver-with-exact-game-version-suffix" | "explicit-fabric-api-version";
     exactSuffix: string;
     reportedLatest: string | null;
     reportedRelease: string | null;
@@ -117,6 +117,7 @@ type FabricApiSurface = {
 
 export type FabricApiTypeSearchOptions = {
   gameVersion: string;
+  fabricApiVersion?: string;
   query?: string;
   packagePrefix?: string;
   limit?: number;
@@ -1009,6 +1010,15 @@ async function loadFabricApiSurface(
 ): Promise<{ surface: FabricApiSurface; archive: ZipArchive }> {
   const gameVersion = validateGameVersion(gameVersionInput);
   const timeoutMs = validateTimeout(timeoutMsInput);
+  if (expectedFabricApiVersion !== undefined) {
+    validateMavenToken(expectedFabricApiVersion, "Fabric API fabricApiVersion");
+    if (!expectedFabricApiVersion.endsWith(`+${gameVersion}`)) {
+      throw new Error(
+        "Fabric API fabricApiVersion must have the exact requested Minecraft version suffix",
+      );
+    }
+    numericVersionParts(expectedFabricApiVersion, gameVersion);
+  }
   const controller = new AbortController();
   let timedOut = false;
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -1036,10 +1046,13 @@ async function loadFabricApiSurface(
       decodeUtf8(metadataBytes, "Fabric API Maven metadata"),
       gameVersion,
     );
-    if (expectedFabricApiVersion !== undefined && selection.selected !== expectedFabricApiVersion) {
-      throw new Error(
-        `Fabric API artifact changed from ${expectedFabricApiVersion} to ${selection.selected}; rerun the member search and use its current fabricApiVersion`,
-      );
+    if (expectedFabricApiVersion !== undefined) {
+      if (!selection.candidates.includes(expectedFabricApiVersion)) {
+        throw new Error(
+          "Requested Fabric API fabricApiVersion is not listed for the exact Minecraft version",
+        );
+      }
+      selection.selected = expectedFabricApiVersion;
     }
     const urls = artifactUrls(selection.selected);
     const [pomBytes, checksumBytes, archiveBytes] = await Promise.race([
@@ -1104,7 +1117,10 @@ async function loadFabricApiSurface(
           extension: "jar",
         },
         versionSelection: {
-          strategy: "highest-semver-with-exact-game-version-suffix",
+          strategy:
+            expectedFabricApiVersion === undefined
+              ? "highest-semver-with-exact-game-version-suffix"
+              : "explicit-fabric-api-version",
           exactSuffix: `+${gameVersion}`,
           reportedLatest: selection.reportedLatest,
           reportedRelease: selection.reportedRelease,
@@ -1178,7 +1194,12 @@ export async function searchFabricApiTypes(
   const limit = validateLimit(options.limit);
   const query = normalizeOptionalSearchText(options.query, "query");
   const packagePrefix = validatePackagePrefix(options.packagePrefix);
-  const { surface } = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
+  const { surface } = await loadFabricApiSurface(
+    options.gameVersion,
+    options.timeoutMs,
+    fetchImpl,
+    options.fabricApiVersion,
+  );
   const needle = query?.toLowerCase() ?? null;
   const matches = surface.types.filter(
     (entry) =>
@@ -1219,7 +1240,12 @@ export async function searchFabricApiMembers(
   ) {
     throw new Error("Fabric API surface kind is unsupported");
   }
-  const { surface } = await loadFabricApiSurface(options.gameVersion, options.timeoutMs, fetchImpl);
+  const { surface } = await loadFabricApiSurface(
+    options.gameVersion,
+    options.timeoutMs,
+    fetchImpl,
+    options.fabricApiVersion,
+  );
   const needle = query?.toLowerCase() ?? null;
   const matches = surface.members.filter(
     (entry) =>
