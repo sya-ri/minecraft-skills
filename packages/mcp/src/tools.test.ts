@@ -4191,6 +4191,7 @@ describe("MCP tools", () => {
     vi.stubGlobal("fetch", fetchMock);
     const result = await callMinecraftSkillsTool("search_fabric_api_members", {
       gameVersion: "26.2",
+      fabricApiVersion: "0.159.0+26.2",
       query: "register",
       type: "ArmorRenderer",
       kind: "method",
@@ -4200,6 +4201,7 @@ describe("MCP tools", () => {
     });
     expect(result.isError, result.content[0]?.text).not.toBe(true);
     const output = JSON.parse(result.content[0]?.text ?? "{}");
+    expect(output.versionSelection.strategy).toBe("explicit-fabric-api-version");
     expect(output.search).toMatchObject({
       query: "register",
       type: "ArmorRenderer",

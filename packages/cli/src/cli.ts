@@ -302,7 +302,13 @@ function readOption(args: string[], name: string, fallback: string): string {
 
 function parseFabricApiSearchArgs(args: string[], members: boolean): FabricApiMemberSearchOptions {
   const command = `fabric api ${members ? "members" : "types"}`;
-  const allowed = new Set(["--query", "--package-prefix", "--limit", "--timeout-ms"]);
+  const allowed = new Set([
+    "--query",
+    "--package-prefix",
+    "--limit",
+    "--timeout-ms",
+    "--fabric-api-version",
+  ]);
   if (members) {
     allowed.add("--type");
     allowed.add("--kind");
@@ -333,6 +339,7 @@ function parseFabricApiSearchArgs(args: string[], members: boolean): FabricApiMe
   for (const [flag, key] of [
     ["--query", "query"],
     ["--package-prefix", "packagePrefix"],
+    ["--fabric-api-version", "fabricApiVersion"],
     ["--type", "type"],
   ] as const) {
     const value = values.get(flag);
