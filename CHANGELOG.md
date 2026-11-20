@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+## 0.1.12 - 2026-11-21
+
+### Added
+
+- Fabric API type and member searches accept an optional exact `fabricApiVersion` through
+  Catalog, CLI and MCP. Member details retain that selected artifact, with exact Minecraft
+  version suffix and official Maven archive verification.
+
+### Fixed
+
+- Log analysis recognizes CI transport prefixes, GitHub error annotations and explicit
+  Minecraft loading-version statements while retaining bounded extraction and source lines.
+- Resource pack texture `.mcmeta` sidecars are classified as JSON object containers rather
+  than binary image data. File validation parses their JSON and rejects non-object roots;
+  metadata fields, animation and atlas sampling behavior remain outside this schema.
+
+### Changed
+
+- Updated workspace packages and internal dependencies to 0.1.12. Bundled data remains at
+  `2026.09.23-1`, with downloadable surfaces pinned to `v0.1.10`. This is a code patch,
+  not a data refresh: Paper 26.3 build metadata still records build 5, while the pre-release
+  source audit observed build 257. See [version coverage](docs/VERSION_SUPPORT.md).
+
 ## 0.1.11 - 2026-10-04
 
 ### Fixed
