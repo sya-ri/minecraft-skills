@@ -4907,7 +4907,8 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
   }
 
   const extension = pathExtension(normalized);
-  const json = extension === "json";
+  const textureMetadata = parts[2] === "textures" && extension === "mcmeta";
+  const json = extension === "json" || textureMetadata;
   let kind = parts[2];
   let schemaKind: string | null = null;
   if (parts[2] === "models") {
@@ -4924,7 +4925,7 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
     schemaKind = "language";
   } else if (parts[2] === "textures") {
     kind = `texture/${parts[3] ?? "unknown"}`;
-    schemaKind = "texture";
+    schemaKind = textureMetadata ? "texture-metadata" : "texture";
   } else if (parts[2] === "sounds.json") {
     kind = "sounds";
     schemaKind = "sounds";
@@ -4964,8 +4965,11 @@ function classifyResourcepackPath(path: string): PackFileClassification | undefi
     json,
     schemaAvailable,
     schemaKind: schemaKind ?? (json ? kind : null),
-    notes:
-      json && schemaKind
+    notes: textureMetadata
+      ? [
+          "Only the JSON object container is described; texture metadata fields and sampling or animation behavior are not validated.",
+        ]
+      : json && schemaKind
         ? [
             "Schema data is an observed vanilla model/item shape, not a normative validation schema.",
           ]

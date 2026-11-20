@@ -194,6 +194,9 @@ This group also supports every [shared authoring command](#shared-authoring-comm
 | `validate-translations <version> <file...> --pack-root <dir>` | Compare locale keys, duplicate-key evidence, and placeholders for selected locales. |
 | `migration-plan <from> <to> [path...]` | Build a version-aware migration checklist for selected paths. |
 
+Texture `.mcmeta` sidecars expose only a JSON object container schema. Metadata fields,
+animation, and atlas sampling behavior are not validated by that schema.
+
 #### `minecraft-skills resourcepack assets`
 
 | Subcommand | Purpose |

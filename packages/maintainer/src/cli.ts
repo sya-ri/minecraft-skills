@@ -1161,6 +1161,9 @@ function validationSampleContent(
     }
     return {};
   }
+  if (domain === "resourcepack" && /^assets\/[^/]+\/textures\/.+\.mcmeta$/.test(path)) {
+    return {};
+  }
   return "";
 }
 

@@ -2481,6 +2481,28 @@ describe("catalog", () => {
     });
   });
 
+  it("identifies texture metadata as JSON without claiming metadata field support", () => {
+    const path = "assets/example/textures/item/widget.png.mcmeta";
+    const schema = getPackFileSchema({ version: "26.3", domain: "resourcepack", path });
+    expect(schema).toMatchObject({
+      available: true,
+      normative: false,
+      coverage: "known-pack-file-format",
+      file: { json: true, extension: "mcmeta", schemaKind: "texture-metadata" },
+      jsonSchema: { type: "object", additionalProperties: true, properties: {} },
+      observedFields: [],
+    });
+    expect(schema.jsonSchema).not.toHaveProperty("contentEncoding");
+    expect(
+      validatePackFileContent({
+        version: "26.3",
+        domain: "resourcepack",
+        path,
+        content: "[]",
+      }),
+    ).toMatchObject({ validated: true, valid: false, contentKind: "json" });
+  });
+
   it("returns schemas for known datapack and resourcepack file formats", () => {
     const paths = [
       ["datapack", "pack.mcmeta"],
