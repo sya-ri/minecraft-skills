@@ -4,6 +4,25 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+## 0.1.13 - 2026-11-27
+
+### Fixed
+
+- Paper API maintenance rechecks existing Minecraft versions so same-version Javadoc additions
+  can enter the scheduled data refresh. Saved ETag and Last-Modified validators allow conditional
+  requests to avoid downloading unchanged index bodies. Retrieval failures and missing hierarchy
+  coverage preserve the existing snapshot.
+- Javadoc-only changes can trigger the data refresh checks and pull request even when the
+  version/build source audits report no drift.
+
+### Changed
+
+- Updated workspace packages and internal dependencies to 0.1.13. Source provenance accepts
+  optional `etag` and `lastModified` fields. Bundled data remains at `2026.09.23-1`, with downloadable
+  surfaces pinned to `v0.1.10`; this release changes the refresh process rather than distributing
+  a new data snapshot. Paper 26.3 build metadata still records build 5, while the pre-release
+  source audit observed build 263. Newly indexed types require a subsequent validated data refresh.
+
 ## 0.1.12 - 2026-11-21
 
 ### Added
