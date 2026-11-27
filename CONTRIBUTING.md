@@ -82,7 +82,8 @@ index. Paper build ingestion preserves each latest build's official channel in `
 and the global latest build's `channel`; a missing channel remains `null`.
 
 The `Data Refresh` GitHub Actions workflow runs weekly and can also be started manually. It first
-runs `audit-current-sources`; only source drift or a manual force run triggers regeneration. When
+runs source audits and rechecks Paper Javadocs, including existing Minecraft versions. Source drift,
+changed Paper API surfaces, or a manual force run triggers regeneration. When
 regeneration and repository checks pass, the workflow pushes a `data-refresh/<run-id>` branch and
 opens a pull request.
 
@@ -215,6 +216,12 @@ node packages/maintainer/dist/cli.mjs ingest-paper-api-surfaces \
 ```
 
 Paper API surface ingestion reads the Javadocs type/member search indexes and `overview-tree.html`.
+Existing versions are rechecked. Saved ETag or Last-Modified validators allow conditional HEAD
+requests to skip body downloads when all indexed sources return HTTP 304. The first check, missing
+validators, unsupported conditional requests, or changed sources require downloading the indexes.
+Parsed content and source validators are compared without retrieval timestamps;
+unchanged surfaces retain their original bytes and provenance, while `--force` rewrites them.
+Failed lookups or loss of previously indexed hierarchy coverage preserve the existing surface.
 Hierarchy coverage is recorded only when known direct-supertype edges can be extracted; otherwise
 type-scoped member searches remain explicitly declared-members-only.
 

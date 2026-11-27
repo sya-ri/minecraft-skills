@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { getPaperPluginData } from "@minecraft-skills/catalog";
 
 type SearchIndexEntry = {
@@ -8,6 +9,8 @@ type SearchIndexEntry = {
   l?: string;
   u?: string;
 };
+
+type HttpValidators = { etag?: string; lastModified?: string };
 
 type PaperApiType = {
   packageName: string;
@@ -41,6 +44,8 @@ type PaperApiSurface = {
     kind: string;
     url: string;
     retrievedAt: string;
+    etag?: string;
+    lastModified?: string;
   }>;
 };
 
@@ -268,19 +273,23 @@ function attachPaperTypeHierarchy(options: {
   };
 }
 
-async function fetchText(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-  }
-  return response.text();
+async function fetchText(url: string, validators: Map<string, HttpValidators>): Promise<string> {
+  return (await fetchTextWithFinalUrl(url, validators)).text;
 }
 
-async function fetchTextWithFinalUrl(url: string): Promise<{ text: string; finalUrl: string }> {
+async function fetchTextWithFinalUrl(
+  url: string,
+  validators: Map<string, HttpValidators>,
+): Promise<{ text: string; finalUrl: string }> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
   }
+  const etag = response.headers.get("etag");
+  const lastModified = response.headers.get("last-modified");
+  const observed = { ...(etag ? { etag } : {}), ...(lastModified ? { lastModified } : {}) };
+  validators.set(url, observed);
+  validators.set(response.url, observed);
   return {
     text: await response.text(),
     finalUrl: response.url,
@@ -496,6 +505,33 @@ function requireNonEmptySurface(surface: PaperApiSurface): void {
   }
 }
 
+function surfaceContent(surface: PaperApiSurface) {
+  return {
+    ...surface,
+    sources: surface.sources.map(({ retrievedAt: _retrievedAt, ...source }) => source),
+  };
+}
+
+async function sourcesUnchanged(surface: PaperApiSurface): Promise<boolean> {
+  // Without the overview source, recheck whether hierarchy coverage has become available.
+  if (!surface.inheritanceCoverage || surface.sources.length === 0) return false;
+  for (const source of surface.sources) {
+    if (!source.etag && !source.lastModified) return false;
+    try {
+      const response = await fetch(source.url, {
+        method: "HEAD",
+        headers: source.etag
+          ? { "If-None-Match": source.etag }
+          : { "If-Modified-Since": source.lastModified as string },
+      });
+      if (response.status !== 304) return false;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 export async function ingestPaperApiSurfaces(
   options: IngestPaperApiSurfacesOptions,
 ): Promise<number> {
@@ -506,15 +542,22 @@ export async function ingestPaperApiSurfaces(
 
   for (const version of versions) {
     const output = join(outputRoot, `${version}.json`);
-    if (!options.force && !options.onlyVersion && existsSync(output)) {
-      options.log?.(`skip ${version}: Paper API surface already exists`);
+    const previous: PaperApiSurface | undefined = existsSync(output)
+      ? JSON.parse(readFileSync(output, "utf8"))
+      : undefined;
+    if (!options.force && previous && (await sourcesUnchanged(previous))) {
+      options.log?.(`skip ${version}: Paper Javadocs sources not modified (HTTP 304)`);
       continue;
     }
+    const validators = new Map<string, HttpValidators>();
     const javadocsUrl = `https://jd.papermc.io/paper/${version}/`;
     let overviewTreeHtml: string | undefined;
     try {
       options.log?.(`fetch ${version}: Paper Javadocs overview type hierarchy`);
-      overviewTreeHtml = await fetchText(new URL("overview-tree.html", javadocsUrl).toString());
+      overviewTreeHtml = await fetchText(
+        new URL("overview-tree.html", javadocsUrl).toString(),
+        validators,
+      );
     } catch (error) {
       options.log?.(
         `continue ${version}: Paper Javadocs overview type hierarchy unavailable (${
@@ -526,8 +569,8 @@ export async function ingestPaperApiSurfaces(
     try {
       options.log?.(`fetch ${version}: Paper Javadocs type/member search indexes`);
       const [typeSearchIndexJs, memberSearchIndexJs] = await Promise.all([
-        fetchText(new URL("type-search-index.js", javadocsUrl).toString()),
-        fetchText(new URL("member-search-index.js", javadocsUrl).toString()),
+        fetchText(new URL("type-search-index.js", javadocsUrl).toString(), validators),
+        fetchText(new URL("member-search-index.js", javadocsUrl).toString(), validators),
       ]);
       surface = buildPaperApiSurface({
         minecraftVersion: version,
@@ -547,8 +590,11 @@ export async function ingestPaperApiSurfaces(
       try {
         options.log?.(`fetch ${version}: Paper legacy Javadocs allclasses/index-all pages`);
         const [allClasses, indexAll] = await Promise.all([
-          fetchTextWithFinalUrl(new URL("allclasses-noframe.html", javadocsUrl).toString()),
-          fetchTextWithFinalUrl(new URL("index-all.html", javadocsUrl).toString()),
+          fetchTextWithFinalUrl(
+            new URL("allclasses-noframe.html", javadocsUrl).toString(),
+            validators,
+          ),
+          fetchTextWithFinalUrl(new URL("index-all.html", javadocsUrl).toString(), validators),
         ]);
         surface = buildLegacyPaperApiSurface({
           minecraftVersion: version,
@@ -578,6 +624,22 @@ export async function ingestPaperApiSurfaces(
         );
         continue;
       }
+    }
+    surface.sources = surface.sources.map((source) => ({
+      ...source,
+      ...validators.get(source.url),
+    }));
+    if (previous?.inheritanceCoverage && !surface.inheritanceCoverage) {
+      options.log?.(`skip ${version}: preserving existing Paper API hierarchy coverage`);
+      continue;
+    }
+    if (
+      !options.force &&
+      previous &&
+      isDeepStrictEqual(surfaceContent(previous), surfaceContent(surface))
+    ) {
+      options.log?.(`skip ${version}: Paper API surface unchanged`);
+      continue;
     }
     writeFileSync(output, `${JSON.stringify(surface, null, 2)}\n`);
     written += 1;
