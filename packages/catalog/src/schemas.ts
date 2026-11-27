@@ -5,6 +5,8 @@ export const Source = type({
   kind: "string",
   url: "string",
   "retrievedAt?": "string",
+  "etag?": "string",
+  "lastModified?": "string",
 });
 
 export const DomainId = type("'datapack' | 'resourcepack' | 'paper-plugin'");
